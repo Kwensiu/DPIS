@@ -957,3 +957,15 @@ not change route selection, mutation policy, or evidence semantics.
   `Flutter typeface asset replacement hit`. The remaining unproven boundary is
   Flutter engine font-asset consumption, not DPIS configuration, native hook
   readiness, overlay registration, or JNI startup reachability.
+- 2026-08-11: A reversible baseline APK from `47a635ec` was installed after a
+  device reboot so LSPosed could reload the pre-overlay module code. Kazumi's
+  baseline log showed Android `DPIS_FONT_STYLE` hooks ready, no overlay or
+  asset callback, and no Flutter replacement hit; the visible application
+  remained usable. After restoring the current Modern APK and rebooting,
+  Kazumi produced one `AAssetManager` open and one replacement hit for
+  `flutter_assets/assets/fonts/MiSans-Regular.ttf`, while Bettbox produced
+  overlay visibility and JNI startup evidence but no asset open or replacement
+  hit. This separates the two apps at the Flutter asset-consumption boundary:
+  the current route is exercised by Kazumi, but not by Bettbox. The generic
+  `route=NONE` / `ParagraphBuilder` / `pushStyle` probe remains unrelated
+  font-size evidence and is not a negative result for the Typeface route.
