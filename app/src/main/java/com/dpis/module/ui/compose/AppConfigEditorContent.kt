@@ -312,9 +312,14 @@ fun AppConfigEditorContent(
         if (state.showsWechatDpi()) {
             Spacer(Modifier.height(AppConfigSheetUiTokens.InputRowLayoutGap))
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(AppConfigSheetUiTokens.FieldRowHeight),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically
+                // Keep the app-specific field on the same bottom edge as the standard
+                // value/mode rows. The shared row height reserves the floating-label inset,
+                // so the visible gaps above and below this row remain consistent.
+                verticalAlignment = Alignment.Bottom
             ) {
                 DpisCompactEditorTextField(
                     value = draft.wechatDpiInput ?: "",

@@ -472,6 +472,22 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/ui/compose/AppHookChainEditorDialog.kt").exists());
     }
 
+    @Test
+    public void wechatEditorRowUsesTheSameVerticalRhythmAsValueModeRows() throws IOException {
+        String editor = read(
+                "src/main/java/com/dpis/module/ui/compose/AppConfigEditorContent.kt");
+
+        int wechatStart = editor.indexOf("if (state.showsWechatDpi())");
+        int wechatEnd = editor.indexOf("if (!state.wechatDpiInputValid)", wechatStart);
+        assertTrue(wechatStart > 0);
+        assertTrue(wechatEnd > wechatStart);
+
+        String wechatRow = editor.substring(wechatStart, wechatEnd);
+        assertTrue(wechatRow.contains(".height(AppConfigSheetUiTokens.FieldRowHeight)"));
+        assertTrue(wechatRow.contains("verticalAlignment = Alignment.Bottom"));
+        assertTrue(wechatRow.contains("state.actions::showWechatDpiHelp"));
+    }
+
     private static String read(String relativePath) throws IOException {
         return new String(
                 Files.readAllBytes(new File(relativePath).toPath()),
