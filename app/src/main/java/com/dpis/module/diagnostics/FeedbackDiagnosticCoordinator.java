@@ -189,6 +189,8 @@ public final class FeedbackDiagnosticCoordinator {
         public final String summary;
         public final List<String> timelineEvents;
         public final FeedbackDiagnosticPerformanceSnapshot performanceSnapshot;
+        public final byte[] perfettoTrace;
+        public final String perfettoNote;
 
         Result(
                 Request request,
@@ -227,6 +229,36 @@ public final class FeedbackDiagnosticCoordinator {
                 List<String> timelineEvents,
                 FeedbackDiagnosticPerformanceSnapshot performanceSnapshot
         ) {
+            this(
+                    request,
+                    startedAtMillis,
+                    finishedAtMillis,
+                    durationMs,
+                    targetLaunchStarted,
+                    rootAccess,
+                    systemHooksEnabled,
+                    summary,
+                    timelineEvents,
+                    performanceSnapshot,
+                    new byte[0],
+                    ""
+            );
+        }
+
+        Result(
+                Request request,
+                long startedAtMillis,
+                long finishedAtMillis,
+                long durationMs,
+                boolean targetLaunchStarted,
+                RootAccessProbe.Result rootAccess,
+                boolean systemHooksEnabled,
+                String summary,
+                List<String> timelineEvents,
+                FeedbackDiagnosticPerformanceSnapshot performanceSnapshot,
+                byte[] perfettoTrace,
+                String perfettoNote
+        ) {
             this.request = request;
             this.startedAtMillis = startedAtMillis;
             this.finishedAtMillis = finishedAtMillis;
@@ -241,6 +273,8 @@ public final class FeedbackDiagnosticCoordinator {
             this.performanceSnapshot = performanceSnapshot != null
                     ? performanceSnapshot
                     : FeedbackDiagnosticPerformanceSnapshot.EMPTY;
+            this.perfettoTrace = perfettoTrace != null ? perfettoTrace.clone() : new byte[0];
+            this.perfettoNote = perfettoNote != null ? perfettoNote : "";
         }
     }
 
@@ -254,6 +288,7 @@ public final class FeedbackDiagnosticCoordinator {
     private boolean runningTargetLaunchStarted;
     private String lastObservedForegroundPackage;
     private final List<String> runningTimelineEvents = new ArrayList<>();
+    private FeedbackDiagnosticPerfettoTrace runningPerfettoTrace;
 
     public FeedbackDiagnosticCoordinator(Host host) {
         this(
@@ -296,6 +331,12 @@ public final class FeedbackDiagnosticCoordinator {
             recordTimelineEvent(transportStatus.available
                     ? "runtime transport prepared"
                     : transportStatus.message);
+            FeedbackDiagnosticPerfettoTrace.StartResult perfettoStart =
+                    FeedbackDiagnosticPerfettoTrace.start(null);
+            runningPerfettoTrace = perfettoStart.trace;
+            recordTimelineEvent(perfettoStart.available
+                    ? "perfetto trace prepared"
+                    : "perfetto unavailable: " + perfettoStart.note);
             FeedbackDiagnosticRuntimeSelfTest.Status selfTest =
                     FeedbackDiagnosticRuntimeSelfTest.runUiTransportSelfTest(
                             request.packageName,
@@ -426,6 +467,11 @@ public final class FeedbackDiagnosticCoordinator {
         List<String> runtimeEvents = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
         FeedbackDiagnosticRuntimeTransport.Snapshot transportSnapshot =
                 FeedbackDiagnosticRuntimeTransport.stopSnapshot(null);
+        FeedbackDiagnosticPerfettoTrace.StopResult perfettoStop =
+                runningPerfettoTrace != null
+                        ? runningPerfettoTrace.stop()
+                        : FeedbackDiagnosticPerfettoTrace.StopResult.unavailable(
+                                "Perfetto trace was not started");
         List<String> timelineEvents = new ArrayList<>(runningTimelineEvents);
         timelineEvents.addAll(runtimeEvents);
         timelineEvents.addAll(transportSnapshot.events);
@@ -465,7 +511,9 @@ public final class FeedbackDiagnosticCoordinator {
                         systemHooksEnabled
                 ),
                 timelineEvents,
-                performanceSnapshot
+                performanceSnapshot,
+                perfettoStop.bytes,
+                perfettoStop.note
         );
         host.onFeedbackDiagnosticFinished(result);
     }
@@ -512,6 +560,7 @@ public final class FeedbackDiagnosticCoordinator {
         runningTargetLaunchStarted = false;
         lastObservedForegroundPackage = null;
         runningTimelineEvents.clear();
+        runningPerfettoTrace = null;
     }
 
     private static boolean samePackage(String first, String second) {

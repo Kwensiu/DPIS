@@ -27,6 +27,7 @@ public final class FeedbackDiagnosticExportBuilder {
     public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
     public static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
     public static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
+    public static final String PERFETTO_ENTRY_NAME = "perfetto-trace.pftrace";
     public static final String MIME_TYPE = "application/zip";
 
     private static final int RECENT_DPIS_LOG_FALLBACK_LIMIT = 100;
@@ -111,6 +112,11 @@ public final class FeedbackDiagnosticExportBuilder {
             writeZipEntry(zip, DIAGNOSTIC_ENTRY_NAME, diagnostic);
             writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, dpisLog);
             writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, lsposed);
+            if (result != null && result.perfettoTrace.length > 0) {
+                zip.putNextEntry(new ZipEntry(PERFETTO_ENTRY_NAME));
+                zip.write(result.perfettoTrace);
+                zip.closeEntry();
+            }
         }
         return new DiagnosticPackage(
                 result,
@@ -156,6 +162,7 @@ public final class FeedbackDiagnosticExportBuilder {
                 result.performanceSnapshot,
                 runtimeEvents
         );
+        appendPerfettoSummary(builder, result);
         appendRuntimeTimeline(builder, runtimeEvents);
         appendRuntimeSelfTest(builder, runtimeEvents);
         appendRawLog(builder);
@@ -438,6 +445,23 @@ public final class FeedbackDiagnosticExportBuilder {
         builder.append("[raw-log]\n");
         builder.append("dpis: see ").append(DPIS_LOG_ENTRY_NAME).append('\n');
         builder.append("lsposed: see ").append(LSPOSED_LOG_ENTRY_NAME).append("\n\n");
+    }
+
+    private void appendPerfettoSummary(
+            StringBuilder builder,
+            FeedbackDiagnosticCoordinator.Result result
+    ) {
+        builder.append("[perfetto]\n");
+        boolean available = result != null
+                && result.perfettoTrace != null
+                && result.perfettoTrace.length > 0;
+        builder.append("available: ").append(available).append('\n');
+        builder.append("entry: ").append(available ? PERFETTO_ENTRY_NAME : "none").append('\n');
+        builder.append("note: ")
+                .append(result != null && !result.perfettoNote.isBlank()
+                        ? result.perfettoNote
+                        : available ? "trace captured" : "trace unavailable")
+                .append("\n\n");
     }
 
     private static String joinCounts(Map<String, Long> counts) {

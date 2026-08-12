@@ -97,6 +97,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(diagnostic.contains("[runtime-anomalies]"));
         assertTrue(diagnostic.contains("[runtime-timeline]"));
         assertTrue(diagnostic.contains("[runtime-self-test]"));
+        assertTrue(diagnostic.contains("[perfetto]"));
         assertTrue(diagnostic.contains("[raw-log]"));
         assertTrue(diagnostic.contains("package: com.example.app"));
         assertTrue(diagnostic.contains("versionName: 1.2.3"));
@@ -146,6 +147,34 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(diagnostic.contains("processes: 1"));
         assertTrue(diagnostic.contains("route: paint_fallback,calls=20"));
         assertFalse(diagnostic.contains("source: ui-process-fallback"));
+    }
+
+    @Test
+    public void zipIncludesPerfettoTraceWhenAvailable() throws IOException {
+        FeedbackDiagnosticCoordinator.Result base = result();
+        FeedbackDiagnosticCoordinator.Result withTrace =
+                new FeedbackDiagnosticCoordinator.Result(
+                        base.request,
+                        base.startedAtMillis,
+                        base.finishedAtMillis,
+                        base.durationMs,
+                        base.targetLaunchStarted,
+                        base.rootAccess,
+                        base.systemHooksEnabled,
+                        base.summary,
+                        base.timelineEvents,
+                        base.performanceSnapshot,
+                        new byte[] {0x01, 0x02, 0x03},
+                        "trace captured"
+                );
+
+        Map<String, String> entries = unzip(
+                new FeedbackDiagnosticExportBuilder(List::of, () ->
+                        new LogReadResult(0, "test-source", "", ""))
+                        .buildZip(withTrace)
+        );
+
+        assertTrue(entries.containsKey("perfetto-trace.pftrace"));
     }
 
     @Test
