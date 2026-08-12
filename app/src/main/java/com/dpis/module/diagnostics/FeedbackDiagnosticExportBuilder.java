@@ -151,6 +151,11 @@ public final class FeedbackDiagnosticExportBuilder {
         appendRuntimeSummary(builder, runtimeStats);
         appendRuntimeDensity(builder, runtimeStats);
         appendRuntimeAnomalies(builder, runtimeStats);
+        appendPerformanceSummary(
+                builder,
+                result.performanceSnapshot,
+                runtimeEvents
+        );
         appendRuntimeTimeline(builder, runtimeEvents);
         appendRuntimeSelfTest(builder, runtimeEvents);
         appendRawLog(builder);
@@ -371,10 +376,86 @@ public final class FeedbackDiagnosticExportBuilder {
                 .append("\n\n");
     }
 
+    private void appendPerformanceSummary(
+            StringBuilder builder,
+            FeedbackDiagnosticPerformanceSnapshot snapshot,
+            List<String> runtimeEvents
+    ) {
+        builder.append("[performance-summary]\n");
+        List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> processSummaries =
+                FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
+        if (!processSummaries.isEmpty()) {
+            builder.append("source: target-process-transport\n");
+            builder.append("processes: ").append(processSummaries.size()).append('\n');
+            for (FeedbackDiagnosticProcessPerformanceParser.ProcessSummary process
+                    : processSummaries) {
+                builder.append("process: ").append(valueOrDefault(process.process, UNKNOWN))
+                        .append(",pid=").append(valueOrDefault(process.pid, UNKNOWN))
+                        .append('\n');
+                for (FeedbackDiagnosticProcessPerformanceParser.RouteSummary route
+                        : process.routes.values()) {
+                    builder.append("route: ").append(route.route)
+                            .append(",calls=").append(route.calls)
+                            .append(",applied=").append(route.applied)
+                            .append(",skipped=").append(route.skipped)
+                            .append(",measuredCalls=").append(route.measuredCalls)
+                            .append(",p50Us=").append(route.p50Us)
+                            .append(",p95Us=").append(route.p95Us)
+                            .append(",p99Us=").append(route.p99Us)
+                            .append(",maxUs=").append(route.maxUs)
+                            .append('\n');
+                }
+            }
+            builder.append('\n');
+            return;
+        }
+        if (snapshot == null || snapshot.entries().isEmpty()) {
+            builder.append("entries: 0\n\n");
+            return;
+        }
+        builder.append("source: ui-process-fallback\n");
+        builder.append("entries: ").append(snapshot.entries().size()).append('\n');
+        for (FeedbackDiagnosticPerformanceSnapshot.Entry entry : snapshot.entries()) {
+            builder.append("route: ").append(entry.route).append('\n');
+            builder.append("calls: ").append(entry.calls).append('\n');
+            builder.append("applied: ").append(entry.applied).append('\n');
+            builder.append("skipped: ").append(entry.skipped).append('\n');
+            builder.append("measuredCalls: ").append(entry.measuredCalls).append('\n');
+            builder.append("p50Us: ").append(entry.p50Us).append('\n');
+            builder.append("p95Us: ").append(entry.p95Us).append('\n');
+            builder.append("p99Us: ").append(entry.p99Us).append('\n');
+            builder.append("maxUs: ").append(entry.maxUs).append('\n');
+            if (!entry.skipReasons.isEmpty()) {
+                builder.append("skipReasons: ")
+                        .append(joinCounts(entry.skipReasons))
+                        .append('\n');
+            }
+        }
+        builder.append('\n');
+    }
+
     private void appendRawLog(StringBuilder builder) {
         builder.append("[raw-log]\n");
         builder.append("dpis: see ").append(DPIS_LOG_ENTRY_NAME).append('\n');
         builder.append("lsposed: see ").append(LSPOSED_LOG_ENTRY_NAME).append("\n\n");
+    }
+
+    private static String joinCounts(Map<String, Long> counts) {
+        List<Map.Entry<String, Long>> entries = new ArrayList<>(counts.entrySet());
+        entries.sort(
+                Comparator.<Map.Entry<String, Long>>comparingLong(
+                                Map.Entry::getValue)
+                        .reversed()
+                        .thenComparing(Map.Entry::getKey)
+        );
+        StringBuilder result = new StringBuilder();
+        for (Map.Entry<String, Long> entry : entries) {
+            if (result.length() > 0) {
+                result.append(',');
+            }
+            result.append(entry.getKey()).append('=').append(entry.getValue());
+        }
+        return result.toString();
     }
 
     private String buildDpisLogText(FeedbackDiagnosticSessionWindow window) {

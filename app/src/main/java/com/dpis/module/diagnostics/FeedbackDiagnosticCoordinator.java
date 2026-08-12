@@ -188,6 +188,7 @@ public final class FeedbackDiagnosticCoordinator {
         public final boolean systemHooksEnabled;
         public final String summary;
         public final List<String> timelineEvents;
+        public final FeedbackDiagnosticPerformanceSnapshot performanceSnapshot;
 
         Result(
                 Request request,
@@ -200,6 +201,32 @@ public final class FeedbackDiagnosticCoordinator {
                 String summary,
                 List<String> timelineEvents
         ) {
+            this(
+                    request,
+                    startedAtMillis,
+                    finishedAtMillis,
+                    durationMs,
+                    targetLaunchStarted,
+                    rootAccess,
+                    systemHooksEnabled,
+                    summary,
+                    timelineEvents,
+                    FeedbackDiagnosticPerformanceSnapshot.EMPTY
+            );
+        }
+
+        Result(
+                Request request,
+                long startedAtMillis,
+                long finishedAtMillis,
+                long durationMs,
+                boolean targetLaunchStarted,
+                RootAccessProbe.Result rootAccess,
+                boolean systemHooksEnabled,
+                String summary,
+                List<String> timelineEvents,
+                FeedbackDiagnosticPerformanceSnapshot performanceSnapshot
+        ) {
             this.request = request;
             this.startedAtMillis = startedAtMillis;
             this.finishedAtMillis = finishedAtMillis;
@@ -211,6 +238,9 @@ public final class FeedbackDiagnosticCoordinator {
             this.timelineEvents = timelineEvents != null
                     ? new ArrayList<>(timelineEvents)
                     : new ArrayList<>();
+            this.performanceSnapshot = performanceSnapshot != null
+                    ? performanceSnapshot
+                    : FeedbackDiagnosticPerformanceSnapshot.EMPTY;
         }
     }
 
@@ -391,6 +421,8 @@ public final class FeedbackDiagnosticCoordinator {
         long startedAt = runningStartedAtMillis;
         boolean launched = runningTargetLaunchStarted;
         recordTimelineEvent("session finished");
+        FeedbackDiagnosticPerformanceSnapshot performanceSnapshot =
+                FeedbackDiagnosticRuntimeEvents.stopPerformanceSnapshot();
         List<String> runtimeEvents = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
         FeedbackDiagnosticRuntimeTransport.Snapshot transportSnapshot =
                 FeedbackDiagnosticRuntimeTransport.stopSnapshot(null);
@@ -432,7 +464,8 @@ public final class FeedbackDiagnosticCoordinator {
                         rootAccess,
                         systemHooksEnabled
                 ),
-                timelineEvents
+                timelineEvents,
+                performanceSnapshot
         );
         host.onFeedbackDiagnosticFinished(result);
     }

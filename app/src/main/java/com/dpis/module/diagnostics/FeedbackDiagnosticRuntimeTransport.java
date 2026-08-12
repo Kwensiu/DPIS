@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public final class FeedbackDiagnosticRuntimeTransport {
@@ -144,6 +145,51 @@ public final class FeedbackDiagnosticRuntimeTransport {
         if (remote != null) {
             appendLine(remote.eventPath, toLine(category, route, stage, packageName, message));
         }
+    }
+
+    /**
+     * Publishes a compact process-local performance aggregate. Unlike
+     * {@link #record(String, String, String, String)}, this is emitted at a
+     * bounded cadence by the target process and must not be called per hook
+     * callback.
+     */
+    public static void recordPerformanceSnapshot(
+            String packageName,
+            String processName,
+            int pid,
+            Map<String, FeedbackDiagnosticProcessPerformance.RouteSnapshot> routes
+    ) {
+        if (routes == null || routes.isEmpty()) {
+            return;
+        }
+        StringBuilder message = new StringBuilder();
+        message.append("process=").append(valueOrDefault(processName, "unknown"))
+                .append(",pid=").append(pid);
+        for (Map.Entry<String, FeedbackDiagnosticProcessPerformance.RouteSnapshot> entry
+                : routes.entrySet()) {
+            FeedbackDiagnosticProcessPerformance.RouteSnapshot snapshot = entry.getValue();
+            message.append(";route=").append(entry.getKey())
+                    .append(",calls=").append(snapshot.calls)
+                    .append(",applied=").append(snapshot.applied)
+                    .append(",skipped=").append(snapshot.skipped)
+                    .append(",measuredCalls=").append(snapshot.measuredCalls)
+                    .append(",p50Us=").append(snapshot.p50Us)
+                    .append(",p95Us=").append(snapshot.p95Us)
+                    .append(",p99Us=").append(snapshot.p99Us)
+                    .append(",maxUs=").append(snapshot.maxUs);
+            if (!snapshot.skipReasons.isEmpty()) {
+                message.append(",skipReasons=");
+                boolean first = true;
+                for (Map.Entry<String, Long> reason : snapshot.skipReasons.entrySet()) {
+                    if (!first) {
+                        message.append('|');
+                    }
+                    message.append(reason.getKey()).append(':').append(reason.getValue());
+                    first = false;
+                }
+            }
+        }
+        record("performance", "runtime", "aggregate", packageName, message.toString());
     }
 
     public static Status statusForTest() {

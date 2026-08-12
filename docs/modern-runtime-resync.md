@@ -163,6 +163,15 @@ look for `DPIS_FONT ForceTextSize hook ready` plus first-hit
 `... override applied` bridge lines to distinguish install success from actual
 rewrite callbacks.
 
+The performance-evidence refactor is active on the diagnostic-performance
+branch. Hot-path route counters and latency samples are owned by the injected
+target process, not the DPIS UI process. While the diagnostic marker is active,
+the target process publishes bounded aggregate snapshots through the existing
+runtime transport; the exporter groups them by process and pid before falling
+back to any UI-process-only snapshot. This is the first cross-process evidence
+boundary. Perfetto lifecycle capture and transport completeness reporting remain
+the next implementation stages.
+
 ## Full Tree
 
 ```text

@@ -92,6 +92,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(diagnostic.contains("[app-config]"));
         assertTrue(diagnostic.contains("[diagnostic-plan]"));
         assertTrue(diagnostic.contains("[runtime-summary]"));
+        assertTrue(diagnostic.contains("[performance-summary]"));
         assertTrue(diagnostic.contains("[runtime-density]"));
         assertTrue(diagnostic.contains("[runtime-anomalies]"));
         assertTrue(diagnostic.contains("[runtime-timeline]"));
@@ -104,6 +105,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(diagnostic.contains("source=runtime-hotpath"));
         assertTrue(diagnostic.contains("routeName=text_appearance"));
         assertTrue(diagnostic.contains("runtimeEvents: "));
+        assertTrue(diagnostic.contains("entries: 0"));
         assertTrue(diagnostic.contains("font=1"));
         assertTrue(diagnostic.contains("begin=1"));
         assertTrue(diagnostic.contains("peakSecond: "));
@@ -123,6 +125,27 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(entries.get("lsposed-log.txt").contains("DPIS DPIS_DIAG_HOTPATH route=font stage=begin"));
         assertTrue(entries.get("lsposed-log.txt").contains("target app matched"));
         assertFalse(entries.get("lsposed-log.txt").contains("stale target app matched"));
+    }
+
+    @Test
+    public void performanceSummaryPrefersTargetProcessTransport() {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        String diagnostic = builder.buildDiagnosticText(result(List.of(
+                "11-15 06:13:20.100 source=runtime-transport "
+                        + "category=performance route=runtime stage=aggregate "
+                        + "package=com.example.app message=process=com.example.app,pid=123;"
+                        + "route=paint_fallback,calls=20,applied=3,skipped=17,"
+                        + "measuredCalls=3,p50Us=4,p95Us=20,p99Us=20,maxUs=30"
+        )));
+
+        assertTrue(diagnostic.contains("source: target-process-transport"));
+        assertTrue(diagnostic.contains("processes: 1"));
+        assertTrue(diagnostic.contains("route: paint_fallback,calls=20"));
+        assertFalse(diagnostic.contains("source: ui-process-fallback"));
     }
 
     @Test

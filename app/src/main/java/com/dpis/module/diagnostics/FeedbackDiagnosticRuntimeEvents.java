@@ -29,6 +29,13 @@ public final class FeedbackDiagnosticRuntimeEvents {
         return session != null ? session.snapshot() : List.of();
     }
 
+    public static FeedbackDiagnosticPerformanceSnapshot stopPerformanceSnapshot() {
+        Session session = activeSession;
+        return session != null
+                ? session.performanceSnapshot()
+                : FeedbackDiagnosticPerformanceSnapshot.EMPTY;
+    }
+
     public static void cancel() {
         activeSession = null;
     }
@@ -73,6 +80,42 @@ public final class FeedbackDiagnosticRuntimeEvents {
         session.recordStructured(route, stage, level, message);
     }
 
+    static void recordPerformanceCall(String packageName, String route) {
+        Session session = activeSession;
+        if (session != null && session.matchesTarget(packageName)) {
+            session.performance.call(route);
+        }
+    }
+
+    static void recordPerformanceApplied(String packageName, String route) {
+        Session session = activeSession;
+        if (session != null && session.matchesTarget(packageName)) {
+            session.performance.applied(route);
+        }
+    }
+
+    static void recordPerformanceSkipped(
+            String packageName,
+            String route,
+            String reason
+    ) {
+        Session session = activeSession;
+        if (session != null && session.matchesTarget(packageName)) {
+            session.performance.skipped(route, reason);
+        }
+    }
+
+    static void recordPerformanceDuration(
+            String packageName,
+            String route,
+            long durationNs
+    ) {
+        Session session = activeSession;
+        if (session != null && session.matchesTarget(packageName)) {
+            session.performance.duration(route, durationNs);
+        }
+    }
+
     public static void recordHotReload(
             String packageName,
             String route,
@@ -101,6 +144,8 @@ public final class FeedbackDiagnosticRuntimeEvents {
         private final FeedbackDiagnosticTimelineClassifier.Context classifierContext;
         private final List<String> events = new ArrayList<>();
         private final Map<String, Long> lastEventByKey = new HashMap<>();
+        private final FeedbackDiagnosticPerformanceSnapshot.Collector performance =
+                new FeedbackDiagnosticPerformanceSnapshot.Collector();
 
         Session(String packageName, FeedbackDiagnosticCoordinator.Request request) {
             targetPackage = valueOrEmpty(packageName);
@@ -111,6 +156,10 @@ public final class FeedbackDiagnosticRuntimeEvents {
             List<String> snapshot = new ArrayList<>(events);
             Collections.sort(snapshot);
             return snapshot;
+        }
+
+        synchronized FeedbackDiagnosticPerformanceSnapshot performanceSnapshot() {
+            return performance.snapshot();
         }
 
         synchronized void recordDpisLog(String level, String message) {

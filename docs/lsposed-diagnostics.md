@@ -48,6 +48,14 @@ same LSPosed window. These are still auxiliary evidence, but they let the
 exported timeline show specific callback/skip/apply points for hot runtime
 routes without relying on post-hoc text classification alone.
 
+Feedback diagnostics also aggregate hot-path performance measurements in memory
+for the duration of the session. The export includes calls, applied/skipped
+counts, skip-reason counts, and latency percentiles (`p50Us`, `p95Us`, `p99Us`,
+and `maxUs`) under `[performance-summary]`. This first-stage capture is
+intentionally broad; it does not write one log line per callback. Perfetto
+trace capture is a separate follow-up layer and should be correlated with
+these counters before adding tighter sampling or thresholds.
+
 ## Pull Path
 
 Replace `<local-temp-dir>` with a writable local directory:
