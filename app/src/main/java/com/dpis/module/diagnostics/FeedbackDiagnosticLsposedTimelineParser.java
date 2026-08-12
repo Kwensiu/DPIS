@@ -55,6 +55,11 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 events.add(hotPathEvent);
                 continue;
             }
+            String performanceEvent = formatPerformanceEvent(timestampMillis, entry, input);
+            if (performanceEvent != null) {
+                events.add(performanceEvent);
+                continue;
+            }
             FeedbackDiagnosticTimelineClassifier.Event event =
                     classify(entry, context);
             if (event != null) {
@@ -134,6 +139,27 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 + " package=" + valueOrDefault(packageName, "unknown")
                 + " process=" + valueOrDefault(entry.process, "unknown")
                 + " message=" + sanitize(detail);
+    }
+
+    private static String formatPerformanceEvent(
+            long timestampMillis,
+            DpisLogEntry entry,
+            Input input
+    ) {
+        String message = entry != null ? entry.message : "";
+        String performanceMessage = performanceMessage(message);
+        if (performanceMessage == null) {
+            return null;
+        }
+        return formatTime(timestampMillis)
+                + " source=runtime-hotpath"
+                + " category=performance"
+                + " route=runtime"
+                + " stage=aggregate"
+                + " level=" + valueOrDefault(entry.level, "I")
+                + " package=" + valueOrDefault(input != null ? input.packageName : "", "unknown")
+                + " process=" + valueOrDefault(entry.process, "unknown")
+                + " message=" + sanitize(performanceMessage);
     }
 
     public static WindowedRawLog windowRawLog(
@@ -360,6 +386,19 @@ final class FeedbackDiagnosticLsposedTimelineParser {
             normalized = normalized.substring("DPIS ".length()).trim();
         }
         return normalized.startsWith("DPIS_DIAG_HOTPATH ") ? normalized : null;
+    }
+
+    private static String performanceMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+        String normalized = message.trim();
+        if (normalized.startsWith("DPIS ")) {
+            normalized = normalized.substring("DPIS ".length()).trim();
+        }
+        return normalized.startsWith("DPIS_DIAG_PERF ")
+                ? normalized.substring("DPIS_DIAG_PERF ".length()).trim()
+                : null;
     }
 
     public static final class Input {

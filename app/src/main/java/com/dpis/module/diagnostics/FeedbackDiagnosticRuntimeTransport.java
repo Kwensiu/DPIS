@@ -23,6 +23,7 @@ import java.util.UUID;
 public final class FeedbackDiagnosticRuntimeTransport {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final String MARKER_FILE = DIRECTORY + "/active-session";
+    private static final String SESSION_PROPERTY = "debug.dpis.diag.session";
     private static final String EVENT_FILE_NAME = "runtime-events.jsonl";
     private static final long MAX_EXPORT_BYTES = 256L * 1024L;
     private static volatile Session activeSession;
@@ -48,7 +49,8 @@ public final class FeedbackDiagnosticRuntimeTransport {
                 + " && chmod 666 " + shellQuote(eventPath)
                 + " && printf %s " + shellQuote(eventPath)
                 + " > " + shellQuote(MARKER_FILE)
-                + " && chmod 644 " + shellQuote(MARKER_FILE));
+                + " && chmod 644 " + shellQuote(MARKER_FILE)
+                + " && setprop " + shellQuote(SESSION_PROPERTY) + " " + shellQuote(sessionId));
         if (result.code() != 0) {
             activeSession = new Session("", false,
                     "runtime transport unavailable: " + compact(result.output()));
@@ -81,7 +83,8 @@ public final class FeedbackDiagnosticRuntimeTransport {
                 + "; rm -f "
                 + shellQuote(session.eventPath)
                 + " "
-                + shellQuote(MARKER_FILE));
+                + shellQuote(MARKER_FILE)
+                + "; setprop " + shellQuote(SESSION_PROPERTY) + " ''");
         if (readResult.code() != 0) {
             return Snapshot.unavailable(
                     "runtime transport unavailable: " + compact(readResult.output()));
@@ -122,7 +125,9 @@ public final class FeedbackDiagnosticRuntimeTransport {
         ShellRunner runner = shellRunner != null
                 ? shellRunner
                 : FeedbackDiagnosticRuntimeTransport::runSuCommand;
-        runner.run("rm -f " + shellQuote(session.eventPath) + " " + shellQuote(MARKER_FILE));
+        runner.run("rm -f " + shellQuote(session.eventPath) + " "
+                + shellQuote(MARKER_FILE)
+                + "; setprop " + shellQuote(SESSION_PROPERTY) + " ''");
     }
 
     public static void record(String category, String stage, String packageName, String message) {
@@ -190,6 +195,9 @@ public final class FeedbackDiagnosticRuntimeTransport {
             }
         }
         record("performance", "runtime", "aggregate", packageName, message.toString());
+        if (isCaptureActive()) {
+            DpisLog.i("DPIS_DIAG_PERF " + message);
+        }
     }
 
     public static Status statusForTest() {
@@ -244,24 +252,39 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
         lastMarkerCheckMillis = now;
         File marker = new File(MARKER_FILE);
-        if (!marker.isFile()) {
-            remoteSession = RemoteSession.unavailable();
-            return null;
-        }
-        try {
-            String eventPath = new String(
-                    Files.readAllBytes(marker.toPath()),
-                    StandardCharsets.UTF_8
-            ).trim();
-            if (!eventPath.startsWith(DIRECTORY + "/")) {
-                remoteSession = RemoteSession.unavailable();
-                return null;
+        if (marker.isFile()) {
+            try {
+                String eventPath = new String(
+                        Files.readAllBytes(marker.toPath()),
+                        StandardCharsets.UTF_8
+                ).trim();
+                if (eventPath.startsWith(DIRECTORY + "/")) {
+                    remoteSession = RemoteSession.available(eventPath);
+                    return remoteSession;
+                }
+            } catch (IOException ignored) {
+                // The property fallback remains available when the marker is hidden.
             }
-            remoteSession = RemoteSession.available(eventPath);
+        }
+        String sessionId = readSystemProperty(SESSION_PROPERTY);
+        if (!sessionId.isBlank() && sessionId.matches("[0-9a-fA-F-]{36}")) {
+            remoteSession = RemoteSession.available(
+                    DIRECTORY + "/" + sessionId + "-" + EVENT_FILE_NAME
+            );
             return remoteSession;
-        } catch (IOException exception) {
-            remoteSession = RemoteSession.unavailable();
-            return null;
+        }
+        remoteSession = RemoteSession.unavailable();
+        return null;
+    }
+
+    private static String readSystemProperty(String name) {
+        try {
+            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
+            Object value = systemProperties.getMethod("get", String.class, String.class)
+                    .invoke(null, name, "");
+            return value != null ? value.toString().trim() : "";
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            return "";
         }
     }
 

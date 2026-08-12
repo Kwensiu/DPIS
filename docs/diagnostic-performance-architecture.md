@@ -269,7 +269,12 @@ Perfetto 原始文件：
 不能作为目标 App 进程实际执行结果。
 
 当前 `FeedbackDiagnosticRuntimeTransport` 已经提供跨进程 marker 和文件通道，
-并已开始承载目标进程周期性聚合快照。后续仍需补充明确的 transport health、
+并已开始承载目标进程周期性聚合快照。由于 appdomain 对
+`/data/local/tmp` 的读取/追加可能受 SELinux 策略限制，活动 session 同时通过
+`debug.dpis.diag.session` 广播短 session id；目标进程不能访问 marker 时可据此
+恢复事件文件路径。聚合快照还通过低频 `DPIS_DIAG_PERF` LSPosed 日志作为回退
+证据，导出端将其归类为 `source=runtime-hotpath category=performance`。
+后续仍需补充明确的 transport health、
 session completeness、结束时 flush 语义，以及少量慢调用样本的独立传输协议。
 
 ## 未决问题

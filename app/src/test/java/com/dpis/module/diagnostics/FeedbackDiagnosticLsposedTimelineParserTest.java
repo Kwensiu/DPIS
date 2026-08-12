@@ -273,6 +273,28 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     }
 
     @Test
+    public void diagnosticPerformanceAggregateBecomesTargetProcessEvidence() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "DPIS DPIS_DIAG_PERF process=com.example.app,pid=123;"
+                + "route=paint_fallback,calls=20,applied=3,skipped=17,"
+                + "measuredCalls=3,p50Us=4,p95Us=20,p99Us=20,maxUs=30";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                request(true, true, true)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("source=runtime-hotpath"));
+        assertTrue(events.get(0).contains("category=performance"));
+        assertTrue(events.get(0).contains("stage=aggregate"));
+        assertTrue(events.get(0).contains("process=com.example.app,pid=123"));
+    }
+
+    @Test
     public void diagnosticHotPathKeepsExpandedFontRouteName() {
         String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
