@@ -16,7 +16,7 @@ import java.util.UUID;
 final class FeedbackDiagnosticPerfettoTrace {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final long TRACE_DURATION_MS = 60_000L;
-    private static final long TRACE_MAX_BYTES = 32L * 1024L * 1024L;
+    private static final long TRACE_MAX_BYTES = 64L * 1024L * 1024L;
 
     interface ShellRunner {
         RootAppProcessLauncher.ShellResult run(String command);
@@ -90,7 +90,7 @@ final class FeedbackDiagnosticPerfettoTrace {
     }
 
     private static String config() {
-        return "buffers { size_kb: 8192 fill_policy: RING_BUFFER }\n"
+        return "buffers { size_kb: 65536 fill_policy: RING_BUFFER }\n"
                 + "duration_ms: " + TRACE_DURATION_MS + "\n"
                 + "data_sources { config { name: \"linux.ftrace\" "
                 + "ftrace_config { "
