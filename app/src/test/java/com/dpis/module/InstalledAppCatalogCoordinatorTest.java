@@ -74,6 +74,49 @@ public class InstalledAppCatalogCoordinatorTest {
     }
 
     @Test
+    public void userVisibleConfiguredPackagesExcludesPersistedSystemFrameworkAliases() {
+        FakePrefs prefs = new FakePrefs();
+        DpisConfigStore store = new DpisConfigStore(prefs);
+        store.setTargetFontScalePercent("system", 125);
+        store.setTargetFontScalePercent("android", 125);
+        store.setTargetFontScalePercent("com.example.saved", 125);
+
+        Set<String> configured = InstalledAppCatalogCoordinator
+                .userVisibleConfiguredPackages(store);
+
+        assertTrue(configured.contains("com.example.saved"));
+        assertFalse(configured.contains("system"));
+        assertFalse(configured.contains("android"));
+    }
+
+    @Test
+    public void userVisibleConfiguredPackagesExcludesSystemFrameworkScopeAliases() {
+        Set<String> configured = InstalledAppCatalogCoordinator
+                .userVisibleConfiguredPackages(
+                        null,
+                        Set.of("system", "android", "com.example.injected"),
+                        true);
+
+        assertTrue(configured.contains("com.example.injected"));
+        assertFalse(configured.contains("system"));
+        assertFalse(configured.contains("android"));
+    }
+
+    @Test
+    public void systemFrameworkScopeAliasesAreNotConfiguredByScopeOnlyState() {
+        assertFalse(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+                null,
+                "system",
+                true,
+                true));
+        assertFalse(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+                null,
+                "android",
+                true,
+                true));
+    }
+
+    @Test
     public void unconfiguredItemUsesTheSameDefaultStatusWithoutStoreReads() {
         AppListItem item = InstalledAppCatalogCoordinator.createUnconfiguredAppListItem(
                 "Plain", "com.example.plain", false, true, false, false, true);

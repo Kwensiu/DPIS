@@ -10,6 +10,7 @@ import android.os.SystemClock
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.DpisLog
 import com.dpis.module.fonts.FontApplyMode
+import com.dpis.module.settings.SystemFrameworkScope
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
@@ -206,7 +207,10 @@ class InstalledAppCatalogCoordinator(
         fun userVisibleConfiguredPackages(store: DpisConfigStore?): Set<String> {
             if (store == null) return emptySet()
             return store.configuredPackages
-                .filterTo(HashSet()) { store.hasUserVisiblePackageConfig(it) }
+                .filterTo(HashSet()) {
+                    !SystemFrameworkScope.isFrameworkScopePackage(it) &&
+                        store.hasUserVisiblePackageConfig(it)
+                }
         }
 
         /**
@@ -222,7 +226,8 @@ class InstalledAppCatalogCoordinator(
         ): Set<String> {
             val configured = userVisibleConfiguredPackages(store).toMutableSet()
             if (scopeKnown) {
-                configured.addAll(scopePackages.orEmpty())
+                scopePackages.orEmpty()
+                    .filterNotTo(configured) { SystemFrameworkScope.isFrameworkScopePackage(it) }
             }
             return configured
         }
@@ -253,7 +258,12 @@ class InstalledAppCatalogCoordinator(
             false,
             null,
             true,
-            scopeKnown && inScope,
+            isUserVisibleConfiguredPackage(
+                null,
+                packageName,
+                scopeKnown,
+                inScope,
+            ),
             installed,
             systemApp,
             hyperOsNativeProxyCandidate,
@@ -321,7 +331,8 @@ class InstalledAppCatalogCoordinator(
             scopeKnown: Boolean,
             inScope: Boolean,
         ): Boolean =
-            (scopeKnown && inScope) || store?.hasUserVisiblePackageConfig(packageName) == true
+            !SystemFrameworkScope.isFrameworkScopePackage(packageName) &&
+                ((scopeKnown && inScope) || store?.hasUserVisiblePackageConfig(packageName) == true)
 
         @JvmStatic
         fun shouldUseLauncherVisibilityFallback(

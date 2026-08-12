@@ -30,6 +30,16 @@ public class MainActivityConfiguredCountTest {
     }
 
     @Test
+    public void configuredCountExcludesSystemFrameworkScopeAliases() {
+        assertEquals(1, MainActivity.countUserVisibleConfiguredPackages(
+                null,
+                new MainActivity.ScopeState(Set.of(
+                        "system",
+                        "android",
+                        "com.example.injected"), true)));
+    }
+
+    @Test
     public void configuredCountMatchesKnownScopeOnlyPackage() {
         assertEquals(1, MainActivity.countUserVisibleConfiguredPackages(
                 null,

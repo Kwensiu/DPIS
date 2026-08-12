@@ -12,8 +12,6 @@ import java.util.List;
 import io.github.libxposed.service.XposedService;
 
 public final class SystemScopeCoordinator {
-    private static final String SYSTEM_SCOPE_MODERN = "system";
-
     public interface Host {
         void showToast(int messageResId, Object... formatArgs);
 
@@ -120,7 +118,7 @@ public final class SystemScopeCoordinator {
         if (serviceAvailable) {
             try {
                 List<String> scope = service.getScope();
-                scopeSelected = scope != null && scope.contains(SYSTEM_SCOPE_MODERN);
+                scopeSelected = SystemFrameworkScope.containsSystemScope(scope);
             } catch (RuntimeException ignored) {
                 scopeSelected = false;
             }

@@ -20,6 +20,7 @@ import com.dpis.module.settings.AppUiScaleManager;
 import com.dpis.module.settings.InterfaceScaleStore;
 import com.dpis.module.settings.LauncherIconVisibilityStore;
 import com.dpis.module.settings.SafeCacheCleaner;
+import com.dpis.module.settings.SystemFrameworkScope;
 import com.dpis.module.settings.SystemHookState;
 import com.dpis.module.settings.SystemHooksToggleController;
 import com.dpis.module.settings.ExperimentalSettingsActivity;
@@ -77,7 +78,6 @@ import io.github.libxposed.service.XposedService;
 
 final class SystemServerSettingsPageController implements DpisApplication.ServiceStateListener {
     private static final long STATS_REFRESH_INTERVAL_MS = 500L;
-    private static final String SYSTEM_SCOPE_MODERN = "system";
     private static final int REQUEST_EXPORT_CONFIG_BACKUP = 1001;
     private static final int REQUEST_IMPORT_CONFIG_BACKUP = 1002;
     private static final long CLEAR_CACHE_MIN_DISABLED_MS = 300L;
@@ -1376,7 +1376,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             }
             try {
                 List<String> scope = service.getScope();
-                return scope != null && scope.contains(SYSTEM_SCOPE_MODERN);
+                return SystemFrameworkScope.containsSystemScope(scope);
             } catch (RuntimeException error) {
                 return false;
             }
