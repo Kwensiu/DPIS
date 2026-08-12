@@ -8,6 +8,7 @@ import com.dpis.module.appconfig.AppConfigPrefillPreview;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
 
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.templates.TemplateConfigValueAdapters;
@@ -135,6 +136,77 @@ public class AppConfigPrefillPreviewTest {
 
         assertSame(item, result);
         assertFalse(result.previewFromGlobalPrefill);
+    }
+
+    @Test
+    public void configuredItemCarriesPersistedHookDomainsSeparatelyFromPreviewDomains() {
+        AppListItem item = new AppListItem("Example",
+                "com.example.app",
+                true,
+                true,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                ViewportTargetType.OFF,
+                ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                false,
+                null,
+                true,
+                true,
+                true,
+                false,
+                false,
+                "textview_sp_rewrite,paint_text_size_fallback",
+                null);
+
+        assertEquals("textview_sp_rewrite,paint_text_size_fallback",
+                item.effectiveFontHookDomainsRaw());
+        assertEquals("textview_sp_rewrite,paint_text_size_fallback",
+                AppConfigEditorDraft.fromItem(item).draftFontHookDomainsRaw);
+
+        AppListItem preview = item.withGlobalPrefillPreview(
+                TemplateConfigValueAdapters.fromViewportTargetSpec(
+                        ViewportTargetSpec.off(),
+                        ViewportApplyMode.OFF,
+                        null,
+                        FontApplyMode.FIELD_REWRITE,
+                        null,
+                        "webview_text_zoom"));
+
+        assertEquals("textview_sp_rewrite,paint_text_size_fallback", preview.fontHookDomainsRaw);
+        assertEquals("webview_text_zoom", preview.previewFontHookDomainsRaw);
+        assertEquals("webview_text_zoom", preview.effectiveFontHookDomainsRaw());
+    }
+
+    @Test
+    public void emptyCustomHookDomainsRemainDistinctFromRecommendedDomains() {
+        AppListItem item = new AppListItem("Example",
+                "com.example.app",
+                true,
+                true,
+                null,
+                null,
+                ViewportApplyMode.OFF,
+                ViewportTargetType.OFF,
+                ViewportTargetSpec.off(),
+                null,
+                FontApplyMode.FIELD_REWRITE,
+                null,
+                false,
+                null,
+                true,
+                true,
+                true,
+                false,
+                false,
+                "",
+                null);
+
+        assertEquals("", item.effectiveFontHookDomainsRaw());
+        assertEquals("", AppConfigEditorDraft.fromItem(item).draftFontHookDomainsRaw);
     }
 
     private static AppListItem app(String packageName) {

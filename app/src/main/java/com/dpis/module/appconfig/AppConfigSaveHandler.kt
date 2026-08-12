@@ -306,7 +306,7 @@ class AppConfigSaveHandler {
                 item.fontScalePercent,
                 item.fontMode,
                 item.typefaceId,
-                item.previewFontHookDomainsRaw
+                item.effectiveFontHookDomainsRaw()
             )
             return current == preview
         }

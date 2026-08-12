@@ -128,7 +128,7 @@ public final class FeedbackDiagnosticCoordinator {
                     item.fontScalePercent,
                     item.fontMode,
                     useState ? state.selectedTypefaceId : item.typefaceId,
-                    useState ? state.draftFontHookDomainsRaw : item.previewFontHookDomainsRaw,
+                    useState ? state.draftFontHookDomainsRaw : item.effectiveFontHookDomainsRaw(),
                     item.wechatDpi
             );
         }

@@ -290,6 +290,7 @@ class InstalledAppCatalogCoordinator(
             val fontScale = store?.getTargetFontScalePercent(packageName)
             val fontMode = store?.getTargetFontApplyMode(packageName) ?: FontApplyMode.OFF
             val typefaceId = store?.getTargetTypefaceId(packageName)
+            val fontHookDomainsRaw = store?.getPackageFontHookDomainsRaw(packageName)
             val appSpecificConfigActive = store?.hasTargetAppSpecificConfig(packageName) == true
             val wechatDpi = store?.getWechatDpi(packageName)
             val dpisEnabled = store?.isTargetDpisEnabled(packageName) != false
@@ -320,6 +321,7 @@ class InstalledAppCatalogCoordinator(
                 installed,
                 systemApp,
                 hyperOsNativeProxyCandidate,
+                fontHookDomainsRaw,
                 icon,
             )
         }

@@ -94,7 +94,7 @@ public final class AppConfigEditorDraft {
                 item.fontScalePercent != null ? String.valueOf(item.fontScalePercent) : "",
                 AppConfigInputValidation.initialFontMode(item.fontMode),
                 item.typefaceId,
-                item.previewFontHookDomainsRaw,
+                item.effectiveFontHookDomainsRaw(),
                 item.viewportMode,
                 false,
                 false,
@@ -200,7 +200,8 @@ public final class AppConfigEditorDraft {
 
     public AppConfigEditorDraft afterSuccessfulSave() {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput, fontMode,
-                selectedTypefaceId, null, viewportApplyMode, false, false, wechatDpiInput,
+                selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
+                fontHookDomainsResetRequested, false, wechatDpiInput,
                 scopeSelected, dpisEnabled);
     }
 

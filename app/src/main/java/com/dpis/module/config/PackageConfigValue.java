@@ -56,7 +56,7 @@ public final class PackageConfigValue {
         this.fontScalePercent = normalizeFontScalePercent(fontScalePercent);
         this.fontApplyMode = FontApplyMode.normalize(fontApplyMode);
         this.typefaceId = normalizeNullableString(typefaceId);
-        this.fontHookDomainsRaw = normalizeNullableString(fontHookDomainsRaw);
+        this.fontHookDomainsRaw = normalizeHookDomainsRaw(fontHookDomainsRaw);
         this.dpisEnabled = normalizeDpisEnabled(dpisEnabled);
         this.wechatDpi = WechatDpiConfig.normalize(wechatDpi);
     }
@@ -107,6 +107,13 @@ public final class PackageConfigValue {
                 || fontHookDomainsRaw != null
                 || dpisEnabled != null
                 || wechatDpi != null;
+    }
+
+    private static String normalizeHookDomainsRaw(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.trim();
     }
 
     private static String normalizeNullableString(String value) {

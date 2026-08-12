@@ -37,6 +37,7 @@ public final class AppListItem {
     public final boolean systemApp;
     public final boolean hyperOsNativeProxyCandidate;
     public final boolean previewFromGlobalPrefill;
+    public final String fontHookDomainsRaw;
     public final String previewFontHookDomainsRaw;
     public final Drawable icon;
 
@@ -102,7 +103,7 @@ public final class AppListItem {
                 viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
                 appSpecificConfigActive, null, dpisEnabled, false, true,
                 systemApp, hyperOsNativeProxyCandidate,
-                false, null, icon);
+                false, null, null, icon);
     }
 
     private AppListItem(String label,
@@ -125,6 +126,7 @@ public final class AppListItem {
                 boolean systemApp,
                 boolean hyperOsNativeProxyCandidate,
                 boolean previewFromGlobalPrefill,
+                String fontHookDomainsRaw,
                 String previewFontHookDomainsRaw,
                 Drawable icon) {
         this.label = label;
@@ -157,7 +159,8 @@ public final class AppListItem {
         this.systemApp = systemApp;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
         this.previewFromGlobalPrefill = previewFromGlobalPrefill;
-        this.previewFontHookDomainsRaw = normalizeNullableString(previewFontHookDomainsRaw);
+        this.fontHookDomainsRaw = normalizeHookDomainsRaw(fontHookDomainsRaw);
+        this.previewFontHookDomainsRaw = normalizeHookDomainsRaw(previewFontHookDomainsRaw);
         this.icon = icon;
     }
 
@@ -203,7 +206,7 @@ public final class AppListItem {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScaleMilliPercent,
                 viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode,
                 typefaceId, appSpecificConfigActive, null, dpisEnabled, configured, installed,
-                systemApp, hyperOsNativeProxyCandidate, false, null, icon);
+                systemApp, hyperOsNativeProxyCandidate, false, null, null, icon);
     }
 
     public AppListItem(String label,
@@ -229,7 +232,39 @@ public final class AppListItem {
         this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScaleMilliPercent,
                 viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode,
                 typefaceId, appSpecificConfigActive, wechatDpi, dpisEnabled, configured, installed,
-                systemApp, hyperOsNativeProxyCandidate, false, null, icon);
+                systemApp, hyperOsNativeProxyCandidate, null, icon);
+    }
+
+    public AppListItem(String label,
+                String packageName,
+                boolean inScope,
+                boolean scopeKnown,
+                Integer viewportWidthDp,
+                Integer viewportScaleMilliPercent,
+                String viewportMode,
+                String viewportTargetType,
+                ViewportTargetSpec viewportTargetSpec,
+                Integer fontScalePercent,
+                String fontMode,
+                String typefaceId,
+                boolean appSpecificConfigActive,
+                Integer wechatDpi,
+                boolean dpisEnabled,
+                boolean configured,
+                boolean installed,
+                boolean systemApp,
+                boolean hyperOsNativeProxyCandidate,
+                String fontHookDomainsRaw,
+                Drawable icon) {
+        this(label, packageName, inScope, scopeKnown, viewportWidthDp, viewportScaleMilliPercent,
+                viewportMode, viewportTargetType, viewportTargetSpec, fontScalePercent, fontMode,
+                typefaceId, appSpecificConfigActive, wechatDpi, dpisEnabled, configured, installed,
+                systemApp, hyperOsNativeProxyCandidate, false, fontHookDomainsRaw, null, icon);
+    }
+
+
+    public String effectiveFontHookDomainsRaw() {
+        return previewFromGlobalPrefill ? previewFontHookDomainsRaw : fontHookDomainsRaw;
     }
 
     public boolean hasAppSpecificConfig() {
@@ -265,6 +300,7 @@ public final class AppListItem {
                 systemApp,
                 hyperOsNativeProxyCandidate,
                 previewFromGlobalPrefill,
+                fontHookDomainsRaw,
                 previewFontHookDomainsRaw,
                 updatedIcon
         );
@@ -298,6 +334,7 @@ public final class AppListItem {
                 systemApp,
                 hyperOsNativeProxyCandidate,
                 true,
+                fontHookDomainsRaw,
                 normalized.fontHookDomainsRaw,
                 icon);
     }
@@ -327,9 +364,17 @@ public final class AppListItem {
                 systemApp,
                 hyperOsNativeProxyCandidate,
                 previewFromGlobalPrefill,
+                fontHookDomainsRaw,
                 previewFontHookDomainsRaw,
                 icon
         );
+    }
+
+    private static String normalizeHookDomainsRaw(String value) {
+        if (value == null) {
+            return null;
+        }
+        return value.trim();
     }
 
     private static String normalizeNullableString(String value) {
