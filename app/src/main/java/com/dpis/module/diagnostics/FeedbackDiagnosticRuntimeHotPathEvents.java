@@ -12,6 +12,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     private static final String ROUTE_FONT = "font";
     private static final FeedbackDiagnosticProcessPerformance PERFORMANCE =
             new FeedbackDiagnosticProcessPerformance();
+    private static volatile String performanceSessionPath = "";
 
     private FeedbackDiagnosticRuntimeHotPathEvents() {
     }
@@ -23,6 +24,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     public static void begin(String packageName, String categoryRoute, String routeName, String detail) {
         String key = key(packageName, categoryRoute, routeName, detail);
         ACTIVE.put(key, System.nanoTime());
+        preparePerformanceSession();
         PERFORMANCE.call(routeName);
         FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
         record(packageName, categoryRoute, routeName, "begin", detail);
@@ -33,6 +35,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     }
 
     public static void applied(String packageName, String categoryRoute, String routeName, String detail) {
+        preparePerformanceSession();
         FeedbackDiagnosticRuntimeEvents.recordPerformanceApplied(packageName, routeName);
         PERFORMANCE.applied(routeName);
         record(packageName, categoryRoute, routeName, "applied", detail);
@@ -43,6 +46,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     }
 
     public static void skipped(String packageName, String categoryRoute, String routeName, String detail) {
+        preparePerformanceSession();
         FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
         PERFORMANCE.skipped(routeName, skipReason(detail));
         FeedbackDiagnosticRuntimeEvents.recordPerformanceSkipped(
@@ -102,6 +106,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     public static void resetForTest() {
         ACTIVE.clear();
         PERFORMANCE.reset();
+        performanceSessionPath = "";
     }
 
     private static void record(String packageName,
@@ -145,18 +150,36 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     }
 
     private static void recordPerformanceIfDue(String packageName) {
-        long now = System.currentTimeMillis();
-        if (!FeedbackDiagnosticRuntimeTransport.isCaptureActive()
-                || !PERFORMANCE.shouldPublish(now)) {
+        String eventPath = FeedbackDiagnosticRuntimeTransport.activeEventPath();
+        if (eventPath.isBlank()
+                && !FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
             return;
         }
-        String processName = android.app.Application.getProcessName();
+        long now = System.currentTimeMillis();
+        if (!PERFORMANCE.shouldPublish(now)
+                || eventPath.isBlank()
+                || !FeedbackDiagnosticRuntimeTransport.isCaptureActive()
+        ) {
+            return;
+        }
         FeedbackDiagnosticRuntimeTransport.recordPerformanceSnapshot(
                 packageName,
-                processName,
+                android.app.Application.getProcessName(),
                 android.os.Process.myPid(),
                 PERFORMANCE.snapshot()
         );
+    }
+
+    private static void preparePerformanceSession() {
+        String eventPath = FeedbackDiagnosticRuntimeTransport.activeEventPath();
+        if (eventPath.isBlank()) {
+            return;
+        }
+        String previous = performanceSessionPath;
+        if (!eventPath.equals(previous)) {
+            PERFORMANCE.reset();
+            performanceSessionPath = eventPath;
+        }
     }
 
     private static String skipReason(String detail) {

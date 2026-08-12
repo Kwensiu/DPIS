@@ -202,7 +202,11 @@ public final class FeedbackDiagnosticRuntimeTransport {
 
     public static String activeEventPath() {
         Session session = activeSession;
-        return session != null && session.available ? session.eventPath : "";
+        if (session != null && session.available) {
+            return session.eventPath;
+        }
+        RemoteSession remote = resolveRemoteSession();
+        return remote != null ? remote.eventPath : "";
     }
 
     public static boolean isCaptureActive() {
