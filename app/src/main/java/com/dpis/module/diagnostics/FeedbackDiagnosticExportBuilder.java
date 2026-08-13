@@ -424,7 +424,7 @@ public final class FeedbackDiagnosticExportBuilder {
         List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> processSummaries =
                 FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
         if (!processSummaries.isEmpty()) {
-            builder.append("source: target-process-transport\n");
+            builder.append("source: target-process-lsposed-aggregate\n");
             appendProcessPerformanceSummaries(builder, processSummaries);
             builder.append('\n');
             return;

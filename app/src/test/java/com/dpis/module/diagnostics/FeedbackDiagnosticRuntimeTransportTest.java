@@ -73,6 +73,15 @@ public final class FeedbackDiagnosticRuntimeTransportTest {
         assertTrue(snapshot.events.get(0).contains("stage=dpis_log"));
     }
 
+    @Test
+    public void activeSessionDiscoveryReportsLocalSession() {
+        FakeShell shell = new FakeShell("");
+        FeedbackDiagnosticRuntimeTransport.start("com.example.app", shell::run);
+
+        assertTrue(FeedbackDiagnosticRuntimeTransport.activeSessionDiscoveryDetail()
+                .contains("source=local-session"));
+    }
+
     private static final class FakeShell {
         final List<String> commands = new ArrayList<>();
         final String readOutput;

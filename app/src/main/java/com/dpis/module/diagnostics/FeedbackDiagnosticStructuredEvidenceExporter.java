@@ -66,7 +66,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                 FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
         if (!summaries.isEmpty()) {
             return buildProcessSummaryTsv(
-                    "target-process-transport",
+                    "target-process-lsposed-aggregate",
                     summaries,
                     "",
                     selectedRoutes

@@ -225,6 +225,28 @@ public final class FeedbackDiagnosticRuntimeTransport {
         return resolveRemoteSession() != null;
     }
 
+    /**
+     * Returns a compact process-entry diagnostic marker without writing any
+     * event. App-process module entry calls this once, before hook hot paths,
+     * so an active session can prove whether its marker/property was visible
+     * to the injected process.
+     */
+    public static String activeSessionDiscoveryDetail() {
+        Session local = activeSession;
+        if (local != null && local.available) {
+            return "source=local-session";
+        }
+        String markerPath = readMarkerEventPath();
+        String propertySessionId = readSystemProperty(SESSION_PROPERTY);
+        RemoteSession remote = resolveRemoteSession();
+        if (remote == null) {
+            return "";
+        }
+        return "source=remote-session"
+                + ", markerVisible=" + !markerPath.isBlank()
+                + ", propertyVisible=" + !propertySessionId.isBlank();
+    }
+
     public static boolean writeSelfTestEvent(
             String packageName,
             String message,
@@ -251,20 +273,10 @@ public final class FeedbackDiagnosticRuntimeTransport {
             return cached.available ? cached : null;
         }
         lastMarkerCheckMillis = now;
-        File marker = new File(MARKER_FILE);
-        if (marker.isFile()) {
-            try {
-                String eventPath = new String(
-                        Files.readAllBytes(marker.toPath()),
-                        StandardCharsets.UTF_8
-                ).trim();
-                if (eventPath.startsWith(DIRECTORY + "/")) {
-                    remoteSession = RemoteSession.available(eventPath);
-                    return remoteSession;
-                }
-            } catch (IOException ignored) {
-                // The property fallback remains available when the marker is hidden.
-            }
+        String markerEventPath = readMarkerEventPath();
+        if (!markerEventPath.isBlank()) {
+            remoteSession = RemoteSession.available(markerEventPath);
+            return remoteSession;
         }
         String sessionId = readSystemProperty(SESSION_PROPERTY);
         if (!sessionId.isBlank() && sessionId.matches("[0-9a-fA-F-]{36}")) {
@@ -275,6 +287,23 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
         remoteSession = RemoteSession.unavailable();
         return null;
+    }
+
+    private static String readMarkerEventPath() {
+        File marker = new File(MARKER_FILE);
+        if (!marker.isFile()) {
+            return "";
+        }
+        try {
+            String eventPath = new String(
+                    Files.readAllBytes(marker.toPath()),
+                    StandardCharsets.UTF_8
+            ).trim();
+            return eventPath.startsWith(DIRECTORY + "/") ? eventPath : "";
+        } catch (IOException | RuntimeException ignored) {
+            // The property fallback remains available when the marker is hidden.
+            return "";
+        }
     }
 
     private static String readSystemProperty(String name) {

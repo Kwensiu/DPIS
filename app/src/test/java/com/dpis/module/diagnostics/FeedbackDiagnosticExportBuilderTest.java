@@ -137,7 +137,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
-    public void performanceSummaryPrefersTargetProcessTransport() {
+    public void performanceSummaryPrefersTargetProcessLsposedAggregate() {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
@@ -151,7 +151,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
                         + "measuredCalls=3,p50Us=4,p95Us=20,p99Us=20,maxUs=30"
         )));
 
-        assertTrue(diagnostic.contains("source: target-process-transport"));
+        assertTrue(diagnostic.contains("source: target-process-lsposed-aggregate"));
         assertTrue(diagnostic.contains("processes: 1"));
         assertTrue(diagnostic.contains("route: paint_fallback,calls=20"));
         assertFalse(diagnostic.contains("source: ui-process-fallback"));
@@ -224,7 +224,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
-    public void moduleEffectsEntryUsesTargetProcessTransport() throws IOException {
+    public void moduleEffectsEntryUsesTargetProcessLsposedAggregate() throws IOException {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
@@ -241,7 +241,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
         String moduleEffects = entries.get("module-effects.tsv");
 
         assertTrue(moduleEffects.contains(
-                "target-process-transport\tcom.example.app\t123\tfont\tpaint_fallback"
+                "target-process-lsposed-aggregate\tcom.example.app\t123\tfont\tpaint_fallback"
                         + "\t20\t3\t17\t3\t4\t20\t20\t30\t"));
         assertFalse(moduleEffects.contains("ui-process-fallback"));
     }

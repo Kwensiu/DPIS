@@ -8,6 +8,7 @@ import com.dpis.module.config.ModulePackagePlan;
 import com.dpis.module.config.RuntimePropertyConfigPreferences;
 
 
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeBridgeEvents;
 import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
@@ -501,6 +502,11 @@ public final class ModuleMain extends XposedModule {
                 "process_entry",
                 "process-entry source=" + source
                         + ", process=" + currentProcessName
+        );
+        FeedbackDiagnosticRuntimeBridgeEvents.emitSessionDiscovery(
+                packageName,
+                currentProcessName,
+                message -> log(android.util.Log.INFO, "DPIS", message)
         );
         appProcessInstallAttempted = true;
         try {

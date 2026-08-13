@@ -60,6 +60,11 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 events.add(performanceEvent);
                 continue;
             }
+            String sessionEvent = formatSessionEvent(timestampMillis, entry, input);
+            if (sessionEvent != null) {
+                events.add(sessionEvent);
+                continue;
+            }
             FeedbackDiagnosticTimelineClassifier.Event event =
                     classify(entry, context);
             if (event != null) {
@@ -98,7 +103,8 @@ final class FeedbackDiagnosticLsposedTimelineParser {
         String stage = fieldValue(event != null ? event : "", "stage", "");
         return switch (stage) {
             case "probe" -> 0;
-            case "hook_ready", "config_resolved", "route_callback_entered" -> 1;
+            case "session_discovered", "hook_ready", "config_resolved",
+                    "route_callback_entered" -> 1;
             case "begin" -> 2;
             case "mutation_candidate" -> 3;
             case "applied", "mutation_applied" -> 4;
@@ -160,6 +166,34 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 + " package=" + valueOrDefault(input != null ? input.packageName : "", "unknown")
                 + " process=" + valueOrDefault(entry.process, "unknown")
                 + " message=" + sanitize(performanceMessage);
+    }
+
+    private static String formatSessionEvent(
+            long timestampMillis,
+            DpisLogEntry entry,
+            Input input
+    ) {
+        String message = entry != null ? entry.message : "";
+        String sessionMessage = sessionMessage(message);
+        if (sessionMessage == null) {
+            return null;
+        }
+        String packageName = fieldValue(
+                sessionMessage,
+                "package",
+                input != null ? input.packageName : "unknown"
+        );
+        String processName = fieldValue(sessionMessage, "process", entry.process);
+        String detail = detailValue(sessionMessage);
+        return formatTime(timestampMillis)
+                + " source=runtime-hotpath"
+                + " category=transport"
+                + " route=app_process"
+                + " stage=session_discovered"
+                + " level=" + valueOrDefault(entry.level, "I")
+                + " package=" + valueOrDefault(packageName, "unknown")
+                + " process=" + valueOrDefault(processName, "unknown")
+                + " message=" + sanitize(detail);
     }
 
     public static WindowedRawLog windowRawLog(
@@ -364,6 +398,10 @@ final class FeedbackDiagnosticLsposedTimelineParser {
         }
         start += prefix.length();
         int end = message.indexOf(' ', start);
+        int comma = message.indexOf(',', start);
+        if (end < 0 || (comma >= 0 && comma < end)) {
+            end = comma;
+        }
         String value = end >= 0 ? message.substring(start, end) : message.substring(start);
         return value.isBlank() ? fallback : value;
     }
@@ -398,6 +436,19 @@ final class FeedbackDiagnosticLsposedTimelineParser {
         }
         return normalized.startsWith("DPIS_DIAG_PERF ")
                 ? normalized.substring("DPIS_DIAG_PERF ".length()).trim()
+                : null;
+    }
+
+    private static String sessionMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+        String normalized = message.trim();
+        if (normalized.startsWith("DPIS ")) {
+            normalized = normalized.substring("DPIS ".length()).trim();
+        }
+        return normalized.startsWith("DPIS_DIAG_SESSION ")
+                ? normalized.substring("DPIS_DIAG_SESSION ".length()).trim()
                 : null;
     }
 

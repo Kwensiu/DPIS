@@ -102,6 +102,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(summary.contains("Runtime event capture is TODO"));
         assertTrue(structuredExporter.contains("buildTimelineTsv("));
         assertTrue(structuredExporter.contains("buildModuleEffectsTsv("));
+        assertTrue(structuredExporter.contains("target-process-lsposed-aggregate"));
         assertTrue(structuredExporter.contains("target-process-log-fallback"));
         assertTrue(structuredExporter.contains("latency percentiles unavailable"));
     }

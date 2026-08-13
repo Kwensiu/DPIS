@@ -263,7 +263,7 @@ DPIS 自定义 trace 不应为每个高频 callback 创建完整 slice。建议�
 - 按进程与 route 聚合模块实际效果；
 - 字段包含 source、process、pid、module、route、calls、applied、skipped、
   measuredCalls、p50Us、p95Us、p99Us、maxUs、note；
-- 优先使用 target-process transport 聚合；
+- 优先使用 LSPosed bridge 中的 target-process aggregate 聚合；
 - transport 缺失时可从 LSPosed `mutation_applied` 事件生成
   `target-process-log-fallback`，但这种回退只代表命中和修改次数，
   不包含延迟分位数；
@@ -294,9 +294,9 @@ Perfetto 原始文件：
 ## 当前实现与目标模型的差距
 
 当前分支已增加目标进程本地的
-`FeedbackDiagnosticProcessPerformance`，并通过 runtime transport 发布按
+`FeedbackDiagnosticProcessPerformance`，并通过低频 LSPosed bridge 日志发布按
 进程聚合的 calls/applied/skipped 与延迟分位数。导出端优先消费
-`source=target-process-transport` 的数据；旧的
+`source=target-process-lsposed-aggregate` 的数据；旧的
 `FeedbackDiagnosticPerformanceSnapshot` 仍是迁移期间的 UI 进程 fallback，
 不能作为目标 App 进程实际执行结果。
 
@@ -304,8 +304,9 @@ Perfetto 原始文件：
 并已开始承载目标进程周期性聚合快照。由于 appdomain 对
 `/data/local/tmp` 的读取/追加可能受 SELinux 策略限制，活动 session 同时通过
 `debug.dpis.diag.session` 广播短 session id；目标进程不能访问 marker 时可据此
-恢复事件文件路径。聚合快照还通过低频 `DPIS_DIAG_PERF` LSPosed 日志作为回退
-证据，导出端将其归类为 `source=runtime-hotpath category=performance`。
+恢复事件文件路径。由于部分 appdomain 不能可靠 append `/data/local/tmp`，聚合快照
+现在以低频 `DPIS_DIAG_PERF` LSPosed 日志作为主目标进程证据，
+导出端将其归类为 `source=runtime-hotpath category=performance`。
 后续仍需补充明确的 transport health、
 session completeness、结束时 flush 语义，以及少量慢调用样本的独立传输协议。
 

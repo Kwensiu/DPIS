@@ -295,6 +295,30 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     }
 
     @Test
+    public void diagnosticSessionDiscoveryBecomesTransportEvidence() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "DPIS DPIS_DIAG_SESSION process-entry: package=com.example.app, "
+                + "process=com.example.app, source=remote-session, "
+                + "markerVisible=true, propertyVisible=true";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                request(true, true, true)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("source=runtime-hotpath"));
+        assertTrue(events.get(0).contains("category=transport"));
+        assertTrue(events.get(0).contains("route=app_process"));
+        assertTrue(events.get(0).contains("stage=session_discovered"));
+        assertTrue(events.get(0).contains("process=com.example.app"));
+        assertTrue(events.get(0).contains("markerVisible=true"));
+    }
+
+    @Test
     public void diagnosticHotPathKeepsExpandedFontRouteName() {
         String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
