@@ -248,6 +248,53 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
+    public void moduleEffectsEntryReportsSelectedViewportWhenUnobserved() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=lsposed-log category=runtime route=app_process "
+                        + "stage=route_callback_entered level=I package=com.example.app "
+                        + "process=com.example.app message=DPIS package ready: "
+                        + "process=com.example.app, package=com.example.app"
+        ))));
+
+        String moduleEffects = entries.get("module-effects.tsv");
+
+        assertTrue(moduleEffects.contains(
+                "diagnostic-plan\tunknown\tunknown\tviewport\tviewport_auto"
+                        + "\t0\t0\t0\t0\t0\t0\t0\t0"
+                        + "\tselected but no viewport route effect observed"));
+    }
+
+    @Test
+    public void timelineEntryClassifiesAppProcessAndSelfTestModules() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=runtime-transport category=runtime "
+                        + "route=self_test stage=self_test package=com.example.app "
+                        + "message=ui-self-test",
+                "11-15 06:13:20.200 source=lsposed-log category=runtime "
+                        + "route=app_process stage=route_callback_entered "
+                        + "package=com.example.app process=com.example.app "
+                        + "message=DPIS package ready"
+        ))));
+
+        String timeline = entries.get("timeline.tsv");
+
+        assertTrue(timeline.contains(
+                "06:13:20.100\truntime-transport\truntime\tdiagnostic\tself_test"));
+        assertTrue(timeline.contains(
+                "06:13:20.200\tlsposed-log\truntime\tapp_process\tapp_process"));
+    }
+
+    @Test
     public void diagnosticReportsPerfettoMetadataWithoutExportingTrace() throws IOException {
         FeedbackDiagnosticCoordinator.Result base = result();
         FeedbackDiagnosticCoordinator.Result withTrace =

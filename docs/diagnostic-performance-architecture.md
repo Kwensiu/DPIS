@@ -263,6 +263,10 @@ DPIS 自定义 trace 不应为每个高频 callback 创建完整 slice。建议�
   不包含延迟分位数；
 - 最后才使用 UI 进程 snapshot fallback，且必须标明它不能证明目标进程
   hook 实际执行。
+- 如果诊断计划选择了某个模块，但窗口内没有观测到对应 route effect，
+  必须输出 `source=diagnostic-plan` 的显式 0 行，例如
+  `selected but no viewport route effect observed`。这表示证据缺口，不表示
+  route 已执行或已修改。
 
 `dpis-log.txt`：
 

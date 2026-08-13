@@ -77,6 +77,12 @@ TextView span rewrite, Paint/TextPaint fallback, Android WebView textZoom, and
 X5 WebView textZoom. The events are diagnostic-only and gated by the active
 feedback-diagnostic marker.
 
+As of 2026-08-13, diagnostic ZIPs include `timeline.tsv` and
+`module-effects.tsv`. `module-effects.tsv` emits a `source=diagnostic-plan`
+zero row for any selected route that has no observed effect in the session
+window. Treat this as a route-evidence gap, not as evidence that the Legacy route
+executed or mutated the target process.
+
 The shared app-process font route implementation now lives under
 `runtime.font`. Legacy flavor entry points still call the same install/reset
 protocols; the move only classifies ActivityThread, Resources font scheduling,

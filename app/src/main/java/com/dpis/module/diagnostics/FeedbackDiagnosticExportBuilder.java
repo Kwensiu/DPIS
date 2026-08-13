@@ -128,6 +128,7 @@ public final class FeedbackDiagnosticExportBuilder {
         String diagnostic = buildDiagnosticText(result, runtimeEvents);
         String timeline = FeedbackDiagnosticStructuredEvidenceExporter.buildTimelineTsv(runtimeEvents);
         String moduleEffects = FeedbackDiagnosticStructuredEvidenceExporter.buildModuleEffectsTsv(
+                result,
                 runtimeEvents,
                 result != null ? result.performanceSnapshot : null
         );

@@ -46,16 +46,19 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
     }
 
     static String buildModuleEffectsTsv(
+            FeedbackDiagnosticCoordinator.Result result,
             List<String> runtimeEvents,
             FeedbackDiagnosticPerformanceSnapshot snapshot
     ) {
+        List<SelectedRoute> selectedRoutes = selectedRoutes(result);
         List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> summaries =
                 FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
         if (!summaries.isEmpty()) {
             return buildProcessSummaryTsv(
                     "target-process-transport",
                     summaries,
-                    ""
+                    "",
+                    selectedRoutes
             );
         }
         summaries = FeedbackDiagnosticProcessPerformanceParser.parseMutationAppliedFallback(
@@ -64,29 +67,35 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
             return buildProcessSummaryTsv(
                     "target-process-log-fallback",
                     summaries,
-                    "aggregate transport missing; latency percentiles unavailable"
+                    "aggregate transport missing; latency percentiles unavailable",
+                    selectedRoutes
             );
         }
         if (snapshot != null && !snapshot.entries().isEmpty()) {
-            return buildUiSnapshotTsv(snapshot);
+            return buildUiSnapshotTsv(snapshot, selectedRoutes);
         }
-        return MODULE_EFFECTS_HEADER;
+        return buildSelectedRouteOnlyTsv(selectedRoutes);
     }
 
     private static String buildProcessSummaryTsv(
             String source,
             List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> summaries,
-            String note
+            String note,
+            List<SelectedRoute> selectedRoutes
     ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
+        List<String> observedModules = new ArrayList<>();
         for (FeedbackDiagnosticProcessPerformanceParser.ProcessSummary process : summaries) {
             for (FeedbackDiagnosticProcessPerformanceParser.RouteSummary route
                     : process.routes.values()) {
+                String module = moduleFor(route.route, route.route);
+                observedModules.add(module);
                 appendModuleEffectRow(
                         builder,
                         source,
                         process.process,
                         process.pid,
+                        module,
                         route.route,
                         route.calls,
                         route.applied,
@@ -100,17 +109,25 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                 );
             }
         }
+        appendUnobservedSelectedRoutes(builder, selectedRoutes, observedModules);
         return builder.toString();
     }
 
-    private static String buildUiSnapshotTsv(FeedbackDiagnosticPerformanceSnapshot snapshot) {
+    private static String buildUiSnapshotTsv(
+            FeedbackDiagnosticPerformanceSnapshot snapshot,
+            List<SelectedRoute> selectedRoutes
+    ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
+        List<String> observedModules = new ArrayList<>();
         for (FeedbackDiagnosticPerformanceSnapshot.Entry entry : snapshot.entries()) {
+            String module = moduleFor(entry.route, entry.route);
+            observedModules.add(module);
             appendModuleEffectRow(
                     builder,
                     "ui-process-fallback",
                     "dpis-ui",
                     UNKNOWN,
+                    module,
                     entry.route,
                     entry.calls,
                     entry.applied,
@@ -123,6 +140,13 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                     "ui-process snapshot; not proof of target-process hook execution"
             );
         }
+        appendUnobservedSelectedRoutes(builder, selectedRoutes, observedModules);
+        return builder.toString();
+    }
+
+    private static String buildSelectedRouteOnlyTsv(List<SelectedRoute> selectedRoutes) {
+        StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
+        appendUnobservedSelectedRoutes(builder, selectedRoutes, List.of());
         return builder.toString();
     }
 
@@ -131,6 +155,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
             String source,
             String process,
             String pid,
+            String module,
             String route,
             long calls,
             long applied,
@@ -145,7 +170,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
         builder.append(tsv(valueOrDefault(source, UNKNOWN))).append('\t')
                 .append(tsv(valueOrDefault(process, UNKNOWN))).append('\t')
                 .append(tsv(valueOrDefault(pid, UNKNOWN))).append('\t')
-                .append(tsv(moduleFor(route, route))).append('\t')
+                .append(tsv(valueOrDefault(module, UNKNOWN))).append('\t')
                 .append(tsv(valueOrDefault(route, UNKNOWN))).append('\t')
                 .append(calls).append('\t')
                 .append(applied).append('\t')
@@ -191,11 +216,103 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                 || value.contains("system-server")) {
             return "system_server";
         }
+        if (value.contains("app_process")
+                || value.contains("app-process")) {
+            return "app_process";
+        }
+        if (value.contains("self_test")
+                || value.contains("self-test")) {
+            return "diagnostic";
+        }
         if (value.contains("runtime")
                 || value.contains("performance")) {
             return "runtime";
         }
         return UNKNOWN;
+    }
+
+    private static void appendUnobservedSelectedRoutes(
+            StringBuilder builder,
+            List<SelectedRoute> selectedRoutes,
+            List<String> observedModules
+    ) {
+        if (selectedRoutes == null || selectedRoutes.isEmpty()) {
+            return;
+        }
+        for (SelectedRoute selectedRoute : selectedRoutes) {
+            if (selectedRoute == null || observedModules.contains(selectedRoute.module)) {
+                continue;
+            }
+            appendModuleEffectRow(
+                    builder,
+                    "diagnostic-plan",
+                    UNKNOWN,
+                    UNKNOWN,
+                    selectedRoute.module,
+                    selectedRoute.route,
+                    0L,
+                    0L,
+                    0L,
+                    0L,
+                    0L,
+                    0L,
+                    0L,
+                    0L,
+                    selectedRoute.note
+            );
+        }
+    }
+
+    private static List<SelectedRoute> selectedRoutes(FeedbackDiagnosticCoordinator.Result result) {
+        FeedbackDiagnosticCoordinator.Request request =
+                result != null ? result.request : null;
+        if (request == null || !request.inScope || !request.dpisEnabled) {
+            return List.of();
+        }
+        List<SelectedRoute> routes = new ArrayList<>();
+        if (request.viewportTargetSpec != null && request.viewportTargetSpec.isEnabled()) {
+            routes.add(new SelectedRoute(
+                    "viewport",
+                    "viewport_" + valueOrDefault(String.valueOf(request.viewportApplyMode), "unknown")
+                            .toLowerCase(java.util.Locale.ROOT),
+                    "selected but no viewport route effect observed"
+            ));
+        }
+        if (request.fontScalePercent != null) {
+            routes.add(new SelectedRoute(
+                    "font",
+                    "font_" + valueOrDefault(String.valueOf(request.fontApplyMode), "unknown")
+                            .toLowerCase(java.util.Locale.ROOT),
+                    "selected but no font route effect observed"
+            ));
+        }
+        if (request.typefaceId != null) {
+            routes.add(new SelectedRoute(
+                    "typeface",
+                    "typeface_replacement",
+                    "selected but no typeface route effect observed"
+            ));
+        }
+        if (request.wechatDpi != null) {
+            routes.add(new SelectedRoute(
+                    "wechat_dpi",
+                    "wechat_dpi",
+                    "selected but no WeChat DPI route effect observed"
+            ));
+        }
+        return routes;
+    }
+
+    private static final class SelectedRoute {
+        final String module;
+        final String route;
+        final String note;
+
+        SelectedRoute(String module, String route, String note) {
+            this.module = valueOrDefault(module, UNKNOWN);
+            this.route = valueOrDefault(route, UNKNOWN);
+            this.note = valueOrDefault(note, "");
+        }
     }
 
     private static String messageFor(String event) {

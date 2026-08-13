@@ -172,6 +172,12 @@ back to any UI-process-only snapshot. This is the first cross-process evidence
 boundary. Perfetto lifecycle capture and transport completeness reporting remain
 the next implementation stages.
 
+As of 2026-08-13, diagnostic ZIPs also include `timeline.tsv` and
+`module-effects.tsv`. `module-effects.tsv` emits a `source=diagnostic-plan`
+zero row when a selected route, such as `viewport_auto`, has no observed route
+effect in the session window. This is an explicit evidence gap, not proof that
+the route executed or mutated runtime state.
+
 ## Full Tree
 
 ```text
