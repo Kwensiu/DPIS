@@ -27,7 +27,6 @@ public final class FeedbackDiagnosticExportBuilder {
     public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
     public static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
     public static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
-    public static final String PERFETTO_ENTRY_NAME = "perfetto-trace.pftrace";
     public static final String MIME_TYPE = "application/zip";
 
     private static final int RECENT_DPIS_LOG_FALLBACK_LIMIT = 100;
@@ -131,24 +130,12 @@ public final class FeedbackDiagnosticExportBuilder {
             writeZipEntry(zip, DIAGNOSTIC_ENTRY_NAME, diagnostic);
             writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, dpisLog);
             writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, lsposed);
-            if (result != null && result.perfettoTrace.length > 0) {
-                zip.putNextEntry(new ZipEntry(PERFETTO_ENTRY_NAME));
-                zip.write(result.perfettoTrace);
-                zip.closeEntry();
-            }
         }
         List<EntrySummary> entries = new ArrayList<>(List.of(
                 new EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
                 new EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
                 new EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed)
         ));
-        if (result != null && result.perfettoTrace.length > 0) {
-            entries.add(new EntrySummary(
-                    PERFETTO_ENTRY_NAME,
-                    result.perfettoTrace.length,
-                    0
-            ));
-        }
         return new DiagnosticPackage(
                 result,
                 buildFileName(result),
@@ -479,15 +466,17 @@ public final class FeedbackDiagnosticExportBuilder {
             FeedbackDiagnosticCoordinator.Result result
     ) {
         builder.append("[perfetto]\n");
-        boolean available = result != null
-                && result.perfettoTrace != null
-                && result.perfettoTrace.length > 0;
+        boolean available = result != null && result.perfettoAvailable;
         builder.append("available: ").append(available).append('\n');
-        builder.append("entry: ").append(available ? PERFETTO_ENTRY_NAME : "none").append('\n');
+        builder.append("retainedOnDevice: ").append(available).append('\n');
+        if (available) {
+            builder.append("sizeBytes: ").append(result.perfettoSizeBytes).append('\n');
+            builder.append("truncated: ").append(result.perfettoTruncated).append('\n');
+        }
         builder.append("note: ")
                 .append(result != null && !result.perfettoNote.isBlank()
                         ? result.perfettoNote
-                        : available ? "trace captured" : "trace unavailable")
+                        : available ? "trace retained on device" : "trace unavailable")
                 .append("\n\n");
     }
 

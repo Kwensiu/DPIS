@@ -150,7 +150,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
-    public void zipIncludesPerfettoTraceWhenAvailable() throws IOException {
+    public void diagnosticReportsPerfettoMetadataWithoutExportingTrace() throws IOException {
         FeedbackDiagnosticCoordinator.Result base = result();
         FeedbackDiagnosticCoordinator.Result withTrace =
                 new FeedbackDiagnosticCoordinator.Result(
@@ -164,8 +164,10 @@ public final class FeedbackDiagnosticExportBuilderTest {
                         base.summary,
                         base.timelineEvents,
                         base.performanceSnapshot,
-                        new byte[] {0x01, 0x02, 0x03},
-                        "trace captured"
+                        true,
+                        3L,
+                        false,
+                        "trace retained on device"
                 );
 
         Map<String, String> entries = unzip(
@@ -174,7 +176,14 @@ public final class FeedbackDiagnosticExportBuilderTest {
                         .buildZip(withTrace)
         );
 
-        assertTrue(entries.containsKey("perfetto-trace.pftrace"));
+        assertFalse(entries.containsKey("perfetto-trace.pftrace"));
+        String diagnostic = unzip(
+                new FeedbackDiagnosticExportBuilder(List::of, () ->
+                        new LogReadResult(0, "test-source", "", ""))
+                        .buildZip(withTrace)
+        ).get("diagnostic.txt");
+        assertTrue(diagnostic.contains("retainedOnDevice: true"));
+        assertTrue(diagnostic.contains("sizeBytes: 3"));
     }
 
     @Test

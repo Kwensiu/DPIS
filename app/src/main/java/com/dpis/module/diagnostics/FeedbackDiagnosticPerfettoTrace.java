@@ -3,7 +3,6 @@ package com.dpis.module.diagnostics;
 import com.dpis.module.root.RootAppProcessLauncher;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -16,8 +15,7 @@ import java.util.UUID;
 final class FeedbackDiagnosticPerfettoTrace {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final long TRACE_DURATION_MS = 60_000L;
-    private static final long TRACE_MAX_BYTES = 64L * 1024L * 1024L;
-    private static final long BASE64_MAX_BYTES = ((TRACE_MAX_BYTES + 2L) / 3L) * 4L;
+    private static final long MAX_TRACE_BYTES = 64L * 1024L * 1024L;
 
     interface ShellRunner {
         RootAppProcessLauncher.ShellResult run(String command);
@@ -26,6 +24,7 @@ final class FeedbackDiagnosticPerfettoTrace {
     private final String tracePath;
     private final String pidPath;
     private final String errorPath;
+    private final String configPath;
     private final ShellRunner shellRunner;
     private boolean started;
 
@@ -34,6 +33,7 @@ final class FeedbackDiagnosticPerfettoTrace {
         tracePath = DIRECTORY + "/" + id + ".pftrace";
         pidPath = tracePath + ".pid";
         errorPath = tracePath + ".error";
+        configPath = tracePath + ".config";
         this.shellRunner = shellRunner;
     }
 
@@ -48,9 +48,11 @@ final class FeedbackDiagnosticPerfettoTrace {
                         + " && rm -f " + quote(trace.tracePath)
                         + " " + quote(trace.pidPath)
                         + " " + quote(trace.errorPath)
+                        + " " + quote(trace.configPath)
                         + " && printf %s " + quote(config())
-                        + " | /system/bin/perfetto --txt -c - -o "
-                        + quote(trace.tracePath)
+                        + " > " + quote(trace.configPath)
+                        + " && /system/bin/perfetto --txt -c " + quote(trace.configPath)
+                        + " -o " + quote(trace.tracePath)
                         + " --background > " + quote(trace.pidPath)
                         + " 2>" + quote(trace.errorPath)
         );
@@ -69,30 +71,35 @@ final class FeedbackDiagnosticPerfettoTrace {
         RootAppProcessLauncher.ShellResult result = shellRunner.run(
                 "if [ -s " + quote(pidPath) + " ]; then kill -TERM $(cat "
                         + quote(pidPath) + ") 2>/dev/null || true; fi"
-                        + "; i=0; while [ $i -lt 20 ] && [ ! -s " + quote(tracePath)
+                        + "; i=0; while [ $i -lt 20 ] && [ ! -f " + quote(tracePath)
                         + " ]; do i=$((i+1)); sleep 0.1; done"
-                        + "; if [ -s " + quote(tracePath) + " ]; then"
-                        + " base64 < " + quote(tracePath)
-                        + " | head -c " + BASE64_MAX_BYTES
-                        + "; else"
-                        + " printf 'trace unavailable: '; cat " + quote(errorPath)
+                        + "; if [ -f " + quote(tracePath) + " ]; then"
+                        + " size=$(wc -c < " + quote(tracePath) + ")"
+                        + "; if [ \"$size\" -le " + MAX_TRACE_BYTES + " ]; then"
+                        + " printf 'available:size=%s' \"$size\";"
+                        + " else printf 'available:size=%s,truncated=true' " + MAX_TRACE_BYTES + "; fi"
+                        + "; else printf 'unavailable:error='; cat " + quote(errorPath)
                         + " 2>/dev/null; exit 2; fi"
-                        + "; code=$?; rm -f " + quote(tracePath)
-                        + " " + quote(pidPath) + " " + quote(errorPath)
-                        + "; exit $code"
+                        + "; code=$?; rm -f " + quote(tracePath) + " " + quote(pidPath)
+                        + " " + quote(errorPath) + " " + quote(configPath) + "; exit $code"
         );
         if (result.code() != 0 || result.output().isBlank()) {
             return StopResult.unavailable(
-                    "Perfetto trace read failed: " + compact(result.output()));
+                    "Perfetto trace stop failed: " + compact(result.output()));
         }
+        String output = result.output().trim();
+        if (!output.startsWith("available:size=")) {
+            return StopResult.unavailable("Perfetto trace unavailable: " + compact(output));
+        }
+        String sizeText = output.substring("available:size=".length()).split(",", 2)[0];
         try {
-            return StopResult.available(
-                    Base64.getMimeDecoder().decode(result.output().replaceAll("\\s+", "")),
-                    result.output().length() >= TRACE_MAX_BYTES
-                            ? "trace truncated at max export size"
-                            : "");
-        } catch (IllegalArgumentException exception) {
-            return StopResult.unavailable("Perfetto trace decode failed");
+            long size = Long.parseLong(sizeText.trim());
+            boolean truncated = output.contains("truncated=true");
+            return StopResult.available(size, truncated,
+                    truncated ? "trace exceeded device-side size limit"
+                            : "trace captured on device; not exported");
+        } catch (NumberFormatException exception) {
+            return StopResult.unavailable("Perfetto trace size was invalid");
         }
     }
 
@@ -105,6 +112,7 @@ final class FeedbackDiagnosticPerfettoTrace {
                 "if [ -s " + quote(pidPath) + " ]; then kill -TERM $(cat "
                         + quote(pidPath) + ") 2>/dev/null || true; fi"
                         + "; rm -f " + quote(tracePath) + " " + quote(pidPath)
+                        + " " + quote(errorPath) + " " + quote(configPath)
         );
     }
 
@@ -168,21 +176,23 @@ final class FeedbackDiagnosticPerfettoTrace {
 
     static final class StopResult {
         final boolean available;
-        final byte[] bytes;
+        final long sizeBytes;
+        final boolean truncated;
         final String note;
 
-        private StopResult(boolean available, byte[] bytes, String note) {
+        private StopResult(boolean available, long sizeBytes, boolean truncated, String note) {
             this.available = available;
-            this.bytes = bytes != null ? bytes : new byte[0];
+            this.sizeBytes = Math.max(0L, sizeBytes);
+            this.truncated = truncated;
             this.note = note != null ? note : "";
         }
 
-        static StopResult available(byte[] bytes, String note) {
-            return new StopResult(true, bytes, note);
+        static StopResult available(long sizeBytes, boolean truncated, String note) {
+            return new StopResult(true, sizeBytes, truncated, note);
         }
 
         static StopResult unavailable(String note) {
-            return new StopResult(false, new byte[0], note);
+            return new StopResult(false, 0L, false, note);
         }
     }
 }

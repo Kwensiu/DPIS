@@ -189,7 +189,9 @@ public final class FeedbackDiagnosticCoordinator {
         public final String summary;
         public final List<String> timelineEvents;
         public final FeedbackDiagnosticPerformanceSnapshot performanceSnapshot;
-        public final byte[] perfettoTrace;
+        public final boolean perfettoAvailable;
+        public final long perfettoSizeBytes;
+        public final boolean perfettoTruncated;
         public final String perfettoNote;
 
         Result(
@@ -240,7 +242,9 @@ public final class FeedbackDiagnosticCoordinator {
                     summary,
                     timelineEvents,
                     performanceSnapshot,
-                    new byte[0],
+                    false,
+                    0L,
+                    false,
                     ""
             );
         }
@@ -256,7 +260,9 @@ public final class FeedbackDiagnosticCoordinator {
                 String summary,
                 List<String> timelineEvents,
                 FeedbackDiagnosticPerformanceSnapshot performanceSnapshot,
-                byte[] perfettoTrace,
+                boolean perfettoAvailable,
+                long perfettoSizeBytes,
+                boolean perfettoTruncated,
                 String perfettoNote
         ) {
             this.request = request;
@@ -273,7 +279,9 @@ public final class FeedbackDiagnosticCoordinator {
             this.performanceSnapshot = performanceSnapshot != null
                     ? performanceSnapshot
                     : FeedbackDiagnosticPerformanceSnapshot.EMPTY;
-            this.perfettoTrace = perfettoTrace != null ? perfettoTrace.clone() : new byte[0];
+            this.perfettoAvailable = perfettoAvailable;
+            this.perfettoSizeBytes = Math.max(0L, perfettoSizeBytes);
+            this.perfettoTruncated = perfettoTruncated;
             this.perfettoNote = perfettoNote != null ? perfettoNote : "";
         }
     }
@@ -529,7 +537,9 @@ public final class FeedbackDiagnosticCoordinator {
                 ),
                 timelineEvents,
                 performanceSnapshot,
-                perfettoStop.bytes,
+                perfettoStop.available,
+                perfettoStop.sizeBytes,
+                perfettoStop.truncated,
                 perfettoStop.note
         );
         clearRunningState();

@@ -3,9 +3,8 @@ package com.dpis.module.diagnostics;
 import com.dpis.module.root.RootAppProcessLauncher;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
-import java.util.Base64;
 
 import org.junit.Test;
 
@@ -21,35 +20,18 @@ public final class FeedbackDiagnosticPerfettoTraceTest {
     }
 
     @Test
-    public void stopDecodesTraceAndCleansUp() {
+    public void stopReturnsDeviceSideMetadataWithoutReadingTrace() {
         FeedbackDiagnosticPerfettoTrace.StartResult start =
                 FeedbackDiagnosticPerfettoTrace.start(command ->
                         new RootAppProcessLauncher.ShellResult(0, ""));
         assertTrue(start.available);
 
-        String encoded = Base64.getEncoder().encodeToString(new byte[] {1, 2, 3});
-        FeedbackDiagnosticPerfettoTrace.StopResult stop = new FakeTraceRunner(encoded, start.trace)
-                .stop();
+        FeedbackDiagnosticPerfettoTrace.StopResult stop =
+                FeedbackDiagnosticPerfettoTrace.StopResult.available(
+                        4096L, false, "trace retained on device");
         assertTrue(stop.available);
-        assertTrue(stop.bytes.length > 0);
-    }
-
-    private static final class FakeTraceRunner {
-        private final String encoded;
-        private final FeedbackDiagnosticPerfettoTrace trace;
-
-        FakeTraceRunner(String encoded, FeedbackDiagnosticPerfettoTrace trace) {
-            this.encoded = encoded;
-            this.trace = trace;
-        }
-
-        FeedbackDiagnosticPerfettoTrace.StopResult stop() {
-            // The production runner is exercised through the start command
-            // contract; this test keeps the binary decoder assertion local.
-            return FeedbackDiagnosticPerfettoTrace.StopResult.available(
-                    Base64.getDecoder().decode(encoded),
-                    "trace captured"
-            );
-        }
+        assertEquals(4096L, stop.sizeBytes);
+        assertFalse(stop.truncated);
+        assertTrue(stop.note.contains("retained"));
     }
 }
