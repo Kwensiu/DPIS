@@ -115,9 +115,14 @@ final class FeedbackDiagnosticProcessPerformanceParser {
         if ("message=".equals(prefix)) {
             return value.substring(start).trim();
         }
-        int end = value.indexOf(',', start);
-        if (end < 0) {
-            end = value.length();
+        int comma = value.indexOf(',', start);
+        int semicolon = value.indexOf(';', start);
+        int end = value.length();
+        if (comma >= 0) {
+            end = Math.min(end, comma);
+        }
+        if (semicolon >= 0) {
+            end = Math.min(end, semicolon);
         }
         return value.substring(start, end).trim();
     }

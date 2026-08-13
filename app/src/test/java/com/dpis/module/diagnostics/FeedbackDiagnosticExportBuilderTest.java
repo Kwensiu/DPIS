@@ -83,8 +83,10 @@ public final class FeedbackDiagnosticExportBuilderTest {
         byte[] zipBytes = builder.buildZip(result());
         Map<String, String> entries = unzip(zipBytes);
 
-        assertEquals(3, entries.size());
+        assertEquals(5, entries.size());
         assertTrue(entries.containsKey("diagnostic.txt"));
+        assertTrue(entries.containsKey("timeline.tsv"));
+        assertTrue(entries.containsKey("module-effects.tsv"));
         assertTrue(entries.containsKey("dpis-log.txt"));
         assertTrue(entries.containsKey("lsposed-log.txt"));
         String diagnostic = entries.get("diagnostic.txt");
@@ -126,6 +128,12 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(entries.get("lsposed-log.txt").contains("DPIS DPIS_DIAG_HOTPATH route=font stage=begin"));
         assertTrue(entries.get("lsposed-log.txt").contains("target app matched"));
         assertFalse(entries.get("lsposed-log.txt").contains("stale target app matched"));
+        assertTrue(entries.get("timeline.tsv").contains(
+                "time\tsource\tcategory\tmodule\troute\tstage\tprocess\tpackage\tmessage"));
+        assertTrue(entries.get("timeline.tsv").contains(
+                "06:13:20.100\truntime-hotpath\truntime\tfont\ttext_appearance\tbegin"));
+        assertTrue(entries.get("module-effects.tsv").startsWith(
+                "source\tprocess\tpid\tmodule\troute\tcalls\tapplied\tskipped"));
     }
 
     @Test
@@ -168,6 +176,75 @@ public final class FeedbackDiagnosticExportBuilderTest {
         assertTrue(diagnostic.contains("process: com.example.app,pid=unknown"));
         assertTrue(diagnostic.contains("route: paint_set_text_size,calls=1,applied=1"));
         assertFalse(diagnostic.contains("entries: 0"));
+    }
+
+    @Test
+    public void timelineEntryOrdersRuntimeEvents() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.300 source=runtime-hotpath category=runtime "
+                        + "route=font stage=end routeName=paint_text_size "
+                        + "package=com.example.app process=com.example.app message=durationMs=2",
+                "11-15 06:13:20.100 source=runtime-hotpath category=runtime "
+                        + "route=font stage=begin routeName=paint_text_size "
+                        + "package=com.example.app process=com.example.app message=view=TextView"
+        ))));
+
+        String timeline = entries.get("timeline.tsv");
+
+        assertTrue(timeline.indexOf("06:13:20.100") < timeline.indexOf("06:13:20.300"));
+        assertTrue(timeline.contains(
+                "06:13:20.100\truntime-hotpath\truntime\tfont\tpaint_text_size\tbegin"));
+        assertTrue(timeline.contains("view=TextView"));
+    }
+
+    @Test
+    public void moduleEffectsEntryUsesTargetProcessTransport() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=runtime-transport "
+                        + "category=performance route=runtime stage=aggregate "
+                        + "package=com.example.app message=process=com.example.app,pid=123;"
+                        + "route=paint_fallback,calls=20,applied=3,skipped=17,"
+                        + "measuredCalls=3,p50Us=4,p95Us=20,p99Us=20,maxUs=30"
+        ))));
+
+        String moduleEffects = entries.get("module-effects.tsv");
+
+        assertTrue(moduleEffects.contains(
+                "target-process-transport\tcom.example.app\t123\tfont\tpaint_fallback"
+                        + "\t20\t3\t17\t3\t4\t20\t20\t30\t"));
+        assertFalse(moduleEffects.contains("ui-process-fallback"));
+    }
+
+    @Test
+    public void moduleEffectsEntryFallsBackToMutationLogs() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=lsposed-log category=runtime route=font "
+                        + "stage=mutation_applied level=I package=com.example.app "
+                        + "process=com.example.app message=DPIS DPIS_FONT Paint.setTextSize "
+                        + "fallback applied: package=com.example.app, hookId=paint_set_text_size"
+        ))));
+
+        String moduleEffects = entries.get("module-effects.tsv");
+
+        assertTrue(moduleEffects.contains(
+                "target-process-log-fallback\tcom.example.app\tunknown\tfont"
+                        + "\tpaint_set_text_size\t1\t1\t0\t0\t0\t0\t0\t0"
+                        + "\taggregate transport missing; latency percentiles unavailable"));
     }
 
     @Test

@@ -27,8 +27,10 @@ public final class FeedbackDiagnosticProcessPerformanceParserTest {
 
         assertEquals(2, result.size());
         assertEquals("com.example.app", result.get(0).process);
+        assertEquals("123", result.get(0).pid);
         assertEquals(20L, result.get(0).routes.get("paint_fallback").calls);
         assertEquals("com.google.android.webview", result.get(1).process);
+        assertEquals("456", result.get(1).pid);
         assertEquals(2L, result.get(1).routes.get("webview_text_zoom").applied);
     }
 

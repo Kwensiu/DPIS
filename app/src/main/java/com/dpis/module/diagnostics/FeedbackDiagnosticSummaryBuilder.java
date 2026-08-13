@@ -42,10 +42,10 @@ final class FeedbackDiagnosticSummaryBuilder {
         builder.append("font: ").append(formatFont(request)).append('\n');
         builder.append("notes: ")
                 .append(targetLaunchStarted
-                        ? "Diagnostic package includes diagnostic.txt, dpis-log.txt, "
-                                + "and lsposed-log.txt. Runtime evidence is collected from "
-                                + "DPIS app events, runtime transport, and the LSPosed log window "
-                                + "when available."
+                        ? "Diagnostic package includes diagnostic.txt, timeline.tsv, "
+                                + "module-effects.tsv, dpis-log.txt, and lsposed-log.txt. "
+                                + "Runtime evidence is collected from DPIS app events, "
+                                + "runtime transport, and the LSPosed log window when available."
                         : "Target app launch failed or was unavailable.")
                 .append('\n');
         return builder.toString();

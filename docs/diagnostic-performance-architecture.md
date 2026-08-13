@@ -245,6 +245,25 @@ DPIS 自定义 trace 不应为每个高频 callback 创建完整 slice。建议�
 - CorrelationResult
 - 未覆盖边界和证据不足说明
 
+`timeline.tsv`：
+
+- 按时间排序的结构化事件链；
+- 字段包含 time、source、category、module、route、stage、process、package、message；
+- 首期由已采集的 DPIS timeline、runtime transport 和 LSPosed 窗口解析结果生成；
+- 用于回答“诊断期间哪些模块实际执行过、顺序是什么”，而不是只给最终摘要。
+
+`module-effects.tsv`：
+
+- 按进程与 route 聚合模块实际效果；
+- 字段包含 source、process、pid、module、route、calls、applied、skipped、
+  measuredCalls、p50Us、p95Us、p99Us、maxUs、note；
+- 优先使用 target-process transport 聚合；
+- transport 缺失时可从 LSPosed `mutation_applied` 事件生成
+  `target-process-log-fallback`，但这种回退只代表命中和修改次数，
+  不包含延迟分位数；
+- 最后才使用 UI 进程 snapshot fallback，且必须标明它不能证明目标进程
+  hook 实际执行。
+
 `dpis-log.txt`：
 
 - DPIS UI 进程应用日志；
@@ -257,8 +276,9 @@ DPIS 自定义 trace 不应为每个高频 callback 创建完整 slice。建议�
 
 Perfetto 原始文件：
 
-- 作为独立 ZIP entry；
-- 不能只保留解析后的摘要；
+- 当前不作为 ZIP entry，也不读入 Java 堆；
+- 作为设备侧临时探针，由 `diagnostic.txt` 记录 available、size、truncated
+  与失败原因；
 - 如果采集失败，仍需导出失败原因和其它运行证据。
 
 ## 当前实现与目标模型的差距

@@ -49,6 +49,9 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
         String summary = read(
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticSummaryBuilder.java");
+        String structuredExporter = read(
+                "src/main/java/com/dpis/module/diagnostics/"
+                        + "FeedbackDiagnosticStructuredEvidenceExporter.java");
         String logGate = read(
                 "src/main/java/com/dpis/module/diagnostics/DiagnosticLogGate.java");
 
@@ -91,10 +94,16 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(summary.contains("versionName: "));
         assertTrue(summary.contains("previewFromGlobalPrefill: "));
         assertTrue(summary.contains("Diagnostic package includes diagnostic.txt"));
-        assertTrue(summary.contains("DPIS app events, runtime transport"));
+        assertTrue(summary.contains("timeline.tsv"));
+        assertTrue(summary.contains("module-effects.tsv"));
+        assertTrue(summary.contains("runtime transport"));
         assertTrue(summary.contains("public static final class Input"));
         assertFalse(summary.contains("FeedbackDiagnosticCoordinator.Request"));
         assertFalse(summary.contains("Runtime event capture is TODO"));
+        assertTrue(structuredExporter.contains("buildTimelineTsv("));
+        assertTrue(structuredExporter.contains("buildModuleEffectsTsv("));
+        assertTrue(structuredExporter.contains("target-process-log-fallback"));
+        assertTrue(structuredExporter.contains("latency percentiles unavailable"));
     }
 
     @Test

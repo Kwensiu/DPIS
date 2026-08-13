@@ -25,6 +25,8 @@ import java.util.zip.ZipOutputStream;
 
 public final class FeedbackDiagnosticExportBuilder {
     public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
+    public static final String TIMELINE_ENTRY_NAME = "timeline.tsv";
+    public static final String MODULE_EFFECTS_ENTRY_NAME = "module-effects.tsv";
     public static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
     public static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
     public static final String MIME_TYPE = "application/zip";
@@ -122,17 +124,27 @@ public final class FeedbackDiagnosticExportBuilder {
             throws IOException {
         LogReadResult lsposedLog = readLsposedLog();
         FeedbackDiagnosticSessionWindow window = windowFor(result);
-        String diagnostic = buildDiagnosticText(result, lsposedLog, window);
+        List<String> runtimeEvents = sortedRuntimeEvents(result, lsposedLog, window);
+        String diagnostic = buildDiagnosticText(result, runtimeEvents);
+        String timeline = FeedbackDiagnosticStructuredEvidenceExporter.buildTimelineTsv(runtimeEvents);
+        String moduleEffects = FeedbackDiagnosticStructuredEvidenceExporter.buildModuleEffectsTsv(
+                runtimeEvents,
+                result != null ? result.performanceSnapshot : null
+        );
         String dpisLog = buildDpisLogText(window);
         String lsposed = buildLsposedLogText(lsposedLog, window);
         java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(output, StandardCharsets.UTF_8)) {
             writeZipEntry(zip, DIAGNOSTIC_ENTRY_NAME, diagnostic);
+            writeZipEntry(zip, TIMELINE_ENTRY_NAME, timeline);
+            writeZipEntry(zip, MODULE_EFFECTS_ENTRY_NAME, moduleEffects);
             writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, dpisLog);
             writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, lsposed);
         }
         List<EntrySummary> entries = new ArrayList<>(List.of(
                 new EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
+                new EntrySummary(TIMELINE_ENTRY_NAME, timeline),
+                new EntrySummary(MODULE_EFFECTS_ENTRY_NAME, moduleEffects),
                 new EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
                 new EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed)
         ));
@@ -158,6 +170,13 @@ public final class FeedbackDiagnosticExportBuilder {
             LogReadResult lsposedLog,
             FeedbackDiagnosticSessionWindow window
     ) {
+        return buildDiagnosticText(result, sortedRuntimeEvents(result, lsposedLog, window));
+    }
+
+    private String buildDiagnosticText(
+            FeedbackDiagnosticCoordinator.Result result,
+            List<String> runtimeEvents
+    ) {
         if (result == null || result.request == null) {
             return "";
         }
@@ -165,8 +184,6 @@ public final class FeedbackDiagnosticExportBuilder {
         appendManifest(builder, result);
         appendAppConfig(builder, result.request);
         appendDiagnosticPlan(builder, result.request);
-        List<String> runtimeEvents = mergedRuntimeEvents(result, lsposedLog, window);
-        FeedbackDiagnosticLsposedTimelineParser.sortTimelineEvents(runtimeEvents);
         RuntimeStats runtimeStats = RuntimeStats.from(runtimeEvents);
         appendRuntimeSummary(builder, runtimeStats);
         appendRuntimeDensity(builder, runtimeStats);
@@ -649,8 +666,15 @@ public final class FeedbackDiagnosticExportBuilder {
             LogReadResult lsposedLog,
             FeedbackDiagnosticSessionWindow window
     ) {
-        List<String> events = new java.util.ArrayList<>(result.timelineEvents);
-        if (lsposedLog != null && !lsposedLog.output.isBlank()) {
+        List<String> events = new java.util.ArrayList<>(
+                result != null && result.timelineEvents != null
+                        ? result.timelineEvents
+                        : List.of()
+        );
+        if (result != null
+                && result.request != null
+                && lsposedLog != null
+                && !lsposedLog.output.isBlank()) {
             events.addAll(FeedbackDiagnosticLsposedTimelineParser.parse(
                     lsposedLog.output,
                     window,
@@ -658,6 +682,16 @@ public final class FeedbackDiagnosticExportBuilder {
             ));
         }
         return events;
+    }
+
+    private static List<String> sortedRuntimeEvents(
+            FeedbackDiagnosticCoordinator.Result result,
+            LogReadResult lsposedLog,
+            FeedbackDiagnosticSessionWindow window
+    ) {
+        List<String> runtimeEvents = mergedRuntimeEvents(result, lsposedLog, window);
+        FeedbackDiagnosticLsposedTimelineParser.sortTimelineEvents(runtimeEvents);
+        return runtimeEvents;
     }
 
     private static FeedbackDiagnosticLsposedTimelineParser.Input timelineInput(
