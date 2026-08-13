@@ -81,7 +81,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeEvents.stopSnapshot()"));
         assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeTransport.stopSnapshot("));
         assertTrue(coordinator.contains("host.onFeedbackDiagnosticRootRequired();"));
-        assertTrue(coordinator.contains("host.onFeedbackDiagnosticFinished(result);"));
+        assertTrue(coordinator.contains("handler.post(() -> host.onFeedbackDiagnosticFinished(result));"));
         assertTrue(coordinator.contains("summaryInput(request)"));
         assertTrue(coordinator.contains("static Request fromPersisted("));
         assertFalse(coordinator.contains("DEFAULT_DURATION_MS"));
@@ -126,8 +126,11 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
 
         assertTrue(coordinator.contains("recordTimelineEvent(\"foreground returned to DPIS\");"));
-        assertTrue(coordinator.contains("finish();"));
+        assertTrue(coordinator.contains("onDpisResumed();"));
+        assertTrue(coordinator.contains("executor.execute(this::finishInBackground);"));
+        assertTrue(coordinator.contains("private void finishInBackground()"));
         assertTrue(coordinator.contains("recordTimelineEvent(\"foreground changed to \" + packageName);"));
+        assertFalse(coordinator.contains("private void finish()"));
         assertFalse(coordinator.contains("finish(true);"));
         assertFalse(coordinator.contains("finish(false);"));
     }
