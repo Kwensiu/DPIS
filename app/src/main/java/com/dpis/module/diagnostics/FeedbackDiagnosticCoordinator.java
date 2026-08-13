@@ -286,6 +286,7 @@ public final class FeedbackDiagnosticCoordinator {
     private Request runningRequest;
     private long runningStartedAtMillis;
     private boolean runningTargetLaunchStarted;
+    private boolean finishing;
     private String lastObservedForegroundPackage;
     private final List<String> runningTimelineEvents = new ArrayList<>();
     private FeedbackDiagnosticPerfettoTrace runningPerfettoTrace;
@@ -362,6 +363,11 @@ public final class FeedbackDiagnosticCoordinator {
     public void cancel() {
         FeedbackDiagnosticRuntimeEvents.cancel();
         FeedbackDiagnosticRuntimeTransport.cancel(null);
+        FeedbackDiagnosticPerfettoTrace trace = runningPerfettoTrace;
+        runningPerfettoTrace = null;
+        if (trace != null) {
+            executor.execute(trace::discard);
+        }
         clearRunningState();
         handler.removeCallbacksAndMessages(null);
     }
@@ -372,8 +378,10 @@ public final class FeedbackDiagnosticCoordinator {
     }
 
     public void onDpisResumed() {
-        if (running && runningTargetLaunchStarted) {
-            finish();
+        if (running && runningTargetLaunchStarted && !finishing) {
+            finishing = true;
+            handler.removeCallbacksAndMessages(null);
+            executor.execute(this::finishInBackground);
         }
     }
 
@@ -392,6 +400,11 @@ public final class FeedbackDiagnosticCoordinator {
         if (!launched) {
             FeedbackDiagnosticRuntimeEvents.cancel();
             FeedbackDiagnosticRuntimeTransport.cancel(null);
+            FeedbackDiagnosticPerfettoTrace trace = runningPerfettoTrace;
+            runningPerfettoTrace = null;
+            if (trace != null) {
+                executor.execute(trace::discard);
+            }
             clearRunningState();
             host.onFeedbackDiagnosticUnavailable();
             return;
@@ -442,7 +455,7 @@ public final class FeedbackDiagnosticCoordinator {
         }
         if (samePackage(packageName, host.dpisPackageName())) {
             recordTimelineEvent("foreground returned to DPIS");
-            finish();
+            onDpisResumed();
             return;
         }
         if (packageName != null && !packageName.isBlank()) {
@@ -454,7 +467,7 @@ public final class FeedbackDiagnosticCoordinator {
         scheduleForegroundCheck();
     }
 
-    private void finish() {
+    private void finishInBackground() {
         if (!running || runningRequest == null) {
             return;
         }
@@ -467,11 +480,12 @@ public final class FeedbackDiagnosticCoordinator {
         List<String> runtimeEvents = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
         FeedbackDiagnosticRuntimeTransport.Snapshot transportSnapshot =
                 FeedbackDiagnosticRuntimeTransport.stopSnapshot(null);
-        FeedbackDiagnosticPerfettoTrace.StopResult perfettoStop =
-                runningPerfettoTrace != null
-                        ? runningPerfettoTrace.stop()
-                        : FeedbackDiagnosticPerfettoTrace.StopResult.unavailable(
-                                "Perfetto trace was not started");
+        FeedbackDiagnosticPerfettoTrace trace = runningPerfettoTrace;
+        runningPerfettoTrace = null;
+        FeedbackDiagnosticPerfettoTrace.StopResult perfettoStop = trace != null
+                ? trace.stop()
+                : FeedbackDiagnosticPerfettoTrace.StopResult.unavailable(
+                        "Perfetto trace was not started");
         List<String> timelineEvents = new ArrayList<>(runningTimelineEvents);
         timelineEvents.addAll(runtimeEvents);
         timelineEvents.addAll(transportSnapshot.events);
@@ -482,9 +496,12 @@ public final class FeedbackDiagnosticCoordinator {
             timelineEvents.add(formatTime(host.currentTimeMillis())
                     + " source=runtime-transport stage=transport_note message=" + note);
         }
+        if (!perfettoStop.available) {
+            timelineEvents.add(formatTime(host.currentTimeMillis())
+                    + " source=perfetto stage=stop_failed message="
+                    + valueOrEmpty(perfettoStop.note));
+        }
         timelineEvents.sort(String::compareTo);
-        clearRunningState();
-        handler.removeCallbacksAndMessages(null);
         long finishedAt = host.currentTimeMillis();
         long durationMs = Math.max(0L, finishedAt - startedAt);
         RootAccessProbe.Result rootAccess = host.rootAccess();
@@ -515,8 +532,10 @@ public final class FeedbackDiagnosticCoordinator {
                 perfettoStop.bytes,
                 perfettoStop.note
         );
-        host.onFeedbackDiagnosticFinished(result);
+        clearRunningState();
+        handler.post(() -> host.onFeedbackDiagnosticFinished(result));
     }
+
 
     private static FeedbackDiagnosticSummaryBuilder.Input summaryInput(Request request) {
         if (request == null) {
@@ -558,6 +577,7 @@ public final class FeedbackDiagnosticCoordinator {
         runningRequest = null;
         runningStartedAtMillis = 0L;
         runningTargetLaunchStarted = false;
+        finishing = false;
         lastObservedForegroundPackage = null;
         runningTimelineEvents.clear();
         runningPerfettoTrace = null;

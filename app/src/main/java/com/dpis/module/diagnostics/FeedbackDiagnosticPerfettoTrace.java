@@ -17,6 +17,7 @@ final class FeedbackDiagnosticPerfettoTrace {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final long TRACE_DURATION_MS = 60_000L;
     private static final long TRACE_MAX_BYTES = 64L * 1024L * 1024L;
+    private static final long BASE64_MAX_BYTES = ((TRACE_MAX_BYTES + 2L) / 3L) * 4L;
 
     interface ShellRunner {
         RootAppProcessLauncher.ShellResult run(String command);
@@ -24,6 +25,7 @@ final class FeedbackDiagnosticPerfettoTrace {
 
     private final String tracePath;
     private final String pidPath;
+    private final String errorPath;
     private final ShellRunner shellRunner;
     private boolean started;
 
@@ -31,6 +33,7 @@ final class FeedbackDiagnosticPerfettoTrace {
         String id = UUID.randomUUID().toString();
         tracePath = DIRECTORY + "/" + id + ".pftrace";
         pidPath = tracePath + ".pid";
+        errorPath = tracePath + ".error";
         this.shellRunner = shellRunner;
     }
 
@@ -44,11 +47,12 @@ final class FeedbackDiagnosticPerfettoTrace {
                 "mkdir -p " + quote(DIRECTORY)
                         + " && rm -f " + quote(trace.tracePath)
                         + " " + quote(trace.pidPath)
+                        + " " + quote(trace.errorPath)
                         + " && printf %s " + quote(config())
                         + " | /system/bin/perfetto --txt -c - -o "
                         + quote(trace.tracePath)
                         + " --background > " + quote(trace.pidPath)
-                        + " 2>/dev/null"
+                        + " 2>" + quote(trace.errorPath)
         );
         if (result.code() != 0) {
             return StartResult.unavailable(compact(result.output()));
@@ -65,13 +69,16 @@ final class FeedbackDiagnosticPerfettoTrace {
         RootAppProcessLauncher.ShellResult result = shellRunner.run(
                 "if [ -s " + quote(pidPath) + " ]; then kill -TERM $(cat "
                         + quote(pidPath) + ") 2>/dev/null || true; fi"
-                        + " && sleep 1"
-                        + " && if [ -f " + quote(tracePath) + " ]; then"
+                        + "; i=0; while [ $i -lt 20 ] && [ ! -s " + quote(tracePath)
+                        + " ]; do i=$((i+1)); sleep 0.1; done"
+                        + "; if [ -s " + quote(tracePath) + " ]; then"
                         + " base64 < " + quote(tracePath)
-                        + " | head -c " + TRACE_MAX_BYTES
-                        + "; else exit 2; fi"
+                        + " | head -c " + BASE64_MAX_BYTES
+                        + "; else"
+                        + " printf 'trace unavailable: '; cat " + quote(errorPath)
+                        + " 2>/dev/null; exit 2; fi"
                         + "; code=$?; rm -f " + quote(tracePath)
-                        + " " + quote(pidPath)
+                        + " " + quote(pidPath) + " " + quote(errorPath)
                         + "; exit $code"
         );
         if (result.code() != 0 || result.output().isBlank()) {
@@ -87,6 +94,18 @@ final class FeedbackDiagnosticPerfettoTrace {
         } catch (IllegalArgumentException exception) {
             return StopResult.unavailable("Perfetto trace decode failed");
         }
+    }
+
+    void discard() {
+        if (!started) {
+            return;
+        }
+        started = false;
+        shellRunner.run(
+                "if [ -s " + quote(pidPath) + " ]; then kill -TERM $(cat "
+                        + quote(pidPath) + ") 2>/dev/null || true; fi"
+                        + "; rm -f " + quote(tracePath) + " " + quote(pidPath)
+        );
     }
 
     private static String config() {

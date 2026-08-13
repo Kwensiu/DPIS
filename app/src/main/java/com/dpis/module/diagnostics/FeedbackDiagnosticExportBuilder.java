@@ -48,10 +48,29 @@ public final class FeedbackDiagnosticExportBuilder {
         public final int lineCount;
 
         EntrySummary(String name, String content) {
+            this(name, content != null
+                    ? content.getBytes(StandardCharsets.UTF_8).length
+                    : 0,
+                    countLines(content));
+        }
+
+        EntrySummary(String name, int byteCount, int lineCount) {
             this.name = name;
-            String safeContent = content != null ? content : "";
-            this.byteCount = safeContent.getBytes(StandardCharsets.UTF_8).length;
-            this.lineCount = countLines(safeContent);
+            this.byteCount = Math.max(0, byteCount);
+            this.lineCount = Math.max(0, lineCount);
+        }
+
+        private static int countLines(String content) {
+            if (content == null || content.isEmpty()) {
+                return 0;
+            }
+            int count = 1;
+            for (int i = 0; i < content.length(); i++) {
+                if (content.charAt(i) == '\n') {
+                    count++;
+                }
+            }
+            return count;
         }
     }
 
@@ -118,15 +137,23 @@ public final class FeedbackDiagnosticExportBuilder {
                 zip.closeEntry();
             }
         }
+        List<EntrySummary> entries = new ArrayList<>(List.of(
+                new EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
+                new EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
+                new EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed)
+        ));
+        if (result != null && result.perfettoTrace.length > 0) {
+            entries.add(new EntrySummary(
+                    PERFETTO_ENTRY_NAME,
+                    result.perfettoTrace.length,
+                    0
+            ));
+        }
         return new DiagnosticPackage(
                 result,
                 buildFileName(result),
                 output.toByteArray(),
-                List.of(
-                        new EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
-                        new EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
-                        new EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed)
-                )
+                entries
         );
     }
 
