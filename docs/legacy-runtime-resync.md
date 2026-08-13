@@ -83,6 +83,13 @@ zero row for any selected route that has no observed effect in the session
 window. Treat this as a route-evidence gap, not as evidence that the Legacy route
 executed or mutated the target process.
 
+As of 2026-08-14, the shared Modern `system_server` installer publishes
+target-package-scoped, rate-limited `runtime-transport` events for its
+viewport mutation and selected skip paths. Legacy does not install that shared
+viewport installer, so its own launch-only font route is not represented by
+these events. Transport absence remains an evidence gap, not proof that a
+system-side route did not execute.
+
 The shared app-process font route implementation now lives under
 `runtime.font`. Legacy flavor entry points still call the same install/reset
 protocols; the move only classifies ActivityThread, Resources font scheduling,

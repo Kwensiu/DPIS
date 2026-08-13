@@ -31,6 +31,18 @@ final class FeedbackDiagnosticTimelineClassifier {
     }
 
     private static Stage stageFor(String lower) {
+        if (isSystemServerInstallSummary(lower) || isSystemServerHookReady(lower)) {
+            return Stage.HOOK_READY;
+        }
+        if (isSystemServerPackageReady(lower)) {
+            return Stage.ROUTE_CALLBACK_ENTERED;
+        }
+        if (isSystemServerApply(lower) || isSystemServerFontApply(lower)) {
+            return Stage.MUTATION_APPLIED;
+        }
+        if (isSystemServerSkip(lower)) {
+            return Stage.SKIPPED;
+        }
         if (lower.contains("auto hot reload failed")) {
             return Stage.SKIPPED;
         }
@@ -61,6 +73,11 @@ final class FeedbackDiagnosticTimelineClassifier {
     private static Route routeFor(String lower) {
         if (lower.contains("hot reload")) {
             return Route.HOT_RELOAD;
+        }
+        // Preserve the system_server ownership layer even when the message
+        // also contains generic display or configuration terminology.
+        if (lower.contains("system_server")) {
+            return Route.SYSTEM_SERVER;
         }
         if (isConfigRoute(lower)) {
             return Route.CONFIG;
@@ -94,9 +111,6 @@ final class FeedbackDiagnosticTimelineClassifier {
                 || lower.contains("scaleddensity")
                 || lower.contains("textscalefactor")) {
             return Route.FONT;
-        }
-        if (lower.contains("system_server")) {
-            return Route.SYSTEM_SERVER;
         }
         if (isRouteCallback(lower) || isHookReady(lower) || isSkip(lower)) {
             return Route.APP_PROCESS;
@@ -167,6 +181,38 @@ final class FeedbackDiagnosticTimelineClassifier {
                 || lower.contains("missing")
                 || lower.contains("not configured")
                 || lower.contains("inactive target");
+    }
+
+    private static boolean isSystemServerInstallSummary(String lower) {
+        return lower.contains("system_server") && lower.contains("install summary");
+    }
+
+    private static boolean isSystemServerHookReady(String lower) {
+        return lower.contains("system_server")
+                && (lower.contains("hook ready")
+                || lower.contains("hooks ready")
+                || lower.contains("install enter"));
+    }
+
+    private static boolean isSystemServerPackageReady(String lower) {
+        return lower.contains("system_server") && lower.contains("package ready");
+    }
+
+    private static boolean isSystemServerApply(String lower) {
+        return lower.contains("system_server")
+                && (lower.contains(" apply:")
+                || lower.contains(" apply ")
+                || lower.contains("mutation_applied"));
+    }
+
+    private static boolean isSystemServerFontApply(String lower) {
+        return lower.contains("system_server") && lower.contains("fontscale");
+    }
+
+    private static boolean isSystemServerSkip(String lower) {
+        return lower.contains("system_server")
+                && (lower.contains(" skip:")
+                || lower.contains(" skipped"));
     }
 
     private static boolean isHookReady(String lower) {

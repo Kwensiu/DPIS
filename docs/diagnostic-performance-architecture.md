@@ -147,6 +147,12 @@ hook install
 目标进程通过周期性快照传输聚合结果。建议快照按 500ms～1s 发送，
 慢调用和异常使用单独的小容量样本通道。
 
+`system_server` 是同一 transport 的特殊生产者：它不维护 UI 进程的
+`DiagnosticSession` 静态对象，而是通过会话 marker/property 发现活动会话。
+其 viewport hook 只能在既有日志 gate 已决定输出时发送目标包事件，避免在
+高频系统生命周期回调中另起逐条采样流。首期事件记录实际 mutation 与有限的
+skip 原因；安装摘要没有目标包，不能作为单个诊断目标的 mutation 证据。
+
 ## RouteEvidence 的最小字段
 
 ```text

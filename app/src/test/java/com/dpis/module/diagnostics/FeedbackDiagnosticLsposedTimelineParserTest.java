@@ -412,6 +412,44 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
     }
 
     @Test
+    public void systemServerMutationKeepsSystemServerOwnerRoute() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(system)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "system_server display-manager-info apply: package=com.example.app";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                request(true, true, true)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=system_server"));
+        assertTrue(events.get(0).contains("stage=mutation_applied"));
+    }
+
+    @Test
+    public void systemServerSkipIsCapturedWithoutUnexpectedRouteWarning() {
+        String raw = "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(system)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "system_server display-manager-info skip: reason=env-null, "
+                + "package=com.example.app";
+
+        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                request(true, true, true)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=system_server"));
+        assertTrue(events.get(0).contains("stage=skipped"));
+        assertFalse(events.get(0).contains("unexpected_route_hit"));
+    }
+
+    @Test
     public void sameTimestampHotPathEventsUseSemanticStageOrder() {
         String raw = ""
                 + "[ 2023-11-15T06:13:20.100     1000:  1234:  5678 I/LSPosedFramework ] "

@@ -178,6 +178,15 @@ zero row when a selected route, such as `viewport_auto`, has no observed route
 effect in the session window. This is an explicit evidence gap, not proof that
 the route executed or mutated runtime state.
 
+As of 2026-08-14, Modern `system_server` viewport mutations and selected skip
+outcomes publish target-package-scoped `runtime-transport` evidence. Emission
+shares the existing `SystemServerHookLogGate`, so diagnostic collection adds no
+second high-frequency callback stream. A transport event with
+`route=system_server` and `stage=mutation_applied` proves the gated mutation
+log was emitted; `stage=skipped` records bounded marker, relayout, and
+display-manager skip reasons. Missing transport remains an evidence gap rather
+than proof that a system-side mutation did not happen.
+
 ## Full Tree
 
 ```text

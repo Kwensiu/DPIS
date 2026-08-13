@@ -26,7 +26,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
         List<String> events = sortedCopy(runtimeEvents);
         StringBuilder builder = new StringBuilder(TIMELINE_HEADER);
         for (String event : events) {
-            if (event == null || event.isBlank()) {
+            if (!isStructuredTimelineEvent(event)) {
                 continue;
             }
             String moduleRoute = valueOrDefault(tokenField(event, "route="), UNKNOWN);
@@ -43,6 +43,17 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                     .append('\n');
         }
         return builder.toString();
+    }
+
+    private static boolean isStructuredTimelineEvent(String event) {
+        if (event == null || event.isBlank()) {
+            return false;
+        }
+        // Coordinator status notes deliberately remain in diagnostic.txt, but
+        // are not evidence rows. Exporting them as all-"unknown" TSV rows
+        // makes time-oriented consumers treat narration as runtime data.
+        return !tokenField(event, "source=").isBlank()
+                && !tokenField(event, "stage=").isBlank();
     }
 
     static String buildModuleEffectsTsv(

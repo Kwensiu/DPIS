@@ -203,6 +203,27 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
+    public void timelineTsvExcludesUnstructuredCoordinatorNotes() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.050 session requested",
+                "11-15 06:13:20.100 source=runtime-transport category=runtime "
+                        + "route=self_test stage=self_test package=com.example.app "
+                        + "message=ui-self-test"
+        ))));
+
+        String timeline = entries.get("timeline.tsv");
+
+        assertFalse(timeline.contains("\tunknown\tunknown\tunknown\tunknown\tunknown\tunknown\tunknown\t"));
+        assertFalse(timeline.contains("session requested"));
+        assertTrue(timeline.contains("ui-self-test"));
+    }
+
+    @Test
     public void moduleEffectsEntryUsesTargetProcessTransport() throws IOException {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 List::of,

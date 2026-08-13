@@ -25,7 +25,7 @@ import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
 
 import com.dpis.module.runtime.appprocess.WindowFrameOverride;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeTransport;
 
 import com.dpis.module.*;
 
@@ -198,11 +198,6 @@ public final class SystemServerDisplayEnvironmentInstaller {
                                     false, policy.systemServerSafeModeEnabled));
                 DpisLog.i(SystemServerDisplayDiagnostics.buildGateDisabledLog(
                             false, policy.systemServerSafeModeEnabled));
-                    FeedbackDiagnosticRuntimeEvents.recordHotReload(
-                            null,
-                            "system_server",
-                            "skipped",
-                            "system_server install skipped: gate disabled");
                     installedPid = ProcessScopedInstallGate.currentPid();
                     return new InstallResult(0, 0, false);
                 }
@@ -277,12 +272,6 @@ public final class SystemServerDisplayEnvironmentInstaller {
                                 installedCount, missingCount));
                 DpisLog.i(SystemServerDisplayDiagnostics.buildInstallSummaryLog(
                         installedCount, missingCount));
-                FeedbackDiagnosticRuntimeEvents.recordHotReload(
-                        null,
-                        "system_server",
-                        "installed",
-                        "system_server install summary: installed=" + installedCount
-                                + ", missing=" + missingCount);
                 markInstalledWhenComplete(missingCount);
                 return new InstallResult(installedCount, missingCount, false,
                         installedEntrySummary.toString(), missingEntrySummary.toString());
@@ -594,10 +583,12 @@ public final class SystemServerDisplayEnvironmentInstaller {
                                                         beforeApplySummary,
                                                         afterApplySummary);
                                                 String key = "apply|" + hookSpec.entryName + "|" + packageName;
-                                                logIfChanged(
+                                                logDiagnosticIfChanged(
                                                         key,
                                                         message,
-                                                        resolveLogMinIntervalMs(hookSpec.entryName));
+                                                        resolveLogMinIntervalMs(hookSpec.entryName),
+                                                        packageName,
+                                                        "mutation_applied");
                                             }
                                         } else {
                                             if (loggingEnabled) {
@@ -885,8 +876,10 @@ public final class SystemServerDisplayEnvironmentInstaller {
                     + ", before=" + safeToString(beforeSummary)
                     + ", after=" + describeConfigurationArgs(args)
                     + ", target=" + describeEnvironment(environment);
-            logIfChanged("launch-activity-item|" + packageName, message,
-                    resolveLogMinIntervalMs("launch-activity-item"));
+            logDiagnosticIfChanged("launch-activity-item|" + packageName, message,
+                    resolveLogMinIntervalMs("launch-activity-item"),
+                    packageName,
+                    "mutation_applied");
         }
     }
 
@@ -997,10 +990,12 @@ public final class SystemServerDisplayEnvironmentInstaller {
         }
         if (applyLaunchActivityItemConfigurationFields(launchActivityItem, environment)
                 && DpisLog.isLoggingEnabled()) {
-            logIfChanged("launch-activity-item-object|" + packageName,
+            logDiagnosticIfChanged("launch-activity-item-object|" + packageName,
                     "system_server launch-activity-item object apply: package=" + packageName
                             + ", target=" + describeEnvironment(environment),
-                    resolveLogMinIntervalMs("launch-activity-item"));
+                    resolveLogMinIntervalMs("launch-activity-item"),
+                    packageName,
+                    "mutation_applied");
         }
     }
 
@@ -1225,8 +1220,30 @@ public final class SystemServerDisplayEnvironmentInstaller {
         logIfChanged(key, message, resolveLogMinIntervalMs(entryName));
     }
 
-    private static void logIfChanged(String key, String message, long minIntervalMs) {
-        SystemServerHookLogGate.logIfChanged(key, message, minIntervalMs);
+    private static boolean logIfChanged(String key, String message, long minIntervalMs) {
+        return SystemServerHookLogGate.logIfChanged(key, message, minIntervalMs);
+    }
+
+    /**
+     * Reuses the existing system_server log gate before publishing diagnostic
+     * transport evidence. The hook can run on hot lifecycle entries, so a
+     * diagnostic session must not add a second, independently sampled stream.
+     */
+    private static void logDiagnosticIfChanged(String key,
+                                               String message,
+                                               long minIntervalMs,
+                                               String packageName,
+                                               String stage) {
+        if (!logIfChanged(key, message, minIntervalMs)
+                || !isLikelyPackageName(packageName)) {
+            return;
+        }
+        FeedbackDiagnosticRuntimeTransport.record(
+                "runtime",
+                "system_server",
+                stage,
+                packageName,
+                message);
     }
 
     private static long resolveLogMinIntervalMs(String entryName) {
@@ -1585,12 +1602,14 @@ public final class SystemServerDisplayEnvironmentInstaller {
             return environment;
         }
         if (DpisLog.isLoggingEnabled()) {
-            logIfChanged("marker-gate|" + entryName + "|" + packageName,
+            logDiagnosticIfChanged("marker-gate|" + entryName + "|" + packageName,
                     "system_server viewport skip: reason=marker-publish-failed"
                             + ", entry=" + entryName
                             + ", package=" + safeToString(packageName)
                             + ", target=" + config.targetViewportSpec,
-                    resolveLogMinIntervalMs(entryName));
+                    resolveLogMinIntervalMs(entryName),
+                    packageName,
+                    "skipped");
         }
         return null;
     }
@@ -1772,7 +1791,8 @@ public final class SystemServerDisplayEnvironmentInstaller {
                 + ", entry=" + safeToString(entryName)
                 + ", package=" + safeToString(packageName)
                 + ", target=" + summarizeValue(target, 180);
-        logIfChanged("relayout-skip|" + packageName, message, resolveLogMinIntervalMs(entryName));
+        logDiagnosticIfChanged("relayout-skip|" + packageName, message,
+                resolveLogMinIntervalMs(entryName), packageName, "skipped");
     }
 
     private static void addCandidatePackage(Set<String> candidates, String packageName) {
@@ -1933,8 +1953,8 @@ public final class SystemServerDisplayEnvironmentInstaller {
                     + ", before=" + safeToString(beforeSummary)
                     + ", after=" + safeToString(describeDisplayInfo(displayInfo))
                     + ", target=" + describeEnvironment(environment);
-            logIfChanged("display-manager-info|" + packageName, message,
-                    resolveLogMinIntervalMs(entryName));
+            logDiagnosticIfChanged("display-manager-info|" + packageName, message,
+                    resolveLogMinIntervalMs(entryName), packageName, "mutation_applied");
         }
     }
 
@@ -1950,8 +1970,8 @@ public final class SystemServerDisplayEnvironmentInstaller {
                 + ", uid=" + callingUid
                 + ", package=" + safeToString(packageName)
                 + ", displayInfo=" + safeToString(describeDisplayInfo(displayInfo));
-        logIfChanged("display-manager-info-skip|" + reason + "|" + callingUid,
-                message, resolveLogMinIntervalMs(entryName));
+        logDiagnosticIfChanged("display-manager-info-skip|" + reason + "|" + callingUid,
+                message, resolveLogMinIntervalMs(entryName), packageName, "skipped");
     }
 
     private static String resolveCallingUidConfiguredPackage(PerAppDisplayConfigSource source,

@@ -280,10 +280,21 @@ public final class FeedbackDiagnosticRuntimeTransport {
     private static String readSystemProperty(String name) {
         try {
             Class<?> systemProperties = Class.forName("android.os.SystemProperties");
-            Object value = systemProperties.getMethod("get", String.class, String.class)
-                    .invoke(null, name, "");
+            java.lang.reflect.Method get = systemProperties.getDeclaredMethod(
+                    "get", String.class, String.class);
+            try {
+                get.setAccessible(true);
+            } catch (RuntimeException ignored) {
+                // LSPosed hosts may already expose the method. Keep the
+                // invocation attempt even when hidden-API access cannot be
+                // relaxed by this process.
+            }
+            Object value = get.invoke(null, name, "");
             return value != null ? value.toString().trim() : "";
-        } catch (ReflectiveOperationException | RuntimeException ignored) {
+        } catch (Throwable ignored) {
+            // A target process may be blocked from reading shell_data_file
+            // markers by SELinux. The debug property is therefore the durable
+            // remote-session discovery path and must fail closed silently.
             return "";
         }
     }
