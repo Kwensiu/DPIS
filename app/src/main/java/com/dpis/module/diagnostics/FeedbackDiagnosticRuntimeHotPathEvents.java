@@ -151,16 +151,11 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     }
 
     private static void recordPerformanceIfDue(String packageName) {
-        String eventPath = FeedbackDiagnosticRuntimeTransport.activeEventPath();
-        if (eventPath.isBlank()
-                && !FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
+        if (!FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
             return;
         }
         long now = System.currentTimeMillis();
-        if (!PERFORMANCE.shouldPublish(now)
-                || eventPath.isBlank()
-                || !FeedbackDiagnosticRuntimeTransport.isCaptureActive()
-        ) {
+        if (!PERFORMANCE.shouldPublish(now)) {
             return;
         }
         FeedbackDiagnosticRuntimeTransport.recordPerformanceSnapshot(

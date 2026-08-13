@@ -60,6 +60,17 @@ final class FeedbackDiagnosticPerfettoTrace {
         if (result.code() != 0) {
             return StartResult.unavailable(compact(result.output()));
         }
+        RootAppProcessLauncher.ShellResult readiness = trace.shellRunner.run(
+                "if [ -s " + quote(trace.pidPath) + " ]"
+                        + " && kill -0 $(cat " + quote(trace.pidPath) + ") 2>/dev/null; then"
+                        + " exit 0; else cat " + quote(trace.errorPath)
+                        + " 2>/dev/null; exit 2; fi"
+        );
+        if (readiness.code() != 0) {
+            trace.discard();
+            return StartResult.unavailable(
+                    "Perfetto trace did not stay running: " + compact(readiness.output()));
+        }
         trace.started = true;
         return StartResult.available(trace);
     }
@@ -70,10 +81,11 @@ final class FeedbackDiagnosticPerfettoTrace {
         }
         started = false;
         RootAppProcessLauncher.ShellResult result = shellRunner.run(
-                "if [ -s " + quote(pidPath) + " ]; then kill -TERM $(cat "
+                "if [ -s " + quote(pidPath) + " ]; then kill -INT $(cat "
                         + quote(pidPath) + ") 2>/dev/null || true; fi"
-                        + "; i=0; while [ $i -lt 20 ] && [ ! -s " + quote(tracePath)
-                        + " ]; do i=$((i+1)); sleep 0.1; done"
+                        + "; i=0; while [ $i -lt 30 ] && [ -s " + quote(pidPath)
+                        + " ] && kill -0 $(cat " + quote(pidPath)
+                        + ") 2>/dev/null; do i=$((i+1)); sleep 0.1; done"
                         + "; if [ -s " + quote(tracePath) + " ]; then"
                         + " size=$(wc -c < " + quote(tracePath) + ")"
                         + "; if [ \"$size\" -le " + TRACE_MAX_FILE_BYTES + " ]; then"
