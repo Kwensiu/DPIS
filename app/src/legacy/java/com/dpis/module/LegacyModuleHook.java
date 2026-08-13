@@ -685,11 +685,8 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
     }
 
     private static void emitDiagnosticSessionDiscovery(String packageName, String processName) {
-        FeedbackDiagnosticRuntimeBridgeEvents.emitSessionDiscovery(
-                packageName,
-                processName,
-                XposedBridge::log
-        );
+        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(XposedBridge::log);
+        FeedbackDiagnosticRuntimeBridgeEvents.emitSessionDiscovery(packageName, processName);
     }
 
 }

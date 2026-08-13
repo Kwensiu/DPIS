@@ -195,9 +195,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
             }
         }
         record("performance", "runtime", "aggregate", packageName, message.toString());
-        if (isCaptureActive()) {
-            DpisLog.i("DPIS_DIAG_PERF " + message);
-        }
+        FeedbackDiagnosticRuntimeBridgeEvents.emitPerformance(message.toString());
     }
 
     public static Status statusForTest() {

@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 
 public final class FeedbackDiagnosticRuntimeHotPathEvents {
     private static final Map<String, Long> ACTIVE = new ConcurrentHashMap<>();
-    private static final String LOG_PREFIX = "DPIS_DIAG_HOTPATH";
     private static final String ROUTE_FONT = "font";
     private static final FeedbackDiagnosticProcessPerformance PERFORMANCE =
             new FeedbackDiagnosticProcessPerformance();
@@ -130,14 +129,13 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
                 packageName,
                 message
         );
-        if (FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
-            DpisLog.i(LOG_PREFIX
-                    + " route=" + valueOrDefault(categoryRoute, ROUTE_FONT)
-                    + " stage=" + stage
-                    + " routeName=" + valueOrDefault(routeName, "unknown")
-                    + " package=" + valueOrDefault(packageName, "unknown")
-                    + " detail=" + detail);
-        }
+        FeedbackDiagnosticRuntimeBridgeEvents.emitHotPath(
+                categoryRoute,
+                stage,
+                routeName,
+                packageName,
+                detail
+        );
     }
 
     private static String key(String packageName,
@@ -160,10 +158,26 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         }
         FeedbackDiagnosticRuntimeTransport.recordPerformanceSnapshot(
                 packageName,
-                android.app.Application.getProcessName(),
-                android.os.Process.myPid(),
+                currentProcessName(),
+                currentPid(),
                 PERFORMANCE.snapshot()
         );
+    }
+
+    private static String currentProcessName() {
+        try {
+            return android.app.Application.getProcessName();
+        } catch (RuntimeException | LinkageError ignored) {
+            return "";
+        }
+    }
+
+    private static int currentPid() {
+        try {
+            return android.os.Process.myPid();
+        } catch (RuntimeException | LinkageError ignored) {
+            return 0;
+        }
     }
 
     private static void preparePerformanceSession() {

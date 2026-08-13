@@ -213,6 +213,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
             return "typeface";
         }
         if (value.contains("font")
+                || value.contains("webview")
                 || value.contains("text")
                 || value.contains("paint")) {
             return "font";

@@ -11,6 +11,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
@@ -21,6 +22,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
     public void tearDown() {
         FeedbackDiagnosticRuntimeEvents.cancel();
         FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(null);
     }
 
     @Test
@@ -93,10 +95,10 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
         );
 
         List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
-        assertEquals(1, events.size());
-        assertTrue(events.get(0).contains("route=viewport"));
-        assertTrue(events.get(0).contains("stage=applied"));
-        assertTrue(events.get(0).contains("resources_read_configuration_override"));
+        assertTrue(events.stream().anyMatch(event ->
+                event.contains("route=viewport")
+                        && event.contains("stage=applied")
+                        && event.contains("resources_read_configuration_override")));
     }
 
     @Test
@@ -137,6 +139,37 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
         assertTrue(entry.p95Us >= entry.p50Us);
         assertTrue(entry.p99Us >= entry.p95Us);
         assertEquals(Long.valueOf(1L), entry.skipReasons.get("already_applied"));
+    }
+
+    @Test
+    public void emitsHotPathAndPerformanceToRegisteredBridgeSink() {
+        List<String> bridgeLines = new ArrayList<>();
+        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(bridgeLines::add);
+        FeedbackDiagnosticRuntimeTransport.start(
+                "com.example.app",
+                command -> new com.dpis.module.root.RootAppProcessLauncher.ShellResult(
+                        0,
+                        ""
+                )
+        );
+
+        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                "com.example.app",
+                "paint_fallback",
+                "paint=android.graphics.Paint, in=10.0, out=12.0"
+        );
+        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                "com.example.app",
+                "paint_fallback",
+                "paint=android.graphics.Paint, in=10.0, out=12.0"
+        );
+
+        assertTrue(bridgeLines.stream().anyMatch(line ->
+                line.contains("DPIS DPIS_DIAG_HOTPATH")
+                        && line.contains("routeName=paint_fallback")));
+        assertTrue(bridgeLines.stream().anyMatch(line ->
+                line.contains("DPIS DPIS_DIAG_PERF")
+                        && line.contains("route=paint_fallback")));
     }
 
     @Test

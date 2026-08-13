@@ -503,10 +503,12 @@ public final class ModuleMain extends XposedModule {
                 "process-entry source=" + source
                         + ", process=" + currentProcessName
         );
+        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(
+                message -> log(android.util.Log.INFO, "DPIS", message)
+        );
         FeedbackDiagnosticRuntimeBridgeEvents.emitSessionDiscovery(
                 packageName,
-                currentProcessName,
-                message -> log(android.util.Log.INFO, "DPIS", message)
+                currentProcessName
         );
         appProcessInstallAttempted = true;
         try {
