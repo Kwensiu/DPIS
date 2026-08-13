@@ -15,7 +15,8 @@ import java.util.UUID;
 final class FeedbackDiagnosticPerfettoTrace {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final long TRACE_DURATION_MS = 60_000L;
-    private static final long MAX_TRACE_BYTES = 64L * 1024L * 1024L;
+    private static final long TRACE_BUFFER_KB = 8L * 1024L;
+    private static final long TRACE_MAX_FILE_BYTES = 16L * 1024L * 1024L;
 
     interface ShellRunner {
         RootAppProcessLauncher.ShellResult run(String command);
@@ -51,10 +52,10 @@ final class FeedbackDiagnosticPerfettoTrace {
                         + " " + quote(trace.configPath)
                         + " && printf %s " + quote(config())
                         + " > " + quote(trace.configPath)
-                        + " && /system/bin/perfetto --txt -c " + quote(trace.configPath)
+                        + " && ( nohup /system/bin/perfetto --txt -c " + quote(trace.configPath)
                         + " -o " + quote(trace.tracePath)
-                        + " --background > " + quote(trace.pidPath)
-                        + " 2>" + quote(trace.errorPath)
+                        + " > /dev/null 2>" + quote(trace.errorPath)
+                        + " < /dev/null & echo $! > " + quote(trace.pidPath) + " )"
         );
         if (result.code() != 0) {
             return StartResult.unavailable(compact(result.output()));
@@ -71,13 +72,13 @@ final class FeedbackDiagnosticPerfettoTrace {
         RootAppProcessLauncher.ShellResult result = shellRunner.run(
                 "if [ -s " + quote(pidPath) + " ]; then kill -TERM $(cat "
                         + quote(pidPath) + ") 2>/dev/null || true; fi"
-                        + "; i=0; while [ $i -lt 20 ] && [ ! -f " + quote(tracePath)
+                        + "; i=0; while [ $i -lt 20 ] && [ ! -s " + quote(tracePath)
                         + " ]; do i=$((i+1)); sleep 0.1; done"
-                        + "; if [ -f " + quote(tracePath) + " ]; then"
+                        + "; if [ -s " + quote(tracePath) + " ]; then"
                         + " size=$(wc -c < " + quote(tracePath) + ")"
-                        + "; if [ \"$size\" -le " + MAX_TRACE_BYTES + " ]; then"
+                        + "; if [ \"$size\" -le " + TRACE_MAX_FILE_BYTES + " ]; then"
                         + " printf 'available:size=%s' \"$size\";"
-                        + " else printf 'available:size=%s,truncated=true' " + MAX_TRACE_BYTES + "; fi"
+                        + " else printf 'available:size=%s,truncated=true' " + TRACE_MAX_FILE_BYTES + "; fi"
                         + "; else printf 'unavailable:error='; cat " + quote(errorPath)
                         + " 2>/dev/null; exit 2; fi"
                         + "; code=$?; rm -f " + quote(tracePath) + " " + quote(pidPath)
@@ -117,8 +118,11 @@ final class FeedbackDiagnosticPerfettoTrace {
     }
 
     private static String config() {
-        return "buffers { size_kb: 65536 fill_policy: RING_BUFFER }\n"
+        return "buffers { size_kb: " + TRACE_BUFFER_KB + " fill_policy: RING_BUFFER }\n"
                 + "duration_ms: " + TRACE_DURATION_MS + "\n"
+                + "write_into_file: true\n"
+                + "file_write_period_ms: 1000\n"
+                + "max_file_size_bytes: " + TRACE_MAX_FILE_BYTES + "\n"
                 + "data_sources { config { name: \"linux.ftrace\" "
                 + "ftrace_config { "
                 + "ftrace_events: \"sched/sched_switch\" "

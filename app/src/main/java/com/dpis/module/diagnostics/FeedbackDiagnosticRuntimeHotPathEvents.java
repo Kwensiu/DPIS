@@ -38,6 +38,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         preparePerformanceSession();
         FeedbackDiagnosticRuntimeEvents.recordPerformanceApplied(packageName, routeName);
         PERFORMANCE.applied(routeName);
+        recordPerformanceIfDue(packageName);
         record(packageName, categoryRoute, routeName, "applied", detail);
     }
 
