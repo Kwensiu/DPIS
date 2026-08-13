@@ -150,6 +150,27 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
+    public void performanceSummaryFallsBackToTargetMutationLogs() {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        String diagnostic = builder.buildDiagnosticText(result(List.of(
+                "11-15 06:13:20.100 source=lsposed-log category=runtime route=font "
+                        + "stage=mutation_applied level=I package=com.example.app "
+                        + "process=com.example.app message=DPIS DPIS_FONT Paint.setTextSize "
+                        + "fallback applied: package=com.example.app, hookId=paint_set_text_size"
+        )));
+
+        assertTrue(diagnostic.contains("source: target-process-log-fallback"));
+        assertTrue(diagnostic.contains("aggregate transport missing"));
+        assertTrue(diagnostic.contains("process: com.example.app,pid=unknown"));
+        assertTrue(diagnostic.contains("route: paint_set_text_size,calls=1,applied=1"));
+        assertFalse(diagnostic.contains("entries: 0"));
+    }
+
+    @Test
     public void diagnosticReportsPerfettoMetadataWithoutExportingTrace() throws IOException {
         FeedbackDiagnosticCoordinator.Result base = result();
         FeedbackDiagnosticCoordinator.Result withTrace =

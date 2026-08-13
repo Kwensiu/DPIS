@@ -42,6 +42,33 @@ final class FeedbackDiagnosticProcessPerformanceParser {
         return result;
     }
 
+    static List<ProcessSummary> parseMutationAppliedFallback(List<String> events) {
+        Map<String, ProcessSummary> summaries = new LinkedHashMap<>();
+        if (events == null) {
+            return List.of();
+        }
+        for (String event : events) {
+            if (event == null || !event.contains("stage=mutation_applied")) {
+                continue;
+            }
+            String process = tokenField(event, "process=");
+            String route = appliedRoute(event);
+            if (route.isBlank()) {
+                continue;
+            }
+            ProcessSummary summary = summaries.computeIfAbsent(
+                    valueOrDefault(process, "unknown") + "|unknown",
+                    ignored -> new ProcessSummary(valueOrDefault(process, "unknown"), "unknown")
+            );
+            RouteSummary routeSummary = summary.routes.computeIfAbsent(route, RouteSummary::new);
+            routeSummary.calls++;
+            routeSummary.applied++;
+        }
+        List<ProcessSummary> result = new ArrayList<>(summaries.values());
+        result.sort(Comparator.comparing(summary -> summary.process));
+        return result;
+    }
+
     private static RouteSummary parseRoute(String value) {
         String[] fields = value.split(",");
         if (fields.length < 2) {
@@ -93,6 +120,40 @@ final class FeedbackDiagnosticProcessPerformanceParser {
             end = value.length();
         }
         return value.substring(start, end).trim();
+    }
+
+    private static String tokenField(String value, String prefix) {
+        if (value == null) {
+            return "";
+        }
+        int start = value.indexOf(prefix);
+        if (start < 0) {
+            return "";
+        }
+        start += prefix.length();
+        int end = value.indexOf(' ', start);
+        if (end < 0) {
+            end = value.length();
+        }
+        return value.substring(start, end).trim();
+    }
+
+    private static String appliedRoute(String event) {
+        String message = field(event, "message=");
+        String hookId = field(message, "hookId=");
+        if (!hookId.isBlank()) {
+            return hookId;
+        }
+        String routeName = tokenField(event, "routeName=");
+        if (!routeName.isBlank()) {
+            return routeName;
+        }
+        return tokenField(event, "route=");
+    }
+
+    private static String valueOrDefault(String value, String fallback) {
+        String normalized = value != null ? value.trim() : "";
+        return normalized.isEmpty() ? fallback : normalized;
     }
 
     private static long parseLong(String value) {

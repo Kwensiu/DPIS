@@ -407,26 +407,16 @@ public final class FeedbackDiagnosticExportBuilder {
                 FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
         if (!processSummaries.isEmpty()) {
             builder.append("source: target-process-transport\n");
-            builder.append("processes: ").append(processSummaries.size()).append('\n');
-            for (FeedbackDiagnosticProcessPerformanceParser.ProcessSummary process
-                    : processSummaries) {
-                builder.append("process: ").append(valueOrDefault(process.process, UNKNOWN))
-                        .append(",pid=").append(valueOrDefault(process.pid, UNKNOWN))
-                        .append('\n');
-                for (FeedbackDiagnosticProcessPerformanceParser.RouteSummary route
-                        : process.routes.values()) {
-                    builder.append("route: ").append(route.route)
-                            .append(",calls=").append(route.calls)
-                            .append(",applied=").append(route.applied)
-                            .append(",skipped=").append(route.skipped)
-                            .append(",measuredCalls=").append(route.measuredCalls)
-                            .append(",p50Us=").append(route.p50Us)
-                            .append(",p95Us=").append(route.p95Us)
-                            .append(",p99Us=").append(route.p99Us)
-                            .append(",maxUs=").append(route.maxUs)
-                            .append('\n');
-                }
-            }
+            appendProcessPerformanceSummaries(builder, processSummaries);
+            builder.append('\n');
+            return;
+        }
+        processSummaries =
+                FeedbackDiagnosticProcessPerformanceParser.parseMutationAppliedFallback(runtimeEvents);
+        if (!processSummaries.isEmpty()) {
+            builder.append("source: target-process-log-fallback\n");
+            builder.append("note: aggregate transport missing; counts are derived from LSPosed mutation_applied events and do not include latency percentiles.\n");
+            appendProcessPerformanceSummaries(builder, processSummaries);
             builder.append('\n');
             return;
         }
@@ -453,6 +443,32 @@ public final class FeedbackDiagnosticExportBuilder {
             }
         }
         builder.append('\n');
+    }
+
+    private void appendProcessPerformanceSummaries(
+            StringBuilder builder,
+            List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> processSummaries
+    ) {
+        builder.append("processes: ").append(processSummaries.size()).append('\n');
+        for (FeedbackDiagnosticProcessPerformanceParser.ProcessSummary process
+                : processSummaries) {
+            builder.append("process: ").append(valueOrDefault(process.process, UNKNOWN))
+                    .append(",pid=").append(valueOrDefault(process.pid, UNKNOWN))
+                    .append('\n');
+            for (FeedbackDiagnosticProcessPerformanceParser.RouteSummary route
+                    : process.routes.values()) {
+                builder.append("route: ").append(route.route)
+                        .append(",calls=").append(route.calls)
+                        .append(",applied=").append(route.applied)
+                        .append(",skipped=").append(route.skipped)
+                        .append(",measuredCalls=").append(route.measuredCalls)
+                        .append(",p50Us=").append(route.p50Us)
+                        .append(",p95Us=").append(route.p95Us)
+                        .append(",p99Us=").append(route.p99Us)
+                        .append(",maxUs=").append(route.maxUs)
+                        .append('\n');
+            }
+        }
     }
 
     private void appendRawLog(StringBuilder builder) {

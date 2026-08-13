@@ -31,4 +31,27 @@ public final class FeedbackDiagnosticProcessPerformanceParserTest {
         assertEquals("com.google.android.webview", result.get(1).process);
         assertEquals(2L, result.get(1).routes.get("webview_text_zoom").applied);
     }
+
+    @Test
+    public void derivesFallbackCountsFromMutationAppliedLogs() {
+        List<String> events = List.of(
+                "08-13 21:21:51.920 source=lsposed-log category=runtime route=font "
+                        + "stage=mutation_applied level=I package=com.example.app "
+                        + "process=com.example.app message=DPIS DPIS_FONT Paint.setTextSize "
+                        + "fallback applied: package=com.example.app, hookId=paint_set_text_size",
+                "08-13 21:21:54.816 source=lsposed-log category=runtime route=font "
+                        + "stage=mutation_applied level=I package=com.example.app "
+                        + "process=com.example.app message=DPIS DPIS_FONT TextView span rewrite "
+                        + "applied: package=com.example.app, hookId=textview_set_text"
+        );
+
+        List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> result =
+                FeedbackDiagnosticProcessPerformanceParser.parseMutationAppliedFallback(events);
+
+        assertEquals(1, result.size());
+        assertEquals("com.example.app", result.get(0).process);
+        assertEquals("unknown", result.get(0).pid);
+        assertEquals(1L, result.get(0).routes.get("paint_set_text_size").applied);
+        assertEquals(1L, result.get(0).routes.get("textview_set_text").calls);
+    }
 }
