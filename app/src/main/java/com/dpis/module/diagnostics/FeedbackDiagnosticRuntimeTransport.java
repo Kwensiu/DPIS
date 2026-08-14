@@ -19,6 +19,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.LinkedHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public final class FeedbackDiagnosticRuntimeTransport {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
@@ -29,6 +33,13 @@ public final class FeedbackDiagnosticRuntimeTransport {
     private static volatile Session activeSession;
     private static volatile long lastMarkerCheckMillis;
     private static volatile RemoteSession remoteSession;
+    private static final int MAX_PENDING_LINES = 8192;
+    private static final LinkedBlockingQueue<PendingLine> PENDING_LINES =
+            new LinkedBlockingQueue<>(MAX_PENDING_LINES);
+    private static final Object WRITER_LOCK = new Object();
+    private static final AtomicLong DROPPED_LINES = new AtomicLong();
+    private static volatile Thread writerThread;
+    private static int linesBeingWritten;
 
     public interface ShellRunner {
         RootAppProcessLauncher.ShellResult run(String command);
@@ -63,6 +74,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
     }
 
     public static Snapshot stopSnapshot(ShellRunner shellRunner) {
+        flushPendingWrites();
         Session session = activeSession;
         activeSession = null;
         remoteSession = null;
@@ -143,13 +155,17 @@ public final class FeedbackDiagnosticRuntimeTransport {
     ) {
         Session local = activeSession;
         if (local != null && local.available) {
-            appendLine(local.eventPath, toLine(category, route, stage, packageName, message));
+            enqueueLine(local.eventPath, toLine(category, route, stage, packageName, message));
             return;
         }
         RemoteSession remote = resolveRemoteSession();
         if (remote != null) {
-            appendLine(remote.eventPath, toLine(category, route, stage, packageName, message));
+            enqueueLine(remote.eventPath, toLine(category, route, stage, packageName, message));
         }
+    }
+
+    static void flushForTest() {
+        flushPendingWrites();
     }
 
     /**
@@ -170,6 +186,10 @@ public final class FeedbackDiagnosticRuntimeTransport {
         StringBuilder message = new StringBuilder();
         message.append("process=").append(valueOrDefault(processName, "unknown"))
                 .append(",pid=").append(pid);
+        long droppedLines = DROPPED_LINES.getAndSet(0L);
+        if (droppedLines > 0L) {
+            message.append(",transportDroppedLines=").append(droppedLines);
+        }
         for (Map.Entry<String, FeedbackDiagnosticProcessPerformance.RouteSnapshot> entry
                 : routes.entrySet()) {
             FeedbackDiagnosticProcessPerformance.RouteSnapshot snapshot = entry.getValue();
@@ -326,16 +346,115 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
     }
 
-    private static void appendLine(String eventPath, String line) {
-        try {
-            Files.write(
-                    new File(eventPath).toPath(),
-                    (line + "\n").getBytes(StandardCharsets.UTF_8),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND
-            );
-        } catch (IOException | RuntimeException ignored) {
-            // Runtime diagnostics must never affect hooked app behavior.
+    private static void enqueueLine(String eventPath, String line) {
+        if (!PENDING_LINES.offer(new PendingLine(eventPath, line + "\n"))) {
+            DROPPED_LINES.incrementAndGet();
+            return;
+        }
+        ensureWriter();
+    }
+
+    private static void ensureWriter() {
+        if (writerThread != null) {
+            return;
+        }
+        synchronized (WRITER_LOCK) {
+            if (writerThread != null) {
+                return;
+            }
+            Thread thread = new Thread(() -> {
+                while (true) {
+                    try {
+                        PendingLine first = PENDING_LINES.take();
+                        LinkedHashMap<String, StringBuilder> batches = new LinkedHashMap<>();
+                        appendToBatch(batches, first);
+                        for (int i = 1; i < 64; i++) {
+                            PendingLine next = PENDING_LINES.poll();
+                            if (next == null) {
+                                break;
+                            }
+                            appendToBatch(batches, next);
+                        }
+                        int batchLineCount = countLines(batches);
+                        synchronized (WRITER_LOCK) {
+                            linesBeingWritten += batchLineCount;
+                        }
+                        try {
+                            for (Map.Entry<String, StringBuilder> entry : batches.entrySet()) {
+                                try {
+                                    Files.write(
+                                            new File(entry.getKey()).toPath(),
+                                            entry.getValue().toString().getBytes(StandardCharsets.UTF_8),
+                                            StandardOpenOption.CREATE,
+                                            StandardOpenOption.APPEND
+                                    );
+                                } catch (IOException | RuntimeException ignored) {
+                                    // Runtime diagnostics must never affect hooked app behavior.
+                                }
+                            }
+                        } finally {
+                            synchronized (WRITER_LOCK) {
+                                linesBeingWritten -= batchLineCount;
+                                WRITER_LOCK.notifyAll();
+                            }
+                        }
+                    } catch (InterruptedException ignored) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    } catch (Throwable ignored) {
+                        // A writer failure must never affect the target process.
+                    }
+                }
+            }, "DPIS-diagnostic-transport");
+            thread.setDaemon(true);
+            writerThread = thread;
+            thread.start();
+        }
+    }
+
+    private static void appendToBatch(
+            Map<String, StringBuilder> batches,
+            PendingLine line
+    ) {
+        StringBuilder builder = batches.computeIfAbsent(line.eventPath, ignored -> new StringBuilder());
+        builder.append(line.content);
+    }
+
+    private static int countLines(Map<String, StringBuilder> batches) {
+        int count = 0;
+        for (StringBuilder batch : batches.values()) {
+            for (int i = 0; i < batch.length(); i++) {
+                if (batch.charAt(i) == '\n') {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private static void flushPendingWrites() {
+        ensureWriter();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2L);
+        synchronized (WRITER_LOCK) {
+            while ((!PENDING_LINES.isEmpty() || linesBeingWritten > 0)
+                    && System.nanoTime() < deadline) {
+                try {
+                    WRITER_LOCK.wait(25L);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
+    }
+
+    private static final class PendingLine {
+        final String eventPath;
+        final String content;
+
+        PendingLine(String eventPath, String content) {
+            this.eventPath = eventPath;
+            this.content = content;
         }
     }
 

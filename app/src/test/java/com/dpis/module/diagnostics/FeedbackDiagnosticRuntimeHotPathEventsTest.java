@@ -23,6 +23,8 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
         FeedbackDiagnosticRuntimeEvents.cancel();
         FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
         FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(null);
+        FeedbackDiagnosticRuntimeTransport.cancel(command ->
+                new com.dpis.module.root.RootAppProcessLauncher.ShellResult(0, ""));
     }
 
     @Test
@@ -163,6 +165,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
+        FeedbackDiagnosticRuntimeBridgeEvents.flushForTest();
 
         assertTrue(bridgeLines.stream().anyMatch(line ->
                 line.contains("DPIS DPIS_DIAG_HOTPATH")

@@ -56,6 +56,12 @@ intentionally broad; it does not write one log line per callback. Perfetto
 trace capture is a separate follow-up layer and should be correlated with
 these counters before adding tighter sampling or thresholds.
 
+High-frequency `DPIS_DIAG_HOTPATH` bridge lines are dispatched asynchronously
+from the injected process. This keeps LSPosed file logging off the hooked
+callback thread while preserving detailed bridge evidence during normal short
+diagnostic sessions. The queue is bounded; an overflow is an evidence
+completeness warning, not proof that the route was inactive.
+
 ## Pull Path
 
 Replace `<local-temp-dir>` with a writable local directory:

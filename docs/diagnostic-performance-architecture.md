@@ -307,8 +307,11 @@ Perfetto 原始文件：
 恢复事件文件路径。由于部分 appdomain 不能可靠 append `/data/local/tmp`，聚合快照
 现在以低频 `DPIS_DIAG_PERF` LSPosed 日志作为主目标进程证据，
 导出端将其归类为 `source=runtime-hotpath category=performance`。
-后续仍需补充明确的 transport health、
-session completeness、结束时 flush 语义，以及少量慢调用样本的独立传输协议。
+高频事件的 transport append 与 `DPIS_DIAG_HOTPATH` bridge 输出均在目标进程
+内排队，由后台线程批量写入或交给 LSPosed sink；hook 回调线程不再同步执行
+文件 I/O、`DpisLog` 回灌或 bridge sink。DPIS 收尾前会 flush 自己的 transport
+队列，再读取事件文件。队列有界，溢出必须作为 transport completeness gap
+报告，不能降级成“没有命中”。
 
 ## 未决问题
 

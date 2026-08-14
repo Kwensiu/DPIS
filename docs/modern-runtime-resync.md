@@ -187,6 +187,14 @@ log was emitted; `stage=skipped` records bounded marker, relayout, and
 display-manager skip reasons. Missing transport remains an evidence gap rather
 than proof that a system-side mutation did not happen.
 
+As of 2026-08-14, high-frequency runtime evidence no longer performs file
+append or LSPosed bridge logging on the hook callback thread. Runtime transport
+uses a bounded process-local queue and short batched writes; the DPIS-side stop
+path flushes its own pending writes before reading the event file. Hotpath
+bridge lines use a bounded asynchronous dispatcher, while low-frequency session
+and aggregate lines remain direct. A full queue is a transport completeness
+gap and must not be interpreted as a missing callback or mutation.
+
 ## Full Tree
 
 ```text

@@ -90,6 +90,13 @@ viewport installer, so its own launch-only font route is not represented by
 these events. Transport absence remains an evidence gap, not proof that a
 system-side route did not execute.
 
+As of 2026-08-14, Legacy and shared app-process hotpath diagnostics enqueue
+transport and LSPosed bridge records away from the hook callback thread. The
+transport batches short writes and the DPIS stop path flushes its local queue;
+the bridge queue is bounded so diagnostic capture cannot grow without limit.
+Queue overflow is an evidence-completeness limitation, not evidence that the
+Legacy route did not execute.
+
 The shared app-process font route implementation now lives under
 `runtime.font`. Legacy flavor entry points still call the same install/reset
 protocols; the move only classifies ActivityThread, Resources font scheduling,

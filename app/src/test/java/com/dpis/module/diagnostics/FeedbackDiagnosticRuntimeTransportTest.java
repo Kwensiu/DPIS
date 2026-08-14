@@ -11,9 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public final class FeedbackDiagnosticRuntimeTransportTest {
+    @Before
+    public void setUp() {
+        FeedbackDiagnosticRuntimeTransport.cancel(command ->
+                new RootAppProcessLauncher.ShellResult(0, ""));
+    }
+
     @After
     public void tearDown() {
         FeedbackDiagnosticRuntimeTransport.cancel(command ->
