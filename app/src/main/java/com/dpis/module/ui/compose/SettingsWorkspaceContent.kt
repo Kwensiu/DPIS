@@ -273,7 +273,7 @@ private fun SettingsSwitchRow(
     SegmentedListItem(
         onClick = { hapticChanged(!checked) },
         enabled = enabled,
-        shapes = ListItemDefaults.segmentedShapes(index, total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -308,7 +308,7 @@ private fun SettingsEntry(
     SegmentedListItem(
         onClick = hapticClick,
         enabled = enabled,
-        shapes = ListItemDefaults.segmentedShapes(index, total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,

@@ -213,7 +213,7 @@ private fun ThemeDynamicColorRow(
 ) {
     SegmentedListItem(
         onClick = { onCheckedChange(!checked) },
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -252,7 +252,7 @@ private fun ThemeStaticOptionRow(
 ) {
     SegmentedListItem(
         onClick = onClick,
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -308,7 +308,7 @@ private fun ThemeColorRow(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = ListItemDefaults.segmentedShapes(index, total).shape,
+        shape = dpisSegmentedShapes(index, total).shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
@@ -599,7 +599,7 @@ private fun ThemeSettingsEntry(
 ) {
     SegmentedListItem(
         onClick = rememberDpisConfirmAction(onClick),
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -635,7 +635,7 @@ private fun ThemeInterfaceScaleRow(
     index: Int,
     total: Int,
 ) {
-    val shape = ListItemDefaults.segmentedShapes(index, total).shape
+    val shape = dpisSegmentedShapes(index, total).shape
     Surface(
         modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = onClick),
         shape = shape,
