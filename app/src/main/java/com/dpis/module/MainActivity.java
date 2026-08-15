@@ -31,7 +31,6 @@ import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
-import com.dpis.module.about.AboutActivity;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 
@@ -43,16 +42,11 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
 
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 
-import com.dpis.module.fonts.FontLibraryStore;
-
-import com.dpis.module.viewport.DpiConfig;
-
 import com.dpis.module.viewport.ViewportPropertySyncer;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 
-import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.hooks.HookDomainOverride;
@@ -147,16 +141,11 @@ import com.dpis.module.updates.ReleaseNotesCacheStore;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.RelativeSizeSpan;
-import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -170,7 +159,6 @@ import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
-import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
@@ -2001,7 +1989,8 @@ public final class MainActivity
                         rootStatus,
                         logStatus,
                         getString(R.string.feedback_diagnostic_lsposed_checking),
-                        false,
+                        0,
+                        getString(R.string.feedback_diagnostic_lsposed_checking_message),
                         RootAccessProbe.cachedResult().status
                                 == RootAccessProbe.Status.AVAILABLE,
                         com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.Phase.PREPARING,
@@ -2063,10 +2052,30 @@ public final class MainActivity
                             return Unit.INSTANCE;
                         },
                         () -> {
+                            com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
+                                    current = feedbackDiagnosticPreparationPresentation;
+                            if (current != null) {
+                                refreshComposeFeedbackDiagnosticEnvironment(
+                                        current,
+                                        current.lsposedAvailabilityCode()
+                                                == LsposedLogReader.Availability.NO_PERMISSION
+                                                        .ordinal() + 1
+                                );
+                            }
+                            return Unit.INSTANCE;
+                        },
+                        () -> {
+                            refreshComposeFeedbackDiagnosticLsposedAvailability(
+                                    feedbackDiagnosticPreparationPresentation
+                            );
+                            return Unit.INSTANCE;
+                        },
+                        () -> {
                             com.dpis.module.ui.compose.ComposeMessageDialog.show(
                                     this,
-                                    getString(R.string.feedback_diagnostic_lsposed_unavailable_title),
-                                    getString(R.string.feedback_diagnostic_lsposed_unavailable_message),
+                                    feedbackDiagnosticPreparationPresentation.lsposedStatus(),
+                                    feedbackDiagnosticPreparationPresentation
+                                            .lsposedExplanation(),
                                     getString(R.string.dialog_close_button)
                             );
                             return Unit.INSTANCE;
@@ -2078,21 +2087,101 @@ public final class MainActivity
         );
         feedbackDiagnosticPreparationPresentation = presentation;
         composeShellHost.showDiagnosticPreparation(presentation);
+        refreshComposeFeedbackDiagnosticEnvironment(presentation, true);
+    }
+
+    private void refreshComposeFeedbackDiagnosticEnvironment(
+            com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation,
+            boolean refreshLsposed
+    ) {
+        if (presentation == null) {
+            return;
+        }
+        String logStatus = getString(R.string.feedback_diagnostic_log_session_enabled);
+        String lsposedStatus = refreshLsposed
+                ? getString(R.string.feedback_diagnostic_lsposed_checking)
+                : presentation.lsposedStatus();
+        int lsposedAvailabilityCode = refreshLsposed
+                ? 0
+                : presentation.lsposedAvailabilityCode();
+        String lsposedExplanation = refreshLsposed
+                ? getString(R.string.feedback_diagnostic_lsposed_checking_message)
+                : presentation.lsposedExplanation();
+        presentation.updateEnvironment(
+                getString(R.string.feedback_diagnostic_root_checking),
+                logStatus,
+                lsposedStatus,
+                lsposedAvailabilityCode,
+                lsposedExplanation,
+                false
+        );
         feedbackDiagnosticExportExecutor.execute(() -> {
             RootAccessProbe.Result rootAccess = RootAccessProbe.probe();
+            LogReadResult result = refreshLsposed
+                    && rootAccess.status == RootAccessProbe.Status.AVAILABLE
+                    ? LsposedLogReader.readLsposedDpisCurrent()
+                    : null;
+            LsposedLogReader.Availability availability = refreshLsposed
+                    && rootAccess.status
+                    == RootAccessProbe.Status.AVAILABLE
+                    ? LsposedLogReader.availability(result)
+                    : refreshLsposed
+                            ? LsposedLogReader.Availability.NO_PERMISSION
+                            : LsposedLogReader.Availability.values()[
+                                    Math.max(0, lsposedAvailabilityCode - 1)
+                            ];
+            runOnUiThread(() -> {
+                if (feedbackDiagnosticPreparationPresentation != presentation) {
+                    return;
+                }
+                presentation.updateEnvironment(
+                        feedbackDiagnosticRootStatus(),
+                        logStatus,
+                        getString(feedbackDiagnosticLsposedStatusRes(availability)),
+                        availability.ordinal() + 1,
+                        feedbackDiagnosticLsposedExplanation(availability),
+                        rootAccess.status == RootAccessProbe.Status.AVAILABLE
+                );
+            });
+        });
+    }
+
+    private void refreshComposeFeedbackDiagnosticLsposedAvailability(
+            com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
+    ) {
+        if (presentation == null) {
+            return;
+        }
+        presentation.updateEnvironment(
+                presentation.rootStatus(),
+                presentation.logStatus(),
+                getString(R.string.feedback_diagnostic_lsposed_checking),
+                0,
+                getString(R.string.feedback_diagnostic_lsposed_checking_message),
+                presentation.isStartEnabled()
+        );
+        feedbackDiagnosticExportExecutor.execute(() -> {
+            RootAccessProbe.Result rootAccess = RootAccessProbe.cachedResult();
             LogReadResult result = rootAccess.status == RootAccessProbe.Status.AVAILABLE
                     ? LsposedLogReader.readLsposedDpisCurrent()
                     : null;
-            boolean readable = result != null && result.code == 0;
-            runOnUiThread(() -> presentation.updateEnvironment(
-                    feedbackDiagnosticRootStatus(),
-                    logStatus,
-                    getString(readable
-                            ? R.string.feedback_diagnostic_lsposed_readable
-                            : R.string.feedback_diagnostic_lsposed_unavailable),
-                    readable,
-                    rootAccess.status == RootAccessProbe.Status.AVAILABLE
-            ));
+            LsposedLogReader.Availability availability = rootAccess.status
+                    == RootAccessProbe.Status.AVAILABLE
+                    ? LsposedLogReader.availability(result)
+                    : LsposedLogReader.Availability.NO_PERMISSION;
+            runOnUiThread(() -> {
+                if (feedbackDiagnosticPreparationPresentation != presentation) {
+                    return;
+                }
+                presentation.updateEnvironment(
+                        presentation.rootStatus(),
+                        presentation.logStatus(),
+                        getString(feedbackDiagnosticLsposedStatusRes(availability)),
+                        availability.ordinal() + 1,
+                        feedbackDiagnosticLsposedExplanation(availability),
+                        presentation.isStartEnabled()
+                );
+            });
         });
     }
 
@@ -2105,6 +2194,38 @@ public final class MainActivity
             return getString(R.string.feedback_diagnostic_root_unavailable);
         }
         return getString(R.string.feedback_diagnostic_root_checking);
+    }
+
+    private int feedbackDiagnosticLsposedStatusRes(
+            LsposedLogReader.Availability availability
+    ) {
+        switch (availability) {
+            case NO_LOGS:
+                return R.string.feedback_diagnostic_lsposed_no_logs;
+            case NO_VALID_LOGS:
+                return R.string.feedback_diagnostic_lsposed_no_valid_logs;
+            case AVAILABLE:
+                return R.string.feedback_diagnostic_lsposed_available;
+            case NO_PERMISSION:
+            default:
+                return R.string.feedback_diagnostic_lsposed_no_permission;
+        }
+    }
+
+    private String feedbackDiagnosticLsposedExplanation(
+            LsposedLogReader.Availability availability
+    ) {
+        switch (availability) {
+            case NO_LOGS:
+                return getString(R.string.feedback_diagnostic_lsposed_no_logs_message);
+            case NO_VALID_LOGS:
+                return getString(R.string.feedback_diagnostic_lsposed_no_valid_logs_message);
+            case AVAILABLE:
+                return getString(R.string.feedback_diagnostic_lsposed_available_message);
+            case NO_PERMISSION:
+            default:
+                return getString(R.string.feedback_diagnostic_lsposed_no_permission_message);
+        }
     }
 
     private void showComposeFeedbackDiagnosticConfirmation(
@@ -2131,6 +2252,7 @@ public final class MainActivity
                             )
                     );
                     if (!started) {
+                        feedbackDiagnosticPreparationPresentation.markStartFailed();
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
                 },
@@ -3195,15 +3317,12 @@ public final class MainActivity
         ).size();
     }
 
-    static final class ScopeState {
-        final Set<String> packages;
-        final boolean known;
-
-        ScopeState(Set<String> packages, boolean known) {
-            this.packages = packages != null ? packages : Collections.emptySet();
-            this.known = known;
+    record ScopeState(Set<String> packages, boolean known) {
+            ScopeState(Set<String> packages, boolean known) {
+                this.packages = packages != null ? packages : Collections.emptySet();
+                this.known = known;
+            }
         }
-    }
 
     private void maybeStartRootAccessProbe() {
         RootAccessProbe.refreshAsync(result -> {
@@ -4001,11 +4120,17 @@ public final class MainActivity
 
             @Override
             public void onFeedbackDiagnosticUnavailable() {
+                if (feedbackDiagnosticPreparationPresentation != null) {
+                    feedbackDiagnosticPreparationPresentation.markStartFailed();
+                }
                 showToast(R.string.feedback_diagnostic_unavailable);
             }
 
             @Override
             public void onFeedbackDiagnosticRootRequired() {
+                if (feedbackDiagnosticPreparationPresentation != null) {
+                    feedbackDiagnosticPreparationPresentation.markStartFailed();
+                }
                 showToast(R.string.feedback_diagnostic_root_required);
             }
 
@@ -4015,6 +4140,11 @@ public final class MainActivity
             ) {
                 pendingFeedbackDiagnosticResult = result;
                 maybeShowPendingFeedbackDiagnosticResult();
+            }
+
+            @Override
+            public void onFeedbackDiagnosticAutoFinished() {
+                showToast(R.string.feedback_diagnostic_auto_finished);
             }
         };
     }
@@ -4271,7 +4401,9 @@ public final class MainActivity
                 feedbackDiagnosticSharedCachePath(diagnosticPackage),
                 getString(
                         R.string.feedback_diagnostic_package_metadata,
-                        diagnosticPackage.entries.size(),
+                        formatFeedbackDiagnosticDuration(
+                                diagnosticPackage.result.durationMs
+                        ),
                         android.text.format.Formatter.formatFileSize(
                                 this,
                                 diagnosticPackage.zipBytes.length
@@ -4297,6 +4429,30 @@ public final class MainActivity
                         ))
                         .toList()
         );
+    }
+
+    private static String formatFeedbackDiagnosticDuration(long durationMs) {
+        long safeDurationMs = Math.max(0L, durationMs);
+        if (safeDurationMs < 1_000L) {
+            return safeDurationMs + " ms";
+        }
+        if (safeDurationMs < 60_000L) {
+            String value = String.format(
+                    java.util.Locale.US,
+                    "%.1f",
+                    safeDurationMs / 1_000.0d
+            );
+            if (value.endsWith(".0")) {
+                value = value.substring(0, value.length() - 2);
+            }
+            return value + " s";
+        }
+        long totalSeconds = safeDurationMs / 1_000L;
+        long minutes = totalSeconds / 60L;
+        long seconds = totalSeconds % 60L;
+        return seconds == 0L
+                ? minutes + " min"
+                : minutes + " min " + seconds + " s";
     }
 
     private void showFeedbackDiagnosticResultSheet(
@@ -4811,7 +4967,7 @@ public final class MainActivity
 
     private void refreshSystemHookEffectiveEnabled() {
         cachedSystemHookEffectiveEnabled
-                = systemScopeCoordinator.resolveSystemHookEffectiveEnabled(
+                = SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(
                         getHookConfigStore()
                 );
     }
@@ -5060,85 +5216,78 @@ public final class MainActivity
                 : LandAppDetailPaneBinder.stateFor(root);
     }
 
-    private static final class RetainedState {
+    private record RetainedState(List<AppListItem> appsSnapshot, String query, String templateQuery,
+                                 AppListFilterState filterState,
+                                 MainUiState.WorkspaceMode workspaceMode, int currentPage,
+                                 int[] appListScrollPositions, int[] refreshingPagePositions,
+                                 String editingPackageName, AppConfigEditorDraft editingDraft,
+                                 AppConfigEditorDraft savedEditingDraft,
+                                 ConfigEditorDestination editingDestination,
+                                 TemplateDetailSelection templateDetailSelection,
+                                 ConfigEditorDestination templateEditorDestination,
+                                 boolean quickTemplateTargetSelectionActivityStarted,
+                                 TemplateEditorDraft globalPrefillDraft,
+                                 TemplateEditorDraft quickTemplateDraft,
+                                 HomeUpdateUiState homeUpdateUiState) {
 
-        final List<AppListItem> appsSnapshot;
-        final String query;
-        final String templateQuery;
-        final AppListFilterState filterState;
-        final MainUiState.WorkspaceMode workspaceMode;
-        final int currentPage;
-        final int[] appListScrollPositions;
-        final int[] refreshingPagePositions;
-        final String editingPackageName;
-        final AppConfigEditorDraft editingDraft;
-        final AppConfigEditorDraft savedEditingDraft;
-        final ConfigEditorDestination editingDestination;
-        final TemplateDetailSelection templateDetailSelection;
-        final ConfigEditorDestination templateEditorDestination;
-        final boolean quickTemplateTargetSelectionActivityStarted;
-        final TemplateEditorDraft globalPrefillDraft;
-        final TemplateEditorDraft quickTemplateDraft;
-        final HomeUpdateUiState homeUpdateUiState;
-
-        RetainedState(
-                List<AppListItem> appsSnapshot,
-                String query,
-                String templateQuery,
-                AppListFilterState filterState,
-                MainUiState.WorkspaceMode workspaceMode,
-                int currentPage,
-                int[] appListScrollPositions,
-                int[] refreshingPagePositions,
-                String editingPackageName,
-                AppConfigEditorDraft editingDraft,
-                AppConfigEditorDraft savedEditingDraft,
-                ConfigEditorDestination editingDestination,
-                TemplateDetailSelection templateDetailSelection,
-                ConfigEditorDestination templateEditorDestination,
-                boolean quickTemplateTargetSelectionActivityStarted,
-                TemplateEditorDraft globalPrefillDraft,
-                TemplateEditorDraft quickTemplateDraft,
-                HomeUpdateUiState homeUpdateUiState
-        ) {
-            this.appsSnapshot = appsSnapshot;
-            this.query = query != null ? query : "";
-            this.templateQuery = templateQuery != null ? templateQuery : "";
-            this.filterState
-                    = filterState != null
-                            ? filterState
-                            : AppListFilterState.defaultState();
-            this.workspaceMode
-                    = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.APP;
-            this.currentPage = currentPage;
-            this.appListScrollPositions = appListScrollPositions != null
-                    ? appListScrollPositions.clone()
-                    : new int[0];
-            this.refreshingPagePositions
-                    = refreshingPagePositions != null
-                            ? refreshingPagePositions.clone()
-                            : new int[0];
-            this.editingPackageName = editingPackageName;
-            this.editingDraft = editingDraft;
-            this.savedEditingDraft = savedEditingDraft;
-            this.editingDestination = editingDestination != null
-                    ? editingDestination
-                    : ConfigEditorDestination.MAIN;
-            this.templateDetailSelection = templateDetailSelection != null
-                    ? templateDetailSelection
-                    : TemplateDetailSelection.none();
-            this.templateEditorDestination = templateEditorDestination != null
-                    ? templateEditorDestination
-                    : ConfigEditorDestination.MAIN;
-            this.quickTemplateTargetSelectionActivityStarted =
-                    quickTemplateTargetSelectionActivityStarted;
-            this.globalPrefillDraft = globalPrefillDraft;
-            this.quickTemplateDraft = quickTemplateDraft;
-            this.homeUpdateUiState = homeUpdateUiState != null
-                    ? homeUpdateUiState
-                    : HomeUpdateUiState.UP_TO_DATE;
+            private RetainedState(
+                    List<AppListItem> appsSnapshot,
+                    String query,
+                    String templateQuery,
+                    AppListFilterState filterState,
+                    MainUiState.WorkspaceMode workspaceMode,
+                    int currentPage,
+                    int[] appListScrollPositions,
+                    int[] refreshingPagePositions,
+                    String editingPackageName,
+                    AppConfigEditorDraft editingDraft,
+                    AppConfigEditorDraft savedEditingDraft,
+                    ConfigEditorDestination editingDestination,
+                    TemplateDetailSelection templateDetailSelection,
+                    ConfigEditorDestination templateEditorDestination,
+                    boolean quickTemplateTargetSelectionActivityStarted,
+                    TemplateEditorDraft globalPrefillDraft,
+                    TemplateEditorDraft quickTemplateDraft,
+                    HomeUpdateUiState homeUpdateUiState
+            ) {
+                this.appsSnapshot = appsSnapshot;
+                this.query = query != null ? query : "";
+                this.templateQuery = templateQuery != null ? templateQuery : "";
+                this.filterState
+                        = filterState != null
+                        ? filterState
+                        : AppListFilterState.defaultState();
+                this.workspaceMode
+                        = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.APP;
+                this.currentPage = currentPage;
+                this.appListScrollPositions = appListScrollPositions != null
+                        ? appListScrollPositions.clone()
+                        : new int[0];
+                this.refreshingPagePositions
+                        = refreshingPagePositions != null
+                        ? refreshingPagePositions.clone()
+                        : new int[0];
+                this.editingPackageName = editingPackageName;
+                this.editingDraft = editingDraft;
+                this.savedEditingDraft = savedEditingDraft;
+                this.editingDestination = editingDestination != null
+                        ? editingDestination
+                        : ConfigEditorDestination.MAIN;
+                this.templateDetailSelection = templateDetailSelection != null
+                        ? templateDetailSelection
+                        : TemplateDetailSelection.none();
+                this.templateEditorDestination = templateEditorDestination != null
+                        ? templateEditorDestination
+                        : ConfigEditorDestination.MAIN;
+                this.quickTemplateTargetSelectionActivityStarted =
+                        quickTemplateTargetSelectionActivityStarted;
+                this.globalPrefillDraft = globalPrefillDraft;
+                this.quickTemplateDraft = quickTemplateDraft;
+                this.homeUpdateUiState = homeUpdateUiState != null
+                        ? homeUpdateUiState
+                        : HomeUpdateUiState.UP_TO_DATE;
+            }
         }
-    }
 
     private enum TemplateDetailKind {
         NONE,
@@ -5158,48 +5307,45 @@ public final class MainActivity
         }
     }
 
-    private static final class TemplateDetailSelection {
+    private record TemplateDetailSelection(TemplateDetailKind kind, String templateId) {
 
-        final TemplateDetailKind kind;
-        final String templateId;
-
-        private TemplateDetailSelection(
-                TemplateDetailKind kind,
-                String templateId
-        ) {
-            this.kind = kind != null ? kind : TemplateDetailKind.NONE;
-            this.templateId = templateId;
-        }
-
-        static TemplateDetailSelection none() {
-            return new TemplateDetailSelection(TemplateDetailKind.NONE, null);
-        }
-
-        static TemplateDetailSelection globalPrefill() {
-            return new TemplateDetailSelection(
-                    TemplateDetailKind.GLOBAL_PREFILL,
-                    null
-            );
-        }
-
-        static TemplateDetailSelection quickTemplate(String templateId) {
-            if (templateId != null && templateId.isBlank()) {
-                return none();
+            private TemplateDetailSelection(
+                    TemplateDetailKind kind,
+                    String templateId
+            ) {
+                this.kind = kind != null ? kind : TemplateDetailKind.NONE;
+                this.templateId = templateId;
             }
-            return new TemplateDetailSelection(
-                    TemplateDetailKind.QUICK_TEMPLATE,
-                    templateId
-            );
-        }
 
-        static TemplateDetailSelection quickTemplateTargets(String templateId) {
-            if (templateId == null || templateId.isBlank()) {
-                return none();
+            static TemplateDetailSelection none() {
+                return new TemplateDetailSelection(TemplateDetailKind.NONE, null);
             }
-            return new TemplateDetailSelection(
-                    TemplateDetailKind.QUICK_TEMPLATE_TARGETS,
-                    templateId
-            );
+
+            static TemplateDetailSelection globalPrefill() {
+                return new TemplateDetailSelection(
+                        TemplateDetailKind.GLOBAL_PREFILL,
+                        null
+                );
+            }
+
+            static TemplateDetailSelection quickTemplate(String templateId) {
+                if (templateId != null && templateId.isBlank()) {
+                    return none();
+                }
+                return new TemplateDetailSelection(
+                        TemplateDetailKind.QUICK_TEMPLATE,
+                        templateId
+                );
+            }
+
+            static TemplateDetailSelection quickTemplateTargets(String templateId) {
+                if (templateId == null || templateId.isBlank()) {
+                    return none();
+                }
+                return new TemplateDetailSelection(
+                        TemplateDetailKind.QUICK_TEMPLATE_TARGETS,
+                        templateId
+                );
+            }
         }
-    }
 }

@@ -108,6 +108,7 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_record_action">Записать диагностику отзыва</string>
     <string name="feedback_diagnostic_confirm_message">Сохранить и перезапустить %1$s.\nПосле воспроизведения проблемы вернитесь в DPIS, чтобы получить пакет диагностики.\nЖурналы не собирают личные данные.</string>
     <string name="feedback_diagnostic_started">Диагностический сеанс запущен</string>
+    <string name="feedback_diagnostic_auto_finished">Диагностика завершилась автоматически. Вернитесь в DPIS, чтобы получить отчет</string>
     <string name="feedback_diagnostic_unavailable">Не удалось запустить диагностический сеанс</string>
     <string name="feedback_diagnostic_root_required">Требуется root-доступ</string>
     <string name="feedback_diagnostic_result_title">Пакет диагностики готов: %1$s</string>
@@ -135,8 +136,19 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_log_global_enabled">Глобальный вывод включен</string>
     <string name="feedback_diagnostic_log_session_enabled">Временно включается только на время этой диагностики</string>
     <string name="feedback_diagnostic_lsposed_checking">Проверка…</string>
+    <string name="feedback_diagnostic_lsposed_checking_message">Проверка файлов журналов LSPosed</string>
     <string name="feedback_diagnostic_lsposed_readable">Доступно для чтения</string>
     <string name="feedback_diagnostic_lsposed_unavailable">Недоступно для чтения</string>
+    <string name="feedback_diagnostic_lsposed_no_permission">Нет разрешения на чтение</string>
+    <string name="feedback_diagnostic_lsposed_no_logs">Нет журналов</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs">Нет действительных журналов</string>
+    <string name="feedback_diagnostic_lsposed_available">Журналы доступны</string>
+    <string name="feedback_diagnostic_lsposed_info_action">Объяснить доступность журналов LSPosed</string>
+    <string name="feedback_diagnostic_lsposed_info_title">Доступность журналов LSPosed</string>
+    <string name="feedback_diagnostic_lsposed_no_permission_message">Не удалось прочитать файлы журналов LSPosed. Возможно, Root недоступен или доступ к каталогу журналов запрещен.</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">Файлы журналов LSPosed не найдены. Возможные причины:\n\n• Отладка Hook в LSPosed отключена\n• Включено отключение подробных журналов\n• Включен вывод журналов в демон\n• Журнал LSPosed был неожиданно отключен или не может записываться</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs_message">Файлы журналов LSPosed прочитаны, но действительных записей DPIS нет. Проверьте отладку Hook, подробные журналы и вывод в демон.</string>
+    <string name="feedback_diagnostic_lsposed_available_message">В журнале LSPosed найдены записи DPIS.</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">Не удалось прочитать журналы LSPosed</string>
     <string name="feedback_diagnostic_lsposed_unavailable_message">Возможные причины:\n• В LSPosed отключена отладка Hook.\n• Включено отключение подробных журналов.\n• Включен вывод журналов в демон.\n• Журнал LSPosed был отключен или не может записываться.</string>
     <string name="feedback_diagnostic_duration_section">Длительность диагностики</string>
@@ -156,7 +168,7 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_exit_confirm_message">При выходе диагностика будет остановлена, а текущий пакет и результаты очищены.</string>
     <string name="feedback_diagnostic_exit_clear_action">Остановить и очистить</string>
     <string name="feedback_diagnostic_ready_message">Диагностический пакет готов.</string>
-    <string name="feedback_diagnostic_package_metadata">%1$d файлов · %2$s</string>
+    <string name="feedback_diagnostic_package_metadata">%1$s | %2$s</string>
     <string name="feedback_diagnostic_path_copied">Путь к диагностике скопирован</string>
     <string name="feedback_diagnostic_recording_message">Воспроизведите проблему в целевом приложении, затем вернитесь в DPIS для завершения и упаковки диагностики.</string>
     <string name="workspace_app">Приложения</string>

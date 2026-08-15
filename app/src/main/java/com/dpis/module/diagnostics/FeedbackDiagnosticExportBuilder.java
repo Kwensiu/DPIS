@@ -1,7 +1,5 @@
 package com.dpis.module.diagnostics;
 
-import com.dpis.module.*;
-
 import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -599,8 +597,8 @@ public final class FeedbackDiagnosticExportBuilder {
         FeedbackDiagnosticLsposedTimelineParser.WindowedRawLog windowed =
                 FeedbackDiagnosticLsposedTimelineParser.windowRawLog(result, window);
         StringBuilder builder = new StringBuilder();
-        builder.append("source: ").append(valueOrDefault(result.sourceLabel, UNKNOWN)).append('\n');
-        builder.append("code: ").append(result.code).append('\n');
+        builder.append("source: ").append(valueOrDefault(result.sourceLabel(), UNKNOWN)).append('\n');
+        builder.append("code: ").append(result.code()).append('\n');
         if (window != null) {
             builder.append("windowStart: ").append(displayTime(window.startMillis())).append('\n');
             builder.append("windowEnd: ").append(displayTime(window.endMillis())).append('\n');
@@ -611,8 +609,8 @@ public final class FeedbackDiagnosticExportBuilder {
                 .append('\n');
         builder.append("droppedNonDpis: ").append(windowed.droppedNonDpis()).append('\n');
         builder.append("droppedUnparsed: ").append(windowed.droppedUnparsed()).append('\n');
-        if (!result.error.isBlank()) {
-            builder.append("error:\n").append(result.error).append('\n');
+        if (!result.error().isBlank()) {
+            builder.append("error:\n").append(result.error()).append('\n');
         }
         if (windowed.output().isBlank()) {
             builder.append("LSPosed filtered log unavailable or empty in diagnostic window.\n");
@@ -698,9 +696,9 @@ public final class FeedbackDiagnosticExportBuilder {
         if (result != null
                 && result.request != null
                 && lsposedLog != null
-                && !lsposedLog.output.isBlank()) {
+                && !lsposedLog.output().isBlank()) {
             events.addAll(FeedbackDiagnosticLsposedTimelineParser.parse(
-                    lsposedLog.output,
+                    lsposedLog.output(),
                     window,
                     timelineInput(result.request)
             ));

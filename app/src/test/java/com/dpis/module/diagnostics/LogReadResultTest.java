@@ -41,4 +41,32 @@ public final class LogReadResultTest {
         assertFalse(new LogReadResult(1, "LSPosed", "", "missing file")
                 .needsRootAccess());
     }
+
+    @Test
+    public void lsposedAvailabilitySeparatesPermissionFilesAndValidEntries() {
+        assertEquals(
+                LsposedLogReader.Availability.NO_PERMISSION,
+                LsposedLogReader.availability(
+                        new LogReadResult(-1, "LSPosed", "", "permission denied")
+                )
+        );
+        assertEquals(
+                LsposedLogReader.Availability.NO_LOGS,
+                LsposedLogReader.availability(
+                        new LogReadResult(0, "LSPosed", "", "", false, false)
+                )
+        );
+        assertEquals(
+                LsposedLogReader.Availability.NO_VALID_LOGS,
+                LsposedLogReader.availability(
+                        new LogReadResult(0, "LSPosed", "", "", true, false)
+                )
+        );
+        assertEquals(
+                LsposedLogReader.Availability.AVAILABLE,
+                LsposedLogReader.availability(
+                        new LogReadResult(0, "LSPosed", "entry", "", true, true)
+                )
+        );
+    }
 }

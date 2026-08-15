@@ -108,6 +108,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="feedback_diagnostic_record_action">フィードバック診断を記録</string>
     <string name="feedback_diagnostic_confirm_message">保存して %1$s を再起動します。\n問題を再現した後、DPIS に戻って診断パッケージを取得してください。\nログは個人情報を収集しません。</string>
     <string name="feedback_diagnostic_started">診断セッションを開始しました</string>
+    <string name="feedback_diagnostic_auto_finished">診断は自動的に終了しました。レポートを取得するには DPIS に戻ってください</string>
     <string name="feedback_diagnostic_unavailable">診断セッションを開始できません</string>
     <string name="feedback_diagnostic_root_required">root 権限が必要です</string>
     <string name="feedback_diagnostic_result_title">%1$s の診断パッケージを作成しました</string>
@@ -135,8 +136,19 @@ Mini Programs はまだサポートされていません。</string>
     <string name="feedback_diagnostic_log_global_enabled">グローバル出力が有効です</string>
     <string name="feedback_diagnostic_log_session_enabled">この診断中のみ一時的に有効です</string>
     <string name="feedback_diagnostic_lsposed_checking">確認中…</string>
+    <string name="feedback_diagnostic_lsposed_checking_message">LSPosed ログファイルを確認中</string>
     <string name="feedback_diagnostic_lsposed_readable">読み取り可能</string>
     <string name="feedback_diagnostic_lsposed_unavailable">読み取り不可</string>
+    <string name="feedback_diagnostic_lsposed_no_permission">読み取り権限なし</string>
+    <string name="feedback_diagnostic_lsposed_no_logs">ログなし</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs">有効なログなし</string>
+    <string name="feedback_diagnostic_lsposed_available">ログを利用可能</string>
+    <string name="feedback_diagnostic_lsposed_info_action">LSPosed ログの可用性を説明</string>
+    <string name="feedback_diagnostic_lsposed_info_title">LSPosed ログの可用性</string>
+    <string name="feedback_diagnostic_lsposed_no_permission_message">LSPosed ログファイルを読み取れません。Root 権限がないか、ログディレクトリへのアクセスが拒否されています。</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">LSPosed ログファイルが見つかりません。考えられる原因：\n\n• LSPosed の Hook デバッグが無効\n• 詳細ログを無効にするが有効\n• ログをデーモンに出力するが有効\n• LSPosed ログが予期せず無効化されたか、出力できない</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs_message">LSPosed ログは読み取れましたが、有効な DPIS エントリがありません。Hook デバッグ、詳細ログ、デーモン出力の設定を確認してください。</string>
+    <string name="feedback_diagnostic_lsposed_available_message">DPIS エントリを含む LSPosed ログを読み取れます。</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">LSPosed ログを読み取れません</string>
     <string name="feedback_diagnostic_lsposed_unavailable_message">考えられる原因：\n• LSPosed の Hook デバッグが無効です。\n• 詳細ログを無効にするが有効です。\n• ログをデーモンに出力するが有効です。\n• LSPosed ログが予期せず無効化されたか、出力できません。</string>
     <string name="feedback_diagnostic_duration_section">診断時間</string>
@@ -156,7 +168,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="feedback_diagnostic_exit_confirm_message">退出すると診断を停止し、現在の診断パッケージと結果を削除します。</string>
     <string name="feedback_diagnostic_exit_clear_action">停止して削除</string>
     <string name="feedback_diagnostic_ready_message">診断パッケージの準備が完了しました。</string>
-    <string name="feedback_diagnostic_package_metadata">%1$d ファイル · %2$s</string>
+    <string name="feedback_diagnostic_package_metadata">%1$s | %2$s</string>
     <string name="feedback_diagnostic_path_copied">診断パスをコピーしました</string>
     <string name="feedback_diagnostic_recording_message">対象アプリで問題を再現し、DPIS に戻って診断を完了してパッケージ化してください。</string>
     <string name="workspace_app">アプリ</string>

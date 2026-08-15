@@ -48,6 +48,9 @@ public final class FeedbackDiagnosticCoordinator {
         void onFeedbackDiagnosticRootRequired();
 
         void onFeedbackDiagnosticFinished(Result result);
+
+        default void onFeedbackDiagnosticAutoFinished() {
+        }
     }
 
     public static final class Request {
@@ -337,6 +340,7 @@ public final class FeedbackDiagnosticCoordinator {
     private boolean runningTargetLaunchStarted;
     private boolean finishing;
     private String lastObservedForegroundPackage;
+    private final Object timelineLock = new Object();
     private final List<String> runningTimelineEvents = new ArrayList<>();
     private volatile FeedbackDiagnosticPerfettoTrace runningPerfettoTrace;
 
@@ -367,7 +371,9 @@ public final class FeedbackDiagnosticCoordinator {
         }
         running = true;
         runningRequest = request;
-        runningTimelineEvents.clear();
+        synchronized (timelineLock) {
+            runningTimelineEvents.clear();
+        }
         recordTimelineEvent("session requested");
         executor.execute(() -> {
             RootAccessProbe.Result rootAccess = ensureRootAccess();
@@ -467,6 +473,9 @@ public final class FeedbackDiagnosticCoordinator {
         finishing = true;
         handler.removeCallbacksAndMessages(null);
         recordTimelineEvent(reason);
+        if ("diagnostic timer elapsed".equals(reason)) {
+            host.onFeedbackDiagnosticAutoFinished();
+        }
         executor.execute(this::finishInBackground);
     }
 
@@ -570,7 +579,10 @@ public final class FeedbackDiagnosticCoordinator {
         if (trace != null && perfettoStop.available) {
             perfettoStop = trace.consumeStoppedTrace(perfettoStop);
         }
-        List<String> timelineEvents = new ArrayList<>(runningTimelineEvents);
+        List<String> timelineEvents;
+        synchronized (timelineLock) {
+            timelineEvents = new ArrayList<>(runningTimelineEvents);
+        }
         timelineEvents.addAll(runtimeEvents);
         timelineEvents.addAll(transportSnapshot.events);
         if (!transportSnapshot.available || transportSnapshot.events.isEmpty()) {
@@ -666,7 +678,9 @@ public final class FeedbackDiagnosticCoordinator {
         runningTargetLaunchStarted = false;
         finishing = false;
         lastObservedForegroundPackage = null;
-        runningTimelineEvents.clear();
+        synchronized (timelineLock) {
+            runningTimelineEvents.clear();
+        }
         runningPerfettoTrace = null;
     }
 
@@ -681,7 +695,11 @@ public final class FeedbackDiagnosticCoordinator {
     private void recordTimelineEvent(String event) {
         String normalized = valueOrEmpty(event);
         if (!normalized.isEmpty()) {
-            runningTimelineEvents.add(formatTime(host.currentTimeMillis()) + " " + normalized);
+            synchronized (timelineLock) {
+                runningTimelineEvents.add(
+                        formatTime(host.currentTimeMillis()) + " " + normalized
+                );
+            }
         }
     }
 

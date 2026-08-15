@@ -4,17 +4,26 @@ import com.dpis.module.R;
 
 import android.content.Context;
 
-public final class LogReadResult {
-    public final int code;
-    public final String sourceLabel;
-    public final String output;
-    public final String error;
-
+public record LogReadResult(int code, String sourceLabel, String output, String error,
+                            boolean sourceFilesPresent, boolean validEntriesPresent) {
     public LogReadResult(int code, String sourceLabel, String output, String error) {
+        this(code, sourceLabel, output, error, false, false);
+    }
+
+    public LogReadResult(
+            int code,
+            String sourceLabel,
+            String output,
+            String error,
+            boolean sourceFilesPresent,
+            boolean validEntriesPresent
+    ) {
         this.code = code;
         this.sourceLabel = sourceLabel;
         this.output = output != null ? output : "";
         this.error = error != null ? error : "";
+        this.sourceFilesPresent = sourceFilesPresent;
+        this.validEntriesPresent = validEntriesPresent;
     }
 
     public String messageForEmptyState(Context context) {

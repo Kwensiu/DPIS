@@ -116,6 +116,7 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_record_action">Record feedback diagnostic</string>
     <string name="feedback_diagnostic_confirm_message">Save and restart %1$s.\nReturn to DPIS after reproducing the issue to get the diagnostic package.\nLogs do not collect personal privacy.</string>
     <string name="feedback_diagnostic_started">Diagnostic session started</string>
+    <string name="feedback_diagnostic_auto_finished">Diagnostic ended automatically. Return to DPIS to get the report</string>
     <string name="feedback_diagnostic_unavailable">Unable to start diagnostic session</string>
     <string name="feedback_diagnostic_root_required">Root access required</string>
     <string name="feedback_diagnostic_result_title">Diagnostic package ready: %1$s</string>
@@ -143,8 +144,19 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_log_global_enabled">Global output enabled</string>
     <string name="feedback_diagnostic_log_session_enabled">Enabled temporarily during this diagnosis</string>
     <string name="feedback_diagnostic_lsposed_checking">Checking…</string>
+    <string name="feedback_diagnostic_lsposed_checking_message">Checking LSPosed log files</string>
     <string name="feedback_diagnostic_lsposed_readable">Readable</string>
     <string name="feedback_diagnostic_lsposed_unavailable">Unavailable</string>
+    <string name="feedback_diagnostic_lsposed_no_permission">No permission to read</string>
+    <string name="feedback_diagnostic_lsposed_no_logs">No logs</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs">No valid logs</string>
+    <string name="feedback_diagnostic_lsposed_available">Logs available</string>
+    <string name="feedback_diagnostic_lsposed_info_action">Explain LSPosed log availability</string>
+    <string name="feedback_diagnostic_lsposed_info_title">LSPosed log availability</string>
+    <string name="feedback_diagnostic_lsposed_no_permission_message">The LSPosed log files could not be read. Root access may be unavailable, or access to the log directory was denied.</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">No LSPosed log files were found. Possible causes:\n\n• LSPosed Hook debugging is disabled\n• Disable detailed logs is enabled\n• Output logs to daemon is enabled\n• LSPosed logging was disabled unexpectedly or cannot write logs</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs_message">The LSPosed log files were readable, but no valid DPIS entries were found. Hook debugging may be disabled, detailed logs may be disabled, daemon output may be enabled, or logging may have been closed unexpectedly.</string>
+    <string name="feedback_diagnostic_lsposed_available_message">A readable LSPosed log file contains DPIS entries. The diagnostic can include these entries.</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">Unable to read LSPosed logs</string>
     <string name="feedback_diagnostic_lsposed_unavailable_message">Possible causes:\n• LSPosed Hook debugging is disabled.\n• Disable detailed logs is enabled.\n• Output logs to daemon is enabled.\n• LSPosed logging was disabled unexpectedly or cannot write logs.</string>
     <string name="feedback_diagnostic_duration_section">Recording duration</string>
@@ -164,7 +176,7 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_exit_confirm_message">Leaving will stop the diagnostic session and clear its current package and results.</string>
     <string name="feedback_diagnostic_exit_clear_action">Stop and clear</string>
     <string name="feedback_diagnostic_ready_message">Diagnostic package is ready.</string>
-    <string name="feedback_diagnostic_package_metadata">%1$d files · %2$s</string>
+    <string name="feedback_diagnostic_package_metadata">%1$s | %2$s</string>
     <string name="feedback_diagnostic_path_copied">Diagnostic path copied</string>
     <string name="feedback_diagnostic_recording_message">Reproduce the issue in the target app, then return to DPIS to finish and package the diagnostic.</string>
     <string name="workspace_app">Apps</string>

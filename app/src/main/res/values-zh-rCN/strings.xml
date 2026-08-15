@@ -108,6 +108,7 @@
     <string name="feedback_diagnostic_record_action">录制反馈诊断</string>
     <string name="feedback_diagnostic_confirm_message">将保存并重启 %1$s\n请在复现问题后返回 DPIS 获取诊断包\n日志不会收集个人隐私</string>
     <string name="feedback_diagnostic_started">诊断采集已开始</string>
+    <string name="feedback_diagnostic_auto_finished">诊断已自动结束，请返回 DPIS 获取报告</string>
     <string name="feedback_diagnostic_unavailable">无法启动诊断采集</string>
     <string name="feedback_diagnostic_root_required">需要 root 权限</string>
     <string name="feedback_diagnostic_result_title">%1$s 的诊断包已生成</string>
@@ -135,8 +136,19 @@
     <string name="feedback_diagnostic_log_global_enabled">全局输出已开启</string>
     <string name="feedback_diagnostic_log_session_enabled">诊断期间将临时开启</string>
     <string name="feedback_diagnostic_lsposed_checking">正在检查…</string>
+    <string name="feedback_diagnostic_lsposed_checking_message">正在检查 LSPosed 日志文件</string>
     <string name="feedback_diagnostic_lsposed_readable">可读取</string>
     <string name="feedback_diagnostic_lsposed_unavailable">不可读取</string>
+    <string name="feedback_diagnostic_lsposed_no_permission">无权限读取</string>
+    <string name="feedback_diagnostic_lsposed_no_logs">无日志</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs">无有效日志</string>
+    <string name="feedback_diagnostic_lsposed_available">日志可用</string>
+    <string name="feedback_diagnostic_lsposed_info_action">查看 LSPosed 日志可用性说明</string>
+    <string name="feedback_diagnostic_lsposed_info_title">LSPosed 日志可用性</string>
+    <string name="feedback_diagnostic_lsposed_no_permission_message">无法读取 LSPosed 日志文件，可能是 Root 权限不可用，或日志目录拒绝访问</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">未找到 LSPosed 日志文件，可能是：\n\n• 未开启 LSPosed 的“Hook 调试”\n• 开启了 LSPosed 的“禁用详细日志”\n• 开启了 LSPosed 的“输出日志到守护进程”\n• LSPosed 日志被意外关闭或无法输出</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs_message">已读取到 LSPosed 日志文件，但没有找到有效的 DPIS 记录。可能未开启“Hook 调试”、已开启“禁用详细日志”、已开启“输出日志到守护进程”，或 LSPosed 日志被意外关闭/无法输出</string>
+    <string name="feedback_diagnostic_lsposed_available_message">已读取到包含 DPIS 记录的 LSPosed 日志文件，诊断包可以包含这些记录</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">无法读取 LSPosed 日志</string>
     <string name="feedback_diagnostic_lsposed_unavailable_message">可能原因：\n• 未开启 LSPosed 的“Hook 调试”\n• 已开启“禁用详细日志”\n• 已开启“输出日志到守护进程”\n• LSPosed 日志被意外关闭或无法输出</string>
     <string name="feedback_diagnostic_duration_section">诊断时长</string>
@@ -156,7 +168,7 @@
     <string name="feedback_diagnostic_exit_confirm_message">退出后将停止诊断，并清除当前诊断包和结果</string>
     <string name="feedback_diagnostic_exit_clear_action">停止并清除</string>
     <string name="feedback_diagnostic_ready_message">诊断包已准备完成</string>
-    <string name="feedback_diagnostic_package_metadata">%1$d 个文件 · %2$s</string>
+    <string name="feedback_diagnostic_package_metadata">%1$s | %2$s</string>
     <string name="feedback_diagnostic_path_copied">已复制诊断路径</string>
     <string name="feedback_diagnostic_recording_message">请在目标应用中复现问题，然后返回 DPIS 完成并打包诊断</string>
     <string name="workspace_app">应用</string>

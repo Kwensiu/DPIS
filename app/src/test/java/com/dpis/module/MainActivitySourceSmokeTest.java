@@ -1281,7 +1281,7 @@ public class MainActivitySourceSmokeTest {
         assertTrue(source.contains("systemScopeCoordinator.toggleScope("));
         assertTrue(
             source.contains(
-                "systemScopeCoordinator.resolveSystemHookEffectiveEnabled("
+                "SystemScopeCoordinator.resolveSystemHookEffectiveEnabled("
             )
         );
         assertFalse(source.contains("openLsposedModuleSettings()"));

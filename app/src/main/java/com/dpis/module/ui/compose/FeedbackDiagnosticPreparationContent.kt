@@ -25,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -32,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,6 +56,11 @@ import com.dpis.module.R
 private const val MIN_DIAGNOSTIC_DURATION_SECONDS = 1
 private const val MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400
 private const val DEFAULT_DIAGNOSTIC_DURATION_SECONDS = 30
+private const val LSPOSED_CHECKING = 0
+private const val LSPOSED_NO_PERMISSION = 1
+private const val LSPOSED_NO_LOGS = 2
+private const val LSPOSED_NO_VALID_LOGS = 3
+private const val LSPOSED_AVAILABLE = 4
 
 class FeedbackDiagnosticPreparationPresentation(
     initialState: State,
@@ -61,6 +68,8 @@ class FeedbackDiagnosticPreparationPresentation(
     private val onStart: () -> Unit,
     private val onSave: () -> Unit,
     private val onShare: () -> Unit,
+    private val onRefreshRootPermission: () -> Unit,
+    private val onRefreshLsposedAvailability: () -> Unit,
     private val onExplainLsposedUnavailable: () -> Unit,
     private val onCopyPackagePath: (String) -> Unit,
 ) {
@@ -75,14 +84,16 @@ class FeedbackDiagnosticPreparationPresentation(
         rootStatus: String,
         logStatus: String,
         lsposedStatus: String,
-        lsposedReadable: Boolean,
+        lsposedAvailabilityCode: Int,
+        lsposedExplanation: String,
         startEnabled: Boolean,
     ) {
         state = state.copy(
             rootStatus = rootStatus,
             logStatus = logStatus,
             lsposedStatus = lsposedStatus,
-            lsposedReadable = lsposedReadable,
+            lsposedAvailabilityCode = lsposedAvailabilityCode,
+            lsposedExplanation = lsposedExplanation,
             startEnabled = startEnabled,
         )
     }
@@ -95,7 +106,23 @@ class FeedbackDiagnosticPreparationPresentation(
 
     fun share() = onShare()
 
-    fun explainLsposedUnavailable() = onExplainLsposedUnavailable()
+    fun refreshRootPermission() = onRefreshRootPermission()
+
+    fun refreshLsposedAvailability() = onRefreshLsposedAvailability()
+
+    fun explainLsposedAvailability() = onExplainLsposedUnavailable()
+
+    fun lsposedAvailabilityCode(): Int = state.lsposedAvailabilityCode
+
+    fun lsposedExplanation(): String = state.lsposedExplanation
+
+    fun lsposedStatus(): String = state.lsposedStatus
+
+    fun rootStatus(): String = state.rootStatus
+
+    fun logStatus(): String = state.logStatus
+
+    fun isStartEnabled(): Boolean = state.startEnabled
 
     fun copyPackagePath(path: String) = onCopyPackagePath(path)
 
@@ -115,6 +142,10 @@ class FeedbackDiagnosticPreparationPresentation(
 
     fun markRecording() {
         state = state.copy(phase = Phase.RECORDING)
+    }
+
+    fun markStartFailed() {
+        state = state.copy(phase = Phase.PREPARING)
     }
 
     fun markPackaging() {
@@ -148,7 +179,8 @@ class FeedbackDiagnosticPreparationPresentation(
         val rootStatus: String,
         val logStatus: String,
         val lsposedStatus: String,
-        val lsposedReadable: Boolean,
+        val lsposedAvailabilityCode: Int,
+        val lsposedExplanation: String,
         val startEnabled: Boolean,
         val phase: Phase = Phase.PREPARING,
         val packageFileName: String = "",
@@ -334,10 +366,29 @@ private fun EnvironmentSection(
     presentation: FeedbackDiagnosticPreparationPresentation,
 ) {
     DiagnosticSection(R.string.feedback_diagnostic_environment_section) {
-        DiagnosticStatusRow(R.drawable.ic_shield_24, R.string.feedback_diagnostic_root_status, state.rootStatus, 0, 3)
+        DiagnosticRootPermissionRow(state, presentation)
         DiagnosticLogOutputRow(state.logStatus)
         DiagnosticLsposedRow(state, presentation)
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun DiagnosticRootPermissionRow(
+    state: FeedbackDiagnosticPreparationPresentation.State,
+    presentation: FeedbackDiagnosticPreparationPresentation,
+) {
+    val enabled = state.phase == FeedbackDiagnosticPreparationPresentation.Phase.PREPARING
+    SegmentedListItem(
+        onClick = presentation::refreshRootPermission,
+        enabled = enabled,
+        shapes = dpisSegmentedShapes(0, 3),
+        colors = diagnosticItemColors(enabled = enabled),
+        verticalAlignment = Alignment.CenterVertically,
+        leadingContent = { Icon(painterResource(R.drawable.ic_shield_24), null) },
+        content = { Text(stringResource(R.string.feedback_diagnostic_root_status)) },
+        supportingContent = { Text(state.rootStatus) },
+    )
 }
 
 @Composable
@@ -352,7 +403,17 @@ private fun DiagnosticLogOutputRow(status: String) {
         content = { Text(stringResource(R.string.feedback_diagnostic_log_status)) },
         supportingContent = { Text(status) },
         // This switch represents the session policy. It is visible but not editable here.
-        trailingContent = { Switch(checked = true, onCheckedChange = null) },
+        trailingContent = {
+            Switch(
+                checked = true,
+                onCheckedChange = null,
+                enabled = false,
+                colors = SwitchDefaults.colors(
+                    disabledCheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    disabledCheckedTrackColor = MaterialTheme.colorScheme.outlineVariant,
+                ),
+            )
+        },
     )
 }
 
@@ -362,18 +423,35 @@ private fun DiagnosticLsposedRow(
     state: FeedbackDiagnosticPreparationPresentation.State,
     presentation: FeedbackDiagnosticPreparationPresentation,
 ) {
+    val enabled = state.phase == FeedbackDiagnosticPreparationPresentation.Phase.PREPARING
     SegmentedListItem(
-        onClick = {
-            if (!state.lsposedReadable) {
-                presentation.explainLsposedUnavailable()
-            }
-        },
+        onClick = presentation::refreshLsposedAvailability,
+        enabled = enabled,
         shapes = dpisSegmentedShapes(2, 3),
-        colors = diagnosticItemColors(),
+        colors = diagnosticItemColors(enabled = enabled),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_healing_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_lsposed_status)) },
         supportingContent = { Text(state.lsposedStatus) },
+        trailingContent = {
+            IconButton(
+                onClick = presentation::explainLsposedAvailability,
+                enabled = enabled,
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (state.lsposedAvailabilityCode == LSPOSED_AVAILABLE) {
+                            R.drawable.ic_done_all_24
+                        } else {
+                            R.drawable.ic_warning_24
+                        }
+                    ),
+                    contentDescription = stringResource(
+                        R.string.feedback_diagnostic_lsposed_info_action
+                    ),
+                )
+            }
+        },
     )
 }
 
@@ -445,11 +523,6 @@ private fun DurationChipSelector(
     DpisHorizontalScrollWithEdgeFade(
         contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        edgeColor = if (enabled) {
-            MaterialTheme.colorScheme.surfaceContainerHigh
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        },
     ) {
             FilterChip(
                 selected = customSelected,

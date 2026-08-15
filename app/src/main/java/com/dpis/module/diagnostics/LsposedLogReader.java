@@ -8,55 +8,102 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class LsposedLogReader {
+    public enum Availability {
+        NO_PERMISSION,
+        NO_LOGS,
+        NO_VALID_LOGS,
+        AVAILABLE
+    }
     private static final long ROOT_READ_TIMEOUT_MS = 8_000L;
     private static final String SOURCE_MODULE_FILE = "modules_*.log";
     private static final String SOURCE_VERBOSE_FILE = "verbose_*.log";
+    private static final String FILE_MARKER = "__DPIS_LSP_FILES__=";
+    private static final String VALID_MARKER = "__DPIS_LSP_VALID__=";
 
     private LsposedLogReader() {
+    }
+
+    public static Availability availability(LogReadResult result) {
+        if (result == null || result.code() != 0 || result.needsRootAccess()) {
+            return Availability.NO_PERMISSION;
+        }
+        if (!result.sourceFilesPresent()) {
+            return Availability.NO_LOGS;
+        }
+        return result.validEntriesPresent()
+                ? Availability.AVAILABLE
+                : Availability.NO_VALID_LOGS;
     }
 
     public static LogReadResult readLsposedDpisCurrent() {
         LogReadResult moduleFile = runSu(
                 SOURCE_MODULE_FILE,
-                "for file in /data/adb/lspd/log/modules_*.log; do "
-                        + "[ -e \"$file\" ] && grep -a -E -h "
+                "files=0; valid=0; read_error=0; "
+                        + "for file in /data/adb/lspd/log/modules_*.log; do "
+                        + "if [ -e \"$file\" ]; then files=1; "
+                        + "if [ ! -r \"$file\" ]; then read_error=1; else "
+                        + "grep -a -E -h "
                         + "'[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,|"
                         + "Auto hot reload .*io\\.github\\.kwensiu\\.dpis' \"$file\"; "
-                        + "done; true"
+                        + "status=$?; [ $status -eq 0 ] && valid=1; "
+                        + "[ $status -gt 1 ] && read_error=1; fi; fi; done; "
+                        + "printf '__DPIS_LSP_FILES__=%s\\n__DPIS_LSP_VALID__=%s\\n' $files $valid; "
+                        + "[ $read_error -eq 0 ]"
         );
         LogReadResult verboseFile = runSu(
                 SOURCE_VERBOSE_FILE,
-                "for file in /data/adb/lspd/log/verbose_*.log; do "
-                        + "[ -e \"$file\" ] && grep -a -E -h "
+                "files=0; valid=0; read_error=0; "
+                        + "for file in /data/adb/lspd/log/verbose_*.log; do "
+                        + "if [ -e \"$file\" ]; then files=1; "
+                        + "if [ ! -r \"$file\" ]; then read_error=1; else "
+                        + "grep -a -E -h "
                         + "'[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,|"
                         + "Auto hot reload .*io\\.github\\.kwensiu\\.dpis' \"$file\"; "
-                        + "done; true"
+                        + "status=$?; [ $status -eq 0 ] && valid=1; "
+                        + "[ $status -gt 1 ] && read_error=1; fi; fi; done; "
+                        + "printf '__DPIS_LSP_FILES__=%s\\n__DPIS_LSP_VALID__=%s\\n' $files $valid; "
+                        + "[ $read_error -eq 0 ]"
         );
-        String combinedOutput = combine(moduleFile.output, verboseFile.output);
-        String combinedError = combine(moduleFile.error, verboseFile.error);
+        String combinedOutput = combine(moduleFile.output(), verboseFile.output());
+        String combinedError = combine(moduleFile.error(), verboseFile.error());
+        boolean sourceFilesPresent = moduleFile.sourceFilesPresent()
+                || verboseFile.sourceFilesPresent();
+        boolean validEntriesPresent = moduleFile.validEntriesPresent()
+                || verboseFile.validEntriesPresent();
         if (combinedOutput.isBlank() && isRootAccessError(combinedError)) {
             return new LogReadResult(
                     -1,
                     "modules_*.log + verbose_*.log",
                     "",
-                    combinedError
+                    combinedError,
+                    sourceFilesPresent,
+                    validEntriesPresent
             );
         }
-        if (!combinedOutput.isBlank() || moduleFile.code == 0 || verboseFile.code == 0) {
+        if (moduleFile.code() == 0 || verboseFile.code() == 0) {
             return new LogReadResult(
                     0,
                     "modules_*.log + verbose_*.log",
                     combinedOutput,
-                    combinedError
+                    combinedError,
+                    sourceFilesPresent,
+                    validEntriesPresent
             );
         }
-        if (moduleFile.code != 0) {
+        if (moduleFile.code() != 0) {
             return moduleFile;
         }
-        if (verboseFile.code != 0) {
+        if (verboseFile.code() != 0) {
             return verboseFile;
         }
-        return new LogReadResult(0, "modules_*.log + verbose_*.log", "", combinedError);
+        return new LogReadResult(
+                0,
+                "modules_*.log + verbose_*.log",
+                "",
+                combinedError,
+                sourceFilesPresent,
+                validEntriesPresent
+        );
     }
 
     private static LogReadResult runSu(String sourceLabel, String command) {
@@ -97,7 +144,18 @@ public final class LsposedLogReader {
             if (errorReadException.get() != null) {
                 throw errorReadException.get();
             }
-            return new LogReadResult(code, sourceLabel, output.toString(), error.toString());
+            String rawOutput = output.toString();
+            boolean sourceFilesPresent = rawOutput.contains(FILE_MARKER + "1");
+            boolean validEntriesPresent = rawOutput.contains(VALID_MARKER + "1");
+            rawOutput = stripMarkers(rawOutput);
+            return new LogReadResult(
+                    code,
+                    sourceLabel,
+                    rawOutput,
+                    error.toString(),
+                    sourceFilesPresent,
+                    validEntriesPresent
+            );
         } catch (IOException exception) {
             return new LogReadResult(-1, sourceLabel, "", exceptionMessage(exception));
         } catch (InterruptedException exception) {
@@ -129,6 +187,20 @@ public final class LsposedLogReader {
             return first;
         }
         return first + "\n" + second;
+    }
+
+    private static String stripMarkers(String value) {
+        StringBuilder result = new StringBuilder();
+        for (String line : value.split("\\R")) {
+            if (line.startsWith(FILE_MARKER) || line.startsWith(VALID_MARKER)) {
+                continue;
+            }
+            if (result.length() > 0) {
+                result.append('\n');
+            }
+            result.append(line);
+        }
+        return result.toString();
     }
 
     private static boolean isRootAccessError(String message) {

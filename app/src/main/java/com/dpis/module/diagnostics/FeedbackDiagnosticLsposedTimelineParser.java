@@ -200,20 +200,20 @@ final class FeedbackDiagnosticLsposedTimelineParser {
             LogReadResult result,
             FeedbackDiagnosticSessionWindow window
     ) {
-        if (result == null || result.output.isBlank()) {
+        if (result == null || result.output().isBlank()) {
             return new WindowedRawLog("", 0, 0, 0, 0);
         }
         if (window == null) {
-            return new WindowedRawLog(result.output, 0, 0, 0, 0);
+            return new WindowedRawLog(result.output(), 0, 0, 0, 0);
         }
         List<String> retained = new ArrayList<>();
         int total = 0;
         int droppedOutsideWindow = 0;
         int droppedUnparsed = 0;
-        List<DpisLogEntry> entries = DpisLogParser.parseLsposedDpis(result.output);
+        List<DpisLogEntry> entries = DpisLogParser.parseLsposedDpis(result.output());
         // Non-DPIS lines (other modules/apps, framework noise) are expected to
         // be filtered out and are counted separately from genuine parse misses.
-        int droppedNonDpis = Math.max(0, nonBlankLineCount(result.output) - entries.size());
+        int droppedNonDpis = Math.max(0, nonBlankLineCount(result.output()) - entries.size());
         for (DpisLogEntry entry : entries) {
             total++;
             long timestampMillis = resolveTimestampMillis(entry.timestamp, window.startMillis());
