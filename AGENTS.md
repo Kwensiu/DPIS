@@ -204,20 +204,22 @@ bundle and does not modify global agent skills.
 - Current useful pattern for issue-style validation:
   configure DPIS through the debug-only config entrypoint, use Autofish to launch
   and navigate the target app, then collect screenshots plus adb/LSPosed logs.
+- Do not use `monkey` to launch target applications, either from ADB automation or
+  DPIS runtime logic. On some systems it can unexpectedly enable automatic
+  rotation. Prefer an explicit launcher intent or resolved launcher component;
+  for ADB validation, use `adb shell am start` with the target package/component.
 
 ## Frida Runtime Probes
 - Frida may be used as a read-only Android app-process probe when Xposed rebuilds
   would be too slow. Prefer it for process lists, current Activity/resources,
   View tree metrics, and one-off method return inspection.
-- Current Windows user install path (example):
-  `$env:APPDATA\Python\Python314\Scripts\frida.exe` and
-  `$env:APPDATA\Python\Python314\Scripts\frida-ps.exe`.
-- Current device server pattern:
-  push `frida-server-<version>-android-arm64` to `/data/local/tmp/frida-server`,
-  then run it as root with
-  `adb -s <device> shell su 0 sh -c "nohup /data/local/tmp/frida-server >/data/local/tmp/frida.log 2>&1 &"`.
-- Example process check:
-  `& "$env:APPDATA\Python\Python314\Scripts\frida-ps.exe" -U | Select-String -Pattern 'com.tencent.mm|PID|Name'`.
+- Use the Frida binaries installed on the local machine; do not encode a
+  developer-specific Python or filesystem path in project documentation.
+- Start a matching Frida server on the connected test device using the local
+  device tooling; keep the server binary and its temporary logs outside the
+  repository.
+- Example process check: run the locally installed `frida-ps` with `-U` and
+  filter for the target package, PID, or process name.
 - Keep Frida artifacts local. Do not commit `.frida/`, downloaded servers,
   temporary Frida scripts, captures, or generated debug evidence unless they are
   intentionally promoted into documented tooling.
@@ -240,12 +242,11 @@ bundle and does not modify global agent skills.
   order.
 - Record every new route exploration, route detail adjustment, abandoned
   attempt, and runtime finding in the relevant living route document.
-- For LSPosed diagnostics (both flavors), use `/data/adb/lspd/log/modules_*.log`
-  and `verbose_*.log` as the primary source when proving module entry or
-  hook execution. `logcat` is useful for cross-checking forwarded
-  `LSPosedFramework` lines, but absence in plain `logcat` is not a reliable
-  negative signal. See `docs/lsposed-diagnostics.md` for the pull-and-filter
-  path.
+- For LSPosed diagnostics (both flavors), use the framework's module and
+  verbose logs as the primary source when proving module entry or hook
+  execution. `logcat` is useful for cross-checking forwarded framework lines,
+  but absence in plain `logcat` is not a reliable negative signal. See
+  `docs/lsposed-diagnostics.md` for the pull-and-filter path.
 - Probe one boundary at a time: entry, guard return, dependency availability,
   hook install, callback hit, and final effect.
 - Do not diagnose a later stage until logs prove execution reached that stage.
@@ -273,12 +274,3 @@ bundle and does not modify global agent skills.
   - Verification steps/commands executed
   - Screenshots or logs for UI/runtime behavior changes when relevant
   - Linked issue/task if available
-
-## RTK In Codex
-- Codex sessions should not assume the Bash hook is active.
-- When compact shell output matters, call `rtk` explicitly, for example
-  `rtk git status`, `rtk gradlew :app:testAllDebugUnitTests`, or `rtk rg`.
-- Treat this file and `C:/<username>/.claude/RTK.md` as the durable source
-  of this preference; do not rely on chat history to preserve it.
-
-@C:\<username>\.codex\RTK.md
