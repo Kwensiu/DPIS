@@ -144,6 +144,29 @@ the embedded face family/style label.
 
 ## Resources Font Event Gate
 
+## Synchronous Field Mutation Scheduling
+
+Compat field-rewrite routes keep `TextView`, `Paint`, and `TextPaint` setters
+synchronous because callers must observe the target size before layout and draw
+continue. Their shared mutation scheduler is a decision boundary, not a
+background executor:
+
+- an object whose current size is already the recorded target keeps that value
+  when the same recorded base size is submitted again;
+- this `kept` outcome is exported separately from `skipped`, so a diagnostic
+  can measure duplicate setter calls removed by the scheduler;
+- an external size drift, factor change, or new base size re-enters normal
+  arbitration and may write a new target;
+- a stronger TextView/resource provenance remains observationally authoritative
+  for the Paint fallback;
+- the keep decision avoids a redundant native setter. It does not suppress a
+  genuinely new user/app size or defer a required mutation.
+
+This boundary exists because the runtime evidence from comment-heavy screens
+showed repeated Paint fallback applications and TextView setter reinforcement.
+The optimization targets duplicate synchronous writes and layout invalidation;
+it does not claim that every remaining frame delay is caused by DPIS.
+
 The app-process `resources_font` route may see two different runtime meanings
 for the same target factor:
 
@@ -194,6 +217,40 @@ Resources route:
   Resources route has already proven the target-stabilization event.
 - `ResourcesManager` write-side hooks stay owned by viewport routes and system
   font emulation. Compat `resources_font` should not install them by itself.
+
+## Diagnostic Evidence Semantics
+
+Font route performance aggregates distinguish three outcomes:
+
+- `applied`: the route synchronously changed the framework object.
+- `kept`: the route owns the current target value and avoided a redundant
+  setter call.
+- `skipped`: the callback was observed, but the route yielded to a stronger
+  provenance owner or could not establish a safe target.
+
+`kept` remains full-fidelity in the performance aggregate, but is not emitted
+as one timeline/transport event per callback because it performs no mutation;
+this keeps repeated setter observations from becoming diagnostic work on the
+target thread.
+
+TextView target-state cache entries carry the factor that produced the target.
+An entry is eligible for `kept` only when that factor still matches the active
+factor; a factor change therefore re-enters normal arbitration instead of
+reusing an old target size. Current-size drift and a new base size remain
+value-based invalidation boundaries, while the weak-key map still lets dead
+TextViews be collected.
+
+The `textview_current_px_fallback` route follows the same distinction. A
+known target-sized `TextView` is `kept`; a `Resources` / SP / absolute route
+that owns the value remains `skipped` for the fallback route. This prevents
+the aggregate from understating scheduler hits or treating route arbitration
+as a redundant-write optimization.
+
+Paint mutation counters and latency measurements remain full-fidelity during
+diagnostics. Caller stack text is sampled per Paint type and input-size bucket
+to keep repeated stack formatting and transport payloads from becoming a
+second source of jank; the sample is evidence for attribution, not the source
+of the aggregate counts.
 
 ## Documentation Rules
 

@@ -97,6 +97,14 @@ the bridge queue is bounded so diagnostic capture cannot grow without limit.
 Queue overflow is an evidence-completeness limitation, not evidence that the
 Legacy route did not execute.
 
+As of 2026-08-15, shared compat field-rewrite setters use a synchronous
+`FontMutationScheduler` decision boundary. Paint/TextPaint fallback keeps an
+already-target-sized object when the same recorded base size repeats, avoiding
+redundant native setters. Legacy keeps required synchronous mutations and still
+re-arbitrates after external drift, factor changes, or a new base size.
+The diagnostic aggregate exports this outcome as `kept`, separately from
+ordinary skipped callbacks.
+
 The shared app-process font route implementation now lives under
 `runtime.font`. Legacy flavor entry points still call the same install/reset
 protocols; the move only classifies ActivityThread, Resources font scheduling,

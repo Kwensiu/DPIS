@@ -63,6 +63,16 @@ public final class TextViewFontProvenanceTracker {
         }
     }
 
+    public static Float appliedTargetForFactor(Object textView, float factor) {
+        Entry entry = getEntry(textView);
+        if (entry == null) {
+            return null;
+        }
+        synchronized (entry) {
+            return isSameFactor(entry.factorAtApply, factor) ? entry.appliedPx : null;
+        }
+    }
+
     public static Entry snapshotForTest(Object textView) {
         Entry entry = getEntry(textView);
         if (entry == null) {

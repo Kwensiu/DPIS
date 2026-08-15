@@ -72,6 +72,19 @@ public class PaintProvenanceTrackerTest {
     }
 
     @Test
+    public void keepsCurrentPaintTargetWhenUpstreamRepeatsBaseSize() {
+        Object paint = new Object();
+
+        float adjusted = PaintProvenanceTracker.resolveScaled(paint, 18f, 0.93f);
+        PaintProvenanceTracker.recordApplied(paint, adjusted, 0.93f);
+
+        PaintProvenanceTracker.Resolution resolution = PaintProvenanceTracker.resolveFallback(
+                paint, 18f, 16.74f, 0.93f, false);
+
+        assertEquals(PaintProvenanceTracker.Action.KEEP, resolution.action());
+    }
+
+    @Test
     public void scaledValueAfterDriftIsTreatedAsAlreadyScaledSafetyNet() {
         Object paint = new Object();
 

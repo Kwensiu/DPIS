@@ -51,6 +51,15 @@ public final class PaintProvenanceTracker {
                 return Resolution.skip(incomingPx);
             }
             float adjustedPx = entry.resolveScaledLocked(incomingPx, factor);
+            FontMutationScheduler.Decision schedule = FontMutationScheduler.decide(
+                    incomingPx,
+                    currentPx,
+                    adjustedPx,
+                    factor,
+                    false);
+            if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
+                return Resolution.keep(incomingPx);
+            }
             if (FontFieldRewriteMath.approximatelyEqual(adjustedPx, incomingPx)) {
                 return Resolution.observe(incomingPx);
             }
@@ -80,7 +89,6 @@ public final class PaintProvenanceTracker {
             entry.lastAppliedPxBySlot[0] = appliedPx;
             entry.factorAtApplyBySlot[0] = factor;
             entry.syncPrimaryFields();
-            entry.lastTouchNanos = System.nanoTime();
         }
     }
 
@@ -132,32 +140,28 @@ public final class PaintProvenanceTracker {
         float basePx;
         Float lastAppliedPx;
         Float factorAtApply;
-        long lastTouchNanos;
         final float[] basePxBySlot;
         final Float[] lastAppliedPxBySlot;
         final Float[] factorAtApplyBySlot;
 
         Entry() {
-            this(new float[MAX_SLOTS], new Float[MAX_SLOTS], new Float[MAX_SLOTS], 0L);
+            this(new float[MAX_SLOTS], new Float[MAX_SLOTS], new Float[MAX_SLOTS]);
         }
 
         private Entry(Entry source) {
             this(
                     source.basePxBySlot.clone(),
                     source.lastAppliedPxBySlot.clone(),
-                    source.factorAtApplyBySlot.clone(),
-                    source.lastTouchNanos);
+                    source.factorAtApplyBySlot.clone());
         }
 
         private Entry(float[] basePxBySlot,
                       Float[] lastAppliedPxBySlot,
-                      Float[] factorAtApplyBySlot,
-                      long lastTouchNanos) {
+                      Float[] factorAtApplyBySlot) {
             this.basePxBySlot = basePxBySlot;
             this.lastAppliedPxBySlot = lastAppliedPxBySlot;
             this.factorAtApplyBySlot = factorAtApplyBySlot;
             syncPrimaryFields();
-            this.lastTouchNanos = lastTouchNanos;
         }
 
         private int findBaseSlot(float incomingPx) {
@@ -193,7 +197,6 @@ public final class PaintProvenanceTracker {
                         lastAppliedPxBySlot[i],
                         factorAtApplyBySlot[i])) {
                     promoteSlot(i);
-                    lastTouchNanos = System.nanoTime();
                     return true;
                 }
             }
@@ -208,7 +211,6 @@ public final class PaintProvenanceTracker {
             for (int i = 0; i < MAX_SLOTS; i++) {
                 if (matchesKnownScaledSize(i, incomingPx, factor)) {
                     promoteSlot(i);
-                    lastTouchNanos = System.nanoTime();
                     return incomingPx;
                 }
             }
@@ -221,7 +223,6 @@ public final class PaintProvenanceTracker {
                 factorAtApplyBySlot[slot] = null;
             }
             promoteSlot(slot);
-            lastTouchNanos = System.nanoTime();
             return basePxBySlot[0] * factor;
         }
 
@@ -236,7 +237,6 @@ public final class PaintProvenanceTracker {
                 }
             }
             syncPrimaryFields();
-            lastTouchNanos = System.nanoTime();
         }
 
         private void promoteSlot(int slot) {
@@ -268,6 +268,7 @@ public final class PaintProvenanceTracker {
     public enum Action {
         WRITE,
         SKIP,
+        KEEP,
         OBSERVE
     }
 
@@ -286,6 +287,10 @@ public final class PaintProvenanceTracker {
 
         static Resolution skip(float incomingPx) {
             return new Resolution(Action.SKIP, incomingPx);
+        }
+
+        static Resolution keep(float incomingPx) {
+            return new Resolution(Action.KEEP, incomingPx);
         }
 
         static Resolution observe(float incomingPx) {

@@ -195,6 +195,20 @@ bridge lines use a bounded asynchronous dispatcher, while low-frequency session
 and aggregate lines remain direct. A full queue is a transport completeness
 gap and must not be interpreted as a missing callback or mutation.
 
+As of 2026-08-15, compat field-rewrite setters use a shared synchronous
+`FontMutationScheduler` decision boundary. Paint/TextPaint fallback and
+TextView `setTextSize` retain an already-target-sized object when the same
+recorded base size is submitted again, avoiding a redundant native setter and
+the TextView old-size-then-target double write. External drift, factor changes,
+and new base sizes still enter normal arbitration. This is a hot-path mutation
+deduplication rule, not asynchronous font application; the setter remains
+synchronous so layout observes the target immediately.
+
+The `kept` outcome is now published as a separate target-process performance
+counter and timeline stage. It must not be folded into `skipped`: `kept` means
+DPIS intentionally preserved the current target and did not call the native
+setter, while `skipped` means the route was observed and allowed to continue.
+
 ## Full Tree
 
 ```text

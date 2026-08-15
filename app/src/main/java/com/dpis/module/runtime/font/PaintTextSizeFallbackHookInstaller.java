@@ -85,7 +85,19 @@ public final class PaintTextSizeFallbackHookInstaller {
                             );
                             return chain.proceed();
                         }
-                        float adjusted = PaintProvenanceTracker.resolveScaled(paint, incoming, factor);
+                        PaintProvenanceTracker.Resolution resolution =
+                                PaintProvenanceTracker.resolveFallback(
+                                        paint, incoming, paint.getTextSize(), factor, false);
+                        if (resolution.action() == PaintProvenanceTracker.Action.KEEP) {
+                            FeedbackDiagnosticRuntimeHotPathEvents.kept(
+                                    packageName,
+                                    "paint_fallback",
+                                    "reason=current_target, paint=" + paint.getClass().getName()
+                                            + ", factor=" + factor
+                                            + ", percent=" + targetPercent);
+                            return null;
+                        }
+                        float adjusted = resolution.adjustedPx();
                         String detail = "paint=" + paint.getClass().getName()
                                 + ", in=" + incoming
                                 + ", out=" + adjusted
