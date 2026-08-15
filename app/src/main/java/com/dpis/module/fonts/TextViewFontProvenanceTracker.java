@@ -91,6 +91,15 @@ public final class TextViewFontProvenanceTracker {
                                UnitKind unitKind) {
         Entry entry = getOrCreateEntry(textView);
         synchronized (entry) {
+            // Repeated callbacks often report the same target. Avoid rewriting
+            // the provenance record while preserving updates from new routes or factors.
+            if (Float.compare(entry.basePx, basePx) == 0
+                    && Float.compare(entry.appliedPx, appliedPx) == 0
+                    && Float.compare(entry.factorAtApply, factor) == 0
+                    && entry.source == source
+                    && entry.unitKind == unitKind) {
+                return;
+            }
             entry.basePx = basePx;
             entry.appliedPx = appliedPx;
             entry.factorAtApply = factor;

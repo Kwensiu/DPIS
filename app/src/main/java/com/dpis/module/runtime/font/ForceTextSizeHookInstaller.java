@@ -1483,6 +1483,12 @@ public final class ForceTextSizeHookInstaller {
         if (textView == null || targetPx <= 0f) {
             return;
         }
+        TargetTextSize previous = LAST_TARGET_TEXT_SIZES.get(textView);
+        if (previous != null
+                && Float.compare(previous.px, targetPx) == 0
+                && previous.matchesFactor(factor)) {
+            return;
+        }
         LAST_TARGET_TEXT_SIZES.put(textView, new TargetTextSize(targetPx, factor));
     }
 
