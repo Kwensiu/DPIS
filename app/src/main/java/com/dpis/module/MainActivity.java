@@ -342,7 +342,7 @@ public final class MainActivity
     private com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
             feedbackDiagnosticPreparationPresentation;
     private boolean feedbackDiagnosticDurationEnabled;
-    private int feedbackDiagnosticDurationMinutes = 5;
+    private int feedbackDiagnosticDurationSeconds = 30;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
     private TemplateEditorDraft retainedGlobalPrefillDraft;
@@ -2010,7 +2010,7 @@ public final class MainActivity
                         "",
                         List.of(),
                         false,
-                        5
+                        30
                 );
         com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
                 = new com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation(
@@ -2023,8 +2023,8 @@ public final class MainActivity
                     if (feedbackDiagnosticPreparationPresentation != null) {
                         feedbackDiagnosticDurationEnabled =
                                 feedbackDiagnosticPreparationPresentation.isDurationEnabled();
-                        feedbackDiagnosticDurationMinutes =
-                                feedbackDiagnosticPreparationPresentation.selectedDurationMinutes();
+                        feedbackDiagnosticDurationSeconds =
+                                feedbackDiagnosticPreparationPresentation.selectedDurationSeconds();
                     }
                     if (!saveComposeAppEditor(item, draft)) {
                         return Unit.INSTANCE;
@@ -3993,7 +3993,7 @@ public final class MainActivity
                 if (feedbackDiagnosticPreparationPresentation != null
                         && feedbackDiagnosticDurationEnabled) {
                     feedbackDiagnosticCoordinator.scheduleFinishAfterDelay(
-                            feedbackDiagnosticDurationMinutes * 60_000L
+                            feedbackDiagnosticDurationSeconds * 1_000L
                     );
                 }
                 showToast(R.string.feedback_diagnostic_started);

@@ -48,6 +48,10 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String preparation = read(
                 "src/main/java/com/dpis/module/ui/compose/"
                         + "FeedbackDiagnosticPreparationContent.kt");
+        String theme = read(
+                "src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
+        String edgeFade = read(
+                "src/main/java/com/dpis/module/ui/compose/HorizontalScrollEdgeFade.kt");
         String shell = read("src/main/java/com/dpis/module/MainComposeShellHost.kt");
         String segmentedPolicy = read(
                 "src/main/java/com/dpis/module/ui/compose/SegmentedListItemPolicy.kt");
@@ -70,10 +74,10 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
         assertTrue(main.contains("feedbackDiagnosticCoordinator.start("));
-        assertTrue(main.contains("selectedDurationMinutes()"));
+        assertTrue(main.contains("selectedDurationSeconds()"));
         assertTrue(main.contains("isDurationEnabled()"));
         assertTrue(main.contains("feedbackDiagnosticDurationEnabled"));
-        assertTrue(main.contains("feedbackDiagnosticDurationMinutes * 60_000L"));
+        assertTrue(main.contains("feedbackDiagnosticDurationSeconds * 1_000L"));
         assertTrue(main.contains("ComposeMessageDialog.show("));
         assertTrue(main.contains("feedback_diagnostic_lsposed_unavailable_message"));
         assertTrue(main.contains("presentation.updateEnvironment("));
@@ -101,6 +105,18 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(preparation.contains("Switch("));
         assertTrue(preparation.contains("setDurationEnabled("));
         assertTrue(preparation.contains("AnimatedConditionalItem(visible = state.durationEnabled)"));
+        assertTrue(preparation.contains("DurationChipSelector("));
+        assertTrue(edgeFade.contains("horizontalScroll(scrollState)"));
+        assertTrue(preparation.contains("DpisHorizontalScrollWithEdgeFade("));
+        assertTrue(preparation.contains("R.drawable.ic_view_kanban_24"));
+        assertTrue(preparation.contains("R.drawable.ic_healing_24"));
+        assertTrue(preparation.contains("R.drawable.ic_hourglass_check_24"));
+        assertTrue(theme.contains("DpisHorizontalScrollWithEdgeFade("));
+        assertTrue(edgeFade.contains("scrollState.value > 0"));
+        assertTrue(edgeFade.contains("scrollState.value < scrollState.maxValue"));
+        assertTrue(preparation.contains("CustomDurationDialog("));
+        assertTrue(preparation.contains("MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400"));
+        assertTrue(preparation.contains("feedback_diagnostic_duration_custom"));
         assertTrue(preparation.contains("DiagnosticLogOutputRow(state.logStatus)"));
         assertTrue(preparation.contains("DiagnosticLsposedRow(state, presentation)"));
         assertTrue(preparation.contains("presentation.explainLsposedUnavailable()"));
