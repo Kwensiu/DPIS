@@ -443,10 +443,31 @@ public final class FeedbackDiagnosticCoordinator {
 
     public void onDpisResumed() {
         if (running && runningTargetLaunchStarted && !finishing) {
-            finishing = true;
-            handler.removeCallbacksAndMessages(null);
-            executor.execute(this::finishInBackground);
+            requestFinish("foreground returned to DPIS");
         }
+    }
+
+    /** Schedules a bounded diagnostic stop without requiring the DPIS UI to stay foreground. */
+    public boolean scheduleFinishAfterDelay(long delayMs) {
+        if (!running || !runningTargetLaunchStarted || finishing || delayMs <= 0L) {
+            return false;
+        }
+        handler.postDelayed(() -> {
+            if (running && runningTargetLaunchStarted && !finishing) {
+                requestFinish("diagnostic timer elapsed");
+            }
+        }, delayMs);
+        return true;
+    }
+
+    private void requestFinish(String reason) {
+        if (!running || finishing) {
+            return;
+        }
+        finishing = true;
+        handler.removeCallbacksAndMessages(null);
+        recordTimelineEvent(reason);
+        executor.execute(this::finishInBackground);
     }
 
     private void failForMissingRoot(Request request) {

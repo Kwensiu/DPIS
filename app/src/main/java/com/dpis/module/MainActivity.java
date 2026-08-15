@@ -1,7 +1,6 @@
 package com.dpis.module;
 
 import com.dpis.module.appconfig.LandAppDetailPaneBinder;
-
 import com.dpis.module.diagnostics.DiagnosticLogGate;
 
 import com.dpis.module.settings.SystemScopeCoordinator;
@@ -25,6 +24,8 @@ import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
 import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
 
 import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.LogReadResult;
+import com.dpis.module.diagnostics.LsposedLogReader;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -338,6 +339,11 @@ public final class MainActivity
     private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
     private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private androidx.appcompat.app.AlertDialog activeFeedbackDiagnosticPackagingDialog;
+    private boolean feedbackDiagnosticResultAvailable;
+    private com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
+            feedbackDiagnosticPreparationPresentation;
+    private boolean feedbackDiagnosticDurationEnabled;
+    private int feedbackDiagnosticDurationMinutes = 5;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
     private TemplateEditorDraft retainedGlobalPrefillDraft;
@@ -1971,14 +1977,134 @@ public final class MainActivity
         if (item == null || draft == null) {
             return;
         }
-        if (!DiagnosticLogGate.ensureEnabled(
-                this,
-                () -> showComposeFeedbackDiagnosticConfirmation(item, draft),
-                null
-        )) {
+        showComposeFeedbackDiagnosticPreparation(item, draft);
+    }
+
+    private void showComposeFeedbackDiagnosticPreparation(
+            AppListItem item,
+            AppConfigEditorDraft draft
+    ) {
+        feedbackDiagnosticResultAvailable = false;
+        if (composeShellHost == null) {
+            showComposeFeedbackDiagnosticConfirmation(item, draft);
             return;
         }
-        showComposeFeedbackDiagnosticConfirmation(item, draft);
+        String rootStatus = feedbackDiagnosticRootStatus();
+        String logStatus = getString(R.string.feedback_diagnostic_log_session_enabled);
+        String versionName = resolvePackageVersionName(item.packageName);
+        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State initialState
+                = new com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State(
+                        item.label,
+                        item.packageName,
+                        item.icon,
+                        versionName,
+                        rootStatus,
+                        logStatus,
+                        getString(R.string.feedback_diagnostic_lsposed_checking),
+                        false,
+                        RootAccessProbe.cachedResult().status
+                                == RootAccessProbe.Status.AVAILABLE,
+                        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.Phase.PREPARING,
+                        "",
+                        "",
+                        "",
+                        List.of(),
+                        false,
+                        5
+                );
+        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
+                = new com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation(
+                        initialState,
+                        () -> {
+                            handleFeedbackDiagnosticPageBack();
+                            return Unit.INSTANCE;
+                        },
+                        () -> {
+                    if (feedbackDiagnosticPreparationPresentation != null) {
+                        feedbackDiagnosticDurationEnabled =
+                                feedbackDiagnosticPreparationPresentation.isDurationEnabled();
+                        feedbackDiagnosticDurationMinutes =
+                                feedbackDiagnosticPreparationPresentation.selectedDurationMinutes();
+                    }
+                    if (!saveComposeAppEditor(item, draft)) {
+                        return Unit.INSTANCE;
+                    }
+                    markComposeAppEditorSaved(draft);
+                    if (feedbackDiagnosticPreparationPresentation != null) {
+                        feedbackDiagnosticPreparationPresentation.markRecording();
+                    }
+                    boolean started = feedbackDiagnosticCoordinator.start(
+                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                                    item,
+                                    composeEditorDialogState(item, draft),
+                                    versionName,
+                                    getHookConfigStore()
+                            )
+                    );
+                    if (!started) {
+                        showToast(R.string.feedback_diagnostic_unavailable);
+                    }
+                    return Unit.INSTANCE;
+                },
+                        () -> {
+                            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                                    = pendingFeedbackDiagnosticPackage;
+                            if (diagnosticPackage != null) {
+                                launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
+                            }
+                            return Unit.INSTANCE;
+                        },
+                        () -> {
+                            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                                    = pendingFeedbackDiagnosticPackage;
+                            if (diagnosticPackage != null) {
+                                shareFeedbackDiagnostic(diagnosticPackage);
+                            }
+                            return Unit.INSTANCE;
+                        },
+                        () -> {
+                            com.dpis.module.ui.compose.ComposeMessageDialog.show(
+                                    this,
+                                    getString(R.string.feedback_diagnostic_lsposed_unavailable_title),
+                                    getString(R.string.feedback_diagnostic_lsposed_unavailable_message),
+                                    getString(R.string.dialog_close_button)
+                            );
+                            return Unit.INSTANCE;
+                        },
+                        path -> {
+                            copyFeedbackDiagnosticPath(path);
+                            return Unit.INSTANCE;
+                        }
+        );
+        feedbackDiagnosticPreparationPresentation = presentation;
+        composeShellHost.showDiagnosticPreparation(presentation);
+        feedbackDiagnosticExportExecutor.execute(() -> {
+            RootAccessProbe.Result rootAccess = RootAccessProbe.probe();
+            LogReadResult result = rootAccess.status == RootAccessProbe.Status.AVAILABLE
+                    ? LsposedLogReader.readLsposedDpisCurrent()
+                    : null;
+            boolean readable = result != null && result.code == 0;
+            runOnUiThread(() -> presentation.updateEnvironment(
+                    feedbackDiagnosticRootStatus(),
+                    logStatus,
+                    getString(readable
+                            ? R.string.feedback_diagnostic_lsposed_readable
+                            : R.string.feedback_diagnostic_lsposed_unavailable),
+                    readable,
+                    rootAccess.status == RootAccessProbe.Status.AVAILABLE
+            ));
+        });
+    }
+
+    private String feedbackDiagnosticRootStatus() {
+        RootAccessProbe.Result result = RootAccessProbe.cachedResult();
+        if (result.status == RootAccessProbe.Status.AVAILABLE) {
+            return getString(R.string.feedback_diagnostic_root_available, result.provider);
+        }
+        if (result.status == RootAccessProbe.Status.UNAVAILABLE) {
+            return getString(R.string.feedback_diagnostic_root_unavailable);
+        }
+        return getString(R.string.feedback_diagnostic_root_checking);
     }
 
     private void showComposeFeedbackDiagnosticConfirmation(
@@ -1988,10 +2114,7 @@ public final class MainActivity
         ComposeConfirmDialog.showWithLabels(
                 this,
                 getString(R.string.feedback_diagnostic_action),
-                getString(
-                        R.string.feedback_diagnostic_confirm_message,
-                        item.label
-                ),
+                getString(R.string.feedback_diagnostic_confirm_message, item.label),
                 getString(android.R.string.cancel),
                 getString(R.string.feedback_diagnostic_save_and_start_button),
                 () -> {
@@ -3876,6 +3999,12 @@ public final class MainActivity
 
             @Override
             public void onFeedbackDiagnosticStarted() {
+                if (feedbackDiagnosticPreparationPresentation != null
+                        && feedbackDiagnosticDurationEnabled) {
+                    feedbackDiagnosticCoordinator.scheduleFinishAfterDelay(
+                            feedbackDiagnosticDurationMinutes * 60_000L
+                    );
+                }
                 showToast(R.string.feedback_diagnostic_started);
             }
 
@@ -4090,9 +4219,8 @@ public final class MainActivity
         FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
                 = pendingFeedbackDiagnosticPackage;
         if (diagnosticPackage != null && mainActivityResumed) {
-            pendingFeedbackDiagnosticPackage = null;
             dismissFeedbackDiagnosticPackagingDialog();
-            showFeedbackDiagnosticResultSheet(diagnosticPackage);
+            showFeedbackDiagnosticReady(diagnosticPackage);
             return;
         }
         FeedbackDiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
@@ -4100,7 +4228,11 @@ public final class MainActivity
             return;
         }
         pendingFeedbackDiagnosticResult = null;
-        showFeedbackDiagnosticPackagingDialog();
+        if (feedbackDiagnosticPreparationPresentation != null) {
+            feedbackDiagnosticPreparationPresentation.markPackaging();
+        } else {
+            showFeedbackDiagnosticPackagingDialog();
+        }
         feedbackDiagnosticExportExecutor.execute(() -> {
             FeedbackDiagnosticExportBuilder.DiagnosticPackage built;
             try {
@@ -4112,6 +4244,9 @@ public final class MainActivity
             runOnUiThread(() -> {
                 dismissFeedbackDiagnosticPackagingDialog();
                 if (finalBuilt == null) {
+                    if (feedbackDiagnosticPreparationPresentation != null) {
+                        feedbackDiagnosticPreparationPresentation.showPackagingFailed();
+                    }
                     Toast.makeText(
                             this,
                             R.string.feedback_diagnostic_save_failed,
@@ -4123,9 +4258,54 @@ public final class MainActivity
                     pendingFeedbackDiagnosticPackage = finalBuilt;
                     return;
                 }
-                showFeedbackDiagnosticResultSheet(finalBuilt);
+                showFeedbackDiagnosticReady(finalBuilt);
             });
         });
+    }
+
+    private void showFeedbackDiagnosticReady(
+            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+    ) {
+        if (diagnosticPackage == null) {
+            return;
+        }
+        pendingFeedbackDiagnosticPackage = diagnosticPackage;
+        feedbackDiagnosticResultAvailable = true;
+        if (feedbackDiagnosticPreparationPresentation == null) {
+            showFeedbackDiagnosticResultSheet(diagnosticPackage);
+            return;
+        }
+        feedbackDiagnosticPreparationPresentation.showReady(
+                diagnosticPackage.fileName,
+                feedbackDiagnosticSharedCachePath(diagnosticPackage),
+                getString(
+                        R.string.feedback_diagnostic_package_metadata,
+                        diagnosticPackage.entries.size(),
+                        android.text.format.Formatter.formatFileSize(
+                                this,
+                                diagnosticPackage.zipBytes.length
+                        )
+                ),
+                diagnosticPackage.entries.stream()
+                        .map(entry -> new com.dpis.module.ui.compose
+                                .FeedbackDiagnosticPreparationPresentation.OutputEntry(
+                                entry.name,
+                                entry.hasLineCount
+                                        ? getString(
+                                                R.string.feedback_diagnostic_result_entry_meta,
+                                                entry.lineCount,
+                                                android.text.format.Formatter.formatFileSize(
+                                                        this,
+                                                        entry.byteCount
+                                                )
+                                        )
+                                        : android.text.format.Formatter.formatFileSize(
+                                                this,
+                                                entry.byteCount
+                                        )
+                        ))
+                        .toList()
+        );
     }
 
     private void showFeedbackDiagnosticResultSheet(
@@ -4134,6 +4314,7 @@ public final class MainActivity
         if (diagnosticPackage == null) {
             return;
         }
+        feedbackDiagnosticResultAvailable = true;
         new FeedbackDiagnosticResultSheet(this, new FeedbackDiagnosticResultSheet.Host() {
             @Override
             public void shareFeedbackDiagnostic(
@@ -4149,6 +4330,44 @@ public final class MainActivity
                 MainActivity.this.launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
             }
         }).show(diagnosticPackage);
+    }
+
+    private void handleFeedbackDiagnosticPageBack() {
+        if (!hasFeedbackDiagnosticStateToClear()) {
+            dismissFeedbackDiagnosticPage();
+            return;
+        }
+        ComposeConfirmDialog.showWithLabels(
+                this,
+                getString(R.string.feedback_diagnostic_action),
+                getString(R.string.feedback_diagnostic_exit_confirm_message),
+                getString(android.R.string.cancel),
+                getString(R.string.feedback_diagnostic_exit_clear_action),
+                () -> {
+                    feedbackDiagnosticCoordinator.cancel();
+                    pendingFeedbackDiagnosticResult = null;
+                    pendingFeedbackDiagnosticPackage = null;
+                    feedbackDiagnosticResultAvailable = false;
+                    dismissFeedbackDiagnosticPackagingDialog();
+                    dismissFeedbackDiagnosticPage();
+                },
+                () -> { }
+        );
+    }
+
+    private boolean hasFeedbackDiagnosticStateToClear() {
+        return feedbackDiagnosticCoordinator.isRunning()
+                || pendingFeedbackDiagnosticResult != null
+                || pendingFeedbackDiagnosticPackage != null
+                || activeFeedbackDiagnosticPackagingDialog != null
+                || feedbackDiagnosticResultAvailable;
+    }
+
+    private void dismissFeedbackDiagnosticPage() {
+        feedbackDiagnosticPreparationPresentation = null;
+        if (composeShellHost != null) {
+            composeShellHost.dismissDiagnosticPreparation();
+        }
     }
 
     private void showFeedbackDiagnosticPackagingDialog() {
@@ -4280,6 +4499,30 @@ public final class MainActivity
             outputStream.write(diagnosticPackage.zipBytes);
         }
         return file;
+    }
+
+    private String feedbackDiagnosticSharedCachePath(
+            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+    ) {
+        return "/data/data/" + getPackageName() + "/cache/"
+                + SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME + "/"
+                + diagnosticPackage.fileName;
+    }
+
+    private void copyFeedbackDiagnosticPath(String path) {
+        if (path == null || path.isBlank()) {
+            return;
+        }
+        android.content.ClipboardManager clipboard =
+                (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboard == null) {
+            return;
+        }
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
+                getString(R.string.feedback_diagnostic_action),
+                path
+        ));
+        Toast.makeText(this, R.string.feedback_diagnostic_path_copied, Toast.LENGTH_SHORT).show();
     }
 
     private void launchFeedbackDiagnosticShareSheet(Uri uri) {

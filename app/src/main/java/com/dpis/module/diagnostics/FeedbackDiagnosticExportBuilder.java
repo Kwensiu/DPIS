@@ -57,9 +57,21 @@ public final class FeedbackDiagnosticExportBuilder {
         }
 
         EntrySummary(String name, int byteCount, int lineCount) {
+            this(name, byteCount, lineCount, true);
+        }
+
+        private EntrySummary(String name, int byteCount, int lineCount, boolean hasLineCount) {
             this.name = name;
             this.byteCount = Math.max(0, byteCount);
             this.lineCount = Math.max(0, lineCount);
+            this.hasLineCount = hasLineCount;
+        }
+
+        /** True only for UTF-8 diagnostic text where a line count has meaning. */
+        public final boolean hasLineCount;
+
+        static EntrySummary binary(String name, int byteCount) {
+            return new EntrySummary(name, byteCount, 0, false);
         }
 
         private static int countLines(String content) {
@@ -155,7 +167,7 @@ public final class FeedbackDiagnosticExportBuilder {
                 new EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed)
         ));
         if (perfettoTrace.length > 0) {
-            entries.add(new EntrySummary(PERFETTO_TRACE_ENTRY_NAME, perfettoTrace.length, 0));
+            entries.add(EntrySummary.binary(PERFETTO_TRACE_ENTRY_NAME, perfettoTrace.length));
         }
         return new DiagnosticPackage(
                 result,

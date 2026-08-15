@@ -1,6 +1,7 @@
 package com.dpis.module.diagnostics
 
 import android.app.Activity
+import android.text.format.Formatter
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -77,11 +78,15 @@ class FeedbackDiagnosticResultSheet(
                     entries = diagnosticPackage.entries.map {
                         FeedbackDiagnosticEntryUi(
                             it.name,
-                            activity.getString(
-                                R.string.feedback_diagnostic_result_entry_meta,
-                                it.lineCount,
-                                it.byteCount
-                            )
+                            if (it.hasLineCount) {
+                                activity.getString(
+                                    R.string.feedback_diagnostic_result_entry_meta,
+                                    it.lineCount,
+                                    Formatter.formatFileSize(activity, it.byteCount.toLong())
+                                )
+                            } else {
+                                Formatter.formatFileSize(activity, it.byteCount.toLong())
+                            }
                         )
                     },
                     onSave = {
