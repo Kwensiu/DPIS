@@ -327,7 +327,6 @@ public final class MainActivity
     private boolean pendingInstalledAppsLoadAfterPermission;
     private boolean installedAppsPermissionRequestCompleted;
     private MainUiState.WorkspaceMode renderedWorkspaceMode;
-    private boolean rootAccessProbeInFlight;
     private HomeUpdateUiState homeUpdateUiState = HomeUpdateUiState.UP_TO_DATE;
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
@@ -579,6 +578,7 @@ public final class MainActivity
     protected void onResume() {
         super.onResume();
         mainActivityResumed = true;
+        maybeStartRootAccessProbe();
         feedbackDiagnosticCoordinator.onDpisResumed();
         maybeShowPendingFeedbackDiagnosticResult();
         if (composeShellHost != null && composeToolsPresenter != null) {
@@ -3079,7 +3079,6 @@ public final class MainActivity
     }
 
     private void bindHomeWorkspace() {
-        maybeStartRootAccessProbe();
         if (composeShellHost != null) {
             composeShellHost.refreshHome();
             return;
@@ -3207,16 +3206,8 @@ public final class MainActivity
     }
 
     private void maybeStartRootAccessProbe() {
-        if (rootAccessProbeInFlight
-                || RootAccessProbe.cachedResult().status
-                        != RootAccessProbe.Status.UNKNOWN) {
-            return;
-        }
-        rootAccessProbeInFlight = true;
-        startupUpdateExecutor.execute(() -> {
-            RootAccessProbe.Result result = RootAccessProbe.probe();
+        RootAccessProbe.refreshAsync(result -> {
             runOnUiThread(() -> {
-                rootAccessProbeInFlight = false;
                 if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                     bindHomeWorkspace();
                 }

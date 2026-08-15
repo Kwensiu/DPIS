@@ -1,5 +1,7 @@
 package com.dpis.module.runtime;
 
+import com.dpis.module.root.RootAccessProbe;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -14,7 +16,10 @@ public final class RootCommandRunner {
                     .redirectErrorStream(true)
                     .start();
             drain(process.getInputStream());
-            process.waitFor();
+            int exitCode = process.waitFor();
+            if (exitCode == 0) {
+                RootAccessProbe.recordSuccessfulRootCommand();
+            }
         } catch (IOException ignored) {
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();

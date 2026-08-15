@@ -509,11 +509,7 @@ public final class FeedbackDiagnosticCoordinator {
     }
 
     private RootAccessProbe.Result ensureRootAccess() {
-        RootAccessProbe.Result rootAccess = host.rootAccess();
-        if (rootAccess.status == RootAccessProbe.Status.UNKNOWN) {
-            return RootAccessProbe.probe();
-        }
-        return rootAccess;
+        return RootAccessProbe.probe();
     }
 
     private void scheduleForegroundCheck() {

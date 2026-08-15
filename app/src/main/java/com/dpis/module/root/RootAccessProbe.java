@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public final class RootAccessProbe {
     public enum Status {
@@ -58,15 +59,23 @@ public final class RootAccessProbe {
     }
 
     public static void warmUpAsync() {
-        if (cachedResult.status != Status.UNKNOWN
-                || !probeInFlight.compareAndSet(false, true)) {
+        refreshAsync(null);
+    }
+
+    /** Rechecks authorization without requiring an activity or process restart. */
+    public static void refreshAsync(Consumer<Result> callback) {
+        if (!probeInFlight.compareAndSet(false, true)) {
             return;
         }
         new Thread(() -> {
+            Result result;
             try {
-                probe();
+                result = probe();
             } finally {
                 probeInFlight.set(false);
+            }
+            if (callback != null) {
+                callback.accept(result);
             }
         }, "dpis-root-access-probe").start();
     }
@@ -87,7 +96,7 @@ public final class RootAccessProbe {
             if (code != 0 || !output.contains("uid=0")) {
                 return cache(Result.unavailable());
             }
-            return cache(Result.available(resolveProvider(output)));
+            return cache(Result.available(resolveProvider(output, readSuVersion())));
         } catch (IOException ignored) {
             return cache(Result.unavailable());
         } catch (InterruptedException ignored) {
@@ -103,6 +112,14 @@ public final class RootAccessProbe {
     private static Result cache(Result result) {
         cachedResult = result != null ? result : Result.unknown();
         return cachedResult;
+    }
+
+    /** Records successful use of a root shell without replacing a known provider name. */
+    public static void recordSuccessfulRootCommand() {
+        Result current = cachedResult;
+        if (current.status != Status.AVAILABLE) {
+            cachedResult = Result.available("su");
+        }
     }
 
     private static String readOutput(Process process) throws IOException {
@@ -130,7 +147,19 @@ public final class RootAccessProbe {
         }
     }
 
-    private static String resolveProvider(String output) {
+    static String resolveProvider(String output, String suVersion) {
+        String normalizedVersion = suVersion != null
+                ? suVersion.toLowerCase(Locale.ROOT)
+                : "";
+        if (normalizedVersion.contains("magisk")) {
+            return "Magisk";
+        }
+        if (normalizedVersion.contains("apatch")) {
+            return "APatch";
+        }
+        if (normalizedVersion.contains("kernelsu") || normalizedVersion.contains("ksu")) {
+            return "KernelSU";
+        }
         String normalized = output != null ? output : "";
         if (hasProbeValue(normalized, "DPIS_KSU=", "true")
                 || hasNonEmptyProbeValue(normalized, "DPIS_KSU_VER=")
@@ -146,6 +175,30 @@ public final class RootAccessProbe {
             return "Magisk";
         }
         return "su";
+    }
+
+    private static String readSuVersion() {
+        Process process = null;
+        try {
+            process = Runtime.getRuntime().exec(new String[] { "su", "-v" });
+            if (!process.waitFor(PROBE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                process.destroyForcibly();
+                return "";
+            }
+            if (process.exitValue() != 0) {
+                return "";
+            }
+            return readOutput(process);
+        } catch (IOException ignored) {
+            return "";
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+            return "";
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
     }
 
     private static boolean hasProbeValue(

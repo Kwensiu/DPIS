@@ -388,6 +388,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     protected void onResume() {
         super.onResume();
         activityResumed = true;
+        RootAccessProbe.refreshAsync(null);
         feedbackDiagnosticCoordinator.onDpisResumed();
         maybeShowPendingFeedbackDiagnosticResult();
     }
