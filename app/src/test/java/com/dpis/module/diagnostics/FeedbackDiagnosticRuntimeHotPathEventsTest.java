@@ -127,20 +127,42 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
                 "paint_fallback",
                 "already applied"
         );
+        FeedbackDiagnosticRuntimeHotPathEvents.kept(
+                "com.example.app",
+                "paint_fallback",
+                "reason=current_target"
+        );
 
         FeedbackDiagnosticPerformanceSnapshot snapshot =
                 FeedbackDiagnosticRuntimeEvents.stopPerformanceSnapshot();
         assertEquals(1, snapshot.entries().size());
         FeedbackDiagnosticPerformanceSnapshot.Entry entry = snapshot.entries().get(0);
         assertEquals("paint_fallback", entry.route);
-        assertEquals(2L, entry.calls);
+        assertEquals(3L, entry.calls);
         assertEquals(1L, entry.applied);
         assertEquals(1L, entry.skipped);
+        assertEquals(1L, entry.kept);
         assertEquals(1L, entry.measuredCalls);
         assertTrue(entry.p50Us >= 0L);
         assertTrue(entry.p95Us >= entry.p50Us);
         assertTrue(entry.p99Us >= entry.p95Us);
         assertEquals(Long.valueOf(1L), entry.skipReasons.get("already_applied"));
+    }
+
+    @Test
+    public void keepsAreAggregatedWithoutPerCallbackTimelineRecords() {
+        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request());
+
+        FeedbackDiagnosticRuntimeHotPathEvents.kept(
+                "com.example.app",
+                "paint_fallback",
+                "reason=current_target"
+        );
+
+        assertTrue(FeedbackDiagnosticRuntimeEvents.snapshotForTest().isEmpty());
+        FeedbackDiagnosticPerformanceSnapshot snapshot =
+                FeedbackDiagnosticRuntimeEvents.stopPerformanceSnapshot();
+        assertEquals(1L, snapshot.entries().get(0).kept);
     }
 
     @Test

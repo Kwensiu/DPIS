@@ -193,6 +193,7 @@ public final class FeedbackDiagnosticCoordinator {
         public final long perfettoSizeBytes;
         public final boolean perfettoTruncated;
         public final String perfettoNote;
+        public final byte[] perfettoTraceBytes;
 
         Result(
                 Request request,
@@ -245,7 +246,8 @@ public final class FeedbackDiagnosticCoordinator {
                     false,
                     0L,
                     false,
-                    ""
+                    "",
+                    new byte[0]
             );
         }
 
@@ -265,6 +267,42 @@ public final class FeedbackDiagnosticCoordinator {
                 boolean perfettoTruncated,
                 String perfettoNote
         ) {
+            this(
+                    request,
+                    startedAtMillis,
+                    finishedAtMillis,
+                    durationMs,
+                    targetLaunchStarted,
+                    rootAccess,
+                    systemHooksEnabled,
+                    summary,
+                    timelineEvents,
+                    performanceSnapshot,
+                    perfettoAvailable,
+                    perfettoSizeBytes,
+                    perfettoTruncated,
+                    perfettoNote,
+                    new byte[0]
+            );
+        }
+
+        Result(
+                Request request,
+                long startedAtMillis,
+                long finishedAtMillis,
+                long durationMs,
+                boolean targetLaunchStarted,
+                RootAccessProbe.Result rootAccess,
+                boolean systemHooksEnabled,
+                String summary,
+                List<String> timelineEvents,
+                FeedbackDiagnosticPerformanceSnapshot performanceSnapshot,
+                boolean perfettoAvailable,
+                long perfettoSizeBytes,
+                boolean perfettoTruncated,
+                String perfettoNote,
+                byte[] perfettoTraceBytes
+        ) {
             this.request = request;
             this.startedAtMillis = startedAtMillis;
             this.finishedAtMillis = finishedAtMillis;
@@ -283,6 +321,9 @@ public final class FeedbackDiagnosticCoordinator {
             this.perfettoSizeBytes = Math.max(0L, perfettoSizeBytes);
             this.perfettoTruncated = perfettoTruncated;
             this.perfettoNote = perfettoNote != null ? perfettoNote : "";
+            this.perfettoTraceBytes = perfettoTraceBytes != null
+                    ? perfettoTraceBytes.clone()
+                    : new byte[0];
         }
     }
 
@@ -290,14 +331,14 @@ public final class FeedbackDiagnosticCoordinator {
     private final Handler handler;
     private final FeedbackDiagnosticSummaryBuilder summaryBuilder;
     private final ExecutorService executor;
-    private boolean running;
-    private Request runningRequest;
+    private volatile boolean running;
+    private volatile Request runningRequest;
     private long runningStartedAtMillis;
     private boolean runningTargetLaunchStarted;
     private boolean finishing;
     private String lastObservedForegroundPackage;
     private final List<String> runningTimelineEvents = new ArrayList<>();
-    private FeedbackDiagnosticPerfettoTrace runningPerfettoTrace;
+    private volatile FeedbackDiagnosticPerfettoTrace runningPerfettoTrace;
 
     public FeedbackDiagnosticCoordinator(Host host) {
         this(
@@ -334,15 +375,30 @@ public final class FeedbackDiagnosticCoordinator {
                 handler.post(() -> failForMissingRoot(request));
                 return;
             }
+            if (!isActiveRequest(request)) {
+                return;
+            }
             recordTimelineEvent("root available: " + rootProvider(rootAccess));
             FeedbackDiagnosticRuntimeTransport.Status transportStatus =
                     FeedbackDiagnosticRuntimeTransport.start(request.packageName, null);
+            if (!isActiveRequest(request)) {
+                FeedbackDiagnosticRuntimeTransport.cancel(null);
+                return;
+            }
             recordTimelineEvent(transportStatus.available
                     ? "runtime transport prepared"
                     : transportStatus.message);
             FeedbackDiagnosticPerfettoTrace.StartResult perfettoStart =
                     FeedbackDiagnosticPerfettoTrace.start(null);
             runningPerfettoTrace = perfettoStart.trace;
+            if (!isActiveRequest(request)) {
+                runningPerfettoTrace = null;
+                if (perfettoStart.trace != null) {
+                    perfettoStart.trace.discard();
+                }
+                FeedbackDiagnosticRuntimeTransport.cancel(null);
+                return;
+            }
             recordTimelineEvent(perfettoStart.available
                     ? "perfetto trace prepared"
                     : "perfetto unavailable: " + perfettoStart.note);
@@ -494,6 +550,9 @@ public final class FeedbackDiagnosticCoordinator {
                 ? trace.stop()
                 : FeedbackDiagnosticPerfettoTrace.StopResult.unavailable(
                         "Perfetto trace was not started");
+        if (trace != null && perfettoStop.available) {
+            perfettoStop = trace.consumeStoppedTrace(perfettoStop);
+        }
         List<String> timelineEvents = new ArrayList<>(runningTimelineEvents);
         timelineEvents.addAll(runtimeEvents);
         timelineEvents.addAll(transportSnapshot.events);
@@ -540,7 +599,8 @@ public final class FeedbackDiagnosticCoordinator {
                 perfettoStop.available,
                 perfettoStop.sizeBytes,
                 perfettoStop.truncated,
-                perfettoStop.note
+                perfettoStop.note,
+                perfettoStop.traceBytes
         );
         clearRunningState();
         handler.post(() -> host.onFeedbackDiagnosticFinished(result));
@@ -591,6 +651,10 @@ public final class FeedbackDiagnosticCoordinator {
         lastObservedForegroundPackage = null;
         runningTimelineEvents.clear();
         runningPerfettoTrace = null;
+    }
+
+    private boolean isActiveRequest(Request request) {
+        return running && runningRequest == request;
     }
 
     private static boolean samePackage(String first, String second) {

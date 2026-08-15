@@ -29,6 +29,7 @@ public final class FeedbackDiagnosticExportBuilder {
     public static final String MODULE_EFFECTS_ENTRY_NAME = "module-effects.tsv";
     public static final String DPIS_LOG_ENTRY_NAME = "dpis-log.txt";
     public static final String LSPOSED_LOG_ENTRY_NAME = "lsposed-log.txt";
+    public static final String PERFETTO_TRACE_ENTRY_NAME = "perfetto-trace.pftrace";
     public static final String MIME_TYPE = "application/zip";
 
     private static final int RECENT_DPIS_LOG_FALLBACK_LIMIT = 100;
@@ -134,6 +135,7 @@ public final class FeedbackDiagnosticExportBuilder {
         );
         String dpisLog = buildDpisLogText(window);
         String lsposed = buildLsposedLogText(lsposedLog, window);
+        byte[] perfettoTrace = result != null ? result.perfettoTraceBytes : new byte[0];
         java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(output, StandardCharsets.UTF_8)) {
             writeZipEntry(zip, DIAGNOSTIC_ENTRY_NAME, diagnostic);
@@ -141,6 +143,9 @@ public final class FeedbackDiagnosticExportBuilder {
             writeZipEntry(zip, MODULE_EFFECTS_ENTRY_NAME, moduleEffects);
             writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, dpisLog);
             writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, lsposed);
+            if (perfettoTrace.length > 0) {
+                writeZipEntry(zip, PERFETTO_TRACE_ENTRY_NAME, perfettoTrace);
+            }
         }
         List<EntrySummary> entries = new ArrayList<>(List.of(
                 new EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
@@ -149,6 +154,9 @@ public final class FeedbackDiagnosticExportBuilder {
                 new EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
                 new EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed)
         ));
+        if (perfettoTrace.length > 0) {
+            entries.add(new EntrySummary(PERFETTO_TRACE_ENTRY_NAME, perfettoTrace.length, 0));
+        }
         return new DiagnosticPackage(
                 result,
                 buildFileName(result),
@@ -449,6 +457,7 @@ public final class FeedbackDiagnosticExportBuilder {
             builder.append("calls: ").append(entry.calls).append('\n');
             builder.append("applied: ").append(entry.applied).append('\n');
             builder.append("skipped: ").append(entry.skipped).append('\n');
+            builder.append("kept: ").append(entry.kept).append('\n');
             builder.append("measuredCalls: ").append(entry.measuredCalls).append('\n');
             builder.append("p50Us: ").append(entry.p50Us).append('\n');
             builder.append("p95Us: ").append(entry.p95Us).append('\n');
@@ -479,6 +488,7 @@ public final class FeedbackDiagnosticExportBuilder {
                         .append(",calls=").append(route.calls)
                         .append(",applied=").append(route.applied)
                         .append(",skipped=").append(route.skipped)
+                        .append(",kept=").append(route.kept)
                         .append(",measuredCalls=").append(route.measuredCalls)
                         .append(",p50Us=").append(route.p50Us)
                         .append(",p95Us=").append(route.p95Us)
@@ -502,7 +512,8 @@ public final class FeedbackDiagnosticExportBuilder {
         builder.append("[perfetto]\n");
         boolean available = result != null && result.perfettoAvailable;
         builder.append("available: ").append(available).append('\n');
-        builder.append("retainedOnDevice: ").append(available).append('\n');
+        boolean exported = result != null && result.perfettoTraceBytes.length > 0;
+        builder.append("exported: ").append(exported).append('\n');
         if (available) {
             builder.append("sizeBytes: ").append(result.perfettoSizeBytes).append('\n');
             builder.append("truncated: ").append(result.perfettoTruncated).append('\n');
@@ -510,7 +521,7 @@ public final class FeedbackDiagnosticExportBuilder {
         builder.append("note: ")
                 .append(result != null && !result.perfettoNote.isBlank()
                         ? result.perfettoNote
-                        : available ? "trace retained on device" : "trace unavailable")
+                        : available ? "trace captured but not exported" : "trace unavailable")
                 .append("\n\n");
     }
 
@@ -755,8 +766,13 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private static void writeZipEntry(ZipOutputStream zip, String name, String content)
             throws IOException {
+        writeZipEntry(zip, name, (content != null ? content : "").getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static void writeZipEntry(ZipOutputStream zip, String name, byte[] content)
+            throws IOException {
         zip.putNextEntry(new ZipEntry(name));
-        zip.write((content != null ? content : "").getBytes(StandardCharsets.UTF_8));
+        zip.write(content != null ? content : new byte[0]);
         zip.closeEntry();
     }
 

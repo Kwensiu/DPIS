@@ -16,6 +16,7 @@ public final class FeedbackDiagnosticProcessPerformanceTest {
         performance.call("paint_fallback");
         performance.applied("paint_fallback");
         performance.skipped("paint_fallback", "known_applied");
+        performance.kept("paint_fallback");
         performance.duration("paint_fallback", 1_000L);
         performance.duration("paint_fallback", 20_000L);
         performance.duration("paint_fallback", 10_000L);
@@ -28,6 +29,7 @@ public final class FeedbackDiagnosticProcessPerformanceTest {
         assertEquals(1L, route.calls);
         assertEquals(1L, route.applied);
         assertEquals(1L, route.skipped);
+        assertEquals(1L, route.kept);
         assertEquals(3L, route.measuredCalls);
         assertEquals(10L, route.p50Us);
         assertEquals(20L, route.p95Us);

@@ -16,7 +16,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
     private static final String TIMELINE_HEADER =
             "time\tsource\tcategory\tmodule\troute\tstage\tprocess\tpackage\tmessage\n";
     private static final String MODULE_EFFECTS_HEADER =
-            "source\tprocess\tpid\tmodule\troute\tcalls\tapplied\tskipped\tmeasuredCalls"
+            "source\tprocess\tpid\tmodule\troute\tcalls\tapplied\tskipped\tkept\tmeasuredCalls"
                     + "\tp50Us\tp95Us\tp99Us\tmaxUs\tnote\n";
 
     private FeedbackDiagnosticStructuredEvidenceExporter() {
@@ -111,6 +111,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                         route.calls,
                         route.applied,
                         route.skipped,
+                        route.kept,
                         route.measuredCalls,
                         route.p50Us,
                         route.p95Us,
@@ -143,6 +144,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                     entry.calls,
                     entry.applied,
                     entry.skipped,
+                    entry.kept,
                     entry.measuredCalls,
                     entry.p50Us,
                     entry.p95Us,
@@ -171,6 +173,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
             long calls,
             long applied,
             long skipped,
+            long kept,
             long measuredCalls,
             long p50Us,
             long p95Us,
@@ -186,6 +189,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                 .append(calls).append('\t')
                 .append(applied).append('\t')
                 .append(skipped).append('\t')
+                .append(kept).append('\t')
                 .append(measuredCalls).append('\t')
                 .append(p50Us).append('\t')
                 .append(p95Us).append('\t')
@@ -262,6 +266,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                     UNKNOWN,
                     selectedRoute.module,
                     selectedRoute.route,
+                    0L,
                     0L,
                     0L,
                     0L,

@@ -105,6 +105,13 @@ public final class FeedbackDiagnosticRuntimeEvents {
         }
     }
 
+    static void recordPerformanceKept(String packageName, String route) {
+        Session session = activeSession;
+        if (session != null && session.matchesTarget(packageName)) {
+            session.performance.kept(route);
+        }
+    }
+
     static void recordPerformanceDuration(
             String packageName,
             String route,

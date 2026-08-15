@@ -13,7 +13,7 @@ public final class FeedbackDiagnosticProcessPerformanceParserTest {
                 "08-12 23:00:00.000 source=runtime-transport "
                         + "category=performance route=runtime stage=aggregate "
                         + "package=com.example.app message=process=com.example.app,pid=123;"
-                        + "route=paint_fallback,calls=20,applied=3,skipped=17,"
+                        + "route=paint_fallback,calls=20,applied=3,skipped=17,kept=4,"
                         + "measuredCalls=3,p50Us=4,p95Us=20,p99Us=20,maxUs=30",
                 "08-12 23:00:01.000 source=runtime-transport "
                         + "category=performance route=runtime stage=aggregate "
@@ -29,6 +29,7 @@ public final class FeedbackDiagnosticProcessPerformanceParserTest {
         assertEquals("com.example.app", result.get(0).process);
         assertEquals("123", result.get(0).pid);
         assertEquals(20L, result.get(0).routes.get("paint_fallback").calls);
+        assertEquals(4L, result.get(0).routes.get("paint_fallback").kept);
         assertEquals("com.google.android.webview", result.get(1).process);
         assertEquals("456", result.get(1).pid);
         assertEquals(2L, result.get(1).routes.get("webview_text_zoom").applied);

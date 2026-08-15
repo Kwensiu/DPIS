@@ -197,6 +197,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
                     .append(",calls=").append(snapshot.calls)
                     .append(",applied=").append(snapshot.applied)
                     .append(",skipped=").append(snapshot.skipped)
+                    .append(",kept=").append(snapshot.kept)
                     .append(",measuredCalls=").append(snapshot.measuredCalls)
                     .append(",p50Us=").append(snapshot.p50Us)
                     .append(",p95Us=").append(snapshot.p95Us)

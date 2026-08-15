@@ -203,6 +203,28 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
+    public void timelineIncludesSlowMutationBreakdownEvidence() throws IOException {
+        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=runtime-hotpath category=font "
+                        + "route=textview_sp_rewrite stage=slow_mutation_breakdown "
+                        + "package=com.example.app process=com.example.app "
+                        + "message=frameworkUs=5200,bookkeepingUs=40,totalUs=5240"
+        ))));
+
+        String timeline = entries.get("timeline.tsv");
+
+        assertTrue(timeline.contains(
+                "06:13:20.100\truntime-hotpath\tfont\tfont\ttextview_sp_rewrite\t"
+                        + "slow_mutation_breakdown"));
+        assertTrue(timeline.contains("frameworkUs=5200,bookkeepingUs=40,totalUs=5240"));
+    }
+
+    @Test
     public void timelineTsvExcludesUnstructuredCoordinatorNotes() throws IOException {
         FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
                 List::of,
@@ -242,7 +264,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
         assertTrue(moduleEffects.contains(
                 "target-process-lsposed-aggregate\tcom.example.app\t123\tfont\tpaint_fallback"
-                        + "\t20\t3\t17\t3\t4\t20\t20\t30\t"));
+                        + "\t20\t3\t17\t0\t3\t4\t20\t20\t30\t"));
         assertFalse(moduleEffects.contains("ui-process-fallback"));
     }
 
@@ -264,7 +286,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
         assertTrue(moduleEffects.contains(
                 "target-process-log-fallback\tcom.example.app\tunknown\tfont"
-                        + "\tpaint_set_text_size\t1\t1\t0\t0\t0\t0\t0\t0"
+                        + "\tpaint_set_text_size\t1\t1\t0\t0\t0\t0\t0\t0\t0"
                         + "\taggregate transport missing; latency percentiles unavailable"));
     }
 
@@ -286,7 +308,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
         assertTrue(moduleEffects.contains(
                 "diagnostic-plan\tunknown\tunknown\tviewport\tviewport_auto"
-                        + "\t0\t0\t0\t0\t0\t0\t0\t0"
+                        + "\t0\t0\t0\t0\t0\t0\t0\t0\t0"
                         + "\tselected but no viewport route effect observed"));
     }
 
@@ -316,7 +338,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
     }
 
     @Test
-    public void diagnosticReportsPerfettoMetadataWithoutExportingTrace() throws IOException {
+    public void diagnosticExportsAvailablePerfettoTrace() throws IOException {
         FeedbackDiagnosticCoordinator.Result base = result();
         FeedbackDiagnosticCoordinator.Result withTrace =
                 new FeedbackDiagnosticCoordinator.Result(
@@ -333,7 +355,8 @@ public final class FeedbackDiagnosticExportBuilderTest {
                         true,
                         3L,
                         false,
-                        "trace retained on device"
+                        "trace exported with diagnostic package",
+                        "abc".getBytes(StandardCharsets.UTF_8)
                 );
 
         Map<String, String> entries = unzip(
@@ -342,13 +365,13 @@ public final class FeedbackDiagnosticExportBuilderTest {
                         .buildZip(withTrace)
         );
 
-        assertFalse(entries.containsKey("perfetto-trace.pftrace"));
+        assertEquals("abc", entries.get(FeedbackDiagnosticExportBuilder.PERFETTO_TRACE_ENTRY_NAME));
         String diagnostic = unzip(
                 new FeedbackDiagnosticExportBuilder(List::of, () ->
                         new LogReadResult(0, "test-source", "", ""))
                         .buildZip(withTrace)
         ).get("diagnostic.txt");
-        assertTrue(diagnostic.contains("retainedOnDevice: true"));
+        assertTrue(diagnostic.contains("exported: true"));
         assertTrue(diagnostic.contains("sizeBytes: 3"));
     }
 

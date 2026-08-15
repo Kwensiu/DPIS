@@ -3,6 +3,7 @@ package com.dpis.module.diagnostics;
 import com.dpis.module.root.RootAppProcessLauncher;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.UUID;
 
 /**
@@ -52,10 +53,14 @@ final class FeedbackDiagnosticPerfettoTrace {
                         + " " + quote(trace.configPath)
                         + " && printf %s " + quote(config())
                         + " > " + quote(trace.configPath)
-                        + " && ( nohup /system/bin/perfetto --txt -c " + quote(trace.configPath)
+                        // Perfetto owns the detached process here. Do not mix
+                        // TraceConfig.write_into_file with CLI -o: Android 16
+                        // Perfetto rejects that two-writer configuration.
+                        + " && /system/bin/perfetto --background-wait --txt -c "
+                        + quote(trace.configPath)
                         + " -o " + quote(trace.tracePath)
-                        + " > /dev/null 2>" + quote(trace.errorPath)
-                        + " < /dev/null & echo $! > " + quote(trace.pidPath) + " )"
+                        + " > " + quote(trace.pidPath)
+                        + " 2>" + quote(trace.errorPath)
         );
         if (result.code() != 0) {
             return StartResult.unavailable(compact(result.output()));
@@ -93,8 +98,7 @@ final class FeedbackDiagnosticPerfettoTrace {
                         + " else printf 'available:size=%s,truncated=true' " + TRACE_MAX_FILE_BYTES + "; fi"
                         + "; else printf 'unavailable:error='; cat " + quote(errorPath)
                         + " 2>/dev/null; exit 2; fi"
-                        + "; code=$?; rm -f " + quote(tracePath) + " " + quote(pidPath)
-                        + " " + quote(errorPath) + " " + quote(configPath) + "; exit $code"
+                        + "; exit $?"
         );
         if (result.code() != 0 || result.output().isBlank()) {
             return StopResult.unavailable(
@@ -110,7 +114,7 @@ final class FeedbackDiagnosticPerfettoTrace {
             boolean truncated = output.contains("truncated=true");
             return StopResult.available(size, truncated,
                     truncated ? "trace exceeded device-side size limit"
-                            : "trace captured on device; not exported");
+                            : "trace ready for diagnostic export");
         } catch (NumberFormatException exception) {
             return StopResult.unavailable("Perfetto trace size was invalid");
         }
@@ -129,22 +133,69 @@ final class FeedbackDiagnosticPerfettoTrace {
         );
     }
 
+    /**
+     * Transfers the completed trace into the app process, then removes root-owned temporary
+     * files. The trace only exists on-device until its diagnostic ZIP is assembled.
+     */
+    StopResult consumeStoppedTrace(StopResult stoppedTrace) {
+        if (stoppedTrace == null || !stoppedTrace.available) {
+            return stoppedTrace != null
+                    ? stoppedTrace
+                    : StopResult.unavailable("Perfetto trace was not stopped");
+        }
+        if (stoppedTrace.truncated) {
+            discardCompletedTrace();
+            return StopResult.available(stoppedTrace.sizeBytes, true, new byte[0],
+                    "trace exceeded device-side size limit and was not exported");
+        }
+        RootAppProcessLauncher.ShellResult result = shellRunner.run(
+                "base64 " + quote(tracePath)
+                        + "; code=$?; rm -f " + quote(tracePath) + " " + quote(pidPath)
+                        + " " + quote(errorPath) + " " + quote(configPath) + "; exit $code"
+        );
+        if (result.code() != 0 || result.output().isBlank()) {
+            return StopResult.unavailable(
+                    "Perfetto trace export failed: " + compact(result.output()));
+        }
+        try {
+            byte[] bytes = Base64.getMimeDecoder().decode(result.output());
+            if (bytes.length != stoppedTrace.sizeBytes) {
+                return StopResult.unavailable("Perfetto trace export size mismatch");
+            }
+            return StopResult.available(bytes.length, false, bytes,
+                    "trace exported with diagnostic package");
+        } catch (IllegalArgumentException exception) {
+            return StopResult.unavailable("Perfetto trace export was invalid");
+        }
+    }
+
+    private void discardCompletedTrace() {
+        shellRunner.run(
+                "rm -f " + quote(tracePath) + " " + quote(pidPath)
+                        + " " + quote(errorPath) + " " + quote(configPath)
+        );
+    }
+
     private static String config() {
         return "buffers { size_kb: " + TRACE_BUFFER_KB + " fill_policy: RING_BUFFER }\n"
                 + "duration_ms: " + TRACE_DURATION_MS + "\n"
-                + "write_into_file: true\n"
-                + "file_write_period_ms: 1000\n"
-                + "max_file_size_bytes: " + TRACE_MAX_FILE_BYTES + "\n"
                 + "data_sources { config { name: \"linux.ftrace\" "
                 + "ftrace_config { "
                 + "ftrace_events: \"sched/sched_switch\" "
                 + "ftrace_events: \"sched/sched_wakeup\" "
                 + "ftrace_events: \"sched/sched_waking\" "
+                + "ftrace_events: \"sched/sched_process_exit\" "
+                + "ftrace_events: \"sched/sched_process_free\" "
+                + "ftrace_events: \"task/task_newtask\" "
+                + "ftrace_events: \"task/task_rename\" "
                 + "atrace_categories: \"gfx\" "
                 + "atrace_categories: \"view\" "
                 + "atrace_categories: \"input\" "
                 + "atrace_categories: \"binder_driver\" "
-                + "} } }\n";
+                + "} } }\n"
+                + "data_sources { config { name: \"linux.process_stats\" "
+                + "process_stats_config { scan_all_processes_on_start: true } } }\n"
+                + "data_sources { config { name: \"android.surfaceflinger.frametimeline\" } }\n";
     }
 
     private static RootAppProcessLauncher.ShellResult runSuCommand(String command) {
@@ -194,21 +245,38 @@ final class FeedbackDiagnosticPerfettoTrace {
         final boolean available;
         final long sizeBytes;
         final boolean truncated;
+        final byte[] traceBytes;
         final String note;
 
-        private StopResult(boolean available, long sizeBytes, boolean truncated, String note) {
+        private StopResult(
+                boolean available,
+                long sizeBytes,
+                boolean truncated,
+                byte[] traceBytes,
+                String note
+        ) {
             this.available = available;
             this.sizeBytes = Math.max(0L, sizeBytes);
             this.truncated = truncated;
+            this.traceBytes = traceBytes != null ? traceBytes.clone() : new byte[0];
             this.note = note != null ? note : "";
         }
 
         static StopResult available(long sizeBytes, boolean truncated, String note) {
-            return new StopResult(true, sizeBytes, truncated, note);
+            return available(sizeBytes, truncated, new byte[0], note);
+        }
+
+        static StopResult available(
+                long sizeBytes,
+                boolean truncated,
+                byte[] traceBytes,
+                String note
+        ) {
+            return new StopResult(true, sizeBytes, truncated, traceBytes, note);
         }
 
         static StopResult unavailable(String note) {
-            return new StopResult(false, 0L, false, note);
+            return new StopResult(false, 0L, false, new byte[0], note);
         }
     }
 }

@@ -91,6 +91,7 @@ final class FeedbackDiagnosticProcessPerformanceParser {
                 case "calls" -> summary.calls = numericValue;
                 case "applied" -> summary.applied = numericValue;
                 case "skipped" -> summary.skipped = numericValue;
+                case "kept" -> summary.kept = numericValue;
                 case "measuredCalls" -> summary.measuredCalls = numericValue;
                 case "p50Us" -> summary.p50Us = numericValue;
                 case "p95Us" -> summary.p95Us = numericValue;
@@ -185,6 +186,7 @@ final class FeedbackDiagnosticProcessPerformanceParser {
         long calls;
         long applied;
         long skipped;
+        long kept;
         long measuredCalls;
         long p50Us;
         long p95Us;

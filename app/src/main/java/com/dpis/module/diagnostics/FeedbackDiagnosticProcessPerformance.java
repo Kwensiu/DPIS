@@ -38,6 +38,10 @@ final class FeedbackDiagnosticProcessPerformance {
         stats.skipReasons.merge(key, 1L, Long::sum);
     }
 
+    synchronized void kept(String route) {
+        stats(route).kept++;
+    }
+
     synchronized void duration(String route, long durationNs) {
         RouteStats stats = stats(route);
         long micros = Math.max(0L, durationNs / 1_000L);
@@ -63,6 +67,7 @@ final class FeedbackDiagnosticProcessPerformance {
                     stats.calls,
                     stats.applied,
                     stats.skipped,
+                    stats.kept,
                     stats.skipReasons,
                     stats.samples
             ));
@@ -79,6 +84,7 @@ final class FeedbackDiagnosticProcessPerformance {
         final long calls;
         final long applied;
         final long skipped;
+        final long kept;
         final Map<String, Long> skipReasons;
         final long measuredCalls;
         final long p50Us;
@@ -90,12 +96,14 @@ final class FeedbackDiagnosticProcessPerformance {
                 long calls,
                 long applied,
                 long skipped,
+                long kept,
                 Map<String, Long> skipReasons,
                 List<Long> samples
         ) {
             this.calls = calls;
             this.applied = applied;
             this.skipped = skipped;
+            this.kept = kept;
             this.skipReasons = new LinkedHashMap<>(skipReasons);
             List<Long> sorted = new ArrayList<>(samples);
             Collections.sort(sorted);
@@ -119,6 +127,7 @@ final class FeedbackDiagnosticProcessPerformance {
         long calls;
         long applied;
         long skipped;
+        long kept;
         final Map<String, Long> skipReasons = new LinkedHashMap<>();
         final List<Long> samples = new ArrayList<>();
         long maxUs;

@@ -23,6 +23,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
         public final long calls;
         public final long applied;
         public final long skipped;
+        public final long kept;
         public final long measuredCalls;
         public final long p50Us;
         public final long p95Us;
@@ -35,6 +36,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
                 long calls,
                 long applied,
                 long skipped,
+                long kept,
                 long measuredCalls,
                 long p50Us,
                 long p95Us,
@@ -46,6 +48,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
             this.calls = calls;
             this.applied = applied;
             this.skipped = skipped;
+            this.kept = kept;
             this.measuredCalls = measuredCalls;
             this.p50Us = p50Us;
             this.p95Us = p95Us;
@@ -87,6 +90,10 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
             entry.skipReasons.merge(normalizedReason, 1L, Long::sum);
         }
 
+        synchronized void kept(String route) {
+            entry(route).kept++;
+        }
+
         synchronized void duration(String route, long durationNs) {
             MutableEntry entry = entry(route);
             long micros = Math.max(0L, durationNs / 1_000L);
@@ -107,6 +114,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
                         value.calls,
                         value.applied,
                         value.skipped,
+                        value.kept,
                         samples.size(),
                         percentile(samples, 0.50),
                         percentile(samples, 0.95),
@@ -138,6 +146,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
             long calls;
             long applied;
             long skipped;
+            long kept;
             long maxUs;
             final List<Long> samples = new ArrayList<>();
             final Map<String, Long> skipReasons = new LinkedHashMap<>();

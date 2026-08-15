@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 
 public final class FeedbackDiagnosticRuntimeHotPathEvents {
-    private static final Map<String, Long> ACTIVE = new ConcurrentHashMap<>();
+    private static final Map<String, ActiveMeasurement> ACTIVE = new ConcurrentHashMap<>();
     private static final String ROUTE_FONT = "font";
     private static final FeedbackDiagnosticProcessPerformance PERFORMANCE =
             new FeedbackDiagnosticProcessPerformance();
@@ -22,11 +22,14 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
 
     public static void begin(String packageName, String categoryRoute, String routeName, String detail) {
         String key = key(packageName, categoryRoute, routeName, detail);
-        ACTIVE.put(key, System.nanoTime());
         preparePerformanceSession();
         PERFORMANCE.call(routeName);
         FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
         record(packageName, categoryRoute, routeName, "begin", detail);
+        // The begin event may enqueue transport and bridge work. Start latency
+        // measurement afterwards so percentiles describe the target hook work,
+        // not diagnostic publication performed ahead of that work.
+        ACTIVE.put(key, new ActiveMeasurement(System.nanoTime()));
     }
 
     public static void applied(String packageName, String route, String detail) {
@@ -35,6 +38,10 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
 
     public static void applied(String packageName, String categoryRoute, String routeName, String detail) {
         preparePerformanceSession();
+        // Capture mutation latency before diagnostic publication. The event,
+        // transport, and bridge writes below are evidence delivery work, not
+        // the target route's mutation cost.
+        recordDurationIfNeeded(packageName, categoryRoute, routeName, detail);
         FeedbackDiagnosticRuntimeEvents.recordPerformanceApplied(packageName, routeName);
         PERFORMANCE.applied(routeName);
         recordPerformanceIfDue(packageName);
@@ -57,6 +64,27 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         recordPerformanceIfDue(packageName);
         record(packageName, categoryRoute, routeName, "skipped", detail);
         ACTIVE.remove(key(packageName, categoryRoute, routeName, detail));
+    }
+
+    public static void kept(String packageName, String route, String detail) {
+        kept(packageName, ROUTE_FONT, route, detail);
+    }
+
+    public static void kept(
+            String packageName,
+            String categoryRoute,
+            String routeName,
+            String detail
+    ) {
+        preparePerformanceSession();
+        PERFORMANCE.call(routeName);
+        PERFORMANCE.kept(routeName);
+        FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
+        FeedbackDiagnosticRuntimeEvents.recordPerformanceKept(packageName, routeName);
+        recordPerformanceIfDue(packageName);
+        // Kept is an aggregate-only outcome. It is intentionally not emitted
+        // as one timeline/transport/bridge record per callback because a kept
+        // callback performs no mutation; the aggregate remains full-fidelity.
     }
 
     public static void probe(String packageName, String route, String detail) {
@@ -83,15 +111,15 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
 
     public static void end(String packageName, String categoryRoute, String routeName, String detail) {
         String key = key(packageName, categoryRoute, routeName, detail);
-        Long startedAt = ACTIVE.remove(key);
-        long durationNs = startedAt != null
-                ? Math.max(0L, System.nanoTime() - startedAt)
+        ActiveMeasurement measurement = ACTIVE.remove(key);
+        long durationNs = measurement != null
+                ? measurement.durationNsOr(System.nanoTime())
                 : -1L;
         long durationMs = durationNs >= 0L ? durationNs / 1_000_000L : -1L;
         String message = durationMs >= 0L
                 ? detail + ", durationMs=" + durationMs
                 : detail;
-        if (startedAt != null) {
+        if (measurement != null && !measurement.durationRecorded) {
             PERFORMANCE.duration(routeName, durationNs);
             FeedbackDiagnosticRuntimeEvents.recordPerformanceDuration(
                     packageName,
@@ -101,6 +129,26 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         }
         recordPerformanceIfDue(packageName);
         record(packageName, categoryRoute, routeName, "end", message);
+    }
+
+    private static void recordDurationIfNeeded(
+            String packageName,
+            String categoryRoute,
+            String routeName,
+            String detail
+    ) {
+        String key = key(packageName, categoryRoute, routeName, detail);
+        ActiveMeasurement measurement = ACTIVE.get(key);
+        if (measurement == null || !measurement.markDurationRecorded()) {
+            return;
+        }
+        long durationNs = measurement.durationNsOr(System.nanoTime());
+        PERFORMANCE.duration(routeName, durationNs);
+        FeedbackDiagnosticRuntimeEvents.recordPerformanceDuration(
+                packageName,
+                routeName,
+                durationNs
+        );
     }
 
     public static void resetForTest() {
@@ -215,5 +263,31 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     private static String valueOrDefault(String value, String fallback) {
         String normalized = value != null ? value.trim() : "";
         return normalized.isEmpty() ? fallback : normalized;
+    }
+
+    private static final class ActiveMeasurement {
+        private final long startedAt;
+        private volatile long mutationDurationNs = -1L;
+        private volatile boolean durationRecorded;
+
+        ActiveMeasurement(long startedAt) {
+            this.startedAt = startedAt;
+        }
+
+        synchronized boolean markDurationRecorded() {
+            if (durationRecorded) {
+                return false;
+            }
+            mutationDurationNs = Math.max(0L, System.nanoTime() - startedAt);
+            durationRecorded = true;
+            return true;
+        }
+
+        long durationNsOr(long now) {
+            long recorded = mutationDurationNs;
+            return recorded >= 0L
+                    ? recorded
+                    : Math.max(0L, now - startedAt);
+        }
     }
 }
