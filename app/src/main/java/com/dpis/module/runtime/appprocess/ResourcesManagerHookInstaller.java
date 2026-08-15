@@ -2,7 +2,7 @@ package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.DpisConfigStore;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
@@ -591,7 +591,7 @@ public final class ResourcesManagerHookInstaller {
                 + result.densityDpi
                 + ", fontScale " + fontScale.original + " -> " + config.fontScale;
         if (logIfChanged(packageName + ":" + sourceTag, message)) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     packageName,
                     "viewport",
                     "resources_manager_config_override",
@@ -616,7 +616,7 @@ public final class ResourcesManagerHookInstaller {
                 HOTPATH_SAMPLER.sample("skip|" + packageName + "|" + routeName + "|" + reason,
                         detail);
         if (sample.emit) {
-            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+            RuntimeHotPathEvents.skipped(
                     packageName,
                     "viewport",
                     routeName,

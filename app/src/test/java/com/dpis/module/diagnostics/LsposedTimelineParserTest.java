@@ -13,7 +13,7 @@ import java.util.Locale;
 
 import org.junit.Test;
 
-public final class FeedbackDiagnosticLsposedTimelineParserTest {
+public final class LsposedTimelineParserTest {
     private static final long WINDOW_START_MILLIS = millis("2023-11-15 06:13:19.000");
     private static final long WINDOW_END_MILLIS = millis("2023-11-15 06:13:29.000");
 
@@ -30,7 +30,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.other.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "target app matched: package=com.other.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -49,7 +49,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "DPIS_VIEWPORT app-process state seeded: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -67,7 +67,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "hooks installed (safe mode): package=com.example.app "
                 + "viewportEnabled=false fontMode=FIELD_REWRITE resolvedViewportMode=off";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -86,7 +86,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "Auto hot reload failed for io.github.kwensiu.dpis in "
                 + "com.example.app/1234: status=3, message=null";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -106,7 +106,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "DPIS_FONT Flutter settings hook ready for com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -125,7 +125,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "DPIS_FONT Flutter settings textScaleFactor override: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -143,7 +143,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "Resources write hooks skipped: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -165,7 +165,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "DPIS_FONT Flutter settings textScaleFactor override: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -183,7 +183,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "fontMode=field_rewrite suppressed=none "
                 + "debugDisableTextViewAbsoluteRewrite=false";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -202,7 +202,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "module loaded onPackageLoaded enter: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -220,7 +220,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "DPIS_FONT skip abstract WebSettings#setTextZoom hook: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -238,7 +238,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "DPIS DPIS_DIAG_HOTPATH route=font stage=begin routeName=text_appearance "
                 + "package=com.example.app detail=view=android.widget.TextView,percent=120";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -259,7 +259,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "DPIS DPIS_DIAG_HOTPATH route=font stage=probe "
                 + "routeName=process_entry package=com.example.app detail=process-entry";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -280,7 +280,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "route=paint_fallback,calls=20,applied=3,skipped=17,"
                 + "measuredCalls=3,p50Us=4,p95Us=20,p99Us=20,maxUs=30";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -302,7 +302,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "process=com.example.app, source=remote-session, "
                 + "markerVisible=true, propertyVisible=true";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -326,7 +326,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "routeName=textview_sp_rewrite package=com.example.app "
                 + "detail=view=android.widget.TextView,in=20.0,out=10.0";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -345,7 +345,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "modern WeChat DPI hook ready: j65.f#e, installed=1, locator=static-route";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -365,7 +365,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "class=j65.f, metricsTargets=d,e, bottomTab=true, retiredTargets=g,k,l, "
                 + "retiredActive=false";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -384,7 +384,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "modern WeChat DPI callback hit: method=j65.f#e, firstCallbackMethod=e, "
                 + "configuredDpi=0";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -403,7 +403,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "modern WeChat DPI applied: method=j65.f#e, appliedMethod=e, targetDpi=600, "
                 + "densityDpi 480 -> 600";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -423,7 +423,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "DPIS_VIEWPORT ResourcesRead(getConfiguration) override: package=com.example.app "
                 + "densityDpi 533 -> 533, fontScale 1.0 -> 1.05";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -441,7 +441,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "(system)[io.github.kwensiu.dpis,DPIS,id,0,1] "
                 + "system_server display-manager-info apply: package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -460,7 +460,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "system_server display-manager-info skip: reason=env-null, "
                 + "package=com.example.app";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -489,7 +489,7 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
                 + "DPIS DPIS_DIAG_HOTPATH route=font stage=begin routeName=text_appearance "
                 + "package=com.example.app detail=view=android.widget.TextView";
 
-        List<String> events = FeedbackDiagnosticLsposedTimelineParser.parse(
+        List<String> events = LsposedTimelineParser.parse(
                 raw,
                 WINDOW_START_MILLIS,
                 WINDOW_END_MILLIS,
@@ -502,13 +502,13 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
         assertTrue(events.get(2).contains("stage=end"));
     }
 
-    private static FeedbackDiagnosticLsposedTimelineParser.Input request(
+    private static LsposedTimelineParser.Input request(
             boolean inScope,
             boolean dpisEnabled,
             boolean viewportEnabled
     ) {
         boolean appEnabled = inScope && dpisEnabled;
-        return new FeedbackDiagnosticLsposedTimelineParser.Input(
+        return new LsposedTimelineParser.Input(
                 "com.example.app",
                 appEnabled,
                 appEnabled && viewportEnabled,
@@ -518,8 +518,8 @@ public final class FeedbackDiagnosticLsposedTimelineParserTest {
         );
     }
 
-    private static FeedbackDiagnosticLsposedTimelineParser.Input wechatRequest(Integer wechatDpi) {
-        return new FeedbackDiagnosticLsposedTimelineParser.Input(
+    private static LsposedTimelineParser.Input wechatRequest(Integer wechatDpi) {
+        return new LsposedTimelineParser.Input(
                 "com.tencent.mm",
                 true,
                 false,

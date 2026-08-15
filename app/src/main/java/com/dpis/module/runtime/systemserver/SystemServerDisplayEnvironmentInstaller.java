@@ -25,7 +25,7 @@ import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
 
 import com.dpis.module.runtime.appprocess.WindowFrameOverride;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeTransport;
+import com.dpis.module.diagnostics.RuntimeTransport;
 
 import com.dpis.module.*;
 
@@ -1238,7 +1238,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
                 || !isLikelyPackageName(packageName)) {
             return;
         }
-        FeedbackDiagnosticRuntimeTransport.record(
+        RuntimeTransport.record(
                 "runtime",
                 "system_server",
                 stage,

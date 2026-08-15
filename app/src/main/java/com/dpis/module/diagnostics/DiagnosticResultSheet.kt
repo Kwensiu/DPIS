@@ -38,21 +38,21 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** Compose-owned diagnostic result sheet; package creation and file actions remain host-owned. */
-class FeedbackDiagnosticResultSheet(
+class DiagnosticResultSheet(
     private val activity: Activity?,
     private val host: Host?
 ) {
     interface Host {
         fun shareFeedbackDiagnostic(
-            diagnosticPackage: FeedbackDiagnosticExportBuilder.DiagnosticPackage
+            diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage
         )
 
         fun saveFeedbackDiagnostic(
-            diagnosticPackage: FeedbackDiagnosticExportBuilder.DiagnosticPackage
+            diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage
         )
     }
 
-    fun show(diagnosticPackage: FeedbackDiagnosticExportBuilder.DiagnosticPackage?) {
+    fun show(diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage?) {
         val activity = activity ?: return
         val host = host ?: return
         val result = diagnosticPackage?.result ?: return
@@ -76,7 +76,7 @@ class FeedbackDiagnosticResultSheet(
                         valueOrUnknown(result.request.versionName)
                     ),
                     entries = diagnosticPackage.entries.map {
-                        FeedbackDiagnosticEntryUi(
+                        DiagnosticEntryUi(
                             it.name,
                             if (it.hasLineCount) {
                                 activity.getString(
@@ -110,14 +110,14 @@ class FeedbackDiagnosticResultSheet(
     }
 }
 
-internal data class FeedbackDiagnosticEntryUi(val name: String, val metadata: String)
+internal data class DiagnosticEntryUi(val name: String, val metadata: String)
 
 @Composable
 internal fun FeedbackDiagnosticResultContent(
     title: String,
     packageLine: String,
     versionLine: String,
-    entries: List<FeedbackDiagnosticEntryUi>,
+    entries: List<DiagnosticEntryUi>,
     onSave: () -> Unit,
     onShare: () -> Unit
 ) {
@@ -203,7 +203,7 @@ internal fun FeedbackDiagnosticResultContent(
 }
 
 /** Shared Compose progress dialog used while the diagnostic ZIP is being built. */
-object FeedbackDiagnosticPackagingDialog {
+object PackagingDialog {
     // TODO: Migrate after packaging progress no longer requires an externally mutable AlertDialog.
     @JvmStatic
     fun show(activity: Activity): AlertDialog {
@@ -261,8 +261,8 @@ private fun FeedbackDiagnosticResultContentPreview() {
             packageLine = "Package: example.app",
             versionLine = "Version: 1.0",
             entries = listOf(
-                FeedbackDiagnosticEntryUi("diagnostic.txt", "42 lines - 2048 bytes"),
-                FeedbackDiagnosticEntryUi("dpis-log.txt", "18 lines - 900 bytes")
+                DiagnosticEntryUi("diagnostic.txt", "42 lines - 2048 bytes"),
+                DiagnosticEntryUi("dpis-log.txt", "18 lines - 900 bytes")
             ),
             onSave = {},
             onShare = {}

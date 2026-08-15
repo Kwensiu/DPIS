@@ -12,14 +12,14 @@ import java.util.Locale;
 import java.util.Map;
 
 
-public final class FeedbackDiagnosticRuntimeEvents {
+public final class RuntimeEvents {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
     private static volatile Session activeSession;
 
-    private FeedbackDiagnosticRuntimeEvents() {
+    private RuntimeEvents() {
     }
 
-    public static void start(String packageName, FeedbackDiagnosticCoordinator.Request request) {
+    public static void start(String packageName, DiagnosticCoordinator.Request request) {
         activeSession = new Session(packageName, request);
     }
 
@@ -29,11 +29,11 @@ public final class FeedbackDiagnosticRuntimeEvents {
         return session != null ? session.snapshot() : List.of();
     }
 
-    public static FeedbackDiagnosticPerformanceSnapshot stopPerformanceSnapshot() {
+    public static PerformanceSnapshot stopPerformanceSnapshot() {
         Session session = activeSession;
         return session != null
                 ? session.performanceSnapshot()
-                : FeedbackDiagnosticPerformanceSnapshot.EMPTY;
+                : PerformanceSnapshot.EMPTY;
     }
 
     public static void cancel() {
@@ -45,11 +45,11 @@ public final class FeedbackDiagnosticRuntimeEvents {
         return session != null ? session.snapshot() : List.of();
     }
 
-    private static FeedbackDiagnosticTimelineClassifier.Context classifierContext(
-            FeedbackDiagnosticCoordinator.Request request
+    private static TimelineClassifier.Context classifierContext(
+            DiagnosticCoordinator.Request request
     ) {
         boolean appEnabled = request != null && request.inScope && request.dpisEnabled;
-        return new FeedbackDiagnosticTimelineClassifier.Context(
+        return new TimelineClassifier.Context(
                 appEnabled,
                 appEnabled && request.viewportTargetSpec.isEnabled(),
                 appEnabled && request.fontScalePercent != null,
@@ -142,19 +142,19 @@ public final class FeedbackDiagnosticRuntimeEvents {
      */
     public static void recordTypeface(String packageName, String stage, String message) {
         recordStructured(packageName, "typeface", stage, "I", message);
-        FeedbackDiagnosticRuntimeTransport.record(
+        RuntimeTransport.record(
                 "runtime", "typeface", stage, packageName, message);
     }
 
     private static final class Session {
         private final String targetPackage;
-        private final FeedbackDiagnosticTimelineClassifier.Context classifierContext;
+        private final TimelineClassifier.Context classifierContext;
         private final List<String> events = new ArrayList<>();
         private final Map<String, Long> lastEventByKey = new HashMap<>();
-        private final FeedbackDiagnosticPerformanceSnapshot.Collector performance =
-                new FeedbackDiagnosticPerformanceSnapshot.Collector();
+        private final PerformanceSnapshot.Collector performance =
+                new PerformanceSnapshot.Collector();
 
-        Session(String packageName, FeedbackDiagnosticCoordinator.Request request) {
+        Session(String packageName, DiagnosticCoordinator.Request request) {
             targetPackage = valueOrEmpty(packageName);
             classifierContext = classifierContext(request);
         }
@@ -165,7 +165,7 @@ public final class FeedbackDiagnosticRuntimeEvents {
             return snapshot;
         }
 
-        synchronized FeedbackDiagnosticPerformanceSnapshot performanceSnapshot() {
+        synchronized PerformanceSnapshot performanceSnapshot() {
             return performance.snapshot();
         }
 
@@ -174,8 +174,8 @@ public final class FeedbackDiagnosticRuntimeEvents {
             if (normalized.isEmpty() || !isTargetMessage(normalized)) {
                 return;
             }
-            FeedbackDiagnosticTimelineClassifier.Event event =
-                    FeedbackDiagnosticTimelineClassifier.classify(
+            TimelineClassifier.Event event =
+                    TimelineClassifier.classify(
                             level,
                             normalized,
                             classifierContext
@@ -208,7 +208,7 @@ public final class FeedbackDiagnosticRuntimeEvents {
             warnIfRepeated(normalizedRoute, normalizedStage, normalized);
         }
 
-        private void warnIfRepeated(FeedbackDiagnosticTimelineClassifier.Event event) {
+        private void warnIfRepeated(TimelineClassifier.Event event) {
             if (!"mutation_applied".equals(event.stage())
                     && !"unexpected_route_hit".equals(event.stage())) {
                 return;

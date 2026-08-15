@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-public final class FeedbackDiagnosticProcessPerformanceParserTest {
+public final class ProcessPerformanceParserTest {
     @Test
     public void groupsTransportSnapshotsByProcessAndPid() {
         List<String> events = List.of(
@@ -22,8 +22,8 @@ public final class FeedbackDiagnosticProcessPerformanceParserTest {
                         + "measuredCalls=2,p50Us=5,p95Us=9,p99Us=9,maxUs=9"
         );
 
-        List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> result =
-                FeedbackDiagnosticProcessPerformanceParser.parse(events);
+        List<ProcessPerformanceParser.ProcessSummary> result =
+                ProcessPerformanceParser.parse(events);
 
         assertEquals(2, result.size());
         assertEquals("com.example.app", result.get(0).process);
@@ -48,8 +48,8 @@ public final class FeedbackDiagnosticProcessPerformanceParserTest {
                         + "applied: package=com.example.app, hookId=textview_set_text"
         );
 
-        List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> result =
-                FeedbackDiagnosticProcessPerformanceParser.parseMutationAppliedFallback(events);
+        List<ProcessPerformanceParser.ProcessSummary> result =
+                ProcessPerformanceParser.parseMutationAppliedFallback(events);
 
         assertEquals(1, result.size());
         assertEquals("com.example.app", result.get(0).process);

@@ -11,7 +11,7 @@ import java.util.List;
  * hot paths; richer evidence should be added at the route recorder/transport
  * seam first, then surfaced here.</p>
  */
-final class FeedbackDiagnosticStructuredEvidenceExporter {
+final class StructuredEvidenceExporter {
     private static final String UNKNOWN = "unknown";
     private static final String TIMELINE_HEADER =
             "time\tsource\tcategory\tmodule\troute\tstage\tprocess\tpackage\tmessage\n";
@@ -19,7 +19,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
             "source\tprocess\tpid\tmodule\troute\tcalls\tapplied\tskipped\tkept\tmeasuredCalls"
                     + "\tp50Us\tp95Us\tp99Us\tmaxUs\tnote\n";
 
-    private FeedbackDiagnosticStructuredEvidenceExporter() {
+    private StructuredEvidenceExporter() {
     }
 
     static String buildTimelineTsv(List<String> runtimeEvents) {
@@ -57,13 +57,13 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
     }
 
     static String buildModuleEffectsTsv(
-            FeedbackDiagnosticCoordinator.Result result,
+            DiagnosticCoordinator.Result result,
             List<String> runtimeEvents,
-            FeedbackDiagnosticPerformanceSnapshot snapshot
+            PerformanceSnapshot snapshot
     ) {
         List<SelectedRoute> selectedRoutes = selectedRoutes(result);
-        List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> summaries =
-                FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
+        List<ProcessPerformanceParser.ProcessSummary> summaries =
+                ProcessPerformanceParser.parse(runtimeEvents);
         if (!summaries.isEmpty()) {
             return buildProcessSummaryTsv(
                     "target-process-lsposed-aggregate",
@@ -72,7 +72,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
                     selectedRoutes
             );
         }
-        summaries = FeedbackDiagnosticProcessPerformanceParser.parseMutationAppliedFallback(
+        summaries = ProcessPerformanceParser.parseMutationAppliedFallback(
                 runtimeEvents);
         if (!summaries.isEmpty()) {
             return buildProcessSummaryTsv(
@@ -90,14 +90,14 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
 
     private static String buildProcessSummaryTsv(
             String source,
-            List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> summaries,
+            List<ProcessPerformanceParser.ProcessSummary> summaries,
             String note,
             List<SelectedRoute> selectedRoutes
     ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
         List<String> observedModules = new ArrayList<>();
-        for (FeedbackDiagnosticProcessPerformanceParser.ProcessSummary process : summaries) {
-            for (FeedbackDiagnosticProcessPerformanceParser.RouteSummary route
+        for (ProcessPerformanceParser.ProcessSummary process : summaries) {
+            for (ProcessPerformanceParser.RouteSummary route
                     : process.routes.values()) {
                 String module = moduleFor(route.route, route.route);
                 observedModules.add(module);
@@ -126,12 +126,12 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
     }
 
     private static String buildUiSnapshotTsv(
-            FeedbackDiagnosticPerformanceSnapshot snapshot,
+            PerformanceSnapshot snapshot,
             List<SelectedRoute> selectedRoutes
     ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
         List<String> observedModules = new ArrayList<>();
-        for (FeedbackDiagnosticPerformanceSnapshot.Entry entry : snapshot.entries()) {
+        for (PerformanceSnapshot.Entry entry : snapshot.entries()) {
             String module = moduleFor(entry.route, entry.route);
             observedModules.add(module);
             appendModuleEffectRow(
@@ -203,7 +203,7 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
         List<String> events = runtimeEvents != null
                 ? new ArrayList<>(runtimeEvents)
                 : new ArrayList<>();
-        FeedbackDiagnosticLsposedTimelineParser.sortTimelineEvents(events);
+        LsposedTimelineParser.sortTimelineEvents(events);
         return events;
     }
 
@@ -280,8 +280,8 @@ final class FeedbackDiagnosticStructuredEvidenceExporter {
         }
     }
 
-    private static List<SelectedRoute> selectedRoutes(FeedbackDiagnosticCoordinator.Result result) {
-        FeedbackDiagnosticCoordinator.Request request =
+    private static List<SelectedRoute> selectedRoutes(DiagnosticCoordinator.Result result) {
+        DiagnosticCoordinator.Request request =
                 result != null ? result.request : null;
         if (request == null || !request.inScope || !request.dpisEnabled) {
             return List.of();

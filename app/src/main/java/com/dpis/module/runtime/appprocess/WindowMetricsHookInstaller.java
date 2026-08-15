@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.appprocess;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.*;
 import com.dpis.module.viewport.VirtualDisplayOverride;
@@ -88,7 +88,7 @@ public final class WindowMetricsHookInstaller {
                                     + rect.height() + " -> " + newRect.width() + "x"
                                     + newRect.height()
                                     + ", " + sampledDetail);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            RuntimeHotPathEvents.applied(
                                     packageName,
                                     "viewport",
                                     ROUTE_NAME,
@@ -110,7 +110,7 @@ public final class WindowMetricsHookInstaller {
                 "DPIS_VIEWPORT WindowMetrics callback: package=" + safeValue(packageName)
                         + ", route=" + ROUTE_NAME
                         + ", " + sampledDetail);
-            FeedbackDiagnosticRuntimeHotPathEvents.probe(
+            RuntimeHotPathEvents.probe(
                     packageName,
                     "viewport",
                     ROUTE_NAME,
@@ -127,7 +127,7 @@ public final class WindowMetricsHookInstaller {
                 "DPIS_VIEWPORT WindowMetrics skip: package=" + safeValue(packageName)
                         + ", route=" + ROUTE_NAME
                         + ", " + sampledDetail);
-            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+            RuntimeHotPathEvents.skipped(
                     packageName,
                     "viewport",
                     ROUTE_NAME,

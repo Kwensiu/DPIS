@@ -18,12 +18,12 @@ import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.updates.UpdateAvailableDialog;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
-import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
+import com.dpis.module.diagnostics.DiagnosticResultSheet;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
+import com.dpis.module.diagnostics.DiagnosticExportBuilder;
+import com.dpis.module.diagnostics.DiagnosticSession;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.DiagnosticCoordinator;
 import com.dpis.module.diagnostics.LogReadResult;
 import com.dpis.module.diagnostics.LsposedLogReader;
 
@@ -82,7 +82,7 @@ import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
-import com.dpis.module.diagnostics.FeedbackDiagnosticAppLauncher;
+import com.dpis.module.diagnostics.DiagnosticAppLauncher;
 
 import com.dpis.module.ui.TouchFeedbackBinder;
 
@@ -252,12 +252,9 @@ public final class MainActivity
             = new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch);
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
-    private final FeedbackDiagnosticCoordinator feedbackDiagnosticCoordinator
-            = new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost());
-    private final FeedbackDiagnosticAppLauncher feedbackDiagnosticAppLauncher
-            = new FeedbackDiagnosticAppLauncher(this);
-    private final FeedbackDiagnosticExportBuilder feedbackDiagnosticExportBuilder
-            = new FeedbackDiagnosticExportBuilder(this);
+    private DiagnosticSession feedbackDiagnosticSession;
+    private final DiagnosticAppLauncher feedbackDiagnosticAppLauncher
+            = new DiagnosticAppLauncher(this);
     private final ExecutorService feedbackDiagnosticExportExecutor
             = Executors.newSingleThreadExecutor();
     private final StartupUpdatePackageHandler startupUpdatePackageHandler
@@ -323,14 +320,9 @@ public final class MainActivity
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
-    private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
-    private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
-    private androidx.appcompat.app.AlertDialog activeFeedbackDiagnosticPackagingDialog;
-    private boolean feedbackDiagnosticResultAvailable;
     private com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
             feedbackDiagnosticPreparationPresentation;
-    private boolean feedbackDiagnosticDurationEnabled;
-    private int feedbackDiagnosticDurationSeconds = 30;
+    private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
     private TemplateEditorDraft retainedGlobalPrefillDraft;
@@ -364,6 +356,10 @@ public final class MainActivity
 
         RetainedState retainedState
                 = (RetainedState) getLastCustomNonConfigurationInstance();
+        feedbackDiagnosticSession = retainedState != null
+                && retainedState.feedbackDiagnosticSession != null
+                ? retainedState.feedbackDiagnosticSession
+                : new DiagnosticSession(getApplicationContext());
         String initialQuery = "";
         String initialTemplateQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
@@ -384,6 +380,7 @@ public final class MainActivity
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
             retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
             homeUpdateUiState = retainedState.homeUpdateUiState;
+            feedbackDiagnosticPageRequest = retainedState.feedbackDiagnosticPageRequest;
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
@@ -517,6 +514,8 @@ public final class MainActivity
 
         renderMainUiState(requireUiState());
         installComposeWorkspaceShell();
+        restoreFeedbackDiagnosticPage(retainedState);
+        feedbackDiagnosticSession.attachHost(createFeedbackDiagnosticHost());
         // The service state callback is not guaranteed to fire on every Wear image.
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         requestAppsLoad();
@@ -567,8 +566,6 @@ public final class MainActivity
         super.onResume();
         mainActivityResumed = true;
         maybeStartRootAccessProbe();
-        feedbackDiagnosticCoordinator.onDpisResumed();
-        maybeShowPendingFeedbackDiagnosticResult();
         if (composeShellHost != null && composeToolsPresenter != null) {
             composeToolsPresenter.refresh();
         } else if (toolsWorkspaceBinder != null) {
@@ -594,8 +591,12 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
-        feedbackDiagnosticCoordinator.shutdown();
-        feedbackDiagnosticExportExecutor.shutdownNow();
+        if (isChangingConfigurations()) {
+            feedbackDiagnosticSession.detachHost();
+        } else {
+            feedbackDiagnosticSession.shutdown();
+            feedbackDiagnosticExportExecutor.shutdownNow();
+        }
         if (updateDownloadCoordinator != null) {
             updateDownloadCoordinator.shutdown();
         }
@@ -772,7 +773,12 @@ public final class MainActivity
                 quickTemplateTargetSelectionActivityStarted,
                 retainedGlobalPrefillDraft,
                 retainedQuickTemplateDraft,
-                homeUpdateUiState
+                homeUpdateUiState,
+                feedbackDiagnosticSession,
+                feedbackDiagnosticPageRequest,
+                feedbackDiagnosticPreparationPresentation != null
+                        ? feedbackDiagnosticPreparationPresentation.getState()
+                        : null
         );
     }
 
@@ -1968,18 +1974,37 @@ public final class MainActivity
         showComposeFeedbackDiagnosticPreparation(item, draft);
     }
 
+    private void restoreFeedbackDiagnosticPage(RetainedState retainedState) {
+        if (retainedState == null
+                || retainedState.feedbackDiagnosticPageRequest == null
+                || retainedState.feedbackDiagnosticPresentationState == null) {
+            return;
+        }
+        FeedbackDiagnosticPageRequest request = retainedState.feedbackDiagnosticPageRequest;
+        showComposeFeedbackDiagnosticPreparation(request.item, request.draft);
+        if (feedbackDiagnosticPreparationPresentation != null) {
+            feedbackDiagnosticPreparationPresentation.show(
+                    retainedState.feedbackDiagnosticPresentationState
+            );
+        }
+    }
+
     private void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
             AppConfigEditorDraft draft
     ) {
-        feedbackDiagnosticResultAvailable = false;
         if (composeShellHost == null) {
             showComposeFeedbackDiagnosticConfirmation(item, draft);
             return;
         }
+        feedbackDiagnosticPageRequest = new FeedbackDiagnosticPageRequest(
+                item,
+                draft,
+                resolvePackageVersionName(item.packageName)
+        );
         String rootStatus = feedbackDiagnosticRootStatus();
         String logStatus = getString(R.string.feedback_diagnostic_log_session_enabled);
-        String versionName = resolvePackageVersionName(item.packageName);
+        String versionName = feedbackDiagnosticPageRequest.versionName;
         com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State initialState
                 = new com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State(
                         item.label,
@@ -2009,43 +2034,41 @@ public final class MainActivity
                             return Unit.INSTANCE;
                         },
                         () -> {
-                    if (feedbackDiagnosticPreparationPresentation != null) {
-                        feedbackDiagnosticDurationEnabled =
-                                feedbackDiagnosticPreparationPresentation.isDurationEnabled();
-                        feedbackDiagnosticDurationSeconds =
-                                feedbackDiagnosticPreparationPresentation.selectedDurationSeconds();
-                    }
                     if (!saveComposeAppEditor(item, draft)) {
                         return Unit.INSTANCE;
                     }
                     markComposeAppEditorSaved(draft);
-                    if (feedbackDiagnosticPreparationPresentation != null) {
-                        feedbackDiagnosticPreparationPresentation.markRecording();
-                    }
-                    boolean started = feedbackDiagnosticCoordinator.start(
-                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                    com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation current
+                            = feedbackDiagnosticPreparationPresentation;
+                    boolean started = feedbackDiagnosticSession.start(
+                            DiagnosticCoordinator.Request.fromPersisted(
                                     item,
                                     composeEditorDialogState(item, draft),
                                     versionName,
                                     getHookConfigStore()
-                            )
+                            ),
+                            current != null && current.isDurationEnabled(),
+                            current != null ? current.selectedDurationSeconds() : 30
                     );
                     if (!started) {
+                        if (current != null) {
+                            current.markStartFailed();
+                        }
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
                     return Unit.INSTANCE;
                 },
                         () -> {
-                            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                                    = pendingFeedbackDiagnosticPackage;
+                            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                                    = feedbackDiagnosticSession.diagnosticPackage();
                             if (diagnosticPackage != null) {
                                 launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
                             }
                             return Unit.INSTANCE;
                         },
                         () -> {
-                            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                                    = pendingFeedbackDiagnosticPackage;
+                            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                                    = feedbackDiagnosticSession.diagnosticPackage();
                             if (diagnosticPackage != null) {
                                 shareFeedbackDiagnostic(diagnosticPackage);
                             }
@@ -2243,16 +2266,17 @@ public final class MainActivity
                         return;
                     }
                     markComposeAppEditorSaved(draft);
-                    boolean started = feedbackDiagnosticCoordinator.start(
-                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                    boolean started = feedbackDiagnosticSession.start(
+                            DiagnosticCoordinator.Request.fromPersisted(
                                     item,
                                     composeEditorDialogState(item, draft),
                                     resolvePackageVersionName(item.packageName),
                                     getHookConfigStore()
-                            )
+                            ),
+                            false,
+                            30
                     );
                     if (!started) {
-                        feedbackDiagnosticPreparationPresentation.markStartFailed();
                         showToast(R.string.feedback_diagnostic_unavailable);
                     }
                 },
@@ -4074,8 +4098,8 @@ public final class MainActivity
         };
     }
 
-    private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost() {
-        return new FeedbackDiagnosticCoordinator.Host() {
+    private DiagnosticSession.Host createFeedbackDiagnosticHost() {
+        return new DiagnosticSession.Host() {
             @Override
             public boolean restartTargetAppForDiagnostic(String packageName) {
                 syncRuntimePropertiesForTargetLaunch(packageName);
@@ -4088,62 +4112,52 @@ public final class MainActivity
             }
 
             @Override
-            public String dpisPackageName() {
-                return getPackageName();
-            }
-
-            @Override
-            public RootAccessProbe.Result rootAccess() {
-                return RootAccessProbe.cachedResult();
-            }
-
-            @Override
             public boolean systemHooksEnabled() {
                 return isSystemHookEnabledFromStore();
             }
 
             @Override
-            public long currentTimeMillis() {
-                return System.currentTimeMillis();
-            }
-
-            @Override
-            public void onFeedbackDiagnosticStarted() {
-                if (feedbackDiagnosticPreparationPresentation != null
-                        && feedbackDiagnosticDurationEnabled) {
-                    feedbackDiagnosticCoordinator.scheduleFinishAfterDelay(
-                            feedbackDiagnosticDurationSeconds * 1_000L
-                    );
+            public void onRecordingStarted() {
+                if (feedbackDiagnosticPreparationPresentation != null) {
+                    feedbackDiagnosticPreparationPresentation.markRecording();
                 }
                 showToast(R.string.feedback_diagnostic_started);
             }
 
             @Override
-            public void onFeedbackDiagnosticUnavailable() {
+            public void onStartUnavailable(boolean rootRequired) {
                 if (feedbackDiagnosticPreparationPresentation != null) {
                     feedbackDiagnosticPreparationPresentation.markStartFailed();
                 }
-                showToast(R.string.feedback_diagnostic_unavailable);
+                showToast(rootRequired
+                        ? R.string.feedback_diagnostic_root_required
+                        : R.string.feedback_diagnostic_unavailable);
             }
 
             @Override
-            public void onFeedbackDiagnosticRootRequired() {
+            public void onPackagingStarted() {
                 if (feedbackDiagnosticPreparationPresentation != null) {
-                    feedbackDiagnosticPreparationPresentation.markStartFailed();
+                    feedbackDiagnosticPreparationPresentation.markPackaging();
                 }
-                showToast(R.string.feedback_diagnostic_root_required);
             }
 
             @Override
-            public void onFeedbackDiagnosticFinished(
-                    FeedbackDiagnosticCoordinator.Result result
+            public void onPackageReady(
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
-                pendingFeedbackDiagnosticResult = result;
-                maybeShowPendingFeedbackDiagnosticResult();
+                showFeedbackDiagnosticReady(diagnosticPackage);
             }
 
             @Override
-            public void onFeedbackDiagnosticAutoFinished() {
+            public void onPackagingFailed() {
+                if (feedbackDiagnosticPreparationPresentation != null) {
+                    feedbackDiagnosticPreparationPresentation.showPackagingFailed();
+                }
+                showToast(R.string.feedback_diagnostic_save_failed);
+            }
+
+            @Override
+            public void onAutoFinished() {
                 showToast(R.string.feedback_diagnostic_auto_finished);
             }
         };
@@ -4184,13 +4198,15 @@ public final class MainActivity
                     if (diagnosticItem == null) {
                         return;
                     }
-                    boolean started = feedbackDiagnosticCoordinator.start(
-                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                    boolean started = feedbackDiagnosticSession.start(
+                            DiagnosticCoordinator.Request.fromPersisted(
                                     diagnosticItem,
                                     state,
                                     resolvePackageVersionName(item.packageName),
                                     getHookConfigStore()
-                            )
+                            ),
+                            false,
+                            30
                     );
                     if (!started) {
                         showToast(R.string.feedback_diagnostic_unavailable);
@@ -4336,64 +4352,14 @@ public final class MainActivity
         }
     }
 
-    private void maybeShowPendingFeedbackDiagnosticResult() {
-        FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                = pendingFeedbackDiagnosticPackage;
-        if (diagnosticPackage != null && mainActivityResumed) {
-            dismissFeedbackDiagnosticPackagingDialog();
-            showFeedbackDiagnosticReady(diagnosticPackage);
-            return;
-        }
-        FeedbackDiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
-        if (result == null || !mainActivityResumed) {
-            return;
-        }
-        pendingFeedbackDiagnosticResult = null;
-        if (feedbackDiagnosticPreparationPresentation != null) {
-            feedbackDiagnosticPreparationPresentation.markPackaging();
-        } else {
-            showFeedbackDiagnosticPackagingDialog();
-        }
-        feedbackDiagnosticExportExecutor.execute(() -> {
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage built;
-            try {
-                built = feedbackDiagnosticExportBuilder.buildPackage(result);
-            } catch (IOException | RuntimeException ignored) {
-                built = null;
-            }
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage finalBuilt = built;
-            runOnUiThread(() -> {
-                dismissFeedbackDiagnosticPackagingDialog();
-                if (finalBuilt == null) {
-                    if (feedbackDiagnosticPreparationPresentation != null) {
-                        feedbackDiagnosticPreparationPresentation.showPackagingFailed();
-                    }
-                    Toast.makeText(
-                            this,
-                            R.string.feedback_diagnostic_save_failed,
-                            Toast.LENGTH_SHORT
-                    ).show();
-                    return;
-                }
-                if (!mainActivityResumed) {
-                    pendingFeedbackDiagnosticPackage = finalBuilt;
-                    return;
-                }
-                showFeedbackDiagnosticReady(finalBuilt);
-            });
-        });
-    }
-
     private void showFeedbackDiagnosticReady(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
         }
-        pendingFeedbackDiagnosticPackage = diagnosticPackage;
-        feedbackDiagnosticResultAvailable = true;
         if (feedbackDiagnosticPreparationPresentation == null) {
-            showFeedbackDiagnosticResultSheet(diagnosticPackage);
+            showDiagnosticResultSheet(diagnosticPackage);
             return;
         }
         feedbackDiagnosticPreparationPresentation.showReady(
@@ -4455,24 +4421,23 @@ public final class MainActivity
                 : minutes + " min " + seconds + " s";
     }
 
-    private void showFeedbackDiagnosticResultSheet(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+    private void showDiagnosticResultSheet(
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
         }
-        feedbackDiagnosticResultAvailable = true;
-        new FeedbackDiagnosticResultSheet(this, new FeedbackDiagnosticResultSheet.Host() {
+        new DiagnosticResultSheet(this, new DiagnosticResultSheet.Host() {
             @Override
             public void shareFeedbackDiagnostic(
-                    FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 MainActivity.this.shareFeedbackDiagnostic(diagnosticPackage);
             }
 
             @Override
             public void saveFeedbackDiagnostic(
-                    FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 MainActivity.this.launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
             }
@@ -4491,11 +4456,7 @@ public final class MainActivity
                 getString(android.R.string.cancel),
                 getString(R.string.feedback_diagnostic_exit_clear_action),
                 () -> {
-                    feedbackDiagnosticCoordinator.cancel();
-                    pendingFeedbackDiagnosticResult = null;
-                    pendingFeedbackDiagnosticPackage = null;
-                    feedbackDiagnosticResultAvailable = false;
-                    dismissFeedbackDiagnosticPackagingDialog();
+                    feedbackDiagnosticSession.cancel();
                     dismissFeedbackDiagnosticPage();
                 },
                 () -> { }
@@ -4503,29 +4464,16 @@ public final class MainActivity
     }
 
     private boolean hasFeedbackDiagnosticStateToClear() {
-        return feedbackDiagnosticCoordinator.isRunning()
-                || pendingFeedbackDiagnosticResult != null
-                || pendingFeedbackDiagnosticPackage != null
-                || activeFeedbackDiagnosticPackagingDialog != null
-                || feedbackDiagnosticResultAvailable;
+        return feedbackDiagnosticSession.isRunning()
+                || feedbackDiagnosticSession.hasPageState()
+                || feedbackDiagnosticSession.diagnosticPackage() != null;
     }
 
     private void dismissFeedbackDiagnosticPage() {
         feedbackDiagnosticPreparationPresentation = null;
+        feedbackDiagnosticPageRequest = null;
         if (composeShellHost != null) {
             composeShellHost.dismissDiagnosticPreparation();
-        }
-    }
-
-    private void showFeedbackDiagnosticPackagingDialog() {
-        dismissFeedbackDiagnosticPackagingDialog();
-        activeFeedbackDiagnosticPackagingDialog = FeedbackDiagnosticPackagingDialog.show(this);
-    }
-
-    private void dismissFeedbackDiagnosticPackagingDialog() {
-        if (activeFeedbackDiagnosticPackagingDialog != null) {
-            activeFeedbackDiagnosticPackagingDialog.dismiss();
-            activeFeedbackDiagnosticPackagingDialog = null;
         }
     }
 
@@ -4542,15 +4490,14 @@ public final class MainActivity
 
     @SuppressWarnings("deprecation")
     private void launchSaveFeedbackDiagnosticPicker(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
         }
-        pendingFeedbackDiagnosticPackage = diagnosticPackage;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType(FeedbackDiagnosticExportBuilder.MIME_TYPE)
+                .setType(DiagnosticExportBuilder.MIME_TYPE)
                 .putExtra(
                         Intent.EXTRA_TITLE,
                         diagnosticPackage.fileName
@@ -4558,7 +4505,6 @@ public final class MainActivity
         try {
             startActivityForResult(intent, REQUEST_SAVE_FEEDBACK_DIAGNOSTIC);
         } catch (ActivityNotFoundException error) {
-            pendingFeedbackDiagnosticPackage = null;
             Toast.makeText(
                     this,
                     R.string.feedback_diagnostic_save_failed,
@@ -4568,9 +4514,8 @@ public final class MainActivity
     }
 
     private void saveFeedbackDiagnosticZip(Uri uri) {
-        FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                = pendingFeedbackDiagnosticPackage;
-        pendingFeedbackDiagnosticPackage = null;
+        DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                = feedbackDiagnosticSession.diagnosticPackage();
         if (uri == null || diagnosticPackage == null) {
             Toast.makeText(this, R.string.feedback_diagnostic_save_failed, Toast.LENGTH_SHORT)
                     .show();
@@ -4599,7 +4544,7 @@ public final class MainActivity
     }
 
     private void shareFeedbackDiagnostic(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
@@ -4635,7 +4580,7 @@ public final class MainActivity
     }
 
     private File writeSharedFeedbackDiagnosticZip(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) throws IOException {
         File directory = new File(getCacheDir(), SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME);
         if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -4649,7 +4594,7 @@ public final class MainActivity
     }
 
     private String feedbackDiagnosticSharedCachePath(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         return "/data/data/" + getPackageName() + "/cache/"
                 + SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME + "/"
@@ -4674,7 +4619,7 @@ public final class MainActivity
 
     private void launchFeedbackDiagnosticShareSheet(Uri uri) {
         Intent intent = new Intent(Intent.ACTION_SEND)
-                .setType(FeedbackDiagnosticExportBuilder.MIME_TYPE)
+                .setType(DiagnosticExportBuilder.MIME_TYPE)
                 .putExtra(Intent.EXTRA_STREAM, uri)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {
@@ -5228,7 +5173,11 @@ public final class MainActivity
                                  boolean quickTemplateTargetSelectionActivityStarted,
                                  TemplateEditorDraft globalPrefillDraft,
                                  TemplateEditorDraft quickTemplateDraft,
-                                 HomeUpdateUiState homeUpdateUiState) {
+                                 HomeUpdateUiState homeUpdateUiState,
+                                 DiagnosticSession feedbackDiagnosticSession,
+                                 FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
+                                 com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
+                                         feedbackDiagnosticPresentationState) {
 
             private RetainedState(
                     List<AppListItem> appsSnapshot,
@@ -5248,7 +5197,11 @@ public final class MainActivity
                     boolean quickTemplateTargetSelectionActivityStarted,
                     TemplateEditorDraft globalPrefillDraft,
                     TemplateEditorDraft quickTemplateDraft,
-                    HomeUpdateUiState homeUpdateUiState
+                    HomeUpdateUiState homeUpdateUiState,
+                    DiagnosticSession feedbackDiagnosticSession,
+                    FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
+                    com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
+                            feedbackDiagnosticPresentationState
             ) {
                 this.appsSnapshot = appsSnapshot;
                 this.query = query != null ? query : "";
@@ -5286,8 +5239,28 @@ public final class MainActivity
                 this.homeUpdateUiState = homeUpdateUiState != null
                         ? homeUpdateUiState
                         : HomeUpdateUiState.UP_TO_DATE;
+                this.feedbackDiagnosticSession = feedbackDiagnosticSession;
+                this.feedbackDiagnosticPageRequest = feedbackDiagnosticPageRequest;
+                this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;
             }
         }
+
+    /** Inputs needed to rebuild the diagnostic page after a configuration change. */
+    private record FeedbackDiagnosticPageRequest(
+            AppListItem item,
+            AppConfigEditorDraft draft,
+            String versionName
+    ) {
+        private FeedbackDiagnosticPageRequest(
+                AppListItem item,
+                AppConfigEditorDraft draft,
+                String versionName
+        ) {
+            this.item = item;
+            this.draft = draft;
+            this.versionName = versionName != null ? versionName : "";
+        }
+    }
 
     private enum TemplateDetailKind {
         NONE,

@@ -1,8 +1,8 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeTransport;
+import com.dpis.module.diagnostics.RuntimeTransport;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
 import android.util.Log;
 
@@ -67,8 +67,8 @@ public final class DpisLog {
                 ? msg
                 : msg + " | " + throwableMessage;
         recordAppLog(level, recordedMessage);
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(level, recordedMessage);
-        FeedbackDiagnosticRuntimeTransport.record("runtime", "dpis_log", "", recordedMessage);
+        RuntimeEvents.recordDpisLog(level, recordedMessage);
+        RuntimeTransport.record("runtime", "dpis_log", "", recordedMessage);
     }
 
     public static boolean isLoggingEnabled() {
@@ -85,7 +85,7 @@ public final class DpisLog {
 
     private static boolean isDiagnosticCaptureActive() {
         try {
-            return FeedbackDiagnosticRuntimeTransport.isCaptureActive();
+            return RuntimeTransport.isCaptureActive();
         } catch (RuntimeException | LinkageError ignored) {
             // Logging is also used during early process startup where the
             // diagnostic transport may not yet be available.

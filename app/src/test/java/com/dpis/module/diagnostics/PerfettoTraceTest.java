@@ -12,11 +12,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class FeedbackDiagnosticPerfettoTraceTest {
+public class PerfettoTraceTest {
     @Test
     public void startsDetachedCliTraceWithoutServiceSideFileWriter() {
         List<String> commands = new ArrayList<>();
-        FeedbackDiagnosticPerfettoTrace.StartResult result = FeedbackDiagnosticPerfettoTrace.start(
+        PerfettoTrace.StartResult result = PerfettoTrace.start(
                 command -> {
                     commands.add(command);
                     return new RootAppProcessLauncher.ShellResult(0, "");
@@ -45,7 +45,7 @@ public class FeedbackDiagnosticPerfettoTraceTest {
     @Test
     public void exportsCompletedTraceAndCleansUpDeviceFiles() {
         List<String> commands = new ArrayList<>();
-        FeedbackDiagnosticPerfettoTrace.StartResult started = FeedbackDiagnosticPerfettoTrace.start(
+        PerfettoTrace.StartResult started = PerfettoTrace.start(
                 command -> {
                     commands.add(command);
                     if (command.contains("available:size")) {
@@ -58,8 +58,8 @@ public class FeedbackDiagnosticPerfettoTraceTest {
                 }
         );
 
-        FeedbackDiagnosticPerfettoTrace.StopResult stopped = started.trace.stop();
-        FeedbackDiagnosticPerfettoTrace.StopResult exported =
+        PerfettoTrace.StopResult stopped = started.trace.stop();
+        PerfettoTrace.StopResult exported =
                 started.trace.consumeStoppedTrace(stopped);
 
         assertTrue(stopped.available);

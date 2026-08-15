@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * process-local aggregate publication. Keep this class as the owner of the
  * diagnostic log prefixes so runtime entrypoints only call semantic helpers.</p>
  */
-public final class FeedbackDiagnosticRuntimeBridgeEvents {
+public final class RuntimeBridgeEvents {
     private static final String BRIDGE_PREFIX = "DPIS ";
     private static final String SESSION_PREFIX = "DPIS_DIAG_SESSION";
     private static final String HOT_PATH_PREFIX = "DPIS_DIAG_HOTPATH";
@@ -30,7 +30,7 @@ public final class FeedbackDiagnosticRuntimeBridgeEvents {
         void log(String message);
     }
 
-    private FeedbackDiagnosticRuntimeBridgeEvents() {
+    private RuntimeBridgeEvents() {
     }
 
     public static void setBridgeSink(BridgeSink sink) {
@@ -42,7 +42,7 @@ public final class FeedbackDiagnosticRuntimeBridgeEvents {
             String processName
     ) {
         try {
-            String discovery = FeedbackDiagnosticRuntimeTransport.activeSessionDiscoveryDetail();
+            String discovery = RuntimeTransport.activeSessionDiscoveryDetail();
             if (discovery.isBlank()) {
                 return;
             }
@@ -62,7 +62,7 @@ public final class FeedbackDiagnosticRuntimeBridgeEvents {
             String packageName,
             String detail
     ) {
-        if (!FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
+        if (!RuntimeTransport.isCaptureActive()) {
             return;
         }
         enqueueHotPathMessage(HOT_PATH_PREFIX
@@ -74,7 +74,7 @@ public final class FeedbackDiagnosticRuntimeBridgeEvents {
     }
 
     public static void emitPerformance(String message) {
-        if (!FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
+        if (!RuntimeTransport.isCaptureActive()) {
             return;
         }
         long dropped = DROPPED_HOT_PATH_EVENTS.getAndSet(0L);

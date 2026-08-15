@@ -32,13 +32,13 @@ import java.util.zip.ZipInputStream;
 
 import org.junit.Test;
 
-public final class FeedbackDiagnosticExportBuilderTest {
+public final class DiagnosticExportBuilderTest {
     private static final long SESSION_START_MILLIS = millis("2023-11-15 06:13:20.000");
     private static final long SESSION_END_MILLIS = millis("2023-11-15 06:13:30.000");
 
     @Test
     public void zipContainsDiagnosticAndSeparateLogEntries() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
                                 millis("2023-11-15 06:13:20.100"),
@@ -138,7 +138,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void performanceSummaryPrefersTargetProcessLsposedAggregate() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -159,7 +159,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void performanceSummaryFallsBackToTargetMutationLogs() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -180,7 +180,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void timelineEntryOrdersRuntimeEvents() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -204,7 +204,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void timelineIncludesSlowMutationBreakdownEvidence() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -226,7 +226,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void timelineTsvExcludesUnstructuredCoordinatorNotes() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -247,7 +247,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void moduleEffectsEntryUsesTargetProcessLsposedAggregate() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -270,7 +270,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void moduleEffectsEntryFallsBackToMutationLogs() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -292,7 +292,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void moduleEffectsEntryReportsSelectedViewportWhenUnobserved() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -314,7 +314,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void timelineEntryClassifiesAppProcessAndSelfTestModules() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -339,9 +339,9 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void diagnosticExportsAvailablePerfettoTrace() throws IOException {
-        FeedbackDiagnosticCoordinator.Result base = result();
-        FeedbackDiagnosticCoordinator.Result withTrace =
-                new FeedbackDiagnosticCoordinator.Result(
+        DiagnosticCoordinator.Result base = result();
+        DiagnosticCoordinator.Result withTrace =
+                new DiagnosticCoordinator.Result(
                         base.request,
                         base.startedAtMillis,
                         base.finishedAtMillis,
@@ -360,14 +360,14 @@ public final class FeedbackDiagnosticExportBuilderTest {
                 );
 
         Map<String, String> entries = unzip(
-                new FeedbackDiagnosticExportBuilder(List::of, () ->
+                new DiagnosticExportBuilder(List::of, () ->
                         new LogReadResult(0, "test-source", "", ""))
                         .buildZip(withTrace)
         );
 
-        assertEquals("abc", entries.get(FeedbackDiagnosticExportBuilder.PERFETTO_TRACE_ENTRY_NAME));
+        assertEquals("abc", entries.get(DiagnosticExportBuilder.PERFETTO_TRACE_ENTRY_NAME));
         String diagnostic = unzip(
-                new FeedbackDiagnosticExportBuilder(List::of, () ->
+                new DiagnosticExportBuilder(List::of, () ->
                         new LogReadResult(0, "test-source", "", ""))
                         .buildZip(withTrace)
         ).get("diagnostic.txt");
@@ -377,7 +377,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void dpisLogKeepsWindowEntriesWhenPresent() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
                                 millis("2023-11-15 06:13:25.000"),
@@ -429,7 +429,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
                     false
             ));
         }
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 () -> entries,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -450,7 +450,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void dpisLogFallbackIgnoresEntriesFarOutsideSession() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
                                 millis("2023-11-15 05:00:00.000"),
@@ -490,7 +490,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void emptyTimelineIncludesRawEvidenceNote() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -506,7 +506,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void wechatDpiConfigAddsAppSpecificDiagnosticPlan() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -521,7 +521,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void runtimeAnalysisKeepsFullTimelineAndFlagsWarnings() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -548,7 +548,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void runtimeSelfTestReportsFoundHotpathProbe() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(
                         0,
@@ -570,7 +570,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void runtimeSelfTestReportsFoundForWechatHotpath() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(
                         0,
@@ -592,7 +592,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void fileNameUsesZipExtension() {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -607,7 +607,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
 
     @Test
     public void emptyLogEntriesUsePlaceholders() throws IOException {
-        FeedbackDiagnosticExportBuilder builder = new FeedbackDiagnosticExportBuilder(
+        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -620,19 +620,19 @@ public final class FeedbackDiagnosticExportBuilderTest {
                 .contains("LSPosed filtered log unavailable or empty in diagnostic window."));
     }
 
-    private static FeedbackDiagnosticCoordinator.Result result() {
+    private static DiagnosticCoordinator.Result result() {
         return result(List.of("11-14 22:13:20.000 session started"), null);
     }
 
-    private static FeedbackDiagnosticCoordinator.Result result(List<String> timelineEvents) {
+    private static DiagnosticCoordinator.Result result(List<String> timelineEvents) {
         return result(timelineEvents, null);
     }
 
-    private static FeedbackDiagnosticCoordinator.Result result(
+    private static DiagnosticCoordinator.Result result(
             List<String> timelineEvents,
             Integer wechatDpi
     ) {
-        FeedbackDiagnosticCoordinator.Request request = new FeedbackDiagnosticCoordinator.Request(
+        DiagnosticCoordinator.Request request = new DiagnosticCoordinator.Request(
                 "com.example.app",
                 "Example",
                 "1.2.3",
@@ -648,7 +648,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
                 "system_server_font",
                 wechatDpi
         );
-        return new FeedbackDiagnosticCoordinator.Result(
+        return new DiagnosticCoordinator.Result(
                 request,
                 SESSION_START_MILLIS,
                 SESSION_END_MILLIS,
@@ -661,11 +661,11 @@ public final class FeedbackDiagnosticExportBuilderTest {
         );
     }
 
-    private static FeedbackDiagnosticCoordinator.Result wechatResult(
+    private static DiagnosticCoordinator.Result wechatResult(
             List<String> timelineEvents,
             Integer wechatDpi
     ) {
-        FeedbackDiagnosticCoordinator.Request request = new FeedbackDiagnosticCoordinator.Request(
+        DiagnosticCoordinator.Request request = new DiagnosticCoordinator.Request(
                 "com.tencent.mm",
                 "微信",
                 "8.0.74",
@@ -681,7 +681,7 @@ public final class FeedbackDiagnosticExportBuilderTest {
                 null,
                 wechatDpi
         );
-        return new FeedbackDiagnosticCoordinator.Result(
+        return new DiagnosticCoordinator.Result(
                 request,
                 SESSION_START_MILLIS,
                 SESSION_END_MILLIS,

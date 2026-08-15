@@ -8,10 +8,10 @@ import com.dpis.module.config.ModulePackagePlan;
 import com.dpis.module.config.RuntimePropertyConfigPreferences;
 
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeBridgeEvents;
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeBridgeEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
 import com.dpis.module.runtime.ModuleRuntimeStateReporter;
 import com.dpis.module.runtime.XposedSelfActivation;
@@ -176,7 +176,7 @@ public final class ModuleMain extends XposedModule {
     public boolean onHotReloading(XposedModuleInterface.HotReloadingParam param) {
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
                 + "hot reload begin: process=" + currentProcessName);
-        FeedbackDiagnosticRuntimeEvents.recordHotReload(
+        RuntimeEvents.recordHotReload(
                 currentProcessName,
                 "runtime",
                 "begin",
@@ -211,7 +211,7 @@ public final class ModuleMain extends XposedModule {
                     + "hot reload replay: process=" + currentProcessName
                     + ", systemServerAttempted=" + systemServerInstallAttempted
                     + ", appAttempted=" + appProcessInstallAttempted);
-            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+            RuntimeEvents.recordHotReload(
                     currentProcessName,
                     "runtime",
                     "replay",
@@ -228,7 +228,7 @@ public final class ModuleMain extends XposedModule {
         } finally {
             log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX
                     + "hot reload end: process=" + currentProcessName);
-            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+            RuntimeEvents.recordHotReload(
                     currentProcessName,
                     "runtime",
                     "end",
@@ -497,16 +497,16 @@ public final class ModuleMain extends XposedModule {
                 + ", targetTypefaceId=" + packagePlan.targetTypefaceId
                 + ", flutterSettingsFont=" + packagePlan.flutterSettingsFontEnabled
                 + ", hyperOsNativeFlutterFont=" + packagePlan.hyperOsNativeFlutterFontEnabled);
-        FeedbackDiagnosticRuntimeHotPathEvents.probe(
+        RuntimeHotPathEvents.probe(
                 packageName,
                 "process_entry",
                 "process-entry source=" + source
                         + ", process=" + currentProcessName
         );
-        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(
+        RuntimeBridgeEvents.setBridgeSink(
                 message -> log(android.util.Log.INFO, "DPIS", message)
         );
-        FeedbackDiagnosticRuntimeBridgeEvents.emitSessionDiscovery(
+        RuntimeBridgeEvents.emitSessionDiscovery(
                 packageName,
                 currentProcessName
         );

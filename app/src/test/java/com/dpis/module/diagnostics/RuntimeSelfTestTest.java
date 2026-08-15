@@ -13,21 +13,21 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 
-public final class FeedbackDiagnosticRuntimeSelfTestTest {
+public final class RuntimeSelfTestTest {
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeTransport.cancel(command ->
+        RuntimeTransport.cancel(command ->
                 new RootAppProcessLauncher.ShellResult(0, ""));
-        FeedbackDiagnosticRuntimeSelfTest.resetForTest();
+        RuntimeSelfTest.resetForTest();
     }
 
     @Test
     public void uiSelfTestReportsSuccessWhenTransportEchoesWrittenEvent() {
         EchoShell shell = new EchoShell();
-        FeedbackDiagnosticRuntimeTransport.start("com.example.app", shell::run);
+        RuntimeTransport.start("com.example.app", shell::run);
 
-        FeedbackDiagnosticRuntimeSelfTest.Status status =
-                FeedbackDiagnosticRuntimeSelfTest.runUiTransportSelfTest(
+        RuntimeSelfTest.Status status =
+                RuntimeSelfTest.runUiTransportSelfTest(
                         "com.example.app",
                         shell::run
                 );
@@ -41,10 +41,10 @@ public final class FeedbackDiagnosticRuntimeSelfTestTest {
     @Test
     public void uiSelfTestReportsFailureWhenTransportCannotReadBack() {
         EmptyReadShell shell = new EmptyReadShell();
-        FeedbackDiagnosticRuntimeTransport.start("com.example.app", shell::run);
+        RuntimeTransport.start("com.example.app", shell::run);
 
-        FeedbackDiagnosticRuntimeSelfTest.Status status =
-                FeedbackDiagnosticRuntimeSelfTest.runUiTransportSelfTest(
+        RuntimeSelfTest.Status status =
+                RuntimeSelfTest.runUiTransportSelfTest(
                         "com.example.app",
                         shell::run
                 );

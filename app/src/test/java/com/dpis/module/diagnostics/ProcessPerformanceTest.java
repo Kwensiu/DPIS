@@ -7,11 +7,11 @@ import java.util.Map;
 
 import org.junit.Test;
 
-public final class FeedbackDiagnosticProcessPerformanceTest {
+public final class ProcessPerformanceTest {
     @Test
     public void aggregatesRouteCountsAndLatencyPercentiles() {
-        FeedbackDiagnosticProcessPerformance performance =
-                new FeedbackDiagnosticProcessPerformance();
+        ProcessPerformance performance =
+                new ProcessPerformance();
 
         performance.call("paint_fallback");
         performance.applied("paint_fallback");
@@ -21,9 +21,9 @@ public final class FeedbackDiagnosticProcessPerformanceTest {
         performance.duration("paint_fallback", 20_000L);
         performance.duration("paint_fallback", 10_000L);
 
-        Map<String, FeedbackDiagnosticProcessPerformance.RouteSnapshot> snapshot =
+        Map<String, ProcessPerformance.RouteSnapshot> snapshot =
                 performance.snapshot();
-        FeedbackDiagnosticProcessPerformance.RouteSnapshot route =
+        ProcessPerformance.RouteSnapshot route =
                 snapshot.get("paint_fallback");
 
         assertEquals(1L, route.calls);
@@ -40,8 +40,8 @@ public final class FeedbackDiagnosticProcessPerformanceTest {
 
     @Test
     public void publishCadenceIsBoundedAndResettable() {
-        FeedbackDiagnosticProcessPerformance performance =
-                new FeedbackDiagnosticProcessPerformance();
+        ProcessPerformance performance =
+                new ProcessPerformance();
 
         assertTrue(performance.shouldPublish(1_000L));
         assertTrue(!performance.shouldPublish(1_100L));

@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-final class FeedbackDiagnosticLsposedTimelineParser {
+final class LsposedTimelineParser {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
 
-    private FeedbackDiagnosticLsposedTimelineParser() {
+    private LsposedTimelineParser() {
     }
 
     public static List<String> parse(
@@ -26,14 +26,14 @@ final class FeedbackDiagnosticLsposedTimelineParser {
     ) {
         return parse(
                 raw,
-                FeedbackDiagnosticSessionWindow.around(startedAtMillis, finishedAtMillis),
+                SessionWindow.around(startedAtMillis, finishedAtMillis),
                 input
         );
     }
 
     public static List<String> parse(
             String raw,
-            FeedbackDiagnosticSessionWindow window,
+            SessionWindow window,
             Input input
     ) {
         if (raw == null || raw.isBlank() || window == null || window.endMillis() <= 0L) {
@@ -41,7 +41,7 @@ final class FeedbackDiagnosticLsposedTimelineParser {
         }
         List<String> events = new ArrayList<>();
         Map<String, Long> lastMutationByKey = new HashMap<>();
-        FeedbackDiagnosticTimelineClassifier.Context context = classifierContext(input);
+        TimelineClassifier.Context context = classifierContext(input);
         for (DpisLogEntry entry : DpisLogParser.parseLsposedDpis(raw)) {
             long timestampMillis = resolveTimestampMillis(entry.timestamp, window.startMillis());
             if (!window.contains(timestampMillis)) {
@@ -65,7 +65,7 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 events.add(sessionEvent);
                 continue;
             }
-            FeedbackDiagnosticTimelineClassifier.Event event =
+            TimelineClassifier.Event event =
                     classify(entry, context);
             if (event != null) {
                 events.add(formatEvent(timestampMillis, entry, input, event));
@@ -90,8 +90,8 @@ final class FeedbackDiagnosticLsposedTimelineParser {
     }
 
     private static final Comparator<String> TIMELINE_EVENT_COMPARATOR =
-            Comparator.comparing(FeedbackDiagnosticLsposedTimelineParser::timePrefix)
-                    .thenComparingInt(FeedbackDiagnosticLsposedTimelineParser::stageRank)
+            Comparator.comparing(LsposedTimelineParser::timePrefix)
+                    .thenComparingInt(LsposedTimelineParser::stageRank)
                     .thenComparing(String::compareTo);
 
     private static String timePrefix(String event) {
@@ -198,7 +198,7 @@ final class FeedbackDiagnosticLsposedTimelineParser {
 
     public static WindowedRawLog windowRawLog(
             LogReadResult result,
-            FeedbackDiagnosticSessionWindow window
+            SessionWindow window
     ) {
         if (result == null || result.output().isBlank()) {
             return new WindowedRawLog("", 0, 0, 0, 0);
@@ -253,7 +253,7 @@ final class FeedbackDiagnosticLsposedTimelineParser {
             long timestampMillis,
             DpisLogEntry entry,
             Input input,
-            FeedbackDiagnosticTimelineClassifier.Event event
+            TimelineClassifier.Event event
     ) {
         return formatTime(timestampMillis)
                 + " source=lsposed-log"
@@ -266,11 +266,11 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 + " message=" + sanitize(event.message());
     }
 
-    private static FeedbackDiagnosticTimelineClassifier.Event classify(
+    private static TimelineClassifier.Event classify(
             DpisLogEntry entry,
-            FeedbackDiagnosticTimelineClassifier.Context context
+            TimelineClassifier.Context context
     ) {
-        return FeedbackDiagnosticTimelineClassifier.classify(
+        return TimelineClassifier.classify(
                 entry != null ? entry.level : "",
                 entry != null ? entry.message : "",
                 context
@@ -281,7 +281,7 @@ final class FeedbackDiagnosticLsposedTimelineParser {
             long timestampMillis,
             DpisLogEntry entry,
             Input input,
-            FeedbackDiagnosticTimelineClassifier.Event event,
+            TimelineClassifier.Event event,
             Map<String, Long> lastMutationByKey
     ) {
         if (!"mutation_applied".equals(event.stage())
@@ -307,10 +307,10 @@ final class FeedbackDiagnosticLsposedTimelineParser {
                 + sanitize(event.message());
     }
 
-    private static FeedbackDiagnosticTimelineClassifier.Context classifierContext(
+    private static TimelineClassifier.Context classifierContext(
             Input input
     ) {
-        return new FeedbackDiagnosticTimelineClassifier.Context(
+        return new TimelineClassifier.Context(
                 input != null && input.appEnabled,
                 input != null && input.viewportEnabled,
                 input != null && input.fontScaleEnabled,

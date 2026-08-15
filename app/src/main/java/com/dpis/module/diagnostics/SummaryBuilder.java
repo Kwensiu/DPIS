@@ -6,7 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-final class FeedbackDiagnosticSummaryBuilder {
+final class SummaryBuilder {
     private static final String UNKNOWN = "unknown";
 
     public String build(

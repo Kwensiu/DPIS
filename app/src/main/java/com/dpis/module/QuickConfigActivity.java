@@ -14,12 +14,12 @@ import com.dpis.module.fonts.FontLibraryActivity;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticResultSheet;
-import com.dpis.module.diagnostics.FeedbackDiagnosticPackagingDialog;
+import com.dpis.module.diagnostics.DiagnosticResultSheet;
+import com.dpis.module.diagnostics.PackagingDialog;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticExportBuilder;
+import com.dpis.module.diagnostics.DiagnosticExportBuilder;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.DiagnosticCoordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -56,7 +56,7 @@ import com.dpis.module.appconfig.WechatDpiConfig;
 
 import com.dpis.module.ui.DialogWindowSizer;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticAppLauncher;
+import com.dpis.module.diagnostics.DiagnosticAppLauncher;
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
@@ -107,20 +107,20 @@ public final class QuickConfigActivity extends LocalizedActivity {
             = new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch);
     private final SystemScopeCoordinator systemScopeCoordinator
             = new SystemScopeCoordinator(createSystemScopeHost());
-    private final FeedbackDiagnosticAppLauncher feedbackDiagnosticAppLauncher
-            = new FeedbackDiagnosticAppLauncher(this);
-    private final FeedbackDiagnosticExportBuilder feedbackDiagnosticExportBuilder
-            = new FeedbackDiagnosticExportBuilder(this);
+    private final DiagnosticAppLauncher feedbackDiagnosticAppLauncher
+            = new DiagnosticAppLauncher(this);
+    private final DiagnosticExportBuilder feedbackDiagnosticExportBuilder
+            = new DiagnosticExportBuilder(this);
     private final ExecutorService feedbackDiagnosticExportExecutor
             = Executors.newSingleThreadExecutor();
     private final AppConfigDialogBinder.Host appConfigDialogHost = createHost();
-    private final FeedbackDiagnosticCoordinator feedbackDiagnosticCoordinator
-            = new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost());
+    private final DiagnosticCoordinator feedbackDiagnosticCoordinator
+            = new DiagnosticCoordinator(createFeedbackDiagnosticHost());
     private View activeEditorRoot;
     private boolean activityResumed;
-    private FeedbackDiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
-    private FeedbackDiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
-    private AlertDialog activeFeedbackDiagnosticPackagingDialog;
+    private DiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
+    private DiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
+    private AlertDialog activePackagingDialog;
     private QuickConfigPresentation presentation;
     private AppListItem editingItem;
     private AppConfigEditorDraft editingDraft;
@@ -401,7 +401,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     @Override
     protected void onDestroy() {
-        dismissFeedbackDiagnosticPackagingDialog();
+        dismissPackagingDialog();
         feedbackDiagnosticCoordinator.shutdown();
         feedbackDiagnosticExportExecutor.shutdownNow();
         super.onDestroy();
@@ -619,8 +619,8 @@ public final class QuickConfigActivity extends LocalizedActivity {
         };
     }
 
-    private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost() {
-        return new FeedbackDiagnosticCoordinator.Host() {
+    private DiagnosticCoordinator.Host createFeedbackDiagnosticHost() {
+        return new DiagnosticCoordinator.Host() {
             @Override
             public boolean restartTargetAppForDiagnostic(String packageName) {
                 syncRuntimePropertiesForTargetLaunch(packageName);
@@ -663,7 +663,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
             }
 
             @Override
-            public void onFeedbackDiagnosticFinished(FeedbackDiagnosticCoordinator.Result result) {
+            public void onFeedbackDiagnosticFinished(DiagnosticCoordinator.Result result) {
                 pendingFeedbackDiagnosticResult = result;
                 maybeShowPendingFeedbackDiagnosticResult();
             }
@@ -770,7 +770,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
                         return;
                     }
                     boolean started = feedbackDiagnosticCoordinator.start(
-                            FeedbackDiagnosticCoordinator.Request.fromPersisted(
+                            DiagnosticCoordinator.Request.fromPersisted(
                                     diagnosticItem,
                                     state,
                                     resolvePackageVersionName(item.packageName),
@@ -853,30 +853,30 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void maybeShowPendingFeedbackDiagnosticResult() {
-        FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+        DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
                 = pendingFeedbackDiagnosticPackage;
         if (diagnosticPackage != null && activityResumed) {
             pendingFeedbackDiagnosticPackage = null;
-            dismissFeedbackDiagnosticPackagingDialog();
-            showFeedbackDiagnosticResultSheet(diagnosticPackage);
+            dismissPackagingDialog();
+            showDiagnosticResultSheet(diagnosticPackage);
             return;
         }
-        FeedbackDiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
+        DiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
         if (result == null || !activityResumed) {
             return;
         }
         pendingFeedbackDiagnosticResult = null;
-        showFeedbackDiagnosticPackagingDialog();
+        showPackagingDialog();
         feedbackDiagnosticExportExecutor.execute(() -> {
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage built;
+            DiagnosticExportBuilder.DiagnosticPackage built;
             try {
                 built = feedbackDiagnosticExportBuilder.buildPackage(result);
             } catch (IOException | RuntimeException ignored) {
                 built = null;
             }
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage finalBuilt = built;
+            DiagnosticExportBuilder.DiagnosticPackage finalBuilt = built;
             runOnUiThread(() -> {
-                dismissFeedbackDiagnosticPackagingDialog();
+                dismissPackagingDialog();
                 if (finalBuilt == null) {
                     showToast(R.string.feedback_diagnostic_save_failed);
                     return;
@@ -885,49 +885,49 @@ public final class QuickConfigActivity extends LocalizedActivity {
                     pendingFeedbackDiagnosticPackage = finalBuilt;
                     return;
                 }
-                showFeedbackDiagnosticResultSheet(finalBuilt);
+                showDiagnosticResultSheet(finalBuilt);
             });
         });
     }
 
-    private void showFeedbackDiagnosticResultSheet(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+    private void showDiagnosticResultSheet(
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
         }
-        new FeedbackDiagnosticResultSheet(this, new FeedbackDiagnosticResultSheet.Host() {
+        new DiagnosticResultSheet(this, new DiagnosticResultSheet.Host() {
             @Override
             public void shareFeedbackDiagnostic(
-                    FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 QuickConfigActivity.this.shareFeedbackDiagnostic(diagnosticPackage);
             }
 
             @Override
             public void saveFeedbackDiagnostic(
-                    FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 QuickConfigActivity.this.launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
             }
         }).show(diagnosticPackage);
     }
 
-    private void showFeedbackDiagnosticPackagingDialog() {
-        dismissFeedbackDiagnosticPackagingDialog();
-        activeFeedbackDiagnosticPackagingDialog = FeedbackDiagnosticPackagingDialog.show(this);
+    private void showPackagingDialog() {
+        dismissPackagingDialog();
+        activePackagingDialog = PackagingDialog.show(this);
     }
 
-    private void dismissFeedbackDiagnosticPackagingDialog() {
-        if (activeFeedbackDiagnosticPackagingDialog != null) {
-            activeFeedbackDiagnosticPackagingDialog.dismiss();
-            activeFeedbackDiagnosticPackagingDialog = null;
+    private void dismissPackagingDialog() {
+        if (activePackagingDialog != null) {
+            activePackagingDialog.dismiss();
+            activePackagingDialog = null;
         }
     }
 
     @SuppressWarnings("deprecation")
     private void launchSaveFeedbackDiagnosticPicker(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
@@ -935,7 +935,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         pendingFeedbackDiagnosticPackage = diagnosticPackage;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType(FeedbackDiagnosticExportBuilder.MIME_TYPE)
+                .setType(DiagnosticExportBuilder.MIME_TYPE)
                 .putExtra(Intent.EXTRA_TITLE, diagnosticPackage.fileName);
         try {
             startActivityForResult(intent, REQUEST_SAVE_FEEDBACK_DIAGNOSTIC);
@@ -946,7 +946,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void saveFeedbackDiagnosticZip(Uri uri) {
-        FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+        DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
                 = pendingFeedbackDiagnosticPackage;
         pendingFeedbackDiagnosticPackage = null;
         if (uri == null || diagnosticPackage == null) {
@@ -972,7 +972,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void shareFeedbackDiagnostic(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
@@ -1004,7 +1004,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private File writeSharedFeedbackDiagnosticZip(
-            FeedbackDiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
     ) throws IOException {
         File directory = new File(getCacheDir(), SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME);
         if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -1019,7 +1019,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     private void launchFeedbackDiagnosticShareSheet(Uri uri) {
         Intent intent = new Intent(Intent.ACTION_SEND)
-                .setType(FeedbackDiagnosticExportBuilder.MIME_TYPE)
+                .setType(DiagnosticExportBuilder.MIME_TYPE)
                 .putExtra(Intent.EXTRA_STREAM, uri)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {

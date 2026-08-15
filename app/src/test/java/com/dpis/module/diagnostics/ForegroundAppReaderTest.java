@@ -6,7 +6,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public final class FeedbackDiagnosticForegroundAppReaderTest {
+public final class ForegroundAppReaderTest {
     @Test
     public void parsePackageReadsResumedActivityComponent() {
         String output = "mResumedActivity: ActivityRecord{"
@@ -14,7 +14,7 @@ public final class FeedbackDiagnosticForegroundAppReaderTest {
 
         assertEquals(
                 "com.example.target",
-                FeedbackDiagnosticForegroundAppReader.parsePackage(output)
+                ForegroundAppReader.parsePackage(output)
         );
     }
 
@@ -25,12 +25,12 @@ public final class FeedbackDiagnosticForegroundAppReaderTest {
 
         assertEquals(
                 "com.dpis.module",
-                FeedbackDiagnosticForegroundAppReader.parsePackage(output)
+                ForegroundAppReader.parsePackage(output)
         );
     }
 
     @Test
     public void parsePackageReturnsEmptyForBlankOutput() {
-        assertEquals("", FeedbackDiagnosticForegroundAppReader.parsePackage(""));
+        assertEquals("", ForegroundAppReader.parsePackage(""));
     }
 }

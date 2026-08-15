@@ -13,7 +13,7 @@ import java.util.UUID;
  * by the target app process. Runtime evidence remains target-process-owned;
  * Perfetto provides the system-wide timeline used for later correlation.</p>
  */
-final class FeedbackDiagnosticPerfettoTrace {
+final class PerfettoTrace {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final long TRACE_DURATION_MS = 60_000L;
     private static final long TRACE_BUFFER_KB = 8L * 1024L;
@@ -30,7 +30,7 @@ final class FeedbackDiagnosticPerfettoTrace {
     private final ShellRunner shellRunner;
     private boolean started;
 
-    private FeedbackDiagnosticPerfettoTrace(ShellRunner shellRunner) {
+    private PerfettoTrace(ShellRunner shellRunner) {
         String id = UUID.randomUUID().toString();
         tracePath = DIRECTORY + "/" + id + ".pftrace";
         pidPath = tracePath + ".pid";
@@ -40,11 +40,11 @@ final class FeedbackDiagnosticPerfettoTrace {
     }
 
     static StartResult start(ShellRunner shellRunner) {
-        FeedbackDiagnosticPerfettoTrace trace =
-                new FeedbackDiagnosticPerfettoTrace(
+        PerfettoTrace trace =
+                new PerfettoTrace(
                         shellRunner != null
                                 ? shellRunner
-                                : FeedbackDiagnosticPerfettoTrace::runSuCommand);
+                                : PerfettoTrace::runSuCommand);
         RootAppProcessLauncher.ShellResult result = trace.shellRunner.run(
                 "mkdir -p " + quote(DIRECTORY)
                         + " && rm -f " + quote(trace.tracePath)
@@ -220,19 +220,19 @@ final class FeedbackDiagnosticPerfettoTrace {
     static final class StartResult {
         final boolean available;
         final String note;
-        final FeedbackDiagnosticPerfettoTrace trace;
+        final PerfettoTrace trace;
 
         private StartResult(
                 boolean available,
                 String note,
-                FeedbackDiagnosticPerfettoTrace trace
+                PerfettoTrace trace
         ) {
             this.available = available;
             this.note = note;
             this.trace = trace;
         }
 
-        static StartResult available(FeedbackDiagnosticPerfettoTrace trace) {
+        static StartResult available(PerfettoTrace trace) {
             return new StartResult(true, "", trace);
         }
 

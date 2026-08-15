@@ -2,7 +2,7 @@ package com.dpis.module.runtime.font;
 
 import com.dpis.module.DpisConfigStore;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
 import com.dpis.module.BuildConfig;
 
@@ -185,7 +185,7 @@ public final class TypefaceOverrideHookInstaller {
                     + HOOK_ID_PAINT_SET_TYPEFACE + ","
                     + HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW + ","
                     + HOOK_ID_TEXTVIEW_ON_DRAW);
-            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+            RuntimeEvents.recordTypeface(
                     packageName,
                     "hook_installed",
                     "typefaceId=" + targetTypefaceId
@@ -359,7 +359,7 @@ public final class TypefaceOverrideHookInstaller {
         String key = packageName + ":" + typefaceId;
         LAST_LOAD_SOURCES.put(key, source);
         LAST_LOAD_TTC_INDICES.put(key, ttcIndex);
-        FeedbackDiagnosticRuntimeEvents.recordTypeface(
+        RuntimeEvents.recordTypeface(
                 packageName,
                 "load_source",
                 "typefaceId=" + typefaceId + ", source=" + source + ", ttcIndex=" + ttcIndex);
@@ -392,7 +392,7 @@ public final class TypefaceOverrideHookInstaller {
             String message
     ) {
         if (logIfChanged(key, message)) {
-            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+            RuntimeEvents.recordTypeface(
                     packageName, stage, "typefaceId=" + typefaceId);
         }
     }
@@ -487,7 +487,7 @@ public final class TypefaceOverrideHookInstaller {
         if (logIfChanged(packageName + ":replacement-hit:" + source,
                 LOG_PREFIX + "replacement hit: package=" + packageName
                         + ", source=" + source)) {
-            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+            RuntimeEvents.recordTypeface(
                     packageName, "replacement_hit", "source=" + source);
         }
     }

@@ -21,7 +21,7 @@ import com.dpis.module.runtime.appprocess.WindowFrameOverride;
 
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeBridgeEvents;
+import com.dpis.module.diagnostics.RuntimeBridgeEvents;
 
 import com.dpis.module.viewport.DensityOverride;
 
@@ -685,8 +685,8 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
     }
 
     private static void emitDiagnosticSessionDiscovery(String packageName, String processName) {
-        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(XposedBridge::log);
-        FeedbackDiagnosticRuntimeBridgeEvents.emitSessionDiscovery(packageName, processName);
+        RuntimeBridgeEvents.setBridgeSink(XposedBridge::log);
+        RuntimeBridgeEvents.emitSessionDiscovery(packageName, processName);
     }
 
 }

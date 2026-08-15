@@ -17,48 +17,48 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 
-public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
+public final class RuntimeHotPathEventsTest {
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeEvents.cancel();
-        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
-        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(null);
-        FeedbackDiagnosticRuntimeTransport.cancel(command ->
+        RuntimeEvents.cancel();
+        RuntimeHotPathEvents.resetForTest();
+        RuntimeBridgeEvents.setBridgeSink(null);
+        RuntimeTransport.cancel(command ->
                 new com.dpis.module.root.RootAppProcessLauncher.ShellResult(0, ""));
     }
 
     @Test
     public void doesNotRecordWhenDiagnosticClosed() {
-        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+        RuntimeHotPathEvents.begin(
                 "com.example.app",
                 "text_appearance",
                 "view=android.widget.TextView, factor=1.2"
         );
 
-        assertTrue(FeedbackDiagnosticRuntimeEvents.snapshotForTest().isEmpty());
+        assertTrue(RuntimeEvents.snapshotForTest().isEmpty());
     }
 
     @Test
     public void recordsBeginAppliedEndWhenDiagnosticOpen() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request());
+        RuntimeEvents.start("com.example.app", request());
 
-        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+        RuntimeHotPathEvents.begin(
                 "com.example.app",
                 "text_appearance",
                 "view=android.widget.TextView, factor=1.2"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+        RuntimeHotPathEvents.applied(
                 "com.example.app",
                 "text_appearance",
                 "view=android.widget.TextView, factor=1.2"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.end(
+        RuntimeHotPathEvents.end(
                 "com.example.app",
                 "text_appearance",
                 "view=android.widget.TextView, factor=1.2"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(3, events.size());
         assertTrue(events.stream().anyMatch(event -> event.contains("stage=begin")));
         assertTrue(events.stream().anyMatch(event -> event.contains("stage=applied")));
@@ -68,35 +68,35 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
 
     @Test
     public void repeatedAppliedEmitsRepeatedWrite() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request());
+        RuntimeEvents.start("com.example.app", request());
 
-        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+        RuntimeHotPathEvents.applied(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+        RuntimeHotPathEvents.applied(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event -> event.contains("stage=repeated_write")));
     }
 
     @Test
     public void recordsViewportRouteWhenCategoryRouteProvided() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request());
+        RuntimeEvents.start("com.example.app", request());
 
-        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+        RuntimeHotPathEvents.applied(
                 "com.example.app",
                 "viewport",
                 "resources_read_configuration_override",
                 "source=ResourcesRead(getConfiguration), widthDp=360->324"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event ->
                 event.contains("route=viewport")
                         && event.contains("stage=applied")
@@ -105,38 +105,38 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
 
     @Test
     public void aggregatesHotPathCountsAndLatencyPercentiles() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request());
+        RuntimeEvents.start("com.example.app", request());
 
-        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+        RuntimeHotPathEvents.begin(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+        RuntimeHotPathEvents.applied(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.end(
+        RuntimeHotPathEvents.end(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+        RuntimeHotPathEvents.skipped(
                 "com.example.app",
                 "paint_fallback",
                 "already applied"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.kept(
+        RuntimeHotPathEvents.kept(
                 "com.example.app",
                 "paint_fallback",
                 "reason=current_target"
         );
 
-        FeedbackDiagnosticPerformanceSnapshot snapshot =
-                FeedbackDiagnosticRuntimeEvents.stopPerformanceSnapshot();
+        PerformanceSnapshot snapshot =
+                RuntimeEvents.stopPerformanceSnapshot();
         assertEquals(1, snapshot.entries().size());
-        FeedbackDiagnosticPerformanceSnapshot.Entry entry = snapshot.entries().get(0);
+        PerformanceSnapshot.Entry entry = snapshot.entries().get(0);
         assertEquals("paint_fallback", entry.route);
         assertEquals(3L, entry.calls);
         assertEquals(1L, entry.applied);
@@ -151,25 +151,25 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
 
     @Test
     public void keepsAreAggregatedWithoutPerCallbackTimelineRecords() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request());
+        RuntimeEvents.start("com.example.app", request());
 
-        FeedbackDiagnosticRuntimeHotPathEvents.kept(
+        RuntimeHotPathEvents.kept(
                 "com.example.app",
                 "paint_fallback",
                 "reason=current_target"
         );
 
-        assertTrue(FeedbackDiagnosticRuntimeEvents.snapshotForTest().isEmpty());
-        FeedbackDiagnosticPerformanceSnapshot snapshot =
-                FeedbackDiagnosticRuntimeEvents.stopPerformanceSnapshot();
+        assertTrue(RuntimeEvents.snapshotForTest().isEmpty());
+        PerformanceSnapshot snapshot =
+                RuntimeEvents.stopPerformanceSnapshot();
         assertEquals(1L, snapshot.entries().get(0).kept);
     }
 
     @Test
     public void emitsHotPathAndPerformanceToRegisteredBridgeSink() {
         List<String> bridgeLines = new ArrayList<>();
-        FeedbackDiagnosticRuntimeBridgeEvents.setBridgeSink(bridgeLines::add);
-        FeedbackDiagnosticRuntimeTransport.start(
+        RuntimeBridgeEvents.setBridgeSink(bridgeLines::add);
+        RuntimeTransport.start(
                 "com.example.app",
                 command -> new com.dpis.module.root.RootAppProcessLauncher.ShellResult(
                         0,
@@ -177,17 +177,17 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
                 )
         );
 
-        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+        RuntimeHotPathEvents.begin(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
-        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+        RuntimeHotPathEvents.applied(
                 "com.example.app",
                 "paint_fallback",
                 "paint=android.graphics.Paint, in=10.0, out=12.0"
         );
-        FeedbackDiagnosticRuntimeBridgeEvents.flushForTest();
+        RuntimeBridgeEvents.flushForTest();
 
         assertTrue(bridgeLines.stream().anyMatch(line ->
                 line.contains("DPIS DPIS_DIAG_HOTPATH")
@@ -199,17 +199,17 @@ public final class FeedbackDiagnosticRuntimeHotPathEventsTest {
 
     @Test
     public void doesNotEmitDiagnosticFallbackLogWhenCaptureInactive() {
-        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+        RuntimeHotPathEvents.begin(
                 "com.example.app",
                 "text_appearance",
                 "view=android.widget.TextView, factor=1.2"
         );
 
-        assertFalse(FeedbackDiagnosticRuntimeTransport.isCaptureActive());
+        assertFalse(RuntimeTransport.isCaptureActive());
     }
 
-    private static FeedbackDiagnosticCoordinator.Request request() {
-        return new FeedbackDiagnosticCoordinator.Request(
+    private static DiagnosticCoordinator.Request request() {
+        return new DiagnosticCoordinator.Request(
                 "com.example.app",
                 "Example",
                 "1.2.3",

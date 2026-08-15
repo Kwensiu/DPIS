@@ -24,7 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class FeedbackDiagnosticRuntimeTransport {
+public final class RuntimeTransport {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final String MARKER_FILE = DIRECTORY + "/active-session";
     private static final String SESSION_PROPERTY = "debug.dpis.diag.session";
@@ -45,7 +45,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         RootAppProcessLauncher.ShellResult run(String command);
     }
 
-    private FeedbackDiagnosticRuntimeTransport() {
+    private RuntimeTransport() {
     }
 
     public static Status start(String packageName, ShellRunner shellRunner) {
@@ -53,7 +53,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         String eventPath = DIRECTORY + "/" + sessionId + "-" + EVENT_FILE_NAME;
         ShellRunner runner = shellRunner != null
                 ? shellRunner
-                : FeedbackDiagnosticRuntimeTransport::runSuCommand;
+                : RuntimeTransport::runSuCommand;
         RootAppProcessLauncher.ShellResult result = runner.run("mkdir -p " + shellQuote(DIRECTORY)
                 + " && chmod 755 " + shellQuote(DIRECTORY)
                 + " && : > " + shellQuote(eventPath)
@@ -87,7 +87,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
         ShellRunner runner = shellRunner != null
                 ? shellRunner
-                : FeedbackDiagnosticRuntimeTransport::runSuCommand;
+                : RuntimeTransport::runSuCommand;
         RootAppProcessLauncher.ShellResult readResult = runner.run("cat "
                 + shellQuote(session.eventPath)
                 + " 2>/dev/null | head -c "
@@ -114,7 +114,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
         ShellRunner runner = shellRunner != null
                 ? shellRunner
-                : FeedbackDiagnosticRuntimeTransport::runSuCommand;
+                : RuntimeTransport::runSuCommand;
         RootAppProcessLauncher.ShellResult readResult = runner.run("cat "
                 + shellQuote(session.eventPath)
                 + " 2>/dev/null | head -c "
@@ -136,7 +136,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
         ShellRunner runner = shellRunner != null
                 ? shellRunner
-                : FeedbackDiagnosticRuntimeTransport::runSuCommand;
+                : RuntimeTransport::runSuCommand;
         runner.run("rm -f " + shellQuote(session.eventPath) + " "
                 + shellQuote(MARKER_FILE)
                 + "; setprop " + shellQuote(SESSION_PROPERTY) + " ''");
@@ -178,7 +178,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
             String packageName,
             String processName,
             int pid,
-            Map<String, FeedbackDiagnosticProcessPerformance.RouteSnapshot> routes
+            Map<String, ProcessPerformance.RouteSnapshot> routes
     ) {
         if (routes == null || routes.isEmpty()) {
             return;
@@ -190,9 +190,9 @@ public final class FeedbackDiagnosticRuntimeTransport {
         if (droppedLines > 0L) {
             message.append(",transportDroppedLines=").append(droppedLines);
         }
-        for (Map.Entry<String, FeedbackDiagnosticProcessPerformance.RouteSnapshot> entry
+        for (Map.Entry<String, ProcessPerformance.RouteSnapshot> entry
                 : routes.entrySet()) {
-            FeedbackDiagnosticProcessPerformance.RouteSnapshot snapshot = entry.getValue();
+            ProcessPerformance.RouteSnapshot snapshot = entry.getValue();
             message.append(";route=").append(entry.getKey())
                     .append(",calls=").append(snapshot.calls)
                     .append(",applied=").append(snapshot.applied)
@@ -216,7 +216,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
             }
         }
         record("performance", "runtime", "aggregate", packageName, message.toString());
-        FeedbackDiagnosticRuntimeBridgeEvents.emitPerformance(message.toString());
+        RuntimeBridgeEvents.emitPerformance(message.toString());
     }
 
     public static Status statusForTest() {
@@ -277,7 +277,7 @@ public final class FeedbackDiagnosticRuntimeTransport {
         }
         ShellRunner runner = shellRunner != null
                 ? shellRunner
-                : FeedbackDiagnosticRuntimeTransport::runSuCommand;
+                : RuntimeTransport::runSuCommand;
         String line = toLine("runtime", "self_test", "self_test", packageName, message);
         RootAppProcessLauncher.ShellResult result = runner.run(
                 "printf %s\\\\n " + shellQuote(line) + " >> " + shellQuote(eventPath)

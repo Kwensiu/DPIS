@@ -13,7 +13,7 @@ import java.util.Map;
  * can therefore collect evidence in an injected target process and publish a
  * compact snapshot through the marker transport.</p>
  */
-final class FeedbackDiagnosticProcessPerformance {
+final class ProcessPerformance {
     private static final long SNAPSHOT_INTERVAL_MS = 500L;
     private final Map<String, RouteStats> routes = new LinkedHashMap<>();
     private long lastSnapshotAt;

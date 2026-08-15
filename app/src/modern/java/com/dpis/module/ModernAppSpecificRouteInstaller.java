@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.viewport.DpiConfig;
 
@@ -79,7 +79,7 @@ final class ModernAppSpecificRouteInstaller {
         xposed.log(android.util.Log.INFO, DpisLog.TAG,
                 "DPIS modern WeChat DPI route enter: package="
                         + packageName + ", process=" + processName + ", source=" + source);
-        FeedbackDiagnosticRuntimeHotPathEvents.event(
+        RuntimeHotPathEvents.event(
                 packageName,
                 "wechat_dpi",
                 source,
@@ -97,7 +97,7 @@ final class ModernAppSpecificRouteInstaller {
                     + ", installed=" + installed
                     + ", classLoader="
                     + WechatDpiModernHookInstaller.describeClassLoaderForLog(classLoader));
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     packageName,
                     "wechat_dpi",
                     source,
@@ -109,7 +109,7 @@ final class ModernAppSpecificRouteInstaller {
                     + packageName + ", process=" + processName + ", source=" + source
                     + ", " + throwable.getClass().getName() + ": " + throwable.getMessage(),
                     throwable);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     packageName,
                     "wechat_dpi",
                     source,
@@ -140,7 +140,7 @@ final class ModernAppSpecificRouteInstaller {
                                     + ", classLoader="
                                     + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                             classLoader));
-                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                            RuntimeHotPathEvents.event(
                                     context.getPackageName(),
                                     "wechat_dpi",
                                     "application_attach",
@@ -159,7 +159,7 @@ final class ModernAppSpecificRouteInstaller {
                                     + ", classLoader="
                                     + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                             classLoader));
-                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                            RuntimeHotPathEvents.event(
                                     context.getPackageName(),
                                     "wechat_dpi",
                                     "application_attach",
@@ -173,7 +173,7 @@ final class ModernAppSpecificRouteInstaller {
                     });
             DpisLog.i("modern WeChat DPI application-attach hook ready: process="
                     + WechatDpiConfig.PACKAGE_NAME);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "application_attach",
@@ -184,7 +184,7 @@ final class ModernAppSpecificRouteInstaller {
             DpisLog.e("modern WeChat DPI application-attach hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(),
                     throwable);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "application_attach",

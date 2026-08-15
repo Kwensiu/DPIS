@@ -27,7 +27,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class FeedbackDiagnosticCoordinator {
+public final class DiagnosticCoordinator {
     private static final long FOREGROUND_CHECK_INTERVAL_MS = 1_000L;
 
     public interface Host {
@@ -191,7 +191,7 @@ public final class FeedbackDiagnosticCoordinator {
         public final boolean systemHooksEnabled;
         public final String summary;
         public final List<String> timelineEvents;
-        public final FeedbackDiagnosticPerformanceSnapshot performanceSnapshot;
+        public final PerformanceSnapshot performanceSnapshot;
         public final boolean perfettoAvailable;
         public final long perfettoSizeBytes;
         public final boolean perfettoTruncated;
@@ -219,7 +219,7 @@ public final class FeedbackDiagnosticCoordinator {
                     systemHooksEnabled,
                     summary,
                     timelineEvents,
-                    FeedbackDiagnosticPerformanceSnapshot.EMPTY
+                    PerformanceSnapshot.EMPTY
             );
         }
 
@@ -233,7 +233,7 @@ public final class FeedbackDiagnosticCoordinator {
                 boolean systemHooksEnabled,
                 String summary,
                 List<String> timelineEvents,
-                FeedbackDiagnosticPerformanceSnapshot performanceSnapshot
+                PerformanceSnapshot performanceSnapshot
         ) {
             this(
                     request,
@@ -264,7 +264,7 @@ public final class FeedbackDiagnosticCoordinator {
                 boolean systemHooksEnabled,
                 String summary,
                 List<String> timelineEvents,
-                FeedbackDiagnosticPerformanceSnapshot performanceSnapshot,
+                PerformanceSnapshot performanceSnapshot,
                 boolean perfettoAvailable,
                 long perfettoSizeBytes,
                 boolean perfettoTruncated,
@@ -299,7 +299,7 @@ public final class FeedbackDiagnosticCoordinator {
                 boolean systemHooksEnabled,
                 String summary,
                 List<String> timelineEvents,
-                FeedbackDiagnosticPerformanceSnapshot performanceSnapshot,
+                PerformanceSnapshot performanceSnapshot,
                 boolean perfettoAvailable,
                 long perfettoSizeBytes,
                 boolean perfettoTruncated,
@@ -319,7 +319,7 @@ public final class FeedbackDiagnosticCoordinator {
                     : new ArrayList<>();
             this.performanceSnapshot = performanceSnapshot != null
                     ? performanceSnapshot
-                    : FeedbackDiagnosticPerformanceSnapshot.EMPTY;
+                    : PerformanceSnapshot.EMPTY;
             this.perfettoAvailable = perfettoAvailable;
             this.perfettoSizeBytes = Math.max(0L, perfettoSizeBytes);
             this.perfettoTruncated = perfettoTruncated;
@@ -332,7 +332,7 @@ public final class FeedbackDiagnosticCoordinator {
 
     private final Host host;
     private final Handler handler;
-    private final FeedbackDiagnosticSummaryBuilder summaryBuilder;
+    private final SummaryBuilder summaryBuilder;
     private final ExecutorService executor;
     private volatile boolean running;
     private volatile Request runningRequest;
@@ -342,22 +342,22 @@ public final class FeedbackDiagnosticCoordinator {
     private String lastObservedForegroundPackage;
     private final Object timelineLock = new Object();
     private final List<String> runningTimelineEvents = new ArrayList<>();
-    private volatile FeedbackDiagnosticPerfettoTrace runningPerfettoTrace;
+    private volatile PerfettoTrace runningPerfettoTrace;
 
-    public FeedbackDiagnosticCoordinator(Host host) {
+    public DiagnosticCoordinator(Host host) {
         this(
                 host,
                 new Handler(Looper.getMainLooper()),
                 Executors.newSingleThreadExecutor(),
-                new FeedbackDiagnosticSummaryBuilder()
+                new SummaryBuilder()
         );
     }
 
-    FeedbackDiagnosticCoordinator(
+    DiagnosticCoordinator(
             Host host,
             Handler handler,
             ExecutorService executor,
-            FeedbackDiagnosticSummaryBuilder summaryBuilder
+            SummaryBuilder summaryBuilder
     ) {
         this.host = host;
         this.handler = handler;
@@ -385,31 +385,31 @@ public final class FeedbackDiagnosticCoordinator {
                 return;
             }
             recordTimelineEvent("root available: " + rootProvider(rootAccess));
-            FeedbackDiagnosticRuntimeTransport.Status transportStatus =
-                    FeedbackDiagnosticRuntimeTransport.start(request.packageName, null);
+            RuntimeTransport.Status transportStatus =
+                    RuntimeTransport.start(request.packageName, null);
             if (!isActiveRequest(request)) {
-                FeedbackDiagnosticRuntimeTransport.cancel(null);
+                RuntimeTransport.cancel(null);
                 return;
             }
             recordTimelineEvent(transportStatus.available
                     ? "runtime transport prepared"
                     : transportStatus.message);
-            FeedbackDiagnosticPerfettoTrace.StartResult perfettoStart =
-                    FeedbackDiagnosticPerfettoTrace.start(null);
+            PerfettoTrace.StartResult perfettoStart =
+                    PerfettoTrace.start(null);
             runningPerfettoTrace = perfettoStart.trace;
             if (!isActiveRequest(request)) {
                 runningPerfettoTrace = null;
                 if (perfettoStart.trace != null) {
                     perfettoStart.trace.discard();
                 }
-                FeedbackDiagnosticRuntimeTransport.cancel(null);
+                RuntimeTransport.cancel(null);
                 return;
             }
             recordTimelineEvent(perfettoStart.available
                     ? "perfetto trace prepared"
                     : "perfetto unavailable: " + perfettoStart.note);
-            FeedbackDiagnosticRuntimeSelfTest.Status selfTest =
-                    FeedbackDiagnosticRuntimeSelfTest.runUiTransportSelfTest(
+            RuntimeSelfTest.Status selfTest =
+                    RuntimeSelfTest.runUiTransportSelfTest(
                             request.packageName,
                             null
                     );
@@ -431,9 +431,9 @@ public final class FeedbackDiagnosticCoordinator {
     }
 
     public void cancel() {
-        FeedbackDiagnosticRuntimeEvents.cancel();
-        FeedbackDiagnosticRuntimeTransport.cancel(null);
-        FeedbackDiagnosticPerfettoTrace trace = runningPerfettoTrace;
+        RuntimeEvents.cancel();
+        RuntimeTransport.cancel(null);
+        PerfettoTrace trace = runningPerfettoTrace;
         runningPerfettoTrace = null;
         if (trace != null) {
             executor.execute(trace::discard);
@@ -492,9 +492,9 @@ public final class FeedbackDiagnosticCoordinator {
             return;
         }
         if (!launched) {
-            FeedbackDiagnosticRuntimeEvents.cancel();
-            FeedbackDiagnosticRuntimeTransport.cancel(null);
-            FeedbackDiagnosticPerfettoTrace trace = runningPerfettoTrace;
+            RuntimeEvents.cancel();
+            RuntimeTransport.cancel(null);
+            PerfettoTrace trace = runningPerfettoTrace;
             runningPerfettoTrace = null;
             if (trace != null) {
                 executor.execute(trace::discard);
@@ -504,7 +504,7 @@ public final class FeedbackDiagnosticCoordinator {
             return;
         }
         runningStartedAtMillis = host.currentTimeMillis();
-        FeedbackDiagnosticRuntimeEvents.start(request.packageName, request);
+        RuntimeEvents.start(request.packageName, request);
         recordTimelineEvent("session started");
         recordTimelineEvent("app config resolved");
         DpisLog.i("feedback diagnostic session started: package="
@@ -530,7 +530,7 @@ public final class FeedbackDiagnosticCoordinator {
             return;
         }
         executor.execute(() -> {
-            String packageName = FeedbackDiagnosticForegroundAppReader.readForegroundPackage();
+            String packageName = ForegroundAppReader.readForegroundPackage();
             handler.post(() -> handleForegroundPackage(packageName));
         });
     }
@@ -565,16 +565,16 @@ public final class FeedbackDiagnosticCoordinator {
         long startedAt = runningStartedAtMillis;
         boolean launched = runningTargetLaunchStarted;
         recordTimelineEvent("session finished");
-        FeedbackDiagnosticPerformanceSnapshot performanceSnapshot =
-                FeedbackDiagnosticRuntimeEvents.stopPerformanceSnapshot();
-        List<String> runtimeEvents = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
-        FeedbackDiagnosticRuntimeTransport.Snapshot transportSnapshot =
-                FeedbackDiagnosticRuntimeTransport.stopSnapshot(null);
-        FeedbackDiagnosticPerfettoTrace trace = runningPerfettoTrace;
+        PerformanceSnapshot performanceSnapshot =
+                RuntimeEvents.stopPerformanceSnapshot();
+        List<String> runtimeEvents = RuntimeEvents.stopSnapshot();
+        RuntimeTransport.Snapshot transportSnapshot =
+                RuntimeTransport.stopSnapshot(null);
+        PerfettoTrace trace = runningPerfettoTrace;
         runningPerfettoTrace = null;
-        FeedbackDiagnosticPerfettoTrace.StopResult perfettoStop = trace != null
+        PerfettoTrace.StopResult perfettoStop = trace != null
                 ? trace.stop()
-                : FeedbackDiagnosticPerfettoTrace.StopResult.unavailable(
+                : PerfettoTrace.StopResult.unavailable(
                         "Perfetto trace was not started");
         if (trace != null && perfettoStop.available) {
             perfettoStop = trace.consumeStoppedTrace(perfettoStop);
@@ -636,11 +636,11 @@ public final class FeedbackDiagnosticCoordinator {
     }
 
 
-    private static FeedbackDiagnosticSummaryBuilder.Input summaryInput(Request request) {
+    private static SummaryBuilder.Input summaryInput(Request request) {
         if (request == null) {
             return null;
         }
-        return new FeedbackDiagnosticSummaryBuilder.Input(
+        return new SummaryBuilder.Input(
                 request.packageName,
                 request.label,
                 request.versionName,

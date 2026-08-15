@@ -14,9 +14,9 @@ import java.util.Map;
  * of every callback. This keeps the diagnostic window useful without turning
  * the measured hot path into a file-writing benchmark.</p>
  */
-public final class FeedbackDiagnosticPerformanceSnapshot {
-    public static final FeedbackDiagnosticPerformanceSnapshot EMPTY =
-            new FeedbackDiagnosticPerformanceSnapshot(List.of());
+public final class PerformanceSnapshot {
+    public static final PerformanceSnapshot EMPTY =
+            new PerformanceSnapshot(List.of());
 
     public static final class Entry {
         public final String route;
@@ -61,7 +61,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
 
     private final List<Entry> entries;
 
-    FeedbackDiagnosticPerformanceSnapshot(List<Entry> entries) {
+    PerformanceSnapshot(List<Entry> entries) {
         this.entries = Collections.unmodifiableList(new ArrayList<>(entries));
     }
 
@@ -103,7 +103,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
             }
         }
 
-        synchronized FeedbackDiagnosticPerformanceSnapshot snapshot() {
+        synchronized PerformanceSnapshot snapshot() {
             List<Entry> snapshot = new ArrayList<>();
             for (Map.Entry<String, MutableEntry> item : entries.entrySet()) {
                 MutableEntry value = item.getValue();
@@ -124,7 +124,7 @@ public final class FeedbackDiagnosticPerformanceSnapshot {
                 ));
             }
             snapshot.sort(Comparator.comparing(entry -> entry.route));
-            return new FeedbackDiagnosticPerformanceSnapshot(snapshot);
+            return new PerformanceSnapshot(snapshot);
         }
 
         private MutableEntry entry(String route) {

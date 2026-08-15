@@ -4,24 +4,24 @@ import com.dpis.module.*;
 
 import java.util.List;
 
-final class FeedbackDiagnosticRuntimeSelfTest {
+final class RuntimeSelfTest {
     private static volatile Status lastStatus = Status.notStarted();
 
-    private FeedbackDiagnosticRuntimeSelfTest() {
+    private RuntimeSelfTest() {
     }
 
     static Status runUiTransportSelfTest(
             String packageName,
-            FeedbackDiagnosticRuntimeTransport.ShellRunner shellRunner
+            RuntimeTransport.ShellRunner shellRunner
     ) {
-        FeedbackDiagnosticRuntimeTransport.Status status =
-                FeedbackDiagnosticRuntimeTransport.statusForTest();
+        RuntimeTransport.Status status =
+                RuntimeTransport.statusForTest();
         if (!status.available) {
             lastStatus = Status.unavailable(status.message);
             return lastStatus;
         }
         String token = "ui-self-test-" + System.currentTimeMillis();
-        boolean writeOk = FeedbackDiagnosticRuntimeTransport.writeSelfTestEvent(
+        boolean writeOk = RuntimeTransport.writeSelfTestEvent(
                 packageName,
                 token,
                 shellRunner
@@ -30,8 +30,8 @@ final class FeedbackDiagnosticRuntimeSelfTest {
             lastStatus = Status.failed("ui transport write failed", 0);
             return lastStatus;
         }
-        FeedbackDiagnosticRuntimeTransport.Snapshot snapshot =
-                FeedbackDiagnosticRuntimeTransport.peekSnapshot(shellRunner);
+        RuntimeTransport.Snapshot snapshot =
+                RuntimeTransport.peekSnapshot(shellRunner);
         boolean ok = snapshot.available
                 && snapshot.events.stream().anyMatch(event -> event.contains(token));
         lastStatus = ok

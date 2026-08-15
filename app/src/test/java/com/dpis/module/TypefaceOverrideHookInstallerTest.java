@@ -105,7 +105,7 @@ public final class TypefaceOverrideHookInstallerTest {
     public void modernInstallerRecordsStableTypefaceDiagnosticStages() throws Exception {
         String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
 
-        assertTrue(source.contains("FeedbackDiagnosticRuntimeEvents.recordTypeface("));
+        assertTrue(source.contains("RuntimeEvents.recordTypeface("));
         assertTrue(source.contains("\"source_provider_loaded\""));
         assertTrue(source.contains("\"source_fallback_loaded\""));
         assertTrue(source.contains("\"hook_installed\""));
@@ -127,9 +127,9 @@ public final class TypefaceOverrideHookInstallerTest {
     @Test
     public void modernTypefaceEventsReachRuntimeTransport() throws Exception {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticRuntimeEvents.java");
+                "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.java");
 
-        assertTrue(source.contains("FeedbackDiagnosticRuntimeTransport.record("));
+        assertTrue(source.contains("RuntimeTransport.record("));
         assertTrue(source.contains("\"typeface\", stage, packageName, message"));
     }
 

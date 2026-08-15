@@ -19,13 +19,13 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-public final class FeedbackDiagnosticCoordinatorRequestTest {
+public final class DiagnosticCoordinatorRequestTest {
 
     @Test
     public void fromUsesItemWechatDpiValue() {
         AppListItem item = app("com.tencent.mm", 600);
 
-        FeedbackDiagnosticCoordinator.Request request = FeedbackDiagnosticCoordinator.Request.from(
+        DiagnosticCoordinator.Request request = DiagnosticCoordinator.Request.from(
                 item,
                 null,
                 "8.0.74"
@@ -38,7 +38,7 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
     public void fromAllowsClearedPersistedWechatDpi() {
         AppListItem item = app("com.tencent.mm", 600).withWechatDpi(null);
 
-        FeedbackDiagnosticCoordinator.Request request = FeedbackDiagnosticCoordinator.Request.from(
+        DiagnosticCoordinator.Request request = DiagnosticCoordinator.Request.from(
                 item,
                 null,
                 "8.0.74"
@@ -61,8 +61,8 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
         assertTrue(store.setWechatDpi(packageName, 610));
         AppListItem staleItem = app(packageName, null);
 
-        FeedbackDiagnosticCoordinator.Request request
-                = FeedbackDiagnosticCoordinator.Request.fromPersisted(
+        DiagnosticCoordinator.Request request
+                = DiagnosticCoordinator.Request.fromPersisted(
                         staleItem,
                         null,
                         "8.0.74",
@@ -84,8 +84,8 @@ public final class FeedbackDiagnosticCoordinatorRequestTest {
     public void fromPersistedFallsBackWhenStoreUnavailable() {
         AppListItem item = app("com.tencent.mm", 600);
 
-        FeedbackDiagnosticCoordinator.Request request
-                = FeedbackDiagnosticCoordinator.Request.fromPersisted(
+        DiagnosticCoordinator.Request request
+                = DiagnosticCoordinator.Request.fromPersisted(
                         item,
                         null,
                         "8.0.74",

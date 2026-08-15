@@ -2,11 +2,11 @@ package com.dpis.module;
 
 import com.dpis.module.fonts.FontApplyMode;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.DiagnosticCoordinator;
 
 import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller;
 
@@ -58,8 +58,8 @@ public class ResourcesReadHookInstallerTest {
 
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeEvents.cancel();
-        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        RuntimeEvents.cancel();
+        RuntimeHotPathEvents.resetForTest();
         ResourcesReadHookInstaller.resetHotPathSamplerForTest();
         TargetViewportWidthResolver.resetResolveCacheForTest();
         ViewportConfigurationScope.resetReflectionCacheForTest();
@@ -69,7 +69,7 @@ public class ResourcesReadHookInstallerTest {
 
     @Test
     public void stableMetricsReadRecordsFeedbackDiagnosticSkip() {
-        FeedbackDiagnosticRuntimeEvents.start(PACKAGE_NAME, request());
+        RuntimeEvents.start(PACKAGE_NAME, request());
         Configuration config = new Configuration();
         config.densityDpi = 480;
         config.screenWidthDp = 360;
@@ -85,7 +85,7 @@ public class ResourcesReadHookInstallerTest {
 
         ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, PACKAGE_NAME);
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.toString(), events.stream().anyMatch(event ->
                 event.contains("route=viewport")
                         && event.contains("stage=skipped")
@@ -792,8 +792,8 @@ public class ResourcesReadHookInstallerTest {
                 .commit();
     }
 
-    private static FeedbackDiagnosticCoordinator.Request request() {
-        return new FeedbackDiagnosticCoordinator.Request(
+    private static DiagnosticCoordinator.Request request() {
+        return new DiagnosticCoordinator.Request(
                 PACKAGE_NAME,
                 "Target",
                 "1",

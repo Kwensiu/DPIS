@@ -6,8 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-final class FeedbackDiagnosticProcessPerformanceParser {
-    private FeedbackDiagnosticProcessPerformanceParser() {
+final class ProcessPerformanceParser {
+    private ProcessPerformanceParser() {
     }
 
     static List<ProcessSummary> parse(List<String> events) {

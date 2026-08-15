@@ -4,10 +4,10 @@ import android.content.Context;
 
 import com.dpis.module.root.RootAppProcessLauncher;
 
-public final class FeedbackDiagnosticAppLauncher {
+public final class DiagnosticAppLauncher {
     private final RootAppProcessLauncher rootLauncher;
 
-    public FeedbackDiagnosticAppLauncher(Context context) {
+    public DiagnosticAppLauncher(Context context) {
         rootLauncher = new RootAppProcessLauncher(context);
     }
 

@@ -3,7 +3,7 @@ package com.dpis.module;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.DiagnosticCoordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 
@@ -91,14 +91,14 @@ public class QuickConfigSourceSmokeTest {
     public void quickConfigKeepsFeedbackDiagnosticSemanticsAvailable() throws IOException {
         String activity = read("src/main/java/com/dpis/module/QuickConfigActivity.java");
 
-        assertTrue(activity.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
+        assertTrue(activity.contains("new DiagnosticCoordinator(createFeedbackDiagnosticHost())"));
         assertTrue(activity.contains("QuickConfigActivity.this.startFeedbackDiagnostic("));
-        assertTrue(activity.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
+        assertTrue(activity.contains("DiagnosticCoordinator.Request.fromPersisted("));
         assertTrue(activity.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(activity.contains("ComposeMessageDialog.show("));
         assertFalse(activity.contains("MaterialAlertDialogBuilder"));
-        assertTrue(activity.contains("showFeedbackDiagnosticPackagingDialog();"));
-        assertTrue(activity.contains("showFeedbackDiagnosticResultSheet(finalBuilt);"));
+        assertTrue(activity.contains("showPackagingDialog();"));
+        assertTrue(activity.contains("showDiagnosticResultSheet(finalBuilt);"));
         assertTrue(activity.contains("saveComposeEditor(item, editingDraft)"));
         assertFalse(activity.contains("dialog_feedback_diagnostic_button);\n        if (feedbackDiagnosticButton != null)"));
     }

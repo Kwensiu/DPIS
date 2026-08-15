@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public final class FeedbackDiagnosticExportBuilder {
+public final class DiagnosticExportBuilder {
     public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
     public static final String TIMELINE_ENTRY_NAME = "timeline.tsv";
     public static final String MODULE_EFFECTS_ENTRY_NAME = "module-effects.tsv";
@@ -87,13 +87,13 @@ public final class FeedbackDiagnosticExportBuilder {
     }
 
     public static final class DiagnosticPackage {
-        public final FeedbackDiagnosticCoordinator.Result result;
+        public final DiagnosticCoordinator.Result result;
         public final String fileName;
         public final byte[] zipBytes;
         public final List<EntrySummary> entries;
 
         DiagnosticPackage(
-                FeedbackDiagnosticCoordinator.Result result,
+                DiagnosticCoordinator.Result result,
                 String fileName,
                 byte[] zipBytes,
                 List<EntrySummary> entries
@@ -108,14 +108,14 @@ public final class FeedbackDiagnosticExportBuilder {
     private final DpisLogReader dpisLogReader;
     private final RawLogReader lsposedLogReader;
 
-    public FeedbackDiagnosticExportBuilder(android.content.Context context) {
+    public DiagnosticExportBuilder(android.content.Context context) {
         this(
                 () -> new DpisAppLogStore(context).readRecentEntries(),
                 LsposedLogReader::readLsposedDpisCurrent
         );
     }
 
-    FeedbackDiagnosticExportBuilder(
+    DiagnosticExportBuilder(
             DpisLogReader dpisLogReader,
             RawLogReader lsposedLogReader
     ) {
@@ -127,18 +127,18 @@ public final class FeedbackDiagnosticExportBuilder {
                 : LsposedLogReader::readLsposedDpisCurrent;
     }
 
-    public byte[] buildZip(FeedbackDiagnosticCoordinator.Result result) throws IOException {
+    public byte[] buildZip(DiagnosticCoordinator.Result result) throws IOException {
         return buildPackage(result).zipBytes;
     }
 
-    public DiagnosticPackage buildPackage(FeedbackDiagnosticCoordinator.Result result)
+    public DiagnosticPackage buildPackage(DiagnosticCoordinator.Result result)
             throws IOException {
         LogReadResult lsposedLog = readLsposedLog();
-        FeedbackDiagnosticSessionWindow window = windowFor(result);
+        SessionWindow window = windowFor(result);
         List<String> runtimeEvents = sortedRuntimeEvents(result, lsposedLog, window);
         String diagnostic = buildDiagnosticText(result, runtimeEvents);
-        String timeline = FeedbackDiagnosticStructuredEvidenceExporter.buildTimelineTsv(runtimeEvents);
-        String moduleEffects = FeedbackDiagnosticStructuredEvidenceExporter.buildModuleEffectsTsv(
+        String timeline = StructuredEvidenceExporter.buildTimelineTsv(runtimeEvents);
+        String moduleEffects = StructuredEvidenceExporter.buildModuleEffectsTsv(
                 result,
                 runtimeEvents,
                 result != null ? result.performanceSnapshot : null
@@ -175,25 +175,25 @@ public final class FeedbackDiagnosticExportBuilder {
         );
     }
 
-    public void writeZip(OutputStream output, FeedbackDiagnosticCoordinator.Result result)
+    public void writeZip(OutputStream output, DiagnosticCoordinator.Result result)
             throws IOException {
         output.write(buildPackage(result).zipBytes);
     }
 
-    String buildDiagnosticText(FeedbackDiagnosticCoordinator.Result result) {
+    String buildDiagnosticText(DiagnosticCoordinator.Result result) {
         return buildDiagnosticText(result, readLsposedLog(), windowFor(result));
     }
 
     private String buildDiagnosticText(
-            FeedbackDiagnosticCoordinator.Result result,
+            DiagnosticCoordinator.Result result,
             LogReadResult lsposedLog,
-            FeedbackDiagnosticSessionWindow window
+            SessionWindow window
     ) {
         return buildDiagnosticText(result, sortedRuntimeEvents(result, lsposedLog, window));
     }
 
     private String buildDiagnosticText(
-            FeedbackDiagnosticCoordinator.Result result,
+            DiagnosticCoordinator.Result result,
             List<String> runtimeEvents
     ) {
         if (result == null || result.request == null) {
@@ -219,7 +219,7 @@ public final class FeedbackDiagnosticExportBuilder {
         return builder.toString();
     }
 
-    String buildFileName(FeedbackDiagnosticCoordinator.Result result) {
+    String buildFileName(DiagnosticCoordinator.Result result) {
         String packageName = result != null && result.request != null
                 ? safeFilePart(result.request.packageName)
                 : "unknown";
@@ -238,7 +238,7 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private void appendManifest(
             StringBuilder builder,
-            FeedbackDiagnosticCoordinator.Result result
+            DiagnosticCoordinator.Result result
     ) {
         builder.append("[manifest]\n");
         builder.append("package: ").append(valueOrUnknown(result.request.packageName)).append('\n');
@@ -257,7 +257,7 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private void appendAppConfig(
             StringBuilder builder,
-            FeedbackDiagnosticCoordinator.Request request
+            DiagnosticCoordinator.Request request
     ) {
         builder.append("[app-config]\n");
         builder.append("scopeKnown: ").append(request.scopeKnown).append('\n');
@@ -283,7 +283,7 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private void appendDiagnosticPlan(
             StringBuilder builder,
-            FeedbackDiagnosticCoordinator.Request request
+            DiagnosticCoordinator.Request request
     ) {
         builder.append("[diagnostic-plan]\n");
         if (!request.scopeKnown) {
@@ -411,15 +411,15 @@ public final class FeedbackDiagnosticExportBuilder {
     }
 
     private void appendRuntimeSelfTest(StringBuilder builder, List<String> runtimeEvents) {
-        FeedbackDiagnosticRuntimeSelfTest.Status status =
-                FeedbackDiagnosticRuntimeSelfTest.lastStatus();
+        RuntimeSelfTest.Status status =
+                RuntimeSelfTest.lastStatus();
         int transportCount = 0;
         boolean hotPathProbeFound = false;
         for (String event : runtimeEvents) {
             if (event.contains("source=runtime-transport")) {
                 transportCount++;
             }
-            if (FeedbackDiagnosticRuntimeSelfTest.hasHotPathProbe(List.of(event))) {
+            if (RuntimeSelfTest.hasHotPathProbe(List.of(event))) {
                 hotPathProbeFound = true;
             }
         }
@@ -435,12 +435,12 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private void appendPerformanceSummary(
             StringBuilder builder,
-            FeedbackDiagnosticPerformanceSnapshot snapshot,
+            PerformanceSnapshot snapshot,
             List<String> runtimeEvents
     ) {
         builder.append("[performance-summary]\n");
-        List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> processSummaries =
-                FeedbackDiagnosticProcessPerformanceParser.parse(runtimeEvents);
+        List<ProcessPerformanceParser.ProcessSummary> processSummaries =
+                ProcessPerformanceParser.parse(runtimeEvents);
         if (!processSummaries.isEmpty()) {
             builder.append("source: target-process-lsposed-aggregate\n");
             appendProcessPerformanceSummaries(builder, processSummaries);
@@ -448,7 +448,7 @@ public final class FeedbackDiagnosticExportBuilder {
             return;
         }
         processSummaries =
-                FeedbackDiagnosticProcessPerformanceParser.parseMutationAppliedFallback(runtimeEvents);
+                ProcessPerformanceParser.parseMutationAppliedFallback(runtimeEvents);
         if (!processSummaries.isEmpty()) {
             builder.append("source: target-process-log-fallback\n");
             builder.append("note: aggregate transport missing; counts are derived from LSPosed mutation_applied events and do not include latency percentiles.\n");
@@ -462,7 +462,7 @@ public final class FeedbackDiagnosticExportBuilder {
         }
         builder.append("source: ui-process-fallback\n");
         builder.append("entries: ").append(snapshot.entries().size()).append('\n');
-        for (FeedbackDiagnosticPerformanceSnapshot.Entry entry : snapshot.entries()) {
+        for (PerformanceSnapshot.Entry entry : snapshot.entries()) {
             builder.append("route: ").append(entry.route).append('\n');
             builder.append("calls: ").append(entry.calls).append('\n');
             builder.append("applied: ").append(entry.applied).append('\n');
@@ -484,15 +484,15 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private void appendProcessPerformanceSummaries(
             StringBuilder builder,
-            List<FeedbackDiagnosticProcessPerformanceParser.ProcessSummary> processSummaries
+            List<ProcessPerformanceParser.ProcessSummary> processSummaries
     ) {
         builder.append("processes: ").append(processSummaries.size()).append('\n');
-        for (FeedbackDiagnosticProcessPerformanceParser.ProcessSummary process
+        for (ProcessPerformanceParser.ProcessSummary process
                 : processSummaries) {
             builder.append("process: ").append(valueOrDefault(process.process, UNKNOWN))
                     .append(",pid=").append(valueOrDefault(process.pid, UNKNOWN))
                     .append('\n');
-            for (FeedbackDiagnosticProcessPerformanceParser.RouteSummary route
+            for (ProcessPerformanceParser.RouteSummary route
                     : process.routes.values()) {
                 builder.append("route: ").append(route.route)
                         .append(",calls=").append(route.calls)
@@ -517,7 +517,7 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private void appendPerfettoSummary(
             StringBuilder builder,
-            FeedbackDiagnosticCoordinator.Result result
+            DiagnosticCoordinator.Result result
     ) {
         builder.append("[perfetto]\n");
         boolean available = result != null && result.perfettoAvailable;
@@ -553,7 +553,7 @@ public final class FeedbackDiagnosticExportBuilder {
         return result.toString();
     }
 
-    private String buildDpisLogText(FeedbackDiagnosticSessionWindow window) {
+    private String buildDpisLogText(SessionWindow window) {
         List<DpisLogEntry> allEntries = dpisLogReader.read();
         List<DpisLogEntry> entries = filterDpisEntries(allEntries, window);
         if ((entries == null || entries.isEmpty())
@@ -592,10 +592,10 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private String buildLsposedLogText(
             LogReadResult result,
-            FeedbackDiagnosticSessionWindow window
+            SessionWindow window
     ) {
-        FeedbackDiagnosticLsposedTimelineParser.WindowedRawLog windowed =
-                FeedbackDiagnosticLsposedTimelineParser.windowRawLog(result, window);
+        LsposedTimelineParser.WindowedRawLog windowed =
+                LsposedTimelineParser.windowRawLog(result, window);
         StringBuilder builder = new StringBuilder();
         builder.append("source: ").append(valueOrDefault(result.sourceLabel(), UNKNOWN)).append('\n');
         builder.append("code: ").append(result.code()).append('\n');
@@ -622,7 +622,7 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private static List<DpisLogEntry> filterDpisEntries(
             List<DpisLogEntry> entries,
-            FeedbackDiagnosticSessionWindow window
+            SessionWindow window
     ) {
         if (entries == null || entries.isEmpty() || window == null) {
             return entries != null ? entries : List.of();
@@ -648,7 +648,7 @@ public final class FeedbackDiagnosticExportBuilder {
 
     private static List<DpisLogEntry> recentEntriesNearWindow(
             List<DpisLogEntry> entries,
-            FeedbackDiagnosticSessionWindow window,
+            SessionWindow window,
             int limit
     ) {
         if (entries == null || entries.isEmpty()) {
@@ -671,22 +671,22 @@ public final class FeedbackDiagnosticExportBuilder {
         return newestEntries(nearby, limit);
     }
 
-    private static FeedbackDiagnosticSessionWindow windowFor(
-            FeedbackDiagnosticCoordinator.Result result
+    private static SessionWindow windowFor(
+            DiagnosticCoordinator.Result result
     ) {
         if (result == null) {
             return null;
         }
-        return FeedbackDiagnosticSessionWindow.around(
+        return SessionWindow.around(
                 result.startedAtMillis,
                 result.finishedAtMillis
         );
     }
 
     private static List<String> mergedRuntimeEvents(
-            FeedbackDiagnosticCoordinator.Result result,
+            DiagnosticCoordinator.Result result,
             LogReadResult lsposedLog,
-            FeedbackDiagnosticSessionWindow window
+            SessionWindow window
     ) {
         List<String> events = new java.util.ArrayList<>(
                 result != null && result.timelineEvents != null
@@ -697,7 +697,7 @@ public final class FeedbackDiagnosticExportBuilder {
                 && result.request != null
                 && lsposedLog != null
                 && !lsposedLog.output().isBlank()) {
-            events.addAll(FeedbackDiagnosticLsposedTimelineParser.parse(
+            events.addAll(LsposedTimelineParser.parse(
                     lsposedLog.output(),
                     window,
                     timelineInput(result.request)
@@ -707,20 +707,20 @@ public final class FeedbackDiagnosticExportBuilder {
     }
 
     private static List<String> sortedRuntimeEvents(
-            FeedbackDiagnosticCoordinator.Result result,
+            DiagnosticCoordinator.Result result,
             LogReadResult lsposedLog,
-            FeedbackDiagnosticSessionWindow window
+            SessionWindow window
     ) {
         List<String> runtimeEvents = mergedRuntimeEvents(result, lsposedLog, window);
-        FeedbackDiagnosticLsposedTimelineParser.sortTimelineEvents(runtimeEvents);
+        LsposedTimelineParser.sortTimelineEvents(runtimeEvents);
         return runtimeEvents;
     }
 
-    private static FeedbackDiagnosticLsposedTimelineParser.Input timelineInput(
-            FeedbackDiagnosticCoordinator.Request request
+    private static LsposedTimelineParser.Input timelineInput(
+            DiagnosticCoordinator.Request request
     ) {
         boolean appEnabled = request != null && request.inScope && request.dpisEnabled;
-        return new FeedbackDiagnosticLsposedTimelineParser.Input(
+        return new LsposedTimelineParser.Input(
                 request != null ? request.packageName : "",
                 appEnabled,
                 appEnabled && request.viewportTargetSpec.isEnabled(),
@@ -799,7 +799,7 @@ public final class FeedbackDiagnosticExportBuilder {
         return content.endsWith("\n") ? count : count + 1;
     }
 
-    private static String formatViewport(FeedbackDiagnosticCoordinator.Request request) {
+    private static String formatViewport(DiagnosticCoordinator.Request request) {
         ViewportTargetSpec spec = request.viewportTargetSpec;
         String target;
         if (spec.isRelativeScale()) {
@@ -812,7 +812,7 @@ public final class FeedbackDiagnosticExportBuilder {
         return target + ", mode=" + request.viewportApplyMode;
     }
 
-    private static String formatFont(FeedbackDiagnosticCoordinator.Request request) {
+    private static String formatFont(DiagnosticCoordinator.Request request) {
         String scale = request.fontScalePercent != null
                 ? request.fontScalePercent + "%"
                 : "off";

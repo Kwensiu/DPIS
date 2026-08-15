@@ -16,32 +16,32 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Test;
 
-public final class FeedbackDiagnosticRuntimeEventsTest {
+public final class RuntimeEventsTest {
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeEvents.cancel();
+        RuntimeEvents.cancel();
     }
 
     @Test
     public void defaultClosedCollectorDoesNotRecord() {
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "target app matched: package=com.example.app"
         );
 
-        assertTrue(FeedbackDiagnosticRuntimeEvents.snapshotForTest().isEmpty());
+        assertTrue(RuntimeEvents.snapshotForTest().isEmpty());
     }
 
     @Test
     public void enabledCollectorRecordsTargetPackageEvents() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "target app matched: package=com.example.app, dpi=411"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("stage=config_resolved"));
         assertTrue(events.get(0).contains("package=com.example.app"));
@@ -49,26 +49,26 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void nonTargetPackageEventsAreIgnored() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "target app matched: package=com.other.app"
         );
 
-        assertTrue(FeedbackDiagnosticRuntimeEvents.stopSnapshot().isEmpty());
+        assertTrue(RuntimeEvents.stopSnapshot().isEmpty());
     }
 
     @Test
     public void typefaceEventsUseStableRouteAndOnlyRecordTheTargetPackage() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordTypeface(
+        RuntimeEvents.recordTypeface(
                 "com.example.app", "source_provider_loaded", "typefaceId=font_demo_ttc_1");
-        FeedbackDiagnosticRuntimeEvents.recordTypeface(
+        RuntimeEvents.recordTypeface(
                 "com.other.app", "replacement_hit", "source=Paint.setTypeface");
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("route=typeface"));
         assertTrue(events.get(0).contains("stage=source_provider_loaded"));
@@ -77,47 +77,47 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void disabledViewportConfigMarksViewportHitUnexpected() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, false, true));
+        RuntimeEvents.start("com.example.app", request(true, true, false, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_VIEWPORT app-process state seeded: package=com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("stage=unexpected_route_hit"));
     }
 
     @Test
     public void repeatedSameRouteEventEmitsWarning() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_VIEWPORT app-process state seeded: package=com.example.app"
         );
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_VIEWPORT app-process state seeded: package=com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event -> event.contains("stage=repeated_write")));
     }
 
     @Test
     public void hookInstalledSummaryIsClassifiedAsConfigNotViewportMutation() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, false, true));
+        RuntimeEvents.start("com.example.app", request(true, true, false, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "hooks installed (safe mode): package=com.example.app "
                         + "viewportEnabled=false fontMode=FIELD_REWRITE "
                         + "resolvedViewportMode=off"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("route=config"));
         assertTrue(events.get(0).contains("stage=config_resolved"));
@@ -126,14 +126,14 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void hookReadyIsNotClassifiedAsMutationApplied() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_FONT Flutter settings hook ready for com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("route=font"));
         assertTrue(events.get(0).contains("stage=hook_ready"));
@@ -142,14 +142,14 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void overrideIsClassifiedAsMutationApplied() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_FONT Flutter settings textScaleFactor override: package=com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("route=font"));
         assertTrue(events.get(0).contains("stage=mutation_applied"));
@@ -157,14 +157,14 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void featureOffSkipIsClassifiedAsSkipped() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, false, true));
+        RuntimeEvents.start("com.example.app", request(true, true, false, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "Resources write hooks skipped: package=com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("stage=skipped"));
         assertFalse(events.get(0).contains("unexpected_route_hit"));
@@ -172,16 +172,16 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void appHookPlanWithSuppressedNoneIsConfigResolvedNotSkipped() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_FONT app hook plan: package=com.example.app "
                         + "fontMode=field_rewrite suppressed=none "
                         + "debugDisableTextViewAbsoluteRewrite=false"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("route=config"));
         assertTrue(events.get(0).contains("stage=config_resolved"));
@@ -190,14 +190,14 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void packageReadyAndModuleLoadedAreRouteCallbacks() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "module loaded onPackageLoaded enter: package=com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("route=app_process"));
         assertTrue(events.get(0).contains("stage=route_callback_entered"));
@@ -205,25 +205,25 @@ public final class FeedbackDiagnosticRuntimeEventsTest {
 
     @Test
     public void skipHookMessagesRemainSkipped() {
-        FeedbackDiagnosticRuntimeEvents.start("com.example.app", request(true, true, true, true));
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
 
-        FeedbackDiagnosticRuntimeEvents.recordDpisLog(
+        RuntimeEvents.recordDpisLog(
                 "I",
                 "DPIS_FONT skip abstract WebSettings#setTextZoom hook: package=com.example.app"
         );
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertEquals(1, events.size());
         assertTrue(events.get(0).contains("stage=skipped"));
     }
 
-    private static FeedbackDiagnosticCoordinator.Request request(
+    private static DiagnosticCoordinator.Request request(
             boolean inScope,
             boolean dpisEnabled,
             boolean viewportEnabled,
             boolean fontEnabled
     ) {
-        return new FeedbackDiagnosticCoordinator.Request(
+        return new DiagnosticCoordinator.Request(
                 "com.example.app",
                 "Example",
                 "1.2.3",

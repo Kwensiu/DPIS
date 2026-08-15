@@ -1,6 +1,6 @@
 package com.dpis.module.viewport;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 
 import com.dpis.module.BuildConfig;
@@ -129,7 +129,7 @@ public final class ViewportRuntimeMarkerProbe {
                     + ", resultSig=" + record.resultSignature
                     + ", effectiveSwDp=" + record.effectiveSmallestWidthDp
                     + ", provenance=" + record.provenance)) {
-                FeedbackDiagnosticRuntimeHotPathEvents.probe(
+                RuntimeHotPathEvents.probe(
                         packageName,
                         "viewport",
                         "viewport_marker_app_observe",
@@ -150,7 +150,7 @@ public final class ViewportRuntimeMarkerProbe {
                 + ", reason=" + result.reason
                 + ", expectedTargetFp=" + expectedTargetFingerprint
                 + ", property=" + ViewportRuntimeMarkerBridge.propertyNameForPackage(packageName))) {
-            FeedbackDiagnosticRuntimeHotPathEvents.probe(
+            RuntimeHotPathEvents.probe(
                     packageName,
                     "viewport",
                     "viewport_marker_app_observe",

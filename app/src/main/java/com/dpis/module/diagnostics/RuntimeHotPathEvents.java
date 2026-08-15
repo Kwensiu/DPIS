@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 
-public final class FeedbackDiagnosticRuntimeHotPathEvents {
+public final class RuntimeHotPathEvents {
     private static final Map<String, ActiveMeasurement> ACTIVE = new ConcurrentHashMap<>();
     private static final String ROUTE_FONT = "font";
-    private static final FeedbackDiagnosticProcessPerformance PERFORMANCE =
-            new FeedbackDiagnosticProcessPerformance();
+    private static final ProcessPerformance PERFORMANCE =
+            new ProcessPerformance();
     private static volatile String performanceSessionPath = "";
 
-    private FeedbackDiagnosticRuntimeHotPathEvents() {
+    private RuntimeHotPathEvents() {
     }
 
     public static void begin(String packageName, String route, String detail) {
@@ -24,7 +24,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         String key = key(packageName, categoryRoute, routeName, detail);
         preparePerformanceSession();
         PERFORMANCE.call(routeName);
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
+        RuntimeEvents.recordPerformanceCall(packageName, routeName);
         record(packageName, categoryRoute, routeName, "begin", detail);
         // The begin event may enqueue transport and bridge work. Start latency
         // measurement afterwards so percentiles describe the target hook work,
@@ -42,7 +42,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         // transport, and bridge writes below are evidence delivery work, not
         // the target route's mutation cost.
         recordDurationIfNeeded(packageName, categoryRoute, routeName, detail);
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceApplied(packageName, routeName);
+        RuntimeEvents.recordPerformanceApplied(packageName, routeName);
         PERFORMANCE.applied(routeName);
         recordPerformanceIfDue(packageName);
         record(packageName, categoryRoute, routeName, "applied", detail);
@@ -54,9 +54,9 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
 
     public static void skipped(String packageName, String categoryRoute, String routeName, String detail) {
         preparePerformanceSession();
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
+        RuntimeEvents.recordPerformanceCall(packageName, routeName);
         PERFORMANCE.skipped(routeName, skipReason(detail));
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceSkipped(
+        RuntimeEvents.recordPerformanceSkipped(
                 packageName,
                 routeName,
                 skipReason(detail)
@@ -79,8 +79,8 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         preparePerformanceSession();
         PERFORMANCE.call(routeName);
         PERFORMANCE.kept(routeName);
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceCall(packageName, routeName);
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceKept(packageName, routeName);
+        RuntimeEvents.recordPerformanceCall(packageName, routeName);
+        RuntimeEvents.recordPerformanceKept(packageName, routeName);
         recordPerformanceIfDue(packageName);
         // Kept is an aggregate-only outcome. It is intentionally not emitted
         // as one timeline/transport/bridge record per callback because a kept
@@ -121,7 +121,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
                 : detail;
         if (measurement != null && !measurement.durationRecorded) {
             PERFORMANCE.duration(routeName, durationNs);
-            FeedbackDiagnosticRuntimeEvents.recordPerformanceDuration(
+            RuntimeEvents.recordPerformanceDuration(
                     packageName,
                     routeName,
                     durationNs
@@ -144,7 +144,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
         }
         long durationNs = measurement.durationNsOr(System.nanoTime());
         PERFORMANCE.duration(routeName, durationNs);
-        FeedbackDiagnosticRuntimeEvents.recordPerformanceDuration(
+        RuntimeEvents.recordPerformanceDuration(
                 packageName,
                 routeName,
                 durationNs
@@ -163,21 +163,21 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
                                String stage,
                                String detail) {
         String message = "hot path route=" + routeName + ", " + detail;
-        FeedbackDiagnosticRuntimeEvents.recordStructured(
+        RuntimeEvents.recordStructured(
                 packageName,
                 valueOrDefault(categoryRoute, ROUTE_FONT),
                 stage,
                 "I",
                 message
         );
-        FeedbackDiagnosticRuntimeTransport.record(
+        RuntimeTransport.record(
                 "runtime",
                 valueOrDefault(categoryRoute, ROUTE_FONT),
                 stage,
                 packageName,
                 message
         );
-        FeedbackDiagnosticRuntimeBridgeEvents.emitHotPath(
+        RuntimeBridgeEvents.emitHotPath(
                 categoryRoute,
                 stage,
                 routeName,
@@ -197,14 +197,14 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     }
 
     private static void recordPerformanceIfDue(String packageName) {
-        if (!FeedbackDiagnosticRuntimeTransport.isCaptureActive()) {
+        if (!RuntimeTransport.isCaptureActive()) {
             return;
         }
         long now = System.currentTimeMillis();
         if (!PERFORMANCE.shouldPublish(now)) {
             return;
         }
-        FeedbackDiagnosticRuntimeTransport.recordPerformanceSnapshot(
+        RuntimeTransport.recordPerformanceSnapshot(
                 packageName,
                 currentProcessName(),
                 currentPid(),
@@ -229,7 +229,7 @@ public final class FeedbackDiagnosticRuntimeHotPathEvents {
     }
 
     private static void preparePerformanceSession() {
-        String eventPath = FeedbackDiagnosticRuntimeTransport.activeEventPath();
+        String eventPath = RuntimeTransport.activeEventPath();
         if (eventPath.isBlank()) {
             return;
         }

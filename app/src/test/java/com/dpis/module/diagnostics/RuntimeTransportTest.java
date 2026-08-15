@@ -14,30 +14,30 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public final class FeedbackDiagnosticRuntimeTransportTest {
+public final class RuntimeTransportTest {
     @Before
     public void setUp() {
-        FeedbackDiagnosticRuntimeTransport.cancel(command ->
+        RuntimeTransport.cancel(command ->
                 new RootAppProcessLauncher.ShellResult(0, ""));
     }
 
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeTransport.cancel(command ->
+        RuntimeTransport.cancel(command ->
                 new RootAppProcessLauncher.ShellResult(0, ""));
     }
 
     @Test
     public void defaultClosedTransportReportsUnavailable() {
-        FeedbackDiagnosticRuntimeTransport.record(
+        RuntimeTransport.record(
                 "runtime",
                 "dpis_log",
                 "com.example.app",
                 "target app matched: package=com.example.app"
         );
 
-        FeedbackDiagnosticRuntimeTransport.Status status =
-                FeedbackDiagnosticRuntimeTransport.statusForTest();
+        RuntimeTransport.Status status =
+                RuntimeTransport.statusForTest();
 
         assertFalse(status.available);
         assertTrue(status.message.contains("not started"));
@@ -45,8 +45,8 @@ public final class FeedbackDiagnosticRuntimeTransportTest {
 
     @Test
     public void startFailureReturnsUnavailableStatus() {
-        FeedbackDiagnosticRuntimeTransport.Status status =
-                FeedbackDiagnosticRuntimeTransport.start(
+        RuntimeTransport.Status status =
+                RuntimeTransport.start(
                         "com.example.app",
                         command -> new RootAppProcessLauncher.ShellResult(1, "permission denied")
                 );
@@ -66,10 +66,10 @@ public final class FeedbackDiagnosticRuntimeTransportTest {
                 + "\"package\":\"com.example.app\","
                 + "\"message\":\"target app matched: package=com.example.app\"}\n");
 
-        FeedbackDiagnosticRuntimeTransport.Status status =
-                FeedbackDiagnosticRuntimeTransport.start("com.example.app", shell::run);
-        FeedbackDiagnosticRuntimeTransport.Snapshot snapshot =
-                FeedbackDiagnosticRuntimeTransport.stopSnapshot(shell::run);
+        RuntimeTransport.Status status =
+                RuntimeTransport.start("com.example.app", shell::run);
+        RuntimeTransport.Snapshot snapshot =
+                RuntimeTransport.stopSnapshot(shell::run);
 
         assertTrue(status.available);
         assertTrue(shell.commands.get(0).contains("chmod 666"));
@@ -83,9 +83,9 @@ public final class FeedbackDiagnosticRuntimeTransportTest {
     @Test
     public void activeSessionDiscoveryReportsLocalSession() {
         FakeShell shell = new FakeShell("");
-        FeedbackDiagnosticRuntimeTransport.start("com.example.app", shell::run);
+        RuntimeTransport.start("com.example.app", shell::run);
 
-        assertTrue(FeedbackDiagnosticRuntimeTransport.activeSessionDiscoveryDetail()
+        assertTrue(RuntimeTransport.activeSessionDiscoveryDetail()
                 .contains("source=local-session"));
     }
 

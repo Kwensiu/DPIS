@@ -2,8 +2,8 @@ package com.dpis.module.diagnostics;
 
 import java.util.Locale;
 
-final class FeedbackDiagnosticTimelineClassifier {
-    private FeedbackDiagnosticTimelineClassifier() {
+final class TimelineClassifier {
+    private TimelineClassifier() {
     }
 
     public static Event classify(String level, String message, Context context) {

@@ -2,11 +2,11 @@ package com.dpis.module;
 
 import com.dpis.module.fonts.FontApplyMode;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.DiagnosticCoordinator;
 
 import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
 
@@ -50,8 +50,8 @@ public class ResourcesManagerHookInstallerTest {
 
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeEvents.cancel();
-        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        RuntimeEvents.cancel();
+        RuntimeHotPathEvents.resetForTest();
         TargetViewportWidthResolver.resetResolveCacheForTest();
         ViewportConfigurationScope.resetReflectionCacheForTest();
         VirtualDisplayState.set(null);
@@ -60,12 +60,12 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void nullConfigurationRecordsFeedbackDiagnosticSkip() {
-        FeedbackDiagnosticRuntimeEvents.start(PACKAGE_NAME, request());
+        RuntimeEvents.start(PACKAGE_NAME, request());
 
         ResourcesManagerHookInstaller.applyResourceOverrides(
                 null, new DpisConfigStore(new FakePrefs()), PACKAGE_NAME, "ResourcesManager");
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event ->
                 event.contains("route=viewport")
                         && event.contains("stage=skipped")
@@ -479,8 +479,8 @@ public class ResourcesManagerHookInstallerTest {
                 .commit();
     }
 
-    private static FeedbackDiagnosticCoordinator.Request request() {
-        return new FeedbackDiagnosticCoordinator.Request(
+    private static DiagnosticCoordinator.Request request() {
+        return new DiagnosticCoordinator.Request(
                 PACKAGE_NAME,
                 "Target",
                 "1",

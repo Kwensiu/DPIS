@@ -1,8 +1,8 @@
 # 诊断性能证据架构
 
 本文定义 DPIS 反馈诊断从“运行日志”演进为“模块实际执行证据”的目标
-语义。本文先于实现，避免把当前 `FeedbackDiagnosticRuntimeEvents` 或
-`FeedbackDiagnosticRuntimeTransport` 的类结构误认为最终领域模型。
+语义。本文先于实现，避免把当前 `RuntimeEvents` 或
+`RuntimeTransport` 的类结构误认为最终领域模型。
 
 ## 已确认的产品决策
 
@@ -294,13 +294,13 @@ Perfetto 原始文件：
 ## 当前实现与目标模型的差距
 
 当前分支已增加目标进程本地的
-`FeedbackDiagnosticProcessPerformance`，并通过低频 LSPosed bridge 日志发布按
+`ProcessPerformance`，并通过低频 LSPosed bridge 日志发布按
 进程聚合的 calls/applied/skipped 与延迟分位数。导出端优先消费
 `source=target-process-lsposed-aggregate` 的数据；旧的
-`FeedbackDiagnosticPerformanceSnapshot` 仍是迁移期间的 UI 进程 fallback，
+`PerformanceSnapshot` 仍是迁移期间的 UI 进程 fallback，
 不能作为目标 App 进程实际执行结果。
 
-当前 `FeedbackDiagnosticRuntimeTransport` 已经提供跨进程 marker 和文件通道，
+当前 `RuntimeTransport` 已经提供跨进程 marker 和文件通道，
 并已开始承载目标进程周期性聚合快照。由于 appdomain 对
 `/data/local/tmp` 的读取/追加可能受 SELinux 策略限制，活动 session 同时通过
 `debug.dpis.diag.session` 广播短 session id；目标进程不能访问 marker 时可据此

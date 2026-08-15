@@ -8,7 +8,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.concurrent.TimeUnit;
 
-final class FeedbackDiagnosticForegroundAppReader {
+final class ForegroundAppReader {
     private static final long READ_TIMEOUT_MS = 1_500L;
     private static final Pattern COMPONENT_PATTERN = Pattern.compile(
             "([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_]+)+)/"
@@ -19,7 +19,7 @@ final class FeedbackDiagnosticForegroundAppReader {
                     + "dumpsys window 2>/dev/null "
                     + "| grep -m 1 -E 'mCurrentFocus|mFocusedApp'";
 
-    private FeedbackDiagnosticForegroundAppReader() {
+    private ForegroundAppReader() {
     }
 
     public static String readForegroundPackage() {
