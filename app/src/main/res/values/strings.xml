@@ -112,8 +112,8 @@ Mini Programs are not supported yet.</string>
     <string name="home_donate_summary">Your support helps keep DPIS moving forward.</string>
     <string name="dialog_confirm_button">Confirm</string>
     <string name="feedback_diagnostic_save_and_start_button">Save and start</string>
-    <string name="feedback_diagnostic_action">Feedback diagnostic</string>
-    <string name="feedback_diagnostic_record_action">Record feedback diagnostic</string>
+    <string name="feedback_diagnostic_action">Diagnostic</string>
+    <string name="feedback_diagnostic_record_action">Record diagnostic</string>
     <string name="feedback_diagnostic_confirm_message">Save and restart %1$s.\nReturn to DPIS after reproducing the issue to get the diagnostic package.\nLogs do not collect personal privacy.</string>
     <string name="feedback_diagnostic_started">Diagnostic session started</string>
     <string name="feedback_diagnostic_auto_finished">Diagnostic ended automatically. Return to DPIS to get the report</string>
@@ -155,11 +155,11 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_lsposed_info_action">Explain LSPosed log availability</string>
     <string name="feedback_diagnostic_lsposed_info_title">LSPosed log availability</string>
     <string name="feedback_diagnostic_lsposed_no_permission_message">The LSPosed log files could not be read. Root access may be unavailable, or access to the log directory was denied.</string>
-    <string name="feedback_diagnostic_lsposed_no_logs_message">No LSPosed log files were found. Possible causes:\n\n• LSPosed Hook debugging is disabled\n• Disable detailed logs is enabled\n• Output logs to daemon is enabled\n• LSPosed logging was disabled unexpectedly or cannot write logs</string>
-    <string name="feedback_diagnostic_lsposed_no_valid_logs_message">The LSPosed log files were readable, but no valid DPIS entries were found. Hook debugging may be disabled, detailed logs may be disabled, daemon output may be enabled, or logging may have been closed unexpectedly.</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">No LSPosed log files were found. Possible causes:\n\n• LSPosed “Hook Debug” is disabled\n• “Disable verbose logs” is enabled\n• “Log to daemon” is enabled\n• LSPosed logging was disabled unexpectedly or cannot write logs</string>
+    <string name="feedback_diagnostic_lsposed_no_valid_logs_message">The LSPosed log files were readable, but no valid DPIS entries were found. “Hook Debug” may be disabled, “Disable verbose logs” may be enabled, “Log to daemon” may be enabled, or logging may have been closed unexpectedly.</string>
     <string name="feedback_diagnostic_lsposed_available_message">A readable LSPosed log file contains DPIS entries. The diagnostic can include these entries.</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">Unable to read LSPosed logs</string>
-    <string name="feedback_diagnostic_lsposed_unavailable_message">Possible causes:\n• LSPosed Hook debugging is disabled.\n• Disable detailed logs is enabled.\n• Output logs to daemon is enabled.\n• LSPosed logging was disabled unexpectedly or cannot write logs.</string>
+    <string name="feedback_diagnostic_lsposed_unavailable_message">Possible causes:\n• LSPosed “Hook Debug” is disabled.\n• “Disable verbose logs” is enabled.\n• “Log to daemon” is enabled.\n• LSPosed logging was disabled unexpectedly or cannot write logs.</string>
     <string name="feedback_diagnostic_duration_section">Recording duration</string>
     <string name="feedback_diagnostic_status_section">Diagnostic status</string>
     <string name="feedback_diagnostic_output_pending">Generated after the diagnostic ends</string>
@@ -188,7 +188,7 @@ Mini Programs are not supported yet.</string>
     <string name="tools_log_title">View logs</string>
     <string name="tools_log_subtitle">Browse logs related to DPIS</string>
     <string name="diagnostic_log_required_title">Enable diagnostic logs</string>
-    <string name="diagnostic_log_required_message">Logs and feedback diagnostics need diagnostic log output. Enable it now?</string>
+    <string name="diagnostic_log_required_message">Logs and diagnostics need diagnostic log output. Enable it now?</string>
     <string name="diagnostic_log_enable_action">Enable logs</string>
     <string name="log_page_title">Logs</string>
     <string name="log_action_refresh">Refresh logs</string>

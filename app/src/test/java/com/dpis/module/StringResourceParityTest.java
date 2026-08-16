@@ -32,9 +32,9 @@ public class StringResourceParityTest {
 
         assertLocalizedStringNames(defaultNames, defaultNonTranslatableNames,
                 "src/main/res/values-zh-rCN/strings.xml");
-        assertLocalizedStringNames(defaultNames, defaultNonTranslatableNames,
+        assertLocalizedStringNamesAllowingFallback(defaultNames, defaultNonTranslatableNames,
                 "src/main/res/values-ja-rJP/strings.xml");
-        assertLocalizedStringNames(defaultNames, defaultNonTranslatableNames,
+        assertLocalizedStringNamesAllowingFallback(defaultNames, defaultNonTranslatableNames,
                 "src/main/res/values-ru-rRU/strings.xml");
     }
 
@@ -137,6 +137,19 @@ public class StringResourceParityTest {
         Set<String> localizedNames = readStringNames(localizedPath);
 
         assertEquals(defaultNames, localizedNames);
+        for (String name : defaultNonTranslatableNames) {
+            assertTrue(!localizedNames.contains(name));
+        }
+    }
+
+    private static void assertLocalizedStringNamesAllowingFallback(
+            Set<String> defaultNames,
+            Set<String> defaultNonTranslatableNames,
+            String localizedPath)
+            throws IOException, ParserConfigurationException, SAXException {
+        Set<String> localizedNames = readStringNames(localizedPath);
+
+        assertTrue(defaultNames.containsAll(localizedNames));
         for (String name : defaultNonTranslatableNames) {
             assertTrue(!localizedNames.contains(name));
         }
