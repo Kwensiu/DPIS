@@ -108,6 +108,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(preparation.contains("DiagnosticOutputDetails(state, presentation)"));
         assertTrue(preparation.contains("feedback_diagnostic_discard_and_restart_action"));
         assertTrue(preparation.contains("navigationBarsPadding()"));
+        assertTrue(preparation.contains("RoundedCornerShape(18.dp)"));
+        assertTrue(preparation.contains("surfaceContainerHighest"));
         assertTrue(preparation.contains("DiagnosticOutputFileCard(entry)"));
         assertTrue(preparation.contains("DiagnosticOutputFileBackdrop()"));
         assertTrue(preparation.contains("basicMarquee(animationMode = MarqueeAnimationMode.Immediately)"));

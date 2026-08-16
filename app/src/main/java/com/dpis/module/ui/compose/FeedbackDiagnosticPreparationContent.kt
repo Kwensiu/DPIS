@@ -5,6 +5,7 @@ import android.widget.ImageView
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -233,16 +235,15 @@ fun FeedbackDiagnosticPreparationContent(
             onBack = presentation::back,
             bottomBar = {
                 when (state.phase) {
-                    FeedbackDiagnosticPreparationPresentation.Phase.PREPARING -> Button(
+                    FeedbackDiagnosticPreparationPresentation.Phase.PREPARING -> DiagnosticPrimaryActionButton(
                         onClick = presentation::start,
                         enabled = state.startEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(horizontal = 20.dp, vertical = 12.dp),
-                    ) {
-                        Text(stringResource(R.string.feedback_diagnostic_save_and_start_button))
-                    }
+                        text = stringResource(R.string.feedback_diagnostic_save_and_start_button),
+                    )
                     FeedbackDiagnosticPreparationPresentation.Phase.READY -> {
                         Column(
                             modifier = Modifier
@@ -255,21 +256,24 @@ fun FeedbackDiagnosticPreparationContent(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                                OutlinedButton(
+                                DiagnosticActionButton(
                                     onClick = presentation::save,
                                     modifier = Modifier.weight(1f),
-                                ) { Text(stringResource(R.string.feedback_diagnostic_save_action)) }
-                                Button(
+                                    text = stringResource(R.string.feedback_diagnostic_save_action),
+                                )
+                                DiagnosticActionButton(
                                     onClick = presentation::share,
                                     modifier = Modifier.weight(1f),
-                                ) { Text(stringResource(R.string.feedback_diagnostic_share_action)) }
+                                    text = stringResource(R.string.feedback_diagnostic_share_action),
+                                )
                             }
-                            OutlinedButton(
+                            DiagnosticActionButton(
                                 onClick = presentation::discardAndRestart,
                                 modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(stringResource(R.string.feedback_diagnostic_discard_and_restart_action))
-                            }
+                                text = stringResource(
+                                    R.string.feedback_diagnostic_discard_and_restart_action,
+                                ),
+                            )
                         }
                     }
                     else -> Unit
@@ -278,6 +282,44 @@ fun FeedbackDiagnosticPreparationContent(
         ) { padding ->
             DiagnosticPage(state, presentation, padding)
         }
+    }
+}
+
+@Composable
+private fun DiagnosticActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    text: String,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(18.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        ),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+    ) {
+        Text(text)
+    }
+}
+
+@Composable
+private fun DiagnosticPrimaryActionButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    text: String,
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(18.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+    ) {
+        Text(text)
     }
 }
 
