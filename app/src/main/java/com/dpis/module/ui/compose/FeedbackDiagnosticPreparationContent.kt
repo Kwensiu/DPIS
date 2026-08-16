@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -265,6 +266,9 @@ fun FeedbackDiagnosticPreparationContent(
                                     onClick = presentation::share,
                                     modifier = Modifier.weight(1f),
                                     text = stringResource(R.string.feedback_diagnostic_share_action),
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                    borderColor = MaterialTheme.colorScheme.primary,
                                 )
                             }
                             DiagnosticActionButton(
@@ -273,6 +277,9 @@ fun FeedbackDiagnosticPreparationContent(
                                 text = stringResource(
                                     R.string.feedback_diagnostic_discard_and_restart_action,
                                 ),
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                borderColor = MaterialTheme.colorScheme.error,
                             )
                         }
                     }
@@ -290,14 +297,18 @@ private fun DiagnosticActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     text: String,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
 ) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         shape = RoundedCornerShape(18.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(1.dp, borderColor),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            containerColor = containerColor,
+            contentColor = contentColor,
         ),
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
