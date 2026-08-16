@@ -22,11 +22,10 @@ import com.dpis.module.diagnostics.DiagnosticResultSheet;
 
 import com.dpis.module.diagnostics.DiagnosticExportBuilder;
 import com.dpis.module.diagnostics.DiagnosticPackageActions;
+import com.dpis.module.diagnostics.DiagnosticPageController;
 import com.dpis.module.diagnostics.DiagnosticSession;
 
 import com.dpis.module.diagnostics.DiagnosticCoordinator;
-import com.dpis.module.diagnostics.LogReadResult;
-import com.dpis.module.diagnostics.LsposedLogReader;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -320,8 +319,12 @@ public final class MainActivity
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
-    private com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
-            feedbackDiagnosticPreparationPresentation;
+    private final DiagnosticPageController feedbackDiagnosticPageController
+            = new DiagnosticPageController(
+                    getApplicationContext(),
+                    feedbackDiagnosticExportExecutor,
+                    createDiagnosticPageControllerHost()
+            );
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
@@ -591,6 +594,7 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
+        feedbackDiagnosticPageController.detachHost();
         if (isChangingConfigurations()) {
             feedbackDiagnosticSession.detachHost();
         } else {
@@ -779,8 +783,8 @@ public final class MainActivity
                 homeUpdateUiState,
                 feedbackDiagnosticSession,
                 feedbackDiagnosticPageRequest,
-                feedbackDiagnosticPreparationPresentation != null
-                        ? feedbackDiagnosticPreparationPresentation.getState()
+                feedbackDiagnosticPageController.presentation() != null
+                        ? feedbackDiagnosticPageController.presentation().getState()
                         : null
         );
     }
@@ -1985,276 +1989,28 @@ public final class MainActivity
         }
         FeedbackDiagnosticPageRequest request = retainedState.feedbackDiagnosticPageRequest;
         showComposeFeedbackDiagnosticPreparation(request.item, request.draft);
-        if (feedbackDiagnosticPreparationPresentation != null) {
-            feedbackDiagnosticPreparationPresentation.show(
-                    retainedState.feedbackDiagnosticPresentationState
-            );
-        }
+        feedbackDiagnosticPageController.restoreState(
+                retainedState.feedbackDiagnosticPresentationState
+        );
     }
 
     private void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
             AppConfigEditorDraft draft
     ) {
-        if (composeShellHost == null) {
-            showComposeFeedbackDiagnosticConfirmation(item, draft);
-            return;
-        }
         feedbackDiagnosticPageRequest = new FeedbackDiagnosticPageRequest(
                 item,
                 draft,
                 resolvePackageVersionName(item.packageName)
         );
-        String rootStatus = feedbackDiagnosticRootStatus();
-        String logStatus = getString(R.string.feedback_diagnostic_log_session_enabled);
-        String versionName = feedbackDiagnosticPageRequest.versionName;
-        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State initialState
-                = new com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State(
-                        item.label,
-                        item.packageName,
-                        item.icon,
-                        versionName,
-                        rootStatus,
-                        logStatus,
-                        getString(R.string.feedback_diagnostic_lsposed_checking),
-                        0,
-                        getString(R.string.feedback_diagnostic_lsposed_checking_message),
-                        RootAccessProbe.cachedResult().status
-                                == RootAccessProbe.Status.AVAILABLE,
-                        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.Phase.PREPARING,
-                        "",
-                        "",
-                        "",
-                        List.of(),
-                        false,
-                        30
-                );
-        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
-                = new com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation(
-                        initialState,
-                        () -> {
-                            handleFeedbackDiagnosticPageBack();
-                            return Unit.INSTANCE;
-                        },
-                        () -> {
-                    if (!saveComposeAppEditor(item, draft)) {
-                        return Unit.INSTANCE;
-                    }
-                    markComposeAppEditorSaved(draft);
-                    com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation current
-                            = feedbackDiagnosticPreparationPresentation;
-                    boolean started = feedbackDiagnosticSession.start(
-                            DiagnosticCoordinator.Request.fromPersisted(
-                                    item,
-                                    composeEditorDialogState(item, draft),
-                                    versionName,
-                                    getHookConfigStore()
-                            ),
-                            current != null && current.isDurationEnabled(),
-                            current != null ? current.selectedDurationSeconds() : 30
-                    );
-                    if (!started) {
-                        if (current != null) {
-                            current.markStartFailed();
-                        }
-                        showToast(R.string.feedback_diagnostic_unavailable);
-                    }
-                    return Unit.INSTANCE;
-                },
-                        () -> {
-                            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                                    = feedbackDiagnosticSession.diagnosticPackage();
-                            if (diagnosticPackage != null) {
-                                feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
-                                        diagnosticPackage
-                                );
-                            }
-                            return Unit.INSTANCE;
-                        },
-                        () -> {
-                            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                                    = feedbackDiagnosticSession.diagnosticPackage();
-                            if (diagnosticPackage != null) {
-                                feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(
-                                        diagnosticPackage
-                                );
-                            }
-                            return Unit.INSTANCE;
-                        },
-                        () -> {
-                            com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
-                                    current = feedbackDiagnosticPreparationPresentation;
-                            if (current != null) {
-                                refreshComposeFeedbackDiagnosticEnvironment(
-                                        current,
-                                        current.lsposedAvailabilityCode()
-                                                == LsposedLogReader.Availability.NO_PERMISSION
-                                                        .ordinal() + 1
-                                );
-                            }
-                            return Unit.INSTANCE;
-                        },
-                        () -> {
-                            refreshComposeFeedbackDiagnosticLsposedAvailability(
-                                    feedbackDiagnosticPreparationPresentation
-                            );
-                            return Unit.INSTANCE;
-                        },
-                        () -> {
-                            com.dpis.module.ui.compose.ComposeMessageDialog.show(
-                                    this,
-                                    feedbackDiagnosticPreparationPresentation.lsposedStatus(),
-                                    feedbackDiagnosticPreparationPresentation
-                                            .lsposedExplanation(),
-                                    getString(R.string.dialog_close_button)
-                            );
-                            return Unit.INSTANCE;
-                        },
-                        path -> {
-                            feedbackDiagnosticPackageActions.copyFeedbackDiagnosticPath(path);
-                            return Unit.INSTANCE;
-                        }
+        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation shown
+                = feedbackDiagnosticPageController.show(
+                item,
+                draft,
+                feedbackDiagnosticPageRequest.versionName
         );
-        feedbackDiagnosticPreparationPresentation = presentation;
-        composeShellHost.showDiagnosticPreparation(presentation);
-        refreshComposeFeedbackDiagnosticEnvironment(presentation, true);
-    }
-
-    private void refreshComposeFeedbackDiagnosticEnvironment(
-            com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation,
-            boolean refreshLsposed
-    ) {
-        if (presentation == null) {
-            return;
-        }
-        String logStatus = getString(R.string.feedback_diagnostic_log_session_enabled);
-        String lsposedStatus = refreshLsposed
-                ? getString(R.string.feedback_diagnostic_lsposed_checking)
-                : presentation.lsposedStatus();
-        int lsposedAvailabilityCode = refreshLsposed
-                ? 0
-                : presentation.lsposedAvailabilityCode();
-        String lsposedExplanation = refreshLsposed
-                ? getString(R.string.feedback_diagnostic_lsposed_checking_message)
-                : presentation.lsposedExplanation();
-        presentation.updateEnvironment(
-                getString(R.string.feedback_diagnostic_root_checking),
-                logStatus,
-                lsposedStatus,
-                lsposedAvailabilityCode,
-                lsposedExplanation,
-                false
-        );
-        feedbackDiagnosticExportExecutor.execute(() -> {
-            RootAccessProbe.Result rootAccess = RootAccessProbe.probe();
-            LogReadResult result = refreshLsposed
-                    && rootAccess.status == RootAccessProbe.Status.AVAILABLE
-                    ? LsposedLogReader.readLsposedDpisCurrent()
-                    : null;
-            LsposedLogReader.Availability availability = refreshLsposed
-                    && rootAccess.status
-                    == RootAccessProbe.Status.AVAILABLE
-                    ? LsposedLogReader.availability(result)
-                    : refreshLsposed
-                            ? LsposedLogReader.Availability.NO_PERMISSION
-                            : LsposedLogReader.Availability.values()[
-                                    Math.max(0, lsposedAvailabilityCode - 1)
-                            ];
-            runOnUiThread(() -> {
-                if (feedbackDiagnosticPreparationPresentation != presentation) {
-                    return;
-                }
-                presentation.updateEnvironment(
-                        feedbackDiagnosticRootStatus(),
-                        logStatus,
-                        getString(feedbackDiagnosticLsposedStatusRes(availability)),
-                        availability.ordinal() + 1,
-                        feedbackDiagnosticLsposedExplanation(availability),
-                        rootAccess.status == RootAccessProbe.Status.AVAILABLE
-                );
-            });
-        });
-    }
-
-    private void refreshComposeFeedbackDiagnosticLsposedAvailability(
-            com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
-    ) {
-        if (presentation == null) {
-            return;
-        }
-        presentation.updateEnvironment(
-                presentation.rootStatus(),
-                presentation.logStatus(),
-                getString(R.string.feedback_diagnostic_lsposed_checking),
-                0,
-                getString(R.string.feedback_diagnostic_lsposed_checking_message),
-                presentation.isStartEnabled()
-        );
-        feedbackDiagnosticExportExecutor.execute(() -> {
-            RootAccessProbe.Result rootAccess = RootAccessProbe.cachedResult();
-            LogReadResult result = rootAccess.status == RootAccessProbe.Status.AVAILABLE
-                    ? LsposedLogReader.readLsposedDpisCurrent()
-                    : null;
-            LsposedLogReader.Availability availability = rootAccess.status
-                    == RootAccessProbe.Status.AVAILABLE
-                    ? LsposedLogReader.availability(result)
-                    : LsposedLogReader.Availability.NO_PERMISSION;
-            runOnUiThread(() -> {
-                if (feedbackDiagnosticPreparationPresentation != presentation) {
-                    return;
-                }
-                presentation.updateEnvironment(
-                        presentation.rootStatus(),
-                        presentation.logStatus(),
-                        getString(feedbackDiagnosticLsposedStatusRes(availability)),
-                        availability.ordinal() + 1,
-                        feedbackDiagnosticLsposedExplanation(availability),
-                        presentation.isStartEnabled()
-                );
-            });
-        });
-    }
-
-    private String feedbackDiagnosticRootStatus() {
-        RootAccessProbe.Result result = RootAccessProbe.cachedResult();
-        if (result.status == RootAccessProbe.Status.AVAILABLE) {
-            return getString(R.string.feedback_diagnostic_root_available, result.provider);
-        }
-        if (result.status == RootAccessProbe.Status.UNAVAILABLE) {
-            return getString(R.string.feedback_diagnostic_root_unavailable);
-        }
-        return getString(R.string.feedback_diagnostic_root_checking);
-    }
-
-    private int feedbackDiagnosticLsposedStatusRes(
-            LsposedLogReader.Availability availability
-    ) {
-        switch (availability) {
-            case NO_LOGS:
-                return R.string.feedback_diagnostic_lsposed_no_logs;
-            case NO_VALID_LOGS:
-                return R.string.feedback_diagnostic_lsposed_no_valid_logs;
-            case AVAILABLE:
-                return R.string.feedback_diagnostic_lsposed_available;
-            case NO_PERMISSION:
-            default:
-                return R.string.feedback_diagnostic_lsposed_no_permission;
-        }
-    }
-
-    private String feedbackDiagnosticLsposedExplanation(
-            LsposedLogReader.Availability availability
-    ) {
-        switch (availability) {
-            case NO_LOGS:
-                return getString(R.string.feedback_diagnostic_lsposed_no_logs_message);
-            case NO_VALID_LOGS:
-                return getString(R.string.feedback_diagnostic_lsposed_no_valid_logs_message);
-            case AVAILABLE:
-                return getString(R.string.feedback_diagnostic_lsposed_available_message);
-            case NO_PERMISSION:
-            default:
-                return getString(R.string.feedback_diagnostic_lsposed_no_permission_message);
+        if (shown == null) {
+            feedbackDiagnosticPageRequest = null;
         }
     }
 
@@ -4125,16 +3881,16 @@ public final class MainActivity
 
             @Override
             public void onRecordingStarted() {
-                if (feedbackDiagnosticPreparationPresentation != null) {
-                    feedbackDiagnosticPreparationPresentation.markRecording();
+                if (feedbackDiagnosticPageController.presentation() != null) {
+                    feedbackDiagnosticPageController.presentation().markRecording();
                 }
                 showToast(R.string.feedback_diagnostic_started);
             }
 
             @Override
             public void onStartUnavailable(boolean rootRequired) {
-                if (feedbackDiagnosticPreparationPresentation != null) {
-                    feedbackDiagnosticPreparationPresentation.markStartFailed();
+                if (feedbackDiagnosticPageController.presentation() != null) {
+                    feedbackDiagnosticPageController.presentation().markStartFailed();
                 }
                 showToast(rootRequired
                         ? R.string.feedback_diagnostic_root_required
@@ -4143,8 +3899,8 @@ public final class MainActivity
 
             @Override
             public void onPackagingStarted() {
-                if (feedbackDiagnosticPreparationPresentation != null) {
-                    feedbackDiagnosticPreparationPresentation.markPackaging();
+                if (feedbackDiagnosticPageController.presentation() != null) {
+                    feedbackDiagnosticPageController.presentation().markPackaging();
                 }
             }
 
@@ -4157,8 +3913,8 @@ public final class MainActivity
 
             @Override
             public void onPackagingFailed() {
-                if (feedbackDiagnosticPreparationPresentation != null) {
-                    feedbackDiagnosticPreparationPresentation.showPackagingFailed();
+                if (feedbackDiagnosticPageController.presentation() != null) {
+                    feedbackDiagnosticPageController.presentation().showPackagingFailed();
                 }
                 showToast(R.string.feedback_diagnostic_save_failed);
             }
@@ -4365,11 +4121,11 @@ public final class MainActivity
         if (diagnosticPackage == null) {
             return;
         }
-        if (feedbackDiagnosticPreparationPresentation == null) {
+        if (feedbackDiagnosticPageController.presentation() == null) {
             showDiagnosticResultSheet(diagnosticPackage);
             return;
         }
-        feedbackDiagnosticPreparationPresentation.showReady(
+        feedbackDiagnosticPageController.presentation().showReady(
                 diagnosticPackage.fileName,
                 feedbackDiagnosticPackageActions.feedbackDiagnosticSharedCachePath(
                         diagnosticPackage
@@ -4481,7 +4237,7 @@ public final class MainActivity
     }
 
     private void dismissFeedbackDiagnosticPage() {
-        feedbackDiagnosticPreparationPresentation = null;
+        feedbackDiagnosticPageController.clear();
         feedbackDiagnosticPageRequest = null;
         if (composeShellHost != null) {
             composeShellHost.dismissDiagnosticPreparation();
@@ -5123,6 +4879,113 @@ public final class MainActivity
             this.draft = draft;
             this.versionName = versionName != null ? versionName : "";
         }
+    }
+
+    private DiagnosticPageController.Host createDiagnosticPageControllerHost() {
+        return new DiagnosticPageController.Host() {
+            @Override
+            public boolean canShowDiagnosticPage() {
+                return composeShellHost != null;
+            }
+
+            @Override
+            public void showDiagnosticPreparation(
+                    com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
+            ) {
+                if (composeShellHost != null) {
+                    composeShellHost.showDiagnosticPreparation(presentation);
+                }
+            }
+
+            @Override
+            public void showFallbackConfirmation(
+                    AppListItem item,
+                    AppConfigEditorDraft draft
+            ) {
+                showComposeFeedbackDiagnosticConfirmation(item, draft);
+            }
+
+            @Override
+            public void onBackRequested() {
+                handleFeedbackDiagnosticPageBack();
+            }
+
+            @Override
+            public boolean saveAppConfig(AppListItem item, AppConfigEditorDraft draft) {
+                return saveComposeAppEditor(item, draft);
+            }
+
+            @Override
+            public void markAppConfigSaved(AppConfigEditorDraft draft) {
+                markComposeAppEditorSaved(draft);
+            }
+
+            @Override
+            public boolean startDiagnostic(
+                    AppListItem item,
+                    AppConfigEditorDraft draft,
+                    String versionName,
+                    boolean durationEnabled,
+                    int durationSeconds
+            ) {
+                return feedbackDiagnosticSession.start(
+                        DiagnosticCoordinator.Request.fromPersisted(
+                                item,
+                                composeEditorDialogState(item, draft),
+                                versionName,
+                                getHookConfigStore()
+                        ),
+                        durationEnabled,
+                        durationSeconds
+                );
+            }
+
+            @Override
+            public DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage() {
+                return feedbackDiagnosticSession.diagnosticPackage();
+            }
+
+            @Override
+            public void saveDiagnosticPackage(
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ) {
+                feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
+                        diagnosticPackage
+                );
+            }
+
+            @Override
+            public void shareDiagnosticPackage(
+                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ) {
+                feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
+            }
+
+            @Override
+            public void showLsposedExplanation(String title, String explanation) {
+                ComposeMessageDialog.show(
+                        MainActivity.this,
+                        title,
+                        explanation,
+                        getString(R.string.dialog_close_button)
+                );
+            }
+
+            @Override
+            public void copyDiagnosticPath(String path) {
+                feedbackDiagnosticPackageActions.copyFeedbackDiagnosticPath(path);
+            }
+
+            @Override
+            public void runOnUiThread(Runnable action) {
+                MainActivity.this.runOnUiThread(action);
+            }
+
+            @Override
+            public void showToast(int messageResId) {
+                MainActivity.this.showToast(messageResId);
+            }
+        };
     }
 
     private enum TemplateDetailKind {

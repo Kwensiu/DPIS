@@ -45,6 +45,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine()
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
+        String pageController = read(
+                "src/main/java/com/dpis/module/diagnostics/DiagnosticPageController.kt");
         String packageActions = read(
                 "src/main/java/com/dpis/module/diagnostics/DiagnosticPackageActions.kt");
         String preparation = read(
@@ -76,20 +78,20 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
         assertTrue(main.contains("feedbackDiagnosticSession.start("));
-        assertTrue(main.contains("selectedDurationSeconds()"));
-        assertTrue(main.contains("isDurationEnabled()"));
+        assertTrue(pageController.contains("selectedDurationSeconds()"));
+        assertTrue(pageController.contains("isDurationEnabled()"));
         assertTrue(main.contains("feedbackDiagnosticSession.attachHost("));
         assertTrue(main.contains("feedbackDiagnosticSession.detachHost()"));
         assertTrue(main.contains("isChangingConfigurations()"));
         assertTrue(main.contains("ComposeMessageDialog.show("));
-        assertTrue(main.contains("feedbackDiagnosticPreparationPresentation.lsposedStatus()"));
-        assertTrue(main.contains("feedbackDiagnosticPreparationPresentation.markStartFailed()"));
+        assertTrue(pageController.contains("current.lsposedStatus()"));
+        assertTrue(main.contains("feedbackDiagnosticPageController.presentation().markStartFailed()"));
         assertTrue(main.contains("formatFeedbackDiagnosticDuration("));
         assertTrue(main.contains("feedback_diagnostic_auto_finished"));
-        assertTrue(main.contains("presentation.updateEnvironment("));
-        assertTrue(main.contains("refreshComposeFeedbackDiagnosticEnvironment(presentation, true)"));
-        assertTrue(main.contains("current.lsposedAvailabilityCode()"));
-        assertTrue(main.contains("refreshLsposed"));
+        assertTrue(pageController.contains("target.updateEnvironment("));
+        assertTrue(pageController.contains("refreshEnvironment(created, refreshLsposed = true)"));
+        assertTrue(pageController.contains("current.lsposedAvailabilityCode()"));
+        assertTrue(pageController.contains("refreshLsposedAvailability"));
         assertTrue(main.contains("DiagnosticCoordinator.Request.fromPersisted("));
         assertTrue(main.contains("restoreFeedbackDiagnosticPage(retainedState)"));
         assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));
@@ -132,7 +134,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(preparation.contains("presentation::explainLsposedAvailability"));
         assertTrue(preparation.contains("LSPOSED_NO_PERMISSION"));
         assertTrue(preparation.contains("LSPOSED_AVAILABLE"));
-        assertTrue(main.contains("LsposedLogReader.availability(result)"));
+        assertTrue(pageController.contains("LsposedLogReader.availability(result)"));
         assertTrue(preparation.contains("feedback_diagnostic_recording_title"));
         assertTrue(shell.contains("showDiagnosticPreparation("));
         assertTrue(shell.contains("FeedbackDiagnosticPreparationContent(currentPreparation)"));
