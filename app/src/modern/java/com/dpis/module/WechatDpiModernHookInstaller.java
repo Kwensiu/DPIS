@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.viewport.DpiConfig;
 
@@ -75,7 +75,7 @@ final class WechatDpiModernHookInstaller {
                     + locatorResult.source.logName + ", versionCode=" + versionCode
                     + ", classLoader=" + describeClassLoaderForLog(classLoader)
                     + ", reason=" + locatorResult.failure);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     packageName,
                     "wechat_dpi",
                     "displaymetrics",
@@ -129,7 +129,7 @@ final class WechatDpiModernHookInstaller {
                                     + ", configuredDpi="
                                     + WechatDpiPropertyBridge.readDpi(
                                             WechatDpiConfig.PACKAGE_NAME));
-                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                            RuntimeHotPathEvents.event(
                                     WechatDpiConfig.PACKAGE_NAME,
                                     "wechat_dpi",
                                     "bottom_tab_icon",
@@ -149,7 +149,7 @@ final class WechatDpiModernHookInstaller {
                                         + scaleField.getName()
                                         + ", targetDpi=" + configuredDpi
                                         + ", scale " + oldScale + " -> " + targetScale);
-                                FeedbackDiagnosticRuntimeHotPathEvents.event(
+                                RuntimeHotPathEvents.event(
                                         WechatDpiConfig.PACKAGE_NAME,
                                         "wechat_dpi",
                                         "bottom_tab_icon",
@@ -165,7 +165,7 @@ final class WechatDpiModernHookInstaller {
                     + methodName(initMethod)
                     + ", field=" + scaleField.getName()
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "bottom_tab_icon",
@@ -179,7 +179,7 @@ final class WechatDpiModernHookInstaller {
             DpisLog.e("modern WeChat DPI bottom tab icon hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(),
                     throwable);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "bottom_tab_icon",
@@ -266,7 +266,7 @@ final class WechatDpiModernHookInstaller {
                     + ", configuredDpi="
                     + WechatDpiPropertyBridge.readDpi(
                             WechatDpiConfig.PACKAGE_NAME));
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",
@@ -280,7 +280,7 @@ final class WechatDpiModernHookInstaller {
                     + methodNames(hookMethods)
                     + ", versionCode=" + versionCode + ", "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",
@@ -323,7 +323,7 @@ final class WechatDpiModernHookInstaller {
                 + ", retiredTargets=" + retiredTargets(versionCode)
                 + ", retiredActive=false";
         DpisLog.i("modern WeChat DPI route plan: " + detail);
-        FeedbackDiagnosticRuntimeHotPathEvents.event(
+        RuntimeHotPathEvents.event(
                 packageName,
                 "wechat_dpi",
                 "displaymetrics",
@@ -342,7 +342,7 @@ final class WechatDpiModernHookInstaller {
                 + ", firstCallbackMethod=" + shortMethodName(hookMethod)
                 + ", result=" + resultName
                 + ", configuredDpi=" + configuredDpi);
-        FeedbackDiagnosticRuntimeHotPathEvents.event(
+        RuntimeHotPathEvents.event(
                 WechatDpiConfig.PACKAGE_NAME,
                 "wechat_dpi",
                 "displaymetrics",
@@ -479,7 +479,7 @@ final class WechatDpiModernHookInstaller {
                     + ", density " + oldDensity + " -> " + metrics.density
                     + ", scaledDensity " + oldScaledDensity + " -> "
                     + metrics.scaledDensity);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",

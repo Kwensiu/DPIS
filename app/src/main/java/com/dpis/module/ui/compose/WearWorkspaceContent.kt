@@ -63,7 +63,6 @@ import com.dpis.module.AppConfigEditorPresentation
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
-import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.home.HomeUpdateUiState
@@ -389,7 +388,7 @@ internal fun WearHomeWorkspaceContent(state: HomeWorkspaceBinder.State) {
             onClick = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) state.actions::retryUpdateCheck else ({})
         )
         if (state.updateState.showsUpdateActionCard()) {
-            wearButton("release-notes", context.getString(R.string.home_update_action_release_notes), icon = R.drawable.ic_notes_24, onClick = state.actions::showReleaseNotes)
+            wearButton("release-notes", context.getString(R.string.home_update_action_release_notes), icon = R.drawable.ic_assignment_24, onClick = state.actions::showReleaseNotes)
             wearButton(
                 "update-action",
                 context.getString(if (state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY) R.string.home_update_action_install_ready else R.string.home_update_action_install),
@@ -1268,7 +1267,7 @@ internal class WearListScope(
     fun wearSwitch(key: Any, @StringRes label: Int, checked: Boolean, enabled: Boolean, onChanged: (Boolean) -> Unit) = with(scope) {
         item(key = key) {
             SwitchButton(
-                label = { Text(androidx.compose.ui.platform.LocalContext.current.getString(label), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                label = { Text(LocalContext.current.getString(label), maxLines = 2, overflow = TextOverflow.Ellipsis) },
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = onChanged,

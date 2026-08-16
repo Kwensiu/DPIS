@@ -144,10 +144,7 @@ public final class ProcessActionHandler {
     }
 
     private boolean hasRootAccess() {
-        RootAccessProbe.Result result = RootAccessProbe.cachedResult();
-        if (result.status == RootAccessProbe.Status.UNKNOWN) {
-            result = RootAccessProbe.probe();
-        }
+        RootAccessProbe.Result result = RootAccessProbe.probe();
         return result.status == RootAccessProbe.Status.AVAILABLE;
     }
 

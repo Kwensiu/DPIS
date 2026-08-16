@@ -1,6 +1,6 @@
 package com.dpis.module.diagnostics;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import com.dpis.module.*;
 
@@ -45,43 +45,146 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine()
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
+        String pageController = read(
+                "src/main/java/com/dpis/module/diagnostics/PageController.kt");
+        String packageActions = read(
+                "src/main/java/com/dpis/module/diagnostics/PackageActions.kt");
+        String preparation = read(
+                "src/main/java/com/dpis/module/ui/compose/"
+                        + "FeedbackDiagnosticPreparationContent.kt");
+        String theme = read(
+                "src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
+        String edgeFade = read(
+                "src/main/java/com/dpis/module/ui/compose/HorizontalScrollEdgeFade.kt");
+        String shell = read("src/main/java/com/dpis/module/MainComposeShellHost.kt");
+        String segmentedPolicy = read(
+                "src/main/java/com/dpis/module/ui/compose/SegmentedListItemPolicy.kt");
+        String hookChain = read(
+                "src/main/java/com/dpis/module/ui/compose/HookChainEditorPage.kt");
         String coordinator = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
+                "src/main/java/com/dpis/module/diagnostics/Coordinator.java");
         String summary = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticSummaryBuilder.java");
+                "src/main/java/com/dpis/module/diagnostics/SummaryBuilder.java");
+        String structuredExporter = read(
+                "src/main/java/com/dpis/module/diagnostics/"
+                        + "StructuredEvidenceExporter.java");
         String logGate = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticLogGate.java");
+                "src/main/java/com/dpis/module/diagnostics/LogGate.java");
 
-        assertTrue(main.contains("new FeedbackDiagnosticCoordinator(createFeedbackDiagnosticHost())"));
-        assertTrue(main.contains("private FeedbackDiagnosticCoordinator.Host createFeedbackDiagnosticHost()"));
-        assertTrue(main.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(main.contains("new Session(getApplicationContext())"));
+        assertTrue(main.contains("private Session.Host createFeedbackDiagnosticHost()"));
+        assertTrue(main.contains("LogGate.ensureEnabled("));
         assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"));
         assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
-        assertTrue(main.contains("feedbackDiagnosticCoordinator.start("));
-        assertTrue(main.contains("FeedbackDiagnosticCoordinator.Request.fromPersisted("));
-        assertTrue(main.contains("maybeShowPendingFeedbackDiagnosticResult();"));
-        assertTrue(main.contains("showFeedbackDiagnosticPackagingDialog();"));
-        assertTrue(main.contains("feedbackDiagnosticExportBuilder.buildPackage(result)"));
-        assertTrue(main.contains("showFeedbackDiagnosticResultSheet(finalBuilt);"));
+        assertTrue(main.contains("feedbackDiagnosticSession.start("));
+        assertTrue(pageController.contains("selectedDurationSeconds()"));
+        assertTrue(pageController.contains("isDurationEnabled()"));
+        assertTrue(pageController.contains("AppLocaleManager.wrap(context.applicationContext)"));
+        assertTrue(main.contains("feedbackDiagnosticSession.attachHost("));
+        assertTrue(main.contains("feedbackDiagnosticSession.detachHost()"));
+        assertTrue(main.contains("isChangingConfigurations()"));
+        assertTrue(main.contains("ComposeMessageDialog.show("));
+        assertTrue(pageController.contains("current.lsposedStatus()"));
+        assertTrue(main.contains("feedbackDiagnosticPageController.presentation().markStartFailed()"));
+        assertTrue(main.contains("formatFeedbackDiagnosticDuration("));
+        assertTrue(main.contains("feedback_diagnostic_auto_finished"));
+        assertTrue(pageController.contains("target.updateEnvironment("));
+        assertTrue(pageController.contains("refreshEnvironment(created, refreshLsposed = true)"));
+        assertTrue(pageController.contains("current.lsposedAvailabilityCode()"));
+        assertTrue(pageController.contains("refreshLsposedAvailability"));
+        assertTrue(pageController.contains("discardDiagnostic()"));
+        assertTrue(main.contains("Coordinator.Request.fromPersisted("));
+        assertTrue(main.contains("restoreFeedbackDiagnosticPage(retainedState)"));
+        assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));
+        assertTrue(main.contains("handleFeedbackDiagnosticPageBack()"));
+        assertTrue(main.contains("feedbackDiagnosticSession.cancel();"));
+        assertTrue(main.contains("feedback_diagnostic_exit_confirm_message"));
+        assertTrue(preparation.contains("SecondaryPageScaffold("));
+        assertTrue(preparation.contains("feedback_diagnostic_target_section"));
+        assertTrue(preparation.contains("rememberInstalledAppIcon(state.packageName, state.appIcon)"));
+        assertTrue(preparation.contains("Text(\"v${state.versionName}\")"));
+        assertTrue(preparation.contains("feedback_diagnostic_status_section"));
+        assertTrue(preparation.contains("DiagnosticResultPlaceholder()"));
+        assertTrue(preparation.contains("DiagnosticOutputDetails(state, presentation)"));
+        assertTrue(preparation.contains("feedback_diagnostic_discard_and_restart_action"));
+        assertTrue(preparation.contains("navigationBarsPadding()"));
+        assertTrue(preparation.contains("RoundedCornerShape(18.dp)"));
+        assertTrue(preparation.contains("surfaceContainerHighest"));
+        assertTrue(preparation.contains("DiagnosticOutputFileCard(entry)"));
+        assertTrue(preparation.contains("DiagnosticOutputFileBackdrop()"));
+        assertTrue(preparation.contains("basicMarquee(animationMode = MarqueeAnimationMode.Immediately)"));
+        assertTrue(preparation.contains("presentation.copyPackagePath(state.packagePath)"));
+        assertTrue(preparation.contains("feedback_diagnostic_output_pending"));
+        assertTrue(preparation.contains("SegmentedListItem("));
+        assertTrue(preparation.contains("Switch("));
+        assertTrue(preparation.contains("setDurationEnabled("));
+        assertTrue(preparation.contains("AnimatedConditionalItem(visible = state.durationEnabled)"));
+        assertTrue(preparation.contains("DurationChipSelector("));
+        assertTrue(edgeFade.contains("horizontalScroll(scrollState)"));
+        assertTrue(preparation.contains("DpisHorizontalScrollWithEdgeFade("));
+        assertTrue(preparation.contains("R.drawable.ic_view_kanban_24"));
+        assertTrue(preparation.contains("R.drawable.ic_healing_24"));
+        assertTrue(preparation.contains("R.drawable.ic_hourglass_check_24"));
+        assertTrue(theme.contains("DpisHorizontalScrollWithEdgeFade("));
+        assertTrue(edgeFade.contains("scrollState.value > 0"));
+        assertTrue(edgeFade.contains("scrollState.value < scrollState.maxValue"));
+        assertTrue(preparation.contains("CustomDurationDialog("));
+        assertTrue(preparation.contains("MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400"));
+        assertTrue(preparation.contains("feedback_diagnostic_duration_custom"));
+        assertTrue(preparation.contains("DiagnosticLogOutputRow(state.logStatus)"));
+        assertTrue(preparation.contains("DiagnosticRootPermissionRow(state, presentation)"));
+        assertTrue(preparation.contains("presentation::refreshRootPermission"));
+        assertTrue(preparation.contains("DiagnosticLsposedRow(state, presentation)"));
+        assertTrue(preparation.contains("presentation::refreshLsposedAvailability"));
+        assertTrue(preparation.contains("presentation::explainLsposedAvailability"));
+        assertTrue(preparation.contains("LSPOSED_NO_PERMISSION"));
+        assertTrue(preparation.contains("LSPOSED_AVAILABLE"));
+        assertTrue(pageController.contains("LsposedLogReader.availability(result)"));
+        assertTrue(preparation.contains("feedback_diagnostic_recording_title"));
+        assertTrue(shell.contains("showDiagnosticPreparation("));
+        assertTrue(shell.contains("FeedbackDiagnosticPreparationContent(currentPreparation)"));
+        assertTrue(shell.contains("BackHandler(enabled = preparation != null)"));
+        assertTrue(segmentedPolicy.contains("count.coerceAtLeast(1)"));
+        assertTrue(segmentedPolicy.contains("ListItemDefaults.segmentedShapes(safeIndex, safeCount)"));
+        assertTrue(segmentedPolicy.contains("safeCount == 1"));
+        assertTrue(segmentedPolicy.contains("RoundedCornerShape(16.dp)"));
+        assertTrue(segmentedPolicy.contains("} else {\n        shapes"));
+        assertTrue(main.contains("FeedbackDiagnosticPreparationPresentation.OutputEntry"));
+        assertTrue(main.contains("feedback_diagnostic_result_entry_meta"));
+        assertTrue(packageActions.contains("feedbackDiagnosticSharedCachePath("));
+        assertTrue(packageActions.contains("copyFeedbackDiagnosticPath("));
+        assertFalse(main.contains("private void saveFeedbackDiagnosticZip("));
+        assertFalse(main.contains("private void shareFeedbackDiagnostic("));
+        assertFalse(main.contains("private void copyFeedbackDiagnosticPath("));
+        assertFalse(main.contains("private void writeSharedFeedbackDiagnosticZip("));
+        assertTrue(main.contains("Formatter.formatFileSize"));
+        assertTrue(hookChain.contains("val shapes = dpisSegmentedShapes(index, total)"));
+        assertFalse(hookChain.contains("SingleItemShape"));
         assertFalse(main.contains("postDelayed(() -> finish("));
         assertFalse(main.contains("summaryBuilder.build("));
         assertTrue(logGate.contains("ComposeConfirmDialog.showWithLabels("));
         assertFalse(logGate.contains("MaterialAlertDialogBuilder"));
 
         assertTrue(coordinator.contains("handler.postDelayed("));
+        assertTrue(coordinator.contains("scheduleFinishAfterDelay(long delayMs)"));
+        assertTrue(coordinator.contains("requestFinish(\"diagnostic timer elapsed\")"));
+        assertTrue(coordinator.contains("onFeedbackDiagnosticAutoFinished()"));
+        assertTrue(coordinator.contains("handler.removeCallbacksAndMessages(null)"));
+        assertTrue(coordinator.contains("private final Object timelineLock = new Object();"));
+        assertTrue(coordinator.contains("synchronized (timelineLock)"));
         assertTrue(coordinator.contains("RootAccessProbe.probe()"));
-        assertTrue(coordinator.contains("FeedbackDiagnosticForegroundAppReader.readForegroundPackage()"));
+        assertTrue(coordinator.contains("ForegroundAppReader.readForegroundPackage()"));
         assertTrue(coordinator.contains("host.restartTargetAppForDiagnostic(request.packageName)"));
         assertTrue(coordinator.contains("handler.post(() -> startAfterRootLaunch(request, launched));"));
         assertTrue(coordinator.contains("runningStartedAtMillis = host.currentTimeMillis();"));
-        assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeTransport.start("));
-        assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeSelfTest.runUiTransportSelfTest("));
-        assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeEvents.start("));
-        assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeEvents.stopSnapshot()"));
-        assertTrue(coordinator.contains("FeedbackDiagnosticRuntimeTransport.stopSnapshot("));
+        assertTrue(coordinator.contains("RuntimeTransport.start("));
+        assertTrue(coordinator.contains("RuntimeSelfTest.runUiTransportSelfTest("));
+        assertTrue(coordinator.contains("RuntimeEvents.start("));
+        assertTrue(coordinator.contains("RuntimeEvents.stopSnapshot()"));
+        assertTrue(coordinator.contains("RuntimeTransport.stopSnapshot("));
         assertTrue(coordinator.contains("host.onFeedbackDiagnosticRootRequired();"));
-        assertTrue(coordinator.contains("host.onFeedbackDiagnosticFinished(result);"));
+        assertTrue(coordinator.contains("handler.post(() -> host.onFeedbackDiagnosticFinished(result));"));
         assertTrue(coordinator.contains("summaryInput(request)"));
         assertTrue(coordinator.contains("static Request fromPersisted("));
         assertFalse(coordinator.contains("DEFAULT_DURATION_MS"));
@@ -91,10 +194,17 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(summary.contains("versionName: "));
         assertTrue(summary.contains("previewFromGlobalPrefill: "));
         assertTrue(summary.contains("Diagnostic package includes diagnostic.txt"));
-        assertTrue(summary.contains("DPIS app events, runtime transport"));
+        assertTrue(summary.contains("timeline.tsv"));
+        assertTrue(summary.contains("module-effects.tsv"));
+        assertTrue(summary.contains("runtime transport"));
         assertTrue(summary.contains("public static final class Input"));
-        assertFalse(summary.contains("FeedbackDiagnosticCoordinator.Request"));
+        assertFalse(summary.contains("Coordinator.Request"));
         assertFalse(summary.contains("Runtime event capture is TODO"));
+        assertTrue(structuredExporter.contains("buildTimelineTsv("));
+        assertTrue(structuredExporter.contains("buildModuleEffectsTsv("));
+        assertTrue(structuredExporter.contains("target-process-lsposed-aggregate"));
+        assertTrue(structuredExporter.contains("target-process-log-fallback"));
+        assertTrue(structuredExporter.contains("latency percentiles unavailable"));
     }
 
     @Test
@@ -102,15 +212,15 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String dpisLog = read("src/main/java/com/dpis/module/DpisLog.java");
         String collector = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticRuntimeEvents.java");
+                "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.java");
         String hotPath = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticRuntimeHotPathEvents.java");
+                "src/main/java/com/dpis/module/diagnostics/RuntimeHotPathEvents.java");
 
-        assertTrue(dpisLog.contains("FeedbackDiagnosticRuntimeEvents.recordDpisLog(\"I\", msg);"));
-        assertTrue(dpisLog.contains("FeedbackDiagnosticRuntimeEvents.recordDpisLog("));
-        assertTrue(dpisLog.contains("FeedbackDiagnosticRuntimeTransport.record("));
-        assertTrue(hotPath.contains("FeedbackDiagnosticRuntimeEvents.recordStructured("));
-        assertTrue(hotPath.contains("FeedbackDiagnosticRuntimeTransport.record("));
+        assertTrue(dpisLog.contains("private static void write("));
+        assertTrue(dpisLog.contains("RuntimeEvents.recordDpisLog("));
+        assertTrue(dpisLog.contains("RuntimeTransport.record("));
+        assertTrue(hotPath.contains("RuntimeEvents.recordStructured("));
+        assertTrue(hotPath.contains("RuntimeTransport.record("));
         assertTrue(hotPath.contains("static void begin("));
         assertTrue(hotPath.contains("static void applied("));
         assertTrue(hotPath.contains("static void end("));
@@ -123,11 +233,14 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticFinishesOnlyAfterReturningToDpis()
             throws IOException {
         String coordinator = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticCoordinator.java");
+                "src/main/java/com/dpis/module/diagnostics/Coordinator.java");
 
         assertTrue(coordinator.contains("recordTimelineEvent(\"foreground returned to DPIS\");"));
-        assertTrue(coordinator.contains("finish();"));
+        assertTrue(coordinator.contains("onDpisResumed();"));
+        assertTrue(coordinator.contains("executor.execute(this::finishInBackground);"));
+        assertTrue(coordinator.contains("private void finishInBackground()"));
         assertTrue(coordinator.contains("recordTimelineEvent(\"foreground changed to \" + packageName);"));
+        assertFalse(coordinator.contains("private void finish()"));
         assertFalse(coordinator.contains("finish(true);"));
         assertFalse(coordinator.contains("finish(false);"));
     }
@@ -137,10 +250,10 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String launcher = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticAppLauncher.java");
+                "src/main/java/com/dpis/module/diagnostics/AppLauncher.java");
         String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
 
-        assertTrue(main.contains("new FeedbackDiagnosticAppLauncher(this)"));
+        assertTrue(main.contains("new AppLauncher(this)"));
         assertTrue(main.contains("restartTargetAppForDiagnostic(String packageName)"));
         assertTrue(main.contains(".restartForDiagnostic(packageName)"));
         assertFalse(main.contains("public boolean launchTargetApp(String packageName)"));
@@ -161,7 +274,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticForegroundObserverUsesRootTopAppSnapshot()
             throws IOException {
         String reader = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticForegroundAppReader.java");
+                "src/main/java/com/dpis/module/diagnostics/ForegroundAppReader.java");
 
         assertTrue(reader.contains("new ProcessBuilder(\"su\", \"-c\", COMMAND)"));
         assertTrue(reader.contains("dumpsys activity activities"));
@@ -172,11 +285,13 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     @Test
     public void feedbackDiagnosticResultSupportsShareAndSaveZip() throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
+        String packageActions = read(
+                "src/main/java/com/dpis/module/diagnostics/PackageActions.kt");
         String exportBuilder = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticExportBuilder.java");
+                "src/main/java/com/dpis/module/diagnostics/ExportBuilder.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String resultSheet = read(
-                "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticResultSheet.kt");
+                "src/main/java/com/dpis/module/diagnostics/ResultSheet.kt");
         String forceTextSize = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
         String paintFallback = read(
                 "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.java");
@@ -191,20 +306,20 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java");
 
         assertTrue(main.contains("REQUEST_SAVE_FEEDBACK_DIAGNOSTIC"));
-        assertTrue(main.contains("Intent.ACTION_CREATE_DOCUMENT"));
-        assertTrue(main.contains("FeedbackDiagnosticExportBuilder.MIME_TYPE"));
-        assertTrue(main.contains("getContentResolver().openOutputStream(uri)"));
-        assertFalse(main.contains("getContentResolver().openOutputStream(uri, \"wt\")"));
-        assertTrue(main.contains("feedbackDiagnosticExportBuilder.buildPackage(result)"));
-        assertTrue(main.contains("FileProvider.getUriForFile"));
-        assertTrue(main.contains("Intent.ACTION_SEND"));
-        assertTrue(main.contains("putExtra(Intent.EXTRA_STREAM, uri)"));
-        assertFalse(main.contains("putExtra(Intent.EXTRA_TEXT, result.summary)"));
+        assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"));
+        assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"));
+        assertTrue(packageActions.contains("openOutputStream(uri)"));
+        assertFalse(packageActions.contains("openOutputStream(uri, \"wt\")"));
+        assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));
+        assertTrue(packageActions.contains("FileProvider.getUriForFile"));
+        assertTrue(packageActions.contains("Intent.ACTION_SEND"));
+        assertTrue(packageActions.contains("putExtra(Intent.EXTRA_STREAM, uri)"));
+        assertFalse(packageActions.contains("putExtra(Intent.EXTRA_TEXT, result.summary)"));
         assertTrue(exportBuilder.contains("DIAGNOSTIC_ENTRY_NAME = \"diagnostic.txt\""));
         assertTrue(exportBuilder.contains("DPIS_LOG_ENTRY_NAME = \"dpis-log.txt\""));
         assertTrue(exportBuilder.contains("LSPOSED_LOG_ENTRY_NAME = \"lsposed-log.txt\""));
-        assertTrue(exportBuilder.contains("FeedbackDiagnosticLsposedTimelineParser.parse("));
-        assertTrue(exportBuilder.contains("FeedbackDiagnosticSessionWindow.around("));
+        assertTrue(exportBuilder.contains("LsposedTimelineParser.parse("));
+        assertTrue(exportBuilder.contains("SessionWindow.around("));
         assertTrue(exportBuilder.contains("filterDpisEntries("));
         assertTrue(exportBuilder.contains("windowRawLog("));
         assertTrue(exportBuilder.contains("[manifest]"));
@@ -220,8 +335,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(exportBuilder.contains("static final class DiagnosticPackage"));
         assertTrue(exportBuilder.contains("static final class EntrySummary"));
         assertTrue(exportBuilder.contains("DiagnosticPackage buildPackage("));
-        assertTrue(forceTextSize.contains("FeedbackDiagnosticRuntimeHotPathEvents.begin("));
-        assertTrue(moduleMain.contains("FeedbackDiagnosticRuntimeHotPathEvents.probe("));
+        assertTrue(forceTextSize.contains("RuntimeHotPathEvents.begin("));
+        assertTrue(moduleMain.contains("RuntimeHotPathEvents.probe("));
         assertTrue(moduleMain.contains("\"process_entry\""));
         assertTrue(forceTextSize.contains("\"text_appearance\""));
         assertTrue(forceTextSize.contains("\"textview_sp_rewrite\""));
@@ -259,7 +374,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(resultSheet.contains("result.summary"));
         assertTrue(resultSheet.contains("R.string.feedback_diagnostic_save_action"));
         assertTrue(resultSheet.contains("R.string.feedback_diagnostic_share_action"));
-        assertTrue(resultSheet.contains("FeedbackDiagnosticPackagingDialog"));
+        assertTrue(resultSheet.contains("PackagingDialog"));
     }
 
     private static String read(String relativePath) throws IOException {

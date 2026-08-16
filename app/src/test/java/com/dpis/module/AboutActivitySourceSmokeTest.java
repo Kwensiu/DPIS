@@ -107,7 +107,7 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("SegmentedListItem("));
         assertTrue(content.contains("verticalAlignment = Alignment.CenterVertically"));
-        assertTrue(content.contains("ListItemDefaults.segmentedShapes(index, total)"));
+        assertTrue(content.contains("dpisSegmentedShapes(index, total)"));
         assertTrue(content.contains("LazyColumn("));
         assertTrue(content.contains("rememberDpisConfirmAction"));
         assertTrue(content.contains("showDebugUpdateEntry"));

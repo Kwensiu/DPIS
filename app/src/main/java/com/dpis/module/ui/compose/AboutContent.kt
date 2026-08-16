@@ -153,7 +153,7 @@ private fun AboutEntry(
         // The leading icon follows the full row, not the first text baseline. A wrapped
         // supporting line may increase row height without pulling the icon upward.
         verticalAlignment = Alignment.CenterVertically,
-        shapes = ListItemDefaults.segmentedShapes(index, total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,

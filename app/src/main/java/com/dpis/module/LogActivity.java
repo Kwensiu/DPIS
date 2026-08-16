@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import com.dpis.module.diagnostics.DpisLogEntry;
 import com.dpis.module.diagnostics.DpisAppLogStore;
@@ -110,7 +110,7 @@ public final class LogActivity extends LocalizedActivity {
                 this::refreshLogs,
                 this::toggleMessageExpansion,
                 this::copyEntryByKey);
-        waitingForDiagnosticLogEnable = !DiagnosticLogGate.ensureEnabled(
+        waitingForDiagnosticLogEnable = !LogGate.ensureEnabled(
                 this,
                 () -> {
                     waitingForDiagnosticLogEnable = false;
@@ -202,7 +202,7 @@ public final class LogActivity extends LocalizedActivity {
                     ? readLsposedLogsWhenRootAvailable(refreshRootAccess)
                     : null;
             List<DpisLogEntry> parsedLspEntries = includeLsposedCurrent
-                    ? DpisLogParser.parseLsposedDpis(lspResult.output)
+                    ? DpisLogParser.parseLsposedDpis(lspResult.output())
                     : new ArrayList<>();
             mainHandler.post(() -> {
                 loadingLogs = false;
@@ -332,10 +332,10 @@ public final class LogActivity extends LocalizedActivity {
             );
         }
         List<DpisLogEntry> lsposedLogEntries;
-        if (result.code != 0 || result.output.isBlank()) {
+        if (result.code() != 0 || result.output().isBlank()) {
             lsposedLogEntries = new ArrayList<>();
         } else {
-            lsposedLogEntries = DpisLogParser.parseLsposedDpis(result.output);
+            lsposedLogEntries = DpisLogParser.parseLsposedDpis(result.output());
         }
         return new ExportPackage(
                 formatExportPayload(Page.DPIS, dpisLogEntries, exportedAt),
@@ -501,7 +501,7 @@ public final class LogActivity extends LocalizedActivity {
         if (entries.isEmpty()) {
             LogReadResult result = selectedReadResult();
             renderStateEntry(
-                    result != null ? result.sourceLabel : selectedPageTitle(),
+                    result != null ? result.sourceLabel() : selectedPageTitle(),
                     result != null
                             ? result.messageForEmptyState(this)
                             : getString(R.string.log_page_empty_message),
@@ -629,14 +629,14 @@ public final class LogActivity extends LocalizedActivity {
         if (result == null) {
             return null;
         }
-        String retainedOutput = result.code == 0 || !result.error.isBlank()
+        String retainedOutput = result.code() == 0 || !result.error().isBlank()
                 ? ""
-                : result.output;
+                : result.output();
         return new LogReadResult(
-                result.code,
-                result.sourceLabel,
+                result.code(),
+                result.sourceLabel(),
                 retainedOutput,
-                result.error
+                result.error()
         );
     }
 

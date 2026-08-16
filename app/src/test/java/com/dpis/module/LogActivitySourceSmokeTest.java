@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -65,7 +65,7 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("readLsposedLogsWhenRootAvailable(boolean refreshRootAccess)"));
         assertTrue(source.contains("rootAccess.status != RootAccessProbe.Status.AVAILABLE"));
         assertTrue(source.contains("LsposedLogReader.readLsposedDpisCurrent()"));
-        assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(source.contains("LogGate.ensureEnabled("));
         assertTrue(source.contains("this::finish"));
         assertTrue(source.contains("waitingForDiagnosticLogEnable"));
         assertTrue(source.contains("|| waitingForDiagnosticLogEnable"));

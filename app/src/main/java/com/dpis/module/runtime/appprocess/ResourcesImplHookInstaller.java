@@ -2,7 +2,7 @@ package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.DpisConfigStore;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
@@ -214,7 +214,7 @@ public final class ResourcesImplHookInstaller {
                                 + ", fontScale=" + fontScale.original + " -> " + config.fontScale
                                 + ", scaledDensity=" + originalScaledDensity + " -> "
                                 + (metrics != null ? metrics.scaledDensity : -1f))) {
-                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    RuntimeHotPathEvents.applied(
                             packageName,
                             "viewport",
                             "resources_impl_observe",
@@ -300,7 +300,7 @@ public final class ResourcesImplHookInstaller {
                                 + ", metricsDensityDpi=" + metrics.densityDpi
                                 + ", metricsWidthPx=" + metrics.widthPixels
                                 + ", metricsHeightPx=" + metrics.heightPixels)) {
-                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    RuntimeHotPathEvents.applied(
                             packageName,
                             "viewport",
                             "resources_impl_window_like_borrow",
@@ -341,7 +341,7 @@ public final class ResourcesImplHookInstaller {
                                 + (metrics != null ? metrics.widthPixels : -1)
                                 + ", metricsHeightPx="
                                 + (metrics != null ? metrics.heightPixels : -1))) {
-                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    RuntimeHotPathEvents.applied(
                             packageName,
                             "viewport",
                             "resources_impl_stable_target",
@@ -393,7 +393,7 @@ public final class ResourcesImplHookInstaller {
                         + ", metricsDensityDpi=" + (metrics != null ? metrics.densityDpi : -1)
                         + ", metricsWidthPx=" + (metrics != null ? metrics.widthPixels : -1)
                         + ", metricsHeightPx=" + (metrics != null ? metrics.heightPixels : -1))) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     packageName,
                     "viewport",
                     "resources_impl_override",

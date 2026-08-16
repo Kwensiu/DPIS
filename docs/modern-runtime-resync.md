@@ -163,6 +163,52 @@ look for `DPIS_FONT ForceTextSize hook ready` plus first-hit
 `... override applied` bridge lines to distinguish install success from actual
 rewrite callbacks.
 
+The performance-evidence refactor is active on the diagnostic-performance
+branch. Hot-path route counters and latency samples are owned by the injected
+target process, not the DPIS UI process. While the diagnostic marker is active,
+the target process publishes bounded aggregate snapshots through the existing
+runtime transport; the exporter groups them by process and pid before falling
+back to any UI-process-only snapshot. This is the first cross-process evidence
+boundary. Perfetto lifecycle capture and transport completeness reporting remain
+the next implementation stages.
+
+As of 2026-08-13, diagnostic ZIPs also include `timeline.tsv` and
+`module-effects.tsv`. `module-effects.tsv` emits a `source=diagnostic-plan`
+zero row when a selected route, such as `viewport_auto`, has no observed route
+effect in the session window. This is an explicit evidence gap, not proof that
+the route executed or mutated runtime state.
+
+As of 2026-08-14, Modern `system_server` viewport mutations and selected skip
+outcomes publish target-package-scoped `runtime-transport` evidence. Emission
+shares the existing `SystemServerHookLogGate`, so diagnostic collection adds no
+second high-frequency callback stream. A transport event with
+`route=system_server` and `stage=mutation_applied` proves the gated mutation
+log was emitted; `stage=skipped` records bounded marker, relayout, and
+display-manager skip reasons. Missing transport remains an evidence gap rather
+than proof that a system-side mutation did not happen.
+
+As of 2026-08-14, high-frequency runtime evidence no longer performs file
+append or LSPosed bridge logging on the hook callback thread. Runtime transport
+uses a bounded process-local queue and short batched writes; the DPIS-side stop
+path flushes its own pending writes before reading the event file. Hotpath
+bridge lines use a bounded asynchronous dispatcher, while low-frequency session
+and aggregate lines remain direct. A full queue is a transport completeness
+gap and must not be interpreted as a missing callback or mutation.
+
+As of 2026-08-15, compat field-rewrite setters use a shared synchronous
+`FontMutationScheduler` decision boundary. Paint/TextPaint fallback and
+TextView `setTextSize` retain an already-target-sized object when the same
+recorded base size is submitted again, avoiding a redundant native setter and
+the TextView old-size-then-target double write. External drift, factor changes,
+and new base sizes still enter normal arbitration. This is a hot-path mutation
+deduplication rule, not asynchronous font application; the setter remains
+synchronous so layout observes the target immediately.
+
+The `kept` outcome is now published as a separate target-process performance
+counter and timeline stage. It must not be folded into `skipped`: `kept` means
+DPIS intentionally preserved the current target and did not call the native
+setter, while `skipped` means the route was observed and allowed to continue.
+
 ## Full Tree
 
 ```text

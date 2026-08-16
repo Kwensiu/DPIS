@@ -71,7 +71,7 @@ private fun LicenseEntry(
     SegmentedListItem(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
-        shapes = ListItemDefaults.segmentedShapes(index, total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface

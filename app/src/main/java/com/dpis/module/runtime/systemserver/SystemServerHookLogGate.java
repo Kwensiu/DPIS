@@ -17,17 +17,18 @@ public final class SystemServerHookLogGate {
     private SystemServerHookLogGate() {
     }
 
-    static void logIfChanged(String key, String message, long minIntervalMs) {
+    static boolean logIfChanged(String key, String message, long minIntervalMs) {
         long nowMs = System.currentTimeMillis();
         String previous = LAST_PROBE_LOGS.get(key);
         Long lastLogMs = LAST_PROBE_LOG_TIMESTAMPS.get(key);
         if (!shouldEmitLog(previous, message, nowMs, lastLogMs, minIntervalMs)) {
-            return;
+            return false;
         }
         LAST_PROBE_LOGS.put(key, message);
         LAST_PROBE_LOG_TIMESTAMPS.put(key, nowMs);
         trimCachesIfNeeded();
         DpisLog.i(message);
+        return true;
     }
 
     static long resolveLogMinIntervalMs(String entryName) {

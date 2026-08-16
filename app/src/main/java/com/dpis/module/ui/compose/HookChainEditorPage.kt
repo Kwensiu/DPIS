@@ -507,20 +507,7 @@ private fun HookDomainOptionRow(
     total: Int,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    val defaultShapes = ListItemDefaults.segmentedShapes(index, total)
-    val singleItemShape = HookChainPageTokens.SingleItemShape
-    val shapes = if (total == 1) {
-        defaultShapes.copy(
-            shape = singleItemShape,
-            selectedShape = singleItemShape,
-            pressedShape = singleItemShape,
-            focusedShape = singleItemShape,
-            hoveredShape = singleItemShape,
-            draggedShape = singleItemShape
-        )
-    } else {
-        defaultShapes
-    }
+    val shapes = dpisSegmentedShapes(index, total)
     val disabledScrim = MaterialTheme.colorScheme.surface.copy(
         alpha = HookChainPageTokens.DisabledScrimAlpha
     )
@@ -580,7 +567,6 @@ private object HookChainPageTokens {
     val InterfaceRowShape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     val InterfaceRowMinHeight = 64.dp
     val InterfaceRowHorizontalPadding = 12.dp
-    val SingleItemShape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
     const val DisabledScrimAlpha = 0.42f
     val SubtitleTopGap = 2.dp
     val NoticePadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)

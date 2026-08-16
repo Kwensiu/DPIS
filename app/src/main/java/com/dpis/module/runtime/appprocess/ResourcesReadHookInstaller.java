@@ -2,9 +2,9 @@ package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.DpisConfigStore;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
 import com.dpis.module.*;
 import com.dpis.module.runtime.font.FontScaleOverride;
@@ -234,7 +234,7 @@ public final class ResourcesReadHookInstaller {
                     });
             hookInstalled = true;
             DpisLog.i("Resources read hook ready");
-            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+            RuntimeEvents.recordHotReload(
                     packageName,
                     "resources",
                     "installed",
@@ -498,7 +498,7 @@ public final class ResourcesReadHookInstaller {
                                 + " -> " + config.densityDpi
                                 + ", fontScale " + fontScale.original
                                 + " -> " + config.fontScale)) {
-                    FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                    RuntimeHotPathEvents.applied(
                             packageName,
                             "viewport",
                             "resources_read_configuration_stable_target",
@@ -532,7 +532,7 @@ public final class ResourcesReadHookInstaller {
                         + config.smallestScreenWidthDp
                         + ", densityDpi " + originalDensityDpi + " -> " + config.densityDpi
                         + ", fontScale " + fontScale.original + " -> " + config.fontScale)) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     packageName,
                     "viewport",
                     "resources_read_configuration_override",
@@ -879,7 +879,7 @@ public final class ResourcesReadHookInstaller {
                         + metrics.scaledDensity
                         + ", widthPx " + originalWidthPixels + " -> " + metrics.widthPixels
                         + ", heightPx " + originalHeightPixels + " -> " + metrics.heightPixels)) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     packageName,
                     "viewport",
                     "resources_read_display_metrics_override",
@@ -891,7 +891,7 @@ public final class ResourcesReadHookInstaller {
         RuntimeHotPathEvidenceSampler.Sample sample =
                 HOTPATH_SAMPLER.sample("skip|metrics|" + packageName + "|" + reason, detail);
         if (sample.emit) {
-            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+            RuntimeHotPathEvents.skipped(
                     packageName,
                     "viewport",
                     "resources_read_display_metrics_override",

@@ -21,6 +21,8 @@ import com.dpis.module.runtime.appprocess.WindowFrameOverride;
 
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
 
+import com.dpis.module.diagnostics.RuntimeBridgeEvents;
+
 import com.dpis.module.viewport.DensityOverride;
 
 import com.dpis.module.viewport.VirtualDisplayOverride;
@@ -91,6 +93,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         DpisLog.setLoggingEnabled(store.isGlobalLogEnabled());
         compatDebugLog("legacy handleLoadPackage: package=" + packageName
                 + ", process=" + lpparam.processName);
+        emitDiagnosticSessionDiscovery(packageName, lpparam.processName);
         if (LegacyAppSpecificRouteInstaller.handleLoadPackage(lpparam)) {
             return;
         }
@@ -679,6 +682,11 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
             Log.e(DpisLog.TAG, message);
         } catch (Throwable ignored) {
         }
+    }
+
+    private static void emitDiagnosticSessionDiscovery(String packageName, String processName) {
+        RuntimeBridgeEvents.setBridgeSink(XposedBridge::log);
+        RuntimeBridgeEvents.emitSessionDiscovery(packageName, processName);
     }
 
 }

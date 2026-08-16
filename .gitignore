@@ -35,6 +35,8 @@ Thumbs.db
 /xhh-*.txt
 /dpis-check.txt
 /trace_processor
+__pycache__/
+*.pyc
 
 /archive/
 

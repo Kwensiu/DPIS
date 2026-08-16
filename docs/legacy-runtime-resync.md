@@ -77,6 +77,34 @@ TextView span rewrite, Paint/TextPaint fallback, Android WebView textZoom, and
 X5 WebView textZoom. The events are diagnostic-only and gated by the active
 feedback-diagnostic marker.
 
+As of 2026-08-13, diagnostic ZIPs include `timeline.tsv` and
+`module-effects.tsv`. `module-effects.tsv` emits a `source=diagnostic-plan`
+zero row for any selected route that has no observed effect in the session
+window. Treat this as a route-evidence gap, not as evidence that the Legacy route
+executed or mutated the target process.
+
+As of 2026-08-14, the shared Modern `system_server` installer publishes
+target-package-scoped, rate-limited `runtime-transport` events for its
+viewport mutation and selected skip paths. Legacy does not install that shared
+viewport installer, so its own launch-only font route is not represented by
+these events. Transport absence remains an evidence gap, not proof that a
+system-side route did not execute.
+
+As of 2026-08-14, Legacy and shared app-process hotpath diagnostics enqueue
+transport and LSPosed bridge records away from the hook callback thread. The
+transport batches short writes and the DPIS stop path flushes its local queue;
+the bridge queue is bounded so diagnostic capture cannot grow without limit.
+Queue overflow is an evidence-completeness limitation, not evidence that the
+Legacy route did not execute.
+
+As of 2026-08-15, shared compat field-rewrite setters use a synchronous
+`FontMutationScheduler` decision boundary. Paint/TextPaint fallback keeps an
+already-target-sized object when the same recorded base size repeats, avoiding
+redundant native setters. Legacy keeps required synchronous mutations and still
+re-arbitrates after external drift, factor changes, or a new base size.
+The diagnostic aggregate exports this outcome as `kept`, separately from
+ordinary skipped callbacks.
+
 The shared app-process font route implementation now lives under
 `runtime.font`. Legacy flavor entry points still call the same install/reset
 protocols; the move only classifies ActivityThread, Resources font scheduling,

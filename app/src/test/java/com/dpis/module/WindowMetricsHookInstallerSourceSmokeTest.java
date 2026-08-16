@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.runtime.appprocess.WindowMetricsHookInstaller;
 
@@ -24,9 +24,9 @@ public final class WindowMetricsHookInstallerSourceSmokeTest {
         assertTrue(source.contains("RuntimeHotPathEvidenceSampler"));
         assertTrue(source.contains("RuntimeDiagnosticLogFingerprint.field()"));
         assertTrue(source.contains("resetHotPathSamplerForTest"));
-        assertTrue(source.contains("FeedbackDiagnosticRuntimeHotPathEvents.probe"));
-        assertTrue(source.contains("FeedbackDiagnosticRuntimeHotPathEvents.skipped"));
-        assertTrue(source.contains("FeedbackDiagnosticRuntimeHotPathEvents.applied"));
+        assertTrue(source.contains("RuntimeHotPathEvents.probe"));
+        assertTrue(source.contains("RuntimeHotPathEvents.skipped"));
+        assertTrue(source.contains("RuntimeHotPathEvents.applied"));
         assertTrue(source.contains("reason=window_frame_override_disabled"));
     }
 }

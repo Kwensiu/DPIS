@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -66,7 +66,7 @@ public class SystemFontScaleToolLayoutSmokeTest {
         assertTrue(source.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
         assertTrue(mainActivity.contains(
                 "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
-        assertTrue(mainActivity.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(mainActivity.contains("LogGate.ensureEnabled("));
         assertTrue(mainActivity.contains("new Intent(MainActivity.this, LogActivity.class)"));
         assertTrue(settingsController.contains("View toolbar = findViewById(R.id.settings_toolbar);"));
         assertTrue(settingsController.contains("baseTopPadding + safeDrawing.top"));

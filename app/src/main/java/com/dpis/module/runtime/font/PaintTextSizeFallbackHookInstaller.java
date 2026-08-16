@@ -4,7 +4,7 @@ import com.dpis.module.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 
 
@@ -76,7 +76,7 @@ public final class PaintTextSizeFallbackHookInstaller {
                         float incoming = (Float) chain.getArg(0);
                         PaintProvenanceTracker.invalidateIfDrifted(paint, paint.getTextSize());
                         if (PaintProvenanceTracker.isKnownApplied(paint, incoming, factor)) {
-                            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                            RuntimeHotPathEvents.skipped(
                                     packageName,
                                     "paint_fallback",
                                     "reason=known_applied, paint=" + paint.getClass().getName()
@@ -85,25 +85,37 @@ public final class PaintTextSizeFallbackHookInstaller {
                             );
                             return chain.proceed();
                         }
-                        float adjusted = PaintProvenanceTracker.resolveScaled(paint, incoming, factor);
+                        PaintProvenanceTracker.Resolution resolution =
+                                PaintProvenanceTracker.resolveFallback(
+                                        paint, incoming, paint.getTextSize(), factor, false);
+                        if (resolution.action() == PaintProvenanceTracker.Action.KEEP) {
+                            RuntimeHotPathEvents.kept(
+                                    packageName,
+                                    "paint_fallback",
+                                    "reason=current_target, paint=" + paint.getClass().getName()
+                                            + ", factor=" + factor
+                                            + ", percent=" + targetPercent);
+                            return null;
+                        }
+                        float adjusted = resolution.adjustedPx();
                         String detail = "paint=" + paint.getClass().getName()
                                 + ", in=" + incoming
                                 + ", out=" + adjusted
                                 + ", factor=" + factor
                                 + ", percent=" + targetPercent;
-                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                        RuntimeHotPathEvents.begin(
                                 packageName,
                                 "paint_fallback",
                                 detail
                         );
                         Object result = chain.proceed();
                         if (Math.abs(adjusted - incoming) < SIZE_EPSILON_PX) {
-                            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+                            RuntimeHotPathEvents.skipped(
                                     packageName,
                                     "paint_fallback",
                                     "reason=epsilon, " + detail
                             );
-                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                            RuntimeHotPathEvents.end(
                                     packageName,
                                     "paint_fallback",
                                     detail
@@ -117,12 +129,12 @@ public final class PaintTextSizeFallbackHookInstaller {
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
                         }
-                        FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                        RuntimeHotPathEvents.applied(
                                 packageName,
                                 "paint_fallback",
                                 detail
                         );
-                        FeedbackDiagnosticRuntimeHotPathEvents.end(
+                        RuntimeHotPathEvents.end(
                                 packageName,
                                 "paint_fallback",
                                 detail

@@ -196,6 +196,20 @@ The log page and feedback diagnostic flow are user-facing support tools, not
 temporary debug-only surfaces. They exist to collect enough DPIS-specific
 evidence for support without asking users to export unrelated LSPosed logs.
 
+Diagnostic performance evidence is owned by the process where the runtime route
+executes. The DPIS UI process owns the diagnostic session boundary and export,
+but must not be treated as proof of target-process hook execution. A diagnostic
+session starts runtime evidence and Perfetto together and ends both when the
+user returns to DPIS; no second continuation or stop action is required.
+
+Runtime evidence distinguishes hook installation, callback entry, route
+decision, and actual mutation. Missing cross-process snapshots are transport
+incompleteness until proven otherwise, not evidence that the route did not run.
+Performance correlation may classify evidence as observed, correlated, likely
+contributor, or not supported; it must not infer causation from a mutation log
+alone. Background collection accuracy remains an explicit open investigation
+question.
+
 App-specific runtime routes are first-class diagnostic evidence for their target
 apps. For example, WeChat DPI belongs to `route=wechat_dpi`; diagnostics should
 expose hook install evidence, callback evidence, mutation evidence, and skipped

@@ -2,11 +2,11 @@ package com.dpis.module;
 
 import com.dpis.module.fonts.FontApplyMode;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticCoordinator;
+import com.dpis.module.diagnostics.Coordinator;
 
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
 
@@ -44,8 +44,8 @@ public class VirtualDisplayOverrideTest {
 
     @After
     public void tearDown() {
-        FeedbackDiagnosticRuntimeEvents.cancel();
-        FeedbackDiagnosticRuntimeHotPathEvents.resetForTest();
+        RuntimeEvents.cancel();
+        RuntimeHotPathEvents.resetForTest();
         DisplayHookInstaller.resetHotPathSamplerForTest();
         VirtualDisplayState.set(null);
         setTargetPackageName(null);
@@ -84,7 +84,7 @@ public class VirtualDisplayOverrideTest {
     @Test
     public void displayMetricsOverrideRecordsViewportHotpathEvidence() {
         publishTargetRecord();
-        FeedbackDiagnosticRuntimeEvents.start("com.max.xiaoheihe", request());
+        RuntimeEvents.start("com.max.xiaoheihe", request());
         DisplayHookInstaller.resetHotPathSamplerForTest();
         DisplayMetrics metrics = new DisplayMetrics();
         metrics.widthPixels = 1080;
@@ -93,7 +93,7 @@ public class VirtualDisplayOverrideTest {
 
         DisplayHookInstaller.applyDisplayMetrics(metrics, "diagnostic-test");
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event ->
                 event.contains("route=viewport")
                         && event.contains("stage=applied")
@@ -102,7 +102,7 @@ public class VirtualDisplayOverrideTest {
 
     @Test
     public void displayMetricsProbeEvidenceIncludesCountedSamples() {
-        FeedbackDiagnosticRuntimeEvents.start("com.max.xiaoheihe", request());
+        RuntimeEvents.start("com.max.xiaoheihe", request());
         DisplayHookInstaller.resetHotPathSamplerForTest();
         DisplayMetrics metrics = new DisplayMetrics();
         metrics.widthPixels = 1080;
@@ -113,7 +113,7 @@ public class VirtualDisplayOverrideTest {
             DisplayHookInstaller.applyDisplayMetrics(metrics, "diagnostic-count-test");
         }
 
-        List<String> events = FeedbackDiagnosticRuntimeEvents.stopSnapshot();
+        List<String> events = RuntimeEvents.stopSnapshot();
         assertTrue(events.stream().anyMatch(event ->
                 event.contains("route=viewport")
                         && event.contains("stage=probe")
@@ -239,8 +239,8 @@ public class VirtualDisplayOverrideTest {
                 ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
     }
 
-    private static FeedbackDiagnosticCoordinator.Request request() {
-        return new FeedbackDiagnosticCoordinator.Request(
+    private static Coordinator.Request request() {
+        return new Coordinator.Request(
                 "com.max.xiaoheihe",
                 "Xiaoheihe",
                 "1.2.3",

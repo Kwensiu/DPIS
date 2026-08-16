@@ -2,7 +2,7 @@ package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.DpisConfigStore;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.*;
 import com.dpis.module.viewport.DensityOverride;
@@ -214,7 +214,7 @@ public final class DisplayHookInstaller {
                 + ", heightPx=" + metrics.heightPixels
                 + ", densityDpi=" + metrics.densityDpi;
         if (logIfChanged(effectivePackageName + ":metrics:" + sourceTag, message)) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     effectivePackageName,
                     "viewport",
                     routeName,
@@ -274,7 +274,7 @@ public final class DisplayHookInstaller {
         String message = "Display override(" + sourceTag + "): package="
                 + safeValue(effectivePackageName) + ", size=" + point.x + "x" + point.y;
         if (logIfChanged(effectivePackageName + ":point:" + sourceTag, message)) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     effectivePackageName,
                     "viewport",
                     routeName,
@@ -338,7 +338,7 @@ public final class DisplayHookInstaller {
                 + safeValue(effectivePackageName) + ", logical=" + override.widthPx + "x"
                 + override.heightPx + ", densityDpi=" + override.densityDpi;
         if (logIfChanged(effectivePackageName + ":displayInfo:" + sourceTag, message)) {
-            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+            RuntimeHotPathEvents.applied(
                     effectivePackageName,
                     "viewport",
                     routeName,
@@ -423,7 +423,7 @@ public final class DisplayHookInstaller {
                 "DPIS_VIEWPORT Display callback: package=" + safeValue(targetPackageName)
                         + ", route=" + routeName
                         + ", " + sampledDetail);
-            FeedbackDiagnosticRuntimeHotPathEvents.probe(
+            RuntimeHotPathEvents.probe(
                     targetPackageName,
                     "viewport",
                     routeName,
@@ -440,7 +440,7 @@ public final class DisplayHookInstaller {
                 "DPIS_VIEWPORT Display skip: package=" + safeValue(targetPackageName)
                         + ", route=" + routeName
                         + ", " + sampledDetail);
-            FeedbackDiagnosticRuntimeHotPathEvents.skipped(
+            RuntimeHotPathEvents.skipped(
                     targetPackageName,
                     "viewport",
                     routeName,

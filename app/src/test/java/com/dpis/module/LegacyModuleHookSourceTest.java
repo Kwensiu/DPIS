@@ -127,7 +127,7 @@ public class LegacyModuleHookSourceTest {
         assertTrue(typefaceSource.contains("PublishedFontFileResolver.resolve(typefaceId)"));
         assertTrue(typefaceSource.contains("FontProviderTypefaceLoader.load(typefaceId, ttcIndex)"));
         assertTrue(typefaceSource.contains("FontTypefaceLoader.load(file, ttcIndex)"));
-        assertTrue(typefaceSource.contains("FeedbackDiagnosticRuntimeEvents.recordTypeface("));
+        assertTrue(typefaceSource.contains("RuntimeEvents.recordTypeface("));
         assertTrue(typefaceSource.contains("\"source_provider_loaded\""));
         assertTrue(typefaceSource.contains("\"source_fallback_loaded\""));
         assertTrue(typefaceSource.contains("\"hook_installed\""));

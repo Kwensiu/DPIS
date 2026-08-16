@@ -14,7 +14,7 @@ import com.dpis.module.fonts.PublishedFontFileResolver;
 
 import com.dpis.module.fonts.SystemFontRegistry;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -128,7 +128,7 @@ final class LegacyTypefaceOverrideHookInstaller {
             hookInstalledPid = Process.myPid();
             DpisLog.i(LOG_PREFIX + "hook ready for " + packageName);
             XposedBridge.log("DPIS " + LOG_PREFIX + "hook ready for " + packageName);
-            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+            RuntimeEvents.recordTypeface(
                     packageName, "hook_installed", "typeface hook ready: id=" + targetTypefaceId);
         }
     }
@@ -269,7 +269,7 @@ final class LegacyTypefaceOverrideHookInstaller {
             String message
     ) {
         if (logIfChanged(key, message)) {
-            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+            RuntimeEvents.recordTypeface(
                     packageName, stage, "typefaceId=" + typefaceId);
         }
     }
@@ -349,7 +349,7 @@ final class LegacyTypefaceOverrideHookInstaller {
         if (logIfChanged(packageName + ":replacement-hit:" + source,
                 LOG_PREFIX + "replacement hit: package=" + packageName
                         + ", source=" + source)) {
-            FeedbackDiagnosticRuntimeEvents.recordTypeface(
+            RuntimeEvents.recordTypeface(
                     packageName, "replacement_hit", "source=" + source);
         }
     }

@@ -19,17 +19,29 @@ public final class DpisLogTest {
     }
 
     @Test
-    public void recordsInfoAndErrorMessagesToAppSink() {
+    public void recordsAllNormalSeverityMessagesToAppSink() {
         DpisLog.setLoggingEnabled(true);
         DpisLog.setAppLogSink((level, message) -> recorded.add(level + ":" + message));
 
+        DpisLog.w("warning app event");
         DpisLog.i("visible app event");
         DpisLog.e("failed app event", new IllegalStateException("bad state"));
 
-        assertEquals(2, recorded.size());
-        assertEquals("I:visible app event", recorded.get(0));
-        assertTrue(recorded.get(1).startsWith("E:failed app event"));
-        assertTrue(recorded.get(1).contains("IllegalStateException: bad state"));
+        assertEquals(3, recorded.size());
+        assertEquals("W:warning app event", recorded.get(0));
+        assertEquals("I:visible app event", recorded.get(1));
+        assertTrue(recorded.get(2).startsWith("E:failed app event"));
+        assertTrue(recorded.get(2).contains("IllegalStateException: bad state"));
+    }
+
+    @Test
+    public void recordsDebugMessagesInDebugBuilds() {
+        DpisLog.setAppLogSink((level, message) -> recorded.add(level + ":" + message));
+
+        DpisLog.d("diagnostic detail");
+
+        assertEquals(1, recorded.size());
+        assertEquals("D:diagnostic detail", recorded.get(0));
     }
 
 }

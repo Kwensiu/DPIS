@@ -2,9 +2,9 @@ package com.dpis.module.runtime.font;
 
 import com.dpis.module.DpisConfigStore;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeEvents;
 
 import com.dpis.module.BuildConfig;
 
@@ -86,7 +86,7 @@ public final class WebViewFontHookInstaller {
                         }
                         String detail = "textZoom=" + targetZoom
                                 + ", settings=" + settings.getClass().getName();
-                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                        RuntimeHotPathEvents.begin(
                                 packageName,
                                 "webview_text_zoom",
                                 detail
@@ -94,14 +94,14 @@ public final class WebViewFontHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             settings.setTextZoom(targetZoom);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            RuntimeHotPathEvents.applied(
                                     packageName,
                                     "webview_text_zoom",
                                     detail
                             );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
-                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                            RuntimeHotPathEvents.end(
                                     packageName,
                                     "webview_text_zoom",
                                     detail
@@ -125,7 +125,7 @@ public final class WebViewFontHookInstaller {
             bridgeLog(xposed, "DPIS_FONT WebView font hook ready: package=" + packageName
                     + ", hookIds=" + HOOK_ID_WEBVIEW_GET_SETTINGS + ","
                     + HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM);
-            FeedbackDiagnosticRuntimeEvents.recordHotReload(
+            RuntimeEvents.recordHotReload(
                     packageName,
                     "font",
                     "installed",
@@ -164,7 +164,7 @@ public final class WebViewFontHookInstaller {
                         String detail = "in=" + incomingZoom
                                 + ", out=" + targetZoom
                                 + ", settings=" + settings.getClass().getName();
-                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                        RuntimeHotPathEvents.begin(
                                 packageName,
                                 "webview_text_zoom",
                                 detail
@@ -172,14 +172,14 @@ public final class WebViewFontHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             settings.setTextZoom(targetZoom);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            RuntimeHotPathEvents.applied(
                                     packageName,
                                     "webview_text_zoom",
                                     detail
                             );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
-                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                            RuntimeHotPathEvents.end(
                                     packageName,
                                     "webview_text_zoom",
                                     detail
@@ -231,7 +231,7 @@ public final class WebViewFontHookInstaller {
                         Method setTextZoom = x5WebSettingsClass.getMethod("setTextZoom", int.class);
                         String detail = "textZoom=" + targetZoom
                                 + ", settings=" + result.getClass().getName();
-                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                        RuntimeHotPathEvents.begin(
                                 packageName,
                                 "x5_webview_text_zoom",
                                 detail
@@ -239,14 +239,14 @@ public final class WebViewFontHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             setTextZoom.invoke(result, targetZoom);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            RuntimeHotPathEvents.applied(
                                     packageName,
                                     "x5_webview_text_zoom",
                                     detail
                             );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
-                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                            RuntimeHotPathEvents.end(
                                     packageName,
                                     "x5_webview_text_zoom",
                                     detail
@@ -282,7 +282,7 @@ public final class WebViewFontHookInstaller {
                         String detail = "in=" + incomingZoom
                                 + ", out=" + targetZoom
                                 + ", settings=" + thisObject.getClass().getName();
-                        FeedbackDiagnosticRuntimeHotPathEvents.begin(
+                        RuntimeHotPathEvents.begin(
                                 packageName,
                                 "x5_webview_text_zoom",
                                 detail
@@ -290,14 +290,14 @@ public final class WebViewFontHookInstaller {
                         INTERNAL_UPDATE.set(Boolean.TRUE);
                         try {
                             setTextZoom.invoke(thisObject, targetZoom);
-                            FeedbackDiagnosticRuntimeHotPathEvents.applied(
+                            RuntimeHotPathEvents.applied(
                                     packageName,
                                     "x5_webview_text_zoom",
                                     detail
                             );
                         } finally {
                             INTERNAL_UPDATE.set(Boolean.FALSE);
-                            FeedbackDiagnosticRuntimeHotPathEvents.end(
+                            RuntimeHotPathEvents.end(
                                     packageName,
                                     "x5_webview_text_zoom",
                                     detail

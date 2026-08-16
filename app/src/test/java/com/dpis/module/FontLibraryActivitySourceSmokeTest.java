@@ -114,7 +114,7 @@ public final class FontLibraryActivitySourceSmokeTest {
         assertTrue(content.contains("FontReferenceSection("));
         assertTrue(content.contains("font_library_active_apps_title"));
         assertTrue(content.contains("font_library_remove_app_action"));
-        assertTrue(content.contains("ListItemDefaults.segmentedShapes"));
+        assertTrue(content.contains("dpisSegmentedShapes"));
         assertTrue(content.contains("FontFamily(typeface)"));
         assertFalse(detail.contains("createCompatibilitySection"));
         assertFalse(detail.contains("createManagementSection"));

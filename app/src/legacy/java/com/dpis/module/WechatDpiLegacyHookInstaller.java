@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.viewport.DpiConfig;
 
@@ -53,7 +53,7 @@ final class WechatDpiLegacyHookInstaller {
             DpisLog.i("legacy WeChat DPI hook skipped: locator="
                     + result.source.logName + ", versionCode=" + versionCode
                     + ", reason=" + result.failure);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",
@@ -79,7 +79,7 @@ final class WechatDpiLegacyHookInstaller {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
                         if (WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
-                            FeedbackDiagnosticRuntimeHotPathEvents.event(
+                            RuntimeHotPathEvents.event(
                                     WechatDpiConfig.PACKAGE_NAME,
                                     "wechat_dpi",
                                     "displaymetrics",
@@ -101,7 +101,7 @@ final class WechatDpiLegacyHookInstaller {
                     + methodNames(metricsMethods)
                     + ", installed=" + installed + ", locator="
                     + locatorResult.source.logName + ", versionCode=" + versionCode);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",
@@ -114,7 +114,7 @@ final class WechatDpiLegacyHookInstaller {
                     + methodNames(metricsMethods)
                     + ", versionCode=" + versionCode + ", "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",
@@ -157,7 +157,7 @@ final class WechatDpiLegacyHookInstaller {
                     + ", density " + oldDensity + " -> " + metrics.density
                     + ", scaledDensity " + oldScaledDensity + " -> "
                     + metrics.scaledDensity);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
                     "wechat_dpi",
                     "displaymetrics",

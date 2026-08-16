@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.FeedbackDiagnosticRuntimeHotPathEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.viewport.DpiConfig;
 
@@ -19,7 +19,7 @@ final class LegacyAppSpecificRouteInstaller {
         if (WechatDpiConfig.appliesTo(lpparam.processName)) {
             DpisLog.i("legacy WeChat DPI route enter: package="
                     + lpparam.packageName + ", process=" + lpparam.processName);
-            FeedbackDiagnosticRuntimeHotPathEvents.event(
+            RuntimeHotPathEvents.event(
                     lpparam.packageName,
                     "wechat_dpi",
                     "legacy_load_package",
@@ -29,7 +29,7 @@ final class LegacyAppSpecificRouteInstaller {
                 WechatDpiLegacyHookInstaller.install(lpparam);
                 DpisLog.i("legacy WeChat DPI route install attempted: package="
                         + lpparam.packageName + ", process=" + lpparam.processName);
-                FeedbackDiagnosticRuntimeHotPathEvents.event(
+                RuntimeHotPathEvents.event(
                         lpparam.packageName,
                         "wechat_dpi",
                         "legacy_load_package",
@@ -40,7 +40,7 @@ final class LegacyAppSpecificRouteInstaller {
                         + lpparam.packageName + ", process=" + lpparam.processName + ", "
                         + throwable.getClass().getName() + ": " + throwable.getMessage(),
                         throwable);
-                FeedbackDiagnosticRuntimeHotPathEvents.event(
+                RuntimeHotPathEvents.event(
                         lpparam.packageName,
                         "wechat_dpi",
                         "legacy_load_package",

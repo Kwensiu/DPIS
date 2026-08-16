@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,8 +45,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalView
@@ -213,7 +209,7 @@ private fun ThemeDynamicColorRow(
 ) {
     SegmentedListItem(
         onClick = { onCheckedChange(!checked) },
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -252,7 +248,7 @@ private fun ThemeStaticOptionRow(
 ) {
     SegmentedListItem(
         onClick = onClick,
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -308,7 +304,7 @@ private fun ThemeColorRow(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = ListItemDefaults.segmentedShapes(index, total).shape,
+        shape = dpisSegmentedShapes(index, total).shape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
@@ -330,11 +326,8 @@ private fun ThemeColorRow(
                     .height(68.dp)
                     .padding(top = 8.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = 8.dp),
+                DpisHorizontalScrollWithEdgeFade(
+                    contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     themeColorOptions.forEach { option ->
@@ -347,21 +340,6 @@ private fun ThemeColorRow(
                         )
                     }
                 }
-                val surface = MaterialTheme.colorScheme.surfaceContainerHigh
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .width(20.dp)
-                        .height(60.dp)
-                        .background(Brush.horizontalGradient(listOf(surface, Color.Transparent))),
-                )
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .width(20.dp)
-                        .height(60.dp)
-                        .background(Brush.horizontalGradient(listOf(Color.Transparent, surface))),
-                )
             }
         }
     }
@@ -599,7 +577,7 @@ private fun ThemeSettingsEntry(
 ) {
     SegmentedListItem(
         onClick = rememberDpisConfirmAction(onClick),
-        shapes = ListItemDefaults.segmentedShapes(index = index, count = total),
+        shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = MaterialTheme.colorScheme.onSurface,
@@ -635,7 +613,7 @@ private fun ThemeInterfaceScaleRow(
     index: Int,
     total: Int,
 ) {
-    val shape = ListItemDefaults.segmentedShapes(index, total).shape
+    val shape = dpisSegmentedShapes(index, total).shape
     Surface(
         modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = onClick),
         shape = shape,

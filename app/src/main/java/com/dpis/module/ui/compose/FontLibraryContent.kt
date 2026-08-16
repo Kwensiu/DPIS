@@ -353,7 +353,7 @@ private fun FontReferenceSection(
                 references.forEachIndexed { index, reference ->
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = ListItemDefaults.segmentedShapes(index, references.size).shape,
+                        shape = dpisSegmentedShapes(index, references.size).shape,
                         color = MaterialTheme.colorScheme.surfaceContainerHigh
                     ) {
                         Row(
