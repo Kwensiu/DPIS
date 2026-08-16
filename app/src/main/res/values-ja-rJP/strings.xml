@@ -120,6 +120,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="feedback_diagnostic_packaging_title">診断をパッケージ中</string>
     <string name="feedback_diagnostic_packaging_message">診断パッケージを準備しています…</string>
     <string name="feedback_diagnostic_share_action">診断を共有</string>
+    <string name="feedback_diagnostic_discard_and_restart_action">破棄して再診断</string>
     <string name="feedback_diagnostic_save_action">診断を保存</string>
     <string name="feedback_diagnostic_save_success">診断を保存しました</string>
     <string name="feedback_diagnostic_save_failed">診断の保存に失敗しました</string>

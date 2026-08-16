@@ -120,6 +120,7 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_packaging_title">Упаковка диагностики</string>
     <string name="feedback_diagnostic_packaging_message">Подготовка пакета диагностики…</string>
     <string name="feedback_diagnostic_share_action">Поделиться диагностикой</string>
+    <string name="feedback_diagnostic_discard_and_restart_action">Отбросить и диагностировать снова</string>
     <string name="feedback_diagnostic_save_action">Сохранить диагностику</string>
     <string name="feedback_diagnostic_save_success">Диагностика сохранена</string>
     <string name="feedback_diagnostic_save_failed">Не удалось сохранить диагностику</string>

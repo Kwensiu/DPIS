@@ -4964,6 +4964,11 @@ public final class MainActivity
             }
 
             @Override
+            public void discardDiagnostic() {
+                feedbackDiagnosticSession.cancel();
+            }
+
+            @Override
             public void showLsposedExplanation(String title, String explanation) {
                 ComposeMessageDialog.show(
                         MainActivity.this,

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -68,6 +69,7 @@ class FeedbackDiagnosticPreparationPresentation(
     private val onStart: () -> Unit,
     private val onSave: () -> Unit,
     private val onShare: () -> Unit,
+    private val onDiscardAndRestart: () -> Unit,
     private val onRefreshRootPermission: () -> Unit,
     private val onRefreshLsposedAvailability: () -> Unit,
     private val onExplainLsposedUnavailable: () -> Unit,
@@ -105,6 +107,8 @@ class FeedbackDiagnosticPreparationPresentation(
     fun save() = onSave()
 
     fun share() = onShare()
+
+    fun discardAndRestart() = onDiscardAndRestart()
 
     fun refreshRootPermission() = onRefreshRootPermission()
 
@@ -167,6 +171,16 @@ class FeedbackDiagnosticPreparationPresentation(
         )
     }
 
+    fun resetForRestart() {
+        state = state.copy(
+            phase = Phase.PREPARING,
+            packageFileName = "",
+            packagePath = "",
+            packageMetadata = "",
+            outputEntries = emptyList(),
+        )
+    }
+
     fun showPackagingFailed() {
         state = state.copy(phase = Phase.PACKAGING_FAILED)
     }
@@ -224,25 +238,38 @@ fun FeedbackDiagnosticPreparationContent(
                         enabled = state.startEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .navigationBarsPadding()
                             .padding(horizontal = 20.dp, vertical = 12.dp),
                     ) {
                         Text(stringResource(R.string.feedback_diagnostic_save_and_start_button))
                     }
                     FeedbackDiagnosticPreparationPresentation.Phase.READY -> {
-                        androidx.compose.foundation.layout.Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .navigationBarsPadding()
                                 .padding(horizontal = 20.dp, vertical = 12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
+                            androidx.compose.foundation.layout.Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                OutlinedButton(
+                                    onClick = presentation::save,
+                                    modifier = Modifier.weight(1f),
+                                ) { Text(stringResource(R.string.feedback_diagnostic_save_action)) }
+                                Button(
+                                    onClick = presentation::share,
+                                    modifier = Modifier.weight(1f),
+                                ) { Text(stringResource(R.string.feedback_diagnostic_share_action)) }
+                            }
                             OutlinedButton(
-                                onClick = presentation::save,
-                                modifier = Modifier.weight(1f),
-                            ) { Text(stringResource(R.string.feedback_diagnostic_save_action)) }
-                            Button(
-                                onClick = presentation::share,
-                                modifier = Modifier.weight(1f),
-                            ) { Text(stringResource(R.string.feedback_diagnostic_share_action)) }
+                                onClick = presentation::discardAndRestart,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(stringResource(R.string.feedback_diagnostic_discard_and_restart_action))
+                            }
                         }
                     }
                     else -> Unit
@@ -378,12 +405,10 @@ private fun DiagnosticRootPermissionRow(
     state: FeedbackDiagnosticPreparationPresentation.State,
     presentation: FeedbackDiagnosticPreparationPresentation,
 ) {
-    val enabled = state.phase == FeedbackDiagnosticPreparationPresentation.Phase.PREPARING
     SegmentedListItem(
         onClick = presentation::refreshRootPermission,
-        enabled = enabled,
         shapes = dpisSegmentedShapes(0, 3),
-        colors = diagnosticItemColors(enabled = enabled),
+        colors = diagnosticItemColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_shield_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_root_status)) },
@@ -423,12 +448,10 @@ private fun DiagnosticLsposedRow(
     state: FeedbackDiagnosticPreparationPresentation.State,
     presentation: FeedbackDiagnosticPreparationPresentation,
 ) {
-    val enabled = state.phase == FeedbackDiagnosticPreparationPresentation.Phase.PREPARING
     SegmentedListItem(
         onClick = presentation::refreshLsposedAvailability,
-        enabled = enabled,
         shapes = dpisSegmentedShapes(2, 3),
-        colors = diagnosticItemColors(enabled = enabled),
+        colors = diagnosticItemColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_healing_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_lsposed_status)) },
@@ -436,7 +459,6 @@ private fun DiagnosticLsposedRow(
         trailingContent = {
             IconButton(
                 onClick = presentation::explainLsposedAvailability,
-                enabled = enabled,
             ) {
                 Icon(
                     painter = painterResource(
@@ -462,17 +484,11 @@ private fun DiagnosticSessionSection(
     presentation: FeedbackDiagnosticPreparationPresentation,
 ) {
     val durationItemCount = if (state.durationEnabled) 2 else 1
-    val durationControlsEnabled = state.phase == FeedbackDiagnosticPreparationPresentation.Phase.PREPARING
     DiagnosticSection(R.string.feedback_diagnostic_duration_section) {
         SegmentedListItem(
-            onClick = {
-                if (durationControlsEnabled) {
-                    presentation.setDurationEnabled(!state.durationEnabled)
-                }
-            },
-            enabled = durationControlsEnabled,
+            onClick = { presentation.setDurationEnabled(!state.durationEnabled) },
             shapes = dpisSegmentedShapes(0, durationItemCount),
-            colors = diagnosticItemColors(enabled = durationControlsEnabled),
+            colors = diagnosticItemColors(),
             verticalAlignment = Alignment.CenterVertically,
             leadingContent = { Icon(painterResource(R.drawable.ic_hourglass_check_24), null) },
             content = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_title)) },
@@ -480,23 +496,18 @@ private fun DiagnosticSessionSection(
             trailingContent = {
                 Switch(
                     checked = state.durationEnabled,
-                    onCheckedChange = if (
-                        durationControlsEnabled
-                    ) presentation::setDurationEnabled else null,
-                    enabled = durationControlsEnabled,
+                    onCheckedChange = presentation::setDurationEnabled,
                 )
             },
         )
         AnimatedConditionalItem(visible = state.durationEnabled) {
             SegmentedListItem(
                 onClick = {},
-                enabled = durationControlsEnabled,
                 shapes = dpisSegmentedShapes(1, durationItemCount),
-                colors = diagnosticItemColors(enabled = durationControlsEnabled),
+                colors = diagnosticItemColors(),
                 content = {
                     DurationChipSelector(
                         selectedSeconds = state.durationSeconds,
-                        enabled = durationControlsEnabled,
                         onSelect = presentation::selectDuration,
                     )
                 },
@@ -508,7 +519,6 @@ private fun DiagnosticSessionSection(
 @Composable
 private fun DurationChipSelector(
     selectedSeconds: Int,
-    enabled: Boolean,
     onSelect: (Int) -> Unit,
 ) {
     var customDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -527,7 +537,6 @@ private fun DurationChipSelector(
             FilterChip(
                 selected = customSelected,
                 onClick = { customDialogVisible = true },
-                enabled = enabled,
                 label = {
                     Text(
                         if (customSelected) {
@@ -542,7 +551,6 @@ private fun DurationChipSelector(
                 FilterChip(
                     selected = selectedSeconds == seconds,
                     onClick = { onSelect(seconds) },
-                    enabled = enabled,
                     label = { Text(label) },
                 )
             }

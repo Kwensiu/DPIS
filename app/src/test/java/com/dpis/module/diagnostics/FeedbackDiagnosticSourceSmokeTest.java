@@ -92,6 +92,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(pageController.contains("refreshEnvironment(created, refreshLsposed = true)"));
         assertTrue(pageController.contains("current.lsposedAvailabilityCode()"));
         assertTrue(pageController.contains("refreshLsposedAvailability"));
+        assertTrue(pageController.contains("discardDiagnostic()"));
         assertTrue(main.contains("Coordinator.Request.fromPersisted("));
         assertTrue(main.contains("restoreFeedbackDiagnosticPage(retainedState)"));
         assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));
@@ -105,6 +106,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(preparation.contains("feedback_diagnostic_status_section"));
         assertTrue(preparation.contains("DiagnosticResultPlaceholder()"));
         assertTrue(preparation.contains("DiagnosticOutputDetails(state, presentation)"));
+        assertTrue(preparation.contains("feedback_diagnostic_discard_and_restart_action"));
+        assertTrue(preparation.contains("navigationBarsPadding()"));
         assertTrue(preparation.contains("DiagnosticOutputFileCard(entry)"));
         assertTrue(preparation.contains("DiagnosticOutputFileBackdrop()"));
         assertTrue(preparation.contains("basicMarquee(animationMode = MarqueeAnimationMode.Immediately)"));

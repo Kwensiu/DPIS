@@ -120,6 +120,7 @@
     <string name="feedback_diagnostic_packaging_title">正在打包诊断</string>
     <string name="feedback_diagnostic_packaging_message">正在准备诊断包…</string>
     <string name="feedback_diagnostic_share_action">分享诊断</string>
+    <string name="feedback_diagnostic_discard_and_restart_action">丢弃并重新诊断</string>
     <string name="feedback_diagnostic_save_action">保存诊断</string>
     <string name="feedback_diagnostic_save_success">诊断已保存</string>
     <string name="feedback_diagnostic_save_failed">保存诊断失败</string>

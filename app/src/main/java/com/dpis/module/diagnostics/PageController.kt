@@ -52,6 +52,8 @@ class PageController(
             diagnosticPackage: ExportBuilder.DiagnosticPackage,
         )
 
+        fun discardDiagnostic()
+
         fun showLsposedExplanation(title: String, explanation: String)
 
         fun copyDiagnosticPath(path: String?)
@@ -116,6 +118,11 @@ class PageController(
             },
             onShare = {
                 host.diagnosticPackage()?.let(host::shareDiagnosticPackage)
+            },
+            onDiscardAndRestart = {
+                host.discardDiagnostic()
+                presentation?.resetForRestart()
+                startDiagnostic(item, draft)
             },
             onRefreshRootPermission = {
                 presentation?.let { current ->
