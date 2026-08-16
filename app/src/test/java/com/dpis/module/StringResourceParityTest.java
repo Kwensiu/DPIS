@@ -64,6 +64,7 @@ public class StringResourceParityTest {
 
         assertTrue(layout.contains("android:id=\"@+id/row_language\""));
         assertTrue(dialogs.contains("LanguageDialogContent("));
+        assertTrue(dialogs.contains("dismiss()\n                onSelected.accept(selectedTag)"));
         assertTrue(dialogs.contains("R.dimen.dialog_surface_padding_horizontal"));
         assertTrue(dialogs.contains("R.dimen.dialog_action_spacing_top"));
         assertTrue(source.contains("R.id.row_language"));

@@ -50,6 +50,7 @@ import com.dpis.module.R
 import com.dpis.module.SettingsUiState
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.AppLocaleManager
+import com.dpis.module.settings.TranslationContributorCatalog
 import kotlin.math.roundToInt
 
 /** Compose rendering only; all settings workflows execute through Java-owned actions. */
@@ -74,9 +75,20 @@ fun SettingsWorkspaceContent(
 ) {
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
+    val systemContext = context.applicationContext
     val languageOptions = AppLocaleManager.supportedLanguages().map {
-        LanguageDialogOption(it.tag, stringResource(it.labelResId))
+        val label = if (it.tag == AppLocaleManager.TAG_FOLLOW_SYSTEM) {
+            // The activity context is wrapped in the selected app language; the
+            // application context keeps the device language for this option.
+            systemContext.getString(it.labelResId)
+        } else {
+            stringResource(it.labelResId)
+        }
+        LanguageDialogOption(it.tag, label)
     }
+    val translationContributors = TranslationContributorCatalog.forLanguage(
+        AppLocaleManager.getLanguageTag(context)
+    )
     val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
     PrimaryPageScaffold(
         titleRes = R.string.system_settings_title,
@@ -154,12 +166,13 @@ fun SettingsWorkspaceContent(
         }
         item {
             SettingsSection(R.string.settings_section_theme) {
+                val themeItemCount = 2 + translationContributors.size
                 SettingsEntry(
                     R.drawable.ic_format_paint_24,
                     R.string.settings_theme_settings_title,
                     R.string.settings_theme_settings_hint,
                     enabled = true,
-                    index = 0, total = 2,
+                    index = 0, total = themeItemCount,
                     onThemeSettings
                 )
                 SettingsEntry(
@@ -167,9 +180,20 @@ fun SettingsWorkspaceContent(
                     R.string.settings_language_label,
                     state?.languageLabel ?: stringResource(R.string.settings_language_follow_system),
                     enabled = state?.storeAvailable == true,
-                    index = 1, total = 2,
+                    index = 1, total = themeItemCount,
                     { showLanguageDialog = true }
                 )
+                translationContributors.forEachIndexed { index, contributor ->
+                    SettingsEntry(
+                        contributor.iconRes,
+                        contributor.labelRes,
+                        contributor.nameRes,
+                        enabled = true,
+                        index = index + 2, total = themeItemCount,
+                        onClick = {},
+                        showTrailingIcon = false,
+                    )
+                }
             }
         }
         item {
@@ -229,7 +253,11 @@ fun SettingsWorkspaceContent(
                 options = languageOptions,
                 selectedTag = AppLocaleManager.getLanguageTag(context),
                 onDone = { showLanguageDialog = false },
-                onSelected = onLanguageSelected,
+                onSelected = { selectedTag ->
+                    // Dismiss before the locale change recreates the host activity.
+                    showLanguageDialog = false
+                    onLanguageSelected(selectedTag)
+                },
             )
         }
     }
@@ -302,7 +330,8 @@ private fun SettingsEntry(
     enabled: Boolean,
     index: Int,
     total: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    showTrailingIcon: Boolean = true,
 ) {
     val hapticClick = rememberDpisConfirmAction(onClick)
     SegmentedListItem(
@@ -318,13 +347,15 @@ private fun SettingsEntry(
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },
         supportingContent = { Text(summary) },
-        trailingContent = {
-            Icon(
-                painterResource(R.drawable.ic_chevron_right_24),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        trailingContent = if (showTrailingIcon) {
+            {
+                Icon(
+                    painterResource(R.drawable.ic_chevron_right_24),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else null
     )
 }
 
@@ -336,5 +367,15 @@ private fun SettingsEntry(
     enabled: Boolean,
     index: Int,
     total: Int,
-    onClick: () -> Unit
-) = SettingsEntry(iconRes, title, stringResource(summary), enabled, index, total, onClick)
+    onClick: () -> Unit,
+    showTrailingIcon: Boolean = true,
+) = SettingsEntry(
+    iconRes,
+    title,
+    stringResource(summary),
+    enabled,
+    index,
+    total,
+    onClick,
+    showTrailingIcon,
+)

@@ -101,7 +101,11 @@ object SettingsComposeDialogs {
             selectedTag = selectedTag,
             hapticFeedbackEnabled = hapticFeedbackEnabled,
             onDone = dismiss,
-            onSelected = onSelected::accept,
+            onSelected = { selectedTag ->
+                // Dismiss before locale changes trigger activity recreation.
+                dismiss()
+                onSelected.accept(selectedTag)
+            },
         )
     }
 

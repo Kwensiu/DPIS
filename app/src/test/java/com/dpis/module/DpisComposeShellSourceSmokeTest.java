@@ -163,6 +163,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertFalse(settings.contains("SettingsScaleRow("));
         assertTrue(settings.contains(
                 "state?.languageLabel ?: stringResource(R.string.settings_language_follow_system)"));
+        assertTrue(settings.contains("val systemContext = context.applicationContext"));
+        assertTrue(settings.contains("it.tag == AppLocaleManager.TAG_FOLLOW_SYSTEM"));
         assertTrue(settings.contains(
                 "enabled = state?.storeAvailable == true && state.cacheClearInProgress != true"));
         assertTrue(home.contains("rememberDpisConfirmAction"));
