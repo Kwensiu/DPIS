@@ -25,7 +25,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  # Each job receives an isolated runner and no `needs` dependency, so build, tests,
+  # and lint overlap without concurrent Gradle processes contending for one workspace.
+  build:
     if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -84,38 +86,10 @@ jobs:
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
 
-      # Keep build, test, and lint in separate Gradle processes. On Linux runners the combined
-      # invocation can finish every task but leave Gradle workers alive indefinitely after lint.
-      # CI does not need a persistent daemon or configuration cache between these boundaries.
       - name: Build debug APKs
         shell: bash
         run: |
           ./gradlew :app:assembleModernDebug :app:assembleLegacyDebug \
-            --no-daemon --no-configuration-cache --stacktrace
-
-      - name: Run unit tests
-        shell: bash
-        env:
-          TEST_FILTER: ${{ github.event.inputs.test_filter }}
-        run: |
-          if [[ -n "${TEST_FILTER}" ]]; then
-            ./gradlew :app:testModernDebugUnitTest \
-              --tests "${TEST_FILTER}" \
-              --no-daemon --no-configuration-cache --stacktrace
-            ./gradlew :app:testLegacyDebugUnitTest \
-              --tests "${TEST_FILTER}" \
-              --no-daemon --no-configuration-cache --stacktrace
-          else
-            ./gradlew :app:testModernDebugUnitTest \
-              --no-daemon --no-configuration-cache --stacktrace
-            ./gradlew :app:testLegacyDebugUnitTest \
-              --no-daemon --no-configuration-cache --stacktrace
-          fi
-
-      - name: Run Modern lint
-        shell: bash
-        run: |
-          ./gradlew :app:lintModernDebug \
             --no-daemon --no-configuration-cache --stacktrace
 
       - name: Show native cache statistics
@@ -139,22 +113,6 @@ jobs:
             done
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload test and lint reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ci-reports-${{ github.run_id }}
-          if-no-files-found: warn
-          path: |
-            app/build/reports/tests/testDebugUnitTest
-            app/build/reports/tests/testModernDebugUnitTest
-            app/build/reports/tests/testLegacyDebugUnitTest
-            app/build/test-results/testDebugUnitTest
-            app/build/test-results/testModernDebugUnitTest
-            app/build/test-results/testLegacyDebugUnitTest
-            app/build/reports/lint-results-modernDebug.html
-            app/build/reports/lint-results-modernDebug.xml
-
       - name: Upload PR debug APKs
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -165,3 +123,96 @@ jobs:
           path: |
             app/build/outputs/apk/modern/debug/*.apk
             app/build/outputs/apk/legacy/debug/*.apk
+
+  unit-tests:
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          (yes || true) | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
+
+      - name: Ensure gradlew is executable
+        run: chmod +x gradlew
+
+      - name: Run unit tests
+        shell: bash
+        env:
+          TEST_FILTER: ${{ github.event.inputs.test_filter }}
+        run: |
+          if [[ -n "${TEST_FILTER}" ]]; then
+            ./gradlew :app:testModernDebugUnitTest --tests "${TEST_FILTER}" --no-daemon --no-configuration-cache --stacktrace
+            ./gradlew :app:testLegacyDebugUnitTest --tests "${TEST_FILTER}" --no-daemon --no-configuration-cache --stacktrace
+          else
+            ./gradlew :app:testModernDebugUnitTest --no-daemon --no-configuration-cache --stacktrace
+            ./gradlew :app:testLegacyDebugUnitTest --no-daemon --no-configuration-cache --stacktrace
+          fi
+
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-reports-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            app/build/reports/tests/testModernDebugUnitTest
+            app/build/reports/tests/testLegacyDebugUnitTest
+            app/build/test-results/testModernDebugUnitTest
+            app/build/test-results/testLegacyDebugUnitTest
+
+  lint:
+    if: github.event_name != 'pull_request' || !startsWith(github.head_ref, 'release-please--')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          (yes || true) | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.1.0"
+
+      - name: Ensure gradlew is executable
+        run: chmod +x gradlew
+
+      - name: Run Modern lint
+        shell: bash
+        run: ./gradlew :app:lintModernDebug --no-daemon --no-configuration-cache --stacktrace
+
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            app/build/reports/lint-results-modernDebug.html
+            app/build/reports/lint-results-modernDebug.xml
