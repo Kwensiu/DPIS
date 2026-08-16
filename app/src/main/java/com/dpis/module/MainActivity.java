@@ -21,6 +21,7 @@ import com.dpis.module.updates.UpdateAvailableDialog;
 import com.dpis.module.diagnostics.DiagnosticResultSheet;
 
 import com.dpis.module.diagnostics.DiagnosticExportBuilder;
+import com.dpis.module.diagnostics.DiagnosticPackageActions;
 import com.dpis.module.diagnostics.DiagnosticSession;
 
 import com.dpis.module.diagnostics.DiagnosticCoordinator;
@@ -138,7 +139,6 @@ import com.dpis.module.updates.ReleaseNotesController;
 
 import com.dpis.module.updates.ReleaseNotesCacheStore;
 
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -152,7 +152,6 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.Toast;
-import androidx.core.content.FileProvider;
 import androidx.core.view.ViewCompat;
 import androidx.compose.ui.platform.ComposeView;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
@@ -164,9 +163,6 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
 import io.github.libxposed.service.XposedService;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -235,8 +231,6 @@ public final class MainActivity
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
     private static final int REQUEST_QUICK_TEMPLATE_TARGETS = 10023;
     private static final int REQUEST_SAVE_FEEDBACK_DIAGNOSTIC = 10024;
-    private static final String SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME
-            = "shared-feedback-diagnostics";
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
     private final StartupUpdateDownloadExecutor startupUpdateDownloadExecutor
@@ -257,6 +251,12 @@ public final class MainActivity
             = new DiagnosticAppLauncher(this);
     private final ExecutorService feedbackDiagnosticExportExecutor
             = Executors.newSingleThreadExecutor();
+    private final DiagnosticPackageActions feedbackDiagnosticPackageActions
+            = new DiagnosticPackageActions(
+                    this,
+                    feedbackDiagnosticExportExecutor,
+                    REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
+            );
     private final StartupUpdatePackageHandler startupUpdatePackageHandler
             = new StartupUpdatePackageHandler(this);
     private final ExecutorService startupUpdateExecutor
@@ -650,7 +650,10 @@ public final class MainActivity
                 && resultCode == RESULT_OK
                 && data != null
                 && data.getData() != null) {
-            saveFeedbackDiagnosticZip(data.getData());
+            feedbackDiagnosticPackageActions.saveFeedbackDiagnosticZip(
+                    data.getData(),
+                    feedbackDiagnosticSession.diagnosticPackage()
+            );
         }
     }
 
@@ -2062,7 +2065,9 @@ public final class MainActivity
                             DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
                                     = feedbackDiagnosticSession.diagnosticPackage();
                             if (diagnosticPackage != null) {
-                                launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
+                                feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
+                                        diagnosticPackage
+                                );
                             }
                             return Unit.INSTANCE;
                         },
@@ -2070,7 +2075,9 @@ public final class MainActivity
                             DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
                                     = feedbackDiagnosticSession.diagnosticPackage();
                             if (diagnosticPackage != null) {
-                                shareFeedbackDiagnostic(diagnosticPackage);
+                                feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(
+                                        diagnosticPackage
+                                );
                             }
                             return Unit.INSTANCE;
                         },
@@ -2104,7 +2111,7 @@ public final class MainActivity
                             return Unit.INSTANCE;
                         },
                         path -> {
-                            copyFeedbackDiagnosticPath(path);
+                            feedbackDiagnosticPackageActions.copyFeedbackDiagnosticPath(path);
                             return Unit.INSTANCE;
                         }
         );
@@ -4364,7 +4371,9 @@ public final class MainActivity
         }
         feedbackDiagnosticPreparationPresentation.showReady(
                 diagnosticPackage.fileName,
-                feedbackDiagnosticSharedCachePath(diagnosticPackage),
+                feedbackDiagnosticPackageActions.feedbackDiagnosticSharedCachePath(
+                        diagnosticPackage
+                ),
                 getString(
                         R.string.feedback_diagnostic_package_metadata,
                         formatFeedbackDiagnosticDuration(
@@ -4432,14 +4441,16 @@ public final class MainActivity
             public void shareFeedbackDiagnostic(
                     DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
-                MainActivity.this.shareFeedbackDiagnostic(diagnosticPackage);
+                feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
             }
 
             @Override
             public void saveFeedbackDiagnostic(
                     DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
-                MainActivity.this.launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
+                feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
+                        diagnosticPackage
+                );
             }
         }).show(diagnosticPackage);
     }
@@ -4485,154 +4496,6 @@ public final class MainActivity
             return getPackageManager().getPackageInfo(packageName, 0).versionName;
         } catch (PackageManager.NameNotFoundException ignored) {
             return "";
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    private void launchSaveFeedbackDiagnosticPicker(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-    ) {
-        if (diagnosticPackage == null) {
-            return;
-        }
-        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
-                .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType(DiagnosticExportBuilder.MIME_TYPE)
-                .putExtra(
-                        Intent.EXTRA_TITLE,
-                        diagnosticPackage.fileName
-                );
-        try {
-            startActivityForResult(intent, REQUEST_SAVE_FEEDBACK_DIAGNOSTIC);
-        } catch (ActivityNotFoundException error) {
-            Toast.makeText(
-                    this,
-                    R.string.feedback_diagnostic_save_failed,
-                    Toast.LENGTH_SHORT
-            ).show();
-        }
-    }
-
-    private void saveFeedbackDiagnosticZip(Uri uri) {
-        DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-                = feedbackDiagnosticSession.diagnosticPackage();
-        if (uri == null || diagnosticPackage == null) {
-            Toast.makeText(this, R.string.feedback_diagnostic_save_failed, Toast.LENGTH_SHORT)
-                    .show();
-            return;
-        }
-        feedbackDiagnosticExportExecutor.execute(() -> {
-            boolean success;
-            try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
-                if (outputStream == null) {
-                    throw new IOException("Unable to open diagnostic output");
-                }
-                outputStream.write(diagnosticPackage.zipBytes);
-                success = true;
-            } catch (IOException | RuntimeException error) {
-                success = false;
-            }
-            boolean finalSuccess = success;
-            runOnUiThread(() -> Toast.makeText(
-                    this,
-                    finalSuccess
-                            ? R.string.feedback_diagnostic_save_success
-                            : R.string.feedback_diagnostic_save_failed,
-                    Toast.LENGTH_SHORT
-            ).show());
-        });
-    }
-
-    private void shareFeedbackDiagnostic(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-    ) {
-        if (diagnosticPackage == null) {
-            return;
-        }
-        feedbackDiagnosticExportExecutor.execute(() -> {
-            Uri uri = null;
-            boolean success;
-            try {
-                File file = writeSharedFeedbackDiagnosticZip(diagnosticPackage);
-                uri = FileProvider.getUriForFile(
-                        this,
-                        getPackageName() + ".fileprovider",
-                        file
-                );
-                success = true;
-            } catch (IOException | RuntimeException error) {
-                success = false;
-            }
-            Uri finalUri = uri;
-            boolean finalSuccess = success;
-            runOnUiThread(() -> {
-                if (!finalSuccess || finalUri == null) {
-                    Toast.makeText(
-                            this,
-                            R.string.feedback_diagnostic_share_failed,
-                            Toast.LENGTH_SHORT
-                    ).show();
-                    return;
-                }
-                launchFeedbackDiagnosticShareSheet(finalUri);
-            });
-        });
-    }
-
-    private File writeSharedFeedbackDiagnosticZip(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-    ) throws IOException {
-        File directory = new File(getCacheDir(), SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME);
-        if (!directory.isDirectory() && !directory.mkdirs()) {
-            throw new IOException("Unable to create diagnostic share directory");
-        }
-        File file = new File(directory, diagnosticPackage.fileName);
-        try (OutputStream outputStream = new FileOutputStream(file, false)) {
-            outputStream.write(diagnosticPackage.zipBytes);
-        }
-        return file;
-    }
-
-    private String feedbackDiagnosticSharedCachePath(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
-    ) {
-        return "/data/data/" + getPackageName() + "/cache/"
-                + SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME + "/"
-                + diagnosticPackage.fileName;
-    }
-
-    private void copyFeedbackDiagnosticPath(String path) {
-        if (path == null || path.isBlank()) {
-            return;
-        }
-        android.content.ClipboardManager clipboard =
-                (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        if (clipboard == null) {
-            return;
-        }
-        clipboard.setPrimaryClip(android.content.ClipData.newPlainText(
-                getString(R.string.feedback_diagnostic_action),
-                path
-        ));
-        Toast.makeText(this, R.string.feedback_diagnostic_path_copied, Toast.LENGTH_SHORT).show();
-    }
-
-    private void launchFeedbackDiagnosticShareSheet(Uri uri) {
-        Intent intent = new Intent(Intent.ACTION_SEND)
-                .setType(DiagnosticExportBuilder.MIME_TYPE)
-                .putExtra(Intent.EXTRA_STREAM, uri)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        try {
-            startActivity(Intent.createChooser(
-                    intent,
-                    getString(R.string.feedback_diagnostic_share_action)
-            ));
-        } catch (ActivityNotFoundException error) {
-            Toast.makeText(
-                    this,
-                    R.string.feedback_diagnostic_share_failed,
-                    Toast.LENGTH_SHORT
-            ).show();
         }
     }
 

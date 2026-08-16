@@ -45,6 +45,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine()
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
+        String packageActions = read(
+                "src/main/java/com/dpis/module/diagnostics/DiagnosticPackageActions.kt");
         String preparation = read(
                 "src/main/java/com/dpis/module/ui/compose/"
                         + "FeedbackDiagnosticPreparationContent.kt");
@@ -142,8 +144,12 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(segmentedPolicy.contains("} else {\n        shapes"));
         assertTrue(main.contains("FeedbackDiagnosticPreparationPresentation.OutputEntry"));
         assertTrue(main.contains("feedback_diagnostic_result_entry_meta"));
-        assertTrue(main.contains("feedbackDiagnosticSharedCachePath(diagnosticPackage)"));
-        assertTrue(main.contains("copyFeedbackDiagnosticPath(path)"));
+        assertTrue(packageActions.contains("feedbackDiagnosticSharedCachePath("));
+        assertTrue(packageActions.contains("copyFeedbackDiagnosticPath("));
+        assertFalse(main.contains("private void saveFeedbackDiagnosticZip("));
+        assertFalse(main.contains("private void shareFeedbackDiagnostic("));
+        assertFalse(main.contains("private void copyFeedbackDiagnosticPath("));
+        assertFalse(main.contains("private void writeSharedFeedbackDiagnosticZip("));
         assertTrue(main.contains("Formatter.formatFileSize"));
         assertTrue(hookChain.contains("val shapes = dpisSegmentedShapes(index, total)"));
         assertFalse(hookChain.contains("SingleItemShape"));
@@ -271,6 +277,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     @Test
     public void feedbackDiagnosticResultSupportsShareAndSaveZip() throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
+        String packageActions = read(
+                "src/main/java/com/dpis/module/diagnostics/DiagnosticPackageActions.kt");
         String exportBuilder = read(
                 "src/main/java/com/dpis/module/diagnostics/DiagnosticExportBuilder.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
@@ -290,15 +298,15 @@ public final class FeedbackDiagnosticSourceSmokeTest {
                 "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java");
 
         assertTrue(main.contains("REQUEST_SAVE_FEEDBACK_DIAGNOSTIC"));
-        assertTrue(main.contains("Intent.ACTION_CREATE_DOCUMENT"));
-        assertTrue(main.contains("DiagnosticExportBuilder.MIME_TYPE"));
-        assertTrue(main.contains("getContentResolver().openOutputStream(uri)"));
-        assertFalse(main.contains("getContentResolver().openOutputStream(uri, \"wt\")"));
+        assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"));
+        assertTrue(packageActions.contains("DiagnosticExportBuilder.MIME_TYPE"));
+        assertTrue(packageActions.contains("openOutputStream(uri)"));
+        assertFalse(packageActions.contains("openOutputStream(uri, \"wt\")"));
         assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));
-        assertTrue(main.contains("FileProvider.getUriForFile"));
-        assertTrue(main.contains("Intent.ACTION_SEND"));
-        assertTrue(main.contains("putExtra(Intent.EXTRA_STREAM, uri)"));
-        assertFalse(main.contains("putExtra(Intent.EXTRA_TEXT, result.summary)"));
+        assertTrue(packageActions.contains("FileProvider.getUriForFile"));
+        assertTrue(packageActions.contains("Intent.ACTION_SEND"));
+        assertTrue(packageActions.contains("putExtra(Intent.EXTRA_STREAM, uri)"));
+        assertFalse(packageActions.contains("putExtra(Intent.EXTRA_TEXT, result.summary)"));
         assertTrue(exportBuilder.contains("DIAGNOSTIC_ENTRY_NAME = \"diagnostic.txt\""));
         assertTrue(exportBuilder.contains("DPIS_LOG_ENTRY_NAME = \"dpis-log.txt\""));
         assertTrue(exportBuilder.contains("LSPOSED_LOG_ENTRY_NAME = \"lsposed-log.txt\""));
