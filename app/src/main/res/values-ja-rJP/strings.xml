@@ -147,11 +147,11 @@ Mini Programs はまだサポートされていません。</string>
     <string name="feedback_diagnostic_lsposed_info_action">LSPosed ログの可用性を説明</string>
     <string name="feedback_diagnostic_lsposed_info_title">LSPosed ログの可用性</string>
     <string name="feedback_diagnostic_lsposed_no_permission_message">LSPosed ログファイルを読み取れません。Root 権限がないか、ログディレクトリへのアクセスが拒否されています。</string>
-    <string name="feedback_diagnostic_lsposed_no_logs_message">LSPosed ログファイルが見つかりません。考えられる原因：\n\n• LSPosed の Hook デバッグが無効\n• 詳細ログを無効にするが有効\n• ログをデーモンに出力するが有効\n• LSPosed ログが予期せず無効化されたか、出力できない</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">LSPosed ログファイルが見つかりません。考えられる原因：\n\n• LSPosed の Hook デバッグが無効\n• 詳細ログを無効化する設定が有効\n• デーモンへのログ出力が有効\n• LSPosed ログが予期せず無効化されたか、出力できない</string>
     <string name="feedback_diagnostic_lsposed_no_valid_logs_message">LSPosed ログは読み取れましたが、有効な DPIS エントリがありません。Hook デバッグ、詳細ログ、デーモン出力の設定を確認してください。</string>
     <string name="feedback_diagnostic_lsposed_available_message">DPIS エントリを含む LSPosed ログを読み取れます。</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">LSPosed ログを読み取れません</string>
-    <string name="feedback_diagnostic_lsposed_unavailable_message">考えられる原因：\n• LSPosed の Hook デバッグが無効です。\n• 詳細ログを無効にするが有効です。\n• ログをデーモンに出力するが有効です。\n• LSPosed ログが予期せず無効化されたか、出力できません。</string>
+    <string name="feedback_diagnostic_lsposed_unavailable_message">考えられる原因：\n• LSPosed の Hook デバッグが無効です。\n• 詳細ログを無効化する設定が有効です。\n• デーモンへのログ出力が有効です。\n• LSPosed ログが予期せず無効化されたか、出力できません。</string>
     <string name="feedback_diagnostic_duration_section">診断時間</string>
     <string name="feedback_diagnostic_status_section">診断の状態</string>
     <string name="feedback_diagnostic_output_pending">診断の終了後に生成されます</string>

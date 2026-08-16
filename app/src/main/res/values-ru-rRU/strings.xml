@@ -147,11 +147,11 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_lsposed_info_action">Объяснить доступность журналов LSPosed</string>
     <string name="feedback_diagnostic_lsposed_info_title">Доступность журналов LSPosed</string>
     <string name="feedback_diagnostic_lsposed_no_permission_message">Не удалось прочитать файлы журналов LSPosed. Возможно, Root недоступен или доступ к каталогу журналов запрещен.</string>
-    <string name="feedback_diagnostic_lsposed_no_logs_message">Файлы журналов LSPosed не найдены. Возможные причины:\n\n• Отладка Hook в LSPosed отключена\n• Включено отключение подробных журналов\n• Включен вывод журналов в демон\n• Журнал LSPosed был неожиданно отключен или не может записываться</string>
+    <string name="feedback_diagnostic_lsposed_no_logs_message">Файлы журналов LSPosed не найдены. Возможные причины:\n\n• Отладка Hook в LSPosed отключена\n• Включена настройка отключения подробных журналов\n• Включен вывод журналов в демон\n• Журнал LSPosed был неожиданно отключен или не может записываться</string>
     <string name="feedback_diagnostic_lsposed_no_valid_logs_message">Файлы журналов LSPosed прочитаны, но действительных записей DPIS нет. Проверьте отладку Hook, подробные журналы и вывод в демон.</string>
     <string name="feedback_diagnostic_lsposed_available_message">В журнале LSPosed найдены записи DPIS.</string>
     <string name="feedback_diagnostic_lsposed_unavailable_title">Не удалось прочитать журналы LSPosed</string>
-    <string name="feedback_diagnostic_lsposed_unavailable_message">Возможные причины:\n• В LSPosed отключена отладка Hook.\n• Включено отключение подробных журналов.\n• Включен вывод журналов в демон.\n• Журнал LSPosed был отключен или не может записываться.</string>
+    <string name="feedback_diagnostic_lsposed_unavailable_message">Возможные причины:\n• В LSPosed отключена отладка Hook.\n• Включена настройка отключения подробных журналов.\n• Включен вывод журналов в демон.\n• Журнал LSPosed был отключен или не может записываться.</string>
     <string name="feedback_diagnostic_duration_section">Длительность диагностики</string>
     <string name="feedback_diagnostic_status_section">Состояние диагностики</string>
     <string name="feedback_diagnostic_output_pending">Будет создано после завершения диагностики</string>
