@@ -13,11 +13,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -510,21 +512,28 @@ private fun DiagnosticLsposedRow(
         content = { Text(stringResource(R.string.feedback_diagnostic_lsposed_status)) },
         supportingContent = { Text(state.lsposedStatus) },
         trailingContent = {
-            IconButton(
-                onClick = presentation::explainLsposedAvailability,
+            Box(
+                modifier = Modifier
+                    .width(48.dp)
+                    .fillMaxHeight(),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    painter = painterResource(
-                        if (state.lsposedAvailabilityCode == LSPOSED_AVAILABLE) {
-                            R.drawable.ic_done_all_24
-                        } else {
-                            R.drawable.ic_warning_24
-                        }
-                    ),
-                    contentDescription = stringResource(
-                        R.string.feedback_diagnostic_lsposed_info_action
-                    ),
-                )
+                IconButton(
+                    onClick = presentation::explainLsposedAvailability,
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (state.lsposedAvailabilityCode == LSPOSED_AVAILABLE) {
+                                R.drawable.ic_done_all_24
+                            } else {
+                                R.drawable.ic_warning_24
+                            }
+                        ),
+                        contentDescription = stringResource(
+                            R.string.feedback_diagnostic_lsposed_info_action
+                        ),
+                    )
+                }
             }
         },
     )

@@ -378,6 +378,6 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     }
 
     private static String read(String relativePath) throws IOException {
-        return SourceSmokeTestPaths.read(relativePath);
+        return SourceSmokeTestPaths.read(relativePath).replace("\r\n", "\n");
     }
 }

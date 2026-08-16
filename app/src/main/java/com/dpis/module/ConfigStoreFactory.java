@@ -39,7 +39,10 @@ public final class ConfigStoreFactory {
     }
 
     public static DpisConfigStore createDiagnosticLogGateConfigStore(Context context) {
-        return createLocalModuleConfigStore(context);
+        // The UI may be backed by LSPosed remote preferences in modern builds.
+        // Log pages must gate against that same active store, not a stale local copy.
+        DpisConfigStore activeStore = DpisApplication.getActiveHookConfigStore(context);
+        return activeStore != null ? activeStore : createLocalModuleConfigStore(context);
     }
 
     public static boolean enableDiagnosticLogs(Context context) {
