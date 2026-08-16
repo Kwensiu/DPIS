@@ -319,12 +319,7 @@ public final class MainActivity
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
-    private final DiagnosticPageController feedbackDiagnosticPageController
-            = new DiagnosticPageController(
-                    getApplicationContext(),
-                    feedbackDiagnosticExportExecutor,
-                    createDiagnosticPageControllerHost()
-            );
+    private DiagnosticPageController feedbackDiagnosticPageController;
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
@@ -363,6 +358,11 @@ public final class MainActivity
                 && retainedState.feedbackDiagnosticSession != null
                 ? retainedState.feedbackDiagnosticSession
                 : new DiagnosticSession(getApplicationContext());
+        feedbackDiagnosticPageController = new DiagnosticPageController(
+                getApplicationContext(),
+                feedbackDiagnosticExportExecutor,
+                createDiagnosticPageControllerHost()
+        );
         String initialQuery = "";
         String initialTemplateQuery = "";
         AppListFilterState initialFilterState = appListFilterStateStore.load();
@@ -594,7 +594,9 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
-        feedbackDiagnosticPageController.detachHost();
+        if (feedbackDiagnosticPageController != null) {
+            feedbackDiagnosticPageController.detachHost();
+        }
         if (isChangingConfigurations()) {
             feedbackDiagnosticSession.detachHost();
         } else {
