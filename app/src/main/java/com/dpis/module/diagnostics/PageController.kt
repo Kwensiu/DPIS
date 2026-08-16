@@ -5,6 +5,7 @@ import com.dpis.module.R
 import com.dpis.module.AppConfigEditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.root.RootAccessProbe
+import com.dpis.module.settings.AppLocaleManager
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.ExecutorService
 
@@ -14,7 +15,8 @@ class PageController(
     private val executor: ExecutorService,
     host: Host,
 ) {
-    private val context = context.applicationContext
+    // Keep the lightweight application context, but apply the same app-level locale as the page.
+    private val context = AppLocaleManager.wrap(context.applicationContext)
     private var host: Host? = host
     private var presentation: FeedbackDiagnosticPreparationPresentation? = null
     private var currentVersionName: String = ""

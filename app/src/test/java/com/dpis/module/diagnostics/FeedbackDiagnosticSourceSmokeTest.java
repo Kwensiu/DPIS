@@ -80,6 +80,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("feedbackDiagnosticSession.start("));
         assertTrue(pageController.contains("selectedDurationSeconds()"));
         assertTrue(pageController.contains("isDurationEnabled()"));
+        assertTrue(pageController.contains("AppLocaleManager.wrap(context.applicationContext)"));
         assertTrue(main.contains("feedbackDiagnosticSession.attachHost("));
         assertTrue(main.contains("feedbackDiagnosticSession.detachHost()"));
         assertTrue(main.contains("isChangingConfigurations()"));
