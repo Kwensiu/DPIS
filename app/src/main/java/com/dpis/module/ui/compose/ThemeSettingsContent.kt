@@ -354,9 +354,10 @@ private fun GeneratedThemeSwatch(
     onClick: () -> Unit,
 ) {
     val swatchDividerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val seedColor = DpisColorSchemeFactory.seedColor(option.id)
     val scheme = remember(option, paletteStyle, colorSpecification) {
         DpisColorSchemeFactory.create(
-            seedColor = DpisColorSchemeFactory.seedColor(option.id),
+            seedColor = seedColor,
             darkTheme = false,
             paletteStyle = paletteStyle,
             requestedSpecification = colorSpecification,
@@ -380,8 +381,10 @@ private fun GeneratedThemeSwatch(
             val leftWidth = size.width / 2f
             val rightHeight = size.height / 2f
             drawCircle(swatchDividerColor)
+            // Keep the selected color visible instead of showing only its lighter
+            // generated container tone.
             drawRect(
-                scheme.primaryContainer,
+                seedColor,
                 size = size.copy(width = leftWidth - gap / 2f),
             )
             drawRect(
