@@ -103,18 +103,19 @@ private fun FilterSwitch(label: Int, checked: Boolean, tag: String = "", onCheck
 }
 
 object ModuleRuntimeReloadComposeDialog {
-    // TODO: Migrate when the runtime reload notice is owned by Compose state instead of Java callbacks.
     @JvmStatic
-    fun show(activity: Activity, onAcknowledge: Runnable): AlertDialog {
+    fun show(activity: Activity, onDismissed: Runnable): AlertDialog {
         val view = ComposeView(activity).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         view.setContent {
             DpisTheme(darkTheme = dpisDarkTheme()) {
-                RuntimeReloadNoticeContent { dialog.dismiss(); onAcknowledge.run() }
+                RuntimeReloadNoticeContent(dialog::dismiss)
             }
         }
+        dialog.setOnDismissListener { onDismissed.run() }
+        dialog.setCancelable(true)
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
         DialogWindowSizer.applyStandardWidth(dialog, activity)

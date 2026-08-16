@@ -339,19 +339,8 @@ public class MainActivitySourceSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(source.contains("maybeShowModuleRuntimeReloadAdvice()"));
-        assertTrue(
-            source.contains(
-                "ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)"
-            )
-        );
-        assertTrue(
-            source.contains(
-                "ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this)"
-            )
-        );
-        assertTrue(
-            source.contains("ModuleRuntimeReloadComposeDialog.show(this")
-        );
+        assertTrue(source.contains("ModuleRuntimeReloadNoticeCoordinator(this)"));
+        assertTrue(source.contains("maybeShow(this::continueStartupDialogsAfterRuntimeReloadAdvice)"));
         assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
         assertFalse(source.contains("ModuleRuntimeReloader.softReloadAsync("));
         assertFalse(source.contains("module_runtime_reload_now_button"));

@@ -14,8 +14,8 @@ import com.dpis.module.fonts.HyperOsNativeAppDetector;
 
 
 
-import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
 import com.dpis.module.updates.UpdateAvailableDialog;
 
 import com.dpis.module.diagnostics.ResultSheet;
@@ -92,7 +92,6 @@ import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.compose.AppFilterComposeSheet;
 import com.dpis.module.ui.compose.ComposeConfirmDialog;
 import com.dpis.module.ui.compose.ComposeMessageDialog;
-import com.dpis.module.ui.compose.ModuleRuntimeReloadComposeDialog;
 
 import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceBinder;
@@ -2307,14 +2306,8 @@ public final class MainActivity
     }
 
     private boolean maybeShowModuleRuntimeReloadAdvice() {
-        if (!ModuleRuntimeReloadAdvisor.shouldShowReloadAdvice(this)) {
-            return false;
-        }
-        ModuleRuntimeReloadComposeDialog.show(this, () -> {
-            ModuleRuntimeReloadAdvisor.markReloadAdviceAcknowledged(this);
-            continueStartupDialogsAfterRuntimeReloadAdvice();
-        });
-        return true;
+        return new ModuleRuntimeReloadNoticeCoordinator(this)
+                .maybeShow(this::continueStartupDialogsAfterRuntimeReloadAdvice);
     }
 
     private void continueStartupDialogsAfterRuntimeReloadAdvice() {
