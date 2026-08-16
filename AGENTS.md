@@ -79,6 +79,9 @@ or localization review, use the project-local playbook in
 `docs/agents/skills/dpis-localization/SKILL.md`. This is a project-local skill
 bundle and does not modify global agent skills.
 
+Do not add translation text for locales other than English and Simplified
+Chinese unless the user explicitly requests that locale's content.
+
 ## Build, Test, and Development Commands
 - Build debug APKs (both flavors):
   - `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`
@@ -99,9 +102,8 @@ bundle and does not modify global agent skills.
   - `./gradlew Delete`
 
 ## Coding Style & Naming Conventions
-- Kotlin is the default language for new production code and UI components.
-  Java 17 remains the compatibility target for existing Java sources and JVM
-  bytecode.
+- Create new code and test files in Kotlin by default. Java 17 remains the
+  compatibility target for existing Java sources and JVM bytecode.
 - DPIS has completed its main Compose UI migration. Build new screens,
   dialogs, sheets, list rows, navigation surfaces, and reusable controls with
   Jetpack Compose and Kotlin; do not add new XML/View UI unless an external API
@@ -121,8 +123,13 @@ bundle and does not modify global agent skills.
   - Classes: `PascalCase` (e.g., `SystemServerMutationPolicy`)
   - Methods/fields: `camelCase`
   - Constants: `UPPER_SNAKE_CASE`
+- Choose concise, specific names. Do not repeat package, feature, or type
+  context already clear at the declaration site.
 - Keep class responsibilities focused; prefer small helper classes over monolithic installers.
-- Do not keep growing `MainActivity` with new feature workflows. New session flows, exporters, diagnostics, coordinators, or feature-specific state machines should live in focused classes under `app/src/main/java/com/dpis/module/`; `MainActivity` should remain an entry/assembly surface that wires UI events to those helpers.
+- Keep `MainActivity` limited to essential app-shell startup and event wiring.
+  Do not place feature workflows, dialogs, coordinators, exporters,
+  diagnostics, or feature-specific state machines there; put them in focused
+  classes under `app/src/main/java/com/dpis/module/`.
 - Treat Compose as the presentation and interaction layer. Hoist durable state
   and business/runtime work into focused coordinators, presenters, stores, or
   ViewModels; composables should not become alternate owners of package state,
@@ -142,7 +149,9 @@ bundle and does not modify global agent skills.
 ## Testing Guidelines
 - Framework: JUnit4 (`testImplementation(libs.junit4)`).
 - Test location mirrors production package structure.
-- Test naming: `<ClassName>Test.java` and method names describing behavior (e.g., `usesObservedDefaultDensityWhenNoUserValueExists`).
+- Test class names end in `Test` and method names describe behavior (e.g.,
+  `usesObservedDefaultDensityWhenNoUserValueExists`). Use the matching `.kt`
+  or `.java` extension for the implementation language.
 - Run targeted tests during iteration with a flavor test task, then run full `:app:testAllDebugUnitTests` before submitting.
 - Before creating a real commit, run the full CI-aligned unit test suite:
   `./gradlew :app:testAllDebugUnitTests`. Do not rely only on targeted tests
