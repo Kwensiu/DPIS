@@ -99,7 +99,7 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(sortDialog.contains("detectDragGesturesAfterLongPress"));
         assertTrue(sortDialog.contains("R.drawable.ic_drag_indicator_24"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_apply\">Apply</string>"));
-        assertTrue(strings.contains("<string name=\"template_workspace_summary_empty\">No custom values.</string>"));
+        assertTrue(strings.contains("<string name=\"template_workspace_summary_empty\">No custom values</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_edit_template\">Edit template</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_select_apps\">Select apps</string>"));
         assertTrue(strings.contains("template_search_hint"));

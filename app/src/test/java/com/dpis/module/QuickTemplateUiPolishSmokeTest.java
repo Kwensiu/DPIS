@@ -48,9 +48,9 @@ public class QuickTemplateUiPolishSmokeTest {
         assertTrue(zhStrings.contains("quick_template_apply_confirm_message_overwrite"));
         assertTrue(zhStrings.contains("快捷模板"));
         assertFalse(zhStrings.contains("快速模板"));
-        assertTrue(strings.contains("Apply to %1$d apps."));
-        assertTrue(strings.contains("%2$d existing configs will be overwritten."));
-        assertTrue(zhStrings.contains("将应用到 %1$d 个应用。"));
+        assertTrue(strings.contains("Apply to %1$d apps"));
+        assertTrue(strings.contains("%2$d existing configs will be overwritten"));
+        assertTrue(zhStrings.contains("将应用到 %1$d 个应用"));
         assertTrue(zhStrings.contains("%2$d 个已有配置会被覆盖"));
     }
 
