@@ -4160,7 +4160,7 @@ public final class MainActivity
                                                 entry.byteCount
                                         )
                         ))
-                        .toList()
+                        .collect(java.util.stream.Collectors.toList())
         );
     }
 

@@ -112,7 +112,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="feedback_diagnostic_result_package_line">パッケージ: %1$s</string>
     <string name="feedback_diagnostic_result_version_line">バージョン: %1$s</string>
     <string name="feedback_diagnostic_result_privacy_hint">診断には個人情報は含まれません。\n開発者に送信するとサポートを受けられます。</string>
-    <string name="feedback_diagnostic_result_entry_meta">%1$d 行 · %2$d バイト</string>
+    <string name="feedback_diagnostic_result_entry_meta">%1$d 行 · %2$s</string>
     <string name="feedback_diagnostic_result_unknown">不明</string>
     <string name="feedback_diagnostic_packaging_title">診断をパッケージ中</string>
     <string name="feedback_diagnostic_packaging_message">診断パッケージを準備しています…</string>

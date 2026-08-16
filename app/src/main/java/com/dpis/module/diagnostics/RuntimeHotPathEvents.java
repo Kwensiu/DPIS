@@ -212,7 +212,10 @@ public final class RuntimeHotPathEvents {
         );
     }
 
+    @android.annotation.SuppressLint("NewApi")
     private static String currentProcessName() {
+        // Application.getProcessName is unavailable before API 28; the linkage
+        // fallback keeps this diagnostic-only signal optional on older devices.
         try {
             return android.app.Application.getProcessName();
         } catch (RuntimeException | LinkageError ignored) {

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
+    <!-- Japanese and Russian intentionally fall back to English for new strings. -->
+    <issue id="MissingTranslation" severity="ignore" />
     <issue id="Instantiatable">
         <ignore path="src/main/AndroidManifest.xml" />
         <ignore path="src/main/res/layout" />

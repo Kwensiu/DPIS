@@ -2,6 +2,8 @@ package com.dpis.module.diagnostics;
 
 import com.dpis.module.root.RootAppProcessLauncher;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
@@ -201,8 +203,14 @@ final class PerfettoTrace {
     private static RootAppProcessLauncher.ShellResult runSuCommand(String command) {
         try {
             Process process = Runtime.getRuntime().exec(new String[] {"su", "-c", command});
-            String output = new String(process.getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8);
+            InputStream input = process.getInputStream();
+            ByteArrayOutputStream outputBytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                outputBytes.write(buffer, 0, read);
+            }
+            String output = outputBytes.toString(StandardCharsets.UTF_8.name());
             return new RootAppProcessLauncher.ShellResult(process.waitFor(), output);
         } catch (Exception exception) {
             return new RootAppProcessLauncher.ShellResult(-1, exception.getMessage());

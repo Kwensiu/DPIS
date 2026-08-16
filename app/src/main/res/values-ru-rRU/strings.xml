@@ -112,7 +112,7 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_result_package_line">Пакет: %1$s</string>
     <string name="feedback_diagnostic_result_version_line">Версия: %1$s</string>
     <string name="feedback_diagnostic_result_privacy_hint">Диагностика не содержит личные данные.\nОтправьте ее разработчику, чтобы получить помощь.</string>
-    <string name="feedback_diagnostic_result_entry_meta">%1$d строк · %2$d байт</string>
+    <string name="feedback_diagnostic_result_entry_meta">%1$d строк · %2$s</string>
     <string name="feedback_diagnostic_result_unknown">неизвестно</string>
     <string name="feedback_diagnostic_packaging_title">Упаковка диагностики</string>
     <string name="feedback_diagnostic_packaging_message">Подготовка пакета диагностики…</string>
