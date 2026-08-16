@@ -57,7 +57,7 @@ final class StructuredEvidenceExporter {
     }
 
     static String buildModuleEffectsTsv(
-            DiagnosticCoordinator.Result result,
+            Coordinator.Result result,
             List<String> runtimeEvents,
             PerformanceSnapshot snapshot
     ) {
@@ -280,8 +280,8 @@ final class StructuredEvidenceExporter {
         }
     }
 
-    private static List<SelectedRoute> selectedRoutes(DiagnosticCoordinator.Result result) {
-        DiagnosticCoordinator.Request request =
+    private static List<SelectedRoute> selectedRoutes(Coordinator.Result result) {
+        Coordinator.Request request =
                 result != null ? result.request : null;
         if (request == null || !request.inScope || !request.dpisEnabled) {
             return List.of();

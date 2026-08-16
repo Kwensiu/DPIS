@@ -208,8 +208,8 @@ public final class RuntimeHotPathEventsTest {
         assertFalse(RuntimeTransport.isCaptureActive());
     }
 
-    private static DiagnosticCoordinator.Request request() {
-        return new DiagnosticCoordinator.Request(
+    private static Coordinator.Request request() {
+        return new Coordinator.Request(
                 "com.example.app",
                 "Example",
                 "1.2.3",

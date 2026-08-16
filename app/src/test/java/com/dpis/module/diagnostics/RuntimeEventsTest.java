@@ -217,13 +217,13 @@ public final class RuntimeEventsTest {
         assertTrue(events.get(0).contains("stage=skipped"));
     }
 
-    private static DiagnosticCoordinator.Request request(
+    private static Coordinator.Request request(
             boolean inScope,
             boolean dpisEnabled,
             boolean viewportEnabled,
             boolean fontEnabled
     ) {
-        return new DiagnosticCoordinator.Request(
+        return new Coordinator.Request(
                 "com.example.app",
                 "Example",
                 "1.2.3",

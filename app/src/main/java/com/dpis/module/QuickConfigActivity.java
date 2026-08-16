@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import com.dpis.module.settings.SystemScopeCoordinator;
 
@@ -14,12 +14,12 @@ import com.dpis.module.fonts.FontLibraryActivity;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 
-import com.dpis.module.diagnostics.DiagnosticResultSheet;
+import com.dpis.module.diagnostics.ResultSheet;
 import com.dpis.module.diagnostics.PackagingDialog;
 
-import com.dpis.module.diagnostics.DiagnosticExportBuilder;
+import com.dpis.module.diagnostics.ExportBuilder;
 
-import com.dpis.module.diagnostics.DiagnosticCoordinator;
+import com.dpis.module.diagnostics.Coordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -56,7 +56,7 @@ import com.dpis.module.appconfig.WechatDpiConfig;
 
 import com.dpis.module.ui.DialogWindowSizer;
 
-import com.dpis.module.diagnostics.DiagnosticAppLauncher;
+import com.dpis.module.diagnostics.AppLauncher;
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
@@ -107,19 +107,19 @@ public final class QuickConfigActivity extends LocalizedActivity {
             = new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch);
     private final SystemScopeCoordinator systemScopeCoordinator
             = new SystemScopeCoordinator(createSystemScopeHost());
-    private final DiagnosticAppLauncher feedbackDiagnosticAppLauncher
-            = new DiagnosticAppLauncher(this);
-    private final DiagnosticExportBuilder feedbackDiagnosticExportBuilder
-            = new DiagnosticExportBuilder(this);
+    private final AppLauncher feedbackDiagnosticAppLauncher
+            = new AppLauncher(this);
+    private final ExportBuilder feedbackDiagnosticExportBuilder
+            = new ExportBuilder(this);
     private final ExecutorService feedbackDiagnosticExportExecutor
             = Executors.newSingleThreadExecutor();
     private final AppConfigDialogBinder.Host appConfigDialogHost = createHost();
-    private final DiagnosticCoordinator feedbackDiagnosticCoordinator
-            = new DiagnosticCoordinator(createFeedbackDiagnosticHost());
+    private final Coordinator feedbackDiagnosticCoordinator
+            = new Coordinator(createFeedbackDiagnosticHost());
     private View activeEditorRoot;
     private boolean activityResumed;
-    private DiagnosticCoordinator.Result pendingFeedbackDiagnosticResult;
-    private DiagnosticExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
+    private Coordinator.Result pendingFeedbackDiagnosticResult;
+    private ExportBuilder.DiagnosticPackage pendingFeedbackDiagnosticPackage;
     private AlertDialog activePackagingDialog;
     private QuickConfigPresentation presentation;
     private AppListItem editingItem;
@@ -619,8 +619,8 @@ public final class QuickConfigActivity extends LocalizedActivity {
         };
     }
 
-    private DiagnosticCoordinator.Host createFeedbackDiagnosticHost() {
-        return new DiagnosticCoordinator.Host() {
+    private Coordinator.Host createFeedbackDiagnosticHost() {
+        return new Coordinator.Host() {
             @Override
             public boolean restartTargetAppForDiagnostic(String packageName) {
                 syncRuntimePropertiesForTargetLaunch(packageName);
@@ -663,7 +663,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
             }
 
             @Override
-            public void onFeedbackDiagnosticFinished(DiagnosticCoordinator.Result result) {
+            public void onFeedbackDiagnosticFinished(Coordinator.Result result) {
                 pendingFeedbackDiagnosticResult = result;
                 maybeShowPendingFeedbackDiagnosticResult();
             }
@@ -741,7 +741,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         if (item == null) {
             return;
         }
-        if (!DiagnosticLogGate.ensureEnabled(
+        if (!LogGate.ensureEnabled(
                 this,
                 () -> showFeedbackDiagnosticConfirmation(item, state),
                 null
@@ -770,7 +770,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
                         return;
                     }
                     boolean started = feedbackDiagnosticCoordinator.start(
-                            DiagnosticCoordinator.Request.fromPersisted(
+                            Coordinator.Request.fromPersisted(
                                     diagnosticItem,
                                     state,
                                     resolvePackageVersionName(item.packageName),
@@ -853,7 +853,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void maybeShowPendingFeedbackDiagnosticResult() {
-        DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+        ExportBuilder.DiagnosticPackage diagnosticPackage
                 = pendingFeedbackDiagnosticPackage;
         if (diagnosticPackage != null && activityResumed) {
             pendingFeedbackDiagnosticPackage = null;
@@ -861,20 +861,20 @@ public final class QuickConfigActivity extends LocalizedActivity {
             showDiagnosticResultSheet(diagnosticPackage);
             return;
         }
-        DiagnosticCoordinator.Result result = pendingFeedbackDiagnosticResult;
+        Coordinator.Result result = pendingFeedbackDiagnosticResult;
         if (result == null || !activityResumed) {
             return;
         }
         pendingFeedbackDiagnosticResult = null;
         showPackagingDialog();
         feedbackDiagnosticExportExecutor.execute(() -> {
-            DiagnosticExportBuilder.DiagnosticPackage built;
+            ExportBuilder.DiagnosticPackage built;
             try {
                 built = feedbackDiagnosticExportBuilder.buildPackage(result);
             } catch (IOException | RuntimeException ignored) {
                 built = null;
             }
-            DiagnosticExportBuilder.DiagnosticPackage finalBuilt = built;
+            ExportBuilder.DiagnosticPackage finalBuilt = built;
             runOnUiThread(() -> {
                 dismissPackagingDialog();
                 if (finalBuilt == null) {
@@ -891,22 +891,22 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void showDiagnosticResultSheet(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
         }
-        new DiagnosticResultSheet(this, new DiagnosticResultSheet.Host() {
+        new ResultSheet(this, new ResultSheet.Host() {
             @Override
             public void shareFeedbackDiagnostic(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 QuickConfigActivity.this.shareFeedbackDiagnostic(diagnosticPackage);
             }
 
             @Override
             public void saveFeedbackDiagnostic(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 QuickConfigActivity.this.launchSaveFeedbackDiagnosticPicker(diagnosticPackage);
             }
@@ -927,7 +927,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     @SuppressWarnings("deprecation")
     private void launchSaveFeedbackDiagnosticPicker(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
@@ -935,7 +935,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         pendingFeedbackDiagnosticPackage = diagnosticPackage;
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType(DiagnosticExportBuilder.MIME_TYPE)
+                .setType(ExportBuilder.MIME_TYPE)
                 .putExtra(Intent.EXTRA_TITLE, diagnosticPackage.fileName);
         try {
             startActivityForResult(intent, REQUEST_SAVE_FEEDBACK_DIAGNOSTIC);
@@ -946,7 +946,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void saveFeedbackDiagnosticZip(Uri uri) {
-        DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+        ExportBuilder.DiagnosticPackage diagnosticPackage
                 = pendingFeedbackDiagnosticPackage;
         pendingFeedbackDiagnosticPackage = null;
         if (uri == null || diagnosticPackage == null) {
@@ -972,7 +972,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private void shareFeedbackDiagnostic(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
@@ -1004,7 +1004,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
     }
 
     private File writeSharedFeedbackDiagnosticZip(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ExportBuilder.DiagnosticPackage diagnosticPackage
     ) throws IOException {
         File directory = new File(getCacheDir(), SHARED_FEEDBACK_DIAGNOSTIC_DIRECTORY_NAME);
         if (!directory.isDirectory() && !directory.mkdirs()) {
@@ -1019,7 +1019,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     private void launchFeedbackDiagnosticShareSheet(Uri uri) {
         Intent intent = new Intent(Intent.ACTION_SEND)
-                .setType(DiagnosticExportBuilder.MIME_TYPE)
+                .setType(ExportBuilder.MIME_TYPE)
                 .putExtra(Intent.EXTRA_STREAM, uri)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         try {

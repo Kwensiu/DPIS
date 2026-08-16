@@ -1,6 +1,6 @@
 package com.dpis.module.diagnostics;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import com.dpis.module.*;
 
@@ -46,9 +46,9 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String pageController = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticPageController.kt");
+                "src/main/java/com/dpis/module/diagnostics/PageController.kt");
         String packageActions = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticPackageActions.kt");
+                "src/main/java/com/dpis/module/diagnostics/PackageActions.kt");
         String preparation = read(
                 "src/main/java/com/dpis/module/ui/compose/"
                         + "FeedbackDiagnosticPreparationContent.kt");
@@ -62,18 +62,18 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String hookChain = read(
                 "src/main/java/com/dpis/module/ui/compose/HookChainEditorPage.kt");
         String coordinator = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticCoordinator.java");
+                "src/main/java/com/dpis/module/diagnostics/Coordinator.java");
         String summary = read(
                 "src/main/java/com/dpis/module/diagnostics/SummaryBuilder.java");
         String structuredExporter = read(
                 "src/main/java/com/dpis/module/diagnostics/"
                         + "StructuredEvidenceExporter.java");
         String logGate = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticLogGate.java");
+                "src/main/java/com/dpis/module/diagnostics/LogGate.java");
 
-        assertTrue(main.contains("new DiagnosticSession(getApplicationContext())"));
-        assertTrue(main.contains("private DiagnosticSession.Host createFeedbackDiagnosticHost()"));
-        assertTrue(main.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(main.contains("new Session(getApplicationContext())"));
+        assertTrue(main.contains("private Session.Host createFeedbackDiagnosticHost()"));
+        assertTrue(main.contains("LogGate.ensureEnabled("));
         assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"));
         assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
@@ -92,7 +92,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(pageController.contains("refreshEnvironment(created, refreshLsposed = true)"));
         assertTrue(pageController.contains("current.lsposedAvailabilityCode()"));
         assertTrue(pageController.contains("refreshLsposedAvailability"));
-        assertTrue(main.contains("DiagnosticCoordinator.Request.fromPersisted("));
+        assertTrue(main.contains("Coordinator.Request.fromPersisted("));
         assertTrue(main.contains("restoreFeedbackDiagnosticPage(retainedState)"));
         assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));
         assertTrue(main.contains("handleFeedbackDiagnosticPageBack()"));
@@ -192,7 +192,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(summary.contains("module-effects.tsv"));
         assertTrue(summary.contains("runtime transport"));
         assertTrue(summary.contains("public static final class Input"));
-        assertFalse(summary.contains("DiagnosticCoordinator.Request"));
+        assertFalse(summary.contains("Coordinator.Request"));
         assertFalse(summary.contains("Runtime event capture is TODO"));
         assertTrue(structuredExporter.contains("buildTimelineTsv("));
         assertTrue(structuredExporter.contains("buildModuleEffectsTsv("));
@@ -227,7 +227,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticFinishesOnlyAfterReturningToDpis()
             throws IOException {
         String coordinator = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticCoordinator.java");
+                "src/main/java/com/dpis/module/diagnostics/Coordinator.java");
 
         assertTrue(coordinator.contains("recordTimelineEvent(\"foreground returned to DPIS\");"));
         assertTrue(coordinator.contains("onDpisResumed();"));
@@ -244,10 +244,10 @@ public final class FeedbackDiagnosticSourceSmokeTest {
             throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String launcher = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticAppLauncher.java");
+                "src/main/java/com/dpis/module/diagnostics/AppLauncher.java");
         String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
 
-        assertTrue(main.contains("new DiagnosticAppLauncher(this)"));
+        assertTrue(main.contains("new AppLauncher(this)"));
         assertTrue(main.contains("restartTargetAppForDiagnostic(String packageName)"));
         assertTrue(main.contains(".restartForDiagnostic(packageName)"));
         assertFalse(main.contains("public boolean launchTargetApp(String packageName)"));
@@ -280,12 +280,12 @@ public final class FeedbackDiagnosticSourceSmokeTest {
     public void feedbackDiagnosticResultSupportsShareAndSaveZip() throws IOException {
         String main = read("src/main/java/com/dpis/module/MainActivity.java");
         String packageActions = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticPackageActions.kt");
+                "src/main/java/com/dpis/module/diagnostics/PackageActions.kt");
         String exportBuilder = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticExportBuilder.java");
+                "src/main/java/com/dpis/module/diagnostics/ExportBuilder.java");
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
         String resultSheet = read(
-                "src/main/java/com/dpis/module/diagnostics/DiagnosticResultSheet.kt");
+                "src/main/java/com/dpis/module/diagnostics/ResultSheet.kt");
         String forceTextSize = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
         String paintFallback = read(
                 "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.java");
@@ -301,7 +301,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
 
         assertTrue(main.contains("REQUEST_SAVE_FEEDBACK_DIAGNOSTIC"));
         assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"));
-        assertTrue(packageActions.contains("DiagnosticExportBuilder.MIME_TYPE"));
+        assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"));
         assertTrue(packageActions.contains("openOutputStream(uri)"));
         assertFalse(packageActions.contains("openOutputStream(uri, \"wt\")"));
         assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"));

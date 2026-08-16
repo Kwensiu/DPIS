@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -20,7 +20,7 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(source.contains(
                 "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
         assertTrue(source.contains("TouchFeedbackBinder.bindPressHaptic(view);"));
-        assertTrue(source.contains("DiagnosticLogGate.ensureEnabled("));
+        assertTrue(source.contains("LogGate.ensureEnabled("));
         assertTrue(source.contains("bindToolsWorkspace();"));
         assertTrue(source.contains("toolsWorkspaceBinder.onStart();"));
         assertTrue(source.contains("toolsWorkspaceBinder.onResume();"));

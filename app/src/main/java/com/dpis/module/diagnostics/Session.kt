@@ -14,14 +14,14 @@ import java.util.concurrent.Executors
  * It deliberately does not retain an Activity or Compose presentation. A replacement Activity
  * attaches after a configuration change, while collection and package construction keep running.
  */
-class DiagnosticSession(context: Context) {
+class Session(context: Context) {
     interface Host {
         fun restartTargetAppForDiagnostic(packageName: String): Boolean
         fun systemHooksEnabled(): Boolean
         fun onRecordingStarted()
         fun onStartUnavailable(rootRequired: Boolean)
         fun onPackagingStarted()
-        fun onPackageReady(diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage)
+        fun onPackageReady(diagnosticPackage: ExportBuilder.DiagnosticPackage)
         fun onPackagingFailed()
         fun onAutoFinished()
     }
@@ -36,7 +36,7 @@ class DiagnosticSession(context: Context) {
 
     private val applicationContext = context.applicationContext
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val exportBuilder = DiagnosticExportBuilder(applicationContext)
+    private val exportBuilder = ExportBuilder(applicationContext)
     private val exportExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     @Volatile
@@ -46,7 +46,7 @@ class DiagnosticSession(context: Context) {
     private var currentPhase = Phase.PREPARING
 
     @Volatile
-    private var completedPackage: DiagnosticExportBuilder.DiagnosticPackage? = null
+    private var completedPackage: ExportBuilder.DiagnosticPackage? = null
 
     private var durationEnabled = false
     private var durationSeconds = 30
@@ -55,8 +55,8 @@ class DiagnosticSession(context: Context) {
     // Invalidates a package build that outlives the page/session which started it.
     private var sessionGeneration = 0L
 
-    private val coordinator: DiagnosticCoordinator by lazy(LazyThreadSafetyMode.NONE) {
-        DiagnosticCoordinator(object : DiagnosticCoordinator.Host {
+    private val coordinator: Coordinator by lazy(LazyThreadSafetyMode.NONE) {
+        Coordinator(object : Coordinator.Host {
         override fun restartTargetAppForDiagnostic(packageName: String): Boolean {
             return host?.restartTargetAppForDiagnostic(packageName) ?: false
         }
@@ -72,7 +72,7 @@ class DiagnosticSession(context: Context) {
         override fun onFeedbackDiagnosticStarted() {
             currentPhase = Phase.RECORDING
             if (durationEnabled) {
-                this@DiagnosticSession.coordinator.scheduleFinishAfterDelay(durationSeconds * 1_000L)
+                this@Session.coordinator.scheduleFinishAfterDelay(durationSeconds * 1_000L)
             }
             notifyHost { it.onRecordingStarted() }
         }
@@ -87,7 +87,7 @@ class DiagnosticSession(context: Context) {
             notifyHost { it.onStartUnavailable(true) }
         }
 
-        override fun onFeedbackDiagnosticFinished(result: DiagnosticCoordinator.Result) {
+        override fun onFeedbackDiagnosticFinished(result: Coordinator.Result) {
             currentPhase = Phase.PACKAGING
             notifyHost { it.onPackagingStarted() }
             val generation = sessionGeneration
@@ -110,7 +110,7 @@ class DiagnosticSession(context: Context) {
     }
 
     fun start(
-        request: DiagnosticCoordinator.Request,
+        request: Coordinator.Request,
         durationEnabled: Boolean,
         durationSeconds: Int,
     ): Boolean {
@@ -125,7 +125,7 @@ class DiagnosticSession(context: Context) {
 
     fun hasPageState(): Boolean = currentPhase != Phase.PREPARING || isRunning() || completedPackage != null
 
-    fun diagnosticPackage(): DiagnosticExportBuilder.DiagnosticPackage? = completedPackage
+    fun diagnosticPackage(): ExportBuilder.DiagnosticPackage? = completedPackage
 
     fun cancel() {
         sessionGeneration++
@@ -140,7 +140,7 @@ class DiagnosticSession(context: Context) {
         exportExecutor.shutdownNow()
     }
 
-    private fun buildPackage(result: DiagnosticCoordinator.Result, generation: Long) {
+    private fun buildPackage(result: Coordinator.Result, generation: Long) {
         val built = try {
             exportBuilder.buildPackage(result)
         } catch (_: IOException) {

@@ -14,20 +14,20 @@ import java.io.IOException
 import java.util.concurrent.ExecutorService
 
 /** Owns the user-facing file actions for an already-created diagnostic package. */
-class DiagnosticPackageActions(
+class PackageActions(
     private val activity: Activity,
     private val executor: ExecutorService,
     private val saveRequestCode: Int,
 ) {
     fun launchSaveFeedbackDiagnosticPicker(
-        diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage?,
+        diagnosticPackage: ExportBuilder.DiagnosticPackage?,
     ) {
         if (diagnosticPackage == null) {
             return
         }
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
             .addCategory(Intent.CATEGORY_OPENABLE)
-            .setType(DiagnosticExportBuilder.MIME_TYPE)
+            .setType(ExportBuilder.MIME_TYPE)
             .putExtra(Intent.EXTRA_TITLE, diagnosticPackage.fileName)
         try {
             @Suppress("DEPRECATION")
@@ -39,7 +39,7 @@ class DiagnosticPackageActions(
 
     fun saveFeedbackDiagnosticZip(
         uri: Uri?,
-        diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage?,
+        diagnosticPackage: ExportBuilder.DiagnosticPackage?,
     ) {
         if (uri == null || diagnosticPackage == null) {
             showToast(R.string.feedback_diagnostic_save_failed)
@@ -69,7 +69,7 @@ class DiagnosticPackageActions(
     }
 
     fun shareFeedbackDiagnostic(
-        diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage?,
+        diagnosticPackage: ExportBuilder.DiagnosticPackage?,
     ) {
         if (diagnosticPackage == null) {
             return
@@ -101,7 +101,7 @@ class DiagnosticPackageActions(
     }
 
     fun feedbackDiagnosticSharedCachePath(
-        diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage,
+        diagnosticPackage: ExportBuilder.DiagnosticPackage,
     ): String = "/data/data/${activity.packageName}/cache/" +
         "$SHARED_DIRECTORY_NAME/${diagnosticPackage.fileName}"
 
@@ -120,7 +120,7 @@ class DiagnosticPackageActions(
     }
 
     private fun writeSharedFeedbackDiagnosticZip(
-        diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage,
+        diagnosticPackage: ExportBuilder.DiagnosticPackage,
     ): File {
         val directory = File(activity.cacheDir, SHARED_DIRECTORY_NAME)
         if (!directory.isDirectory && !directory.mkdirs()) {
@@ -135,7 +135,7 @@ class DiagnosticPackageActions(
 
     private fun launchFeedbackDiagnosticShareSheet(uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND)
-            .setType(DiagnosticExportBuilder.MIME_TYPE)
+            .setType(ExportBuilder.MIME_TYPE)
             .putExtra(Intent.EXTRA_STREAM, uri)
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         try {

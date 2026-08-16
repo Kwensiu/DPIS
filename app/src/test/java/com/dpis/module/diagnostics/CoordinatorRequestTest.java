@@ -19,13 +19,13 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-public final class DiagnosticCoordinatorRequestTest {
+public final class CoordinatorRequestTest {
 
     @Test
     public void fromUsesItemWechatDpiValue() {
         AppListItem item = app("com.tencent.mm", 600);
 
-        DiagnosticCoordinator.Request request = DiagnosticCoordinator.Request.from(
+        Coordinator.Request request = Coordinator.Request.from(
                 item,
                 null,
                 "8.0.74"
@@ -38,7 +38,7 @@ public final class DiagnosticCoordinatorRequestTest {
     public void fromAllowsClearedPersistedWechatDpi() {
         AppListItem item = app("com.tencent.mm", 600).withWechatDpi(null);
 
-        DiagnosticCoordinator.Request request = DiagnosticCoordinator.Request.from(
+        Coordinator.Request request = Coordinator.Request.from(
                 item,
                 null,
                 "8.0.74"
@@ -61,8 +61,8 @@ public final class DiagnosticCoordinatorRequestTest {
         assertTrue(store.setWechatDpi(packageName, 610));
         AppListItem staleItem = app(packageName, null);
 
-        DiagnosticCoordinator.Request request
-                = DiagnosticCoordinator.Request.fromPersisted(
+        Coordinator.Request request
+                = Coordinator.Request.fromPersisted(
                         staleItem,
                         null,
                         "8.0.74",
@@ -84,8 +84,8 @@ public final class DiagnosticCoordinatorRequestTest {
     public void fromPersistedFallsBackWhenStoreUnavailable() {
         AppListItem item = app("com.tencent.mm", 600);
 
-        DiagnosticCoordinator.Request request
-                = DiagnosticCoordinator.Request.fromPersisted(
+        Coordinator.Request request
+                = Coordinator.Request.fromPersisted(
                         item,
                         null,
                         "8.0.74",

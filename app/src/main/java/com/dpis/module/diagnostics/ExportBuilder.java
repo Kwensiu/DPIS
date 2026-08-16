@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-public final class DiagnosticExportBuilder {
+public final class ExportBuilder {
     public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";
     public static final String TIMELINE_ENTRY_NAME = "timeline.tsv";
     public static final String MODULE_EFFECTS_ENTRY_NAME = "module-effects.tsv";
@@ -87,13 +87,13 @@ public final class DiagnosticExportBuilder {
     }
 
     public static final class DiagnosticPackage {
-        public final DiagnosticCoordinator.Result result;
+        public final Coordinator.Result result;
         public final String fileName;
         public final byte[] zipBytes;
         public final List<EntrySummary> entries;
 
         DiagnosticPackage(
-                DiagnosticCoordinator.Result result,
+                Coordinator.Result result,
                 String fileName,
                 byte[] zipBytes,
                 List<EntrySummary> entries
@@ -108,14 +108,14 @@ public final class DiagnosticExportBuilder {
     private final DpisLogReader dpisLogReader;
     private final RawLogReader lsposedLogReader;
 
-    public DiagnosticExportBuilder(android.content.Context context) {
+    public ExportBuilder(android.content.Context context) {
         this(
                 () -> new DpisAppLogStore(context).readRecentEntries(),
                 LsposedLogReader::readLsposedDpisCurrent
         );
     }
 
-    DiagnosticExportBuilder(
+    ExportBuilder(
             DpisLogReader dpisLogReader,
             RawLogReader lsposedLogReader
     ) {
@@ -127,11 +127,11 @@ public final class DiagnosticExportBuilder {
                 : LsposedLogReader::readLsposedDpisCurrent;
     }
 
-    public byte[] buildZip(DiagnosticCoordinator.Result result) throws IOException {
+    public byte[] buildZip(Coordinator.Result result) throws IOException {
         return buildPackage(result).zipBytes;
     }
 
-    public DiagnosticPackage buildPackage(DiagnosticCoordinator.Result result)
+    public DiagnosticPackage buildPackage(Coordinator.Result result)
             throws IOException {
         LogReadResult lsposedLog = readLsposedLog();
         SessionWindow window = windowFor(result);
@@ -175,17 +175,17 @@ public final class DiagnosticExportBuilder {
         );
     }
 
-    public void writeZip(OutputStream output, DiagnosticCoordinator.Result result)
+    public void writeZip(OutputStream output, Coordinator.Result result)
             throws IOException {
         output.write(buildPackage(result).zipBytes);
     }
 
-    String buildDiagnosticText(DiagnosticCoordinator.Result result) {
+    String buildDiagnosticText(Coordinator.Result result) {
         return buildDiagnosticText(result, readLsposedLog(), windowFor(result));
     }
 
     private String buildDiagnosticText(
-            DiagnosticCoordinator.Result result,
+            Coordinator.Result result,
             LogReadResult lsposedLog,
             SessionWindow window
     ) {
@@ -193,7 +193,7 @@ public final class DiagnosticExportBuilder {
     }
 
     private String buildDiagnosticText(
-            DiagnosticCoordinator.Result result,
+            Coordinator.Result result,
             List<String> runtimeEvents
     ) {
         if (result == null || result.request == null) {
@@ -219,7 +219,7 @@ public final class DiagnosticExportBuilder {
         return builder.toString();
     }
 
-    String buildFileName(DiagnosticCoordinator.Result result) {
+    String buildFileName(Coordinator.Result result) {
         String packageName = result != null && result.request != null
                 ? safeFilePart(result.request.packageName)
                 : "unknown";
@@ -238,7 +238,7 @@ public final class DiagnosticExportBuilder {
 
     private void appendManifest(
             StringBuilder builder,
-            DiagnosticCoordinator.Result result
+            Coordinator.Result result
     ) {
         builder.append("[manifest]\n");
         builder.append("package: ").append(valueOrUnknown(result.request.packageName)).append('\n');
@@ -257,7 +257,7 @@ public final class DiagnosticExportBuilder {
 
     private void appendAppConfig(
             StringBuilder builder,
-            DiagnosticCoordinator.Request request
+            Coordinator.Request request
     ) {
         builder.append("[app-config]\n");
         builder.append("scopeKnown: ").append(request.scopeKnown).append('\n');
@@ -283,7 +283,7 @@ public final class DiagnosticExportBuilder {
 
     private void appendDiagnosticPlan(
             StringBuilder builder,
-            DiagnosticCoordinator.Request request
+            Coordinator.Request request
     ) {
         builder.append("[diagnostic-plan]\n");
         if (!request.scopeKnown) {
@@ -517,7 +517,7 @@ public final class DiagnosticExportBuilder {
 
     private void appendPerfettoSummary(
             StringBuilder builder,
-            DiagnosticCoordinator.Result result
+            Coordinator.Result result
     ) {
         builder.append("[perfetto]\n");
         boolean available = result != null && result.perfettoAvailable;
@@ -672,7 +672,7 @@ public final class DiagnosticExportBuilder {
     }
 
     private static SessionWindow windowFor(
-            DiagnosticCoordinator.Result result
+            Coordinator.Result result
     ) {
         if (result == null) {
             return null;
@@ -684,7 +684,7 @@ public final class DiagnosticExportBuilder {
     }
 
     private static List<String> mergedRuntimeEvents(
-            DiagnosticCoordinator.Result result,
+            Coordinator.Result result,
             LogReadResult lsposedLog,
             SessionWindow window
     ) {
@@ -707,7 +707,7 @@ public final class DiagnosticExportBuilder {
     }
 
     private static List<String> sortedRuntimeEvents(
-            DiagnosticCoordinator.Result result,
+            Coordinator.Result result,
             LogReadResult lsposedLog,
             SessionWindow window
     ) {
@@ -717,7 +717,7 @@ public final class DiagnosticExportBuilder {
     }
 
     private static LsposedTimelineParser.Input timelineInput(
-            DiagnosticCoordinator.Request request
+            Coordinator.Request request
     ) {
         boolean appEnabled = request != null && request.inScope && request.dpisEnabled;
         return new LsposedTimelineParser.Input(
@@ -799,7 +799,7 @@ public final class DiagnosticExportBuilder {
         return content.endsWith("\n") ? count : count + 1;
     }
 
-    private static String formatViewport(DiagnosticCoordinator.Request request) {
+    private static String formatViewport(Coordinator.Request request) {
         ViewportTargetSpec spec = request.viewportTargetSpec;
         String target;
         if (spec.isRelativeScale()) {
@@ -812,7 +812,7 @@ public final class DiagnosticExportBuilder {
         return target + ", mode=" + request.viewportApplyMode;
     }
 
-    private static String formatFont(DiagnosticCoordinator.Request request) {
+    private static String formatFont(Coordinator.Request request) {
         String scale = request.fontScalePercent != null
                 ? request.fontScalePercent + "%"
                 : "off";

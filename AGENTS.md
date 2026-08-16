@@ -182,7 +182,7 @@ bundle and does not modify global agent skills.
 - Read `CONTEXT.md` before changing log page behavior, feedback diagnostic flow,
   or the roles of `diagnostic.txt`, `dpis-log.txt`, and `lsposed-log.txt`.
 - When changing diagnostic package structure, log parsing, export file names, or
-  result sheet file cards, update `DiagnosticExportBuilderTest` and the
+  result sheet file cards, update `ExportBuilderTest` and the
   related source/layout smoke tests so they assert the current diagnostic
   semantics.
 

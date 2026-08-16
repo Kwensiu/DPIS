@@ -11,8 +11,8 @@ import com.dpis.module.ui.compose.ComposeConfirmDialog;
 import android.content.Context;
 import android.widget.Toast;
 
-public final class DiagnosticLogGate {
-    private DiagnosticLogGate() {
+public final class LogGate {
+    private LogGate() {
     }
 
     public static boolean ensureEnabled(

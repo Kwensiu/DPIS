@@ -38,21 +38,21 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** Compose-owned diagnostic result sheet; package creation and file actions remain host-owned. */
-class DiagnosticResultSheet(
+class ResultSheet(
     private val activity: Activity?,
     private val host: Host?
 ) {
     interface Host {
         fun shareFeedbackDiagnostic(
-            diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage
+            diagnosticPackage: ExportBuilder.DiagnosticPackage
         )
 
         fun saveFeedbackDiagnostic(
-            diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage
+            diagnosticPackage: ExportBuilder.DiagnosticPackage
         )
     }
 
-    fun show(diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage?) {
+    fun show(diagnosticPackage: ExportBuilder.DiagnosticPackage?) {
         val activity = activity ?: return
         val host = host ?: return
         val result = diagnosticPackage?.result ?: return

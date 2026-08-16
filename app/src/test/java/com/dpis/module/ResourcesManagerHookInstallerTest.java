@@ -6,7 +6,7 @@ import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.diagnostics.RuntimeEvents;
 
-import com.dpis.module.diagnostics.DiagnosticCoordinator;
+import com.dpis.module.diagnostics.Coordinator;
 
 import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
 
@@ -479,8 +479,8 @@ public class ResourcesManagerHookInstallerTest {
                 .commit();
     }
 
-    private static DiagnosticCoordinator.Request request() {
-        return new DiagnosticCoordinator.Request(
+    private static Coordinator.Request request() {
+        return new Coordinator.Request(
                 PACKAGE_NAME,
                 "Target",
                 "1",

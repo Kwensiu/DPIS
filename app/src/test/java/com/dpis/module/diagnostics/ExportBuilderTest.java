@@ -32,13 +32,13 @@ import java.util.zip.ZipInputStream;
 
 import org.junit.Test;
 
-public final class DiagnosticExportBuilderTest {
+public final class ExportBuilderTest {
     private static final long SESSION_START_MILLIS = millis("2023-11-15 06:13:20.000");
     private static final long SESSION_END_MILLIS = millis("2023-11-15 06:13:30.000");
 
     @Test
     public void zipContainsDiagnosticAndSeparateLogEntries() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
                                 millis("2023-11-15 06:13:20.100"),
@@ -138,7 +138,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void performanceSummaryPrefersTargetProcessLsposedAggregate() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -159,7 +159,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void performanceSummaryFallsBackToTargetMutationLogs() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -180,7 +180,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void timelineEntryOrdersRuntimeEvents() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -204,7 +204,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void timelineIncludesSlowMutationBreakdownEvidence() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -226,7 +226,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void timelineTsvExcludesUnstructuredCoordinatorNotes() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -247,7 +247,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void moduleEffectsEntryUsesTargetProcessLsposedAggregate() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -270,7 +270,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void moduleEffectsEntryFallsBackToMutationLogs() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -292,7 +292,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void moduleEffectsEntryReportsSelectedViewportWhenUnobserved() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -314,7 +314,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void timelineEntryClassifiesAppProcessAndSelfTestModules() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -339,9 +339,9 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void diagnosticExportsAvailablePerfettoTrace() throws IOException {
-        DiagnosticCoordinator.Result base = result();
-        DiagnosticCoordinator.Result withTrace =
-                new DiagnosticCoordinator.Result(
+        Coordinator.Result base = result();
+        Coordinator.Result withTrace =
+                new Coordinator.Result(
                         base.request,
                         base.startedAtMillis,
                         base.finishedAtMillis,
@@ -360,14 +360,14 @@ public final class DiagnosticExportBuilderTest {
                 );
 
         Map<String, String> entries = unzip(
-                new DiagnosticExportBuilder(List::of, () ->
+                new ExportBuilder(List::of, () ->
                         new LogReadResult(0, "test-source", "", ""))
                         .buildZip(withTrace)
         );
 
-        assertEquals("abc", entries.get(DiagnosticExportBuilder.PERFETTO_TRACE_ENTRY_NAME));
+        assertEquals("abc", entries.get(ExportBuilder.PERFETTO_TRACE_ENTRY_NAME));
         String diagnostic = unzip(
-                new DiagnosticExportBuilder(List::of, () ->
+                new ExportBuilder(List::of, () ->
                         new LogReadResult(0, "test-source", "", ""))
                         .buildZip(withTrace)
         ).get("diagnostic.txt");
@@ -377,7 +377,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void dpisLogKeepsWindowEntriesWhenPresent() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
                                 millis("2023-11-15 06:13:25.000"),
@@ -429,7 +429,7 @@ public final class DiagnosticExportBuilderTest {
                     false
             ));
         }
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 () -> entries,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -450,7 +450,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void dpisLogFallbackIgnoresEntriesFarOutsideSession() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 () -> List.of(
                         new DpisLogEntry(
                                 millis("2023-11-15 05:00:00.000"),
@@ -490,7 +490,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void emptyTimelineIncludesRawEvidenceNote() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -506,7 +506,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void wechatDpiConfigAddsAppSpecificDiagnosticPlan() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -521,7 +521,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void runtimeAnalysisKeepsFullTimelineAndFlagsWarnings() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -548,7 +548,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void runtimeSelfTestReportsFoundHotpathProbe() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(
                         0,
@@ -570,7 +570,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void runtimeSelfTestReportsFoundForWechatHotpath() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(
                         0,
@@ -592,7 +592,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void fileNameUsesZipExtension() {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -607,7 +607,7 @@ public final class DiagnosticExportBuilderTest {
 
     @Test
     public void emptyLogEntriesUsePlaceholders() throws IOException {
-        DiagnosticExportBuilder builder = new DiagnosticExportBuilder(
+        ExportBuilder builder = new ExportBuilder(
                 List::of,
                 () -> new LogReadResult(0, "test-source", "", "")
         );
@@ -620,19 +620,19 @@ public final class DiagnosticExportBuilderTest {
                 .contains("LSPosed filtered log unavailable or empty in diagnostic window."));
     }
 
-    private static DiagnosticCoordinator.Result result() {
+    private static Coordinator.Result result() {
         return result(List.of("11-14 22:13:20.000 session started"), null);
     }
 
-    private static DiagnosticCoordinator.Result result(List<String> timelineEvents) {
+    private static Coordinator.Result result(List<String> timelineEvents) {
         return result(timelineEvents, null);
     }
 
-    private static DiagnosticCoordinator.Result result(
+    private static Coordinator.Result result(
             List<String> timelineEvents,
             Integer wechatDpi
     ) {
-        DiagnosticCoordinator.Request request = new DiagnosticCoordinator.Request(
+        Coordinator.Request request = new Coordinator.Request(
                 "com.example.app",
                 "Example",
                 "1.2.3",
@@ -648,7 +648,7 @@ public final class DiagnosticExportBuilderTest {
                 "system_server_font",
                 wechatDpi
         );
-        return new DiagnosticCoordinator.Result(
+        return new Coordinator.Result(
                 request,
                 SESSION_START_MILLIS,
                 SESSION_END_MILLIS,
@@ -661,11 +661,11 @@ public final class DiagnosticExportBuilderTest {
         );
     }
 
-    private static DiagnosticCoordinator.Result wechatResult(
+    private static Coordinator.Result wechatResult(
             List<String> timelineEvents,
             Integer wechatDpi
     ) {
-        DiagnosticCoordinator.Request request = new DiagnosticCoordinator.Request(
+        Coordinator.Request request = new Coordinator.Request(
                 "com.tencent.mm",
                 "微信",
                 "8.0.74",
@@ -681,7 +681,7 @@ public final class DiagnosticExportBuilderTest {
                 null,
                 wechatDpi
         );
-        return new DiagnosticCoordinator.Result(
+        return new Coordinator.Result(
                 request,
                 SESSION_START_MILLIS,
                 SESSION_END_MILLIS,

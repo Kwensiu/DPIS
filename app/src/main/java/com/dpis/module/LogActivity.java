@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import com.dpis.module.diagnostics.DpisLogEntry;
 import com.dpis.module.diagnostics.DpisAppLogStore;
@@ -110,7 +110,7 @@ public final class LogActivity extends LocalizedActivity {
                 this::refreshLogs,
                 this::toggleMessageExpansion,
                 this::copyEntryByKey);
-        waitingForDiagnosticLogEnable = !DiagnosticLogGate.ensureEnabled(
+        waitingForDiagnosticLogEnable = !LogGate.ensureEnabled(
                 this,
                 () -> {
                     waitingForDiagnosticLogEnable = false;

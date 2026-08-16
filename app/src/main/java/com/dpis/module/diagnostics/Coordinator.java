@@ -27,7 +27,7 @@ import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public final class DiagnosticCoordinator {
+public final class Coordinator {
     private static final long FOREGROUND_CHECK_INTERVAL_MS = 1_000L;
 
     public interface Host {
@@ -344,7 +344,7 @@ public final class DiagnosticCoordinator {
     private final List<String> runningTimelineEvents = new ArrayList<>();
     private volatile PerfettoTrace runningPerfettoTrace;
 
-    public DiagnosticCoordinator(Host host) {
+    public Coordinator(Host host) {
         this(
                 host,
                 new Handler(Looper.getMainLooper()),
@@ -353,7 +353,7 @@ public final class DiagnosticCoordinator {
         );
     }
 
-    DiagnosticCoordinator(
+    Coordinator(
             Host host,
             Handler handler,
             ExecutorService executor,

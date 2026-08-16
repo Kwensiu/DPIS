@@ -19,7 +19,7 @@ public final class RuntimeEvents {
     private RuntimeEvents() {
     }
 
-    public static void start(String packageName, DiagnosticCoordinator.Request request) {
+    public static void start(String packageName, Coordinator.Request request) {
         activeSession = new Session(packageName, request);
     }
 
@@ -46,7 +46,7 @@ public final class RuntimeEvents {
     }
 
     private static TimelineClassifier.Context classifierContext(
-            DiagnosticCoordinator.Request request
+            Coordinator.Request request
     ) {
         boolean appEnabled = request != null && request.inScope && request.dpisEnabled;
         return new TimelineClassifier.Context(
@@ -154,7 +154,7 @@ public final class RuntimeEvents {
         private final PerformanceSnapshot.Collector performance =
                 new PerformanceSnapshot.Collector();
 
-        Session(String packageName, DiagnosticCoordinator.Request request) {
+        Session(String packageName, Coordinator.Request request) {
             targetPackage = valueOrEmpty(packageName);
             classifierContext = classifierContext(request);
         }

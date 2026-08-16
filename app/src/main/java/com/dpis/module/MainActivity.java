@@ -1,7 +1,7 @@
 package com.dpis.module;
 
 import com.dpis.module.appconfig.LandAppDetailPaneBinder;
-import com.dpis.module.diagnostics.DiagnosticLogGate;
+import com.dpis.module.diagnostics.LogGate;
 
 import com.dpis.module.settings.SystemScopeCoordinator;
 
@@ -18,14 +18,14 @@ import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.updates.UpdateAvailableDialog;
 
-import com.dpis.module.diagnostics.DiagnosticResultSheet;
+import com.dpis.module.diagnostics.ResultSheet;
 
-import com.dpis.module.diagnostics.DiagnosticExportBuilder;
-import com.dpis.module.diagnostics.DiagnosticPackageActions;
-import com.dpis.module.diagnostics.DiagnosticPageController;
-import com.dpis.module.diagnostics.DiagnosticSession;
+import com.dpis.module.diagnostics.ExportBuilder;
+import com.dpis.module.diagnostics.PackageActions;
+import com.dpis.module.diagnostics.PageController;
+import com.dpis.module.diagnostics.Session;
 
-import com.dpis.module.diagnostics.DiagnosticCoordinator;
+import com.dpis.module.diagnostics.Coordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
@@ -82,7 +82,7 @@ import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
-import com.dpis.module.diagnostics.DiagnosticAppLauncher;
+import com.dpis.module.diagnostics.AppLauncher;
 
 import com.dpis.module.ui.TouchFeedbackBinder;
 
@@ -245,13 +245,13 @@ public final class MainActivity
             = new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch);
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
-    private DiagnosticSession feedbackDiagnosticSession;
-    private final DiagnosticAppLauncher feedbackDiagnosticAppLauncher
-            = new DiagnosticAppLauncher(this);
+    private Session feedbackDiagnosticSession;
+    private final AppLauncher feedbackDiagnosticAppLauncher
+            = new AppLauncher(this);
     private final ExecutorService feedbackDiagnosticExportExecutor
             = Executors.newSingleThreadExecutor();
-    private final DiagnosticPackageActions feedbackDiagnosticPackageActions
-            = new DiagnosticPackageActions(
+    private final PackageActions feedbackDiagnosticPackageActions
+            = new PackageActions(
                     this,
                     feedbackDiagnosticExportExecutor,
                     REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
@@ -319,7 +319,7 @@ public final class MainActivity
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
     private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
-    private DiagnosticPageController feedbackDiagnosticPageController;
+    private PageController feedbackDiagnosticPageController;
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
@@ -357,8 +357,8 @@ public final class MainActivity
         feedbackDiagnosticSession = retainedState != null
                 && retainedState.feedbackDiagnosticSession != null
                 ? retainedState.feedbackDiagnosticSession
-                : new DiagnosticSession(getApplicationContext());
-        feedbackDiagnosticPageController = new DiagnosticPageController(
+                : new Session(getApplicationContext());
+        feedbackDiagnosticPageController = new PageController(
                 getApplicationContext(),
                 feedbackDiagnosticExportExecutor,
                 createDiagnosticPageControllerHost()
@@ -483,7 +483,7 @@ public final class MainActivity
 
             @Override
             public void openLogsWhenDiagnosticLogsEnabled() {
-                if (DiagnosticLogGate.ensureEnabled(
+                if (LogGate.ensureEnabled(
                         MainActivity.this,
                         () -> startActivity(new Intent(MainActivity.this, LogActivity.class)),
                         null
@@ -2032,7 +2032,7 @@ public final class MainActivity
                     }
                     markComposeAppEditorSaved(draft);
                     boolean started = feedbackDiagnosticSession.start(
-                            DiagnosticCoordinator.Request.fromPersisted(
+                            Coordinator.Request.fromPersisted(
                                     item,
                                     composeEditorDialogState(item, draft),
                                     resolvePackageVersionName(item.packageName),
@@ -3863,8 +3863,8 @@ public final class MainActivity
         };
     }
 
-    private DiagnosticSession.Host createFeedbackDiagnosticHost() {
-        return new DiagnosticSession.Host() {
+    private Session.Host createFeedbackDiagnosticHost() {
+        return new Session.Host() {
             @Override
             public boolean restartTargetAppForDiagnostic(String packageName) {
                 syncRuntimePropertiesForTargetLaunch(packageName);
@@ -3908,7 +3908,7 @@ public final class MainActivity
 
             @Override
             public void onPackageReady(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 showFeedbackDiagnosticReady(diagnosticPackage);
             }
@@ -3935,7 +3935,7 @@ public final class MainActivity
         if (item == null) {
             return;
         }
-        if (!DiagnosticLogGate.ensureEnabled(
+        if (!LogGate.ensureEnabled(
                 this,
                 () -> showFeedbackDiagnosticConfirmation(item, state),
                 null
@@ -3964,7 +3964,7 @@ public final class MainActivity
                         return;
                     }
                     boolean started = feedbackDiagnosticSession.start(
-                            DiagnosticCoordinator.Request.fromPersisted(
+                            Coordinator.Request.fromPersisted(
                                     diagnosticItem,
                                     state,
                                     resolvePackageVersionName(item.packageName),
@@ -4118,7 +4118,7 @@ public final class MainActivity
     }
 
     private void showFeedbackDiagnosticReady(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
@@ -4189,22 +4189,22 @@ public final class MainActivity
     }
 
     private void showDiagnosticResultSheet(
-            DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+            ExportBuilder.DiagnosticPackage diagnosticPackage
     ) {
         if (diagnosticPackage == null) {
             return;
         }
-        new DiagnosticResultSheet(this, new DiagnosticResultSheet.Host() {
+        new ResultSheet(this, new ResultSheet.Host() {
             @Override
             public void shareFeedbackDiagnostic(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
             }
 
             @Override
             public void saveFeedbackDiagnostic(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
                         diagnosticPackage
@@ -4795,7 +4795,7 @@ public final class MainActivity
                                  TemplateEditorDraft globalPrefillDraft,
                                  TemplateEditorDraft quickTemplateDraft,
                                  HomeUpdateUiState homeUpdateUiState,
-                                 DiagnosticSession feedbackDiagnosticSession,
+                                 Session feedbackDiagnosticSession,
                                  FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                                  com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
                                          feedbackDiagnosticPresentationState) {
@@ -4819,7 +4819,7 @@ public final class MainActivity
                     TemplateEditorDraft globalPrefillDraft,
                     TemplateEditorDraft quickTemplateDraft,
                     HomeUpdateUiState homeUpdateUiState,
-                    DiagnosticSession feedbackDiagnosticSession,
+                    Session feedbackDiagnosticSession,
                     FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                     com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
                             feedbackDiagnosticPresentationState
@@ -4883,8 +4883,8 @@ public final class MainActivity
         }
     }
 
-    private DiagnosticPageController.Host createDiagnosticPageControllerHost() {
-        return new DiagnosticPageController.Host() {
+    private PageController.Host createDiagnosticPageControllerHost() {
+        return new PageController.Host() {
             @Override
             public boolean canShowDiagnosticPage() {
                 return composeShellHost != null;
@@ -4931,7 +4931,7 @@ public final class MainActivity
                     int durationSeconds
             ) {
                 return feedbackDiagnosticSession.start(
-                        DiagnosticCoordinator.Request.fromPersisted(
+                        Coordinator.Request.fromPersisted(
                                 item,
                                 composeEditorDialogState(item, draft),
                                 versionName,
@@ -4943,13 +4943,13 @@ public final class MainActivity
             }
 
             @Override
-            public DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage() {
+            public ExportBuilder.DiagnosticPackage diagnosticPackage() {
                 return feedbackDiagnosticSession.diagnosticPackage();
             }
 
             @Override
             public void saveDiagnosticPackage(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
                         diagnosticPackage
@@ -4958,7 +4958,7 @@ public final class MainActivity
 
             @Override
             public void shareDiagnosticPackage(
-                    DiagnosticExportBuilder.DiagnosticPackage diagnosticPackage
+                    ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
             }

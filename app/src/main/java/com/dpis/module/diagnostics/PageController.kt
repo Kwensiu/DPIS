@@ -9,7 +9,7 @@ import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.ExecutorService
 
 /** Coordinates construction and environment updates for the diagnostic preparation page. */
-class DiagnosticPageController(
+class PageController(
     context: Context,
     private val executor: ExecutorService,
     host: Host,
@@ -42,14 +42,14 @@ class DiagnosticPageController(
             durationSeconds: Int,
         ): Boolean
 
-        fun diagnosticPackage(): DiagnosticExportBuilder.DiagnosticPackage?
+        fun diagnosticPackage(): ExportBuilder.DiagnosticPackage?
 
         fun saveDiagnosticPackage(
-            diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage,
+            diagnosticPackage: ExportBuilder.DiagnosticPackage,
         )
 
         fun shareDiagnosticPackage(
-            diagnosticPackage: DiagnosticExportBuilder.DiagnosticPackage,
+            diagnosticPackage: ExportBuilder.DiagnosticPackage,
         )
 
         fun showLsposedExplanation(title: String, explanation: String)
