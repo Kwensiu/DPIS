@@ -221,6 +221,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
         AppConfigDialogBinder.AppConfigDialogState dialogState = composeDialogState(item, draft);
         presentation.show(new AppConfigEditorPresentation.State(
                 item,
+                resolvePackageVersionName(item.packageName),
                 draft,
                 new AppConfigDialogBinder(this, appConfigDialogHost)
                         .typefaceSelectorText(draft.selectedTypefaceId),

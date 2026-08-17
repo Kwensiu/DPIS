@@ -429,7 +429,9 @@ private fun TemplateEditorSheetHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AppConfigSheetUiTokens.FieldRowHeight),
+            // Long localized titles/subtitles must be allowed to wrap. The old fixed row
+            // height clipped the second and later lines inside the portrait sheet.
+            .heightIn(min = AppConfigSheetUiTokens.FieldRowHeight),
         horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {

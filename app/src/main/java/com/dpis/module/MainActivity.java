@@ -1723,6 +1723,7 @@ public final class MainActivity
         boolean dirty = !currentDraft.hasSameSavedConfig(mainViewModel.getSavedEditingDraft());
         return new AppConfigEditorPresentation.State(
                 editorItem,
+                resolvePackageVersionName(editorItem.packageName),
                 currentDraft,
                 typefaceSelectorText,
                 hookChainText,

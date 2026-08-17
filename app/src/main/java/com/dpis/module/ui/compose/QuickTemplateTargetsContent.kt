@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -72,6 +73,7 @@ fun QuickTemplateTargetsContent(
     onSave: () -> Unit
 ) {
     val current = state ?: return
+    val focusManager = LocalFocusManager.current
     var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
 
     SecondaryPageScaffold(
@@ -100,7 +102,10 @@ fun QuickTemplateTargetsContent(
         },
         bottomBar = {
             Button(
-                onClick = onSave,
+                onClick = {
+                    focusManager.clearFocus()
+                    onSave()
+                },
                 enabled = !current.loading,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -123,10 +128,18 @@ fun QuickTemplateTargetsContent(
                 query = current.query,
                 onQueryChanged = onQueryChanged,
                 onClearQuery = { onQueryChanged("") },
-                onOpenFilters = { filterSheetVisible = true }
+                onOpenFilters = {
+                    focusManager.clearFocus()
+                    filterSheetVisible = true
+                }
             )
             Spacer(Modifier.height(12.dp))
-            Box(Modifier.fillMaxWidth().weight(1f)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clearTextInputFocusOnPointerDown(focusManager)
+            ) {
                 when {
                     current.loading -> {
                         Text(
@@ -261,7 +274,10 @@ private fun TargetSearchCard(
                             Text(
                                 text = stringResource(R.string.search_hint),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         innerTextField()

@@ -37,12 +37,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -85,12 +86,14 @@ fun AppConfigEditorContent(
 ) {
     val draft = state.draft
     val appIcon = rememberInstalledAppIcon(state.item.packageName, state.item.icon)
-    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val inputFocusBoundary = rememberTextInputFocusBoundary()
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
     val viewportBringIntoView = remember { BringIntoViewRequester() }
     val fontBringIntoView = remember { BringIntoViewRequester() }
     val wechatBringIntoView = remember { BringIntoViewRequester() }
+    val completeInput = { focusManager.clearFocus(force = true) }
     val viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
         draft.viewportInputFor(draft.viewportMode),
         draft.viewportMode
@@ -156,6 +159,7 @@ fun AppConfigEditorContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clearTextInputFocusOutside(focusManager, inputFocusBoundary)
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
@@ -196,20 +200,20 @@ fun AppConfigEditorContent(
                         .padding(start = AppConfigSheetUiTokens.AppIconGap),
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(state.item.label,
+                    AppIdentityMarqueeText(state.item.label,
+                        modifier = Modifier.fillMaxWidth(),
                         // Trim only the boundary facing the package name. The normal title line
                         // height remains intact, so this does not make the glyphs feel cramped.
                         style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
                             platformStyle = PlatformTextStyle(includeFontPadding = false),
                             lineHeightStyle = LineHeightStyle(
                                 alignment = LineHeightStyle.Alignment.Center,
                                 trim = LineHeightStyle.Trim.LastLineBottom,
                                 mode = LineHeightStyle.Mode.Fixed
                             )
-                        ),
-                        fontWeight = FontWeight.Bold, maxLines = 1,
-                        overflow = TextOverflow.Ellipsis)
-                    Text(state.item.packageName, style = MaterialTheme.typography.bodyMedium.copy(
+                        ))
+                    AppIdentityMarqueeText(state.item.packageName, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium.copy(
                         platformStyle = PlatformTextStyle(includeFontPadding = false),
                         lineHeightStyle = LineHeightStyle(
                             alignment = LineHeightStyle.Alignment.Center,
@@ -217,10 +221,11 @@ fun AppConfigEditorContent(
                             mode = LineHeightStyle.Mode.Fixed
                         )
                     ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(statusText, style = MaterialTheme.typography.bodySmall,
+                        Text(
+                            if (state.versionName.isBlank()) "-" else state.versionName,
+                            style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (showInlineUnsavedBadge && state.dirty) {
@@ -247,7 +252,10 @@ fun AppConfigEditorContent(
                 DpisCompactEditorTextField(
                     value = draft.viewportInputFor(draft.viewportMode),
                     onValueChange = state.actions::updateViewportInput,
-                    modifier = Modifier.fillMaxWidth().bringIntoViewRequester(viewportBringIntoView),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(viewportBringIntoView)
+                        .reportTextInputFocusBounds(inputFocusBoundary, "viewport"),
                     isError = !state.viewportInputValid,
                     label = stringResource(
                         if (state.usesAbsoluteViewport()) {
@@ -267,11 +275,11 @@ fun AppConfigEditorContent(
             second = stringResource(R.string.dialog_viewport_mode_compat),
             firstSelected = !state.usesAbsoluteViewport(),
             onFirst = {
-                keyboard?.hide()
+                completeInput()
                 state.actions.changeViewportMode(ViewportTargetType.RELATIVE_SCALE)
             },
             onSecond = {
-                keyboard?.hide()
+                completeInput()
                 state.actions.changeViewportMode(ViewportTargetType.ABSOLUTE_DP)
             }
         )
@@ -284,7 +292,10 @@ fun AppConfigEditorContent(
                 DpisCompactEditorTextField(
                     value = draft.fontInput,
                     onValueChange = state.actions::updateFontInput,
-                    modifier = Modifier.fillMaxWidth().bringIntoViewRequester(fontBringIntoView),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .bringIntoViewRequester(fontBringIntoView)
+                        .reportTextInputFocusBounds(inputFocusBoundary, "font"),
                     isError = !state.fontInputValid,
                     label = stringResource(R.string.dialog_font_scale_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -298,11 +309,11 @@ fun AppConfigEditorContent(
             second = stringResource(R.string.dialog_font_mode_compat),
             firstSelected = state.usesSystemFontMode(),
             onFirst = {
-                keyboard?.hide()
+                completeInput()
                 state.actions.changeFontMode(FontApplyMode.SYSTEM_EMULATION)
             },
             onSecond = {
-                keyboard?.hide()
+                completeInput()
                 state.actions.changeFontMode(FontApplyMode.FIELD_REWRITE)
             }
         )
@@ -310,6 +321,9 @@ fun AppConfigEditorContent(
             EditorInputError()
         }
         if (state.showsWechatDpi()) {
+            DisposableEffect(inputFocusBoundary) {
+                onDispose { inputFocusBoundary.removeInput("wechat") }
+            }
             Spacer(Modifier.height(AppConfigSheetUiTokens.InputRowLayoutGap))
             Row(
                 modifier = Modifier
@@ -324,7 +338,10 @@ fun AppConfigEditorContent(
                 DpisCompactEditorTextField(
                     value = draft.wechatDpiInput ?: "",
                     onValueChange = state.actions::updateWechatDpiInput,
-                    modifier = Modifier.weight(1f).bringIntoViewRequester(wechatBringIntoView),
+                    modifier = Modifier
+                        .weight(1f)
+                        .bringIntoViewRequester(wechatBringIntoView)
+                        .reportTextInputFocusBounds(inputFocusBoundary, "wechat"),
                     isError = !state.wechatDpiInputValid,
                     label = stringResource(R.string.dialog_wechat_dpi_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -339,7 +356,10 @@ fun AppConfigEditorContent(
                         .clip(AppConfigSheetUiTokens.ActionShape)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant,
                             AppConfigSheetUiTokens.ActionShape)
-                        .clickable(role = Role.Button, onClick = state.actions::showWechatDpiHelp),
+                        .clickable(role = Role.Button, onClick = {
+                            completeInput()
+                            state.actions.showWechatDpiHelp()
+                        }),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -358,7 +378,10 @@ fun AppConfigEditorContent(
         DpisEditorTypefaceHookRow(
             primary = {
                 OutlinedButton(
-                    onClick = { state.actions.navigate(ConfigEditorDestination.TYPEFACE) },
+                    onClick = {
+                        completeInput()
+                        state.actions.navigate(ConfigEditorDestination.TYPEFACE)
+                    },
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -376,6 +399,7 @@ fun AppConfigEditorContent(
             secondary = {
                 OutlinedButton(
                     onClick = {
+                        completeInput()
                         state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
                     },
                     modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
@@ -396,7 +420,10 @@ fun AppConfigEditorContent(
             horizontalArrangement = Arrangement.spacedBy(AppConfigSheetUiTokens.ProcessActionGap)
         ) {
             Button(
-                onClick = state.actions::stopProcess,
+                onClick = {
+                    completeInput()
+                    state.actions.stopProcess()
+                },
                 modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                 shape = AppConfigSheetUiTokens.ActionShape,
                 colors = ButtonDefaults.buttonColors(
@@ -409,7 +436,10 @@ fun AppConfigEditorContent(
                     textAlign = TextAlign.Center, maxLines = 1)
             }
             Button(
-                onClick = state.actions::restartProcess,
+                onClick = {
+                    completeInput()
+                    state.actions.restartProcess()
+                },
                 modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                 shape = AppConfigSheetUiTokens.ActionShape,
                 colors = ButtonDefaults.buttonColors(
@@ -422,7 +452,10 @@ fun AppConfigEditorContent(
                     textAlign = TextAlign.Center, maxLines = 1)
             }
             Button(
-                onClick = state.actions::startProcess,
+                onClick = {
+                    completeInput()
+                    state.actions.startProcess()
+                },
                 modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                 shape = AppConfigSheetUiTokens.ActionShape,
                 colors = ButtonDefaults.buttonColors(
@@ -438,7 +471,7 @@ fun AppConfigEditorContent(
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         Button(
             onClick = {
-                keyboard?.hide()
+                completeInput()
                 state.actions.save()
             },
             modifier = Modifier.fillMaxWidth().height(AppConfigSheetUiTokens.ActionHeight),
@@ -450,7 +483,7 @@ fun AppConfigEditorContent(
                 R.string.status_save_success_inline
             } else {
                 R.string.status_save_button
-            }))
+            }), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.SaveToAdvancedDividerGap))
         HorizontalDivider(
@@ -474,7 +507,10 @@ fun AppConfigEditorContent(
         ) {
             if (state.isScopeSelected()) {
                 Button(
-                    onClick = state.actions::toggleScope,
+                    onClick = {
+                        completeInput()
+                        state.actions.toggleScope()
+                    },
                     enabled = state.item.scopeKnown,
                     modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                     shape = AppConfigSheetUiTokens.ActionShape,
@@ -482,18 +518,24 @@ fun AppConfigEditorContent(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
-                ) { Text(stringResource(R.string.dialog_scope_button)) }
+                ) { Text(stringResource(R.string.dialog_scope_button), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             } else {
                 OutlinedButton(
-                    onClick = state.actions::toggleScope,
+                    onClick = {
+                        completeInput()
+                        state.actions.toggleScope()
+                    },
                     enabled = state.item.scopeKnown,
                     modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                     shape = AppConfigSheetUiTokens.ActionShape
-                ) { Text(stringResource(R.string.dialog_scope_button)) }
+                ) { Text(stringResource(R.string.dialog_scope_button), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
             if (state.isDpisEnabled()) {
                 Button(
-                    onClick = state.actions::toggleDpisEnabled,
+                    onClick = {
+                        completeInput()
+                        state.actions.toggleDpisEnabled()
+                    },
                     modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                     shape = AppConfigSheetUiTokens.ActionShape,
                     colors = ButtonDefaults.buttonColors(
@@ -501,26 +543,32 @@ fun AppConfigEditorContent(
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
-                    Text(stringResource(R.string.dialog_dpis_disable_button))
+                    Text(stringResource(R.string.dialog_dpis_disable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             } else {
                 OutlinedButton(
-                    onClick = state.actions::toggleDpisEnabled,
+                    onClick = {
+                        completeInput()
+                        state.actions.toggleDpisEnabled()
+                    },
                     modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
                     shape = AppConfigSheetUiTokens.ActionShape
                 ) {
-                    Text(stringResource(R.string.dialog_dpis_enable_button))
+                    Text(stringResource(R.string.dialog_dpis_enable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.DisableActionTopGap))
         OutlinedButton(
-            onClick = state.actions::reset,
+            onClick = {
+                completeInput()
+                state.actions.reset()
+            },
             modifier = Modifier.fillMaxWidth().height(AppConfigSheetUiTokens.ActionHeight),
             shape = AppConfigSheetUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
         ) {
-            Text(stringResource(R.string.dialog_disable_button))
+            Text(stringResource(R.string.dialog_disable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.height(4.dp))
     }

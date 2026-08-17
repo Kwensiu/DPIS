@@ -69,6 +69,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -409,6 +410,7 @@ private fun TemplateWorkspaceListPane(
     onTargetsOpened: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
     PrimaryPageScaffold(
         modifier = modifier.fillMaxSize(),
         title = {
@@ -438,6 +440,7 @@ private fun TemplateWorkspaceListPane(
             verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
             modifier = Modifier
                 .fillMaxSize()
+                .clearTextInputFocusOnPointerDown(focusManager)
         ) {
             if (!state.searching) {
                 item {

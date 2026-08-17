@@ -134,6 +134,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(appWorkspace.contains("allAppsListState"));
         assertTrue(appWorkspace.contains("configuredAppsListState"));
         assertTrue(appWorkspace.contains("actions.openApp(item)"));
+        assertTrue(appWorkspace.contains("val focusManager = LocalFocusManager.current"));
+        assertTrue(appWorkspace.contains("inputFocusManager = focusManager"));
         assertTrue(appWorkspace.contains(
                 "configuration.orientation == Configuration.ORIENTATION_LANDSCAPE"));
         assertTrue(appWorkspace.contains(
@@ -376,6 +378,11 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(controls.contains("overflow = TextOverflow.Ellipsis"));
         assertTrue(appEditor.contains("rememberInstalledAppIcon"));
         assertTrue(appEditor.contains("AppConfigSheetUiTokens.ContentPadding"));
+        assertTrue(appEditor.contains("val focusManager = LocalFocusManager.current"));
+        assertTrue(appEditor.contains("focusManager.clearFocus(force = true)"));
+        assertTrue(appEditor.contains(".clearTextInputFocusOutside(focusManager, inputFocusBoundary)"));
+        assertTrue(appEditor.contains(".reportTextInputFocusBounds(inputFocusBoundary, \"viewport\")"));
+        assertTrue(appEditor.contains(".reportTextInputFocusBounds(inputFocusBoundary, \"font\")"));
         int typefaceLibraryOpen = typefacePicker.indexOf(
                 "context.startActivity(Intent(context, FontLibraryActivity::class.java))");
         assertTrue(typefaceLibraryOpen > 0);
@@ -487,7 +494,26 @@ public final class DpisComposeShellSourceSmokeTest {
         String wechatRow = editor.substring(wechatStart, wechatEnd);
         assertTrue(wechatRow.contains(".height(AppConfigSheetUiTokens.FieldRowHeight)"));
         assertTrue(wechatRow.contains("verticalAlignment = Alignment.Bottom"));
-        assertTrue(wechatRow.contains("state.actions::showWechatDpiHelp"));
+        assertTrue(wechatRow.contains("state.actions.showWechatDpiHelp()"));
+    }
+
+    @Test
+    public void searchPagesDismissInputWhenTheirNonInputContentIsTouched() throws IOException {
+        String controls = read(
+                "src/main/java/com/dpis/module/ui/compose/DpisEditorControls.kt");
+        String apps = read(
+                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt");
+        String targets = read(
+                "src/main/java/com/dpis/module/ui/compose/QuickTemplateTargetsContent.kt");
+        String templates = read(
+                "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
+
+        assertTrue(controls.contains("fun Modifier.clearTextInputFocusOnPointerDown("));
+        assertTrue(controls.contains("focusManager.clearFocus(force = true)"));
+        assertTrue(controls.contains("fun Modifier.clearTextInputFocusOutside("));
+        assertTrue(apps.contains(".clearTextInputFocusOnPointerDown(inputFocusManager)"));
+        assertTrue(targets.contains(".clearTextInputFocusOnPointerDown(focusManager)"));
+        assertTrue(templates.contains(".clearTextInputFocusOnPointerDown(focusManager)"));
     }
 
     private static String read(String relativePath) throws IOException {

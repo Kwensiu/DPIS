@@ -33,6 +33,7 @@ import com.dpis.module.ui.FormInputFocusBinder;
 
 import android.app.Activity;
 import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -1283,42 +1284,15 @@ public final class LandAppDetailPaneBinder {
             AppListItem item,
             boolean systemHooksEnabled
     ) {
-        String status = AppStatusFormatter.formatCompact(
-                activity.getResources(),
-                new AppStatusFormatter.StatusInput(
-                        item.inScope,
-                        item.scopeKnown,
-                        item.installed,
-                        item.viewportTargetSpec,
-                        item.viewportMode,
-                        item.fontScalePercent,
-                        item.fontMode,
-                        item.typefaceId,
-                        item.dpisEnabled,
-                        item.hasAppSpecificConfig(),
-                        item.wechatDpi)
-        );
-        int warnColor
-                = com.google.android.material.color.MaterialColors.getColor(
-                        activity.findViewById(android.R.id.content),
-                        androidx.appcompat.R.attr.colorError
-                );
-        return AppStatusFormatter.applyConfigSegmentsWarnStyle(
-                status,
-                warnColor,
-                AppStatusFormatter.shouldWarnViewportEmulation(
-                        item.viewportTargetSpec,
-                        item.viewportMode,
-                        systemHooksEnabled,
-                        item.dpisEnabled
-                ),
-                AppStatusFormatter.shouldWarnFontEmulation(
-                        item.fontScalePercent,
-                        item.fontMode,
-                        systemHooksEnabled,
-                        item.dpisEnabled
-                )
-        );
+        // The detail pane already shows the full identity above. Version is more useful here
+        // than repeating the compact list status (scope/config/hook flags).
+        try {
+            String versionName = activity.getPackageManager()
+                    .getPackageInfo(item.packageName, 0).versionName;
+            return versionName == null || versionName.isBlank() ? "-" : versionName;
+        } catch (PackageManager.NameNotFoundException ignored) {
+            return "-";
+        }
     }
 
     private String formatTypefaceValue(String selectedTypefaceId) {

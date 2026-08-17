@@ -73,6 +73,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.AppWorkspacePresentation
@@ -99,6 +100,7 @@ fun AppWorkspaceContent(
     padding: PaddingValues,
     editorState: AppConfigEditorPresentation.State? = null,
 ) {
+    val focusManager = LocalFocusManager.current
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val configuration = LocalConfiguration.current
     val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -157,7 +159,10 @@ fun AppWorkspaceContent(
             ) {
                 AppSearchCard(
                     state = state,
-                    onFilterClick = { filterSheetVisible = true },
+                    onFilterClick = {
+                        focusManager.clearFocus()
+                        filterSheetVisible = true
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
@@ -169,6 +174,7 @@ fun AppWorkspaceContent(
                         Tab(
                             selected = page.position() == pagerState.currentPage,
                             onClick = {
+                                focusManager.clearFocus()
                                 pagerScope.launch {
                                     pagerState.animateScrollToPage(page.position())
                                 }
@@ -195,7 +201,8 @@ fun AppWorkspaceContent(
                         listState = listState,
                         bottomPadding = padding.calculateBottomPadding(),
                         systemScopeSelected = state.systemScopeSelected,
-                        actions = state.actions
+                        actions = state.actions,
+                        inputFocusManager = focusManager
                     )
                 }
             }
@@ -262,12 +269,15 @@ private fun AppListPageContent(
     listState: LazyListState,
     bottomPadding: androidx.compose.ui.unit.Dp,
     systemScopeSelected: Boolean,
-    actions: AppWorkspacePresentation.Actions
+    actions: AppWorkspacePresentation.Actions,
+    inputFocusManager: androidx.compose.ui.focus.FocusManager
 ) {
     PullToRefreshBox(
         isRefreshing = refreshing,
         onRefresh = { actions.refresh(page) },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .clearTextInputFocusOnPointerDown(inputFocusManager)
     ) {
         if (pageItems.isEmpty()) {
             Column(
@@ -295,7 +305,9 @@ private fun AppListPageContent(
                         AppRow(
                             item = item,
                             systemScopeSelected = systemScopeSelected,
-                            onClick = { actions.openApp(item) }
+                            onClick = {
+                                actions.openApp(item)
+                            }
                         )
                     }
                 }
@@ -498,7 +510,10 @@ private fun AppSearchCard(
                         if (state.query.isEmpty()) {
                             Text(
                                 stringResource(R.string.search_hint),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                         inner()

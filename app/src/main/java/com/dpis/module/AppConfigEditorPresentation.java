@@ -36,6 +36,7 @@ public final class AppConfigEditorPresentation {
 
     public static final class State {
         public final AppListItem item;
+        public final String versionName;
         public final AppConfigEditorDraft draft;
         public final String typefaceSelectorText;
         public final String hookChainText;
@@ -50,11 +51,12 @@ public final class AppConfigEditorPresentation {
         public final ConfigEditorDestination destination;
         public final Actions actions;
 
-        public State(AppListItem item, AppConfigEditorDraft draft, String typefaceSelectorText,
+        public State(AppListItem item, String versionName, AppConfigEditorDraft draft, String typefaceSelectorText,
                 String hookChainText, boolean dirty, boolean saveFeedbackVisible,
                 boolean systemHooksEnabled, Set<String> automaticFontHookDomains,
                 ConfigEditorDestination destination, Actions actions) {
             this.item = item;
+            this.versionName = versionName != null ? versionName : "";
             this.draft = draft;
             this.typefaceSelectorText = typefaceSelectorText;
             this.hookChainText = hookChainText;
