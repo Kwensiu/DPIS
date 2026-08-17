@@ -144,7 +144,8 @@ public final class ExportBuilder {
                 result != null ? result.performanceSnapshot : null
         );
         String dpisLog = buildDpisLogText(window);
-        String lsposed = buildLsposedLogText(lsposedLog, window);
+        String lsposed = buildLsposedLogText(lsposedLog, window,
+                result != null ? result.request : null);
         byte[] perfettoTrace = result != null ? result.perfettoTraceBytes : new byte[0];
         java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream();
         try (ZipOutputStream zip = new ZipOutputStream(output, StandardCharsets.UTF_8)) {
@@ -207,6 +208,7 @@ public final class ExportBuilder {
         appendRuntimeSummary(builder, runtimeStats);
         appendRuntimeDensity(builder, runtimeStats);
         appendRuntimeAnomalies(builder, runtimeStats);
+        appendWechatDpiEvidence(builder, result.request, runtimeEvents);
         appendPerformanceSummary(
                 builder,
                 result.performanceSnapshot,
@@ -410,6 +412,23 @@ public final class ExportBuilder {
         builder.append('\n');
     }
 
+    private void appendWechatDpiEvidence(
+            StringBuilder builder,
+            Coordinator.Request request,
+            List<String> events
+    ) {
+        if (request == null || request.wechatDpi == null) {
+            return;
+        }
+        WechatDpiEvidence.Summary summary = WechatDpiEvidence.summarize(events);
+        builder.append("[wechat-dpi-evidence]\n");
+        builder.append("routeEntry: ").append(summary.getRouteEntry()).append('\n');
+        builder.append("displayMetrics: ").append(summary.getDisplayMetrics()).append('\n');
+        builder.append("bottomTabIcon: ").append(summary.getBottomTabIcon()).append('\n');
+        builder.append("resourceRecovery: ").append(summary.getResourceRecovery()).append('\n');
+        builder.append('\n');
+    }
+
     private void appendRuntimeSelfTest(StringBuilder builder, List<String> runtimeEvents) {
         RuntimeSelfTest.Status status =
                 RuntimeSelfTest.lastStatus();
@@ -592,10 +611,11 @@ public final class ExportBuilder {
 
     private String buildLsposedLogText(
             LogReadResult result,
-            SessionWindow window
+            SessionWindow window,
+            Coordinator.Request request
     ) {
         LsposedTimelineParser.WindowedRawLog windowed =
-                LsposedTimelineParser.windowRawLog(result, window);
+                LsposedTimelineParser.windowRawLog(result, window, timelineInput(request));
         StringBuilder builder = new StringBuilder();
         builder.append("source: ").append(valueOrDefault(result.sourceLabel(), UNKNOWN)).append('\n');
         builder.append("code: ").append(result.code()).append('\n');

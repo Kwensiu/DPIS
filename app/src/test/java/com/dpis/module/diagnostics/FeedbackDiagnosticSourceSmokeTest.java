@@ -328,6 +328,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(exportBuilder.contains("[runtime-summary]"));
         assertTrue(exportBuilder.contains("[runtime-density]"));
         assertTrue(exportBuilder.contains("[runtime-anomalies]"));
+        assertTrue(exportBuilder.contains("[wechat-dpi-evidence]"));
         assertTrue(exportBuilder.contains("[runtime-timeline]"));
         assertTrue(exportBuilder.contains("[runtime-self-test]"));
         assertTrue(exportBuilder.contains("[raw-log]"));
@@ -352,6 +353,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(modernWechat.contains("\"wechat_dpi\""));
         assertTrue(modernWechat.contains("\"displaymetrics\""));
         assertTrue(modernWechat.contains("\"bottom_tab_icon\""));
+        assertTrue(modernWechat.contains("reason=init_method_not_found"));
+        assertTrue(modernWechat.contains("reason=scale_field_not_found"));
         assertTrue(modernWechat.contains("modern WeChat DPI route plan: "));
         assertTrue(modernWechat.contains("retiredTargets="));
         assertTrue(modernWechat.contains("retiredActive=false"));
@@ -360,7 +363,8 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(modernAppSpecific.contains("\"wechat_dpi\""));
         assertTrue(modernAppSpecific.contains("\"application_attach\""));
         assertTrue(modernAppSpecific.contains("application-attach retry result"));
-        assertTrue(modernAppSpecific.contains("retryInstallAttempted=true, installed="));
+        assertTrue(modernAppSpecific.contains("WechatDpiInstallOutcome"));
+        assertTrue(modernAppSpecific.contains("installOutcomeStage(outcome)"));
         assertFalse(modernAppSpecific.contains("\"module_loaded_class\""));
         assertTrue(legacyWechat.contains("\"wechat_dpi\""));
         assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""));

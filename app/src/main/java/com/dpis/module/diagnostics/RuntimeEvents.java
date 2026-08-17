@@ -73,11 +73,22 @@ public final class RuntimeEvents {
             String level,
             String message
     ) {
+        recordStructured(packageName, route, "", stage, level, message);
+    }
+
+    static void recordStructured(
+            String packageName,
+            String route,
+            String routeName,
+            String stage,
+            String level,
+            String message
+    ) {
         Session session = activeSession;
         if (session == null || !session.matchesTarget(packageName)) {
             return;
         }
-        session.recordStructured(route, stage, level, message);
+        session.recordStructured(route, routeName, stage, level, message);
     }
 
     static void recordPerformanceCall(String packageName, String route) {
@@ -201,10 +212,20 @@ public final class RuntimeEvents {
                 String level,
                 String message
         ) {
+            recordStructured(route, "", stage, level, message);
+        }
+
+        private synchronized void recordStructured(
+                String route,
+                String routeName,
+                String stage,
+                String level,
+                String message
+        ) {
             String normalized = valueOrEmpty(message);
             String normalizedRoute = valueOrDefault(route, "font");
             String normalizedStage = valueOrDefault(stage, "event");
-            append("runtime", normalizedRoute, normalizedStage, level, normalized);
+            append("runtime", normalizedRoute, routeName, normalizedStage, level, normalized);
             warnIfRepeated(normalizedRoute, normalizedStage, normalized);
         }
 
@@ -258,10 +279,23 @@ public final class RuntimeEvents {
                 String level,
                 String message
         ) {
+            append(category, route, "", stage, level, message);
+        }
+
+        private void append(
+                String category,
+                String route,
+                String routeName,
+                String stage,
+                String level,
+                String message
+        ) {
             events.add(formatTime(System.currentTimeMillis())
                     + " source=runtime-events"
                     + " category=" + category
                     + " route=" + route
+                    + (routeName == null || routeName.isBlank()
+                            ? "" : " routeName=" + routeName)
                     + " stage=" + stage
                     + " level=" + valueOrDefault(level, "I")
                     + " package=" + targetPackage

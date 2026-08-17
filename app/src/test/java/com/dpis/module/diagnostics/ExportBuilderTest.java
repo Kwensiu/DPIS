@@ -591,6 +591,31 @@ public final class ExportBuilderTest {
     }
 
     @Test
+    public void wechatDpiEvidenceSeparatesAppliedRouteFromBottomTabFailure() {
+        ExportBuilder builder = new ExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        String text = builder.buildDiagnosticText(wechatResult(List.of(
+                "11-15 06:13:20.100 source=runtime-transport category=runtime "
+                        + "route=wechat_dpi stage=route_callback_entered "
+                        + "routeName=package_ready package=com.tencent.mm message=source=package_ready",
+                "11-15 06:13:20.200 source=runtime-hotpath category=runtime "
+                        + "route=wechat_dpi stage=mutation_applied "
+                        + "routeName=displaymetrics package=com.tencent.mm message=targetDpi=600",
+                "11-15 06:13:20.300 source=runtime-hotpath category=runtime "
+                        + "route=wechat_dpi stage=skipped routeName=bottom_tab_icon "
+                        + "package=com.tencent.mm message=reason=init_method_not_found"
+        ), 600));
+
+        assertTrue(text.contains("[wechat-dpi-evidence]"));
+        assertTrue(text.contains("routeEntry: observed"));
+        assertTrue(text.contains("displayMetrics: mutation applied"));
+        assertTrue(text.contains("bottomTabIcon: skipped (reason=init_method_not_found)"));
+    }
+
+    @Test
     public void fileNameUsesZipExtension() {
         ExportBuilder builder = new ExportBuilder(
                 List::of,

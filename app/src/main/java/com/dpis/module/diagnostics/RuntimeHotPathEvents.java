@@ -166,6 +166,7 @@ public final class RuntimeHotPathEvents {
         RuntimeEvents.recordStructured(
                 packageName,
                 valueOrDefault(categoryRoute, ROUTE_FONT),
+                routeName,
                 stage,
                 "I",
                 message
@@ -173,6 +174,7 @@ public final class RuntimeHotPathEvents {
         RuntimeTransport.record(
                 "runtime",
                 valueOrDefault(categoryRoute, ROUTE_FONT),
+                routeName,
                 stage,
                 packageName,
                 message

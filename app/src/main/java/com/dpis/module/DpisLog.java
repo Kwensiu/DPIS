@@ -51,6 +51,17 @@ public final class DpisLog {
         write(Log.ERROR, "E", msg, throwable);
     }
 
+    /**
+     * Temporary route-history escape hatch for long-idle diagnostics. This is
+     * intentionally independent from the global log switch so a user can
+     * export a next-day WeChat recovery history without enabling verbose DPIS
+     * logging for every process. Remove or narrow this path after the WeChat
+     * long-idle regression is understood.
+     */
+    public static void routeHistory(String msg) {
+        write(Log.INFO, "I", msg, null);
+    }
+
     private static void write(int priority, String level, String msg, Throwable throwable) {
         try {
             if (throwable == null) {

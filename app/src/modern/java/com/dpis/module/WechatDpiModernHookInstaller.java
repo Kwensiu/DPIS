@@ -10,6 +10,7 @@ import com.dpis.module.quirks.WechatDpiRuntime;
 
 import com.dpis.module.appconfig.WechatDpiConfig;
 import com.dpis.module.runtime.WechatDpiPropertyBridge;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -48,47 +49,55 @@ final class WechatDpiModernHookInstaller {
     private WechatDpiModernHookInstaller() {
     }
 
-    static boolean install(XposedInterface xposed, ClassLoader classLoader,
-            ApplicationInfo applicationInfo, String packageName) {
+    static WechatDpiInstallOutcome install(XposedInterface xposed, ClassLoader classLoader,
+            ApplicationInfo applicationInfo, String packageName, WechatDpiInstallPhase phase) {
         if (!WechatDpiConfig.appliesTo(packageName)
                 || xposed == null
                 || classLoader == null) {
-            return false;
+            return WechatDpiInstallOutcome.SKIPPED;
         }
-        return installRoute(xposed, classLoader, applicationInfo, packageName);
+        return installRoute(xposed, classLoader, applicationInfo, packageName, phase);
     }
 
-    private static boolean installRoute(XposedInterface xposed, ClassLoader classLoader,
-            ApplicationInfo applicationInfo, String packageName) {
+    private static WechatDpiInstallOutcome installRoute(XposedInterface xposed,
+            ClassLoader classLoader, ApplicationInfo applicationInfo, String packageName,
+            WechatDpiInstallPhase phase) {
+        WechatDpiResourceRecovery.installResourcesHook(
+                xposed, ModernApiCapabilitiesResolver.fromXposed(xposed));
         long versionCode = resolveWechatVersionCode(applicationInfo, packageName);
         WechatDpiRoutes.Route staticRoute = WechatDpiRoutes.forVersionCode(versionCode);
         WechatDpiMethodLocator.Result locatorResult = WechatDpiMethodLocator.locate(
-                classLoader, applicationInfo, versionCode);
-        logRoutePlan(packageName, staticRoute, locatorResult, versionCode);
-        if (staticRoute != null
-                && staticRoute.bottomTabIconScaleEnabled
-                && !locatorResult.methods.isEmpty()) {
-            installBottomTabIconScaleHook(xposed, classLoader);
-        }
+                classLoader, applicationInfo, versionCode, phase.getAllowsDexKit());
+        logRoutePlan(packageName, staticRoute, locatorResult, versionCode, phase);
+        // Bottom-tab compensation is structurally detected and intentionally
+        // independent of the density-manager version table. New WeChat builds
+        // can retain TabIconView while requiring DexKit for the main route.
+        installBottomTabIconScaleHook(xposed, classLoader, phase);
         if (locatorResult.methods.isEmpty()) {
-            DpisLog.i("modern WeChat DPI hook skipped: locator="
+            boolean deferred = !phase.getAllowsDexKit();
+            DpisLog.i("modern WeChat DPI hook " + (deferred ? "deferred" : "skipped")
+                    + ": locator="
                     + locatorResult.source.logName + ", versionCode=" + versionCode
                     + ", classLoader=" + describeClassLoaderForLog(classLoader)
+                    + ", attempt=" + phase.getRouteName()
                     + ", reason=" + locatorResult.failure);
             RuntimeHotPathEvents.event(
                     packageName,
                     "wechat_dpi",
                     "displaymetrics",
-                    "skipped",
+                    deferred ? "deferred" : "skipped",
                     "locator=" + locatorResult.source.logName + ", versionCode=" + versionCode
+                            + ", attempt=" + phase.getRouteName()
                             + ", reason=" + locatorResult.failure);
-            return false;
+            return deferred ? WechatDpiInstallOutcome.DEFERRED : WechatDpiInstallOutcome.SKIPPED;
         }
-        return installWechatDpiHook(xposed, locatorResult, versionCode);
+        return installWechatDpiHook(xposed, locatorResult, versionCode, phase)
+                ? WechatDpiInstallOutcome.INSTALLED
+                : WechatDpiInstallOutcome.SKIPPED;
     }
 
     private static void installBottomTabIconScaleHook(
-            XposedInterface xposed, ClassLoader classLoader) {
+            XposedInterface xposed, ClassLoader classLoader, WechatDpiInstallPhase phase) {
         if (xposed == null || classLoader == null) {
             return;
         }
@@ -99,16 +108,56 @@ final class WechatDpiModernHookInstaller {
         } catch (ClassNotFoundException throwable) {
             DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: class not found"
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
+            RuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "attempt=" + phase.getRouteName() + ", reason=class_not_found");
             return;
         } catch (Throwable throwable) {
             DpisLog.e("modern WeChat DPI bottom tab icon hook failed while resolving class: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage(),
                     throwable);
+            RuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "attempt=" + phase.getRouteName() + ", reason=class_resolution_failed, error="
+                            + throwable.getClass().getSimpleName());
             return;
         }
         Method initMethod = findBottomTabIconInitMethod(bottomTabIconViewClass);
         Field scaleField = findBottomTabIconScaleField(bottomTabIconViewClass);
-        if (initMethod == null || scaleField == null) {
+        if (initMethod == null) {
+            int declaredMethodCount = bottomTabIconViewClass.getDeclaredMethods().length;
+            DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: init method not found"
+                    + ", class=" + bottomTabIconViewClass.getName()
+                    + ", declaredMethodCount=" + declaredMethodCount);
+            RuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "attempt=" + phase.getRouteName()
+                            + ", reason=init_method_not_found, declaredMethodCount="
+                            + declaredMethodCount);
+            return;
+        }
+        if (scaleField == null) {
+            int candidateCount = bottomTabIconFloatFieldCount(bottomTabIconViewClass);
+            DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: scale field not found"
+                    + ", class=" + bottomTabIconViewClass.getName()
+                    + ", floatFieldCandidates=" + candidateCount);
+            RuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "skipped",
+                    "attempt=" + phase.getRouteName()
+                            + ", reason=scale_field_not_found, floatFieldCandidates="
+                            + candidateCount);
             return;
         }
         synchronized (HOOK_LOCK) {
@@ -170,7 +219,7 @@ final class WechatDpiModernHookInstaller {
                     "wechat_dpi",
                     "bottom_tab_icon",
                     "hook_ready",
-                    "method=" + methodName(initMethod)
+                    "attempt=" + phase.getRouteName() + ", method=" + methodName(initMethod)
                             + ", field=" + scaleField.getName());
         } catch (Throwable throwable) {
             synchronized (HOOK_LOCK) {
@@ -184,36 +233,60 @@ final class WechatDpiModernHookInstaller {
                     "wechat_dpi",
                     "bottom_tab_icon",
                     "skipped",
-                    "hookFailed=true, error=" + throwable.getClass().getSimpleName());
+                    "attempt=" + phase.getRouteName() + ", hookFailed=true, error="
+                            + throwable.getClass().getSimpleName());
         }
     }
 
     private static Method findBottomTabIconInitMethod(Class<?> bottomTabIconViewClass) {
         for (Method method : bottomTabIconViewClass.getDeclaredMethods()) {
-            Class<?>[] parameterTypes = method.getParameterTypes();
-            if (parameterTypes.length == 4
-                    && parameterTypes[0] == Integer.TYPE
-                    && parameterTypes[1] == Integer.TYPE
-                    && parameterTypes[2] == Integer.TYPE
-                    && parameterTypes[3] == Boolean.TYPE) {
+            if (isBottomTabIconInitMethod(method)) {
                 return method;
             }
         }
         return null;
     }
 
+    private static boolean isBottomTabIconInitMethod(Method method) {
+        if (method == null) {
+            return false;
+        }
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        return parameterTypes.length == 4
+                && parameterTypes[0] == Integer.TYPE
+                && parameterTypes[1] == Integer.TYPE
+                && parameterTypes[2] == Integer.TYPE
+                && parameterTypes[3] == Boolean.TYPE;
+    }
+
     private static Field findBottomTabIconScaleField(Class<?> bottomTabIconViewClass) {
         for (Field field : bottomTabIconViewClass.getDeclaredFields()) {
-            if (field.getType() == Float.TYPE
-                    && !java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+            if (isBottomTabIconScaleField(field)) {
                 return field;
             }
         }
         return null;
     }
 
+    private static int bottomTabIconFloatFieldCount(Class<?> bottomTabIconViewClass) {
+        int count = 0;
+        for (Field field : bottomTabIconViewClass.getDeclaredFields()) {
+            if (isBottomTabIconScaleField(field)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static boolean isBottomTabIconScaleField(Field field) {
+        return field != null
+                && field.getType() == Float.TYPE
+                && !java.lang.reflect.Modifier.isStatic(field.getModifiers());
+    }
+
     private static boolean installWechatDpiHook(XposedInterface xposed,
-            WechatDpiMethodLocator.Result locatorResult, long versionCode) {
+            WechatDpiMethodLocator.Result locatorResult, long versionCode,
+            WechatDpiInstallPhase phase) {
         List<Method> hookMethods = locatorResult.methods;
         if (hookMethods.isEmpty()) {
             return false;
@@ -234,7 +307,7 @@ final class WechatDpiModernHookInstaller {
                         .intercept(chain -> {
                             if (isTargetFieldGetter(hookMethod)) {
                                 Object result = chain.proceed();
-                                logWechatDpiCallback(hookMethod, result);
+                                logWechatDpiCallback(hookMethod, result, phase);
                                 Integer configuredDpi = configuredWechatDpiOrNull();
                                 return configuredDpi != null ? configuredDpi : result;
                             }
@@ -243,17 +316,16 @@ final class WechatDpiModernHookInstaller {
                                 Object result = configuredDpi != null
                                         ? chain.proceed(new Object[] {configuredDpi})
                                         : chain.proceed();
-                                logWechatDpiCallback(hookMethod, result);
+                                logWechatDpiCallback(hookMethod, result, phase);
                                 return result;
                             }
                             Object result = chain.proceed();
-                            logWechatDpiCallback(hookMethod, result);
+                            logWechatDpiCallback(hookMethod, result, phase);
                             if (result instanceof DisplayMetrics metrics) {
-                                applyWechatDpi(metrics,
-                                        methodName(hookMethod));
+                                applyWechatDpi(metrics, methodName(hookMethod), phase);
                             } else if (isDisplayMetricsMutator(hookMethod)) {
                                 applyWechatDpi(displayMetricsArgument(chain.getArgs()),
-                                        methodName(hookMethod));
+                                        methodName(hookMethod), phase);
                             }
                             return result;
                         });
@@ -271,7 +343,8 @@ final class WechatDpiModernHookInstaller {
                     "wechat_dpi",
                     "displaymetrics",
                     "hook_ready",
-                    "installed=" + installed + ", locator=" + locatorResult.source.logName
+                    "attempt=" + phase.getRouteName() + ", installed=" + installed
+                            + ", locator=" + locatorResult.source.logName
                             + ", versionCode=" + versionCode);
             return installed > 0;
         } catch (Throwable throwable) {
@@ -285,7 +358,7 @@ final class WechatDpiModernHookInstaller {
                     "wechat_dpi",
                     "displaymetrics",
                     "skipped",
-                    "hookFailed=true, versionCode=" + versionCode
+                    "attempt=" + phase.getRouteName() + ", hookFailed=true, versionCode=" + versionCode
                             + ", error=" + throwable.getClass().getSimpleName());
         }
         return false;
@@ -314,12 +387,15 @@ final class WechatDpiModernHookInstaller {
     private static void logRoutePlan(String packageName,
                                      WechatDpiRoutes.Route staticRoute,
                                      WechatDpiMethodLocator.Result locatorResult,
-                                     long versionCode) {
+                                     long versionCode,
+                                     WechatDpiInstallPhase phase) {
         String detail = "versionCode=" + versionCode
                 + ", locator=" + locatorResult.source.logName
                 + ", class=" + (staticRoute != null ? staticRoute.className : "unknown")
                 + ", metricsTargets=" + routeTargetNames(staticRoute)
                 + ", bottomTab=" + (staticRoute != null && staticRoute.bottomTabIconScaleEnabled)
+                + ", attempt=" + phase.getRouteName()
+                + ", dexkitDeferred=" + !phase.getAllowsDexKit()
                 + ", retiredTargets=" + retiredTargets(versionCode)
                 + ", retiredActive=false";
         DpisLog.i("modern WeChat DPI route plan: " + detail);
@@ -331,7 +407,8 @@ final class WechatDpiModernHookInstaller {
                 detail);
     }
 
-    private static void logWechatDpiCallback(Method hookMethod, Object result) {
+    private static void logWechatDpiCallback(Method hookMethod, Object result,
+            WechatDpiInstallPhase phase) {
         if (!WECHAT_DPI_CALLBACK_LOGGED.compareAndSet(false, true)) {
             return;
         }
@@ -347,7 +424,7 @@ final class WechatDpiModernHookInstaller {
                 "wechat_dpi",
                 "displaymetrics",
                 "route_callback_entered",
-                "method=" + methodName
+                    "attempt=" + phase.getRouteName() + ", method=" + methodName
                         + ", firstCallbackMethod=" + shortMethodName(hookMethod)
                         + ", result=" + resultName
                         + ", configuredDpi=" + configuredDpi);
@@ -459,7 +536,8 @@ final class WechatDpiModernHookInstaller {
         return dpi > 0 ? dpi : null;
     }
 
-    private static void applyWechatDpi(DisplayMetrics metrics, String methodName) {
+    private static void applyWechatDpi(DisplayMetrics metrics, String methodName,
+            WechatDpiInstallPhase phase) {
         if (metrics == null) {
             return;
         }
@@ -484,7 +562,8 @@ final class WechatDpiModernHookInstaller {
                     "wechat_dpi",
                     "displaymetrics",
                     "mutation_applied",
-                    "method=" + methodName + ", targetDpi=" + targetDpi
+                    "attempt=" + phase.getRouteName() + ", method=" + methodName
+                            + ", targetDpi=" + targetDpi
                             + ", appliedMethod=" + appliedMethod
                             + ", densityDpi=" + oldDensityDpi + "->" + metrics.densityDpi
                             + ", density=" + oldDensity + "->" + metrics.density

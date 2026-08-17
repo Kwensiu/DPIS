@@ -44,4 +44,15 @@ public final class DpisLogTest {
         assertEquals("D:diagnostic detail", recorded.get(0));
     }
 
+    @Test
+    public void routeHistoryBypassesGlobalLogSwitchForTemporaryDiagnostics() {
+        DpisLog.setLoggingEnabled(false);
+        DpisLog.setAppLogSink((level, message) -> recorded.add(level + ":" + message));
+
+        DpisLog.i("ordinary message");
+        DpisLog.routeHistory("DPIS_WECHAT_DPI_HISTORY stage=reapplied");
+
+        assertTrue(recorded.contains("I:DPIS_WECHAT_DPI_HISTORY stage=reapplied"));
+    }
+
 }

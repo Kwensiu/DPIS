@@ -153,14 +153,27 @@ public final class RuntimeTransport {
             String packageName,
             String message
     ) {
+        record(category, route, "", stage, packageName, message);
+    }
+
+    public static void record(
+            String category,
+            String route,
+            String routeName,
+            String stage,
+            String packageName,
+            String message
+    ) {
         Session local = activeSession;
         if (local != null && local.available) {
-            enqueueLine(local.eventPath, toLine(category, route, stage, packageName, message));
+            enqueueLine(local.eventPath,
+                    toLine(category, route, routeName, stage, packageName, message));
             return;
         }
         RemoteSession remote = resolveRemoteSession();
         if (remote != null) {
-            enqueueLine(remote.eventPath, toLine(category, route, stage, packageName, message));
+            enqueueLine(remote.eventPath,
+                    toLine(category, route, routeName, stage, packageName, message));
         }
     }
 
@@ -278,7 +291,8 @@ public final class RuntimeTransport {
         ShellRunner runner = shellRunner != null
                 ? shellRunner
                 : RuntimeTransport::runSuCommand;
-        String line = toLine("runtime", "self_test", "self_test", packageName, message);
+        String line = toLine("runtime", "self_test", "self_test", "self_test",
+                packageName, message);
         RootAppProcessLauncher.ShellResult result = runner.run(
                 "printf %s\\\\n " + shellQuote(line) + " >> " + shellQuote(eventPath)
         );
@@ -462,6 +476,7 @@ public final class RuntimeTransport {
     private static String toLine(
             String category,
             String route,
+            String routeName,
             String stage,
             String packageName,
             String message
@@ -472,6 +487,7 @@ public final class RuntimeTransport {
                 + ",\"source\":\"runtime-transport\""
                 + ",\"category\":\"" + jsonEscape(valueOrDefault(category, "runtime")) + "\""
                 + ",\"route\":\"" + jsonEscape(valueOrDefault(route, "")) + "\""
+                + ",\"routeName\":\"" + jsonEscape(valueOrDefault(routeName, "")) + "\""
                 + ",\"stage\":\"" + jsonEscape(valueOrDefault(stage, "event")) + "\""
                 + ",\"package\":\"" + jsonEscape(valueOrDefault(packageName, "unknown")) + "\""
                 + ",\"message\":\"" + jsonEscape(sanitize(message)) + "\""
@@ -488,6 +504,7 @@ public final class RuntimeTransport {
             String displayTime = readStringField(line, "displayTime");
             String category = readStringField(line, "category");
             String route = readStringField(line, "route");
+            String routeName = readStringField(line, "routeName");
             String stage = readStringField(line, "stage");
             String packageName = readStringField(line, "package");
             String message = readStringField(line, "message");
@@ -498,6 +515,7 @@ public final class RuntimeTransport {
                     + " source=runtime-transport"
                     + " category=" + valueOrDefault(category, "runtime")
                     + routePart(route)
+                    + routeNamePart(routeName)
                     + " stage=" + valueOrDefault(stage, "event")
                     + " package=" + valueOrDefault(packageName, "unknown")
                     + " message=" + message);
@@ -509,6 +527,11 @@ public final class RuntimeTransport {
     private static String routePart(String route) {
         String normalized = valueOrDefault(route, "");
         return normalized.isEmpty() ? "" : " route=" + normalized;
+    }
+
+    private static String routeNamePart(String routeName) {
+        String normalized = valueOrDefault(routeName, "");
+        return normalized.isEmpty() ? "" : " routeName=" + normalized;
     }
 
     private static RootAppProcessLauncher.ShellResult runSuCommand(String command) {

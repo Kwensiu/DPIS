@@ -141,6 +141,24 @@ public final class RuntimeEventsTest {
     }
 
     @Test
+    public void hotPathEventsKeepRouteNameInUiMemoryEvidence() {
+        RuntimeEvents.start("com.example.app", request(true, true, true, true));
+
+        RuntimeHotPathEvents.event(
+                "com.example.app",
+                "wechat_dpi",
+                "bottom_tab_icon",
+                "hook_ready",
+                "attempt=application_attach"
+        );
+
+        List<String> events = RuntimeEvents.stopSnapshot();
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("route=wechat_dpi"));
+        assertTrue(events.get(0).contains("routeName=bottom_tab_icon"));
+    }
+
+    @Test
     public void overrideIsClassifiedAsMutationApplied() {
         RuntimeEvents.start("com.example.app", request(true, true, true, true));
 

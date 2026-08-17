@@ -43,7 +43,7 @@ final class ModernAppSpecificRouteInstaller {
                     param.getClassLoader(),
                     param.getApplicationInfo(),
                     processName,
-                    "package_ready");
+                    WechatDpiInstallPhase.PACKAGE_READY);
         }
         DpisLog.i("modern app-specific route installed alongside generic hooks: package="
                 + WechatDpiConfig.PACKAGE_NAME + ", process=" + processName);
@@ -65,7 +65,7 @@ final class ModernAppSpecificRouteInstaller {
                 classLoader,
                 applicationInfo,
                 processName,
-                "hot_reload_package_ready");
+                WechatDpiInstallPhase.HOT_RELOAD_PACKAGE_READY);
     }
 
     private static void installWechatPackageReadyRoute(XposedModule xposed,
@@ -73,7 +73,8 @@ final class ModernAppSpecificRouteInstaller {
             ClassLoader classLoader,
             ApplicationInfo applicationInfo,
             String processName,
-            String source) {
+            WechatDpiInstallPhase phase) {
+        String source = phase.getRouteName();
         DpisLog.i("modern WeChat DPI route enter: package="
                 + packageName + ", process=" + processName + ", source=" + source);
         xposed.log(android.util.Log.INFO, DpisLog.TAG,
@@ -86,23 +87,24 @@ final class ModernAppSpecificRouteInstaller {
                 "route_callback_entered",
                 "source=" + source + ", process=" + processName);
         try {
-            boolean installed = WechatDpiModernHookInstaller.install(
+            WechatDpiInstallOutcome outcome = WechatDpiModernHookInstaller.install(
                     xposed,
                     classLoader,
                     applicationInfo,
-                    packageName);
+                    packageName,
+                    phase);
             DpisLog.i("modern WeChat DPI route install attempted: package="
                     + packageName + ", process=" + processName
                     + ", source=" + source
-                    + ", installed=" + installed
+                    + ", outcome=" + outcome
                     + ", classLoader="
                     + WechatDpiModernHookInstaller.describeClassLoaderForLog(classLoader));
             RuntimeHotPathEvents.event(
                     packageName,
                     "wechat_dpi",
                     source,
-                    installed ? "mutation_candidate" : "skipped",
-                    "installAttempted=true, installed=" + installed
+                    installOutcomeStage(outcome),
+                    "outcome=" + outcome
                             + ", process=" + processName);
         } catch (Throwable throwable) {
             DpisLog.e("modern WeChat DPI route install failed: package="
@@ -134,6 +136,7 @@ final class ModernAppSpecificRouteInstaller {
                                 : null;
                         if (contextObject instanceof Context context
                                 && WechatDpiConfig.appliesTo(context.getPackageName())) {
+                            WechatDpiResourceRecovery.installForegroundMonitor(context);
                             ClassLoader classLoader = context.getClassLoader();
                             DpisLog.i("modern WeChat DPI application-attach route enter: package="
                                     + context.getPackageName()
@@ -148,14 +151,15 @@ final class ModernAppSpecificRouteInstaller {
                                     "classLoader="
                                             + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                                     classLoader));
-                            boolean installed = WechatDpiModernHookInstaller.install(
+                            WechatDpiInstallOutcome outcome = WechatDpiModernHookInstaller.install(
                                     xposed,
                                     classLoader,
                                     context.getApplicationInfo(),
-                                    context.getPackageName());
+                                    context.getPackageName(),
+                                    WechatDpiInstallPhase.APPLICATION_ATTACH);
                             DpisLog.i("modern WeChat DPI application-attach retry result: package="
                                     + context.getPackageName()
-                                    + ", installed=" + installed
+                                    + ", outcome=" + outcome
                                     + ", classLoader="
                                     + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                             classLoader));
@@ -163,8 +167,8 @@ final class ModernAppSpecificRouteInstaller {
                                     context.getPackageName(),
                                     "wechat_dpi",
                                     "application_attach",
-                                    installed ? "mutation_candidate" : "skipped",
-                                    "retryInstallAttempted=true, installed=" + installed
+                                    installOutcomeStage(outcome),
+                                    "outcome=" + outcome
                                             + ", classLoader="
                                             + WechatDpiModernHookInstaller.describeClassLoaderForLog(
                                                     classLoader));
@@ -191,6 +195,13 @@ final class ModernAppSpecificRouteInstaller {
                     "skipped",
                     "hookFailed=true, error=" + throwable.getClass().getSimpleName());
         }
+    }
+
+    private static String installOutcomeStage(WechatDpiInstallOutcome outcome) {
+        if (outcome == WechatDpiInstallOutcome.INSTALLED) {
+            return "mutation_candidate";
+        }
+        return outcome == WechatDpiInstallOutcome.DEFERRED ? "deferred" : "skipped";
     }
 
     static boolean shouldSuppressModuleLoadedGenericHooks(String packageName, String processName) {

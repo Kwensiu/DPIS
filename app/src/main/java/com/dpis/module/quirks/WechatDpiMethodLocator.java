@@ -27,8 +27,21 @@ public final class WechatDpiMethodLocator {
 
     public static Result locate(ClassLoader classLoader, ApplicationInfo applicationInfo,
             long versionCode) {
+        return locate(classLoader, applicationInfo, versionCode, true);
+    }
+
+    /**
+     * Resolves the cheap version-table route first and optionally performs the
+     * APK-wide DexKit scan. Package-ready runs use the static-only form so an
+     * unknown WeChat version does not block cold start before Application.attach.
+     */
+    public static Result locate(ClassLoader classLoader, ApplicationInfo applicationInfo,
+            long versionCode, boolean allowDexKit) {
         Result routeResult = locateByStaticRoute(classLoader, versionCode);
         if (!routeResult.methods.isEmpty()) {
+            return routeResult;
+        }
+        if (!allowDexKit) {
             return routeResult;
         }
         Result dexKitResult = locateByDexKit(classLoader, applicationInfo);

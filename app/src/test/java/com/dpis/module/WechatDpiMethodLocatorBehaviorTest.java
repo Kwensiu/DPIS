@@ -3,6 +3,7 @@ package com.dpis.module;
 import com.dpis.module.quirks.WechatDpiMethodLocator;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
 import android.util.DisplayMetrics;
@@ -24,6 +25,16 @@ public class WechatDpiMethodLocatorBehaviorTest {
         assertEquals(2, result.methods.size());
         assertEquals("d", result.methods.get(0).getName());
         assertEquals("e", result.methods.get(1).getName());
+    }
+
+    @Test
+    public void staticOnlyLookupDoesNotRunDexKitForUnknownVersions() {
+        WechatDpiMethodLocator.Result result = WechatDpiMethodLocator.locate(
+                getClass().getClassLoader(), null, 9999L, false);
+
+        assertEquals(WechatDpiMethodLocator.Source.STATIC_ROUTE, result.source);
+        assertTrue(result.methods.isEmpty());
+        assertTrue(result.failure.contains("unsupported versionCode=9999"));
     }
 
     @Test

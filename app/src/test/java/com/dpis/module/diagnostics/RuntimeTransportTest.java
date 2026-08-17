@@ -62,6 +62,7 @@ public final class RuntimeTransportTest {
                 + "\"source\":\"runtime-transport\","
                 + "\"category\":\"runtime\","
                 + "\"route\":\"font\","
+                + "\"routeName\":\"textview_sp_rewrite\","
                 + "\"stage\":\"dpis_log\","
                 + "\"package\":\"com.example.app\","
                 + "\"message\":\"target app matched: package=com.example.app\"}\n");
@@ -77,6 +78,7 @@ public final class RuntimeTransportTest {
         assertTrue(snapshot.available);
         assertTrue(snapshot.events.get(0).contains("source=runtime-transport"));
         assertTrue(snapshot.events.get(0).contains("route=font"));
+        assertTrue(snapshot.events.get(0).contains("routeName=textview_sp_rewrite"));
         assertTrue(snapshot.events.get(0).contains("stage=dpis_log"));
     }
 

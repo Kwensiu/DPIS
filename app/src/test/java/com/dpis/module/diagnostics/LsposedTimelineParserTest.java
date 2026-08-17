@@ -502,6 +502,30 @@ public final class LsposedTimelineParserTest {
         assertTrue(events.get(2).contains("stage=end"));
     }
 
+    @Test
+    public void wechatDpiHistoryWithinLookbackSurvivesDiagnosticSessionWindow() {
+        String raw = "[ 2023-11-14T09:00:00.000     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "DPIS_WECHAT_DPI_HISTORY package=com.tencent.mm stage=reapplied "
+                + "source=ResourcesImpl.updateConfiguration,targetDpi=368,observedDpi=480,resultDpi=368\n"
+                + "[ 2023-11-12T06:13:20.000     1000:  1234:  5678 I/LSPosedFramework ] "
+                + "(com.tencent.mm)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                + "DPIS_WECHAT_DPI_HISTORY package=com.tencent.mm stage=reapplied "
+                + "source=ResourcesImpl.updateConfiguration,targetDpi=368,observedDpi=480,resultDpi=368";
+
+        List<String> events = LsposedTimelineParser.parse(
+                raw,
+                WINDOW_START_MILLIS,
+                WINDOW_END_MILLIS,
+                wechatRequest(368)
+        );
+
+        assertEquals(1, events.size());
+        assertTrue(events.get(0).contains("source=lsposed-history"));
+        assertTrue(events.get(0).contains("stage=reapplied"));
+        assertTrue(events.get(0).contains("targetDpi=368"));
+    }
+
     private static LsposedTimelineParser.Input request(
             boolean inScope,
             boolean dpisEnabled,

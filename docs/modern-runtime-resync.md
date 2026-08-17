@@ -415,6 +415,39 @@ Detailed app-specific runtime evidence lives in
   `Application.attach(Context)` retry install result, the first callback method
   short name, and the applied method short name. These details stay on the
   feedback-diagnostic hot path only; they do not widen normal always-on probes.
+- 2026-08-17 active: unknown WeChat versions defer APK-wide DexKit discovery
+  from `package_ready` to the existing `Application.attach(Context)` retry.
+  This preserves the static-table fast path for known versions while avoiding
+  two synchronous scans during cold start. Bottom-tab icon compensation remains
+  a separate structural `TabIconView` route and must not be gated on either a
+  static version-table match or a density-manager locator result; WeChat 8.0.76
+  exposed that accidental migration gate when DPI still worked but tab icons did
+  not receive compensation. Diagnostic exports now summarize the independent
+  `displaymetrics` and `bottom_tab_icon` milestones as applied, skipped with a
+  reason, hook-ready without a callback, or no evidence. Bottom-tab setup also
+  publishes class resolution, init-signature, and scale-field failures as
+  low-frequency structured events, so a user diagnostic identifies the failed
+  boundary without adding logging work to its draw-time callback.
+- 2026-08-17 diagnostic contract: every WeChat hot-path record carries the
+  semantic `routeName` (`displaymetrics` or `bottom_tab_icon`) in both the
+  UI-memory event and the runtime-transport JSON line. Export aggregation keeps
+  legacy message-only route markers readable, but no longer depends on the
+  asynchronous LSPosed bridge. `deferred` means an intentional lifecycle
+  deferral (normally package-ready before the application class loader is
+  available), not a failed installation. `skipped` is terminal for that attempt.
+  When events disagree, `mutation_applied` wins over callback, hook-ready,
+  skipped, and deferred evidence; hook-ready without a callback is reported as a
+  coverage gap rather than a mutation failure.
+- 2026-08-17 long-idle recovery: independent WeChat DPI also observes the
+  framework `ResourcesImpl.updateConfiguration` boundary and Activity resume.
+  When a running process receives a new `DisplayMetrics` baseline, the route
+  reasserts only the configured independent DPI and leaves `Configuration`
+  untouched, avoiding a system-framework route or a relaunch-triggering config
+  write. State changes are written as sparse `DPIS_WECHAT_DPI_HISTORY` records
+  to the persistent LSPosed module log. Feedback export retains only this
+  package-scoped history from the preceding 48 hours, so a diagnostic started
+  after an overnight drift can still show the observed DPI, target DPI, and
+  whether reapplication succeeded.
 - 2026-06-17 superseded: WeChat independent DPI route tested a module-loaded
   `ClassLoader.loadClass(String, boolean)` probe in the WeChat main process and
   an `Application.attach(Context)` retry from the runtime `Context` classloader.

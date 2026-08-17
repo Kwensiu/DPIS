@@ -192,6 +192,9 @@ public class ModuleMainHookInstallerTest {
         assertTrue(installer.contains("bottom tab icon hook skipped: class not found"));
         assertTrue(installer.contains("resolveWechatVersionCode"));
         assertTrue(installer.contains("WechatDpiMethodLocator.locate("));
+        assertTrue(installer.contains("phase.getAllowsDexKit()"));
+        assertTrue(router.contains("WechatDpiInstallPhase.PACKAGE_READY"));
+        assertTrue(router.contains("WechatDpiInstallPhase.APPLICATION_ATTACH"));
         assertTrue(installer.contains("WechatDpiRuntime.apply(metrics, dpi)"));
         assertTrue(installer.contains("configuredDpi="));
         assertTrue(installer.contains("describeClassLoaderForLog("));
@@ -338,7 +341,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
                 .contains("handlePackageReadyReplay("));
         assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java")
-                .contains("\"hot_reload_package_ready\""));
+                .contains("WechatDpiInstallPhase.HOT_RELOAD_PACKAGE_READY"));
         assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName);"));
         assertTrue(moduleMain.contains("system_server hot reload replay enter"));
         assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"));

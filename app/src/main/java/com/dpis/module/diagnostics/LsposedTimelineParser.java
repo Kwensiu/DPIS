@@ -14,6 +14,8 @@ import java.util.Map;
 
 final class LsposedTimelineParser {
     private static final long REPEAT_WARNING_WINDOW_MS = 300L;
+    private static final long WECHAT_DPI_HISTORY_LOOKBACK_MS = 48L * 60L * 60L * 1000L;
+    private static final String WECHAT_DPI_HISTORY_PREFIX = "DPIS_WECHAT_DPI_HISTORY ";
 
     private LsposedTimelineParser() {
     }
@@ -44,10 +46,16 @@ final class LsposedTimelineParser {
         TimelineClassifier.Context context = classifierContext(input);
         for (DpisLogEntry entry : DpisLogParser.parseLsposedDpis(raw)) {
             long timestampMillis = resolveTimestampMillis(entry.timestamp, window.startMillis());
-            if (!window.contains(timestampMillis)) {
+            if (!window.contains(timestampMillis) && !isWechatDpiHistoryInLookback(
+                    timestampMillis, entry, window, input)) {
                 continue;
             }
             if (!matchesTarget(entry, input)) {
+                continue;
+            }
+            String historyEvent = formatWechatDpiHistoryEvent(timestampMillis, entry, input);
+            if (historyEvent != null) {
+                events.add(historyEvent);
                 continue;
             }
             String hotPathEvent = formatHotPathEvent(timestampMillis, entry, input);
@@ -198,7 +206,8 @@ final class LsposedTimelineParser {
 
     public static WindowedRawLog windowRawLog(
             LogReadResult result,
-            SessionWindow window
+            SessionWindow window,
+            Input input
     ) {
         if (result == null || result.output().isBlank()) {
             return new WindowedRawLog("", 0, 0, 0, 0);
@@ -221,8 +230,12 @@ final class LsposedTimelineParser {
                 droppedUnparsed++;
                 continue;
             }
-            if (!window.contains(timestampMillis)) {
+            if (!window.contains(timestampMillis)
+                    && !isWechatDpiHistoryInLookback(timestampMillis, entry, window, input)) {
                 droppedOutsideWindow++;
+                continue;
+            }
+            if (!matchesTarget(entry, input)) {
                 continue;
             }
             retained.add(formatRawEntry(entry));
@@ -247,6 +260,47 @@ final class LsposedTimelineParser {
         String message = entry != null ? entry.message : "";
         String process = entry != null ? entry.process : "";
         return message.contains(packageName) || process.equals(packageName);
+    }
+
+    private static boolean isWechatDpiHistoryInLookback(
+            long timestampMillis,
+            DpisLogEntry entry,
+            SessionWindow window,
+            Input input
+    ) {
+        if (timestampMillis <= 0L || window == null || input == null || !input.wechatDpiEnabled) {
+            return false;
+        }
+        String message = entry != null ? entry.message : "";
+        return message.contains(WECHAT_DPI_HISTORY_PREFIX)
+                && matchesTarget(entry, input)
+                && timestampMillis >= window.endMillis() - WECHAT_DPI_HISTORY_LOOKBACK_MS
+                && timestampMillis <= window.endMillis();
+    }
+
+    private static String formatWechatDpiHistoryEvent(
+            long timestampMillis,
+            DpisLogEntry entry,
+            Input input
+    ) {
+        String message = entry != null ? entry.message : "";
+        int prefix = message.indexOf(WECHAT_DPI_HISTORY_PREFIX);
+        if (prefix < 0) {
+            return null;
+        }
+        String history = message.substring(prefix + WECHAT_DPI_HISTORY_PREFIX.length()).trim();
+        String stage = fieldValue(history, "stage", "event");
+        String packageName = fieldValue(history, "package", input.packageName);
+        return formatTime(timestampMillis)
+                + " source=lsposed-history"
+                + " category=runtime"
+                + " route=wechat_dpi"
+                + " stage=" + stage
+                + " routeName=resource_recovery"
+                + " level=" + valueOrDefault(entry.level, "I")
+                + " package=" + valueOrDefault(packageName, "unknown")
+                + " process=" + valueOrDefault(entry.process, "unknown")
+                + " message=" + sanitize(history);
     }
 
     private static String formatEvent(
