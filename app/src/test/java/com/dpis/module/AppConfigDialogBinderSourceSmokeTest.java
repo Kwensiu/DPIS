@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.appconfig.LandAppDetailPaneBinder;
 
@@ -113,7 +114,7 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(interactionsSource.contains(
                 "new AppConfigSheetModeValidationBinder(binder, host)"));
         assertTrue(countOccurrences(modeValidationSource, "host.onDraftStateChanged(state);") >= 7);
-        assertTrue(mainActivitySource.contains("AppConfigEditorDraft captured = captureAppConfigDraft();"));
+        assertTrue(mainActivitySource.contains("EditorDraft captured = captureAppConfigDraft();"));
         assertTrue(mainActivitySource.contains("mainViewModel.setEditingDraft(captured);"));
     }
 
@@ -159,17 +160,23 @@ public class AppConfigDialogBinderSourceSmokeTest {
     public void wechatDpiPublishFollowsSavedHostState() throws IOException {
         String actionBinder = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String editorController = read(
+                "src/main/java/com/dpis/module/appconfig/EditorActions.java");
 
         int toggleStart = actionBinder.indexOf("views.dpisToggleButton.setOnClickListener");
         int toggleEnd = actionBinder.indexOf("views.fontHookDomainsButton.setOnClickListener", toggleStart);
         String toggleBlock = actionBinder.substring(toggleStart, toggleEnd);
         assertFalse(toggleBlock.contains("WechatDpiSheetBinder.publishForDpisState"));
 
-        int hostStart = mainActivity.indexOf("public boolean setDpisEnabled(");
-        int hostEnd = mainActivity.indexOf("@Override", hostStart + 1);
+        int hostStart = mainActivity.indexOf(
+                "public boolean setDpisEnabled(boolean enabled)");
+        int hostEnd = mainActivity.indexOf("@Override public void executeProcessAction", hostStart);
         String hostBlock = mainActivity.substring(hostStart, hostEnd);
-        assertTrue(hostBlock.contains("if (saved)"));
+        assertTrue(hostBlock.contains(
+                "if (!MainActivity.this.setDpisEnabled(item.packageName, enabled))"));
         assertTrue(hostBlock.contains("WechatDpiSheetBinder.publishForDpisState("));
+        assertTrue(editorController.contains("if (host.setDpisEnabled(enabled))"));
+        assertTrue(editorController.contains("host.updateDraft(draft.withDpisEnabled(enabled))"));
     }
 
     @Test

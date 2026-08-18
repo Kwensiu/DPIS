@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -13,7 +14,7 @@ import org.junit.Test;
 public final class AppConfigEditorDraftTest {
     @Test
     public void immediateDpisStateSurvivesSubsequentFieldEdits() {
-        AppConfigEditorDraft draft = draft().withDpisEnabled(true)
+        EditorDraft draft = draft().withDpisEnabled(true)
                 .withFontInput("125");
 
         assertTrue(draft.dpisEnabled);
@@ -22,7 +23,7 @@ public final class AppConfigEditorDraftTest {
 
     @Test
     public void immediateScopeStateSurvivesAdvancedConfigEdits() {
-        AppConfigEditorDraft draft = draft().withScopeSelected(true)
+        EditorDraft draft = draft().withScopeSelected(true)
                 .withAdvancedConfig("serif", "resources_font", ViewportApplyMode.COMPAT,
                         false, false);
 
@@ -33,7 +34,7 @@ public final class AppConfigEditorDraftTest {
 
     @Test
     public void resetKeepsImmediateStateWhileClearingPersistedConfigDraft() {
-        AppConfigEditorDraft cleared = draft().withDpisEnabled(true).withScopeSelected(true)
+        EditorDraft cleared = draft().withDpisEnabled(true).withScopeSelected(true)
                 .cleared();
 
         assertTrue(cleared.dpisEnabled);
@@ -54,7 +55,7 @@ public final class AppConfigEditorDraftTest {
 
     @Test
     public void viewportModeSwitchRetainsIndependentScaleAndAbsoluteInputs() {
-        AppConfigEditorDraft draft = draft()
+        EditorDraft draft = draft()
                 .withViewportInput(ViewportTargetType.RELATIVE_SCALE, "125")
                 .withViewportMode(ViewportTargetType.ABSOLUTE_DP)
                 .withViewportInput(ViewportTargetType.ABSOLUTE_DP, "720")
@@ -66,7 +67,7 @@ public final class AppConfigEditorDraftTest {
 
     @Test
     public void fontModeSwitchDoesNotDiscardFontInput() {
-        AppConfigEditorDraft draft = draft().withFontInput("135")
+        EditorDraft draft = draft().withFontInput("135")
                 .withFontMode(FontApplyMode.FIELD_REWRITE)
                 .withFontMode(FontApplyMode.SYSTEM_EMULATION);
 
@@ -76,9 +77,9 @@ public final class AppConfigEditorDraftTest {
 
     @Test
     public void automaticHookDomainsRemainExplicitAfterAdvancedConfigUpdate() {
-        AppConfigEditorDraft automatic = draft().withAdvancedConfig(
+        EditorDraft automatic = draft().withAdvancedConfig(
                 null, "", ViewportApplyMode.AUTO, true, false);
-        AppConfigEditorDraft updated = automatic.withAdvancedConfig(
+        EditorDraft updated = automatic.withAdvancedConfig(
                 automatic.selectedTypefaceId,
                 automatic.draftFontHookDomainsRaw,
                 ViewportApplyMode.COMPAT,
@@ -90,8 +91,8 @@ public final class AppConfigEditorDraftTest {
         assertEquals(ViewportApplyMode.COMPAT, updated.viewportApplyMode);
     }
 
-    private static AppConfigEditorDraft draft() {
-        return new AppConfigEditorDraft(
+    private static EditorDraft draft() {
+        return new EditorDraft(
                 "com.example.target",
                 "100",
                 "100",

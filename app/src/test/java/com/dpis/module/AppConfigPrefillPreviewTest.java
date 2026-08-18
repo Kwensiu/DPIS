@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.config.PackageConfigRepository;
 
@@ -165,7 +166,7 @@ public class AppConfigPrefillPreviewTest {
         assertEquals("textview_sp_rewrite,paint_text_size_fallback",
                 item.effectiveFontHookDomainsRaw());
         assertEquals("textview_sp_rewrite,paint_text_size_fallback",
-                AppConfigEditorDraft.fromItem(item).draftFontHookDomainsRaw);
+                EditorDraft.fromItem(item).draftFontHookDomainsRaw);
 
         AppListItem preview = item.withGlobalPrefillPreview(
                 TemplateConfigValueAdapters.fromViewportTargetSpec(
@@ -206,7 +207,7 @@ public class AppConfigPrefillPreviewTest {
                 null);
 
         assertEquals("", item.effectiveFontHookDomainsRaw());
-        assertEquals("", AppConfigEditorDraft.fromItem(item).draftFontHookDomainsRaw);
+        assertEquals("", EditorDraft.fromItem(item).draftFontHookDomainsRaw);
     }
 
     private static AppListItem app(String packageName) {

@@ -59,7 +59,7 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.AppWorkspacePresentation
-import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
@@ -196,7 +196,7 @@ private fun WearAppFilterPage(
 
 /** Full-screen Wear editor; it deliberately never creates a phone bottom sheet. */
 @Composable
-internal fun WearAppConfigEditorContent(state: AppConfigEditorPresentation.State) {
+internal fun WearAppConfigEditorContent(state: EditorPresentation.State) {
     val context = LocalContext.current
     val closeOrBack = {
         if (state.destination.isChildPage) {

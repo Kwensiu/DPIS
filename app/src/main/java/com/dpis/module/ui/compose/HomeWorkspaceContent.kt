@@ -222,11 +222,16 @@ private fun HomeInfoCard(state: HomeWorkspaceBinder.State) {
 @Composable
 private fun HomeInfoRow(titleRes: Int, value: String, shape: RoundedCornerShape) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(44.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Row(Modifier.fillMaxWidth().fillMaxHeight().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(stringResource(titleRes), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
             Text(value, modifier = Modifier.padding(start = 16.dp).weight(1.2f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

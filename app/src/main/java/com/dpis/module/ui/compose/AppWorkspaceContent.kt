@@ -77,7 +77,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.AppWorkspacePresentation
-import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
@@ -98,7 +98,7 @@ private val AppListScrollbarThumbHeight = 36.dp
 fun AppWorkspaceContent(
     state: AppWorkspacePresentation.State,
     padding: PaddingValues,
-    editorState: AppConfigEditorPresentation.State? = null,
+    editorState: EditorPresentation.State? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()

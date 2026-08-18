@@ -1,6 +1,8 @@
-package com.dpis.module;
+package com.dpis.module.appconfig;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.applist.AppListItem;
+import com.dpis.module.ConfigEditorDestination;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.WechatDpiConfig;
 import com.dpis.module.fonts.FontApplyMode;
@@ -8,8 +10,8 @@ import com.dpis.module.viewport.ViewportTargetType;
 import java.util.Set;
 
 /** Immutable Compose-facing projection for the per-app configuration editor. */
-public final class AppConfigEditorPresentation {
-    private AppConfigEditorPresentation() {
+public final class EditorPresentation {
+    private EditorPresentation() {
     }
 
     public interface Actions {
@@ -37,7 +39,7 @@ public final class AppConfigEditorPresentation {
     public static final class State {
         public final AppListItem item;
         public final String versionName;
-        public final AppConfigEditorDraft draft;
+        public final EditorDraft draft;
         public final String typefaceSelectorText;
         public final String hookChainText;
         public final boolean dirty;
@@ -51,7 +53,7 @@ public final class AppConfigEditorPresentation {
         public final ConfigEditorDestination destination;
         public final Actions actions;
 
-        public State(AppListItem item, String versionName, AppConfigEditorDraft draft, String typefaceSelectorText,
+        public State(AppListItem item, String versionName, EditorDraft draft, String typefaceSelectorText,
                 String hookChainText, boolean dirty, boolean saveFeedbackVisible,
                 boolean systemHooksEnabled, Set<String> automaticFontHookDomains,
                 ConfigEditorDestination destination, Actions actions) {

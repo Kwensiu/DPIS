@@ -1,5 +1,6 @@
 package com.dpis.module
 
+import com.dpis.module.appconfig.EditorPresentation
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -70,7 +71,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
     interface Content {
         fun homeState(): HomeWorkspaceBinder.State
         fun appState(): AppWorkspacePresentation.State
-        fun appEditorState(): AppConfigEditorPresentation.State?
+        fun appEditorState(): EditorPresentation.State?
         fun toolsState(): SystemFontScaleToolState?
         fun changeToolsPending(percent: Int)
         fun applyTools()

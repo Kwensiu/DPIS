@@ -64,7 +64,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dpis.module.ConfigEditorDestination
-import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.R
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
@@ -296,7 +296,7 @@ internal fun HookChainEditorPage(
 
 @Composable
 internal fun AppHookChainEditorPage(
-    state: AppConfigEditorPresentation.State,
+    state: EditorPresentation.State,
     modifier: Modifier = Modifier,
     animateTabSize: Boolean = true,
     onBack: (() -> Unit)? = null,

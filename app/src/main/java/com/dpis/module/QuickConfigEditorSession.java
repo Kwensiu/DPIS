@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.applist.AppListItem;
 
@@ -9,14 +10,14 @@ import com.dpis.module.applist.AppListItem;
 final class QuickConfigEditorSession {
 
     final AppListItem item;
-    final AppConfigEditorDraft draft;
-    final AppConfigEditorDraft savedDraft;
+    final EditorDraft draft;
+    final EditorDraft savedDraft;
     final ConfigEditorDestination destination;
 
     QuickConfigEditorSession(
             AppListItem item,
-            AppConfigEditorDraft draft,
-            AppConfigEditorDraft savedDraft,
+            EditorDraft draft,
+            EditorDraft savedDraft,
             ConfigEditorDestination destination
     ) {
         this.item = item;

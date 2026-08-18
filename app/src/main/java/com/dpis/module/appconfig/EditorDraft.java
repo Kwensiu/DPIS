@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.appconfig;
 
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.applist.AppListItem;
@@ -15,7 +15,7 @@ import java.util.Objects;
  * presentation. Persisted package configuration remains owned by the existing
  * config store and save handler.
  */
-public final class AppConfigEditorDraft {
+public final class EditorDraft {
 
     public final String packageName;
     public final String viewportInput;
@@ -33,7 +33,7 @@ public final class AppConfigEditorDraft {
     public final boolean scopeSelected;
     public final boolean dpisEnabled;
 
-    public AppConfigEditorDraft(
+    public EditorDraft(
             String packageName,
             String viewportInput,
             String viewportScaleInput,
@@ -74,7 +74,7 @@ public final class AppConfigEditorDraft {
                         : viewportScaleInput;
     }
 
-    public static AppConfigEditorDraft fromItem(AppListItem item) {
+    public static EditorDraft fromItem(AppListItem item) {
         String targetType = AppConfigInputValidation.initialViewportTargetType(
                 item.viewportTargetSpec);
         String viewportInput = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec);
@@ -85,7 +85,7 @@ public final class AppConfigEditorDraft {
         String absoluteInput = item.viewportWidthDp != null
                 ? String.valueOf(item.viewportWidthDp)
                 : (item.viewportTargetSpec.isAbsoluteDp() ? viewportInput : "");
-        return new AppConfigEditorDraft(
+        return new EditorDraft(
                 item.packageName,
                 viewportInput,
                 scaleInput,
@@ -104,7 +104,7 @@ public final class AppConfigEditorDraft {
         );
     }
 
-    public AppConfigEditorDraft withViewportInput(String targetType, String value) {
+    public EditorDraft withViewportInput(String targetType, String value) {
         String normalized = ViewportTargetType.normalize(targetType);
         String scale = ViewportTargetType.ABSOLUTE_DP.equals(normalized)
                 ? viewportScaleInput : valueOrEmpty(value);
@@ -115,7 +115,7 @@ public final class AppConfigEditorDraft {
                 viewportApplyModeResetRequested, wechatDpiInput, scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withViewportMode(String targetType) {
+    public EditorDraft withViewportMode(String targetType) {
         String normalized = ViewportTargetType.normalize(targetType);
         return copy(viewportScaleInput, viewportAbsoluteInput, normalized, fontInput, fontMode,
                 selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
@@ -123,28 +123,28 @@ public final class AppConfigEditorDraft {
                 scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withFontInput(String value) {
+    public EditorDraft withFontInput(String value) {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, value, fontMode,
                 selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
                 fontHookDomainsResetRequested, viewportApplyModeResetRequested, wechatDpiInput,
                 scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withFontMode(String value) {
+    public EditorDraft withFontMode(String value) {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput,
                 AppConfigInputValidation.initialFontMode(value), selectedTypefaceId,
                 draftFontHookDomainsRaw, viewportApplyMode, fontHookDomainsResetRequested,
                 viewportApplyModeResetRequested, wechatDpiInput, scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withWechatDpiInput(String value) {
+    public EditorDraft withWechatDpiInput(String value) {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput, fontMode,
                 selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
                 fontHookDomainsResetRequested, viewportApplyModeResetRequested, value,
                 scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withAdvancedConfig(
+    public EditorDraft withAdvancedConfig(
             String typefaceId,
             String hookDomainsRaw,
             String applyMode,
@@ -156,20 +156,20 @@ public final class AppConfigEditorDraft {
                 wechatDpiInput, scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft cleared() {
+    public EditorDraft cleared() {
         return copy("", "", ViewportTargetType.RELATIVE_SCALE, "",
                 FontApplyMode.SYSTEM_EMULATION, null, null, ViewportApplyMode.OFF,
                 true, true, "", scopeSelected, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withScopeSelected(boolean value) {
+    public EditorDraft withScopeSelected(boolean value) {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput, fontMode,
                 selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
                 fontHookDomainsResetRequested, viewportApplyModeResetRequested, wechatDpiInput,
                 value, dpisEnabled);
     }
 
-    public AppConfigEditorDraft withDpisEnabled(boolean value) {
+    public EditorDraft withDpisEnabled(boolean value) {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput, fontMode,
                 selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
                 fontHookDomainsResetRequested, viewportApplyModeResetRequested, wechatDpiInput,
@@ -182,7 +182,7 @@ public final class AppConfigEditorDraft {
     }
 
     /** Scope and DPIS toggles persist immediately; dirty tracks only values committed by Save. */
-    public boolean hasSameSavedConfig(AppConfigEditorDraft other) {
+    public boolean hasSameSavedConfig(EditorDraft other) {
         return other != null
                 && Objects.equals(packageName, other.packageName)
                 && Objects.equals(viewportScaleInput, other.viewportScaleInput)
@@ -198,21 +198,21 @@ public final class AppConfigEditorDraft {
                 && Objects.equals(wechatDpiInput, other.wechatDpiInput);
     }
 
-    public AppConfigEditorDraft afterSuccessfulSave() {
+    public EditorDraft afterSuccessfulSave() {
         return copy(viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput, fontMode,
                 selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyMode,
                 fontHookDomainsResetRequested, false, wechatDpiInput,
                 scopeSelected, dpisEnabled);
     }
 
-    private AppConfigEditorDraft copy(
+    private EditorDraft copy(
             String scaleInput, String absoluteInput, String nextViewportMode, String nextFontInput,
             String nextFontMode, String nextTypefaceId, String nextHookDomains,
             String nextViewportApplyMode, boolean nextHookDomainsReset,
             boolean nextViewportModeReset, String nextWechatDpiInput,
             boolean nextScopeSelected, boolean nextDpisEnabled
     ) {
-        return new AppConfigEditorDraft(packageName, viewportInputFor(nextViewportMode), scaleInput,
+        return new EditorDraft(packageName, viewportInputFor(nextViewportMode), scaleInput,
                 absoluteInput, nextViewportMode, nextFontInput, nextFontMode, nextTypefaceId,
                 nextHookDomains, nextViewportApplyMode, nextHookDomainsReset,
                 nextViewportModeReset, nextWechatDpiInput, nextScopeSelected, nextDpisEnabled);

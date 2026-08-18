@@ -1,4 +1,6 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorPresentation;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.appconfig.LandAppDetailPaneBinder;
 import com.dpis.module.diagnostics.LogGate;
@@ -28,6 +30,10 @@ import com.dpis.module.diagnostics.Session;
 import com.dpis.module.diagnostics.Coordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.EditorActions;
+import com.dpis.module.appconfig.EditorDialogStateFactory;
+import com.dpis.module.appconfig.EditorPresentationFactory;
+import com.dpis.module.appconfig.EditorSessionResolver;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
@@ -755,7 +761,7 @@ public final class MainActivity
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
         int currentPage = landCurrentPage.position();
-        AppConfigEditorDraft draft = captureAppConfigDraft();
+        EditorDraft draft = captureAppConfigDraft();
         if (draft == null && mainViewModel != null) {
             draft = mainViewModel.getEditingDraft();
         }
@@ -1055,7 +1061,7 @@ public final class MainActivity
                                 appWorkspaceScrollStateStore,
                                 createComposeAppWorkspaceActions());
                     }
-                    @Override public AppConfigEditorPresentation.State appEditorState() {
+                    @Override public EditorPresentation.State appEditorState() {
                         return createComposeAppEditorState();
                     }
                     @Override public com.dpis.module.settings.SystemFontScaleToolState toolsState() { return composeToolsPresenter != null ? composeToolsPresenter.state() : null; }
@@ -1687,18 +1693,13 @@ public final class MainActivity
         };
     }
 
-    private AppConfigEditorPresentation.State createComposeAppEditorState() {
+    private EditorPresentation.State createComposeAppEditorState() {
         if (mainViewModel == null || mainViewModel.getEditingPackageName() == null) {
             return null;
         }
         String packageName = mainViewModel.getEditingPackageName();
-        AppListItem item = null;
-        for (AppListItem candidate : requireUiState().appsSnapshot()) {
-            if (packageName.equals(candidate.packageName)) {
-                item = candidate;
-                break;
-            }
-        }
+        AppListItem item = EditorSessionResolver.findItem(
+                requireUiState().appsSnapshot(), packageName);
         if (item == null) {
             return null;
         }
@@ -1707,51 +1708,48 @@ public final class MainActivity
         ).read();
         AppListItem editorItem = AppConfigPrefillPreview.applyIfEligible(
                 item, getHookConfigStore(), globalPrefill);
-        AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
-        if (draft == null || !editorItem.packageName.equals(draft.packageName)) {
-            draft = AppConfigEditorDraft.fromItem(editorItem);
-            mainViewModel.setEditingDraft(draft);
-            mainViewModel.setSavedEditingDraft(draft);
+        EditorSessionResolver.Session session = EditorSessionResolver.resolve(
+                editorItem,
+                mainViewModel.getEditingDraft(),
+                mainViewModel.getSavedEditingDraft());
+        if (session == null) {
+            return null;
         }
-        final AppConfigEditorDraft currentDraft = draft;
+        if (session.initialized) {
+            mainViewModel.setEditingDraft(session.draft);
+            mainViewModel.setSavedEditingDraft(session.savedDraft);
+        }
+        EditorDraft draft = session.draft;
+        final EditorDraft currentDraft = draft;
         AppConfigDialogBinder.AppConfigDialogState composeDialogState = composeEditorDialogState(
                 editorItem, currentDraft);
         String typefaceSelectorText = new AppConfigDialogBinder(
                 this, createAppConfigDialogHost()).typefaceSelectorText(
                 currentDraft.selectedTypefaceId);
         String hookChainText = getFontHookDomainsButtonText(editorItem, composeDialogState);
-        boolean dirty = !currentDraft.hasSameSavedConfig(mainViewModel.getSavedEditingDraft());
-        return new AppConfigEditorPresentation.State(
+        return EditorPresentationFactory.create(
                 editorItem,
                 resolvePackageVersionName(editorItem.packageName),
                 currentDraft,
                 typefaceSelectorText,
                 hookChainText,
-                dirty,
+                session.savedDraft,
                 mainViewModel.isEditingSaveFeedback(),
                 isSystemHookEnabledFromStore(),
                 recommendedTemplateFontHookDomains(),
                 mainViewModel.getEditingDestination(),
-                new AppConfigEditorPresentation.Actions() {
-                    @Override public void updateViewportInput(String value) {
-                        updateComposeAppEditorDraft(currentDraft.withViewportInput(
-                                currentDraft.viewportMode, value));
-                    }
+                createComposeAppEditorActions(editorItem, currentDraft)
+        );
+    }
 
-                    @Override public void changeViewportMode(String targetType) {
-                        updateComposeAppEditorDraft(currentDraft.withViewportMode(targetType));
-                    }
-
-                    @Override public void updateFontInput(String value) {
-                        updateComposeAppEditorDraft(currentDraft.withFontInput(value));
-                    }
-
-                    @Override public void changeFontMode(String mode) {
-                        updateComposeAppEditorDraft(currentDraft.withFontMode(mode));
-                    }
-
-                    @Override public void updateWechatDpiInput(String value) {
-                        updateComposeAppEditorDraft(currentDraft.withWechatDpiInput(value));
+    private EditorPresentation.Actions createComposeAppEditorActions(
+            AppListItem item,
+            EditorDraft draft
+    ) {
+        return EditorActions.create(
+                new EditorActions.Host() {
+                    @Override public void updateDraft(EditorDraft nextDraft) {
+                        updateComposeAppEditorDraft(nextDraft);
                     }
 
                     @Override public void showWechatDpiHelp() {
@@ -1763,29 +1761,6 @@ public final class MainActivity
                         );
                     }
 
-                    @Override public void updateTypeface(String typefaceId) {
-                        updateComposeAppEditorDraft(currentDraft.withAdvancedConfig(
-                                typefaceId,
-                                currentDraft.draftFontHookDomainsRaw,
-                                currentDraft.viewportApplyMode,
-                                currentDraft.fontHookDomainsResetRequested,
-                                currentDraft.viewportApplyModeResetRequested));
-                    }
-
-                    @Override public void updateHookChain(
-                            String rawDomains,
-                            boolean resetDomains,
-                            String viewportApplyMode,
-                            boolean resetViewportApplyMode
-                    ) {
-                        updateComposeAppEditorDraft(currentDraft.withAdvancedConfig(
-                                currentDraft.selectedTypefaceId,
-                                rawDomains,
-                                viewportApplyMode,
-                                resetDomains,
-                                resetViewportApplyMode));
-                    }
-
                     @Override public void navigate(ConfigEditorDestination destination) {
                         mainViewModel.setEditingDestination(destination);
                         if (composeShellHost != null) {
@@ -1793,53 +1768,41 @@ public final class MainActivity
                         }
                     }
 
-                    @Override public void reset() {
-                        updateComposeAppEditorDraft(currentDraft.cleared());
+                    @Override public void toggleScope(
+                            boolean currentlySelected,
+                            Runnable onSelected,
+                            Runnable onDeselected
+                    ) {
+                        toggleLandDetailScope(item, currentlySelected, onSelected, onDeselected);
                     }
 
-                    @Override public void toggleScope() {
-                        toggleLandDetailScope(editorItem, currentDraft.scopeSelected,
-                                () -> updateComposeAppEditorDraft(
-                                        currentDraft.withScopeSelected(true)),
-                                () -> updateComposeAppEditorDraft(
-                                        currentDraft.withScopeSelected(false)));
-                    }
-
-                    @Override public void toggleDpisEnabled() {
-                        boolean nextEnabled = !currentDraft.dpisEnabled;
-                        if (setDpisEnabled(editorItem.packageName, nextEnabled)) {
-                            WechatDpiSheetBinder.publishForDpisState(
-                                    editorItem.packageName, nextEnabled);
-                            // This value persists immediately and can change the active
-                            // catalogue filters, so refresh the same snapshot path as the
-                            // retained landscape detail implementation.
-                            requestAppsLoad();
-                            updateComposeAppEditorDraft(
-                                    currentDraft.withDpisEnabled(nextEnabled));
+                    @Override public boolean setDpisEnabled(boolean enabled) {
+                        if (!MainActivity.this.setDpisEnabled(item.packageName, enabled)) {
+                            return false;
                         }
+                        WechatDpiSheetBinder.publishForDpisState(item.packageName, enabled);
+                        // This persistence can change active catalog filters, so retain the
+                        // same refresh path as the legacy landscape detail implementation.
+                        requestAppsLoad();
+                        return true;
                     }
 
-                    @Override public void startProcess() {
-                        executeDialogProcessAction(editorItem,
-                                AppConfigDialogBinder.ProcessAction.START);
+                    @Override public void executeProcessAction(
+                            AppConfigDialogBinder.ProcessAction action
+                    ) {
+                        executeDialogProcessAction(item, action);
                     }
 
-                    @Override public void restartProcess() {
-                        executeDialogProcessAction(editorItem,
-                                AppConfigDialogBinder.ProcessAction.RESTART);
+                    @Override public void startFeedbackDiagnostic(
+                            EditorDraft currentDraft
+                    ) {
+                        startComposeFeedbackDiagnostic(item, currentDraft);
                     }
 
-                    @Override public void stopProcess() {
-                        executeDialogProcessAction(editorItem,
-                                AppConfigDialogBinder.ProcessAction.STOP);
-                    }
-
-                    @Override public void startFeedbackDiagnostic() {
-                        startComposeFeedbackDiagnostic(editorItem, currentDraft);
-                    }
-
-                    @Override public void save() {
-                        if (saveComposeAppEditor(editorItem, currentDraft)) {
+                    @Override public void save(
+                            EditorDraft currentDraft
+                    ) {
+                        if (saveComposeAppEditor(item, currentDraft)) {
                             markComposeAppEditorSaved(currentDraft);
                         }
                     }
@@ -1847,30 +1810,21 @@ public final class MainActivity
                     @Override public void close() {
                         closeComposeAppEditor();
                     }
-                }
+                },
+                item,
+                draft
         );
     }
 
     private AppConfigDialogBinder.AppConfigDialogState composeEditorDialogState(
             AppListItem item,
-            AppConfigEditorDraft draft
+            EditorDraft draft
     ) {
-        AppConfigDialogBinder.AppConfigDialogState state
-                = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
-        state.selectedTypefaceId = draft.selectedTypefaceId;
-        state.draftFontHookDomainsRaw = draft.draftFontHookDomainsRaw;
-        state.viewportApplyMode = draft.viewportApplyMode;
-        state.fontHookDomainsResetRequested = draft.fontHookDomainsResetRequested;
-        state.viewportApplyModeResetRequested = draft.viewportApplyModeResetRequested;
-        state.viewportScaleInput = draft.viewportScaleInput;
-        state.viewportAbsoluteInput = draft.viewportAbsoluteInput;
-        state.scopeSelected = draft.scopeSelected;
-        state.dpisEnabled = draft.dpisEnabled;
-        return state;
+        return EditorDialogStateFactory.create(item, draft);
     }
 
     private void updateComposeAdvancedDraft(
-            AppConfigEditorDraft draft,
+            EditorDraft draft,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
         updateComposeAppEditorDraft(draft.withAdvancedConfig(
@@ -1887,16 +1841,19 @@ public final class MainActivity
         }
         mainViewModel.setEditingPackageName(item.packageName);
         mainViewModel.setEditingDestination(ConfigEditorDestination.MAIN);
-        AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
+        EditorDraft draft = mainViewModel.getEditingDraft();
         if (draft == null || !item.packageName.equals(draft.packageName)) {
-            mainViewModel.setEditingDraft(null);
+            EditorDraft lastClosedDraft =
+                    mainViewModel.getLastClosedEditingDraft(item.packageName);
+            mainViewModel.setEditingDraft(lastClosedDraft);
+            mainViewModel.setSavedEditingDraft(lastClosedDraft);
         }
         if (composeShellHost != null) {
             composeShellHost.refreshApps();
         }
     }
 
-    private void updateComposeAppEditorDraft(AppConfigEditorDraft draft) {
+    private void updateComposeAppEditorDraft(EditorDraft draft) {
         if (mainViewModel == null || draft == null) {
             return;
         }
@@ -1915,15 +1872,15 @@ public final class MainActivity
 
     private void closeComposeAppEditor() {
         if (mainViewModel != null) {
-            mainViewModel.clearEditingPackageName();
             mainViewModel.clearEditingDraft();
+            mainViewModel.clearEditingPackageName();
         }
         if (composeShellHost != null) {
             composeShellHost.refreshApps();
         }
     }
 
-    private boolean saveComposeAppEditor(AppListItem item, AppConfigEditorDraft draft) {
+    private boolean saveComposeAppEditor(AppListItem item, EditorDraft draft) {
         if (item == null || draft == null) {
             return false;
         }
@@ -1952,11 +1909,11 @@ public final class MainActivity
         return result.success;
     }
 
-    private void markComposeAppEditorSaved(AppConfigEditorDraft draft) {
+    private void markComposeAppEditorSaved(EditorDraft draft) {
         if (mainViewModel == null || draft == null) {
             return;
         }
-        AppConfigEditorDraft savedDraft = draft.afterSuccessfulSave();
+        EditorDraft savedDraft = draft.afterSuccessfulSave();
         mainViewModel.setEditingDraft(savedDraft);
         mainViewModel.setSavedEditingDraft(savedDraft);
         mainViewModel.setEditingSaveFeedback(true);
@@ -1975,7 +1932,7 @@ public final class MainActivity
 
     private void startComposeFeedbackDiagnostic(
             AppListItem item,
-            AppConfigEditorDraft draft
+            EditorDraft draft
     ) {
         if (item == null || draft == null) {
             return;
@@ -1998,7 +1955,7 @@ public final class MainActivity
 
     private void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
-            AppConfigEditorDraft draft
+            EditorDraft draft
     ) {
         feedbackDiagnosticPageRequest = new FeedbackDiagnosticPageRequest(
                 item,
@@ -2018,7 +1975,7 @@ public final class MainActivity
 
     private void showComposeFeedbackDiagnosticConfirmation(
             AppListItem item,
-            AppConfigEditorDraft draft
+            EditorDraft draft
     ) {
         ComposeConfirmDialog.showWithLabels(
                 this,
@@ -2762,7 +2719,7 @@ public final class MainActivity
                 sheetItem,
                 systemHooksEnabled
         );
-        AppConfigEditorDraft draft = mainViewModel != null
+        EditorDraft draft = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
         if (draft != null) {
@@ -2964,7 +2921,7 @@ public final class MainActivity
         activeEditorRoot = dialogView;
         activeEditorPackageName = item.packageName;
         if (mainViewModel != null && mainViewModel.getEditingDraft() != null) {
-            AppConfigEditorDraft draft = mainViewModel.getEditingDraft();
+            EditorDraft draft = mainViewModel.getEditingDraft();
             applyAppConfigDraft(dialogView, draft);
             LandAppDetailPaneBinder.applyRetainedDraft(
                     this,
@@ -4536,7 +4493,7 @@ public final class MainActivity
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
-    private AppConfigEditorDraft captureAppConfigDraft() {
+    private EditorDraft captureAppConfigDraft() {
         View root = activeEditorRoot;
         String packageName = activeEditorPackageName;
         if (root == null
@@ -4581,13 +4538,13 @@ public final class MainActivity
         if ((packageName == null || packageName.isBlank()) && mainViewModel != null) {
             packageName = mainViewModel.getEditingPackageName();
         }
-        AppConfigEditorDraft current = mainViewModel != null
+        EditorDraft current = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
         boolean useCurrentState = current != null
                 && current.packageName != null
                 && current.packageName.equals(packageName);
-        AppConfigEditorDraft draft = new AppConfigEditorDraft(
+        EditorDraft draft = new EditorDraft(
                 packageName,
                 viewportText,
                 state != null ? state.viewportScaleInput
@@ -4622,16 +4579,16 @@ public final class MainActivity
         if (mainViewModel == null || state == null) {
             return;
         }
-        AppConfigEditorDraft captured = captureAppConfigDraft();
+        EditorDraft captured = captureAppConfigDraft();
         if (captured != null) {
             mainViewModel.setEditingDraft(captured);
             return;
         }
-        AppConfigEditorDraft current = mainViewModel.getEditingDraft();
+        EditorDraft current = mainViewModel.getEditingDraft();
         String packageName = state.packageName != null && !state.packageName.isBlank()
                 ? state.packageName
                 : mainViewModel.getEditingPackageName();
-        AppConfigEditorDraft draft = new AppConfigEditorDraft(
+        EditorDraft draft = new EditorDraft(
                 packageName,
                 current != null ? current.viewportInput : "",
                 current != null ? current.viewportScaleInput : "",
@@ -4651,7 +4608,7 @@ public final class MainActivity
         mainViewModel.setEditingDraft(draft);
     }
 
-    private void applyAppConfigDraft(View root, AppConfigEditorDraft draft) {
+    private void applyAppConfigDraft(View root, EditorDraft draft) {
         if (draft == null || root == null) {
             return;
         }
@@ -4780,8 +4737,8 @@ public final class MainActivity
                                  AppListFilterState filterState,
                                  MainUiState.WorkspaceMode workspaceMode, int currentPage,
                                  int[] appListScrollPositions, int[] refreshingPagePositions,
-                                 String editingPackageName, AppConfigEditorDraft editingDraft,
-                                 AppConfigEditorDraft savedEditingDraft,
+                                 String editingPackageName, EditorDraft editingDraft,
+                                 EditorDraft savedEditingDraft,
                                  ConfigEditorDestination editingDestination,
                                  TemplateDetailSelection templateDetailSelection,
                                  ConfigEditorDestination templateEditorDestination,
@@ -4804,8 +4761,8 @@ public final class MainActivity
                     int[] appListScrollPositions,
                     int[] refreshingPagePositions,
                     String editingPackageName,
-                    AppConfigEditorDraft editingDraft,
-                    AppConfigEditorDraft savedEditingDraft,
+                    EditorDraft editingDraft,
+                    EditorDraft savedEditingDraft,
                     ConfigEditorDestination editingDestination,
                     TemplateDetailSelection templateDetailSelection,
                     ConfigEditorDestination templateEditorDestination,
@@ -4863,12 +4820,12 @@ public final class MainActivity
     /** Inputs needed to rebuild the diagnostic page after a configuration change. */
     private record FeedbackDiagnosticPageRequest(
             AppListItem item,
-            AppConfigEditorDraft draft,
+            EditorDraft draft,
             String versionName
     ) {
         private FeedbackDiagnosticPageRequest(
                 AppListItem item,
-                AppConfigEditorDraft draft,
+                EditorDraft draft,
                 String versionName
         ) {
             this.item = item;
@@ -4896,7 +4853,7 @@ public final class MainActivity
             @Override
             public void showFallbackConfirmation(
                     AppListItem item,
-                    AppConfigEditorDraft draft
+                    EditorDraft draft
             ) {
                 showComposeFeedbackDiagnosticConfirmation(item, draft);
             }
@@ -4907,19 +4864,19 @@ public final class MainActivity
             }
 
             @Override
-            public boolean saveAppConfig(AppListItem item, AppConfigEditorDraft draft) {
+            public boolean saveAppConfig(AppListItem item, EditorDraft draft) {
                 return saveComposeAppEditor(item, draft);
             }
 
             @Override
-            public void markAppConfigSaved(AppConfigEditorDraft draft) {
+            public void markAppConfigSaved(EditorDraft draft) {
                 markComposeAppEditorSaved(draft);
             }
 
             @Override
             public boolean startDiagnostic(
                     AppListItem item,
-                    AppConfigEditorDraft draft,
+                    EditorDraft draft,
                     String versionName,
                     boolean durationEnabled,
                     int durationSeconds

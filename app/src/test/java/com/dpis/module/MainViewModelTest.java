@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.fonts.FontApplyMode;
 
@@ -25,8 +26,8 @@ public class MainViewModelTest {
     @Test
     public void restoredEditorSessionRetainsDraftBaselineAndDestination() {
         MainViewModel viewModel = new MainViewModel(emptyState());
-        AppConfigEditorDraft draft = editorDraft("com.example.app", "125");
-        AppConfigEditorDraft savedDraft = editorDraft("com.example.app", "110");
+        EditorDraft draft = editorDraft("com.example.app", "125");
+        EditorDraft savedDraft = editorDraft("com.example.app", "110");
 
         viewModel.restoreEditingSession(
                 "com.example.app",
@@ -45,7 +46,7 @@ public class MainViewModelTest {
     @Test
     public void closingEditorSessionClearsDraftBaselineAndChildDestination() {
         MainViewModel viewModel = new MainViewModel(emptyState());
-        AppConfigEditorDraft draft = editorDraft("com.example.app", "125");
+        EditorDraft draft = editorDraft("com.example.app", "125");
         viewModel.restoreEditingSession(
                 "com.example.app",
                 draft,
@@ -54,14 +55,33 @@ public class MainViewModelTest {
         );
         viewModel.setEditingSaveFeedback(true);
 
-        viewModel.clearEditingPackageName();
         viewModel.clearEditingDraft();
+        viewModel.clearEditingPackageName();
 
         assertEquals(null, viewModel.getEditingPackageName());
         assertEquals(null, viewModel.getEditingDraft());
         assertEquals(null, viewModel.getSavedEditingDraft());
         assertEquals(ConfigEditorDestination.MAIN, viewModel.getEditingDestination());
         assertFalse(viewModel.isEditingSaveFeedback());
+    }
+
+    @Test
+    public void remembersLastSavedDraftForSamePackageUntilCatalogRefreshes() {
+        MainViewModel viewModel = new MainViewModel(emptyState());
+        EditorDraft saved = editorDraft("com.example.app", "125")
+                .withAdvancedConfig(null, null, ViewportApplyMode.SYSTEM, false, false);
+        viewModel.restoreEditingSession(
+                saved.packageName,
+                saved,
+                saved,
+                ConfigEditorDestination.HOOK_CHAIN_INTERFACE
+        );
+
+        viewModel.clearEditingDraft();
+
+        assertEquals(ViewportApplyMode.SYSTEM,
+                viewModel.getLastClosedEditingDraft(saved.packageName).viewportApplyMode);
+        assertEquals(null, viewModel.getLastClosedEditingDraft("com.other.app"));
     }
 
     @Test
@@ -199,8 +219,8 @@ public class MainViewModelTest {
     }
 
 
-    private static AppConfigEditorDraft editorDraft(String packageName, String viewportInput) {
-        return new AppConfigEditorDraft(
+    private static EditorDraft editorDraft(String packageName, String viewportInput) {
+        return new EditorDraft(
                 packageName,
                 viewportInput,
                 viewportInput,

@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
@@ -27,8 +28,13 @@ final class MainViewModel {
     private MainUiState state;
     private boolean forceInstalledAppCatalogReloadRequested;
     private String editingPackageName;
-    private AppConfigEditorDraft editingDraft;
-    private AppConfigEditorDraft savedEditingDraft;
+    private EditorDraft editingDraft;
+    private EditorDraft savedEditingDraft;
+    // Keep the last committed editor snapshot available while the catalog refresh is asynchronous.
+    // Reopening the same package can restore the saved mode instead of rebuilding from a stale row;
+    // unsaved edits are still discarded by clearEditingDraft().
+    private String lastClosedEditingPackageName;
+    private EditorDraft lastClosedEditingDraft;
     private ConfigEditorDestination editingDestination = ConfigEditorDestination.MAIN;
     private boolean editingSaveFeedback;
 
@@ -59,25 +65,35 @@ final class MainViewModel {
         this.editingPackageName = null;
     }
 
-    AppConfigEditorDraft getEditingDraft() {
+    EditorDraft getEditingDraft() {
         return editingDraft;
     }
 
-    void setEditingDraft(AppConfigEditorDraft draft) {
+    void setEditingDraft(EditorDraft draft) {
         this.editingDraft = draft;
     }
 
     void clearEditingDraft() {
+        if (editingPackageName != null && savedEditingDraft != null) {
+            lastClosedEditingPackageName = editingPackageName;
+            lastClosedEditingDraft = savedEditingDraft;
+        }
         this.editingDraft = null;
         this.savedEditingDraft = null;
         this.editingDestination = ConfigEditorDestination.MAIN;
         this.editingSaveFeedback = false;
     }
 
+    EditorDraft getLastClosedEditingDraft(String packageName) {
+        return packageName != null && packageName.equals(lastClosedEditingPackageName)
+                ? lastClosedEditingDraft
+                : null;
+    }
+
     void restoreEditingSession(
             String packageName,
-            AppConfigEditorDraft draft,
-            AppConfigEditorDraft savedDraft,
+            EditorDraft draft,
+            EditorDraft savedDraft,
             ConfigEditorDestination destination
     ) {
         this.editingPackageName = packageName;
@@ -99,8 +115,8 @@ final class MainViewModel {
                 : ConfigEditorDestination.MAIN;
     }
 
-    AppConfigEditorDraft getSavedEditingDraft() { return savedEditingDraft; }
-    void setSavedEditingDraft(AppConfigEditorDraft draft) { this.savedEditingDraft = draft; }
+    EditorDraft getSavedEditingDraft() { return savedEditingDraft; }
+    void setSavedEditingDraft(EditorDraft draft) { this.savedEditingDraft = draft; }
     boolean isEditingSaveFeedback() { return editingSaveFeedback; }
     void setEditingSaveFeedback(boolean value) { this.editingSaveFeedback = value; }
 
@@ -170,6 +186,15 @@ final class MainViewModel {
                 = loadCoordinator.onLoadFinished(requestId);
         if (completion.shouldApplyResult && loadedApps != null) {
             state = state.withApps(loadedApps);
+            if (lastClosedEditingPackageName != null) {
+                for (AppListItem item : loadedApps) {
+                    if (lastClosedEditingPackageName.equals(item.packageName)) {
+                        lastClosedEditingPackageName = null;
+                        lastClosedEditingDraft = null;
+                        break;
+                    }
+                }
+            }
         }
         if (completion.nextRequestId != AppLoadCoordinator.NO_REQUEST) {
             return Collections.singletonList(createAppsLoadRequest(completion.nextRequestId));

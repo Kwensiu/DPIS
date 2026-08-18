@@ -67,7 +67,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
@@ -78,7 +78,7 @@ import com.dpis.module.viewport.ViewportTargetType
 
 @Composable
 fun AppConfigEditorContent(
-    state: AppConfigEditorPresentation.State,
+    state: EditorPresentation.State,
     contentPadding: PaddingValues = AppConfigSheetUiTokens.ContentPadding,
     onAdvancedAnchorMeasured: ((androidx.compose.ui.unit.Dp) -> Unit)? = null,
     showInlineUnsavedBadge: Boolean = true,

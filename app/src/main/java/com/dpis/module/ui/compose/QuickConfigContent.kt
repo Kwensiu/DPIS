@@ -21,14 +21,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dpis.module.AppConfigEditorPresentation
+import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ConfigEditorDestination
 
 class QuickConfigPresentation {
-    var state: AppConfigEditorPresentation.State? by mutableStateOf(null)
+    var state: EditorPresentation.State? by mutableStateOf(null)
         private set
 
-    fun show(state: AppConfigEditorPresentation.State) {
+    fun show(state: EditorPresentation.State) {
         this.state = state
     }
 }

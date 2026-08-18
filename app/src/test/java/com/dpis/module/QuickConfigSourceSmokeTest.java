@@ -47,7 +47,7 @@ public class QuickConfigSourceSmokeTest {
 
         assertTrue(activity.contains("EXTRA_PACKAGE_NAME"));
         assertTrue(activity.contains("SupportActivityContent.installQuickConfig(this, presentation)"));
-        assertTrue(activity.contains("new AppConfigEditorPresentation.State("));
+        assertTrue(activity.contains("EditorPresentationFactory.create("));
         assertTrue(content.contains("DpisSheetVisualChrome()"));
         assertFalse(content.contains("extraTopPadding = 12.dp"));
         assertTrue(content.contains("AppHookChainEditorPage(state = state)"));

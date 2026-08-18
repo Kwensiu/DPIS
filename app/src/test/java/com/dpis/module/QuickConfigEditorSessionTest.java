@@ -1,4 +1,5 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorDraft;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
@@ -12,8 +13,8 @@ public final class QuickConfigEditorSessionTest {
 
     @Test
     public void configurationChangeKeepsDraftBaselineAndChildDestination() {
-        AppConfigEditorDraft draft = draft("125", "112");
-        AppConfigEditorDraft savedDraft = draft("100", "100");
+        EditorDraft draft = draft("125", "112");
+        EditorDraft savedDraft = draft("100", "100");
 
         QuickConfigEditorSession session = new QuickConfigEditorSession(
                 null,
@@ -29,7 +30,7 @@ public final class QuickConfigEditorSessionTest {
 
     @Test
     public void missingSavedBaselineAndDestinationUseCurrentDraftAndMainPage() {
-        AppConfigEditorDraft draft = draft("125", "112");
+        EditorDraft draft = draft("125", "112");
 
         QuickConfigEditorSession session = new QuickConfigEditorSession(
                 null,
@@ -42,8 +43,8 @@ public final class QuickConfigEditorSessionTest {
         assertEquals(ConfigEditorDestination.MAIN, session.destination);
     }
 
-    private static AppConfigEditorDraft draft(String viewport, String font) {
-        return new AppConfigEditorDraft(
+    private static EditorDraft draft(String viewport, String font) {
+        return new EditorDraft(
                 "com.example.target",
                 viewport,
                 viewport,

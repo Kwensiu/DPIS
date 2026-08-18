@@ -2,7 +2,7 @@ package com.dpis.module.diagnostics
 
 import android.content.Context
 import com.dpis.module.R
-import com.dpis.module.AppConfigEditorDraft
+import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.settings.AppLocaleManager
@@ -28,17 +28,17 @@ class PageController(
             presentation: FeedbackDiagnosticPreparationPresentation,
         )
 
-        fun showFallbackConfirmation(item: AppListItem, draft: AppConfigEditorDraft)
+        fun showFallbackConfirmation(item: AppListItem, draft: EditorDraft)
 
         fun onBackRequested()
 
-        fun saveAppConfig(item: AppListItem, draft: AppConfigEditorDraft): Boolean
+        fun saveAppConfig(item: AppListItem, draft: EditorDraft): Boolean
 
-        fun markAppConfigSaved(draft: AppConfigEditorDraft)
+        fun markAppConfigSaved(draft: EditorDraft)
 
         fun startDiagnostic(
             item: AppListItem,
-            draft: AppConfigEditorDraft,
+            draft: EditorDraft,
             versionName: String,
             durationEnabled: Boolean,
             durationSeconds: Int,
@@ -79,7 +79,7 @@ class PageController(
 
     fun show(
         item: AppListItem,
-        draft: AppConfigEditorDraft,
+        draft: EditorDraft,
         versionName: String,
     ): FeedbackDiagnosticPreparationPresentation? {
         val host = host ?: return null
@@ -267,7 +267,7 @@ class PageController(
         }
     }
 
-    private fun startDiagnostic(item: AppListItem, draft: AppConfigEditorDraft) {
+    private fun startDiagnostic(item: AppListItem, draft: EditorDraft) {
         val host = host ?: return
         if (!host.saveAppConfig(item, draft)) {
             return

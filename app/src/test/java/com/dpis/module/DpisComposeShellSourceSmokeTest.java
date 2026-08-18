@@ -333,6 +333,8 @@ public final class DpisComposeShellSourceSmokeTest {
         String typefacePicker = read(
                 "src/main/java/com/dpis/module/ui/compose/AppTypefacePickerPage.kt");
         String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String editorController = read(
+                "src/main/java/com/dpis/module/appconfig/EditorActions.java");
 
         assertTrue(sheet.contains("skipPartiallyExpanded: Boolean = true"));
         assertTrue(sheet.contains("rememberBottomSheetState("));
@@ -395,11 +397,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(typefacePicker.contains("withContext(Dispatchers.IO)"));
         assertTrue(typefacePicker.contains("height(typefacePageHeight())"));
         assertTrue(typefacePicker.contains("animateContentSize(tween(180))"));
-        int dpisToggleStart = activity.indexOf("@Override public void toggleDpisEnabled()");
-        int dpisToggleEnd = activity.indexOf("@Override public void startProcess()", dpisToggleStart);
-        assertTrue(dpisToggleStart > 0);
-        assertTrue(dpisToggleEnd > dpisToggleStart);
-        assertTrue(activity.substring(dpisToggleStart, dpisToggleEnd).contains("requestAppsLoad();"));
+        assertTrue(activity.contains("EditorActions.create("));
+        assertTrue(activity.contains("requestAppsLoad();"));
+        assertTrue(editorController.contains("host.setDpisEnabled(enabled)"));
+        assertTrue(editorController.contains("draft.withDpisEnabled(enabled)"));
     }
 
     @Test

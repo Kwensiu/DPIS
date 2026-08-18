@@ -1,4 +1,6 @@
 package com.dpis.module;
+import com.dpis.module.appconfig.EditorPresentation;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.diagnostics.LogGate;
 
@@ -22,6 +24,9 @@ import com.dpis.module.diagnostics.ExportBuilder;
 import com.dpis.module.diagnostics.Coordinator;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.EditorActions;
+import com.dpis.module.appconfig.EditorDialogStateFactory;
+import com.dpis.module.appconfig.EditorPresentationFactory;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
@@ -123,8 +128,8 @@ public final class QuickConfigActivity extends LocalizedActivity {
     private AlertDialog activePackagingDialog;
     private QuickConfigPresentation presentation;
     private AppListItem editingItem;
-    private AppConfigEditorDraft editingDraft;
-    private AppConfigEditorDraft savedEditingDraft;
+    private EditorDraft editingDraft;
+    private EditorDraft savedEditingDraft;
     private ConfigEditorDestination editingDestination = ConfigEditorDestination.MAIN;
     private boolean editingSaveFeedback;
 
@@ -178,7 +183,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
                 getHookConfigStore(),
                 new GlobalPrefillStore(
                         getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)).read());
-        editingDraft = AppConfigEditorDraft.fromItem(editingItem);
+        editingDraft = EditorDraft.fromItem(editingItem);
         savedEditingDraft = editingDraft;
         refreshComposeEditor();
     }
@@ -214,12 +219,12 @@ public final class QuickConfigActivity extends LocalizedActivity {
 
     private void refreshComposeEditor() {
         AppListItem item = editingItem;
-        AppConfigEditorDraft draft = editingDraft;
+        EditorDraft draft = editingDraft;
         if (item == null || draft == null || presentation == null) {
             return;
         }
         AppConfigDialogBinder.AppConfigDialogState dialogState = composeDialogState(item, draft);
-        presentation.show(new AppConfigEditorPresentation.State(
+        presentation.show(EditorPresentationFactory.create(
                 item,
                 resolvePackageVersionName(item.packageName),
                 draft,
@@ -228,7 +233,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
                 FontHookDomainPresentation.forOverride(
                         resolveFontHookDomainsForDraft(item, dialogState),
                         recommendedTemplateFontHookDomains()).buttonText(this),
-                !draft.hasSameSavedConfig(savedEditingDraft),
+                savedEditingDraft,
                 editingSaveFeedback,
                 isSystemHookEnabled(),
                 recommendedTemplateFontHookDomains(),
@@ -237,120 +242,87 @@ public final class QuickConfigActivity extends LocalizedActivity {
         ));
     }
 
-    private AppConfigEditorPresentation.Actions createComposeActions(
+    private EditorPresentation.Actions createComposeActions(
             AppListItem item,
-            AppConfigEditorDraft draft) {
-        return new AppConfigEditorPresentation.Actions() {
-            @Override public void updateViewportInput(String value) {
-                updateDraft(draft.withViewportInput(draft.viewportMode, value));
-            }
+            EditorDraft draft) {
+        return EditorActions.create(
+                new EditorActions.Host() {
+                    @Override public void updateDraft(EditorDraft nextDraft) {
+                        QuickConfigActivity.this.updateDraft(nextDraft);
+                    }
 
-            @Override public void changeViewportMode(String targetType) {
-                updateDraft(draft.withViewportMode(targetType));
-            }
+                    @Override public void showWechatDpiHelp() {
+                        ComposeMessageDialog.show(
+                                QuickConfigActivity.this,
+                                getString(R.string.dialog_wechat_dpi_help_title),
+                                getString(R.string.dialog_wechat_dpi_help_message),
+                                getString(R.string.dialog_close_button)
+                        );
+                    }
 
-            @Override public void updateFontInput(String value) {
-                updateDraft(draft.withFontInput(value));
-            }
+                    @Override public void navigate(ConfigEditorDestination destination) {
+                        editingDestination = destination != null
+                                ? destination : ConfigEditorDestination.MAIN;
+                        refreshComposeEditor();
+                    }
 
-            @Override public void changeFontMode(String mode) {
-                updateDraft(draft.withFontMode(mode));
-            }
+                    @Override public void toggleScope(
+                            boolean currentlySelected,
+                            Runnable onSelected,
+                            Runnable onDeselected
+                    ) {
+                        systemScopeCoordinator.toggleScope(
+                                item.packageName,
+                                item.label,
+                                currentlySelected,
+                                onSelected,
+                                onDeselected);
+                    }
 
-            @Override public void updateWechatDpiInput(String value) {
-                updateDraft(draft.withWechatDpiInput(value));
-            }
+                    @Override public boolean setDpisEnabled(boolean enabled) {
+                        return appConfigDialogHost.setDpisEnabled(item.packageName, enabled);
+                    }
 
-            @Override public void showWechatDpiHelp() {
-                ComposeMessageDialog.show(
-                        QuickConfigActivity.this,
-                        getString(R.string.dialog_wechat_dpi_help_title),
-                        getString(R.string.dialog_wechat_dpi_help_message),
-                        getString(R.string.dialog_close_button)
-                );
-            }
+                    @Override public void executeProcessAction(
+                            AppConfigDialogBinder.ProcessAction action
+                    ) {
+                        executeDialogProcessAction(item, action);
+                    }
 
-            @Override public void updateTypeface(String typefaceId) {
-                updateDraft(draft.withAdvancedConfig(typefaceId,
-                        draft.draftFontHookDomainsRaw, draft.viewportApplyMode,
-                        draft.fontHookDomainsResetRequested,
-                        draft.viewportApplyModeResetRequested));
-            }
+                    @Override public void startFeedbackDiagnostic(
+                            EditorDraft currentDraft
+                    ) {
+                        QuickConfigActivity.this.startFeedbackDiagnostic(
+                                item, composeDialogState(item, currentDraft));
+                    }
 
-            @Override public void updateHookChain(String rawDomains, boolean resetDomains,
-                    String viewportApplyMode, boolean resetViewportApplyMode) {
-                updateDraft(draft.withAdvancedConfig(draft.selectedTypefaceId, rawDomains,
-                        viewportApplyMode, resetDomains, resetViewportApplyMode));
-            }
+                    @Override public void save(
+                            EditorDraft currentDraft
+                    ) {
+                        saveComposeEditor(item, currentDraft);
+                    }
 
-            @Override public void navigate(ConfigEditorDestination destination) {
-                editingDestination = destination != null
-                        ? destination : ConfigEditorDestination.MAIN;
-                refreshComposeEditor();
-            }
-
-            @Override public void reset() { updateDraft(draft.cleared()); }
-
-            @Override public void toggleScope() {
-                systemScopeCoordinator.toggleScope(item.packageName, item.label,
-                        draft.scopeSelected,
-                        () -> updateDraft(draft.withScopeSelected(true)),
-                        () -> updateDraft(draft.withScopeSelected(false)));
-            }
-
-            @Override public void toggleDpisEnabled() {
-                boolean enabled = !draft.dpisEnabled;
-                if (appConfigDialogHost.setDpisEnabled(item.packageName, enabled)) {
-                    updateDraft(draft.withDpisEnabled(enabled));
-                }
-            }
-
-            @Override public void startProcess() {
-                executeDialogProcessAction(item, AppConfigDialogBinder.ProcessAction.START);
-            }
-
-            @Override public void restartProcess() {
-                executeDialogProcessAction(item, AppConfigDialogBinder.ProcessAction.RESTART);
-            }
-
-            @Override public void stopProcess() {
-                executeDialogProcessAction(item, AppConfigDialogBinder.ProcessAction.STOP);
-            }
-
-            @Override public void startFeedbackDiagnostic() {
-                QuickConfigActivity.this.startFeedbackDiagnostic(
-                        item, composeDialogState(item, draft));
-            }
-
-            @Override public void save() { saveComposeEditor(item, draft); }
-
-            @Override public void close() { finish(); }
-        };
+                    @Override public void close() {
+                        finish();
+                    }
+                },
+                item,
+                draft
+        );
     }
 
-    private void updateDraft(AppConfigEditorDraft draft) {
+    private void updateDraft(EditorDraft draft) {
         editingDraft = draft;
         refreshComposeEditor();
     }
 
     private AppConfigDialogBinder.AppConfigDialogState composeDialogState(
             AppListItem item,
-            AppConfigEditorDraft draft) {
-        AppConfigDialogBinder.AppConfigDialogState state
-                = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
-        state.selectedTypefaceId = draft.selectedTypefaceId;
-        state.draftFontHookDomainsRaw = draft.draftFontHookDomainsRaw;
-        state.viewportApplyMode = draft.viewportApplyMode;
-        state.fontHookDomainsResetRequested = draft.fontHookDomainsResetRequested;
-        state.viewportApplyModeResetRequested = draft.viewportApplyModeResetRequested;
-        state.viewportScaleInput = draft.viewportScaleInput;
-        state.viewportAbsoluteInput = draft.viewportAbsoluteInput;
-        state.scopeSelected = draft.scopeSelected;
-        state.dpisEnabled = draft.dpisEnabled;
-        return state;
+            EditorDraft draft) {
+        return EditorDialogStateFactory.create(item, draft);
     }
 
-    private boolean saveComposeEditor(AppListItem item, AppConfigEditorDraft draft) {
+    private boolean saveComposeEditor(AppListItem item, EditorDraft draft) {
         ViewportTargetSpec viewport = AppConfigInputValidation.parseViewportTargetSpec(
                 draft.viewportInputFor(draft.viewportMode), draft.viewportMode);
         Integer fontScale = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput);
