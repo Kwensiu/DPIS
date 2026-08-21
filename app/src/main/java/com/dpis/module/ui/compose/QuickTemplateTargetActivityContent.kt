@@ -39,10 +39,11 @@ object QuickTemplateTargetActivityContent {
                     onQueryChanged = controller::setQuery,
                     onFiltersChanged = controller::setFilters,
                     onSelectionChanged = controller::toggleSelection,
-                    onSave = {
+                    onSaveAndExit = {
                         val result = controller.save()
                         Toast.makeText(activity, result.messageResId, Toast.LENGTH_SHORT).show()
                         if (result.success) onSaved.run()
+                        result.success
                     }
                 )
             }

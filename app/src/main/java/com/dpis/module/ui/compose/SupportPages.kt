@@ -55,7 +55,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -265,7 +264,7 @@ internal fun SecondaryPageScaffold(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SecondaryPageScaffold(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
@@ -280,7 +279,7 @@ internal fun SecondaryPageScaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             SecondaryPageTopBar(
-                onBack = rememberDpisConfirmAction(onBack),
+                onBack = onBack,
                 actions = actions,
                 title = title
             )
@@ -354,11 +353,13 @@ internal fun PrimaryPageScaffold(
 @Composable
 internal fun SecondaryPageTopBar(
     @StringRes titleRes: Int,
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
+    includeHorizontalSafeInsets: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     SecondaryPageTopBar(
         onBack = onBack,
+        includeHorizontalSafeInsets = includeHorizontalSafeInsets,
         actions = actions,
         title = {
             Text(
@@ -372,13 +373,15 @@ internal fun SecondaryPageTopBar(
 
 @Composable
 internal fun SecondaryPageTopBar(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
+    includeHorizontalSafeInsets: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
     title: @Composable () -> Unit
 ) {
     PageTopBar(
-        onBack = rememberDpisConfirmAction(onBack),
+        onBack = onBack?.let { action -> rememberDpisConfirmAction(action) },
         actions = actions,
+        includeHorizontalSafeInsets = includeHorizontalSafeInsets,
         title = title
     )
 }
@@ -420,7 +423,6 @@ private fun PageTopBar(
     val extraTopPadding = if (compactVerticalChrome) 0.dp else 6.dp
     val bottomPadding = if (compactVerticalChrome) 4.dp else 8.dp
     Box(modifier = Modifier.fillMaxWidth()) {
-        SecondaryPageTopBarBackdrop()
         Row(
             modifier = Modifier.fillMaxWidth()
                 .padding(
@@ -486,20 +488,6 @@ private fun pageContentPadding(scaffoldPadding: PaddingValues): PaddingValues {
         end = scaffoldPadding.calculateEndPadding(layoutDirection) +
             safeDrawingPadding.calculateEndPadding(layoutDirection),
         bottom = scaffoldPadding.calculateBottomPadding(),
-    )
-}
-
-@Composable
-private fun BoxScope.SecondaryPageTopBarBackdrop() {
-    Box(
-        modifier = Modifier.matchParentSize()
-            .background(
-                Brush.verticalGradient(
-                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
-                    0.72f to MaterialTheme.colorScheme.surface.copy(alpha = 0.74f),
-                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0.0f)
-                )
-            )
     )
 }
 

@@ -413,6 +413,11 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="filter_width_only">Smallest width configured</string>
     <string name="filter_font_only">Font configured</string>
     <string name="quick_template_targets_filter_hide_configured">Hide configured apps</string>
+    <string name="quick_template_targets_unsaved_title">Unsaved changes</string>
+    <string name="quick_template_targets_unsaved_message">Save target selection changes before leaving?</string>
+    <string name="quick_template_targets_discard_changes">Discard changes</string>
+    <string name="quick_template_targets_save_and_back">Save and go back</string>
+    <string name="quick_template_targets_save_and_switch">Save and switch</string>
     <string name="system_settings_title">Settings</string>
     <string name="system_settings_back">Back</string>
     <string name="system_settings_section_general">General</string>

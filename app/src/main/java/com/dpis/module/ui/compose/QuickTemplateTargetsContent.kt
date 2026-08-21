@@ -11,17 +11,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -39,6 +39,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,8 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -70,47 +72,35 @@ fun QuickTemplateTargetsContent(
     onQueryChanged: (String) -> Unit,
     onFiltersChanged: (Boolean, Boolean) -> Unit,
     onSelectionChanged: (String, Boolean) -> Unit,
-    onSave: () -> Unit
+    onSaveAndExit: () -> Boolean,
+    showBackButton: Boolean = true
 ) {
     val current = state ?: return
     val focusManager = LocalFocusManager.current
     var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var discardDialogVisible by rememberSaveable { mutableStateOf(false) }
+    val requestBack = {
+        focusManager.clearFocus()
+        if (current.hasUnsavedChanges) discardDialogVisible = true else onBack()
+    }
+    val listState = rememberLazyListState()
 
-    SecondaryPageScaffold(
-        onBack = onBack,
-        title = {
-            Column {
-                Text(
-                    text = stringResource(
-                        R.string.quick_template_targets_title,
-                        current.templateName.orEmpty()
-                    ),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = stringResource(
-                        R.string.quick_template_targets_selected_count,
-                        current.selectedCount
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        },
+    // This picker is also embedded in the landscape workspace. Keep the shared top bar as
+    // an in-flow sibling instead of Scaffold.topBar, whose overlay slot clips scrolled rows.
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {},
         bottomBar = {
             Button(
                 onClick = {
                     focusManager.clearFocus()
-                    onSave()
+                    onSaveAndExit()
                 },
                 enabled = !current.loading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .navigationBarsPadding()
+                    .then(if (showBackButton) Modifier.navigationBarsPadding() else Modifier)
                     .height(48.dp),
                 shape = RoundedCornerShape(18.dp)
             ) {
@@ -118,12 +108,37 @@ fun QuickTemplateTargetsContent(
             }
         }
     ) { scaffoldPadding ->
-        val layoutDirection = LocalLayoutDirection.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(scaffoldPadding)
         ) {
+            SecondaryPageTopBar(
+                onBack = requestBack.takeIf { showBackButton },
+                includeHorizontalSafeInsets = showBackButton,
+                title = {
+                    Column {
+                        Text(
+                            text = stringResource(
+                                R.string.quick_template_targets_title,
+                                current.templateName.orEmpty()
+                            ),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = stringResource(
+                                R.string.quick_template_targets_selected_count,
+                                current.selectedCount
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            )
             TargetSearchCard(
                 query = current.query,
                 onQueryChanged = onQueryChanged,
@@ -136,7 +151,7 @@ fun QuickTemplateTargetsContent(
             Spacer(Modifier.height(12.dp))
             Box(
                 Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .weight(1f)
                     .clearTextInputFocusOnPointerDown(focusManager)
             ) {
@@ -160,9 +175,11 @@ fun QuickTemplateTargetsContent(
                     else -> {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
+                            state = listState,
                             contentPadding = PaddingValues(
-                                start = scaffoldPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                                end = scaffoldPadding.calculateEndPadding(layoutDirection) + 16.dp,
+                                start = 0.dp,
+                                top = 0.dp,
+                                end = 0.dp,
                                 bottom = 16.dp
                             ),
                             verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -181,6 +198,36 @@ fun QuickTemplateTargetsContent(
                             }
                         }
                     }
+                }
+                if (listState.canScrollBackward) {
+                    // Fade only while content exists above the viewport.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(28.dp)
+                            .align(Alignment.TopCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to MaterialTheme.colorScheme.surface,
+                                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                                )
+                            )
+                    )
+                }
+                if (listState.canScrollForward) {
+                    // Mirror the top boundary above the fixed save action.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(28.dp)
+                            .align(Alignment.BottomCenter)
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0f),
+                                    1f to MaterialTheme.colorScheme.surface
+                                )
+                            )
+                    )
                 }
             }
         }
@@ -225,6 +272,41 @@ fun QuickTemplateTargetsContent(
             }
         }
     }
+
+    if (discardDialogVisible) {
+        DpisModalDialog(onDismissRequest = { discardDialogVisible = false }) {
+            Column(Modifier.padding(24.dp)) {
+                Text(
+                    text = stringResource(R.string.quick_template_targets_unsaved_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = stringResource(R.string.quick_template_targets_unsaved_message),
+                    modifier = Modifier.padding(top = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        discardDialogVisible = false
+                        onBack()
+                    }) {
+                        Text(stringResource(R.string.quick_template_targets_discard_changes))
+                    }
+                    TextButton(onClick = {
+                        if (onSaveAndExit()) discardDialogVisible = false
+                    }) {
+                        Text(stringResource(R.string.quick_template_targets_save_and_back))
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -232,20 +314,21 @@ private fun TargetSearchCard(
     query: String,
     onQueryChanged: (String) -> Unit,
     onClearQuery: () -> Unit,
-    onOpenFilters: () -> Unit
+    onOpenFilters: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
-            modifier = Modifier.height(56.dp),
+            modifier = Modifier.height(52.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

@@ -66,7 +66,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(composeContent.contains("rememberBottomSheetState("));
         assertTrue(composeContent.contains("enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)"));
         assertTrue(composeContent.contains("navigationBarsPadding()"));
-        assertTrue(composeContent.contains("SecondaryPageScaffold("));
+        assertTrue(composeContent.contains("SecondaryPageTopBar("));
         assertFalse(composeContent.contains("TopAppBar("));
         assertTrue(presentation.contains("templates.setSelectedPackages(templateId, selectedPackages)"));
         assertTrue(presentation.contains("pruneSelection()"));
@@ -87,7 +87,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(targetsBinder.contains("KEY_FILTER_SHOW_SYSTEM_APPS"));
         assertTrue(targetsBinder.contains("KEY_FILTER_HIDE_CONFIGURED_APPS"));
         assertFalse(targetsBinder.contains("AppListFilterStateStore"));
-        assertTrue(targetsBinder.contains("if (hideConfiguredApps && item.configured)"));
+        assertTrue(targetsBinder.contains("hideConfiguredApps && item.configured && !selected"));
         assertTrue(targetsBinder.contains("matchesTargetFilters("));
         assertTrue(targetsBinder.contains("R.layout.dialog_quick_template_target_filters"));
         assertTrue(targetsBinder.contains("loadTargetApps()"));

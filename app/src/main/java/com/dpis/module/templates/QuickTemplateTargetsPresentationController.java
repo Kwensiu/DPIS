@@ -55,6 +55,7 @@ public final class QuickTemplateTargetsPresentationController {
         public final String templateName;
         public final List<TargetApp> apps;
         public final int selectedCount;
+        public final boolean hasUnsavedChanges;
         public final String query;
         public final boolean showSystemApps;
         public final boolean hideConfiguredApps;
@@ -62,12 +63,14 @@ public final class QuickTemplateTargetsPresentationController {
         public final boolean missingTemplate;
 
         State(String templateId, String templateName, List<TargetApp> apps, int selectedCount,
+                boolean hasUnsavedChanges,
                 String query, boolean showSystemApps, boolean hideConfiguredApps, boolean loading,
                 boolean missingTemplate) {
             this.templateId = templateId;
             this.templateName = templateName;
             this.apps = apps;
             this.selectedCount = selectedCount;
+            this.hasUnsavedChanges = hasUnsavedChanges;
             this.query = query;
             this.showSystemApps = showSystemApps;
             this.hideConfiguredApps = hideConfiguredApps;
@@ -99,6 +102,8 @@ public final class QuickTemplateTargetsPresentationController {
     private final Set<Listener> listeners = new LinkedHashSet<>();
     private final List<RawTargetApp> allApps = new ArrayList<>();
     private final LinkedHashSet<String> selectedPackages = new LinkedHashSet<>();
+    // Kept stable for the session so changing a checkbox does not move list rows mid-scroll.
+    private final LinkedHashSet<String> savedSelectedPackages = new LinkedHashSet<>();
 
     private String templateId;
     private String templateName;
@@ -135,6 +140,7 @@ public final class QuickTemplateTargetsPresentationController {
             missingTemplate = true;
             templateName = null;
             selectedPackages.clear();
+            savedSelectedPackages.clear();
             loading = false;
             publish();
             return;
@@ -143,6 +149,8 @@ public final class QuickTemplateTargetsPresentationController {
         templateName = template.name;
         selectedPackages.clear();
         selectedPackages.addAll(template.selectedPackages);
+        savedSelectedPackages.clear();
+        savedSelectedPackages.addAll(template.selectedPackages);
         reloadApps();
     }
 
@@ -163,6 +171,10 @@ public final class QuickTemplateTargetsPresentationController {
 
     public SaveResult save() {
         boolean saved = templateId != null && templates.setSelectedPackages(templateId, selectedPackages);
+        if (saved) {
+            savedSelectedPackages.clear();
+            savedSelectedPackages.addAll(selectedPackages);
+        }
         return new SaveResult(saved, saved ? R.string.quick_template_targets_save_success
                 : R.string.quick_template_targets_save_failed);
     }
@@ -207,19 +219,30 @@ public final class QuickTemplateTargetsPresentationController {
         Set<String> installed = new LinkedHashSet<>();
         for (RawTargetApp item : allApps) installed.add(item.packageName);
         selectedPackages.retainAll(installed);
+        savedSelectedPackages.retainAll(installed);
     }
 
     private void publish() {
         List<TargetApp> visible = new ArrayList<>();
         String normalizedQuery = query.trim().toLowerCase(Locale.ROOT);
         for (RawTargetApp item : allApps) {
-            if ((!showSystemApps && item.systemApp) || (hideConfiguredApps && item.configured)) continue;
+            boolean selected = selectedPackages.contains(item.packageName);
+            if ((!showSystemApps && item.systemApp)
+                    || (hideConfiguredApps && item.configured && !selected)) continue;
             if (!normalizedQuery.isEmpty() && !item.label.toLowerCase(Locale.ROOT).contains(normalizedQuery)
                     && !item.packageName.toLowerCase(Locale.ROOT).contains(normalizedQuery)) continue;
             visible.add(new TargetApp(item.label, item.packageName, item.configured, item.systemApp,
-                    item.icon, selectedPackages.contains(item.packageName)));
+                    item.icon, selected));
         }
-        State state = new State(templateId, templateName, visible, selectedPackages.size(), query,
+        // Keep the session's persisted targets visible first, followed by configured apps.
+        // List.sort is stable, so catalog order remains unchanged within each priority group.
+        visible.sort((left, right) -> Integer.compare(
+                QuickTemplateTargetOrdering.priority(
+                        savedSelectedPackages.contains(left.packageName), left.configured),
+                QuickTemplateTargetOrdering.priority(
+                        savedSelectedPackages.contains(right.packageName), right.configured)));
+        State state = new State(templateId, templateName, visible, selectedPackages.size(),
+                !selectedPackages.equals(savedSelectedPackages), query,
                 showSystemApps, hideConfiguredApps, loading, missingTemplate);
         for (Listener listener : new LinkedHashSet<>(listeners)) listener.onStateChanged(state);
     }

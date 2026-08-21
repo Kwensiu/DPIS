@@ -41,6 +41,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -105,6 +106,10 @@ fun TemplateWorkspaceContent(
             }
         )
     }
+    var targetSessionDirty by rememberSaveable { mutableStateOf(false) }
+    var pendingTargetTemplateId by rememberSaveable { mutableStateOf<String?>(null) }
+    var targetSwitchDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var targetSaveRequest by rememberSaveable { mutableStateOf(0) }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     var editorSheetVisible by rememberSaveable { mutableStateOf(false) }
     var editorSheetClosing by remember { mutableStateOf(false) }
@@ -294,10 +299,15 @@ fun TemplateWorkspaceContent(
         val twoPane = isLandscape && maxWidth >= WorkspaceTwoPaneMinWidth
         val openTargets: (String) -> Unit = { templateId ->
             if (twoPane) {
-                editorKind = null
-                editorTemplateId = null
-                targetsTemplateId = templateId
-                state.actions.openEmbeddedTargets(templateId)
+                if (targetsTemplateId != null && targetsTemplateId != templateId && targetSessionDirty) {
+                    pendingTargetTemplateId = templateId
+                    targetSwitchDialogVisible = true
+                } else {
+                    editorKind = null
+                    editorTemplateId = null
+                    targetsTemplateId = templateId
+                    state.actions.openEmbeddedTargets(templateId)
+                }
             } else {
                 state.actions.selectTargets(templateId)
             }
@@ -326,9 +336,18 @@ fun TemplateWorkspaceContent(
                             EmbeddedQuickTemplateTargets(
                                 templateId = targetsTemplateId.orEmpty(),
                                 onClose = {
-                                    targetsTemplateId = null
-                                    onEditorClosed()
-                                }
+                                    targetSessionDirty = false
+                                    val next = pendingTargetTemplateId
+                                    pendingTargetTemplateId = null
+                                    targetsTemplateId = next
+                                    if (next != null) {
+                                        state.actions.openEmbeddedTargets(next)
+                                    } else {
+                                        onEditorClosed()
+                                    }
+                                },
+                                onUnsavedChanged = { targetSessionDirty = it },
+                                saveRequest = targetSaveRequest
                             )
                         }
                         editorKind != null -> editorBody()
@@ -392,6 +411,43 @@ fun TemplateWorkspaceContent(
                 if (result.success) closeEditor()
             }
         )
+    }
+    if (targetSwitchDialogVisible) {
+        DpisModalDialog(onDismissRequest = { targetSwitchDialogVisible = false }) {
+            Column(Modifier.padding(24.dp)) {
+                Text(
+                    stringResource(R.string.quick_template_targets_unsaved_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    stringResource(R.string.quick_template_targets_unsaved_message),
+                    modifier = Modifier.padding(top = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        val next = pendingTargetTemplateId
+                        pendingTargetTemplateId = null
+                        targetSwitchDialogVisible = false
+                        targetSessionDirty = false
+                        targetsTemplateId = next
+                        if (next != null) state.actions.openEmbeddedTargets(next)
+                    }) {
+                        Text(stringResource(R.string.quick_template_targets_discard_changes))
+                    }
+                    TextButton(onClick = {
+                        targetSwitchDialogVisible = false
+                        targetSaveRequest++
+                    }) {
+                        Text(stringResource(R.string.quick_template_targets_save_and_switch))
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -506,7 +562,9 @@ private fun TemplateWorkspaceListPane(
 @Composable
 private fun EmbeddedQuickTemplateTargets(
     templateId: String,
-    onClose: () -> Unit
+    onClose: () -> Unit,
+    onUnsavedChanged: (Boolean) -> Unit,
+    saveRequest: Int
 ) {
     val context = LocalContext.current
     val controller = remember(templateId) {
@@ -536,17 +594,29 @@ private fun EmbeddedQuickTemplateTargets(
         }
     }
 
+    LaunchedEffect(targetState?.hasUnsavedChanges) {
+        onUnsavedChanged(targetState?.hasUnsavedChanges == true)
+    }
+    LaunchedEffect(saveRequest) {
+        if (saveRequest <= 0) return@LaunchedEffect
+        val result = controller.save()
+        Toast.makeText(context, result.messageResId, Toast.LENGTH_SHORT).show()
+        if (result.success) onClose()
+    }
+
     QuickTemplateTargetsContent(
         state = targetState,
         onBack = onClose,
         onQueryChanged = controller::setQuery,
         onFiltersChanged = controller::setFilters,
         onSelectionChanged = controller::toggleSelection,
-        onSave = {
+        onSaveAndExit = {
             val result = controller.save()
             Toast.makeText(context, result.messageResId, Toast.LENGTH_SHORT).show()
             if (result.success) onClose()
-        }
+            result.success
+        },
+        showBackButton = false
     )
 }
 

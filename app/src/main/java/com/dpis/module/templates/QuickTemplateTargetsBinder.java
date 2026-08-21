@@ -232,10 +232,17 @@ public final class QuickTemplateTargetsBinder {
                     item,
                     query,
                     filterShowSystemApps,
-                    filterHideConfiguredApps)) {
+                    filterHideConfiguredApps,
+                    selectedPackages.contains(item.packageName))) {
                 filtered.add(item);
             }
         }
+        // Match the Compose picker: selected targets first, then configured apps, then the rest.
+        filtered.sort((left, right) -> Integer.compare(
+                QuickTemplateTargetOrdering.priority(
+                        selectedPackages.contains(left.packageName), left.configured),
+                QuickTemplateTargetOrdering.priority(
+                        selectedPackages.contains(right.packageName), right.configured)));
         adapter.submit(filtered);
         emptyView.setVisibility(filtered.isEmpty() ? View.VISIBLE : View.GONE);
     }
@@ -321,13 +328,21 @@ public final class QuickTemplateTargetsBinder {
             String normalizedQuery,
             boolean showSystemApps,
             boolean hideConfiguredApps) {
+        return matchesTargetFilters(item, normalizedQuery, showSystemApps, hideConfiguredApps, false);
+    }
+
+    public static boolean matchesTargetFilters(TargetAppItem item,
+            String normalizedQuery,
+            boolean showSystemApps,
+            boolean hideConfiguredApps,
+            boolean selected) {
         if (item == null) {
             return false;
         }
         if (!showSystemApps && item.systemApp) {
             return false;
         }
-        if (hideConfiguredApps && item.configured) {
+        if (hideConfiguredApps && item.configured && !selected) {
             return false;
         }
         return matchesQuery(item, normalizedQuery);

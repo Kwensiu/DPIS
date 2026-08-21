@@ -396,6 +396,11 @@
     <string name="filter_width_only">仅显示已设最小宽度应用</string>
     <string name="filter_font_only">仅显示已设字体应用</string>
     <string name="quick_template_targets_filter_hide_configured">隐藏已配置应用</string>
+    <string name="quick_template_targets_unsaved_title">未保存的更改</string>
+    <string name="quick_template_targets_unsaved_message">离开前是否保存目标应用选择？</string>
+    <string name="quick_template_targets_discard_changes">放弃更改</string>
+    <string name="quick_template_targets_save_and_back">保存并返回</string>
+    <string name="quick_template_targets_save_and_switch">保存并切换</string>
     <string name="system_settings_title">设置</string>
     <string name="system_settings_back">返回</string>
     <string name="system_settings_section_general">常规</string>

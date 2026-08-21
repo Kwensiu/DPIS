@@ -1,5 +1,6 @@
 package com.dpis.module;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
+import com.dpis.module.templates.QuickTemplateTargetOrdering;
 
 import com.dpis.module.templates.QuickTemplateStore;
 
@@ -78,6 +79,8 @@ public class QuickTemplateTargetSelectionTest {
                 configured, "", false, true));
         assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
                 unconfigured, "", false, true));
+        assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
+                configured, "", false, true, true));
     }
 
     @Test
@@ -90,6 +93,14 @@ public class QuickTemplateTargetSelectionTest {
                 system, "", false, false));
         assertTrue(QuickTemplateTargetsBinder.matchesTargetFilters(
                 system, "", true, false));
+    }
+
+    @Test
+    public void targetOrderingPutsSelectedBeforeConfiguredBeforeOtherApps() {
+        assertEquals(0, QuickTemplateTargetOrdering.priority(true, true));
+        assertEquals(0, QuickTemplateTargetOrdering.priority(true, false));
+        assertEquals(1, QuickTemplateTargetOrdering.priority(false, true));
+        assertEquals(2, QuickTemplateTargetOrdering.priority(false, false));
     }
 
     private static LinkedHashSet<String> orderedSet(String... values) {
