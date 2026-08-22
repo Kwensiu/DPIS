@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -90,7 +91,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
-private val AppListRowHeight = 72.dp
+private val AppListRowMinHeight = 72.dp
 private val AppListScrollbarThumbHeight = 36.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -393,7 +394,13 @@ private fun AppListScrollbar(
     ) {
         val visibleCount = listState.layoutInfo.visibleItemsInfo.size
         if (visibleCount >= itemCount || trackHeightPx == 0) return@Box
-        val rowHeightPx = with(density) { AppListRowHeight.toPx() }
+        // Rows grow with the user's font scale. Use the measured visible rows for the
+        // scrollbar estimate instead of assuming the compact 72.dp height everywhere.
+        val rowHeightPx = listState.layoutInfo.visibleItemsInfo
+            .map { it.size }
+            .average()
+            .toFloat()
+            .coerceAtLeast(with(density) { AppListRowMinHeight.toPx() })
         val viewportHeightPx = listState.layoutInfo.viewportSize.height.toFloat()
         val totalContentHeightPx = itemCount * rowHeightPx +
             listState.layoutInfo.beforeContentPadding +
@@ -572,7 +579,7 @@ private fun AppRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AppListRowHeight)
+            .heightIn(min = AppListRowMinHeight)
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
@@ -605,24 +612,22 @@ private fun AppRow(
             modifier = Modifier.weight(1f).padding(start = 12.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                item.label,
-                // Trim only the boundary facing the package name. The row keeps its normal
-                // title line height and does not rely on a negative layout offset.
+            AppIdentityMarqueeText(
+                text = item.label,
+                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleMedium.copy(
                     platformStyle = PlatformTextStyle(includeFontPadding = false),
                     lineHeightStyle = LineHeightStyle(
                         alignment = LineHeightStyle.Alignment.Center,
                         trim = LineHeightStyle.Trim.LastLineBottom,
                         mode = LineHeightStyle.Mode.Fixed
-                    )
-                ),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                    ),
+                    fontWeight = FontWeight.Bold
+                )
             )
-            Text(
-                item.packageName,
+            AppIdentityMarqueeText(
+                text = item.packageName,
+                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     platformStyle = PlatformTextStyle(includeFontPadding = false),
                     lineHeightStyle = LineHeightStyle(
@@ -631,9 +636,7 @@ private fun AppRow(
                         mode = LineHeightStyle.Mode.Fixed
                     )
                 ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 AppStatusFormatter.formatCompact(resources, statusInput),

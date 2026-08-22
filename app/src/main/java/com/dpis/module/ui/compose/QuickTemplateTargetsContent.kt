@@ -417,25 +417,24 @@ private fun TargetAppRow(
                 .padding(start = 12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
+                AppIdentityMarqueeText(
                     text = app.label,
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    )
                 )
                 if (app.configured) {
                     ConfiguredBadge()
                 }
             }
-            Text(
+            AppIdentityMarqueeText(
                 text = app.packageName,
-                modifier = Modifier.padding(top = 2.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 2.dp),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Checkbox(

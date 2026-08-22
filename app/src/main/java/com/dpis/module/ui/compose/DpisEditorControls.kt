@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.BasicTextField
@@ -65,6 +64,8 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import kotlin.math.roundToInt
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
@@ -243,12 +244,23 @@ internal fun AppIdentityMarqueeText(
         }
     }
 
-    Box(modifier = modifier.clipToBounds().onSizeChanged { containerWidth = it.width }) {
+    Box(
+        modifier = modifier.clipToBounds().onSizeChanged { containerWidth = it.width },
+        contentAlignment = Alignment.TopStart
+    ) {
         Text(
             text = text,
             modifier = Modifier
-                .wrapContentWidth(unbounded = true)
-                .offset { IntOffset(offset.value.roundToInt(), 0) }
+                .layout { measurable, constraints ->
+                    // Measure the complete text independently of the viewport. The parent
+                    // Box is the only clipping boundary; the text itself is never pre-clipped.
+                    val placeable = measurable.measure(
+                        constraints.copy(minWidth = 0, maxWidth = Constraints.Infinity)
+                    )
+                    layout(constraints.maxWidth, placeable.height) {
+                        placeable.placeRelative(offset.value.roundToInt(), 0)
+                    }
+                }
                 .onSizeChanged { textWidth = it.width },
             style = style,
             color = color,

@@ -1,6 +1,5 @@
 package com.dpis.module.ui.compose
 
-import android.content.res.Configuration
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -47,6 +46,9 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,8 +57,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -272,8 +275,9 @@ internal fun SecondaryPageScaffold(
     title: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The header owns status bars. Keep the list viewport edge-to-edge and reserve
         // the gesture area inside each scrollable page instead of outside this scaffold.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -281,6 +285,7 @@ internal fun SecondaryPageScaffold(
             SecondaryPageTopBar(
                 onBack = onBack,
                 actions = actions,
+                scrollBehavior = scrollBehavior,
                 title = title
             )
         },
@@ -329,13 +334,15 @@ internal fun PrimaryPageScaffold(
     title: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The header is a scrim overlay. Content owns its first-item breathing room.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             PrimaryPageTopBar(
                 actions = actions,
+                scrollBehavior = scrollBehavior,
                 title = title
             )
         },
@@ -355,12 +362,14 @@ internal fun SecondaryPageTopBar(
     @StringRes titleRes: Int,
     onBack: (() -> Unit)?,
     includeHorizontalSafeInsets: Boolean = true,
-    actions: @Composable RowScope.() -> Unit = {}
+    actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null
 ) {
     SecondaryPageTopBar(
         onBack = onBack,
         includeHorizontalSafeInsets = includeHorizontalSafeInsets,
         actions = actions,
+        scrollBehavior = scrollBehavior,
         title = {
             Text(
                 text = stringResource(titleRes),
@@ -376,12 +385,14 @@ internal fun SecondaryPageTopBar(
     onBack: (() -> Unit)?,
     includeHorizontalSafeInsets: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     title: @Composable () -> Unit
 ) {
     PageTopBar(
         onBack = onBack?.let { action -> rememberDpisConfirmAction(action) },
         actions = actions,
         includeHorizontalSafeInsets = includeHorizontalSafeInsets,
+        scrollBehavior = scrollBehavior,
         title = title
     )
 }
@@ -389,11 +400,13 @@ internal fun SecondaryPageTopBar(
 @Composable
 private fun PrimaryPageTopBar(
     actions: @Composable RowScope.() -> Unit = {},
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     title: @Composable () -> Unit
 ) {
     PageTopBar(
         actions = actions,
         includeHorizontalSafeInsets = false,
+        scrollBehavior = scrollBehavior,
         title = title
     )
 }
@@ -403,39 +416,13 @@ private fun PageTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     includeHorizontalSafeInsets: Boolean = true,
+    scrollBehavior: TopAppBarScrollBehavior? = null,
     title: @Composable () -> Unit
 ) {
-    val configuration = LocalConfiguration.current
-    val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val layoutDirection = LocalLayoutDirection.current
-    val safeTopInsets = WindowInsets.statusBars.union(WindowInsets.displayCutout)
-        .asPaddingValues()
-    val safeStartPadding = if (includeHorizontalSafeInsets) {
-        safeTopInsets.calculateStartPadding(layoutDirection)
-    } else {
-        0.dp
-    }
-    val safeEndPadding = if (includeHorizontalSafeInsets) {
-        safeTopInsets.calculateEndPadding(layoutDirection)
-    } else {
-        0.dp
-    }
-    val extraTopPadding = if (compactVerticalChrome) 0.dp else 6.dp
-    val bottomPadding = if (compactVerticalChrome) 4.dp else 8.dp
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .padding(
-                    start = safeStartPadding + 16.dp,
-                    top = safeTopInsets.calculateTopPadding() + extraTopPadding,
-                    end = safeEndPadding + 16.dp,
-                    bottom = bottomPadding
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    TopAppBar(
+        title = title,
+        navigationIcon = {
             if (onBack != null) {
-                // IconButton enforces a 48dp layout box, which shifts the following title
-                // relative to View secondary pages. The legacy button is a real 36dp box.
                 Box(
                     modifier = Modifier.size(36.dp)
                         .clip(CircleShape)
@@ -451,14 +438,19 @@ private fun PageTopBar(
                     )
                 }
             }
-            Box(
-                Modifier
-                    .padding(start = if (onBack != null) 12.dp else 0.dp)
-                    .weight(1f)
-            ) { title() }
-            actions()
-        }
-    }
+        },
+        actions = actions,
+        windowInsets = if (includeHorizontalSafeInsets) {
+            WindowInsets.statusBars.union(WindowInsets.displayCutout)
+        } else {
+            WindowInsets.statusBars
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        scrollBehavior = scrollBehavior
+    )
 }
 
 @Composable
@@ -477,6 +469,7 @@ private fun primaryPageContentPadding(scaffoldPadding: PaddingValues): PaddingVa
     )
 }
 
+/** Keeps standard page headers readable while allowing their content to pass beneath them. */
 @Composable
 private fun pageContentPadding(scaffoldPadding: PaddingValues): PaddingValues {
     val layoutDirection = LocalLayoutDirection.current
