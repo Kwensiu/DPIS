@@ -14,6 +14,15 @@ on:
       - '.github/workflows/telegram-preview.yml'
       - 'scripts/telegram-preview-media.py'
   workflow_dispatch:
+    inputs:
+      telegram_target:
+        description: Telegram 投递目标
+        required: true
+        default: direct
+        type: choice
+        options:
+          - direct
+          - channel
 
 permissions:
   contents: read
@@ -250,6 +259,8 @@ jobs:
           TELEGRAM_CHAT_IDS: ${{ secrets.TELEGRAM_CHAT_IDS }}
           TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
           TELEGRAM_PROTECT_CONTENT: ${{ secrets.TELEGRAM_PROTECT_CONTENT }}
+          TELEGRAM_TARGET: ${{ inputs.telegram_target || 'channel' }}
+          TELEGRAM_DIRECT_CHAT_ID: ${{ secrets.TELEGRAM_DIRECT_CHAT_ID }}
           VERSION_NAME: ${{ steps.preview.outputs.version_name }}
           VERSION_CODE: ${{ steps.preview.outputs.version_code }}
           SHORT_SHA: ${{ steps.preview.outputs.short_sha }}
@@ -261,10 +272,18 @@ jobs:
             exit 1
           fi
 
-          CHAT_TARGETS="${TELEGRAM_CHAT_IDS:-$TELEGRAM_CHAT_ID}"
-          if [[ -z "$CHAT_TARGETS" ]]; then
-            echo "TELEGRAM_CHAT_ID or TELEGRAM_CHAT_IDS is required"
-            exit 1
+          if [[ "$TELEGRAM_TARGET" == "direct" ]]; then
+            CHAT_TARGETS="$TELEGRAM_DIRECT_CHAT_ID"
+            if [[ -z "$CHAT_TARGETS" ]]; then
+              echo "TELEGRAM_DIRECT_CHAT_ID is required for direct delivery"
+              exit 1
+            fi
+          else
+            CHAT_TARGETS="${TELEGRAM_CHAT_IDS:-$TELEGRAM_CHAT_ID}"
+            if [[ -z "$CHAT_TARGETS" ]]; then
+              echo "TELEGRAM_CHAT_ID or TELEGRAM_CHAT_IDS is required for channel delivery"
+              exit 1
+            fi
           fi
 
           APKS=(
