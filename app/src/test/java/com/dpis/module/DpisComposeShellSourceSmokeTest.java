@@ -116,7 +116,7 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("rememberDpisConfirmAction"));
         assertTrue(haptics.contains("HapticFeedbackType.Confirm"));
         assertTrue(presentation.contains("object TemplateWorkspacePresentation"));
-        assertTrue(presentation.contains("QuickTemplateStore(preferences).readAll()"));
+        assertTrue(presentation.contains("QuickTemplateStore(context).readAll()"));
         assertTrue(presentation.contains("GlobalPrefillStore(preferences).read()"));
         assertTrue(presentation.contains("fun applyTemplate(id: String)"));
         assertTrue(presentation.contains("fun selectTargets(id: String)"));

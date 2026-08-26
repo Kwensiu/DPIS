@@ -44,7 +44,8 @@ object QuickTemplateTargetActivityContent {
                         Toast.makeText(activity, result.messageResId, Toast.LENGTH_SHORT).show()
                         if (result.success) onSaved.run()
                         result.success
-                    }
+                    },
+                    handleSystemBack = true
                 )
             }
         }

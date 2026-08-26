@@ -108,22 +108,22 @@ public class TemplateWorkspaceLayoutSmokeTest {
 
     @Test
     public void binderAndAdapterReadStoresAndBindMissingFontHooks() throws IOException {
-        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
         String adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateListAdapter.java");
 
-        assertTrue(binder.contains("new GlobalPrefillStore(preferences).read()"));
-        assertTrue(binder.contains("new QuickTemplateStore(preferences).readAll()"));
+        assertTrue(binder.contains("GlobalPrefillStore(preferences).read()"));
+        assertTrue(binder.contains("QuickTemplateStore(context).readAll()"));
         assertTrue(binder.contains("ConfigStoreFactory.createLocalUiFontLibraryStore"));
-        assertTrue(binder.contains("new TemplateTypefaceResolver("));
-        assertTrue(binder.contains("fontLibraryStore.resolveFontFile(typefaceId) != null"));
+        assertTrue(binder.contains("TemplateTypefaceResolver("));
+        assertTrue(binder.contains("store.resolveFontFile(typefaceId) != null"));
         assertTrue(read("src/main/java/com/dpis/module/templates/TemplateTypefaceResolver.java")
                 .contains("importedTypefaceProvider.resolve(typefaceId)"));
         assertTrue(read("src/main/java/com/dpis/module/templates/TemplateTypefaceResolver.java")
                 .contains("SystemFontRegistry.loadTypeface(typefaceId) != null"));
         assertTrue(binder.contains("R.id.global_prefill_summary_chips"));
         assertTrue(binder.contains("bindHeaderActions(workspaceView, templates)"));
-        assertTrue(binder.contains("sortButton.setEnabled(sortEnabled);"));
-        assertTrue(binder.contains("sortButton.setAlpha(sortEnabled ? 1f : DISABLED_ACTION_ALPHA);"));
+        assertTrue(binder.contains("sortButton.isEnabled = enabled"));
+        assertTrue(binder.contains("sortButton.alpha = if (enabled) 1f else DISABLED_ACTION_ALPHA"));
         assertTrue(read("src/main/java/com/dpis/module/templates/TemplateSummaryChipBinder.java")
                 .contains("colorSurfaceContainerHighest"));
         assertTrue(read("src/main/java/com/dpis/module/templates/TemplateSummaryChipBinder.java")
@@ -133,7 +133,7 @@ public class TemplateWorkspaceLayoutSmokeTest {
         assertTrue(adapter.contains("R.id.quick_template_apply_button"));
         assertTrue(adapter.contains("R.id.quick_template_edit_button"));
         assertTrue(adapter.contains("R.id.quick_template_select_button"));
-        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java")
+        assertTrue(read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt")
                 .contains("quick_template_sort_button"));
         assertTrue(read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt")
                 .contains("DialogWindowSizer.applyLargeWidth(dialog, activity)"));

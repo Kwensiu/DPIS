@@ -21,7 +21,9 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         String activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.java");
         String contract = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java");
-        String targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.java");
+        String targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.kt");
+        String filterState = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetFilterState.kt");
+        String catalogLoader = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetCatalogLoader.kt");
         String presentation = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsPresentationController.java");
         String carrierState = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetCarrierState.java");
@@ -35,7 +37,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         String composeHost = read(
                 "src/main/java/com/dpis/module/ui/compose/QuickTemplateTargetActivityContent.kt");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
 
         assertTrue(manifest.contains("android:name=\".templates.QuickTemplateTargetSelectionActivity\""));
         assertTrue(manifest.contains("android:exported=\"false\""));
@@ -76,28 +78,27 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(presentation.contains(
                 "quick template target presentation load failed"));
         assertTrue(presentation.contains("loading = false;"));
-        assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
+        assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages(current.id, selectedPackages)"));
         assertTrue(targetsBinder.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allTargetItems)"));
         assertTrue(targetsBinder.contains("DpisApplication.getActiveHookConfigStore(activity)"));
-        assertTrue(targetsBinder.contains("new PackageConfigRepository("));
-        assertTrue(targetsBinder.contains("installedAppCatalogCoordinator.loadInstalledAppCatalogWithIcons(false)"));
-        assertTrue(targetsBinder.contains(
-                "packageConfigRepository.hasRealPackageConfig(item.packageName)"));
+        assertTrue(targetsBinder.contains("PackageConfigRepository("));
+        assertTrue(catalogLoader.contains("loadInstalledAppCatalogWithIcons(false)"));
+        assertTrue(catalogLoader.contains("packageConfigRepository.hasRealPackageConfig(item.packageName)"));
         assertTrue(targetsBinder.contains("FILTER_PREFS_NAME = \"quick_template_target_filters\""));
-        assertTrue(targetsBinder.contains("KEY_FILTER_SHOW_SYSTEM_APPS"));
-        assertTrue(targetsBinder.contains("KEY_FILTER_HIDE_CONFIGURED_APPS"));
+        assertTrue(filterState.contains("KEY_SHOW_SYSTEM_APPS = \"show_system_apps\""));
+        assertTrue(filterState.contains("KEY_HIDE_CONFIGURED_APPS = \"hide_configured_apps\""));
         assertFalse(targetsBinder.contains("AppListFilterStateStore"));
         assertTrue(targetsBinder.contains("hideConfiguredApps && item.configured && !selected"));
         assertTrue(targetsBinder.contains("matchesTargetFilters("));
         assertTrue(targetsBinder.contains("R.layout.dialog_quick_template_target_filters"));
-        assertTrue(targetsBinder.contains("loadTargetApps()"));
-        assertTrue(targetsBinder.contains("buildTargetItems()"));
+        assertTrue(targetsBinder.contains("targetCatalogLoader.load()"));
+        assertTrue(catalogLoader.contains("buildItems()"));
         assertTrue(targetsBinder.contains("onTargetAppsLoaded("));
         assertTrue(targetsBinder.contains("applyTargetFilters()"));
         assertFalse(targetsBinder.contains("private void filterApps("));
-        assertTrue(targetsBinder.contains("appLoadExecutor.execute("));
-        assertTrue(targetsBinder.contains("item.icon"));
-        assertTrue(targetsBinder.contains("quick template target list load failed"));
+        assertTrue(catalogLoader.contains("executor.execute"));
+        assertTrue(catalogLoader.contains("item.icon"));
+        assertTrue(catalogLoader.contains("quick template target list load failed"));
         assertTrue(targetsBinder.contains("if (disposed)"));
         assertFalse(targetsBinder.contains("applicationInfo.loadIcon(packageManager)"));
         assertFalse(targetsBinder.contains("getInstalledApplications("));
@@ -154,14 +155,16 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(carrierState.contains("enum CloseReason"));
         assertTrue(carrierState.contains("ORIENTATION_MIGRATION"));
         assertTrue(mainActivity.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
-        assertTrue(mainActivity.contains("R.layout.view_land_quick_template_targets_detail"));
-        assertTrue(mainActivity.contains("new QuickTemplateTargetsBinder("));
+        assertTrue(mainActivity.contains("TemplateDetailPaneController"));
+        String detailController = read("src/main/java/com/dpis/module/templates/TemplateDetailPaneController.kt");
+        assertTrue(detailController.contains("view_land_quick_template_targets_detail"));
+        assertTrue(detailController.contains("QuickTemplateTargetsBinder(activity, detailView, host)"));
         assertTrue(mainActivity.contains("QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID"));
         String showTargetsMethod = mainActivity.substring(
                 mainActivity.indexOf("private void showQuickTemplateTargets("),
                 mainActivity.indexOf("private void startQuickTemplateTargetSelectionActivity("));
         assertFalse(showTargetsMethod.contains("clearTemplateDetailSelection();"));
-        assertTrue(binder.contains("void select(String templateId)"));
+        assertTrue(binder.contains("fun select(templateId: String)"));
         assertFalse(targetsBinder.contains("target_packages"));
     }
 

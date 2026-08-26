@@ -246,7 +246,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="quick_template_sort_failed">テンプレート順序の保存に失敗しました</string>
     <string name="quick_template_sort_drag_handle">ドラッグして並べ替え</string>
     <string name="quick_template_search_empty">一致するテンプレートはありません。</string>
-    <string name="quick_template_targets_title">アプリを選択: %1$s</string>
+    <string name="quick_template_targets_title">%1$s</string>
     <string name="quick_template_targets_selected_count">%1$d 個のアプリを選択中</string>
     <string name="quick_template_targets_configured_badge">設定済み</string>
     <string name="quick_template_targets_empty">一致するアプリはありません。</string>

@@ -51,6 +51,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.dpis.module.backup.ConfigBackupCodec;
+import com.dpis.module.templates.QuickTemplateStore;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -763,6 +764,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
         }
         new Thread(() -> {
             Map<String, Object> entries = localStore.snapshotBackup();
+            new QuickTemplateStore(activity).copyToBackup(entries);
             boolean success = false;
             try {
                 String payload = ConfigBackupCodec.encode(entries);
@@ -799,6 +801,8 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 runOnUiThread(() -> { showToast(R.string.config_backup_import_invalid); publishPresentationState(); });
                 return;
             }
+            new QuickTemplateStore(activity).restoreFromBackup(entries);
+            entries.entrySet().removeIf(entry -> entry.getKey().startsWith("template."));
             if (!localStore.replaceBackup(entries)) {
                 runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
                 return;

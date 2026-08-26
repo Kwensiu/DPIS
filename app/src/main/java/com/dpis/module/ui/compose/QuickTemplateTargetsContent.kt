@@ -20,17 +20,27 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,10 +57,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,18 +81,28 @@ fun QuickTemplateTargetsContent(
     state: QuickTemplateTargetsPresentationController.State?,
     onBack: () -> Unit,
     onQueryChanged: (String) -> Unit,
-    onFiltersChanged: (Boolean, Boolean) -> Unit,
+    onFiltersChanged: (Boolean, Boolean, Boolean, Boolean) -> Unit,
     onSelectionChanged: (String, Boolean) -> Unit,
     onSaveAndExit: () -> Boolean,
-    showBackButton: Boolean = true
+    showBackButton: Boolean = true,
+    handleSystemBack: Boolean = false
 ) {
     val current = state ?: return
     val focusManager = LocalFocusManager.current
+    var searchVisible by rememberSaveable { mutableStateOf(false) }
     var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
     var discardDialogVisible by rememberSaveable { mutableStateOf(false) }
+    val searchOffset by animateDpAsState(
+        targetValue = if (searchVisible) 76.dp else 0.dp,
+        animationSpec = tween(durationMillis = 250),
+        label = "target search offset"
+    )
     val requestBack = {
         focusManager.clearFocus()
         if (current.hasUnsavedChanges) discardDialogVisible = true else onBack()
+    }
+    if (handleSystemBack) {
+        BackHandler(onBack = requestBack)
     }
     val listState = rememberLazyListState()
 
@@ -90,39 +111,45 @@ fun QuickTemplateTargetsContent(
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {},
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         bottomBar = {
-            Button(
-                onClick = {
-                    focusManager.clearFocus()
-                    onSaveAndExit()
-                },
-                enabled = !current.loading,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .then(if (showBackButton) Modifier.navigationBarsPadding() else Modifier)
-                    .height(48.dp),
-                shape = RoundedCornerShape(18.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                Text(stringResource(R.string.status_save_button))
+                Button(
+                    onClick = {
+                        focusManager.clearFocus()
+                        onSaveAndExit()
+                    },
+                    enabled = !current.loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .then(if (showBackButton) Modifier.navigationBarsPadding() else Modifier)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+                    Text(stringResource(R.string.status_save_button))
+                }
             }
         }
     ) { scaffoldPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceContainer)
                 .padding(scaffoldPadding)
         ) {
-            SecondaryPageTopBar(
-                onBack = requestBack.takeIf { showBackButton },
-                includeHorizontalSafeInsets = showBackButton,
-                title = {
+            Box(Modifier.zIndex(1f)) {
+                SecondaryPageTopBar(
+                    onBack = requestBack.takeIf { showBackButton },
+                    includeHorizontalSafeInsets = showBackButton,
+                    title = {
                     Column {
                         Text(
-                            text = stringResource(
-                                R.string.quick_template_targets_title,
-                                current.templateName.orEmpty()
-                            ),
+                            text = current.templateName.orEmpty(),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -137,97 +164,108 @@ fun QuickTemplateTargetsContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-            )
-            TargetSearchCard(
-                query = current.query,
-                onQueryChanged = onQueryChanged,
-                onClearQuery = { onQueryChanged("") },
-                onOpenFilters = {
-                    focusManager.clearFocus()
-                    filterSheetVisible = true
-                }
-            )
-            Spacer(Modifier.height(12.dp))
+                    },
+                    actions = {
+                    IconButton(
+                        onClick = {
+                            searchVisible = !searchVisible
+                            if (!searchVisible) focusManager.clearFocus()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search_24),
+                            contentDescription = stringResource(R.string.quick_search_button),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            filterSheetVisible = true
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tune_24),
+                            contentDescription = stringResource(R.string.filter_button),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    }
+                )
+            }
             Box(
                 Modifier
                     .fillMaxSize()
                     .weight(1f)
                     .clearTextInputFocusOnPointerDown(focusManager)
             ) {
-                when {
-                    current.loading -> {
-                        Text(
-                            text = stringResource(R.string.quick_template_targets_loading),
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    current.apps.isEmpty() -> {
-                        Text(
-                            text = stringResource(R.string.quick_template_targets_empty),
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(24.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    else -> {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            state = listState,
-                            contentPadding = PaddingValues(
-                                start = 0.dp,
-                                top = 0.dp,
-                                end = 0.dp,
-                                bottom = 16.dp
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            items(
-                                count = current.apps.size,
-                                key = { current.apps[it].packageName }
-                            ) { index ->
-                                val app = current.apps[index]
-                                TargetAppRow(
-                                    app = app,
-                                    onSelected = { selected ->
-                                        onSelectionChanged(app.packageName, selected)
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize()) {
+                        when {
+                            current.loading -> {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = stringResource(R.string.quick_template_targets_loading),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            current.apps.isEmpty() -> {
+                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = stringResource(R.string.quick_template_targets_empty),
+                                        modifier = Modifier.padding(24.dp),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            else -> {
+                                LazyColumn(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .dialogListContentFade(
+                                            state = listState,
+                                            edgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                                            edgeHeight = 4.dp
+                                        ),
+                                    state = listState,
+                                    contentPadding = PaddingValues(
+                                        start = 0.dp,
+                                        top = searchOffset,
+                                        end = 0.dp,
+                                        bottom = 16.dp
+                                    ),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    items(
+                                        count = current.apps.size,
+                                        key = { current.apps[it].packageName }
+                                    ) { index ->
+                                        val app = current.apps[index]
+                                        TargetAppRow(
+                                            app = app,
+                                            onSelected = { selected ->
+                                                onSelectionChanged(app.packageName, selected)
+                                            }
+                                        )
                                     }
-                                )
+                                }
                             }
                         }
                     }
-                }
-                if (listState.canScrollBackward) {
-                    // Fade only while content exists above the viewport.
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(28.dp)
-                            .align(Alignment.TopCenter)
-                            .background(
-                                Brush.verticalGradient(
-                                    0f to MaterialTheme.colorScheme.surface,
-                                    1f to MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-                                )
-                            )
-                    )
-                }
-                if (listState.canScrollForward) {
-                    // Mirror the top boundary above the fixed save action.
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(28.dp)
-                            .align(Alignment.BottomCenter)
-                            .background(
-                                Brush.verticalGradient(
-                                    0f to MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                                    1f to MaterialTheme.colorScheme.surface
-                                )
-                            )
-                    )
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = searchVisible,
+                        modifier = Modifier.align(Alignment.TopCenter),
+                        enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut()
+                    ) {
+                        TargetSearchCard(
+                            query = current.query,
+                            onQueryChanged = onQueryChanged,
+                            onClearQuery = { onQueryChanged("") },
+                            modifier = Modifier.padding(top = 12.dp, bottom = 12.dp)
+                        )
+                    }
                 }
             }
         }
@@ -254,18 +292,43 @@ fun QuickTemplateTargetsContent(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Spacer(Modifier.height(12.dp))
-                TargetFilterSwitch(
-                    label = stringResource(R.string.filter_show_system_apps),
-                    checked = current.showSystemApps,
-                    onCheckedChange = {
-                        onFiltersChanged(it, current.hideConfiguredApps)
-                    }
+                Text(
+                    text = stringResource(R.string.quick_template_targets_filter_category),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = current.showAllApps,
+                        onClick = { onFiltersChanged(true, false, false, current.hideConfiguredApps) },
+                        label = { Text(stringResource(R.string.quick_template_targets_filter_all)) }
+                    )
+                    FilterChip(
+                        selected = current.showSystemApps,
+                        onClick = {
+                            onFiltersChanged(false, !current.showSystemApps, current.showUserApps,
+                                current.hideConfiguredApps)
+                        },
+                        label = { Text(stringResource(R.string.quick_template_targets_filter_system)) }
+                    )
+                    FilterChip(
+                        selected = current.showUserApps,
+                        onClick = {
+                            onFiltersChanged(false, current.showSystemApps, !current.showUserApps,
+                                current.hideConfiguredApps)
+                        },
+                        label = { Text(stringResource(R.string.quick_template_targets_filter_user)) }
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
                 TargetFilterSwitch(
                     label = stringResource(R.string.quick_template_targets_filter_hide_configured),
                     checked = current.hideConfiguredApps,
                     onCheckedChange = {
-                        onFiltersChanged(current.showSystemApps, it)
+                        onFiltersChanged(current.showAllApps, current.showSystemApps, current.showUserApps, it)
                     }
                 )
                 Spacer(Modifier.height(16.dp))
@@ -314,7 +377,6 @@ private fun TargetSearchCard(
     query: String,
     onQueryChanged: (String) -> Unit,
     onClearQuery: () -> Unit,
-    onOpenFilters: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -378,16 +440,6 @@ private fun TargetSearchCard(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-            IconButton(
-                onClick = onOpenFilters,
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_tune_24),
-                    contentDescription = stringResource(R.string.filter_button),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }

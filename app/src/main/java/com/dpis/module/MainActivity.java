@@ -71,11 +71,14 @@ import com.dpis.module.templates.QuickTemplateApplyAdapters;
 import com.dpis.module.templates.TemplateEditorDraft;
 import com.dpis.module.templates.QuickTemplateTargetSelectionActivity;
 import com.dpis.module.templates.QuickTemplateTargetsBinder;
+import com.dpis.module.templates.TemplateDetailPaneController;
 import com.dpis.module.templates.TemplateWorkspaceBinder;
 import com.dpis.module.templates.TemplateWorkspacePresentation;
 import com.dpis.module.templates.TemplateWorkspacePresentationController;
 
 import com.dpis.module.templates.QuickTemplateStore;
+import com.dpis.module.templates.QuickTemplateActionsAdapter;
+import com.dpis.module.templates.GlobalPrefillActionsAdapter;
 import com.dpis.module.templates.QuickTemplateSaveHandler;
 import com.dpis.module.templates.TemplateEditorForm;
 
@@ -323,7 +326,7 @@ public final class MainActivity
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
-    private QuickTemplateTargetsBinder activeQuickTemplateTargetsBinder;
+    private TemplateDetailPaneController templateDetailPaneController;
     private PageController feedbackDiagnosticPageController;
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
@@ -428,10 +431,10 @@ public final class MainActivity
                     STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
                     false
             );
-            retainedGlobalPrefillDraft = restoreGlobalPrefillDraft(
+            retainedGlobalPrefillDraft = TemplateWorkspaceStateCodec.restoreGlobalPrefillDraft(
                     savedInstanceState.getBundle(STATE_GLOBAL_PREFILL_DRAFT)
             );
-            retainedQuickTemplateDraft = restoreQuickTemplateDraft(
+            retainedQuickTemplateDraft = TemplateWorkspaceStateCodec.restoreQuickTemplateDraft(
                     savedInstanceState.getBundle(STATE_QUICK_TEMPLATE_DRAFT)
             );
         }
@@ -464,6 +467,19 @@ public final class MainActivity
         landDetailContent = findViewById(R.id.land_detail_content);
         templateDetailEmptyView = findViewById(R.id.template_detail_empty);
         templateDetailContent = findViewById(R.id.template_detail_content);
+        templateDetailPaneController = new TemplateDetailPaneController(
+                this,
+                templateDetailContent,
+                templateDetailEmptyView,
+                createQuickTemplateTargetsHost(),
+                new Runnable() {
+                    @Override
+                    public void run() {
+                    clearTemplateDetailSelection();
+                    applyLandscapeDetailVisibility(false, true);
+                    }
+                }
+        );
         templateWorkspaceBinder = new TemplateWorkspaceBinder(
                 this,
                 createTemplateWorkspaceActions(),
@@ -722,13 +738,13 @@ public final class MainActivity
         if (retainedGlobalPrefillDraft != null) {
             outState.putBundle(
                     STATE_GLOBAL_PREFILL_DRAFT,
-                    saveGlobalPrefillDraft(retainedGlobalPrefillDraft)
+                    TemplateWorkspaceStateCodec.saveGlobalPrefillDraft(retainedGlobalPrefillDraft)
             );
         }
         if (retainedQuickTemplateDraft != null) {
             outState.putBundle(
                     STATE_QUICK_TEMPLATE_DRAFT,
-                    saveQuickTemplateDraft(retainedQuickTemplateDraft)
+                    TemplateWorkspaceStateCodec.saveQuickTemplateDraft(retainedQuickTemplateDraft)
             );
         }
     }
@@ -1269,7 +1285,8 @@ public final class MainActivity
             applyLandscapeDetailVisibility(false, true);
             return;
         }
-        if (templateDetailContent.getChildCount() > 0) {
+        if (templateDetailPaneController != null
+                && templateDetailPaneController.hasContent()) {
             applyLandscapeDetailVisibility(false, true);
             return;
         }
@@ -1319,85 +1336,9 @@ public final class MainActivity
         return TemplateDetailSelection.none();
     }
 
-    // Saved-instance recovery must keep unsaved template editor input, not just
-    // reopen the same detail page after process recreation.
-    private static Bundle saveGlobalPrefillDraft(TemplateEditorDraft draft) {
-        Bundle bundle = new Bundle();
-        if (draft == null) {
-            return bundle;
-        }
-        bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
-        bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
-        bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
-        bundle.putString(STATE_DRAFT_VIEWPORT_SCALE_INPUT, draft.viewportScaleInput);
-        bundle.putString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT, draft.viewportAbsoluteInput);
-        bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
-        bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
-        bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
-        bundle.putString(STATE_DRAFT_FONT_HOOK_DOMAINS, draft.draftFontHookDomainsRaw);
-        return bundle;
-    }
-
-    private static TemplateEditorDraft restoreGlobalPrefillDraft(Bundle bundle) {
-        if (bundle == null || bundle.isEmpty()) {
-            return null;
-        }
-        return new TemplateEditorDraft(
-                false,
-                "",
-                bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
-                bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
-                bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
-                bundle.getString(STATE_DRAFT_VIEWPORT_SCALE_INPUT),
-                bundle.getString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT),
-                bundle.getString(STATE_DRAFT_FONT_INPUT),
-                bundle.getString(STATE_DRAFT_FONT_MODE),
-                bundle.getString(STATE_DRAFT_TYPEFACE_ID),
-                bundle.getString(STATE_DRAFT_FONT_HOOK_DOMAINS)
-        );
-    }
-
-    private static Bundle saveQuickTemplateDraft(TemplateEditorDraft draft) {
-        Bundle bundle = new Bundle();
-        if (draft == null) {
-            return bundle;
-        }
-        bundle.putString(STATE_DRAFT_NAME, draft.nameInput);
-        bundle.putString(STATE_DRAFT_VIEWPORT_INPUT, draft.viewportInput);
-        bundle.putString(STATE_DRAFT_VIEWPORT_MODE, draft.viewportMode);
-        bundle.putString(STATE_DRAFT_VIEWPORT_APPLY_MODE, draft.viewportApplyMode);
-        bundle.putString(STATE_DRAFT_VIEWPORT_SCALE_INPUT, draft.viewportScaleInput);
-        bundle.putString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT, draft.viewportAbsoluteInput);
-        bundle.putString(STATE_DRAFT_FONT_INPUT, draft.fontInput);
-        bundle.putString(STATE_DRAFT_FONT_MODE, draft.fontMode);
-        bundle.putString(STATE_DRAFT_TYPEFACE_ID, draft.selectedTypefaceId);
-        bundle.putString(STATE_DRAFT_FONT_HOOK_DOMAINS, draft.draftFontHookDomainsRaw);
-        return bundle;
-    }
-
-    private static TemplateEditorDraft restoreQuickTemplateDraft(Bundle bundle) {
-        if (bundle == null || bundle.isEmpty()) {
-            return null;
-        }
-        return new TemplateEditorDraft(
-                true,
-                bundle.getString(STATE_DRAFT_NAME),
-                bundle.getString(STATE_DRAFT_VIEWPORT_INPUT),
-                bundle.getString(STATE_DRAFT_VIEWPORT_MODE),
-                bundle.getString(STATE_DRAFT_VIEWPORT_APPLY_MODE),
-                bundle.getString(STATE_DRAFT_VIEWPORT_SCALE_INPUT),
-                bundle.getString(STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT),
-                bundle.getString(STATE_DRAFT_FONT_INPUT),
-                bundle.getString(STATE_DRAFT_FONT_MODE),
-                bundle.getString(STATE_DRAFT_TYPEFACE_ID),
-                bundle.getString(STATE_DRAFT_FONT_HOOK_DOMAINS)
-        );
-    }
-
     private void disposeActiveQuickTemplateTargetsBinder() {
-        if (activeQuickTemplateTargetsBinder != null) {
-            activeQuickTemplateTargetsBinder.dispose();
-            activeQuickTemplateTargetsBinder = null;
+        if (templateDetailPaneController != null) {
+            templateDetailPaneController.dispose();
         }
     }
 
@@ -1525,67 +1466,26 @@ public final class MainActivity
         quickTemplateTargetSelectionActivityStarted = false;
         disposeActiveQuickTemplateTargetsBinder();
         if (templateDetailContent != null) {
-            templateDetailContent.removeAllViews();
+            if (templateDetailPaneController != null) {
+                templateDetailPaneController.clear();
+            } else {
+                templateDetailContent.removeAllViews();
+            }
         }
     }
 
     private void showTemplateDetailPane(TemplateDetailSelection selection) {
-        if (templateDetailContent == null || selection == null) {
+        if (templateDetailPaneController == null || selection == null) {
             return;
         }
         templateDetailSelection = selection;
-        disposeActiveQuickTemplateTargetsBinder();
-        templateDetailContent.removeAllViews();
-        View detailView = inflateTemplateDetailView(selection);
-        if (detailView == null || !bindTemplateDetailView(selection, detailView)) {
+        if (!templateDetailPaneController.show(selection)) {
             templateDetailSelection = TemplateDetailSelection.none();
-            templateDetailContent.removeAllViews();
             bindTemplateWorkspace();
             applyLandscapeDetailVisibility(false, true);
             return;
         }
-        templateDetailContent.addView(
-                detailView,
-                new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                )
-        );
-        ViewCompat.requestApplyInsets(detailView);
         applyLandscapeDetailVisibility(false, true);
-    }
-
-    private View inflateTemplateDetailView(TemplateDetailSelection selection) {
-        if (selection.kind != TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            return null;
-        }
-        return LayoutInflater.from(this).inflate(
-                R.layout.view_land_quick_template_targets_detail,
-                templateDetailContent,
-                false
-        );
-    }
-
-    private boolean bindTemplateDetailView(
-            TemplateDetailSelection selection,
-            View detailView
-    ) {
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            WindowInsetsBinder.applySafeDrawingPadding(
-                    detailView,
-                    false,
-                    true,
-                    false,
-                    true
-            );
-            activeQuickTemplateTargetsBinder = new QuickTemplateTargetsBinder(
-                    this,
-                    detailView,
-                    createQuickTemplateTargetsHost()
-            );
-            return activeQuickTemplateTargetsBinder.bind(selection.templateId);
-        }
-        return false;
     }
 
     private QuickTemplateTargetsBinder.Host createQuickTemplateTargetsHost() {
@@ -1629,6 +1529,7 @@ public final class MainActivity
             }
         };
     }
+
 
     private void bindSettingsWorkspace() {
         if (composeShellHost != null) {
@@ -2025,9 +1926,7 @@ public final class MainActivity
                         @Override public void editGlobalPrefill() { showGlobalPrefillEditor(); }
                         @Override public void createTemplate() { showQuickTemplateEditor(null); }
                         @Override public void sortTemplates() {
-                            createQuickTemplateActions().sort(new QuickTemplateStore(
-                                    getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
-                            ).readAll());
+                            createQuickTemplateActions().sort(new QuickTemplateStore(MainActivity.this).readAll());
                         }
                         @Override public void applyTemplate(String id) { applyQuickTemplate(id); }
                         @Override public void editTemplate(String id) { showQuickTemplateEditor(id); }
@@ -2058,8 +1957,7 @@ public final class MainActivity
                         @Override public TemplateWorkspacePresentation.EditorResult saveQuickTemplate(
                                 TemplateEditorForm form) {
                             QuickTemplateSaveHandler.Result result = new QuickTemplateSaveHandler().save(
-                                    new QuickTemplateStore(getSharedPreferences(
-                                            DpisConfigStore.GROUP, Context.MODE_PRIVATE)),
+                                    new QuickTemplateStore(MainActivity.this),
                                     new QuickTemplateSaveHandler.Request(
                                             form.templateId, form.nameInput, form.viewportInput,
                                             form.viewportMode, form.viewportApplyMode,
@@ -2073,8 +1971,7 @@ public final class MainActivity
                         }
                         @Override public TemplateWorkspacePresentation.EditorResult deleteQuickTemplate(
                                 String id) {
-                            boolean deleted = new QuickTemplateStore(getSharedPreferences(
-                                    DpisConfigStore.GROUP, Context.MODE_PRIVATE)).delete(id);
+                            boolean deleted = new QuickTemplateStore(MainActivity.this).delete(id);
                             int messageResId = deleted
                                     ? R.string.quick_template_delete_success
                                     : R.string.quick_template_delete_failed;
@@ -2966,12 +2863,7 @@ public final class MainActivity
                         this,
                         DpisApplication.getXposedService()
                 ).listFonts().size(),
-                new QuickTemplateStore(
-                        getSharedPreferences(
-                                DpisConfigStore.GROUP,
-                                Context.MODE_PRIVATE
-                        )
-                ).readAll().size(),
+                new QuickTemplateStore(this).readAll().size(),
                 RootAccessProbe.cachedResult(),
                 homeUpdateUiState,
                 createHomeWorkspaceActions()
@@ -3430,16 +3322,16 @@ public final class MainActivity
     }
 
     private TemplateWorkspaceBinder.GlobalPrefillActions createTemplateWorkspaceActions() {
-        return new TemplateWorkspaceBinder.GlobalPrefillActions() {
+        return new GlobalPrefillActionsAdapter(new GlobalPrefillActionsAdapter.Host() {
             @Override
             public void edit() {
                 showGlobalPrefillEditor();
             }
-        };
+        });
     }
 
     private TemplateWorkspaceBinder.QuickTemplateActions createQuickTemplateActions() {
-        return new TemplateWorkspaceBinder.QuickTemplateActions() {
+        return new QuickTemplateActionsAdapter(new QuickTemplateActionsAdapter.Host() {
             @Override
             public void apply(String templateId) {
                 applyQuickTemplate(templateId);
@@ -3468,12 +3360,7 @@ public final class MainActivity
                         new QuickTemplateSortDialog.Host() {
                     @Override
                     public boolean saveOrder(List<String> orderedIds) {
-                        return new QuickTemplateStore(
-                                getSharedPreferences(
-                                        DpisConfigStore.GROUP,
-                                        Context.MODE_PRIVATE
-                                )
-                        ).reorder(orderedIds);
+                        return new QuickTemplateStore(MainActivity.this).reorder(orderedIds);
                     }
 
                     @Override
@@ -3489,13 +3376,11 @@ public final class MainActivity
                 }
                 );
             }
-        };
+        });
     }
 
     private void applyQuickTemplate(String templateId) {
-        QuickTemplateStore store = new QuickTemplateStore(
-                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
-        );
+        QuickTemplateStore store = new QuickTemplateStore(this);
         QuickTemplateStore.QuickTemplate template = store.read(templateId);
         if (template == null) {
             showToast(R.string.quick_template_target_missing);
@@ -4946,63 +4831,4 @@ public final class MainActivity
         };
     }
 
-    private enum TemplateDetailKind {
-        NONE,
-        GLOBAL_PREFILL,
-        QUICK_TEMPLATE,
-        QUICK_TEMPLATE_TARGETS;
-
-        static TemplateDetailKind fromName(String name) {
-            if (name == null) {
-                return NONE;
-            }
-            try {
-                return valueOf(name);
-            } catch (IllegalArgumentException ignored) {
-                return NONE;
-            }
-        }
-    }
-
-    private record TemplateDetailSelection(TemplateDetailKind kind, String templateId) {
-
-            private TemplateDetailSelection(
-                    TemplateDetailKind kind,
-                    String templateId
-            ) {
-                this.kind = kind != null ? kind : TemplateDetailKind.NONE;
-                this.templateId = templateId;
-            }
-
-            static TemplateDetailSelection none() {
-                return new TemplateDetailSelection(TemplateDetailKind.NONE, null);
-            }
-
-            static TemplateDetailSelection globalPrefill() {
-                return new TemplateDetailSelection(
-                        TemplateDetailKind.GLOBAL_PREFILL,
-                        null
-                );
-            }
-
-            static TemplateDetailSelection quickTemplate(String templateId) {
-                if (templateId != null && templateId.isBlank()) {
-                    return none();
-                }
-                return new TemplateDetailSelection(
-                        TemplateDetailKind.QUICK_TEMPLATE,
-                        templateId
-                );
-            }
-
-            static TemplateDetailSelection quickTemplateTargets(String templateId) {
-                if (templateId == null || templateId.isBlank()) {
-                    return none();
-                }
-                return new TemplateDetailSelection(
-                        TemplateDetailKind.QUICK_TEMPLATE_TARGETS,
-                        templateId
-                );
-            }
-        }
 }

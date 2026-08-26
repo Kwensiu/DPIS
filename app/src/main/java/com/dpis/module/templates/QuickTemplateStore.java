@@ -1,6 +1,8 @@
 package com.dpis.module.templates;
 
 import android.content.SharedPreferences;
+import android.content.Context;
+import com.dpis.module.DpisConfigStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,15 +13,84 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Map;
 
 public final class QuickTemplateStore {
     public static final String KEY_TEMPLATE_IDS = "template.ids";
     public static final String KEY_TEMPLATE_ORDER = "template.order";
+    public static final String GROUP = "quick_templates";
 
     private final SharedPreferences preferences;
 
     public QuickTemplateStore(SharedPreferences preferences) {
         this.preferences = preferences;
+    }
+
+    /** Owns template data outside the runtime configuration preference group. */
+    public QuickTemplateStore(Context context) {
+        this.preferences = context.getSharedPreferences(GROUP, Context.MODE_PRIVATE);
+        migrateLegacyTemplates(context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE));
+    }
+
+    private void migrateLegacyTemplates(SharedPreferences legacy) {
+        if (!preferences.getAll().isEmpty() || legacy == null) return;
+        SharedPreferences.Editor editor = preferences.edit();
+        boolean found = false;
+        for (Map.Entry<String, ?> entry : legacy.getAll().entrySet()) {
+            if (entry.getKey().startsWith("template.")) {
+                putTypedValue(editor, entry.getKey(), entry.getValue());
+                found = true;
+            }
+        }
+        if (found && editor.commit()) {
+            SharedPreferences.Editor cleanup = legacy.edit();
+            for (String key : legacy.getAll().keySet()) {
+                if (key.startsWith("template.")) cleanup.remove(key);
+            }
+            cleanup.commit();
+        }
+    }
+
+    public void copyToBackup(Map<String, Object> entries) {
+        if (entries == null) return;
+        for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
+            if (entry.getKey().startsWith("template.")) {
+                Object value = entry.getValue();
+                if (value instanceof Set) entries.put(entry.getKey(), new LinkedHashSet<>((Set<String>) value));
+                else entries.put(entry.getKey(), value);
+            }
+        }
+    }
+
+    public boolean restoreFromBackup(Map<String, Object> entries) {
+        if (!containsTemplateEntries(entries)) return false;
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()) if (key.startsWith("template.")) editor.remove(key);
+        for (Map.Entry<String, Object> entry : entries.entrySet()) {
+            if (entry.getKey().startsWith("template.")) putTypedValue(editor, entry.getKey(), entry.getValue());
+        }
+        return editor.commit();
+    }
+
+    /**
+     * A backup from before template storage was introduced has no template
+     * entries. Such a backup must not delete the user's current local catalog.
+     */
+    public static boolean containsTemplateEntries(Map<String, ?> entries) {
+        if (entries == null) return false;
+        for (String key : entries.keySet()) {
+            if (key != null && key.startsWith("template.")) return true;
+        }
+        return false;
+    }
+
+    private static void putTypedValue(SharedPreferences.Editor editor, String key, Object value) {
+        if (value instanceof String) editor.putString(key, (String) value);
+        else if (value instanceof Boolean) editor.putBoolean(key, (Boolean) value);
+        else if (value instanceof Integer) editor.putInt(key, (Integer) value);
+        else if (value instanceof Long) editor.putLong(key, (Long) value);
+        else if (value instanceof Float) editor.putFloat(key, (Float) value);
+        else if (value instanceof Set) editor.putStringSet(key, new LinkedHashSet<>((Set<String>) value));
     }
 
     public String newTemplateId() {

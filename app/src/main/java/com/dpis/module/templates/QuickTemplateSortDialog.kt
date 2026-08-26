@@ -148,6 +148,7 @@ internal fun QuickTemplateSortContent(
             items(orderedItems, key = QuickTemplateSortItem::id) { item ->
                 QuickTemplateSortRow(
                     item = item,
+                    modifier = Modifier,
                     onMove = { direction ->
                         val from = orderedItems.indexOfFirst { it.id == item.id }
                         val to = (from + direction).coerceIn(0, orderedItems.lastIndex)
@@ -166,12 +167,30 @@ internal fun QuickTemplateSortContent(
 @Composable
 private fun QuickTemplateSortRow(
     item: QuickTemplateSortItem,
-    onMove: (Int) -> Unit
+    onMove: (Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val moveThreshold = with(LocalDensity.current) { 48.dp.toPx() }
     var dragOffset by remember(item.id) { mutableFloatStateOf(0f) }
     Surface(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .graphicsLayer { translationY = dragOffset }
+            .pointerInput(item.id, moveThreshold) {
+                detectDragGesturesAfterLongPress(
+                    onDragEnd = { dragOffset = 0f },
+                    onDragCancel = { dragOffset = 0f }
+                ) { change, dragAmount ->
+                    change.consume()
+                    dragOffset += dragAmount.y
+                    if (abs(dragOffset) >= moveThreshold) {
+                        val direction = dragOffset.sign.toInt()
+                        onMove(direction)
+                        dragOffset -= direction * moveThreshold
+                    }
+                }
+            },
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurface
@@ -185,21 +204,6 @@ private fun QuickTemplateSortRow(
                 contentDescription = stringResource(R.string.quick_template_sort_drag_handle),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
-                    .graphicsLayer { translationY = dragOffset }
-                    .pointerInput(item.id, moveThreshold) {
-                        detectDragGesturesAfterLongPress(
-                            onDragEnd = { dragOffset = 0f },
-                            onDragCancel = { dragOffset = 0f }
-                        ) { change, dragAmount ->
-                            change.consume()
-                            dragOffset += dragAmount.y
-                            if (abs(dragOffset) >= moveThreshold) {
-                                val direction = dragOffset.sign.toInt()
-                                onMove(direction)
-                                dragOffset -= direction * moveThreshold
-                            }
-                        }
-                    }
             )
             Text(
                 text = item.name,

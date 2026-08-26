@@ -310,7 +310,7 @@ Mini Programs are not supported yet.</string>
     <string name="quick_template_sort_failed">Failed to save template order</string>
     <string name="quick_template_sort_drag_handle">Drag to reorder</string>
     <string name="quick_template_search_empty">No matching templates</string>
-    <string name="quick_template_targets_title">Select apps: %1$s</string>
+    <string name="quick_template_targets_title">%1$s</string>
     <string name="quick_template_targets_selected_count">%1$d apps selected</string>
     <string name="quick_template_targets_configured_badge">Configured</string>
     <string name="quick_template_targets_empty">No matching apps</string>
@@ -408,6 +408,10 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="dialog_close_button">Close</string>
     <string name="filter_sheet_title">Filters</string>
     <string name="filter_show_system_apps">Show system apps</string>
+    <string name="quick_template_targets_filter_category">App category</string>
+    <string name="quick_template_targets_filter_all">All</string>
+    <string name="quick_template_targets_filter_system">System</string>
+    <string name="quick_template_targets_filter_user">User</string>
     <string name="filter_injected_only">Injected only</string>
     <string name="filter_width_only">Smallest width configured</string>
     <string name="filter_font_only">Font configured</string>

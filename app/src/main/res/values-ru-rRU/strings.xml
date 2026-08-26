@@ -181,7 +181,7 @@ Mini Programs are not supported yet.</string>
     <string name="quick_template_sort_failed">Не удалось сохранить порядок шаблонов</string>
     <string name="quick_template_sort_drag_handle">Перетащите для изменения порядка</string>
     <string name="quick_template_search_empty">Шаблонов, соответствующих запросу, не найдено.</string>
-    <string name="quick_template_targets_title">Выбрать приложения: %1$s</string>
+    <string name="quick_template_targets_title">%1$s</string>
     <string name="quick_template_targets_selected_count">%1$d приложений выбрано</string>
     <string name="quick_template_targets_configured_badge">Настроен</string>
     <string name="quick_template_targets_empty">Приложений не найдено.</string>

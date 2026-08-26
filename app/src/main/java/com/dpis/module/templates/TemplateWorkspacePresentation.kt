@@ -88,7 +88,7 @@ object TemplateWorkspacePresentation {
         }
         val preferences = context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
         val normalizedQuery = query?.trim()?.lowercase().orEmpty()
-        val templates = QuickTemplateStore(preferences).readAll()
+        val templates = QuickTemplateStore(context).readAll()
             .asSequence()
             .filter { normalizedQuery.isEmpty() || it.name.lowercase().contains(normalizedQuery) }
             .map {

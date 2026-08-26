@@ -14,7 +14,9 @@ import com.dpis.module.templates.TemplateConfigValue;
 import org.junit.Test;
 
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -260,6 +262,33 @@ public class QuickTemplateStoreTest {
         assertTrue(store.hasDuplicateName(" daily font ", "template_b"));
         assertFalse(store.hasDuplicateName(" daily font ", "template_a"));
         assertFalse(store.hasDuplicateName("Other", null));
+    }
+
+    @Test
+    public void backupWithoutTemplateEntriesDoesNotEraseLocalTemplates() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a", "Daily", 1L, Set.of(), TemplateConfigValue.EMPTY)));
+
+        assertFalse(store.restoreFromBackup(Map.of("font.mode", "off")));
+
+        assertEquals("Daily", store.read("template_a").name);
+    }
+
+    @Test
+    public void restoreFromBackupReplacesTemplatesWhenTemplateEntriesArePresent() {
+        QuickTemplateStore store = new QuickTemplateStore(new FakePrefs());
+        assertTrue(store.save(new QuickTemplateStore.QuickTemplate(
+                "template_a", "Old", 1L, Set.of(), TemplateConfigValue.EMPTY)));
+        Map<String, Object> backup = new LinkedHashMap<>();
+        backup.put("template.ids", Set.of("template_b"));
+        backup.put("template.template_b.name", "New");
+        backup.put("template.template_b.updated_at", 2L);
+
+        assertTrue(store.restoreFromBackup(backup));
+
+        assertNull(store.read("template_a"));
+        assertEquals("New", store.read("template_b").name);
     }
 }
 

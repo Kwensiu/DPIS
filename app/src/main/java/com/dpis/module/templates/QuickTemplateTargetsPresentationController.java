@@ -58,13 +58,15 @@ public final class QuickTemplateTargetsPresentationController {
         public final boolean hasUnsavedChanges;
         public final String query;
         public final boolean showSystemApps;
+        public final boolean showUserApps;
+        public final boolean showAllApps;
         public final boolean hideConfiguredApps;
         public final boolean loading;
         public final boolean missingTemplate;
 
         State(String templateId, String templateName, List<TargetApp> apps, int selectedCount,
                 boolean hasUnsavedChanges,
-                String query, boolean showSystemApps, boolean hideConfiguredApps, boolean loading,
+                String query, boolean showSystemApps, boolean showUserApps, boolean showAllApps, boolean hideConfiguredApps, boolean loading,
                 boolean missingTemplate) {
             this.templateId = templateId;
             this.templateName = templateName;
@@ -73,6 +75,8 @@ public final class QuickTemplateTargetsPresentationController {
             this.hasUnsavedChanges = hasUnsavedChanges;
             this.query = query;
             this.showSystemApps = showSystemApps;
+            this.showUserApps = showUserApps;
+            this.showAllApps = showAllApps;
             this.hideConfiguredApps = hideConfiguredApps;
             this.loading = loading;
             this.missingTemplate = missingTemplate;
@@ -90,6 +94,8 @@ public final class QuickTemplateTargetsPresentationController {
 
     private static final String FILTER_PREFS_NAME = "quick_template_target_filters";
     private static final String KEY_SHOW_SYSTEM_APPS = "show_system_apps";
+    private static final String KEY_SHOW_USER_APPS = "show_user_apps";
+    private static final String KEY_SHOW_ALL_APPS = "show_all_apps";
     private static final String KEY_HIDE_CONFIGURED_APPS = "hide_configured_apps";
 
     private final Context context;
@@ -109,6 +115,8 @@ public final class QuickTemplateTargetsPresentationController {
     private String templateName;
     private String query = "";
     private boolean showSystemApps;
+    private boolean showUserApps;
+    private boolean showAllApps;
     private boolean hideConfiguredApps;
     private boolean loading;
     private boolean missingTemplate;
@@ -117,12 +125,12 @@ public final class QuickTemplateTargetsPresentationController {
 
     public QuickTemplateTargetsPresentationController(Context context) {
         this.context = context;
-        SharedPreferences preferences = context.getSharedPreferences(
-                DpisConfigStore.GROUP, Context.MODE_PRIVATE);
-        templates = new QuickTemplateStore(preferences);
+        templates = new QuickTemplateStore(context);
         filters = context.getSharedPreferences(FILTER_PREFS_NAME, Context.MODE_PRIVATE);
         packageConfigs = new PackageConfigRepository(DpisApplication.getActiveHookConfigStore(context));
         showSystemApps = filters.getBoolean(KEY_SHOW_SYSTEM_APPS, false);
+        showUserApps = filters.getBoolean(KEY_SHOW_USER_APPS, true);
+        showAllApps = filters.getBoolean(KEY_SHOW_ALL_APPS, false);
         hideConfiguredApps = filters.getBoolean(KEY_HIDE_CONFIGURED_APPS, false);
         catalog = new InstalledAppCatalogCoordinator(new InstalledAppCatalogCoordinator.Host() {
             @Override public PackageManager getPackageManager() { return context.getPackageManager(); }
@@ -156,10 +164,14 @@ public final class QuickTemplateTargetsPresentationController {
 
     public void setQuery(String value) { query = value != null ? value : ""; publish(); }
 
-    public void setFilters(boolean showSystem, boolean hideConfigured) {
+    public void setFilters(boolean showAll, boolean showSystem, boolean showUser, boolean hideConfigured) {
+        showAllApps = showAll;
         showSystemApps = showSystem;
+        showUserApps = showUser;
         hideConfiguredApps = hideConfigured;
         filters.edit().putBoolean(KEY_SHOW_SYSTEM_APPS, showSystem)
+                .putBoolean(KEY_SHOW_USER_APPS, showUser)
+                .putBoolean(KEY_SHOW_ALL_APPS, showAll)
                 .putBoolean(KEY_HIDE_CONFIGURED_APPS, hideConfigured).apply();
         publish();
     }
@@ -227,7 +239,8 @@ public final class QuickTemplateTargetsPresentationController {
         String normalizedQuery = query.trim().toLowerCase(Locale.ROOT);
         for (RawTargetApp item : allApps) {
             boolean selected = selectedPackages.contains(item.packageName);
-            if ((!showSystemApps && item.systemApp)
+            if ((!showAllApps && item.systemApp && !showSystemApps)
+                    || (!showAllApps && !item.systemApp && !showUserApps)
                     || (hideConfiguredApps && item.configured && !selected)) continue;
             if (!normalizedQuery.isEmpty() && !item.label.toLowerCase(Locale.ROOT).contains(normalizedQuery)
                     && !item.packageName.toLowerCase(Locale.ROOT).contains(normalizedQuery)) continue;
@@ -243,7 +256,7 @@ public final class QuickTemplateTargetsPresentationController {
                         savedSelectedPackages.contains(right.packageName), right.configured)));
         State state = new State(templateId, templateName, visible, selectedPackages.size(),
                 !selectedPackages.equals(savedSelectedPackages), query,
-                showSystemApps, hideConfiguredApps, loading, missingTemplate);
+                showSystemApps, showUserApps, showAllApps, hideConfiguredApps, loading, missingTemplate);
         for (Listener listener : new LinkedHashSet<>(listeners)) listener.onStateChanged(state);
     }
 

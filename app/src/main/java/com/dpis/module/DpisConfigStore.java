@@ -1714,6 +1714,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         }
         try {
             Map<String, Object> entries = readSharedPreferencesXml(sourceFile);
+            preserveCurrentTemplateEntries(entries);
             return !entries.isEmpty() && replaceAll(entries);
         } catch (Throwable throwable) {
             DpisLog.e("legacy shared prefs import failed", throwable);
@@ -2005,6 +2006,23 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
             DpisLog.e("legacy shared prefs mirror failed", throwable);
         } catch (Throwable throwable) {
             DpisLog.e("legacy shared prefs mirror failed", throwable);
+        }
+    }
+
+    /**
+     * Template data shares the historical preference group but is not part of the
+     * runtime configuration migration. Keep the current catalog when importing an
+     * older XML snapshot so a stale snapshot cannot delete user-created templates.
+     */
+    private void preserveCurrentTemplateEntries(Map<String, Object> entries) {
+        for (Map.Entry<String, ?> entry : preferences.getAll().entrySet()) {
+            String key = entry.getKey();
+            if (key != null && key.startsWith("template.")) {
+                Object value = normalizeValue(entry.getValue());
+                if (value != null) {
+                    entries.put(key, value);
+                }
+            }
         }
     }
 

@@ -22,14 +22,14 @@ public class QuickTemplateApplySourceSmokeTest {
     @Test
     public void mainActivityWiresApplyConfirmationAndResultCopy() throws IOException {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
         String coordinator = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateApplyCoordinator.java");
         String adapters = read("src/main/java/com/dpis/module/templates/QuickTemplateApplyAdapters.java");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(binder.contains("void apply(String templateId)"));
+        assertTrue(binder.contains("fun apply(templateId: String)"));
         assertTrue(mainActivity.contains("applyQuickTemplate(templateId)"));
         assertTrue(mainActivity.contains("R.string.quick_template_apply_confirm_message"));
         assertTrue(mainActivity.contains("R.string.quick_template_apply_confirm_message_overwrite"));

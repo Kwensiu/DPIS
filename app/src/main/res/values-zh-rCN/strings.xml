@@ -297,7 +297,7 @@
     <string name="quick_template_sort_failed">保存模板排序失败</string>
     <string name="quick_template_sort_drag_handle">拖动排序</string>
     <string name="quick_template_search_empty">没有匹配的模板</string>
-    <string name="quick_template_targets_title">选择应用：%1$s</string>
+    <string name="quick_template_targets_title">%1$s</string>
     <string name="quick_template_targets_selected_count">已选择 %1$d 个应用</string>
     <string name="quick_template_targets_configured_badge">已配置</string>
     <string name="quick_template_targets_empty">没有匹配的应用</string>
@@ -391,6 +391,10 @@
     <string name="dialog_close_button">关闭</string>
     <string name="filter_sheet_title">列表筛选</string>
     <string name="filter_show_system_apps">显示系统应用</string>
+    <string name="quick_template_targets_filter_category">应用分类</string>
+    <string name="quick_template_targets_filter_all">全部</string>
+    <string name="quick_template_targets_filter_system">系统</string>
+    <string name="quick_template_targets_filter_user">用户</string>
     <string name="filter_injected_only">仅显示已注入应用</string>
     <string name="filter_width_only">仅显示已设最小宽度应用</string>
     <string name="filter_font_only">仅显示已设字体应用</string>

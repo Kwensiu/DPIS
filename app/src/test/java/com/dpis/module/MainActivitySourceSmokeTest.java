@@ -152,10 +152,10 @@ public class MainActivitySourceSmokeTest {
         assertFalse(source.contains("GlobalPrefillSheetDialog"));
         assertFalse(source.contains("QuickTemplateEditSheetDialog"));
         assertTrue(source.contains("templateDetailSelection = TemplateDetailSelection.none();"));
-        assertTrue(source.contains("R.layout.view_land_quick_template_targets_detail"));
+        assertTrue(source.contains("TemplateDetailPaneController"));
         assertTrue(source.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
         assertTrue(source.contains("TemplateDetailSelection.quickTemplateTargets(templateId)"));
-        assertTrue(source.contains("activeQuickTemplateTargetsBinder.dispose();"));
+        assertTrue(source.contains("templateDetailPaneController.dispose();"));
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"));
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"));
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""));
