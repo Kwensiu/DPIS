@@ -150,7 +150,8 @@ public class SystemServerSettingsLayoutSmokeTest {
         assertTrue(dialogs.contains("R.string.config_backup_import_action"));
         assertTrue(dialogs.contains("R.dimen.dialog_surface_padding_horizontal"));
         assertTrue(dialogs.contains("BackupActionTile("));
-        assertTrue(dialogs.contains("modifier.aspectRatio(1f)"));
+        assertTrue(dialogs.contains("modifier.heightIn(min = 144.dp, max = 220.dp)"));
+        assertTrue(dialogs.contains(".weight(1f, fill = false)"));
         assertTrue(dialogs.contains("R.dimen.dialog_footer_spacing_top"));
     }
 

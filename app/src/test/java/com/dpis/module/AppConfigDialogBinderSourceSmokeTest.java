@@ -385,9 +385,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(source.contains("font_hook_domain_risk_low"));
         assertTrue(source.contains("font_hook_domain_risk_medium"));
         assertTrue(source.contains("font_hook_domain_risk_high"));
-        assertTrue(source.contains("font_hook_domain_warning"));
-        assertTrue(source.contains("bindResourcesFontDefaultWarning("));
-        assertTrue(source.contains("ID_RESOURCES_FONT.equals(domainId)"));
+        assertFalse(source.contains("font_hook_domain_warning"));
+        assertFalse(source.contains("bindResourcesFontDefaultWarning("));
         assertFalse(source.contains("new LinkedHashSet<>(FontHookDomainRegistry.orderedIdsList())"));
         assertTrue(source.contains("title.setText(FontHookDomainRegistry.titleResFor(domainId));"));
         assertTrue(source.contains("title.setText(domainId);"));
@@ -416,10 +415,8 @@ public class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(dialogLayout.contains("@dimen/font_hook_domains_tabs_spacing_bottom"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_title"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_subtitle"));
-        assertTrue(itemLayout.contains("@+id/font_hook_domain_warning"));
-        assertTrue(itemLayout.contains("@string/dialog_font_hook_domain_resources_font_warning"));
-        assertTrue(itemLayout.contains("@color/font_hook_domain_notice_text"));
-        assertTrue(itemLayout.contains("android:visibility=\"gone\""));
+        assertFalse(itemLayout.contains("@+id/font_hook_domain_warning"));
+        assertFalse(itemLayout.contains("@string/dialog_font_hook_domain_resources_font_warning"));
         assertTrue(itemLayout.contains("@+id/font_hook_domain_switch"));
         assertTrue(itemLayout.contains("@dimen/font_hook_domain_row_min_height"));
         assertTrue(itemLayout.contains("@dimen/font_hook_domain_row_padding_vertical"));

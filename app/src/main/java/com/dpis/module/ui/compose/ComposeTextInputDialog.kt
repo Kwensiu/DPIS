@@ -31,6 +31,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.function.Predicate
@@ -75,6 +76,7 @@ object ComposeTextInputDialog {
             }
         }
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         if (large) DialogWindowSizer.applyLargeWidth(dialog, activity)
         else DialogWindowSizer.applyStandardWidth(dialog, activity)
         return dialog

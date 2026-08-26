@@ -3,7 +3,6 @@ package com.dpis.module.ui.compose
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -19,9 +18,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,8 +32,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -56,13 +55,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.foundation.shape.CircleShape
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.R
@@ -152,7 +152,6 @@ internal fun HookChainEditorPage(
     onDestinationChanged: (ConfigEditorDestination) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    animateTabSize: Boolean = true,
     bottomPadding: Dp = 0.dp
 ) {
     BackHandler(onBack = onBack)
@@ -212,29 +211,17 @@ internal fun HookChainEditorPage(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .then(
-                if (animateTabSize) {
-                    Modifier.animateContentSize(tween(HookTabHeightDurationMillis))
-                } else {
-                    Modifier
-                }
-            )
-            .heightIn(max = HookChainPageTokens.MaxContentHeight)
+            .fillMaxHeight()
     ) {
-        Box(Modifier.fillMaxWidth()) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(
-                    painterResource(R.drawable.ic_arrow_back_24),
-                    contentDescription = stringResource(R.string.system_settings_back)
-                )
-            }
-            Text(
-                stringResource(R.string.dialog_font_hook_domains_title),
-                modifier = Modifier.align(Alignment.Center),
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-        SecondaryTabRow(selectedTabIndex = pagerState.currentPage) {
+        EditorSheetChildPageHeader(
+            title = stringResource(R.string.dialog_font_hook_domains_title),
+            onBack = onBack,
+        )
+        SecondaryTabRow(
+            selectedTabIndex = pagerState.currentPage,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ) {
             listOf(
                 ConfigEditorDestination.HOOK_CHAIN_INTERFACE to
                     R.string.dialog_hook_chain_tab_interface,
@@ -252,11 +239,17 @@ internal fun HookChainEditorPage(
                 )
             }
         }
-        val pagePadding = PaddingValues(
+        val fontPagePadding = PaddingValues(
             start = HookChainPageTokens.HorizontalPadding,
             top = HookChainPageTokens.ContentTopPadding,
             end = HookChainPageTokens.HorizontalPadding,
             bottom = HookChainPageTokens.ContentBottomPadding + bottomPadding
+        )
+        val interfacePagePadding = PaddingValues(
+            start = HookChainPageTokens.HorizontalPadding,
+            top = HookChainPageTokens.InterfaceContentTopPadding,
+            end = HookChainPageTokens.HorizontalPadding,
+            bottom = HookChainPageTokens.InterfaceContentBottomPadding + bottomPadding
         )
         HorizontalPager(
             state = pagerState,
@@ -270,7 +263,7 @@ internal fun HookChainEditorPage(
                     unknownDomains = unknownDomains,
                     editable = fontDomainsEditable,
                     onSelectedDomainsChanged = ::commitDomains,
-                    contentPadding = pagePadding
+                    contentPadding = fontPagePadding
                 )
             } else {
                 ViewportApplyModePage(
@@ -287,7 +280,7 @@ internal fun HookChainEditorPage(
                             ViewportApplyMode.OFF.equals(mode)
                         )
                     },
-                    contentPadding = pagePadding
+                    contentPadding = interfacePagePadding
                 )
             }
         }
@@ -298,7 +291,6 @@ internal fun HookChainEditorPage(
 internal fun AppHookChainEditorPage(
     state: EditorPresentation.State,
     modifier: Modifier = Modifier,
-    animateTabSize: Boolean = true,
     onBack: (() -> Unit)? = null,
     bottomPadding: Dp = 0.dp
 ) {
@@ -313,7 +305,6 @@ internal fun AppHookChainEditorPage(
         onDestinationChanged = state.actions::navigate,
         onBack = onBack ?: { state.actions.navigate(state.destination.backDestination()) },
         modifier = modifier,
-        animateTabSize = animateTabSize,
         bottomPadding = bottomPadding
     )
 }
@@ -364,7 +355,7 @@ private fun ViewportApplyModePage(
                 color = if (selected) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
                 } else {
-                    MaterialTheme.colorScheme.surface
+                    MaterialTheme.colorScheme.surfaceBright
                 }
             ) {
                 Row(
@@ -443,9 +434,6 @@ private fun FontDomainsPage(
                         HookDomainOptionRow(
                             title = stringResource(FontHookDomainRegistry.titleResFor(domainId)),
                             domainId = domainId,
-                            warning = if (domainId == FontHookDomainRegistry.ID_RESOURCES_FONT) {
-                                stringResource(R.string.dialog_font_hook_domain_resources_font_warning)
-                            } else null,
                             checked = selectedDomains.contains(domainId),
                             enabled = editable,
                             index = index,
@@ -474,7 +462,6 @@ private fun FontDomainsPage(
                 HookDomainOptionRow(
                     title = domainId,
                     domainId = domainId,
-                    warning = null,
                     checked = true,
                     enabled = false,
                     index = 0,
@@ -500,7 +487,6 @@ private fun FontDomainsPage(
 private fun HookDomainOptionRow(
     title: String,
     domainId: String,
-    warning: String?,
     checked: Boolean,
     enabled: Boolean,
     index: Int,
@@ -514,16 +500,17 @@ private fun HookDomainOptionRow(
     SegmentedListItem(
         onClick = { onCheckedChange(!checked) },
         enabled = enabled,
-        modifier = Modifier.drawWithContent {
-            drawContent()
-            if (!enabled) drawRect(disabledScrim)
-        },
+        modifier = Modifier
+            .drawWithContent {
+                drawContent()
+                if (!enabled) drawRect(disabledScrim)
+            },
         shapes = shapes,
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface
         ).copy(
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             disabledContentColor = MaterialTheme.colorScheme.onSurface,
             disabledSupportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             disabledTrailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -531,21 +518,24 @@ private fun HookDomainOptionRow(
         verticalAlignment = Alignment.CenterVertically,
         content = { Text(title) },
         supportingContent = {
-            Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(HookChainPageTokens.StatusDotGap)
+            ) {
+                hookDomainStatusColorResource(domainId)?.let { colorRes ->
+                    Box(
+                        modifier = Modifier
+                            .size(HookChainPageTokens.StatusDotSize)
+                            .clip(CircleShape)
+                            .background(colorResource(colorRes))
+                    )
+                }
                 Text(
-                    domainId,
+                    text = domainId,
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (warning != null) {
-                    Text(
-                        warning,
-                        modifier = Modifier.padding(top = HookChainPageTokens.SubtitleTopGap),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = colorResource(R.color.font_hook_domain_notice_text)
-                    )
-                }
             }
         },
         trailingContent = {
@@ -559,28 +549,40 @@ private fun HookDomainOptionRow(
 }
 
 private object HookChainPageTokens {
-    val MaxContentHeight = 520.dp
-    val ContentTopPadding = 16.dp
-    val ContentBottomPadding = 20.dp
+    val ContentTopPadding = 12.dp
+    val ContentBottomPadding = 12.dp
     val HorizontalPadding = 20.dp
-    val InterfaceRowGap = 2.dp
+    // Keep the three strategy cards visually distinct without widening the page content.
+    val InterfaceRowGap = 8.dp
     val InterfaceRowShape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
     val InterfaceRowMinHeight = 64.dp
+    val InterfaceContentTopPadding = 16.dp
+    val InterfaceContentBottomPadding = 20.dp
     val InterfaceRowHorizontalPadding = 12.dp
     const val DisabledScrimAlpha = 0.42f
     val SubtitleTopGap = 2.dp
+    val StatusDotSize = 6.dp
+    val StatusDotGap = 6.dp
     val NoticePadding = PaddingValues(horizontal = 14.dp, vertical = 10.dp)
     val NoticeShape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
     val RowContentGap = 12.dp
-    val GroupTopGap = 10.dp
+    val GroupTopGap = 8.dp
     val GroupBottomGap = 2.dp
-    val ActionTopGap = 12.dp
+    val ActionTopGap = 8.dp
+}
+
+private fun hookDomainStatusColorResource(domainId: String): Int? = when (domainId) {
+    FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE -> R.color.font_hook_domain_risk_low
+    FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE -> R.color.font_hook_domain_risk_medium
+    FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK,
+    FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
+    FontHookDomainRegistry.ID_RESOURCES_FONT -> R.color.font_hook_domain_risk_high
+    else -> null
 }
 
 private const val EditorDestinationAnimationDurationMillis = 220
 private const val EditorDestinationFadeDurationMillis = 140
 private const val EditorDestinationHeightDurationMillis = 180
-private const val HookTabHeightDurationMillis = 180
 
 private fun displayViewportApplyMode(mode: String): String {
     val normalized = ViewportApplyMode.normalize(mode)

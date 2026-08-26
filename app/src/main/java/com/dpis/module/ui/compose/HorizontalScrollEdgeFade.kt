@@ -19,7 +19,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.MaterialTheme
 
 /**
  * A horizontally scrollable row whose edge fades reflect the current scroll position.
@@ -32,7 +31,8 @@ internal fun DpisHorizontalScrollWithEdgeFade(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    edgeColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    // The edge is an occlusion shadow, so it stays dark in both light and dark themes.
+    edgeColor: Color = Color.Black.copy(alpha = 0.12f),
     edgeWidth: Dp = 20.dp,
     content: @Composable RowScope.() -> Unit,
 ) {

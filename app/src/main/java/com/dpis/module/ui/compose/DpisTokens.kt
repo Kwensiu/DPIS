@@ -6,6 +6,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 /** Semantic dimensions shared by new Compose surfaces; feature screens should not invent values. */
 @Immutable
@@ -21,5 +23,9 @@ data class DpisTokens(
 val LocalDpisTokens = staticCompositionLocalOf { DpisTokens() }
 
 val DpisTypography = Typography()
+
+/** Expanded page title used by large/flexible app bars. */
+val Typography.dpisExpandedPageTitle: TextStyle
+    get() = headlineLarge.copy(fontSize = 36.sp, lineHeight = 44.sp)
 
 val DpisShapes = Shapes()

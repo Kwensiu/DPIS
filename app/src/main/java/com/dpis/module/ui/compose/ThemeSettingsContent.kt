@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Button
@@ -91,7 +92,7 @@ fun ThemeSettingsContent(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = topBarPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = topBarPadding.calculateTopPadding() + 8.dp,
+                top = topBarPadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = topBarPadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = 24.dp,
             ),
@@ -211,7 +212,7 @@ private fun ThemeDynamicColorRow(
         onClick = { onCheckedChange(!checked) },
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface,
             leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
@@ -250,7 +251,7 @@ private fun ThemeStaticOptionRow(
         onClick = onClick,
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface,
             leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
@@ -305,7 +306,7 @@ private fun ThemeColorRow(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = dpisSegmentedShapes(index, total).shape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -327,6 +328,7 @@ private fun ThemeColorRow(
                     .padding(top = 8.dp),
             ) {
                 DpisHorizontalScrollWithEdgeFade(
+                    edgeColor = MaterialTheme.colorScheme.surfaceBright,
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
@@ -453,11 +455,22 @@ private fun ThemeChoiceDialog(
     onDismiss: () -> Unit,
 ) {
     DpisModalDialog(onDismissRequest = onDismiss) {
-        DialogColumn {
-            DialogTitle(title)
-            Spacer(Modifier.height(16.dp))
+        DialogColumn(
+            title = { DialogTitle(title) },
+            actions = {
+                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.dialog_typeface_done_action))
+                }
+            }
+        ) {
+            val listState = rememberLazyListState()
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp),
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp)
+                    .dialogListContentFade(
+                        state = listState,
+                        edgeColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(options) { option ->
@@ -467,10 +480,6 @@ private fun ThemeChoiceDialog(
                         onClick = { onSelected(option.first) },
                     )
                 }
-            }
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.dialog_typeface_done_action))
             }
         }
     }
@@ -489,11 +498,22 @@ private fun ThemeModeDialog(
             R.string.settings_theme_mode_follow_system,
     )
     DpisModalDialog(onDismissRequest = onDismiss) {
-        DialogColumn {
-            DialogTitle(stringResource(R.string.settings_theme_mode_label))
-            Spacer(Modifier.height(16.dp))
+        DialogColumn(
+            title = { DialogTitle(stringResource(R.string.settings_theme_mode_label)) },
+            actions = {
+                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.dialog_typeface_done_action))
+                }
+            }
+        ) {
+            val listState = rememberLazyListState()
             LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp),
+                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp)
+                    .dialogListContentFade(
+                        state = listState,
+                        edgeColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 items(options) { (value, label) ->
@@ -503,10 +523,6 @@ private fun ThemeModeDialog(
                         onClick = { onSelected(value) },
                     )
                 }
-            }
-            Spacer(Modifier.height(16.dp))
-            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.dialog_typeface_done_action))
             }
         }
     }
@@ -521,7 +537,7 @@ private fun ThemeChoiceRow(label: String, selected: Boolean, onClick: () -> Unit
         color = if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            MaterialTheme.colorScheme.surfaceVariant
         },
         contentColor = if (selected) {
             MaterialTheme.colorScheme.onSecondaryContainer
@@ -553,12 +569,13 @@ private fun ThemeSettingsSection(
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     Column {
-        Text(
-            text = stringResource(title),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 20.dp, bottom = 8.dp),
+        PageSectionLabel(
+            stringResource(title),
+            modifier = Modifier.padding(
+                start = SecondaryPageContentTokens.SectionLabelHorizontalInset,
+            ),
         )
+        Spacer(Modifier.height(SecondaryPageContentTokens.SectionLabelToFirstItemGap))
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
@@ -582,7 +599,7 @@ private fun ThemeSettingsEntry(
         onClick = rememberDpisConfirmAction(onClick),
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface,
             leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
@@ -620,7 +637,7 @@ private fun ThemeInterfaceScaleRow(
     Surface(
         modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = onClick),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceBright,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {

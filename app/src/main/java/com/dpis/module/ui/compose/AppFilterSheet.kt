@@ -33,7 +33,7 @@ internal fun AppFilterSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 0.dp
     ) {
         Column(

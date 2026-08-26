@@ -27,12 +27,22 @@ internal object AppConfigSheetUiTokens {
     // The shared chrome reserves one compact 56dp slot for the centered indicator, optional
     // unsaved badge, and app-only trailing action without inflating the editor's visible height.
     val TopChromeHeight = 56.dp
+    // Expanded sheets draw under the system chrome. Keep the visual handle clear of a cutout
+    // without translating the whole chrome by the full status-bar inset.
+    val ChromeSafeOffset = 20.dp
+    // Expanded editor sheets stop below the system chrome instead of becoming a full-screen page.
+    val ExpandedTopClearance = 16.dp
     val TopChromeIndicatorWidth = 52.dp
     val TopChromeIndicatorHeight = 5.dp
     val WizardHintTopOffset = 40.dp
     val FeedbackActionShape = CircleShape
     val WizardHintShape = RoundedCornerShape(18.dp)
     val WizardHintCloseSize = 28.dp
+
+    // Child pages share the standard 48dp title row below the sheet chrome, keeping tabs aligned
+    // without inflating the editor's already prominent top region.
+    val ChildPageHeaderHeight = 48.dp
+    val ChildPageHorizontalPadding = 20.dp
 
     // 18dp is the sheet's dominant control radius. The mode thumb's legacy XML shape was 16dp,
     // but Compose clips it inside the 18dp track; the shared control intentionally uses 18dp so

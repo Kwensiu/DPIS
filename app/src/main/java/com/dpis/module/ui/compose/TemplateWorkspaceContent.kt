@@ -18,8 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -69,7 +68,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -93,8 +91,10 @@ fun TemplateWorkspaceContent(
     onEditorOpened: (quickTemplate: Boolean, templateId: String?) -> Unit = { _, _ -> },
     onEditorChanged: (TemplateEditorForm) -> Unit = {},
     onEditorDestinationChanged: (ConfigEditorDestination) -> Unit = {},
-    onEditorClosed: () -> Unit = {}
+    onEditorClosed: () -> Unit = {},
+    scrollStore: PageScrollPositionStore,
 ) {
+    val activeScrollStore = scrollStore
     var editorKind by rememberSaveable {
         mutableStateOf(editorKindFor(state.detailKind))
     }
@@ -314,13 +314,18 @@ fun TemplateWorkspaceContent(
         }
 
         if (twoPane) {
-            Row(Modifier.fillMaxSize()) {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+            ) {
                 TemplateWorkspaceListPane(
                     state = state,
                     padding = padding,
                     onQueryChanged = onQueryChanged,
                     onEditorOpened = ::openEditor,
                     onTargetsOpened = openTargets,
+                    scrollStore = activeScrollStore,
                     modifier = Modifier.weight(1f)
                 )
                 VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -328,6 +333,7 @@ fun TemplateWorkspaceContent(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
+                        .background(Color.Transparent)
                 ) {
                     when {
                         targetsTemplateId != null -> Box(
@@ -362,9 +368,10 @@ fun TemplateWorkspaceContent(
                 state = state,
                 padding = padding,
                 onQueryChanged = onQueryChanged,
-            onEditorOpened = ::openEditor,
-            onTargetsOpened = openTargets,
-            modifier = Modifier
+                onEditorOpened = ::openEditor,
+                onTargetsOpened = openTargets,
+                scrollStore = activeScrollStore,
+                modifier = Modifier
             )
             if (editorKind != null) {
                 TemplateEditorSurface(
@@ -464,40 +471,57 @@ private fun TemplateWorkspaceListPane(
     onQueryChanged: (String) -> Unit,
     onEditorOpened: (String, String?) -> Unit,
     onTargetsOpened: (String) -> Unit,
+    scrollStore: PageScrollPositionStore,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
-    PrimaryPageScaffold(
-        modifier = modifier.fillMaxSize(),
-        title = {
-            TemplateWorkspaceSearchCard(
-                query = state.query,
-                onQueryChanged = onQueryChanged,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(TemplateUiTokens.SearchCardHeight)
-            )
-        }
-    ) { pagePadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            contentPadding = PaddingValues(
-                start = pagePadding.calculateStartPadding(layoutDirection) +
-                    TemplateUiTokens.WorkspaceHorizontalPadding,
-                top = pagePadding.calculateTopPadding() +
-                    TemplateUiTokens.SearchBottomPadding +
-                    TemplateUiTokens.WorkspaceTopPadding,
-                end = pagePadding.calculateEndPadding(layoutDirection) +
-                    TemplateUiTokens.WorkspaceHorizontalPadding,
-                bottom = pagePadding.calculateBottomPadding() +
-                    padding.calculateBottomPadding() +
-                    TemplateUiTokens.WorkspaceBottomReserve
+    val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Transparent)
+            .padding(top = topSafePadding)
+    ) {
+        val searchDividerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
+        WorkspaceSearchCard(
+            query = state.query,
+            onQueryChanged = onQueryChanged,
+            hintRes = R.string.template_search_hint,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
+                .padding(
+                    top = TemplateUiTokens.SearchTopPadding,
+                    bottom = TemplateUiTokens.SearchBottomPadding
+                )
+                .height(TemplateUiTokens.SearchCardHeight),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(searchDividerColor),
+        )
+        val listState = rememberRestorableLazyListState(
+            key = "templates",
+            store = scrollStore,
+            enabled = !state.searching,
+        )
+        val listScrolled = listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(
+                start = TemplateUiTokens.WorkspaceHorizontalPadding,
+                top = TemplateUiTokens.WorkspaceTopPadding,
+                end = TemplateUiTokens.WorkspaceHorizontalPadding,
+                bottom = padding.calculateBottomPadding() + TemplateUiTokens.WorkspaceBottomReserve
             ),
             verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
-            modifier = Modifier
-                .fillMaxSize()
-                .clearTextInputFocusOnPointerDown(focusManager)
-        ) {
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clearTextInputFocusOnPointerDown(focusManager)
+            ) {
             if (!state.searching) {
                 item {
                     GlobalPrefillCard(state, rememberDpisConfirmAction {
@@ -554,6 +578,18 @@ private fun TemplateWorkspaceListPane(
                         }
                     )
                 }
+            }
+            }
+            if (listScrolled) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(EdgeOcclusionFadeTokens.Height)
+                        .edgeOcclusionFade(
+                            visibility = 1f,
+                            direction = EdgeOcclusionFadeDirection.TOP_TO_BOTTOM,
+                        )
+                )
             }
         }
     }
@@ -659,76 +695,6 @@ private fun TemplateDetailEmptyStatePreview() {
 }
 
 @Composable
-private fun TemplateWorkspaceSearchCard(
-    query: String,
-    onQueryChanged: (String) -> Unit,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
-        .height(TemplateUiTokens.SearchCardHeight)
-) {
-    Card(
-        modifier = modifier,
-        shape = TemplateUiTokens.SearchCardShape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_search_24),
-                contentDescription = null,
-                modifier = Modifier.padding(start = 12.dp, end = 8.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            BasicTextField(
-                value = query,
-                onValueChange = onQueryChanged,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                decorationBox = { innerTextField ->
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        if (query.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.search_hint),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        innerTextField()
-                    }
-                }
-            )
-            if (query.isNotEmpty()) {
-                IconButton(
-                    onClick = { onQueryChanged("") },
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_close_24),
-                        contentDescription = stringResource(R.string.search_clear),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -737,7 +703,7 @@ private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit
             TemplateUiTokens.CardBorderWidth,
             MaterialTheme.colorScheme.outlineVariant
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
     ) {
         Column(Modifier.padding(TemplateUiTokens.CardPadding)) {
             Row(
@@ -829,7 +795,7 @@ private fun TemplateCard(
             TemplateUiTokens.CardBorderWidth,
             MaterialTheme.colorScheme.outlineVariant
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
     ) {
         Column(Modifier.padding(TemplateUiTokens.CardPadding)) {
             Text(
@@ -971,7 +937,7 @@ private fun EmptySummary() {
             .padding(top = TemplateUiTokens.EmptySummaryTopGap)
             .heightIn(min = TemplateUiTokens.EmptySummaryMinHeight),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceContainer
+        color = MaterialTheme.colorScheme.surfaceBright
     ) {
         Box(
             modifier = Modifier

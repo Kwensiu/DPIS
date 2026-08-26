@@ -60,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
@@ -105,8 +106,9 @@ fun AppWorkspaceContent(
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val configuration = LocalConfiguration.current
     val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val searchTopPadding = if (compactVerticalChrome) 0.dp else 6.dp
-    val searchBottomPadding = if (compactVerticalChrome) 4.dp else 8.dp
+    // Match the 64dp MD3 top-app-bar slot: 6dp above and below the 52dp search surface.
+    val searchTopPadding = 6.dp
+    val searchBottomPadding = 6.dp
     // MainActivity owns the session snapshot because the programmatic ComposeView is recreated
     // across orientation changes. Each catalogue page still keeps an independent position.
     val allAppsListState = rememberLazyListState(
@@ -150,19 +152,34 @@ fun AppWorkspaceContent(
     }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val twoPane = compactVerticalChrome && maxWidth >= WorkspaceTwoPaneMinWidth
-        Row(Modifier.fillMaxSize()) {
+        // Both panes share the workspace surface, including the camera-side
+        // safe-area padding. Child content may still reserve that inset without
+        // exposing the window's darker fallback background.
+        Row(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Transparent)
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
                     .then(if (twoPane) Modifier.weight(1f) else Modifier.fillMaxWidth())
+                    .background(Color.Transparent)
                     .padding(top = topSafePadding)
-                    .background(MaterialTheme.colorScheme.surface)
             ) {
-                AppSearchCard(
-                    state = state,
-                    onFilterClick = {
-                        focusManager.clearFocus()
-                        filterSheetVisible = true
+                WorkspaceSearchCard(
+                    query = state.query,
+                    onQueryChanged = state.actions::changeQuery,
+                    trailingAction = {
+                        IconButton(onClick = {
+                            focusManager.clearFocus()
+                            filterSheetVisible = true
+                        }) {
+                            Icon(
+                                painterResource(R.drawable.ic_tune_24),
+                                stringResource(R.string.filter_button)
+                            )
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -170,43 +187,65 @@ fun AppWorkspaceContent(
                         .padding(top = searchTopPadding, bottom = searchBottomPadding)
                         .height(52.dp)
                 )
-                PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
-                    AppListPage.entries.forEach { page ->
-                        Tab(
-                            selected = page.position() == pagerState.currentPage,
-                            onClick = {
-                                focusManager.clearFocus()
-                                pagerScope.launch {
-                                    pagerState.animateScrollToPage(page.position())
-                                }
-                            },
-                            selectedContentColor = MaterialTheme.colorScheme.primary,
-                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            text = { Text(stringResource(page.titleRes())) }
+                PrimaryTabRow(
+                        selectedTabIndex = pagerState.currentPage,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ) {
+                        AppListPage.entries.forEach { page ->
+                            Tab(
+                                selected = page.position() == pagerState.currentPage,
+                                onClick = {
+                                    focusManager.clearFocus()
+                                    pagerScope.launch {
+                                        pagerState.animateScrollToPage(page.position())
+                                    }
+                                },
+                                selectedContentColor = MaterialTheme.colorScheme.primary,
+                                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                text = { Text(stringResource(page.titleRes())) }
+                            )
+                        }
+                    }
+                val currentPageListState = when (pagerState.currentPage) {
+                    AppListPage.ALL_APPS.position() -> allAppsListState
+                    else -> configuredAppsListState
+                }
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { pageIndex ->
+                        val page = AppListPage.fromPosition(pageIndex)
+                        val listState = when (page) {
+                            AppListPage.ALL_APPS -> allAppsListState
+                            AppListPage.CONFIGURED_APPS -> configuredAppsListState
+                        }
+                        AppListPageContent(
+                            page = page,
+                            pageItems = state.itemsFor(page),
+                            refreshing = state.isRefreshing(page),
+                            listState = listState,
+                            bottomPadding = padding.calculateBottomPadding(),
+                            systemScopeSelected = state.systemScopeSelected,
+                            actions = state.actions,
+                            inputFocusManager = focusManager
+                        )
+                    }
+                    if (currentPageListState.firstVisibleItemIndex > 0 ||
+                        currentPageListState.firstVisibleItemScrollOffset > 0
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(EdgeOcclusionFadeTokens.Height)
+                                .edgeOcclusionFade(
+                                    visibility = 1f,
+                                    direction = EdgeOcclusionFadeDirection.TOP_TO_BOTTOM,
+                                )
                         )
                     }
                 }
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.weight(1f)
-                ) { pageIndex ->
-                    val page = AppListPage.fromPosition(pageIndex)
-                    val listState = when (page) {
-                        AppListPage.ALL_APPS -> allAppsListState
-                        AppListPage.CONFIGURED_APPS -> configuredAppsListState
-                    }
-                    AppListPageContent(
-                        page = page,
-                        pageItems = state.itemsFor(page),
-                        refreshing = state.isRefreshing(page),
-                        listState = listState,
-                        bottomPadding = padding.calculateBottomPadding(),
-                        systemScopeSelected = state.systemScopeSelected,
-                        actions = state.actions,
-                        inputFocusManager = focusManager
-                    )
                 }
-            }
             if (twoPane) {
                 VerticalDivider(
                     modifier = Modifier.fillMaxHeight(),
@@ -475,72 +514,6 @@ private fun AppListScrollbar(
                     .clip(RoundedCornerShape(3.dp))
                     .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.62f))
             )
-        }
-    }
-}
-
-@Composable
-private fun AppSearchCard(
-    state: AppWorkspacePresentation.State,
-    onFilterClick: () -> Unit,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp)
-        .height(52.dp)
-) {
-    Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-        )
-    ) {
-        Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painterResource(R.drawable.ic_search_24),
-                contentDescription = null,
-                modifier = Modifier.padding(start = 12.dp, end = 8.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            BasicTextField(
-                value = state.query,
-                onValueChange = state.actions::changeQuery,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
-                decorationBox = { inner ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                        if (state.query.isEmpty()) {
-                            Text(
-                                stringResource(R.string.search_hint),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                        inner()
-                    }
-                }
-            )
-            if (state.query.isNotEmpty()) {
-                IconButton(onClick = { state.actions.changeQuery("") }) {
-                    Icon(
-                        painterResource(R.drawable.ic_close_24),
-                        stringResource(R.string.search_clear)
-                    )
-                }
-            }
-            IconButton(onClick = onFilterClick) {
-                Icon(
-                    painterResource(R.drawable.ic_tune_24),
-                    stringResource(R.string.filter_button)
-                )
-            }
         }
     }
 }

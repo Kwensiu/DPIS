@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -38,6 +41,7 @@ fun dpisDarkTheme(): Boolean {
  * the stored appearance preference by default.
  */
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 fun DpisTheme(
     darkTheme: Boolean,
     dynamicColor: Boolean? = null,
@@ -73,11 +77,13 @@ fun DpisTheme(
         val isSeparateDialogWindow = activity?.window?.decorView !== view.rootView
         // Dialog and sheet ComposeViews otherwise remain transparent and expose the
         // AppCompat window background, which still follows the system night mode.
-        // Keep dialogs one elevation brighter than pages, including their anti-aliased edge.
+        // Dialog windows use the same dynamic surface layer as their Compose container.
         val rootColor = if (isSeparateDialogWindow) {
             colors.surfaceContainerHigh.toArgb()
         } else {
-            colors.surface.toArgb()
+            // Workspace roots sit one neutral level above the raw surface so that
+            // standard list-item surfaces remain visibly separated in dark mode.
+            colors.surfaceContainer.toArgb()
         }
         view.setBackgroundColor(rootColor)
         if (isSeparateDialogWindow) {
@@ -97,8 +103,9 @@ fun DpisTheme(
         LocalDpisTokens provides DpisTokens(),
         LocalDpisClickHapticsEnabled provides clickHapticsEnabled
     ) {
-        MaterialTheme(
+        MaterialExpressiveTheme(
             colorScheme = colors,
+            motionScheme = MotionScheme.expressive(),
             typography = DpisTypography,
             shapes = DpisShapes,
             content = content

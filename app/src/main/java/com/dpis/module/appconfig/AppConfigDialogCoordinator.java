@@ -14,9 +14,9 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.dpis.module.R;
+import com.dpis.module.ui.DialogWindowEdgeToEdge;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.color.MaterialColors;
 
 public final class AppConfigDialogCoordinator {
     private static final long IME_LAYOUT_SETTLE_DELAY_MS = 120L;
@@ -49,11 +49,9 @@ public final class AppConfigDialogCoordinator {
     }
 
     private void onDialogShown(View dialogView, BottomSheetDialog dialog) {
-        int surfaceColor = MaterialColors.getColor(
-                dialogView, com.google.android.material.R.attr.colorSurface);
         Window window = dialog.getWindow();
         if (window != null) {
-            window.setNavigationBarColor(surfaceColor);
+            DialogWindowEdgeToEdge.apply(dialog);
             window.setSoftInputMode(
                     WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
             );

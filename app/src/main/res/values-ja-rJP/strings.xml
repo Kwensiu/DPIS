@@ -303,7 +303,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="dialog_font_hook_group_web">Web</string>
     <string name="dialog_font_hook_group_cross_runtime">クロスランタイム</string>
     <string name="dialog_font_hook_domain_resources_font">Resources フォント</string>
-    <string name="dialog_font_hook_domain_resources_font_warning">性能上の問題があるため、既定ではオフです</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp 書き換え</string>
     <string name="dialog_font_hook_domain_textview_absolute_rewrite">TextView 絶対値書き換え</string>
     <string name="dialog_font_hook_domain_textview_current_px_fallback">TextView 現在 px フォールバック</string>

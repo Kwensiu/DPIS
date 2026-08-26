@@ -349,7 +349,6 @@ public final class FontHookDomainDialog {
                 R.layout.item_font_hook_domain, null, false);
         MaterialTextView title = row.findViewById(R.id.font_hook_domain_title);
         MaterialTextView subtitle = row.findViewById(R.id.font_hook_domain_subtitle);
-        MaterialTextView warning = row.findViewById(R.id.font_hook_domain_warning);
         if (known) {
             title.setText(FontHookDomainRegistry.titleResFor(domainId));
         } else {
@@ -358,16 +357,7 @@ public final class FontHookDomainDialog {
         subtitle.setText(known
                 ? createSubtitleText(activity, domainId)
                 : domainId);
-        bindResourcesFontDefaultWarning(warning, known, domainId);
         return row;
-    }
-
-    private static void bindResourcesFontDefaultWarning(
-            MaterialTextView warning,
-            boolean known,
-            String domainId) {
-        boolean visible = known && FontHookDomainRegistry.ID_RESOURCES_FONT.equals(domainId);
-        warning.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private static CharSequence createSubtitleText(Activity activity, String domainId) {
@@ -409,24 +399,13 @@ public final class FontHookDomainDialog {
 
     private static int resolveRiskDotColorRes(String domainId) {
         return switch (domainId) {
-            // resources_font is a value-rewrite route (rewrites the
-            // Configuration.fontScale / scaledDensity the app reads), like
-            // system_server_font. It is not the only path that scales visible
-            // text in compat mode -- Paint/TextView draw-rewrite routes cover
-            // standard rendering (including Compose, which draws through
-            // android.graphics.Paint) independently. Its real cost is hot-path
-            // overhead plus double-scaling complexity when combined with the
-            // draw-rewrite routes, so it carries a medium risk dot rather than
-            // the high dot used for the aggressive Paint hook.
-            case FontHookDomainRegistry.ID_RESOURCES_FONT,
-                    FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT ->
-                    R.color.font_hook_domain_risk_medium;
-            case FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE,
-                    FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE ->
+            case FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE ->
                     R.color.font_hook_domain_risk_low;
-            case FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK ->
+            case FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE ->
                     R.color.font_hook_domain_risk_medium;
-            case FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK ->
+            case FontHookDomainRegistry.ID_RESOURCES_FONT,
+                    FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK,
+                    FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK ->
                     R.color.font_hook_domain_risk_high;
             default -> 0;
         };

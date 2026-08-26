@@ -354,7 +354,6 @@
     <string name="dialog_font_hook_group_web">网页</string>
     <string name="dialog_font_hook_group_cross_runtime">跨运行时</string>
     <string name="dialog_font_hook_domain_resources_font">Resources 字体</string>
-    <string name="dialog_font_hook_domain_resources_font_warning">存在性能问题，默认关闭</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp 改写</string>
     <string name="dialog_font_hook_domain_textview_absolute_rewrite">TextView 绝对值改写</string>
     <string name="dialog_font_hook_domain_textview_current_px_fallback">TextView 当前 px 兜底</string>

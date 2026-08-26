@@ -2,9 +2,6 @@ package com.dpis.module.ui.compose
 
 import android.content.Intent
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Column
@@ -16,14 +13,12 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
@@ -37,10 +32,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Velocity
@@ -56,17 +49,6 @@ internal const val TypefacePickerPagerTestTag = "typeface-picker-pager"
 internal const val TypefacePickerManageTestTag = "typeface-picker-manage"
 internal const val TypefacePickerTabRowTestTag = "typeface-picker-tab-row"
 internal const val TypefacePickerSystemListTestTag = "typeface-picker-system-list"
-
-private val ContainTypefaceListVerticalScroll = object : NestedScrollConnection {
-    override fun onPostScroll(
-        consumed: Offset,
-        available: Offset,
-        source: NestedScrollSource
-    ): Offset = Offset(x = 0f, y = available.y)
-
-    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
-        Velocity(x = 0f, y = available.y)
-}
 
 /** Typeface selection rendered as a child page inside an existing configuration editor. */
 @Composable
@@ -110,36 +92,24 @@ private fun TypefacePickerContent(
     val systemEntries = catalog?.systemEntries.orEmpty()
     val importedEntries = catalog?.importedEntries.orEmpty()
     Column(
-        modifier.fillMaxWidth()
-            .height(typefacePageHeight())
-            // Match HookChainEditorPage: page-internal height changes are animated before
-            // the parent sheet receives the next measured anchor.
-            .animateContentSize(tween(180))
+        modifier
+            // Keep the typeface page at the same bounded height as the hook-chain page. The
+            // list owns scrolling while the management action remains in the fixed footer.
+            .fillMaxSize()
             .padding(
             top = 8.dp,
             bottom = 16.dp
         )
     ) {
-        Box(
-            Modifier.fillMaxWidth().padding(
-                horizontal = TypefacePickerUiTokens.HorizontalContentPadding
-            )
-        ) {
-            IconButton(onClick = onBack, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(
-                    painterResource(R.drawable.ic_arrow_back_24),
-                    contentDescription = stringResource(R.string.system_settings_back)
-                )
-            }
-            Text(
-                stringResource(R.string.dialog_typeface_dialog_title),
-                modifier = Modifier.align(Alignment.Center),
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
+        EditorSheetChildPageHeader(
+            title = stringResource(R.string.dialog_typeface_dialog_title),
+            onBack = onBack,
+        )
         SecondaryTabRow(
             selectedTabIndex = pagerState.currentPage,
-            modifier = Modifier.testTag(TypefacePickerTabRowTestTag)
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.testTag(TypefacePickerTabRowTestTag),
         ) {
             listOf(
                 R.string.dialog_typeface_tab_system,
@@ -154,7 +124,6 @@ private fun TypefacePickerContent(
                 )
             }
         }
-        Spacer(Modifier.height(12.dp))
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxWidth().weight(1f).testTag(TypefacePickerPagerTestTag),
@@ -179,21 +148,25 @@ private fun TypefacePickerContent(
                     onTypefaceSelected = onTypefaceSelected,
                     modifier = Modifier.fillMaxSize().padding(
                         horizontal = TypefacePickerUiTokens.HorizontalContentPadding
-                    ).nestedScroll(ContainTypefaceListVerticalScroll)
+                    )
                         .testTag(TypefacePickerSystemListTestTag)
                 )
             } else if (importedEntries.isEmpty()) {
                 Box(
-                    Modifier.fillMaxSize().padding(
-                        horizontal = TypefacePickerUiTokens.HorizontalContentPadding
-                    )
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = TypefacePickerUiTokens.HorizontalContentPadding,
+                            vertical = TypefacePickerUiTokens.TypefaceOptionRowPadding,
+                        )
+                        .height(TypefacePickerUiTokens.TypefaceOptionHeight),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    ListItem(
-                        modifier = Modifier.clickable {
-                            onBack()
-                            context.startActivity(Intent(context, FontLibraryActivity::class.java))
-                        }
-                    ) { Text(stringResource(R.string.dialog_typeface_imported_empty)) }
+                    Text(
+                        text = stringResource(R.string.dialog_typeface_imported_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             } else {
                 TypefaceOptionList(
@@ -203,7 +176,7 @@ private fun TypefacePickerContent(
                     onTypefaceSelected = onTypefaceSelected,
                     modifier = Modifier.fillMaxSize().padding(
                         horizontal = TypefacePickerUiTokens.HorizontalContentPadding
-                    ).nestedScroll(ContainTypefaceListVerticalScroll)
+                    )
                 )
             }
         }
@@ -234,7 +207,41 @@ private fun TypefaceOptionList(
     onTypefaceSelected: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier.fillMaxWidth()) {
+    val listState = rememberLazyListState()
+    val listScrollConnection = androidx.compose.runtime.remember(listState) {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource
+            ): Offset {
+                // Once the list reaches its top, leave a downward drag for the parent sheet.
+                // While rows can still consume it, keep the gesture inside the list.
+                return if (available.y > 0f && !listState.canScrollBackward) {
+                    Offset.Zero
+                } else {
+                    available
+                }
+            }
+
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+                if (available.y > 0f && !listState.canScrollBackward) {
+                    Velocity.Zero
+                } else {
+                    available
+                }
+        }
+    }
+    LazyColumn(
+        modifier = modifier.fillMaxWidth()
+            .nestedScroll(listScrollConnection)
+            .dialogListContentFade(
+            state = listState,
+            edgeColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+        state = listState,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp),
+    ) {
         items(options, key = { it.id ?: "default" }) { option ->
             Button(
                 onClick = { onTypefaceSelected(option.id) },
@@ -246,7 +253,7 @@ private fun TypefaceOptionList(
                     containerColor = if (option.id == selectedTypefaceId) {
                         MaterialTheme.colorScheme.secondaryContainer
                     } else {
-                        MaterialTheme.colorScheme.surfaceVariant
+                        MaterialTheme.colorScheme.surfaceBright
                     },
                     contentColor = if (option.id == selectedTypefaceId) {
                         MaterialTheme.colorScheme.primary
@@ -275,11 +282,3 @@ private data class TypefaceOption(
     val label: String,
     val preview: android.graphics.Typeface?
 )
-
-@Composable
-private fun typefacePageHeight(): androidx.compose.ui.unit.Dp {
-    // The expanded editor sheet keeps the management action visible while the pager owns the
-    // remaining bounded list space on both portrait and short landscape windows.
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    return (screenHeight * 0.82f - AppConfigSheetUiTokens.TopChromeHeight).coerceAtLeast(280.dp)
-}

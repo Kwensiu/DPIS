@@ -442,7 +442,6 @@
     <dimen name="font_hook_domain_row_padding_vertical">8dp</dimen>
     <dimen name="font_hook_domain_text_spacing_end">16dp</dimen>
     <dimen name="font_hook_domain_subtitle_spacing_top">2dp</dimen>
-    <dimen name="font_hook_domain_warning_spacing_top">3dp</dimen>
     <dimen name="viewport_apply_mode_row_min_height">64dp</dimen>
     <dimen name="viewport_apply_mode_row_padding_vertical">8dp</dimen>
     <dimen name="viewport_apply_mode_text_spacing_end">16dp</dimen>

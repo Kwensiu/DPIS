@@ -37,7 +37,7 @@ fun OpenSourceLicenseContent(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = contentPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = contentPadding.calculateTopPadding() + 8.dp,
+                top = contentPadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
@@ -73,7 +73,7 @@ private fun LicenseEntry(
         onClick = onClick,
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface
         ),
         supportingContent = { Text(item.summary) },

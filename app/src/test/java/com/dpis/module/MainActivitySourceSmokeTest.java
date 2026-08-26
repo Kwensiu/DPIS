@@ -19,7 +19,7 @@ public class MainActivitySourceSmokeTest {
         assertFalse(source.contains("searchFocusFab = findViewById"));
         assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"));
         assertFalse(source.contains("searchFilterButton.setOnClickListener"));
-        assertTrue(composeWorkspace.contains("BasicTextField("));
+        assertTrue(composeWorkspace.contains("WorkspaceSearchCard("));
         assertTrue(composeWorkspace.contains("AppFilterSheet("));
     }
 

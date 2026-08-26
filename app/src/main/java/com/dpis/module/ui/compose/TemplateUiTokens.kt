@@ -17,10 +17,10 @@ internal object TemplateUiTokens {
     // without stacking the full status-bar inset on top of the shell boundary.
     val WorkspaceTopPadding = 14.dp
     val WorkspaceBottomReserve = 120.dp
-    val SearchTopPadding = 8.dp
+    // Both workspace pages use the same 64dp pinned MD3 top-app-bar slot.
+    val SearchTopPadding = 6.dp
     val SearchBottomPadding = 6.dp
     val SearchCardHeight = 52.dp
-    val SearchCardShape = RoundedCornerShape(24.dp)
     val SectionTopGap = 10.dp
     // The LazyColumn already owns the page gutter; header actions must align to it directly.
     val SectionTitleInset = 12.dp

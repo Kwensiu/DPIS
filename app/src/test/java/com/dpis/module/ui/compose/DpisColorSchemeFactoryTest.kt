@@ -47,6 +47,7 @@ class DpisColorSchemeFactoryTest {
         assertNotEquals(purple.primary, green.primary)
         assertNotEquals(purple.secondaryContainer, green.secondaryContainer)
         assertNotEquals(purple.tertiaryContainer, green.tertiaryContainer)
+        assertNotEquals(purple.surface, green.surface)
         assertNotEquals(purple.surfaceContainer, green.surfaceContainer)
     }
 

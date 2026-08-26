@@ -22,12 +22,15 @@ internal object DpisColorSchemeFactory {
         darkTheme: Boolean,
         paletteStyle: String,
         requestedSpecification: String,
-    ): ColorScheme = dynamicColorScheme(
-        seedColor = seedColor,
-        isDark = darkTheme,
-        style = paletteStyle.toMaterialKolorStyle(),
-        specVersion = resolveSpecification(paletteStyle, requestedSpecification),
-    )
+    ): ColorScheme {
+        val specification = resolveSpecification(paletteStyle, requestedSpecification)
+        return dynamicColorScheme(
+            seedColor = seedColor,
+            isDark = darkTheme,
+            style = paletteStyle.toMaterialKolorStyle(),
+            specVersion = specification,
+        )
+    }
 
     fun supports2025Specification(paletteStyle: String): Boolean = paletteStyle in setOf(
         ThemeModeStore.STYLE_TONAL_SPOT,

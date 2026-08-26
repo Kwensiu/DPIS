@@ -47,9 +47,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(shell.contains("painterResource(destination.iconRes)"));
         assertFalse(shell.contains("Icons.Outlined"));
         assertTrue(shell.contains("alwaysShowLabel = false"));
-        assertTrue(shell.contains("NavigationBar(windowInsets = bottomNavigationSurfaceInsets())"));
-        assertTrue(shell.contains("background(MaterialTheme.colorScheme.surfaceContainer)"));
-        assertTrue(shell.contains("drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(shell.contains("val navigationContainerColor = MaterialTheme.colorScheme.surfaceBright"));
+        assertTrue(shell.contains("containerColor = navigationContainerColor"));
+        assertTrue(shell.contains("background(navigationContainerColor)"));
+        assertTrue(shell.contains("drawerContainerColor = navigationContainerColor"));
         assertTrue(shell.contains("windowInsets = navigationSurfaceInsets()"));
         assertTrue(shell.contains("WindowInsetsSides.Start + WindowInsetsSides.Vertical"));
         assertTrue(shell.contains("legacyWorkspaceInsetsFor(selectedDestination)"));
@@ -144,7 +145,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(appWorkspace.contains("@Preview(showBackground = true"));
         assertTrue(coordinator.contains("private fun ComposeWorkspaceSurface("));
         assertTrue(coordinator.contains("contentColor = MaterialTheme.colorScheme.onSurface"));
-        assertTrue(coordinator.contains("ComposeWorkspaceSurface { HomeWorkspaceContent("));
+        assertTrue(coordinator.contains("ComposeWorkspaceSurface {"));
+        assertTrue(coordinator.contains("HomeWorkspaceContent(content.homeState(), padding, pageScrollPositions)"));
         assertTrue(coordinator.contains("TemplateWorkspaceContent("));
     }
 
@@ -154,7 +156,6 @@ public final class DpisComposeShellSourceSmokeTest {
         String theme = read("src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
         String home = read("src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt");
         String tools = read("src/main/java/com/dpis/module/ui/compose/ToolsWorkspaceContent.kt");
-        String support = read("src/main/java/com/dpis/module/ui/compose/SupportPages.kt");
 
         assertTrue(theme.contains("steps = 0"));
         assertTrue(theme.contains("SliderDefaults.Track"));
@@ -171,7 +172,9 @@ public final class DpisComposeShellSourceSmokeTest {
                 "enabled = state?.storeAvailable == true && state.cacheClearInProgress != true"));
         assertTrue(home.contains("rememberDpisConfirmAction"));
         assertTrue(home.contains(".clip(CircleShape)"));
-        assertTrue(home.contains("PrimaryPageScaffold("));
+        assertTrue(home.contains("PageBarBehavior.Collapsing"));
+        assertTrue(home.contains("collapsedTitle = {"));
+        assertTrue(home.contains("stringResource(R.string.app_name)"));
         assertTrue(home.contains("contentPadding = PaddingValues("));
         assertTrue(tools.contains("rememberDpisConfirmAction"));
         assertTrue(tools.contains("SystemFontScaleBadge(state)"));
@@ -181,23 +184,28 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(tools.contains("state.canRestore()"));
         assertTrue(tools.contains("SystemFontScaleToolState.normalizeSliderPercent(it)"));
         assertTrue(tools.contains("LocalDensity provides Density(displayDensity.density, fontScale = 1f)"));
-        assertTrue(tools.contains("PrimaryPageScaffold("));
+        assertTrue(tools.contains("PageBarBehavior.Collapsing"));
         assertFalse(tools.contains("TopAppBar("));
-        assertTrue(settings.contains("PrimaryPageScaffold("));
+        assertTrue(settings.contains("PageBarBehavior.Collapsing"));
         assertFalse(settings.contains("TopAppBar("));
-        assertTrue(support.contains("rememberDpisConfirmAction"));
+        assertTrue(home.contains("rememberDpisConfirmAction"));
     }
 
     @Test
     public void standaloneSettingsPagesUseSharedSecondaryPageChrome() throws IOException {
-        String support = read("src/main/java/com/dpis/module/ui/compose/SupportPages.kt");
+        String scaffold = read("src/main/java/com/dpis/module/ui/compose/PageScaffold.kt");
+        String topBar = read("src/main/java/com/dpis/module/ui/compose/PageTopBar.kt");
         String theme = read("src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
         String experimental = read(
                 "src/main/java/com/dpis/module/ui/compose/ExperimentalSettingsContent.kt");
 
-        assertTrue(support.contains("internal fun SecondaryPageScaffold("));
-        assertTrue(support.contains("internal fun PrimaryPageScaffold("));
-        assertTrue(support.contains("SecondaryPageTopBar("));
+        assertTrue(scaffold.contains("internal fun SecondaryPageScaffold("));
+        assertTrue(scaffold.contains("internal fun PrimaryPageScaffold("));
+        assertTrue(topBar.contains("internal fun CollapsingPageTopBar("));
+        assertTrue(topBar.contains("TwoRowsTopAppBar("));
+        assertTrue(topBar.contains("MaterialTheme.typography.dpisExpandedPageTitle"));
+        assertFalse(topBar.contains("fontSize = 34.sp"));
+        assertTrue(topBar.contains("internal fun InFlowPageHeader("));
         assertTrue(theme.contains("SecondaryPageScaffold("));
         assertTrue(experimental.contains("SecondaryPageScaffold("));
         assertFalse(theme.contains("TopAppBar("));
@@ -251,14 +259,15 @@ public final class DpisComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt");
         String tokens = read(
                 "src/main/java/com/dpis/module/ui/compose/TemplateUiTokens.kt");
+        String search = read(
+                "src/main/java/com/dpis/module/ui/compose/WorkspaceSearchCard.kt");
 
-        assertTrue(template.contains("TemplateWorkspaceSearchCard("));
+        assertTrue(template.contains("WorkspaceSearchCard("));
+        assertTrue(template.contains("hintRes = R.string.template_search_hint"));
         assertTrue(template.contains("onQueryChanged = onQueryChanged"));
-        assertTrue(template.contains(
-                "val twoPane = isLandscape && maxWidth >= WorkspaceTwoPaneMinWidth"));
-        assertTrue(template.contains(
-                "cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
-        assertTrue(template.contains("R.drawable.ic_close_24"));
+        assertTrue(template.contains("rememberRestorableLazyListState("));
+        assertTrue(search.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
+        assertTrue(search.contains("R.drawable.ic_close_24"));
         assertTrue(template.contains("role = Role.Button"));
         assertTrue(template.contains("TemplateUiTokens.DisabledActionAlpha"));
         assertTrue(template.contains("TemplateUiTokens.EmptySummaryTopGap"));
@@ -290,7 +299,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(editor.contains("isError = fontError != null"));
         assertTrue(editor.contains("TemplateEditorErrorMessage(it)"));
         assertTrue(editor.contains("modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 8.dp)"));
-        assertTrue(controls.contains(".height(AppConfigSheetUiTokens.ActionHeight)"));
+        assertTrue(controls.contains("rememberEditorControlHeight()"));
+        assertTrue(controls.contains("coerceAtLeast(AppConfigSheetUiTokens.ActionHeight)"));
         assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"));
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"));
         assertTrue(editor.contains("val hookDomainsButtonText = FontHookDomainPresentation"));
@@ -395,8 +405,13 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(typefacePicker.contains("TypefaceCatalogCache.Catalog"));
         assertTrue(typefacePicker.contains("TypefaceCatalogCache.cached()"));
         assertTrue(typefacePicker.contains("withContext(Dispatchers.IO)"));
-        assertTrue(typefacePicker.contains("height(typefacePageHeight())"));
-        assertTrue(typefacePicker.contains("animateContentSize(tween(180))"));
+        assertTrue(typefacePicker.contains(".fillMaxSize()"));
+        assertTrue(typefacePicker.contains("dialogListContentFade("));
+        assertTrue(typefacePicker.contains("EditorSheetChildPageHeader("));
+        assertTrue(typefacePicker.contains("containerColor = MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(typefacePicker.contains("MaterialTheme.colorScheme.surfaceBright"));
+        assertTrue(sheet.contains("internal fun EditorSheetChildPageHeader("));
+        assertTrue(sheet.contains("ChildPageHeaderHeight"));
         assertTrue(activity.contains("EditorActions.create("));
         assertTrue(activity.contains("requestAppsLoad();"));
         assertTrue(editorController.contains("host.setDpisEnabled(enabled)"));
@@ -435,7 +450,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(page.contains("targetPage == editorPage"));
         assertTrue(page.contains("clipToBounds()"));
         assertTrue(page.contains("EditorDestinationHeightDurationMillis = 180"));
-        assertTrue(page.contains("HookTabHeightDurationMillis = 180"));
+        assertTrue(page.contains(".fillMaxHeight()"));
+        assertTrue(page.contains("EditorSheetChildPageHeader("));
+        assertTrue(page.contains("containerColor = MaterialTheme.colorScheme.surfaceContainer"));
+        assertTrue(page.contains("MaterialTheme.colorScheme.surfaceBright"));
         assertTrue(page.contains("verticalScroll(rememberScrollState())"));
         assertTrue(destination.contains("HOOK_CHAIN_INTERFACE"));
         assertTrue(destination.contains("HOOK_CHAIN_FONT"));
@@ -448,13 +466,10 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(appWorkspace.contains(
                 "bottomPadding = padding.calculateBottomPadding()"));
         assertTrue(coordinator.contains("ConfigEditorAnimatedContent("));
-        assertTrue(coordinator.contains("animateTabSize = true"));
+        assertTrue(coordinator.contains("animateSize = false"));
         assertTrue(coordinator.contains("clipContentToAnimatedBounds = false"));
         assertTrue(coordinator.contains(
                 "editorState.destination == ConfigEditorDestination.MAIN"));
-        assertTrue(coordinator.contains("editorState.destination.isHookChain()"));
-        assertTrue(coordinator.contains(
-                "editorState.destination == ConfigEditorDestination.TYPEFACE"));
         String appOverlay = read(
                 "src/main/java/com/dpis/module/ui/compose/AppConfigEditorOverlay.kt");
         assertTrue(appOverlay.contains("mainCollapsedAnchor"));
@@ -493,7 +508,8 @@ public final class DpisComposeShellSourceSmokeTest {
         assertTrue(wechatEnd > wechatStart);
 
         String wechatRow = editor.substring(wechatStart, wechatEnd);
-        assertTrue(wechatRow.contains(".height(AppConfigSheetUiTokens.FieldRowHeight)"));
+        assertTrue(wechatRow.contains(
+                ".height(AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight())"));
         assertTrue(wechatRow.contains("verticalAlignment = Alignment.Bottom"));
         assertTrue(wechatRow.contains("state.actions.showWechatDpiHelp()"));
     }

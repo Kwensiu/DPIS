@@ -104,7 +104,7 @@ fun FontLibraryContent(
         onBack = onBack,
         titleRes = R.string.font_library_page_title,
         actions = {
-            Box {
+            Box(modifier = Modifier.padding(end = 16.dp)) {
                 DpisToolbarIconButton(
                     iconRes = R.drawable.ic_more_vert_24,
                     descriptionRes = R.string.font_library_archive_menu_action,
@@ -159,7 +159,7 @@ fun FontLibraryContent(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
+                    top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                     end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                     bottom = edgeToEdgeContentBottomPadding(88.dp)
                 ),
@@ -178,7 +178,7 @@ private fun FontLibraryCard(item: FontLibraryUiItem, onClick: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surfaceBright
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -258,7 +258,7 @@ fun FontDetailContent(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = padding.calculateTopPadding() + 8.dp,
+                top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = padding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = edgeToEdgeContentBottomPadding(24.dp)
             ),
@@ -354,7 +354,7 @@ private fun FontReferenceSection(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = dpisSegmentedShapes(index, references.size).shape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                        color = MaterialTheme.colorScheme.surfaceBright
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),

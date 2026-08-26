@@ -65,16 +65,18 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import kotlin.math.roundToInt
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
 
 /**
- * Fixed-height outlined input used by DPIS editor rows.
+ * Compact outlined input used by DPIS editor rows.
  *
- * Its 48dp visual outline aligns with the mode track. Validation text belongs to the owning
- * row, outside this control, so an error never changes or clips the field's visible container.
+ * The normal state keeps the 48dp visual baseline, while larger system font scales are allowed
+ * to grow the field instead of clipping the label or entered value. Validation text belongs to
+ * the owning row, outside this control, so an error never changes the field's visible container.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +91,10 @@ internal fun DpisCompactEditorTextField(
     trailingIcon: (@Composable (() -> Unit))? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    Box(modifier = modifier.height(AppConfigSheetUiTokens.ActionHeight)) {
+    val controlHeight = rememberEditorControlHeight()
+    Box(
+        modifier = modifier.height(controlHeight)
+    ) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -139,6 +144,17 @@ internal fun DpisEditorClearButton(onClear: () -> Unit) {
     IconButton(onClick = onClear) {
         Icon(painterResource(R.drawable.ic_close_24), stringResource(R.string.search_clear))
     }
+}
+
+/** Keeps adjacent editor controls visually aligned while allowing large system text to breathe. */
+@Composable
+internal fun rememberEditorControlHeight(): androidx.compose.ui.unit.Dp {
+    // A device can report an extreme accessibility font scale. Let the row breathe, but do not
+    // turn a compact editor control into a full-screen panel; the text field still ellipsizes
+    // its single-line value when the available width is the limiting dimension.
+    val fontScale = LocalDensity.current.fontScale.coerceIn(1f, 1.5f)
+    return (AppConfigSheetUiTokens.ActionHeight * fontScale)
+        .coerceAtLeast(AppConfigSheetUiTokens.ActionHeight)
 }
 
 /**
@@ -306,6 +322,7 @@ internal fun DpisModeSelector(
     modifier: Modifier = Modifier
 ) {
     val modeInteractionSource = remember { MutableInteractionSource() }
+    val controlHeight = rememberEditorControlHeight()
     val thumbOffset by animateDpAsState(
         targetValue = if (selectedFirst) 0.dp else AppConfigSheetUiTokens.SecondaryControlWidth / 2,
         animationSpec = tween(TemplateUiTokens.ModeAnimationDurationMillis),
@@ -315,7 +332,7 @@ internal fun DpisModeSelector(
     Box(
         modifier = modifier
             .width(AppConfigSheetUiTokens.SecondaryControlWidth)
-            .height(AppConfigSheetUiTokens.ActionHeight)
+            .height(controlHeight)
             .clip(AppConfigSheetUiTokens.FieldAndActionShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .selectableGroup()
@@ -323,7 +340,8 @@ internal fun DpisModeSelector(
         Box(
             modifier = Modifier
                 .offset(x = thumbOffset)
-                .size(width = thumbWidth, height = AppConfigSheetUiTokens.ActionHeight)
+                .width(thumbWidth)
+                .height(controlHeight)
                 .clip(AppConfigSheetUiTokens.FieldAndActionShape)
                 .background(MaterialTheme.colorScheme.secondaryContainer, AppConfigSheetUiTokens.FieldAndActionShape)
                 .border(

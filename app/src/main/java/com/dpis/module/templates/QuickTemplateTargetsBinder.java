@@ -11,6 +11,7 @@ import com.dpis.module.*;
 
 
 import com.dpis.module.ui.TouchFeedbackBinder;
+import com.dpis.module.ui.DialogWindowEdgeToEdge;
 
 import com.dpis.module.applist.InstalledAppCatalogItem;
 
@@ -303,6 +304,7 @@ public final class QuickTemplateTargetsBinder {
         showSystemSwitch.setOnCheckedChangeListener(listener);
         hideConfiguredSwitch.setOnCheckedChangeListener(listener);
         dialog.show();
+        DialogWindowEdgeToEdge.apply(dialog);
     }
 
     private InstalledAppCatalogCoordinator.Host createInstalledAppCatalogHost() {

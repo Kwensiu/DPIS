@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.function.Consumer
 import java.util.function.IntConsumer
@@ -135,6 +136,7 @@ object SettingsComposeDialogs {
         }
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         DialogWindowSizer.applyLargeWidth(dialog, activity)
         return dialog
     }
@@ -157,9 +159,12 @@ internal fun InterfaceScaleDialogContent(
         focusRequester.requestFocus()
         keyboard?.show()
     }
-    DialogColumn {
-        DialogTitle(stringResource(R.string.settings_interface_scale_dialog_title))
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+    DialogColumn(
+        title = { DialogTitle(stringResource(R.string.settings_interface_scale_dialog_title)) },
+        actions = {
+            DialogActionRow(onCancel, { if (!invalid) onSave(parsed) }, !invalid)
+        }
+    ) {
         OutlinedTextField(
             value = value,
             onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) value = it },
@@ -173,8 +178,6 @@ internal fun InterfaceScaleDialogContent(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { if (!invalid) onSave(parsed) })
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        DialogActionRow(onCancel, { if (!invalid) onSave(parsed) }, !invalid)
     }
 }
 
@@ -188,14 +191,25 @@ internal fun LanguageDialogContent(
 ) {
     val maxListHeight = (LocalConfiguration.current.screenHeightDp * 0.45f)
         .coerceAtMost(320f).dp
-    DialogColumn {
-        DialogTitle(stringResource(R.string.settings_language_dialog_title))
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+    DialogColumn(
+        title = { DialogTitle(stringResource(R.string.settings_language_dialog_title)) },
+        actions = {
+            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.dialog_typeface_done_action))
+            }
+        }
+    ) {
+        val listState = rememberLazyListState()
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = maxListHeight)
+                .dialogListContentFade(
+                    state = listState,
+                    edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                )
                 .testTag(LanguageDialogOptionsTestTag),
+            state = listState,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(options, key = LanguageDialogOption::tag) { option ->
@@ -206,10 +220,6 @@ internal fun LanguageDialogContent(
                     onSelected = { onSelected(option.tag) }
                 )
             }
-        }
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.dialog_typeface_done_action))
         }
     }
 }
@@ -261,9 +271,14 @@ internal fun BackupActionsDialogContent(
     onImport: () -> Unit,
     onClose: () -> Unit
 ) {
-    DialogColumn {
-        DialogTitle(stringResource(R.string.config_backup_dialog_title), TextAlign.Start)
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+    DialogColumn(
+        title = { DialogTitle(stringResource(R.string.config_backup_dialog_title), TextAlign.Start) },
+        actions = {
+            OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.dialog_close_button))
+            }
+        }
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -285,10 +300,6 @@ internal fun BackupActionsDialogContent(
                 modifier = Modifier.weight(1f)
             )
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_footer_spacing_top)))
-        OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.dialog_close_button))
-        }
     }
 }
 
@@ -304,7 +315,7 @@ private fun BackupActionTile(
     val action = rememberDpisConfirmAction(onClick)
     Surface(
         onClick = action,
-        modifier = modifier.aspectRatio(1f),
+        modifier = modifier.heightIn(min = 144.dp, max = 220.dp),
         shape = RoundedCornerShape(16.dp),
         color = containerColor,
         contentColor = contentColor
@@ -326,16 +337,36 @@ private fun BackupActionTile(
 }
 
 @Composable
-internal fun DialogColumn(content: @Composable ColumnScope.() -> Unit) {
+internal fun DialogColumn(
+    title: @Composable () -> Unit,
+    actions: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val maxHeight = (LocalConfiguration.current.screenHeightDp * 0.9f)
+        .coerceAtLeast(240f)
+        .dp
     Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        ),
-        content = content
-    )
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = maxHeight)
+            .padding(
+                start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
+                top = dimensionResource(R.dimen.dialog_surface_padding_top),
+                end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
+                bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
+            )
+    ) {
+        title()
+        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false),
+            content = content
+        )
+        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_footer_spacing_top)))
+        actions()
+    }
 }
 
 @Composable

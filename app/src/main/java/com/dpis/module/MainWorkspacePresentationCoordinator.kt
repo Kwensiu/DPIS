@@ -23,11 +23,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
@@ -48,9 +55,11 @@ import com.dpis.module.ui.compose.AppHookChainEditorPage
 import com.dpis.module.ui.compose.AppTypefacePickerPage
 import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.rememberEditorControlHeight
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.TemplateWorkspaceContent
 import com.dpis.module.ui.compose.WearAppWorkspaceContent
 import com.dpis.module.ui.compose.WearHomeWorkspaceContent
@@ -62,8 +71,6 @@ import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
@@ -101,38 +108,113 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
     private var settingsRevision by mutableIntStateOf(0)
     private var templateRevision by mutableIntStateOf(0)
     @Composable fun render(mode: MainUiState.WorkspaceMode, padding: PaddingValues): Boolean {
-        return when (mode) {
-        MainUiState.WorkspaceMode.APP -> {
-            appRevision
-            ComposeWorkspaceSurface {
-                AppWorkspaceContent(
-                    state = content.appState(),
-                    padding = padding,
-                    editorState = content.appEditorState()
-                )
-            }
-            true
+        val pageScrollPositions = rememberSaveable(saver = PageScrollPositionStore.Saver) {
+            PageScrollPositionStore()
         }
-        MainUiState.WorkspaceMode.HOME -> { homeRevision; ComposeWorkspaceSurface { HomeWorkspaceContent(content.homeState(), padding) }; true }
-        MainUiState.WorkspaceMode.TOOLS -> { toolsRevision; ComposeWorkspaceSurface { ToolsWorkspaceContent(content.toolsState(), padding, toolsExpanded, { toolsExpanded = !toolsExpanded }, content::changeToolsPending, content::applyTools, content::restoreTools, content::requestToolsPermission) }; true }
-        MainUiState.WorkspaceMode.SETTINGS -> { settingsRevision; ComposeWorkspaceSurface { SettingsWorkspaceContent(content.settingsState(), padding, content::setSettingsHooks, content::setSettingsSafeMode, content::setSettingsGlobalLog, content::openSettingsLogs, content::setSettingsLauncherHidden, content::openSettingsFontDebug, content::openSettingsFontLibrary, content::openSettingsExperimental, content::openThemeSettings, content::setSettingsLanguage, content::openSettingsBackup, content::clearSettingsCache, content::openSettingsAbout, content::openSettingsDonate) }; true }
-        MainUiState.WorkspaceMode.TEMPLATE -> {
-            templateRevision
-            ComposeWorkspaceSurface {
-                TemplateWorkspaceContent(
-                    state = content.templateState(),
-                    padding = padding,
-                    onQueryChanged = content::changeTemplateQuery,
-                    onEditorOpened = { quickTemplate, templateId ->
-                        content.openTemplateEditor(quickTemplate, templateId)
-                    },
-                    onEditorChanged = content::updateTemplateEditor,
-                    onEditorDestinationChanged = content::updateTemplateEditorDestination,
-                    onEditorClosed = content::closeTemplateEditor
-                )
+        val stateHolder = rememberSaveableStateHolder()
+        Surface(
+            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            AnimatedContent(
+                targetState = mode,
+                transitionSpec = {
+                    ContentTransform(
+                        targetContentEnter = fadeIn(animationSpec = tween(180)),
+                        initialContentExit = fadeOut(animationSpec = tween(120)),
+                        sizeTransform = null,
+                    )
+                },
+                label = "workspace-page-transition",
+            ) { targetMode ->
+                stateHolder.SaveableStateProvider(targetMode.name) {
+                    renderWorkspace(targetMode, padding, pageScrollPositions)
+                }
             }
-            true
         }
+        return true
+    }
+
+    @Composable
+    private fun renderWorkspace(
+        mode: MainUiState.WorkspaceMode,
+        padding: PaddingValues,
+        pageScrollPositions: PageScrollPositionStore,
+    ) {
+        when (mode) {
+            MainUiState.WorkspaceMode.APP -> {
+                appRevision
+                ComposeWorkspaceSurface {
+                    AppWorkspaceContent(
+                        state = content.appState(),
+                        padding = padding,
+                        editorState = content.appEditorState()
+                    )
+                }
+            }
+            MainUiState.WorkspaceMode.HOME -> {
+                homeRevision
+                ComposeWorkspaceSurface {
+                    HomeWorkspaceContent(content.homeState(), padding, pageScrollPositions)
+                }
+            }
+            MainUiState.WorkspaceMode.TOOLS -> {
+                toolsRevision
+                ComposeWorkspaceSurface {
+                    ToolsWorkspaceContent(
+                        content.toolsState(),
+                        padding,
+                        toolsExpanded,
+                        { toolsExpanded = !toolsExpanded },
+                        content::changeToolsPending,
+                        content::applyTools,
+                        content::restoreTools,
+                        content::requestToolsPermission,
+                        pageScrollPositions,
+                    )
+                }
+            }
+            MainUiState.WorkspaceMode.SETTINGS -> {
+                settingsRevision
+                ComposeWorkspaceSurface {
+                    SettingsWorkspaceContent(
+                        content.settingsState(),
+                        padding,
+                        content::setSettingsHooks,
+                        content::setSettingsSafeMode,
+                        content::setSettingsGlobalLog,
+                        content::openSettingsLogs,
+                        content::setSettingsLauncherHidden,
+                        content::openSettingsFontDebug,
+                        content::openSettingsFontLibrary,
+                        content::openSettingsExperimental,
+                        content::openThemeSettings,
+                        content::setSettingsLanguage,
+                        content::openSettingsBackup,
+                        content::clearSettingsCache,
+                        content::openSettingsAbout,
+                        content::openSettingsDonate,
+                        pageScrollPositions,
+                    )
+                }
+            }
+            MainUiState.WorkspaceMode.TEMPLATE -> {
+                templateRevision
+                ComposeWorkspaceSurface {
+                    TemplateWorkspaceContent(
+                        state = content.templateState(),
+                        padding = padding,
+                        onQueryChanged = content::changeTemplateQuery,
+                        onEditorOpened = { quickTemplate, templateId ->
+                            content.openTemplateEditor(quickTemplate, templateId)
+                        },
+                        onEditorChanged = content::updateTemplateEditor,
+                        onEditorDestinationChanged = content::updateTemplateEditorDestination,
+                        onEditorClosed = content::closeTemplateEditor,
+                        scrollStore = pageScrollPositions,
+                    )
+                }
+            }
         }
     }
     @Composable fun renderWear(
@@ -209,8 +291,8 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 maxWidth >= 600.dp
             if (twoPane) return@BoxWithConstraints
             val editorState = content.appEditorState() ?: return@BoxWithConstraints
+            val editorControlHeight = rememberEditorControlHeight()
             val context = LocalContext.current
-            val density = LocalDensity.current
             var showAdvancedHint by remember(editorState.item.packageName) {
                 mutableStateOf(AppConfigSheetWizardStore.shouldShowAdvancedHint(context))
             }
@@ -283,15 +365,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                         }
                     }
                 },
-                content = { onAdvancedAnchorMeasured, destinationContentOwnsHeight, onReturnFromChild ->
-                fun reportChildPageAnchor(contentHeightPx: Int) {
-                    val contentHeight = with(density) { contentHeightPx.toDp() }
-                    onAdvancedAnchorMeasured(
-                        contentHeight +
-                            AppConfigSheetUiTokens.SaveToAdvancedDividerGap -
-                            AppConfigSheetUiTokens.CollapsedBottomClearance
-                    )
-                }
+                content = { onAdvancedAnchorMeasured, isExpanded, onReturnFromChild ->
                 ConfigEditorAnimatedContent(
                     destination = editorState.destination,
                     // Expanded sheets ignore the peek anchor, so their destination content owns
@@ -302,8 +376,12 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                     // to AnimatedContent's changing size cuts off the outgoing page while its
                     // horizontal exit is still running and makes the sheet appear to jump.
                     clipContentToAnimatedBounds = false,
-                    // Hook and Typeface child pages share the same sheet size transition.
-                    animateSize = destinationContentOwnsHeight,
+                    // Returning to MAIN must not animate the fixed child viewport down through
+                    // AnimatedContent; the sheet already owns the return height transition.
+                    // SheetState owns the vertical transition. Keeping AnimatedContent's size
+                    // transform snapped prevents a child list remeasurement from becoming a
+                    // second sheet-height animation during return.
+                    animateSize = false,
                     mainContent = {
                         AppConfigEditorContent(
                             editorState,
@@ -311,24 +389,26 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                 // The main page can remain composed while a child page enters.
                                 // Only MAIN may establish the collapsed editor anchor.
                                 if (editorState.destination == ConfigEditorDestination.MAIN) {
-                                    onAdvancedAnchorMeasured(measuredAnchor)
+                                    onAdvancedAnchorMeasured(
+                                        measuredAnchor + if (!isExpanded) {
+                                            (editorControlHeight -
+                                                AppConfigSheetUiTokens.ActionHeight)
+                                                .coerceAtLeast(0.dp)
+                                        } else {
+                                            0.dp
+                                        }
+                                    )
                                 }
                             },
-                            showInlineUnsavedBadge = false
+                            showInlineUnsavedBadge = false,
                         )
                     },
                     hookContent = {
                         AppHookChainEditorPage(
                             state = editorState,
-                            // Hook content owns its internal size changes. The sheet mirrors the
-                            // height it reports instead of adding a second competing tween.
-                            animateTabSize = true,
+                            // Hook pages use a stable viewport, so only the page transition itself
+                            // animates; the outer sheet does not receive a transient height signal.
                             onBack = onReturnFromChild,
-                            modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
-                                if (editorState.destination.isHookChain()) {
-                                    reportChildPageAnchor(size.height)
-                                }
-                            }
                         )
                     },
                     typefaceContent = {
@@ -339,11 +419,6 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                 onReturnFromChild()
                             },
                             onBack = onReturnFromChild,
-                            modifier = androidx.compose.ui.Modifier.onSizeChanged { size ->
-                                if (editorState.destination == ConfigEditorDestination.TYPEFACE) {
-                                    reportChildPageAnchor(size.height)
-                                }
-                            }
                         )
                     }
                 )
@@ -417,7 +492,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
 private fun ComposeWorkspaceSurface(content: @Composable () -> Unit) {
     Surface(
         modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.surface,
+        // The workspace transition owns only page content. Keeping this carrier
+        // transparent prevents the shared page background from fading with it.
+        color = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSurface,
         content = content
     )

@@ -25,17 +25,17 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(content.contains("combinedClickable("));
         assertTrue(content.contains("snapshotFlow"));
         assertTrue(content.contains("presentation::updateAtLatestEdge"));
-        assertTrue(content.contains("SecondaryPageScaffold("));
+        assertTrue(content.contains("PageBarBehavior.Pinned"));
         assertTrue(content.contains("actions = {"));
         assertTrue(content.contains("private fun LogTopBarAction("));
         assertTrue(content.contains("IconButton(onClick"));
         assertTrue(content.contains("TooltipBox("));
-        assertTrue(content.contains("PrimaryTabRow(selectedTabIndex = state.selectedPage)"));
+        assertTrue(content.contains("selectedTabIndex = state.selectedPage"));
         assertTrue(content.contains("private fun LogLevelRail("));
         assertTrue(content.contains("HorizontalDivider("));
         assertTrue(content.contains(
                 "PaddingValues(bottom = edgeToEdgeContentBottomPadding(24.dp))"));
-        assertTrue(content.contains("color = MaterialTheme.colorScheme.background"));
+        assertTrue(content.contains("color = MaterialTheme.colorScheme.surfaceContainer"));
         assertFalse(content.contains("SingleChoiceSegmentedButtonRow("));
         assertFalse(content.contains("Modifier.size(34.dp)"));
         assertFalse(source.contains("RecyclerView"));

@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -58,6 +59,7 @@ object AppFilterComposeSheet {
         }
         dialog.setContentView(view)
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         return dialog
     }
 }
@@ -118,6 +120,7 @@ object ModuleRuntimeReloadComposeDialog {
         dialog.setCancelable(true)
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         DialogWindowSizer.applyStandardWidth(dialog, activity)
         return dialog
     }

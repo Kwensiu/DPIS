@@ -49,10 +49,17 @@ import com.dpis.module.root.RootAccessProbe
 
 /** Native Home workspace. Actions remain owned by MainActivity's existing coordinator. */
 @Composable
-fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValues) {
+fun HomeWorkspaceContent(
+    state: HomeWorkspaceBinder.State,
+    padding: PaddingValues,
+    scrollStore: PageScrollPositionStore,
+) {
     val context = LocalContext.current
-    PrimaryPageScaffold(
-        modifier = Modifier.padding(padding),
+    PageScaffold(
+        pageBar = PageBarBehavior.Collapsing,
+        onBack = null,
+        scrollStore = scrollStore,
+        scrollKey = "home",
         title = {
             Column {
                 Text(
@@ -62,23 +69,32 @@ fun HomeWorkspaceContent(state: HomeWorkspaceBinder.State, padding: PaddingValue
                 )
                 Text(
                     stringResource(R.string.home_workspace_subtitle),
-                    modifier = Modifier.padding(top = 4.dp),
+                    modifier = Modifier.padding(top = 0.dp),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+        },
+        collapsedTitle = {
+            Text(
+                stringResource(R.string.app_name),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
         }
     ) { pagePadding ->
         val layoutDirection = LocalLayoutDirection.current
+        val listState = rememberRestorableLazyListState("home", scrollStore)
         LazyColumn(
+            state = listState,
             contentPadding = PaddingValues(
                 start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = pagePadding.calculateTopPadding() + 4.dp,
+                top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = pagePadding.calculateBottomPadding() + LocalDpisTokens.current.spaceLg,
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize().padding(padding)
         ) {
             item { HomePrimaryStatus(state) }
             if (state.updateState.showsUpdateActionCard()) {
@@ -155,7 +171,7 @@ private fun HomeUpdateActions(state: HomeWorkspaceBinder.State) {
             state.actions.startUpdateDownload()
         }
     }
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer), modifier = Modifier.fillMaxWidth()) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.home_update_available, state.updateState.versionName), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             if (state.updateState.status == HomeUpdateUiState.Status.DOWNLOADING) {
@@ -184,7 +200,7 @@ private fun HomeCountCard(modifier: Modifier, titleRes: Int, count: Int, onClick
     Card(
         onClick = hapticClick,
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(count.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -224,7 +240,7 @@ private fun HomeInfoRow(titleRes: Int, value: String, shape: RoundedCornerShape)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = shape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
     ) {
         Row(
             Modifier
@@ -246,7 +262,7 @@ private fun HomeNavigationEntry(titleRes: Int, summaryRes: Int, onClick: () -> U
         onClick = hapticClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
         border = CardDefaults.outlinedCardBorder()
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -264,7 +280,7 @@ private fun HomeFeedbackEntry(context: android.content.Context) {
     Card(
         modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
         border = CardDefaults.outlinedCardBorder()
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {

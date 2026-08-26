@@ -44,18 +44,24 @@ fun ToolsWorkspaceContent(
     onPendingChanged: (Int) -> Unit,
     onApply: () -> Unit,
     onRestore: () -> Unit,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    scrollStore: PageScrollPositionStore,
 ) {
-    PrimaryPageScaffold(
+    PageScaffold(
+        pageBar = PageBarBehavior.Collapsing,
+        onBack = null,
         titleRes = R.string.workspace_tools,
-        modifier = Modifier.padding(padding)
+        scrollStore = scrollStore,
+        scrollKey = "tools",
     ) { pagePadding ->
         val layoutDirection = LocalLayoutDirection.current
+        val listState = rememberRestorableLazyListState("tools", scrollStore)
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(
                 start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = pagePadding.calculateTopPadding() + 4.dp,
+                top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = pagePadding.calculateBottomPadding() + LocalDpisTokens.current.spaceLg,
             ),
@@ -65,7 +71,7 @@ fun ToolsWorkspaceContent(
                 Card(
                 onClick = rememberDpisConfirmAction(onExpandedChanged),
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
             ) {
                 Column(Modifier.padding(20.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

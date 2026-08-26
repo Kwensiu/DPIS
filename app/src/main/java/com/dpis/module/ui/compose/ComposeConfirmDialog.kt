@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -101,6 +102,7 @@ object ComposeConfirmDialog {
             }
         }
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         DialogWindowSizer.applyStandardWidth(dialog, activity)
         return dialog
     }

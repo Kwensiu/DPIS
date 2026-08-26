@@ -107,10 +107,12 @@ fun LogContent(
     // Activity is ever launched from a translucent host or during an Activity transition.
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
-        SecondaryPageScaffold(
+        PageScaffold(
+            pageBar = PageBarBehavior.Pinned,
             onBack = onBack,
+            showTopBarDivider = false,
             titleRes = R.string.log_page_title,
             actions = {
                 LogTopBarAction(
@@ -159,7 +161,10 @@ fun LogContent(
             }
         ) { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
-                PrimaryTabRow(selectedTabIndex = state.selectedPage) {
+                PrimaryTabRow(
+                    selectedTabIndex = state.selectedPage,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ) {
                     listOf(R.string.log_page_dpis, R.string.log_page_lsposed_related)
                         .forEachIndexed { index, textRes ->
                             Tab(
@@ -247,7 +252,7 @@ private fun LogEntryRow(
             onClick = { onToggleExpanded(entry.key) },
             onLongClick = { onCopyEntry(entry.key) }
         ),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Row(
             Modifier.fillMaxWidth().height(IntrinsicSize.Min).heightIn(min = 64.dp),

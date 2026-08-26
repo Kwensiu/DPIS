@@ -5,15 +5,15 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,16 +34,18 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.DpisConfirmDialogUiTokens
+import com.dpis.module.ui.compose.DialogColumn
+import com.dpis.module.ui.compose.DialogTitle
+import com.dpis.module.ui.compose.dialogListContentFade
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -91,6 +93,7 @@ object QuickTemplateSortDialog {
         }
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         DialogWindowSizer.applyLargeWidth(dialog, activity)
     }
 }
@@ -104,24 +107,42 @@ internal fun QuickTemplateSortContent(
     onSave: (List<String>) -> Unit
 ) {
     val orderedItems = remember(initialItems) { mutableStateListOf(*initialItems.toTypedArray()) }
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        )
+    DialogColumn(
+        title = { DialogTitle(stringResource(R.string.quick_template_sort_title)) },
+        actions = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    8.dp
+                )
+            ) {
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
+                    shape = DpisConfirmDialogUiTokens.ActionShape,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                ) {
+                    Text(stringResource(R.string.dialog_process_action_confirm_negative))
+                }
+                OutlinedButton(
+                    onClick = { onSave(orderedItems.map(QuickTemplateSortItem::id)) },
+                    modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
+                    shape = DpisConfirmDialogUiTokens.ActionShape,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                ) {
+                    Text(stringResource(R.string.quick_template_sort_save))
+                }
+            }
+        }
     ) {
-        Text(
-            text = stringResource(R.string.quick_template_sort_title),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        val listState = rememberLazyListState()
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().height(320.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(max = 320.dp)
+                .dialogListContentFade(
+                    state = listState,
+                    edgeColor = MaterialTheme.colorScheme.surfaceVariant,
+                ),
+            state = listState,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(orderedItems, key = QuickTemplateSortItem::id) { item ->
@@ -137,30 +158,6 @@ internal fun QuickTemplateSortContent(
                         }
                     }
                 )
-            }
-        }
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_typeface_footer_spacing_top)))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                dimensionResource(R.dimen.dialog_action_spacing_between)
-            )
-        ) {
-            OutlinedButton(
-                onClick = onCancel,
-                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-                shape = DpisConfirmDialogUiTokens.ActionShape,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-            ) {
-                Text(stringResource(R.string.dialog_process_action_confirm_negative))
-            }
-            OutlinedButton(
-                onClick = { onSave(orderedItems.map(QuickTemplateSortItem::id)) },
-                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-                shape = DpisConfirmDialogUiTokens.ActionShape,
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-            ) {
-                Text(stringResource(R.string.quick_template_sort_save))
             }
         }
     }

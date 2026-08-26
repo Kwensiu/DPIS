@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -42,6 +43,7 @@ object LicenseDetailDialog {
             }
         }
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         DialogWindowSizer.applyLargeWidth(dialog, activity)
         return dialog
     }

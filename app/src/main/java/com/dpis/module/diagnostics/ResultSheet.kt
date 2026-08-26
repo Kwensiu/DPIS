@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.compose.DpisConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
@@ -102,6 +103,7 @@ class ResultSheet(
         }
         dialog.setContentView(composeView)
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
     }
 
     private fun valueOrUnknown(value: String?): String {
@@ -220,6 +222,7 @@ object PackagingDialog {
             }
         }
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         DialogWindowSizer.applyStandardWidth(dialog, activity)
         return dialog
     }

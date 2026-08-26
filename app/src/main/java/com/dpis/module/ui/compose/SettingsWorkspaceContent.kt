@@ -39,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -71,7 +73,8 @@ fun SettingsWorkspaceContent(
     onBackup: () -> Unit,
     onClearCache: () -> Unit,
     onAbout: () -> Unit,
-    onDonate: () -> Unit
+    onDonate: () -> Unit,
+    scrollStore: PageScrollPositionStore,
 ) {
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
@@ -90,23 +93,28 @@ fun SettingsWorkspaceContent(
         AppLocaleManager.getLanguageTag(context)
     )
     val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
-    PrimaryPageScaffold(
+    val listState = rememberRestorableLazyListState("settings", scrollStore)
+    PageScaffold(
+        pageBar = PageBarBehavior.Collapsing,
+        onBack = null,
         titleRes = R.string.system_settings_title,
-        modifier = Modifier.padding(padding)
+        scrollStore = scrollStore,
+        scrollKey = "settings",
     ) { pagePadding ->
         val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
+            state = listState,
+            modifier = Modifier.fillMaxWidth().padding(padding),
             contentPadding = PaddingValues(
                 start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = pagePadding.calculateTopPadding() + 8.dp,
+                top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
                 bottom = pagePadding.calculateBottomPadding() + LocalDpisTokens.current.spaceLg,
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                SettingsSection(R.string.system_settings_section_general) {
+                SettingsGroup(R.string.system_settings_section_general) {
                 SettingsSwitchRow(
                     R.drawable.ic_android_24,
                     R.string.system_hooks_enabled_label,
@@ -165,7 +173,7 @@ fun SettingsWorkspaceContent(
             }
         }
         item {
-            SettingsSection(R.string.settings_section_theme) {
+            SettingsGroup(R.string.settings_section_theme) {
                 val themeItemCount = 2 + translationContributors.size
                 SettingsEntry(
                     R.drawable.ic_format_paint_24,
@@ -197,7 +205,7 @@ fun SettingsWorkspaceContent(
             }
         }
         item {
-            SettingsSection(R.string.settings_section_other) {
+            SettingsGroup(R.string.settings_section_other) {
                 SettingsEntry(
                     R.drawable.ic_upload_file_24,
                     R.string.settings_config_backup_label,
@@ -226,7 +234,7 @@ fun SettingsWorkspaceContent(
             }
         }
         item {
-            SettingsSection(R.string.settings_section_about) {
+            SettingsGroup(R.string.settings_section_about) {
                 SettingsEntry(
                     R.drawable.ic_info_24,
                     R.string.settings_about_label,
@@ -265,14 +273,16 @@ fun SettingsWorkspaceContent(
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun SettingsSection(title: Int, content: @Composable ColumnScope.() -> Unit) {
+private fun SettingsGroup(title: Int, content: @Composable ColumnScope.() -> Unit) {
     androidx.compose.foundation.layout.Column {
-        Text(
+        PageSectionLabel(
             stringResource(title),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 8.dp)
+            modifier = Modifier.padding(
+                start = SecondaryPageContentTokens.SectionLabelHorizontalInset,
+                top = 8.dp,
+            ),
         )
+        Spacer(Modifier.height(SecondaryPageContentTokens.SectionLabelToFirstItemGap))
         androidx.compose.foundation.layout.Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
@@ -303,7 +313,10 @@ private fun SettingsSwitchRow(
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
+            // Disabled settings remain on the same surface; only their content
+            // should receive Material's disabled emphasis.
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface,
             leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),
@@ -339,7 +352,10 @@ private fun SettingsEntry(
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
+            // Keep unavailable actions from falling back to the darker default
+            // disabled container while preserving disabled content treatment.
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface,
             leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
         ),

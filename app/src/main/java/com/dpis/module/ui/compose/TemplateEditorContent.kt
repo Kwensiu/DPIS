@@ -244,7 +244,9 @@ fun TemplateEditorContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(AppConfigSheetUiTokens.FieldRowHeight),
+                .heightIn(
+                    min = AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()
+                ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top
         ) {
@@ -299,7 +301,9 @@ fun TemplateEditorContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(AppConfigSheetUiTokens.FieldRowHeight),
+                .heightIn(
+                    min = AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()
+                ),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.Top
         ) {
@@ -342,7 +346,7 @@ fun TemplateEditorContent(
             primary = {
                 OutlinedButton(
                     onClick = onSelectTypeface,
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
@@ -364,7 +368,7 @@ fun TemplateEditorContent(
                 OutlinedButton(
                     onClick = onEditHookDomains,
                     modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
-                        .heightIn(min = AppConfigSheetUiTokens.ActionHeight),
+                        .height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
@@ -386,7 +390,7 @@ fun TemplateEditorContent(
             enabled = form.isValid(),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(AppConfigSheetUiTokens.ActionHeight),
+                .height(rememberEditorControlHeight()),
             shape = AppConfigSheetUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
         ) {

@@ -231,7 +231,8 @@ fun FeedbackDiagnosticPreparationContent(
     val state = presentation.state
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
+        // Keep diagnostics on the same page surface as the other secondary pages.
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         SecondaryPageScaffold(
             titleRes = R.string.feedback_diagnostic_action,
@@ -299,7 +300,7 @@ private fun DiagnosticActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     text: String,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceBright,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
 ) {
@@ -330,6 +331,12 @@ private fun DiagnosticPrimaryActionButton(
         enabled = enabled,
         modifier = modifier.height(48.dp),
         shape = RoundedCornerShape(18.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        ),
         contentPadding = PaddingValues(horizontal = 16.dp),
     ) {
         Text(text)
@@ -421,7 +428,7 @@ private fun DiagnosticTargetAppIcon(appIcon: Drawable?) {
             // A container is only visible while the package icon has not resolved.
             .then(
                 if (appIcon == null) {
-                    Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    Modifier.background(MaterialTheme.colorScheme.surfaceBright)
                 } else {
                     Modifier
                 }
@@ -593,6 +600,7 @@ private fun DurationChipSelector(
     val customSelected = selectedSeconds !in presets.map { it.first }
 
     DpisHorizontalScrollWithEdgeFade(
+        edgeColor = MaterialTheme.colorScheme.surfaceBright,
         contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -734,7 +742,7 @@ private fun DiagnosticOutputDetails(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -775,7 +783,7 @@ private fun DiagnosticOutputFileCard(
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -804,7 +812,7 @@ private fun DiagnosticOutputFileBackdrop() {
             .fillMaxWidth()
             .height(72.dp),
         shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {}
 }
 
@@ -813,7 +821,7 @@ private fun DiagnosticResultPlaceholder() {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -852,11 +860,11 @@ private fun DiagnosticStatusRow(
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun diagnosticItemColors(enabled: Boolean = true) = ListItemDefaults.segmentedColors(
-    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+    containerColor = MaterialTheme.colorScheme.surfaceBright,
     contentColor = MaterialTheme.colorScheme.onSurface,
     leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
     disabledContainerColor = if (enabled) {
-        MaterialTheme.colorScheme.surfaceContainerHigh
+        MaterialTheme.colorScheme.surfaceBright
     } else {
         MaterialTheme.colorScheme.surfaceContainer
     },

@@ -309,8 +309,7 @@ class AppConfigEditorOverlayBehaviorTest {
                             viewportApplyMode = ViewportApplyMode.OFF,
                             onHookChainChanged = { _, _, _, _ -> },
                             onDestinationChanged = { currentDestination = it },
-                            onBack = returnToMain,
-                            animateTabSize = false
+                            onBack = returnToMain
                         )
                     } else if (currentDestination.isChildPage) {
                         AppTypefacePickerPage(

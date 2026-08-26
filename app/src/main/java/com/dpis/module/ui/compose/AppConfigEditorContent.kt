@@ -328,7 +328,7 @@ fun AppConfigEditorContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(AppConfigSheetUiTokens.FieldRowHeight),
+                    .height(AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 // Keep the app-specific field on the same bottom edge as the standard
                 // value/mode rows. The shared row height reserves the floating-label inset,
@@ -352,7 +352,7 @@ fun AppConfigEditorContent(
                 )
                 Box(
                     modifier = Modifier
-                        .size(AppConfigSheetUiTokens.ActionHeight)
+                        .size(rememberEditorControlHeight())
                         .clip(AppConfigSheetUiTokens.ActionShape)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant,
                             AppConfigSheetUiTokens.ActionShape)
@@ -382,7 +382,7 @@ fun AppConfigEditorContent(
                         completeInput()
                         state.actions.navigate(ConfigEditorDestination.TYPEFACE)
                     },
-                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
@@ -403,7 +403,7 @@ fun AppConfigEditorContent(
                         state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
                     },
                     modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
-                        .heightIn(min = 48.dp),
+                        .height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
@@ -424,7 +424,7 @@ fun AppConfigEditorContent(
                     completeInput()
                     state.actions.stopProcess()
                 },
-                modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(R.color.dpis_stop_container),
@@ -440,7 +440,7 @@ fun AppConfigEditorContent(
                     completeInput()
                     state.actions.restartProcess()
                 },
-                modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(R.color.dpis_warn_container),
@@ -456,7 +456,7 @@ fun AppConfigEditorContent(
                     completeInput()
                     state.actions.startProcess()
                 },
-                modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorResource(R.color.dpis_success_container),
@@ -474,7 +474,7 @@ fun AppConfigEditorContent(
                 completeInput()
                 state.actions.save()
             },
-            modifier = Modifier.fillMaxWidth().height(AppConfigSheetUiTokens.ActionHeight),
+            modifier = Modifier.fillMaxWidth().height(rememberEditorControlHeight()),
             enabled = state.saveEnabled,
             colors = ButtonDefaults.buttonColors(),
             shape = AppConfigSheetUiTokens.ActionShape
@@ -512,7 +512,7 @@ fun AppConfigEditorContent(
                         state.actions.toggleScope()
                     },
                     enabled = state.item.scopeKnown,
-                    modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.ActionShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -526,7 +526,7 @@ fun AppConfigEditorContent(
                         state.actions.toggleScope()
                     },
                     enabled = state.item.scopeKnown,
-                    modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.ActionShape
                 ) { Text(stringResource(R.string.dialog_scope_button), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
@@ -536,7 +536,7 @@ fun AppConfigEditorContent(
                         completeInput()
                         state.actions.toggleDpisEnabled()
                     },
-                    modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.ActionShape,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -551,7 +551,7 @@ fun AppConfigEditorContent(
                         completeInput()
                         state.actions.toggleDpisEnabled()
                     },
-                    modifier = Modifier.weight(1f).height(AppConfigSheetUiTokens.ActionHeight),
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.ActionShape
                 ) {
                     Text(stringResource(R.string.dialog_dpis_enable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -564,7 +564,7 @@ fun AppConfigEditorContent(
                 completeInput()
                 state.actions.reset()
             },
-            modifier = Modifier.fillMaxWidth().height(AppConfigSheetUiTokens.ActionHeight),
+            modifier = Modifier.fillMaxWidth().height(rememberEditorControlHeight()),
             shape = AppConfigSheetUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
         ) {
@@ -596,7 +596,7 @@ private fun EditorValueModeRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(AppConfigSheetUiTokens.FieldRowHeight),
+            .height(AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Bottom
     ) {

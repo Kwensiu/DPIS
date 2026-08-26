@@ -11,6 +11,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -134,16 +140,19 @@ fun AppConfigEditorOverlay(
         }
         previousDestination = destination
     }
-    LaunchedEffect(returnToMainPending, mainCollapsedAnchor, destination) {
-        if (returnToMainPending && !destination.isChildPage() && mainCollapsedAnchor != null) {
-            // The MAIN anchor can be measured after the destination changes. Keep this as a
-            // separate effect so a late measurement still completes the pending return.
-            bottomSheetState.partialExpand()
-        }
-    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
+        val statusBarTopInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+        // The expanded viewport already stops below the system chrome. Moving the handle again
+        // based only on the sheet state would create a visible jump for a non-full-height sheet.
+        val chromeSafeOffset = 0.dp
         val minPeekHeight = maxHeight * 0.3f
         val maxPeekHeight = maxHeight * 0.75f
+        // The standard sheet's expanded anchor is derived from its measured content height.
+        // Keep a small top clearance so expanding advanced settings remains a sheet interaction,
+        // rather than turning the editor into a full-screen page under the status bar.
+        val sheetViewportHeight = (
+            maxHeight - statusBarTopInset - AppConfigSheetUiTokens.ExpandedTopClearance
+        ).coerceAtLeast(maxHeight * 0.75f)
         // The content report points at the advanced divider. Keep the collapsed edge before the
         // divider so the advanced section does not leak into the initial half-expanded sheet.
         val targetPeekHeight = advancedAnchor?.let {
@@ -190,22 +199,44 @@ fun AppConfigEditorOverlay(
                 // Keep one shared peek anchor for MAIN, Hook, and Typeface pages. Child pages
                 // report their content height through the same callback as the Hook editor.
                 sheetPeekHeight = measuredPeekHeight,
-                sheetContainerColor = MaterialTheme.colorScheme.surface,
+                sheetContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 sheetContentColor = MaterialTheme.colorScheme.onSurface,
                 sheetTonalElevation = 0.dp,
                 // Material assigns the "drag handle" accessibility role to this slot. The
                 // app's short line is visual-only, so render it in regular sheet content.
                 sheetDragHandle = null,
                 sheetContent = {
-                    Box(Modifier.fillMaxWidth()) {
+                    // Cap the expanded sheet without forcing short editor content to occupy the
+                    // whole window. The editor owns scrolling when its content exceeds this cap.
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = sheetViewportHeight)
+                    ) {
                         Column {
-                            topChrome()
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    // Keep the chrome slot's measured height stable. Only move its
+                                    // visual content around the cutout; padding here would remeasure
+                                    // the sheet and make the body jump during collapse.
+                                    .offset(y = chromeSafeOffset)
+                            ) {
+                                topChrome()
+                            }
                             content({ measuredAnchor ->
-                                // Before the user opens advanced actions, layout changes (for example,
-                                // validation text or a window resize) keep the collapsed edge aligned.
-                                // An expanded sheet remains under the user's control until dismissal.
+                                // Before the user opens advanced actions, layout changes (for
+                                // example, validation text or a window resize) keep the collapsed
+                                // edge aligned. An expanded sheet remains under the user's control
+                                // until dismissal.
                                 if (measuredAnchor > 0.dp &&
-                                    (destination.isChildPage() || !hasExpandedOnce)) {
+                                    (
+                                        (!returnToMainPending && destination.isChildPage()) ||
+                                        (!destination.isChildPage() &&
+                                            (!returnToMainPending && !hasExpandedOnce ||
+                                                mainCollapsedAnchor == null))
+                                    )
+                                ) {
                                     advancedAnchor = measuredAnchor
                                     if (!destination.isChildPage()) {
                                         mainCollapsedAnchor = measuredAnchor
@@ -247,9 +278,20 @@ fun AppConfigEditorOverlay(
             returnToMainPending,
             measuredPeekHeight,
             targetPeekHeight,
-            bottomSheetState.currentValue
+            bottomSheetState.currentValue,
+            bottomSheetState.targetValue
         ) {
             if (returnToMainPending &&
+                mainCollapsedAnchor != null &&
+                measuredPeekHeight == targetPeekHeight &&
+                bottomSheetState.currentValue == SheetValue.Expanded &&
+                bottomSheetState.targetValue != SheetValue.PartiallyExpanded) {
+                // A partially expanded sheet already has the correct semantic state. Only an
+                // actually expanded child page needs an explicit collapse request; calling
+                // partialExpand() for every return makes Material rebuild its anchors and briefly
+                // expose the full sheet even when the user never expanded it.
+                bottomSheetState.partialExpand()
+            } else if (returnToMainPending &&
                 mainCollapsedAnchor != null &&
                 measuredPeekHeight == targetPeekHeight &&
                 bottomSheetState.currentValue == SheetValue.PartiallyExpanded) {

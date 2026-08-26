@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 data class FontDebugSheetState(
@@ -71,6 +72,7 @@ object FontDebugComposeSheet {
         dialog.setContentView(view)
         dialog.setOnDismissListener { onDismiss.run() }
         dialog.show()
+        DialogWindowEdgeToEdge.apply(dialog)
         return handle
     }
 }

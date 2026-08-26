@@ -52,6 +52,9 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -135,6 +138,9 @@ fun DpisWorkspaceShell(
     content: @Composable (PaddingValues) -> Unit
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        // Persistent navigation uses the brightest neutral surface role so it remains
+        // visually distinct from the page container without introducing an accent color.
+        val navigationContainerColor = MaterialTheme.colorScheme.surfaceBright
         when (resolveDpisWorkspaceNavigationLayout(maxWidth, isCompactUi)) {
             DpisWorkspaceNavigationLayout.COMPACT_RADIAL -> CompactWearWorkspaceNavigation(
                 selectedDestination = selectedDestination,
@@ -147,29 +153,32 @@ fun DpisWorkspaceShell(
                 bottomBar = {
                     // Include horizontal display-cutout insets so the bar's colored surface
                     // reaches the camera-safe edge in landscape instead of being clipped.
-                    NavigationBar(windowInsets = bottomNavigationSurfaceInsets()) {
-                        DpisWorkspaceDestination.entries.forEach { destination ->
-                            val label = stringResource(destination.labelRes)
-                            val onDestinationClick = rememberDpisConfirmAction {
-                                if (destination != selectedDestination) {
-                                    onDestinationSelected(destination)
+                    NavigationBar(
+                        containerColor = navigationContainerColor,
+                        windowInsets = bottomNavigationSurfaceInsets()
+                    ) {
+                            DpisWorkspaceDestination.entries.forEach { destination ->
+                                val label = stringResource(destination.labelRes)
+                                val onDestinationClick = rememberDpisConfirmAction {
+                                    if (destination != selectedDestination) {
+                                        onDestinationSelected(destination)
+                                    }
                                 }
+                                NavigationBarItem(
+                                    selected = destination == selectedDestination,
+                                    onClick = onDestinationClick,
+                                    icon = {
+                                        Icon(
+                                            painter = painterResource(destination.iconRes),
+                                            contentDescription = label
+                                        )
+                                    },
+                                    label = { Text(label) },
+                                    // Match the established bottom-navigation density: only
+                                    // the active destination exposes its text label.
+                                    alwaysShowLabel = false
+                                )
                             }
-                            NavigationBarItem(
-                                selected = destination == selectedDestination,
-                                onClick = onDestinationClick,
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(destination.iconRes),
-                                        contentDescription = label
-                                    )
-                                },
-                                label = { Text(label) },
-                                // Match the established bottom-navigation density: only
-                                // the active destination exposes its text label.
-                                alwaysShowLabel = false
-                            )
-                        }
                     }
                 },
                 // The legacy workspace root still owns all system-bar and cutout
@@ -191,7 +200,7 @@ fun DpisWorkspaceShell(
                         modifier = Modifier
                             .width(WorkspaceRailWidth + startCutout)
                             .fillMaxHeight()
-                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .background(navigationContainerColor)
                     ) {
                         NavigationRail(
                             modifier = Modifier
@@ -233,7 +242,7 @@ fun DpisWorkspaceShell(
                 drawerContent = {
                     PermanentDrawerSheet(
                         modifier = Modifier.width(WorkspaceDrawerWidth),
-                        drawerContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        drawerContainerColor = navigationContainerColor,
                         windowInsets = navigationSurfaceInsets()
                     ) {
                         Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {

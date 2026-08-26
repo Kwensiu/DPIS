@@ -368,7 +368,6 @@ Mini Programs are not supported yet.</string>
     <string name="dialog_font_hook_group_web">Web</string>
     <string name="dialog_font_hook_group_cross_runtime">Cross runtime</string>
     <string name="dialog_font_hook_domain_resources_font">Resources font</string>
-    <string name="dialog_font_hook_domain_resources_font_warning">Performance issue, disabled by default</string>
     <string name="dialog_font_hook_domain_system_server_font" translatable="false">system_server_font</string>
     <string name="dialog_font_hook_domain_activity_thread_font" translatable="false">activity_thread_font</string>
     <string name="dialog_font_hook_domain_textview_sp_rewrite">TextView sp rewrite</string>

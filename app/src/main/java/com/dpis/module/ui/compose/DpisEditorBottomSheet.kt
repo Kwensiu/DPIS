@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -12,15 +13,19 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.R
 
@@ -61,7 +66,7 @@ fun DpisEditorBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 0.dp,
         contentWindowInsets = contentWindowInsets,
         // The visual white line is content, not a Material drag-handle semantic.
@@ -72,6 +77,35 @@ fun DpisEditorBottomSheet(
     }
 }
 
+/** Shared child-page header inside an expanded editor sheet. */
+@Composable
+internal fun EditorSheetChildPageHeader(
+    title: String,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(AppConfigSheetUiTokens.ChildPageHeaderHeight)
+            .padding(horizontal = AppConfigSheetUiTokens.ChildPageHorizontalPadding),
+        contentAlignment = Alignment.Center,
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.align(Alignment.CenterStart),
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_back_24),
+                contentDescription = stringResource(R.string.system_settings_back),
+            )
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+        )
+    }
+}
 @Composable
 fun DpisSheetVisualChrome(showUnsaved: Boolean = false) {
     Box(

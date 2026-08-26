@@ -3,6 +3,7 @@ package com.dpis.module
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import com.dpis.module.settings.AppLocaleManager
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
@@ -28,6 +29,12 @@ abstract class LocalizedActivity : ComponentActivity() {
         activeInterfaceScalePercent = AppUiScaleManager.getEffectiveScalePercent(this)
         activeAppearance = ThemeModeStore.getAppearance(this)
         super.onCreate(savedInstanceState)
+        // Keep every user-visible Activity on the same edge-to-edge window contract.
+        // Individual content surfaces remain responsible for their own safe-area insets.
+        enableEdgeToEdge()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
     }
 
     override fun onResume() {
