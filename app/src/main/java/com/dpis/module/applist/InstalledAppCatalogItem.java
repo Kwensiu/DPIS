@@ -7,6 +7,8 @@ public final class InstalledAppCatalogItem {
     public final String label;
     public final String packageName;
     public final boolean systemApp;
+    public final long firstInstallTime;
+    public final long lastUpdateTime;
     public final boolean hyperOsNativeProxyCandidate;
     final ApplicationInfo applicationInfo;
     public volatile Drawable icon;
@@ -16,10 +18,14 @@ public final class InstalledAppCatalogItem {
             boolean systemApp,
             boolean hyperOsNativeProxyCandidate,
             ApplicationInfo applicationInfo,
-            Drawable icon) {
+            Drawable icon,
+            long firstInstallTime,
+            long lastUpdateTime) {
         this.label = label;
         this.packageName = packageName;
         this.systemApp = systemApp;
+        this.firstInstallTime = firstInstallTime;
+        this.lastUpdateTime = lastUpdateTime;
         this.hyperOsNativeProxyCandidate = hyperOsNativeProxyCandidate;
         this.applicationInfo = applicationInfo;
         this.icon = icon;

@@ -3359,14 +3359,8 @@ public final class MainActivity
                         templates,
                         new QuickTemplateSortDialog.Host() {
                     @Override
-                    public boolean saveOrder(List<String> orderedIds) {
+                    public boolean onOrderChanged(List<String> orderedIds) {
                         return new QuickTemplateStore(MainActivity.this).reorder(orderedIds);
-                    }
-
-                    @Override
-                    public void onOrderSaved() {
-                        showToast(R.string.quick_template_sort_saved);
-                        bindTemplateWorkspace();
                     }
 
                     @Override

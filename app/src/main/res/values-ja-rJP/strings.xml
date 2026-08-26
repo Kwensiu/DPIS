@@ -241,8 +241,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="quick_template_create_action">新規テンプレート</string>
     <string name="quick_template_sort_action">テンプレートを並べ替え</string>
     <string name="quick_template_sort_title">テンプレート順序</string>
-    <string name="quick_template_sort_save">保存</string>
-    <string name="quick_template_sort_saved">テンプレート順序を保存しました</string>
+    <string name="quick_template_sort_done">完了</string>
     <string name="quick_template_sort_failed">テンプレート順序の保存に失敗しました</string>
     <string name="quick_template_sort_drag_handle">ドラッグして並べ替え</string>
     <string name="quick_template_search_empty">一致するテンプレートはありません。</string>

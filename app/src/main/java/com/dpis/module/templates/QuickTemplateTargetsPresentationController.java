@@ -38,15 +38,19 @@ public final class QuickTemplateTargetsPresentationController {
         public final boolean systemApp;
         public final Drawable icon;
         public final boolean selected;
+        public final long firstInstallTime;
+        public final long lastUpdateTime;
 
         TargetApp(String label, String packageName, boolean configured, boolean systemApp,
-                Drawable icon, boolean selected) {
+                Drawable icon, boolean selected, long firstInstallTime, long lastUpdateTime) {
             this.label = label;
             this.packageName = packageName;
             this.configured = configured;
             this.systemApp = systemApp;
             this.icon = icon;
             this.selected = selected;
+            this.firstInstallTime = firstInstallTime;
+            this.lastUpdateTime = lastUpdateTime;
         }
     }
 
@@ -60,13 +64,15 @@ public final class QuickTemplateTargetsPresentationController {
         public final boolean showSystemApps;
         public final boolean showUserApps;
         public final boolean showAllApps;
-        public final boolean hideConfiguredApps;
+        public final boolean showConfiguredApps;
+        public final int sortMode;
+        public final boolean reverseOrder;
         public final boolean loading;
         public final boolean missingTemplate;
 
         State(String templateId, String templateName, List<TargetApp> apps, int selectedCount,
                 boolean hasUnsavedChanges,
-                String query, boolean showSystemApps, boolean showUserApps, boolean showAllApps, boolean hideConfiguredApps, boolean loading,
+                String query, boolean showSystemApps, boolean showUserApps, boolean showAllApps, boolean showConfiguredApps, int sortMode, boolean reverseOrder, boolean loading,
                 boolean missingTemplate) {
             this.templateId = templateId;
             this.templateName = templateName;
@@ -77,7 +83,9 @@ public final class QuickTemplateTargetsPresentationController {
             this.showSystemApps = showSystemApps;
             this.showUserApps = showUserApps;
             this.showAllApps = showAllApps;
-            this.hideConfiguredApps = hideConfiguredApps;
+            this.showConfiguredApps = showConfiguredApps;
+            this.sortMode = sortMode;
+            this.reverseOrder = reverseOrder;
             this.loading = loading;
             this.missingTemplate = missingTemplate;
         }
@@ -96,7 +104,12 @@ public final class QuickTemplateTargetsPresentationController {
     private static final String KEY_SHOW_SYSTEM_APPS = "show_system_apps";
     private static final String KEY_SHOW_USER_APPS = "show_user_apps";
     private static final String KEY_SHOW_ALL_APPS = "show_all_apps";
-    private static final String KEY_HIDE_CONFIGURED_APPS = "hide_configured_apps";
+    private static final String KEY_SHOW_CONFIGURED_APPS = "show_configured_apps";
+    private static final String KEY_SORT_MODE = "sort_mode";
+    private static final String KEY_REVERSE_ORDER = "reverse_order";
+    public static final int SORT_NAME = 0;
+    public static final int SORT_UPDATED = 1;
+    public static final int SORT_INSTALLED = 2;
 
     private final Context context;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -117,7 +130,9 @@ public final class QuickTemplateTargetsPresentationController {
     private boolean showSystemApps;
     private boolean showUserApps;
     private boolean showAllApps;
-    private boolean hideConfiguredApps;
+    private boolean showConfiguredApps;
+    private int sortMode;
+    private boolean reverseOrder;
     private boolean loading;
     private boolean missingTemplate;
     private int requestId;
@@ -129,9 +144,11 @@ public final class QuickTemplateTargetsPresentationController {
         filters = context.getSharedPreferences(FILTER_PREFS_NAME, Context.MODE_PRIVATE);
         packageConfigs = new PackageConfigRepository(DpisApplication.getActiveHookConfigStore(context));
         showSystemApps = filters.getBoolean(KEY_SHOW_SYSTEM_APPS, false);
-        showUserApps = filters.getBoolean(KEY_SHOW_USER_APPS, true);
-        showAllApps = filters.getBoolean(KEY_SHOW_ALL_APPS, false);
-        hideConfiguredApps = filters.getBoolean(KEY_HIDE_CONFIGURED_APPS, false);
+        showUserApps = filters.getBoolean(KEY_SHOW_USER_APPS, false);
+        showAllApps = filters.getBoolean(KEY_SHOW_ALL_APPS, true);
+        showConfiguredApps = filters.getBoolean(KEY_SHOW_CONFIGURED_APPS, true);
+        sortMode = filters.getInt(KEY_SORT_MODE, SORT_NAME);
+        reverseOrder = filters.getBoolean(KEY_REVERSE_ORDER, false);
         catalog = new InstalledAppCatalogCoordinator(new InstalledAppCatalogCoordinator.Host() {
             @Override public PackageManager getPackageManager() { return context.getPackageManager(); }
             @Override public String getSelfPackageName() { return context.getPackageName(); }
@@ -164,15 +181,19 @@ public final class QuickTemplateTargetsPresentationController {
 
     public void setQuery(String value) { query = value != null ? value : ""; publish(); }
 
-    public void setFilters(boolean showAll, boolean showSystem, boolean showUser, boolean hideConfigured) {
+    public void setFilters(boolean showAll, boolean showSystem, boolean showUser, boolean showConfigured, int sortMode, boolean reverseOrder) {
         showAllApps = showAll;
         showSystemApps = showSystem;
         showUserApps = showUser;
-        hideConfiguredApps = hideConfigured;
+        showConfiguredApps = showConfigured;
+        this.sortMode = sortMode;
+        this.reverseOrder = reverseOrder;
         filters.edit().putBoolean(KEY_SHOW_SYSTEM_APPS, showSystem)
                 .putBoolean(KEY_SHOW_USER_APPS, showUser)
                 .putBoolean(KEY_SHOW_ALL_APPS, showAll)
-                .putBoolean(KEY_HIDE_CONFIGURED_APPS, hideConfigured).apply();
+                .putBoolean(KEY_SHOW_CONFIGURED_APPS, showConfigured)
+                .putInt(KEY_SORT_MODE, sortMode)
+                .putBoolean(KEY_REVERSE_ORDER, reverseOrder).apply();
         publish();
     }
 
@@ -205,7 +226,7 @@ public final class QuickTemplateTargetsPresentationController {
                 for (InstalledAppCatalogItem item : catalog.loadInstalledAppCatalogWithIcons(false)) {
                     next.add(new RawTargetApp(item.label, item.packageName,
                             packageConfigs.hasRealPackageConfig(item.packageName), item.systemApp,
-                            item.icon));
+                            item.icon, item.firstInstallTime, item.lastUpdateTime));
                 }
                 loaded = next;
             } catch (Throwable throwable) {
@@ -239,32 +260,45 @@ public final class QuickTemplateTargetsPresentationController {
         String normalizedQuery = query.trim().toLowerCase(Locale.ROOT);
         for (RawTargetApp item : allApps) {
             boolean selected = selectedPackages.contains(item.packageName);
-            if ((!showAllApps && item.systemApp && !showSystemApps)
-                    || (!showAllApps && !item.systemApp && !showUserApps)
-                    || (hideConfiguredApps && item.configured && !selected)) continue;
+            if ((!showAllApps && item.systemApp && !showSystemApps
+                    && !(showConfiguredApps && item.configured))
+                    || (!showAllApps && !item.systemApp && !showUserApps
+                    && !(showConfiguredApps && item.configured))
+                    || (!showConfiguredApps && item.configured)) continue;
             if (!normalizedQuery.isEmpty() && !item.label.toLowerCase(Locale.ROOT).contains(normalizedQuery)
                     && !item.packageName.toLowerCase(Locale.ROOT).contains(normalizedQuery)) continue;
             visible.add(new TargetApp(item.label, item.packageName, item.configured, item.systemApp,
-                    item.icon, selected));
+                    item.icon, selected, item.firstInstallTime, item.lastUpdateTime));
         }
         // Keep the session's persisted targets visible first, followed by configured apps.
         // List.sort is stable, so catalog order remains unchanged within each priority group.
-        visible.sort((left, right) -> Integer.compare(
+        visible.sort((left, right) -> {
+            int priority = Integer.compare(
                 QuickTemplateTargetOrdering.priority(
                         savedSelectedPackages.contains(left.packageName), left.configured),
                 QuickTemplateTargetOrdering.priority(
-                        savedSelectedPackages.contains(right.packageName), right.configured)));
+                    savedSelectedPackages.contains(right.packageName), right.configured));
+            if (priority != 0) return priority;
+            int result;
+            if (sortMode == SORT_UPDATED) result = Long.compare(right.lastUpdateTime, left.lastUpdateTime);
+            else if (sortMode == SORT_INSTALLED) result = Long.compare(right.firstInstallTime, left.firstInstallTime);
+            else result = left.label.compareToIgnoreCase(right.label);
+            return reverseOrder ? -result : result;
+        });
         State state = new State(templateId, templateName, visible, selectedPackages.size(),
                 !selectedPackages.equals(savedSelectedPackages), query,
-                showSystemApps, showUserApps, showAllApps, hideConfiguredApps, loading, missingTemplate);
+                showSystemApps, showUserApps, showAllApps, showConfiguredApps, sortMode, reverseOrder, loading, missingTemplate);
         for (Listener listener : new LinkedHashSet<>(listeners)) listener.onStateChanged(state);
     }
 
     private static final class RawTargetApp {
         final String label; final String packageName; final boolean configured; final boolean systemApp; final Drawable icon;
-        RawTargetApp(String label, String packageName, boolean configured, boolean systemApp, Drawable icon) {
+        final long firstInstallTime; final long lastUpdateTime;
+        RawTargetApp(String label, String packageName, boolean configured, boolean systemApp, Drawable icon,
+                long firstInstallTime, long lastUpdateTime) {
             this.label = label; this.packageName = packageName; this.configured = configured;
             this.systemApp = systemApp; this.icon = icon;
+            this.firstInstallTime = firstInstallTime; this.lastUpdateTime = lastUpdateTime;
         }
 
     }

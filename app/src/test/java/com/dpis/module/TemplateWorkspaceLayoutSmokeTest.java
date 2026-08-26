@@ -96,7 +96,8 @@ public class TemplateWorkspaceLayoutSmokeTest {
         String sortDialog = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt");
         assertTrue(sortDialog.contains("QuickTemplateSortContent("));
-        assertTrue(sortDialog.contains("detectDragGesturesAfterLongPress"));
+        assertTrue(sortDialog.contains("ReorderableItem"));
+        assertTrue(sortDialog.contains("longPressDraggableHandle"));
         assertTrue(sortDialog.contains("R.drawable.ic_drag_indicator_24"));
         assertTrue(strings.contains("<string name=\"template_workspace_action_apply\">Apply</string>"));
         assertTrue(strings.contains("<string name=\"template_workspace_summary_empty\">No custom values</string>"));

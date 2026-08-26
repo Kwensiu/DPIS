@@ -176,8 +176,7 @@ Mini Programs are not supported yet.</string>
     <string name="quick_template_create_action">Новый шаблон</string>
     <string name="quick_template_sort_action">Сортировать шаблоны</string>
     <string name="quick_template_sort_title">Порядок заполнения шаблона</string>
-    <string name="quick_template_sort_save">Сохранить</string>
-    <string name="quick_template_sort_saved">Заказ шаблона сохранен</string>
+    <string name="quick_template_sort_done">Готово</string>
     <string name="quick_template_sort_failed">Не удалось сохранить порядок шаблонов</string>
     <string name="quick_template_sort_drag_handle">Перетащите для изменения порядка</string>
     <string name="quick_template_search_empty">Шаблонов, соответствующих запросу, не найдено.</string>

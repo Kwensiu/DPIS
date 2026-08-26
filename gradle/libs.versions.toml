@@ -26,6 +26,7 @@ androidxTestCore = "1.7.0"
 baselineProfile = "1.5.0-alpha07"
 uiautomator = "2.3.0"
 materialKolor = "5.0.0-alpha07"
+reorderable = "3.1.0"
 
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
@@ -70,3 +71,4 @@ androidx-test-runner = { group = "androidx.test", name = "runner", version.ref =
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "baselineProfile" }
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }

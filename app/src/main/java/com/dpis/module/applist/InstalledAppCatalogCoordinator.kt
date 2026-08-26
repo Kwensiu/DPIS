@@ -167,6 +167,12 @@ class InstalledAppCatalogCoordinator(
                         false,
                         applicationInfo,
                         null,
+                        runCatching {
+                            packageManager.getPackageInfo(applicationInfo.packageName, 0).firstInstallTime
+                        }.getOrDefault(0L),
+                        runCatching {
+                            packageManager.getPackageInfo(applicationInfo.packageName, 0).lastUpdateTime
+                        }.getOrDefault(0L),
                     )
                 }
                 .sortedWith(
