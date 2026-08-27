@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -214,12 +215,20 @@ fun QuickTemplateTargetsContent(
                                 }
                             }
                             current.apps.isEmpty() -> {
-                                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                                     Text(
                                         text = stringResource(R.string.quick_template_targets_empty),
-                                        modifier = Modifier.padding(24.dp),
+                                        modifier = Modifier.padding(bottom = 8.dp),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                    if (!current.missingTemplate && (current.query.isNotBlank() || !current.showAllApps || current.showConfiguredApps || current.sortMode != QuickTemplateTargetsPresentationController.SORT_NAME || current.reverseOrder)) {
+                                        Button(onClick = {
+                                            onQueryChanged("")
+                                            onFiltersChanged(true, false, false, true, QuickTemplateTargetsPresentationController.SORT_NAME, false)
+                                        }, shape = RoundedCornerShape(50)) {
+                                            Text(stringResource(R.string.reset_filters_button))
+                                        }
+                                    }
                                 }
                             }
                             else -> {
@@ -346,9 +355,10 @@ fun QuickTemplateTargetsContent(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     FilterChip(
                         selected = current.showAllApps,
@@ -361,7 +371,8 @@ fun QuickTemplateTargetsContent(
                             onFiltersChanged(false, !current.showSystemApps, current.showUserApps,
                                 current.showConfiguredApps, current.sortMode, current.reverseOrder)
                         },
-                        label = { Text(stringResource(R.string.quick_template_targets_filter_system)) }
+                        label = { Text(stringResource(R.string.quick_template_targets_filter_system)) },
+                        leadingIcon = if (current.showSystemApps && !current.showAllApps) { { Icon(painterResource(R.drawable.ic_check_24), contentDescription = null) } } else null
                     )
                     FilterChip(
                         selected = current.showUserApps,
@@ -369,12 +380,13 @@ fun QuickTemplateTargetsContent(
                             onFiltersChanged(false, current.showSystemApps, !current.showUserApps,
                                 current.showConfiguredApps, current.sortMode, current.reverseOrder)
                         },
-                        label = { Text(stringResource(R.string.quick_template_targets_filter_user)) }
+                        label = { Text(stringResource(R.string.quick_template_targets_filter_user)) },
+                        leadingIcon = if (current.showUserApps && !current.showAllApps) { { Icon(painterResource(R.drawable.ic_check_24), contentDescription = null) } } else null
                     )
                 }
-                Spacer(Modifier.height(0.dp))
+                Spacer(Modifier.height(4.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().offset(y = (-8).dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Start
                 ) {
                     FilterChip(
@@ -406,9 +418,10 @@ fun QuickTemplateTargetsContent(
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     FilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_NAME,

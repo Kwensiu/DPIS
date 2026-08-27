@@ -526,7 +526,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:minWidth="0dp"
-                            android:text="@string/scope_add_button"
+                            android:text="@string/dialog_scope_apply"
                         />
 
                         <com.google.android.material.button.MaterialButton
@@ -539,7 +539,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:minWidth="0dp"
-                            android:text="@string/dialog_dpis_disable_button"
+                            android:text="@string/dialog_config_disable"
                         />
 
                         <com.google.android.material.button.MaterialButton

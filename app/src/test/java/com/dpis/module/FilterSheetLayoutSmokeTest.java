@@ -13,7 +13,7 @@ public class FilterSheetLayoutSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(layout.contains("R.string.filter_show_system_apps"));
-        assertTrue(layout.contains("R.string.filter_injected_only"));
+        assertTrue(layout.contains("R.string.filter_scoped_only"));
         assertTrue(layout.contains("R.string.filter_width_only"));
         assertTrue(layout.contains("R.string.filter_font_only"));
         assertTrue(layout.contains("R.dimen.filter_sheet_drag_handle_width"));
@@ -26,7 +26,7 @@ public class FilterSheetLayoutSmokeTest {
         assertTrue(!layout.contains("android:id=\"@+id/filter_apply_button\""));
         assertTrue(layout.contains("R.dimen.filter_sheet_first_switch_spacing_top"));
         assertTrue(strings.contains("filter_show_system_apps"));
-        assertTrue(strings.contains("filter_injected_only"));
+        assertTrue(strings.contains("filter_scoped_only"));
         assertTrue(strings.contains("filter_width_only"));
         assertTrue(strings.contains("filter_font_only"));
         assertTrue(!strings.contains("filter_sheet_subtitle"));

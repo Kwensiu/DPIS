@@ -202,7 +202,6 @@ Mini Programs are not supported yet.</string>
     <string name="filter_button">Фильтр</string>
     <string name="scope_add_button">Добавить в список</string>
     <string name="scope_remove_button">Удалить</string>
-    <string name="dialog_scope_button">Область применения</string>
     <string name="scope_add_success">Запрос на добавление области действия: %1$s</string>
     <string name="scope_remove_success">Исключено из области действия: %1$s</string>
     <string name="scope_add_failed">Не удалось добавить в область видимости: %1$s</string>
@@ -215,8 +214,6 @@ Mini Programs are not supported yet.</string>
     <string name="dialog_start_button">Запуск</string>
     <string name="dialog_restart_button">Перезапустить</string>
     <string name="dialog_stop_button">Стоп</string>
-    <string name="dialog_dpis_enable_button">Включить</string>
-    <string name="dialog_dpis_disable_button">Включено</string>
     <string name="dialog_font_hook_domains_title">Цепочка хуков</string>
     <string name="dialog_font_hook_domains_title_with_count">Хук (%1$d/%2$d)</string>
     <string name="dialog_font_hook_domains_dialog_title">Пользовательская цепочка хуков</string>
@@ -273,7 +270,7 @@ Mini Programs are not supported yet.</string>
     <string name="dialog_close_button">Закрыть</string>
     <string name="filter_sheet_title">Фильтр списка</string>
     <string name="filter_show_system_apps">Показать системные приложения</string>
-    <string name="filter_injected_only">Только измененные</string>
+    <string name="filter_scoped_only">Только в scope</string>
     <string name="filter_width_only">Настроенная минимальная ширина</string>
     <string name="filter_font_only">Шрифт настроен</string>
     <string name="quick_template_targets_filter_hide_configured">Скрыть настроенные приложения</string>
@@ -432,8 +429,8 @@ Mini Programs are not supported yet.</string>
     <string name="settings_language_label">Язык</string>
     <string name="settings_language_dialog_title">Выберите язык</string>
     <string name="settings_language_follow_system">Как в системе </string>
-    <string name="app_status_injected">Измененный</string>
-    <string name="app_status_not_injected">Не изменен</string>
+    <string name="app_status_scoped">В scope</string>
+    <string name="app_status_unscoped">Не в scope</string>
     <string name="app_status_enabled">Включено</string>
     <string name="app_status_disabled">Откл</string>
     <string name="app_status_not_enabled">Не включено</string>

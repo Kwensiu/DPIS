@@ -87,7 +87,7 @@ internal fun AppFilterContent(showSystemInitial: Boolean, injectedInitial: Boole
             color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(dimensionResource(R.dimen.filter_sheet_first_switch_spacing_top)))
         FilterSwitch(R.string.filter_show_system_apps, showSystem, "filter_show_system") { showSystem = it; publish() }
-        FilterSwitch(R.string.filter_injected_only, injected) { injected = it; publish() }
+        FilterSwitch(R.string.filter_scoped_only, injected) { injected = it; publish() }
         FilterSwitch(R.string.filter_width_only, width) { width = it; publish() }
         FilterSwitch(R.string.filter_font_only, font) { font = it; publish() }
     }

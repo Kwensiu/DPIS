@@ -40,7 +40,7 @@ internal fun DpisHorizontalScrollWithEdgeFade(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .heightIn(min = 40.dp)
             .drawWithContent {
                 drawContent()
                 val edgePx = edgeWidth.toPx()

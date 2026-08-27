@@ -267,7 +267,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="filter_button">フィルター</string>
     <string name="scope_add_button">scope に追加</string>
     <string name="scope_remove_button">削除</string>
-    <string name="dialog_scope_button">scope</string>
     <string name="scope_add_success">scope 追加を要求しました: %1$s</string>
     <string name="scope_remove_success">scope から削除しました: %1$s</string>
     <string name="scope_add_failed">scope への追加に失敗しました: %1$s</string>
@@ -280,8 +279,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="dialog_start_button">起動</string>
     <string name="dialog_restart_button">再起動</string>
     <string name="dialog_stop_button">停止</string>
-    <string name="dialog_dpis_enable_button">有効化</string>
-    <string name="dialog_dpis_disable_button">有効</string>
     <string name="dialog_font_hook_domains_title">Hook チェーン</string>
     <string name="dialog_font_hook_domains_title_with_count">Hook (%1$d/%2$d)</string>
     <string name="dialog_font_hook_domains_dialog_title">カスタム Hook チェーン</string>
@@ -339,7 +336,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="dialog_close_button">閉じる</string>
     <string name="filter_sheet_title">リストフィルター</string>
     <string name="filter_show_system_apps">システムアプリを表示</string>
-    <string name="filter_injected_only">Injected のみ</string>
+    <string name="filter_scoped_only">Scoped のみ</string>
     <string name="filter_width_only">最小幅設定済み</string>
     <string name="filter_font_only">フォント設定済み</string>
     <string name="quick_template_targets_filter_hide_configured">設定済みアプリを非表示</string>
@@ -498,8 +495,8 @@ Mini Programs はまだサポートされていません。</string>
     <string name="settings_language_label">言語</string>
     <string name="settings_language_dialog_title">言語を選択</string>
     <string name="settings_language_follow_system">システムに従う</string>
-    <string name="app_status_injected">Injected</string>
-    <string name="app_status_not_injected">Not injected</string>
+    <string name="app_status_scoped">Scoped</string>
+    <string name="app_status_unscoped">Unscoped</string>
     <string name="app_status_enabled">有効</string>
     <string name="app_status_disabled">無効</string>
     <string name="app_status_not_enabled">未有効</string>

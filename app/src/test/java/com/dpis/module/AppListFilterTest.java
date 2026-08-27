@@ -217,7 +217,7 @@ public class AppListFilterTest {
 
     @Test
     public void advancedFiltersCanHideSystemAppsAndRequireInjectedWidthConfig() {
-        AppListFilterState state = new AppListFilterState(false, true, true, false);
+        AppListFilterState state = new AppListFilterState(AppListFilterState.AppType.USER, true, false, false, AppListFilterState.SortOrder.NAME, false);
 
         assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -257,7 +257,7 @@ public class AppListFilterTest {
                 "Coolapk",
                 "com.coolapk.market",
                 false,
-                true,
+                false,
                 null,
                 null,
                 FontApplyMode.OFF,
@@ -267,7 +267,7 @@ public class AppListFilterTest {
 
     @Test
     public void advancedFiltersCanRequireEnabledFontConfig() {
-        AppListFilterState state = new AppListFilterState(true, false, false, true);
+        AppListFilterState state = new AppListFilterState(AppListFilterState.AppType.ALL, false, false, true, AppListFilterState.SortOrder.NAME, false);
 
         assertTrue(matches("",
                 AppListFilter.Tab.ALL_APPS,
@@ -308,7 +308,9 @@ public class AppListFilterTest {
     public void defaultFilterStateStartsWithEveryToggleOff() {
         AppListFilterState state = AppListFilterState.defaultState();
 
-        assertFalse(state.showSystemApps());
+        assertTrue(state.allAppsSelected());
+        assertFalse(state.userAppsSelected());
+        assertFalse(state.systemAppsSelected());
         assertFalse(state.injectedOnly());
         assertFalse(state.widthConfiguredOnly());
         assertFalse(state.fontConfiguredOnly());

@@ -3,6 +3,7 @@ import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
 
 import com.dpis.module.applist.AppListFilterState;
 
@@ -174,6 +175,13 @@ final class MainViewModel {
         int requestId = loadCoordinator.onLoadRequested();
         if (requestId == AppLoadCoordinator.NO_REQUEST) {
             return Collections.emptyList();
+        }
+        // An empty snapshot is not a settled empty state while the initial catalog request is
+        // running. Mark both tabs only for that initial load; explicit refreshes already mark
+        // their selected page and must not make the other page flash a loading state.
+        if (state.appsSnapshot().isEmpty()) {
+            state = state.withRefreshingPage(AppListPage.ALL_APPS, true)
+                    .withRefreshingPage(AppListPage.CONFIGURED_APPS, true);
         }
         return Collections.singletonList(createAppsLoadRequest(requestId));
     }

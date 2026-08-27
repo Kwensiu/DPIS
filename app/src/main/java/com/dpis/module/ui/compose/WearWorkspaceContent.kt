@@ -148,7 +148,7 @@ private fun WearAppFilterPage(
         }
         wearSwitch(
             key = "injected-only",
-            label = R.string.filter_injected_only,
+            label = R.string.filter_scoped_only,
             checked = filterState.injectedOnly(),
             enabled = true,
         ) { checked ->
@@ -224,8 +224,8 @@ internal fun WearAppConfigEditorContent(state: EditorPresentation.State) {
             onBack = closeOrBack
         )
         else -> WearWorkspaceList(title = R.string.dialog_title) {
-            wearSwitch("scope", R.string.dialog_scope_button, state.isScopeSelected, true) { state.actions.toggleScope() }
-            wearSwitch("enabled", R.string.dialog_dpis_enable_button, state.isDpisEnabled, true) { state.actions.toggleDpisEnabled() }
+            wearSwitch("scope", if (state.isScopeSelected) R.string.dialog_scope_in_scope else R.string.dialog_scope_apply, state.isScopeSelected, true) { state.actions.toggleScope() }
+            wearSwitch("enabled", if (state.isDpisEnabled) R.string.dialog_config_disable else R.string.dialog_config_disabled, state.isDpisEnabled, true) { state.actions.toggleDpisEnabled() }
             wearTextFieldModeRow(
                 key = "viewport",
                 value = state.draft.viewportInputFor(state.draft.viewportMode),

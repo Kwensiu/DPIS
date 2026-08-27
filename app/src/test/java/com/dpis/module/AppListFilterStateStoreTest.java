@@ -8,6 +8,7 @@ import com.dpis.module.applist.AppListFilterStateStore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class AppListFilterStateStoreTest {
@@ -17,7 +18,9 @@ public class AppListFilterStateStoreTest {
 
         AppListFilterState state = store.load();
 
-        assertFalse(state.showSystemApps());
+        assertTrue(state.allAppsSelected());
+        assertFalse(state.userAppsSelected());
+        assertFalse(state.systemAppsSelected());
         assertFalse(state.injectedOnly());
         assertFalse(state.widthConfiguredOnly());
         assertFalse(state.fontConfiguredOnly());
@@ -28,13 +31,13 @@ public class AppListFilterStateStoreTest {
         FakePrefs prefs = new FakePrefs();
         AppListFilterStateStore store = new AppListFilterStateStore(prefs);
 
-        assertTrue(store.save(new AppListFilterState(true, true, true, true)));
+        assertTrue(store.save(new AppListFilterState(AppListFilterState.AppType.ALL, false, false, true, AppListFilterState.SortOrder.UPDATED, true)));
 
         AppListFilterState restored = new AppListFilterStateStore(prefs).load();
-        assertTrue(restored.showSystemApps());
-        assertTrue(restored.injectedOnly());
-        assertTrue(restored.widthConfiguredOnly());
+        assertTrue(restored.allAppsSelected());
         assertTrue(restored.fontConfiguredOnly());
+        assertEquals(AppListFilterState.SortOrder.UPDATED, restored.sortOrder());
+        assertTrue(restored.reverseOrder());
     }
 
     @Test
@@ -42,13 +45,30 @@ public class AppListFilterStateStoreTest {
         FakePrefs prefs = new FakePrefs();
         AppListFilterStateStore store = new AppListFilterStateStore(prefs);
 
-        assertTrue(store.save(new AppListFilterState(true, true, true, true)));
+        assertTrue(store.save(new AppListFilterState(AppListFilterState.AppType.SYSTEM, true, false, false, AppListFilterState.SortOrder.INSTALLED, true)));
         assertTrue(store.save(null));
 
         AppListFilterState restored = store.load();
-        assertFalse(restored.showSystemApps());
+        assertTrue(restored.allAppsSelected());
+        assertFalse(restored.userAppsSelected());
+        assertFalse(restored.systemAppsSelected());
         assertFalse(restored.injectedOnly());
         assertFalse(restored.widthConfiguredOnly());
         assertFalse(restored.fontConfiguredOnly());
+    }
+
+    @Test
+    public void saveAndLoadPreservesUserAndSystemSelectionTogether() {
+        FakePrefs prefs = new FakePrefs();
+        AppListFilterState state = new AppListFilterState(
+                false, true, true, false, false, false, false, false, false,
+                AppListFilterState.SortOrder.NAME, false);
+
+        assertTrue(new AppListFilterStateStore(prefs).save(state));
+
+        AppListFilterState restored = new AppListFilterStateStore(prefs).load();
+        assertFalse(restored.allAppsSelected());
+        assertTrue(restored.userAppsSelected());
+        assertTrue(restored.systemAppsSelected());
     }
 }

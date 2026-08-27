@@ -518,7 +518,7 @@ fun AppConfigEditorContent(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
-                ) { Text(stringResource(R.string.dialog_scope_button), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                ) { Text(stringResource(R.string.dialog_scope_in_scope), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             } else {
                 OutlinedButton(
                     onClick = {
@@ -528,9 +528,20 @@ fun AppConfigEditorContent(
                     enabled = state.item.scopeKnown,
                     modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.ActionShape
-                ) { Text(stringResource(R.string.dialog_scope_button), maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                ) { Text(stringResource(R.string.dialog_scope_apply), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
             if (state.isDpisEnabled()) {
+                OutlinedButton(
+                    onClick = {
+                        completeInput()
+                        state.actions.toggleDpisEnabled()
+                    },
+                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
+                    shape = AppConfigSheetUiTokens.ActionShape,
+                ) {
+                    Text(stringResource(R.string.dialog_config_disable), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            } else {
                 Button(
                     onClick = {
                         completeInput()
@@ -543,18 +554,7 @@ fun AppConfigEditorContent(
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 ) {
-                    Text(stringResource(R.string.dialog_dpis_disable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            } else {
-                OutlinedButton(
-                    onClick = {
-                        completeInput()
-                        state.actions.toggleDpisEnabled()
-                    },
-                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
-                    shape = AppConfigSheetUiTokens.ActionShape
-                ) {
-                    Text(stringResource(R.string.dialog_dpis_enable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.dialog_config_disabled), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

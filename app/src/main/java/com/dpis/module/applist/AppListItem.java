@@ -40,6 +40,9 @@ public final class AppListItem {
     public final String fontHookDomainsRaw;
     public final String previewFontHookDomainsRaw;
     public final Drawable icon;
+    /** PackageManager timestamps used only by the app-list ordering contract. */
+    public long firstInstallTime;
+    public long lastUpdateTime;
 
     public AppListItem(String label,
                 String packageName,
@@ -271,6 +274,23 @@ public final class AppListItem {
         return appSpecificConfigActive;
     }
 
+    /** Refreshes the persisted enable switch without rebuilding the catalog snapshot. */
+    public AppListItem withDpisEnabled(boolean enabled) {
+        if (dpisEnabled == enabled) {
+            return this;
+        }
+        AppListItem updated = new AppListItem(
+                label, packageName, inScope, scopeKnown, viewportWidthDp,
+                viewportScaleMilliPercent, viewportMode, viewportTargetType,
+                viewportTargetSpec, fontScalePercent, fontMode, typefaceId,
+                appSpecificConfigActive, wechatDpi, enabled, configured, installed,
+                systemApp, hyperOsNativeProxyCandidate, previewFromGlobalPrefill,
+                fontHookDomainsRaw, previewFontHookDomainsRaw, icon);
+        updated.firstInstallTime = firstInstallTime;
+        updated.lastUpdateTime = lastUpdateTime;
+        return updated;
+    }
+
     /**
      * Returns this app snapshot with only its asynchronously loaded icon replaced.
      * Keeping the rest of the immutable state intact lets both app-list tabs refresh together.
@@ -279,7 +299,7 @@ public final class AppListItem {
         if (icon == updatedIcon) {
             return this;
         }
-        return new AppListItem(
+        AppListItem updated = new AppListItem(
                 label,
                 packageName,
                 inScope,
@@ -304,13 +324,16 @@ public final class AppListItem {
                 previewFontHookDomainsRaw,
                 updatedIcon
         );
+        updated.firstInstallTime = firstInstallTime;
+        updated.lastUpdateTime = lastUpdateTime;
+        return updated;
     }
 
     public AppListItem withGlobalPrefillPreview(TemplateConfigValue prefill) {
         TemplateConfigValue normalized = prefill != null ? prefill : TemplateConfigValue.EMPTY;
         ViewportTargetSpec viewportTargetSpec =
                 TemplateConfigValueAdapters.toViewportTargetSpec(normalized);
-        return new AppListItem(label,
+        AppListItem updated = new AppListItem(label,
                 packageName,
                 inScope,
                 scopeKnown,
@@ -337,13 +360,16 @@ public final class AppListItem {
                 fontHookDomainsRaw,
                 normalized.fontHookDomainsRaw,
                 icon);
+        updated.firstInstallTime = firstInstallTime;
+        updated.lastUpdateTime = lastUpdateTime;
+        return updated;
     }
 
     public AppListItem withWechatDpi(Integer updatedWechatDpi) {
         if (java.util.Objects.equals(wechatDpi, updatedWechatDpi)) {
             return this;
         }
-        return new AppListItem(
+        AppListItem updated = new AppListItem(
                 label,
                 packageName,
                 inScope,
@@ -368,6 +394,9 @@ public final class AppListItem {
                 previewFontHookDomainsRaw,
                 icon
         );
+        updated.firstInstallTime = firstInstallTime;
+        updated.lastUpdateTime = lastUpdateTime;
+        return updated;
     }
 
     private static String normalizeHookDomainsRaw(String value) {

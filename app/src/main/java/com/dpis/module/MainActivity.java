@@ -204,6 +204,15 @@ public final class MainActivity
             = "state.filter.width_only";
     private static final String STATE_FILTER_FONT_ONLY
             = "state.filter.font_only";
+    private static final String STATE_FILTER_DISABLED_ONLY
+            = "state.filter.disabled_only";
+    private static final String STATE_FILTER_TYPEFACE_ONLY
+            = "state.filter.typeface_only";
+    private static final String STATE_FILTER_HOOK_ONLY
+            = "state.filter.hook_only";
+    private static final String STATE_FILTER_APP_TYPE = "state.filter.app_type";
+    private static final String STATE_FILTER_SORT_ORDER = "state.filter.sort_order";
+    private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
     private static final String STATE_TEMPLATE_DETAIL_KIND
@@ -409,13 +418,19 @@ public final class MainActivity
                     ""
             );
             initialFilterState = new AppListFilterState(
-                    savedInstanceState.getBoolean(STATE_FILTER_SHOW_SYSTEM, false),
+                    parseAppType(savedInstanceState.getString(STATE_FILTER_APP_TYPE),
+                            savedInstanceState.getBoolean(STATE_FILTER_SHOW_SYSTEM, false)),
                     savedInstanceState.getBoolean(
                             STATE_FILTER_INJECTED_ONLY,
                             false
                     ),
+                    savedInstanceState.getBoolean(STATE_FILTER_DISABLED_ONLY, false),
                     savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false)
+                    savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false),
+                    savedInstanceState.getBoolean(STATE_FILTER_TYPEFACE_ONLY, false),
+                    savedInstanceState.getBoolean(STATE_FILTER_HOOK_ONLY, false),
+                    parseSortOrder(savedInstanceState.getString(STATE_FILTER_SORT_ORDER)),
+                    savedInstanceState.getBoolean(STATE_FILTER_REVERSE, false)
             );
             initialWorkspaceMode = MainUiState.WorkspaceMode.fromName(
                     savedInstanceState.getString(STATE_WORKSPACE_MODE)
@@ -721,6 +736,21 @@ public final class MainActivity
                 STATE_FILTER_FONT_ONLY,
                 state.filterState.fontConfiguredOnly()
         );
+        outState.putBoolean(
+                STATE_FILTER_DISABLED_ONLY,
+                state.filterState.disabledOnly()
+        );
+        outState.putBoolean(
+                STATE_FILTER_TYPEFACE_ONLY,
+                state.filterState.typefaceConfiguredOnly()
+        );
+        outState.putBoolean(
+                STATE_FILTER_HOOK_ONLY,
+                state.filterState.hookConfiguredOnly()
+        );
+        outState.putString(STATE_FILTER_APP_TYPE, state.filterState.appType().name());
+        outState.putString(STATE_FILTER_SORT_ORDER, state.filterState.sortOrder().name());
+        outState.putBoolean(STATE_FILTER_REVERSE, state.filterState.reverseOrder());
         outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
         outState.putIntArray(
                 STATE_REFRESHING_PAGES,
@@ -1488,6 +1518,28 @@ public final class MainActivity
         applyLandscapeDetailVisibility(false, true);
     }
 
+    private static AppListFilterState.AppType parseAppType(String value, boolean legacyShowSystem) {
+        if (value != null) {
+            try {
+                return AppListFilterState.AppType.valueOf(value);
+            } catch (IllegalArgumentException ignored) {
+                // Fall through to the legacy boolean representation.
+            }
+        }
+        return legacyShowSystem ? AppListFilterState.AppType.ALL : AppListFilterState.AppType.USER;
+    }
+
+    private static AppListFilterState.SortOrder parseSortOrder(String value) {
+        if (value != null) {
+            try {
+                return AppListFilterState.SortOrder.valueOf(value);
+            } catch (IllegalArgumentException ignored) {
+                // Older saved state did not include ordering.
+            }
+        }
+        return AppListFilterState.SortOrder.NAME;
+    }
+
     private QuickTemplateTargetsBinder.Host createQuickTemplateTargetsHost() {
         return new QuickTemplateTargetsBinder.Host() {
             @Override
@@ -1603,6 +1655,12 @@ public final class MainActivity
                 requireUiState().appsSnapshot(), packageName);
         if (item == null) {
             return null;
+        }
+        // The catalogue refresh is asynchronous after the enable switch changes. Resolve this
+        // persisted field directly so reopening the sheet cannot render a stale toggle state.
+        DpisConfigStore store = getHookConfigStore();
+        if (store != null) {
+            item = item.withDpisEnabled(store.isTargetDpisEnabled(packageName));
         }
         TemplateConfigValue globalPrefill = new GlobalPrefillStore(
                 getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
@@ -1746,6 +1804,14 @@ public final class MainActivity
         if (draft == null || !item.packageName.equals(draft.packageName)) {
             EditorDraft lastClosedDraft =
                     mainViewModel.getLastClosedEditingDraft(item.packageName);
+            DpisConfigStore store = getHookConfigStore();
+            if (lastClosedDraft != null && store != null) {
+                // A toggle is persisted immediately, while the closed-session draft is only a
+                // presentation snapshot. Keep its editable values, but never restore a stale
+                // enable switch over the current persisted state.
+                lastClosedDraft = lastClosedDraft.withDpisEnabled(
+                        store.isTargetDpisEnabled(item.packageName));
+            }
             mainViewModel.setEditingDraft(lastClosedDraft);
             mainViewModel.setSavedEditingDraft(lastClosedDraft);
         }

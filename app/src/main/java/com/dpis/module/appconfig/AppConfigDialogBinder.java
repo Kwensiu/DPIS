@@ -1206,9 +1206,9 @@ public final class AppConfigDialogBinder {
         int activeFgColor = MaterialColors.getColor(
                 scopeButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
         scopeButton.setIcon(null);
-        int scopeTextRes = scopeKnown
-                ? (inScope ? R.string.scope_remove_button : R.string.scope_add_button)
-                : R.string.scope_add_button;
+        int scopeTextRes = scopeKnown && inScope
+                ? R.string.dialog_scope_in_scope
+                : R.string.dialog_scope_apply;
         scopeButton.setText(scopeTextRes);
         boolean activeScopeStyle = scopeKnown && inScope;
         scopeButton.setBackgroundTintList(activeScopeStyle
@@ -1227,7 +1227,7 @@ public final class AppConfigDialogBinder {
             int defaultStrokeWidth,
             int defaultTextColor) {
         String buttonText = activity.getString(
-                dpisEnabled ? R.string.dialog_dpis_disable_button : R.string.dialog_dpis_enable_button);
+                dpisEnabled ? R.string.dialog_config_disable : R.string.dialog_config_disabled);
         dpisToggleButton.setText(buttonText);
         dpisToggleButton.setIcon(null);
         int activeBgColor = MaterialColors.getColor(
@@ -1236,9 +1236,9 @@ public final class AppConfigDialogBinder {
                 dpisToggleButton, com.google.android.material.R.attr.colorOnSecondaryContainer);
         boolean enabledActive = dpisEnabled;
         dpisToggleButton.setBackgroundTintList(
-                enabledActive ? ColorStateList.valueOf(activeBgColor) : defaultBgTint);
-        dpisToggleButton.setTextColor(enabledActive ? activeFgColor : defaultTextColor);
-        dpisToggleButton.setStrokeWidth(enabledActive ? 0 : defaultStrokeWidth);
+                enabledActive ? defaultBgTint : ColorStateList.valueOf(activeBgColor));
+        dpisToggleButton.setTextColor(enabledActive ? defaultTextColor : activeFgColor);
+        dpisToggleButton.setStrokeWidth(enabledActive ? defaultStrokeWidth : 0);
         dpisToggleButton.setContentDescription(buttonText);
         dpisToggleButton.setEnabled(true);
         dpisToggleButton.setAlpha(1f);

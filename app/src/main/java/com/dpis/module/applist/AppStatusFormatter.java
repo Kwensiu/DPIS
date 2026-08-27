@@ -166,8 +166,8 @@ public final class AppStatusFormatter {
         android.os.LocaleList locales = resources.getConfiguration().getLocales();
         Locale locale = locales.isEmpty() ? Locale.getDefault() : locales.get(0);
         return new Labels(
-                resources.getString(R.string.app_status_injected),
-                resources.getString(R.string.app_status_not_injected),
+                resources.getString(R.string.app_status_scoped),
+                resources.getString(R.string.app_status_unscoped),
                 resources.getString(R.string.app_status_enabled),
                 resources.getString(R.string.app_status_disabled),
                 resources.getString(R.string.app_status_not_enabled),

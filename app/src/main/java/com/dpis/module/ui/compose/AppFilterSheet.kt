@@ -1,28 +1,25 @@
 package com.dpis.module.ui.compose
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.BuildConfig
 import com.dpis.module.applist.AppListFilterState
 
-/** Main-catalogue filter surface. Values commit immediately through the shared UI state. */
+/** App catalogue filters. Visual grouping mirrors the template target picker, state remains local. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun AppFilterSheet(
@@ -30,121 +27,63 @@ internal fun AppFilterSheet(
     onFilterChanged: (AppListFilterState) -> Unit,
     onDismissRequest: () -> Unit
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismissRequest,
-        dragHandle = null,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 0.dp
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = AppFilterSheetTokens.HorizontalPadding)
-                .padding(vertical = AppFilterSheetTokens.VerticalPadding),
-            verticalArrangement = Arrangement.spacedBy(AppFilterSheetTokens.SwitchGap)
-        ) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    ModalBottomSheet(onDismissRequest = onDismissRequest, dragHandle = null, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                IconButton(onClick = onDismissRequest, modifier = Modifier.size(40.dp).offset(x = (-8).dp)) { Icon(painterResource(R.drawable.ic_close_24), stringResource(R.string.dialog_close)) }
+                Text(stringResource(R.string.app_filter_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.offset(x = (-4).dp))
+                Spacer(Modifier.weight(1f))
+                FilterChip(shape = RoundedCornerShape(50), selected = filterState.reverseOrder(), onClick = { onFilterChanged(filterState.withReverseOrder(!filterState.reverseOrder())) }, label = { Text(stringResource(R.string.app_filter_reverse)) })
+                Spacer(Modifier.width(8.dp))
                 Box(
-                    Modifier
-                        .size(
-                            width = AppFilterSheetTokens.VisualLineWidth,
-                            height = AppFilterSheetTokens.VisualLineHeight
-                        )
-                        .background(
-                            MaterialTheme.colorScheme.outlineVariant,
-                            RoundedCornerShape(AppFilterSheetTokens.VisualLineHeight)
-                        )
-                )
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(50))
+                        .clickable { onFilterChanged(AppListFilterState.defaultState()) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(painterResource(R.drawable.ic_reset_settings_24), stringResource(R.string.app_filter_reset), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
-            Text(
-                stringResource(R.string.filter_sheet_title),
-                modifier = Modifier.padding(top = AppFilterSheetTokens.TitleGap),
-                style = MaterialTheme.typography.titleLarge
-            )
-            AppFilterSwitch(
-                label = R.string.filter_show_system_apps,
-                checked = filterState.showSystemApps(),
-                modifier = Modifier.padding(top = AppFilterSheetTokens.FirstSwitchGap),
-                onCheckedChange = {
-                    onFilterChanged(
-                        AppListFilterState(
-                            it,
-                            filterState.injectedOnly(),
-                            filterState.widthConfiguredOnly(),
-                            filterState.fontConfiguredOnly()
-                        )
-                    )
+            AppFilterLabel(R.string.app_filter_type)
+            ChipRow {
+                FilterChip(selected = filterState.allAppsSelected(), onClick = { onFilterChanged(filterState.withAllApps()) }, label = { Text(stringResource(R.string.app_filter_all)) })
+                FilterChip(selected = !filterState.allAppsSelected() && filterState.systemAppsSelected(), onClick = { onFilterChanged(filterState.withAppTypes(filterState.userAppsSelected(), !filterState.systemAppsSelected())) }, label = { Text(stringResource(R.string.app_filter_system)) }, leadingIcon = if (!filterState.allAppsSelected() && filterState.systemAppsSelected()) { { SelectedChipIcon() } } else null)
+                FilterChip(selected = !filterState.allAppsSelected() && filterState.userAppsSelected(), onClick = { onFilterChanged(filterState.withAppTypes(!filterState.userAppsSelected(), filterState.systemAppsSelected())) }, label = { Text(stringResource(R.string.app_filter_user)) }, leadingIcon = if (!filterState.allAppsSelected() && filterState.userAppsSelected()) { { SelectedChipIcon() } } else null)
+            }
+            AppFilterLabel(R.string.app_filter_configuration)
+            ConfigurationChipRow {
+                FilterChip(selected = filterState.allConfigurationSelected(), onClick = { onFilterChanged(filterState.withConfiguration(false, false, false, false, false, false)) }, label = { Text(stringResource(R.string.app_filter_all)) })
+                if (BuildConfig.FLAVOR != "legacy") {
+                    FilterChip(selected = filterState.injectedOnly(), onClick = { onFilterChanged(filterState.withConfiguration(!filterState.injectedOnly(), filterState.disabledOnly(), filterState.widthConfiguredOnly(), filterState.fontConfiguredOnly(), filterState.typefaceConfiguredOnly(), filterState.hookConfiguredOnly())) }, label = { Text(stringResource(R.string.app_filter_scoped)) }, leadingIcon = if (filterState.injectedOnly()) { { SelectedChipIcon() } } else null)
                 }
-            )
-            AppFilterSwitch(
-                label = R.string.filter_injected_only,
-                checked = filterState.injectedOnly(),
-                onCheckedChange = {
-                    onFilterChanged(
-                        AppListFilterState(
-                            filterState.showSystemApps(),
-                            it,
-                            filterState.widthConfiguredOnly(),
-                            filterState.fontConfiguredOnly()
-                        )
-                    )
-                }
-            )
-            AppFilterSwitch(
-                label = R.string.filter_width_only,
-                checked = filterState.widthConfiguredOnly(),
-                onCheckedChange = {
-                    onFilterChanged(
-                        AppListFilterState(
-                            filterState.showSystemApps(),
-                            filterState.injectedOnly(),
-                            it,
-                            filterState.fontConfiguredOnly()
-                        )
-                    )
-                }
-            )
-            AppFilterSwitch(
-                label = R.string.filter_font_only,
-                checked = filterState.fontConfiguredOnly(),
-                onCheckedChange = {
-                    onFilterChanged(
-                        AppListFilterState(
-                            filterState.showSystemApps(),
-                            filterState.injectedOnly(),
-                            filterState.widthConfiguredOnly(),
-                            it
-                        )
-                    )
-                }
-            )
+                FilterChip(selected = filterState.disabledOnly(), onClick = { onFilterChanged(filterState.withConfiguration(filterState.injectedOnly(), !filterState.disabledOnly(), filterState.widthConfiguredOnly(), filterState.fontConfiguredOnly(), filterState.typefaceConfiguredOnly(), filterState.hookConfiguredOnly())) }, label = { Text(stringResource(R.string.app_filter_disabled)) }, leadingIcon = if (filterState.disabledOnly()) { { SelectedChipIcon() } } else null)
+            }
+            ConfigurationChipRow { FilterChip(selected = filterState.widthConfiguredOnly(), onClick = { onFilterChanged(filterState.withConfiguration(filterState.injectedOnly(), filterState.disabledOnly(), !filterState.widthConfiguredOnly(), filterState.fontConfiguredOnly(), filterState.typefaceConfiguredOnly(), filterState.hookConfiguredOnly())) }, label = { Text(stringResource(R.string.app_filter_viewport)) }, leadingIcon = if (filterState.widthConfiguredOnly()) { { SelectedChipIcon() } } else null); FilterChip(selected = filterState.fontConfiguredOnly(), onClick = { onFilterChanged(filterState.withConfiguration(filterState.injectedOnly(), filterState.disabledOnly(), filterState.widthConfiguredOnly(), !filterState.fontConfiguredOnly(), filterState.typefaceConfiguredOnly(), filterState.hookConfiguredOnly())) }, label = { Text(stringResource(R.string.app_filter_font_scale)) }, leadingIcon = if (filterState.fontConfiguredOnly()) { { SelectedChipIcon() } } else null) }
+            ConfigurationChipRow { FilterChip(selected = filterState.typefaceConfiguredOnly(), onClick = { onFilterChanged(filterState.withConfiguration(filterState.injectedOnly(), filterState.disabledOnly(), filterState.widthConfiguredOnly(), filterState.fontConfiguredOnly(), !filterState.typefaceConfiguredOnly(), filterState.hookConfiguredOnly())) }, label = { Text(stringResource(R.string.app_filter_custom_font)) }, leadingIcon = if (filterState.typefaceConfiguredOnly()) { { SelectedChipIcon() } } else null); FilterChip(selected = filterState.hookConfiguredOnly(), onClick = { onFilterChanged(filterState.withConfiguration(filterState.injectedOnly(), filterState.disabledOnly(), filterState.widthConfiguredOnly(), filterState.fontConfiguredOnly(), filterState.typefaceConfiguredOnly(), !filterState.hookConfiguredOnly())) }, label = { Text(stringResource(R.string.app_filter_custom_hook)) }, leadingIcon = if (filterState.hookConfiguredOnly()) { { SelectedChipIcon() } } else null) }
+            AppFilterLabel(R.string.app_filter_sort)
+            ChipRow {
+                SortChip(filterState, AppListFilterState.SortOrder.NAME, R.string.app_filter_sort_name, onFilterChanged)
+                SortChip(filterState, AppListFilterState.SortOrder.UPDATED, R.string.app_filter_sort_updated, onFilterChanged)
+                SortChip(filterState, AppListFilterState.SortOrder.INSTALLED, R.string.app_filter_sort_installed, onFilterChanged)
+            }
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
 
+@Composable private fun AppFilterLabel(@androidx.annotation.StringRes label: Int) = Text(stringResource(label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 6.dp))
+@Composable private fun ChipRow(content: @Composable FlowRowScope.() -> Unit) = FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
 @Composable
-private fun AppFilterSwitch(
-    @androidx.annotation.StringRes label: Int,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    androidx.compose.foundation.layout.Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
-
-private object AppFilterSheetTokens {
-    val HorizontalPadding = 24.dp
-    val VerticalPadding = 20.dp
-    val VisualLineWidth = 36.dp
-    val VisualLineHeight = 4.dp
-    val TitleGap = 16.dp
-    val FirstSwitchGap = 12.dp
-    val SwitchGap = 8.dp
-}
+private fun ConfigurationChipRow(content: @Composable RowScope.() -> Unit) =
+    DpisHorizontalScrollWithEdgeFade(
+        edgeWidth = 20.dp,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
+@Composable private fun AppTypeChip(state: AppListFilterState, type: AppListFilterState.AppType, label: Int, onChanged: (AppListFilterState) -> Unit) = FilterChip(selected = state.appType() == type, onClick = { onChanged(state.withAppType(type)) }, label = { Text(stringResource(label)) })
+@Composable private fun BooleanChip(selected: Boolean, label: Int, onClick: () -> Unit) = FilterChip(selected = selected, onClick = onClick, label = { Text(stringResource(label)) })
+@Composable private fun SortChip(state: AppListFilterState, sort: AppListFilterState.SortOrder, label: Int, onChanged: (AppListFilterState) -> Unit) = FilterChip(selected = state.sortOrder() == sort, onClick = { onChanged(state.withSortOrder(sort)) }, label = { Text(stringResource(label)) })
+@Composable private fun SelectedChipIcon() { Icon(painterResource(R.drawable.ic_check_24), contentDescription = null, modifier = Modifier.size(18.dp)) }

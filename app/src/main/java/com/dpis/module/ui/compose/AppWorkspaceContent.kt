@@ -228,6 +228,8 @@ fun AppWorkspaceContent(
                             bottomPadding = padding.calculateBottomPadding(),
                             systemScopeSelected = state.systemScopeSelected,
                             actions = state.actions,
+                            query = state.query,
+                            filterState = state.filterState,
                             inputFocusManager = focusManager
                         )
                     }
@@ -310,6 +312,8 @@ private fun AppListPageContent(
     bottomPadding: androidx.compose.ui.unit.Dp,
     systemScopeSelected: Boolean,
     actions: AppWorkspacePresentation.Actions,
+    query: String,
+    filterState: AppListFilterState,
     inputFocusManager: androidx.compose.ui.focus.FocusManager
 ) {
     PullToRefreshBox(
@@ -319,7 +323,18 @@ private fun AppListPageContent(
             .fillMaxSize()
             .clearTextInputFocusOnPointerDown(inputFocusManager)
     ) {
-        if (pageItems.isEmpty()) {
+        if (pageItems.isEmpty() && refreshing) {
+            Column(
+                modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    stringResource(R.string.quick_template_targets_loading),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else if (pageItems.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -329,6 +344,17 @@ private fun AppListPageContent(
                     stringResource(R.string.quick_template_targets_empty),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (query.isNotBlank() || !filterState.isDefaultSelection()) {
+                    androidx.compose.material3.Button(
+                        onClick = {
+                            actions.changeQuery("")
+                            actions.changeFilters(AppListFilterState.defaultState())
+                        },
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(stringResource(R.string.reset_filters_button))
+                    }
+                }
             }
         } else {
             Box(Modifier.fillMaxSize()) {

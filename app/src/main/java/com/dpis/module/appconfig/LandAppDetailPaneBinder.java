@@ -606,11 +606,9 @@ public final class LandAppDetailPaneBinder {
                 scopeButton,
                 com.google.android.material.R.attr.colorOnSecondaryContainer
         );
-        int scopeTextRes = state.scopeKnown
-                ? (state.scopeSelected
-                        ? R.string.scope_remove_button
-                        : R.string.scope_add_button)
-                : R.string.scope_add_button;
+        int scopeTextRes = state.scopeKnown && state.scopeSelected
+                ? R.string.dialog_scope_in_scope
+                : R.string.dialog_scope_apply;
         boolean activeScopeStyle = state.scopeKnown && state.scopeSelected;
         scopeButton.setIcon(null);
         scopeButton.setText(scopeTextRes);
@@ -648,22 +646,19 @@ public final class LandAppDetailPaneBinder {
         );
         String buttonText = activity.getString(
                 state.dpisEnabled
-                        ? R.string.dialog_dpis_disable_button
-                        : R.string.dialog_dpis_enable_button
+                        ? R.string.dialog_config_disable
+                        : R.string.dialog_config_disabled
         );
         boolean enabledActive = state.dpisEnabled;
         dpisToggleButton.setIcon(null);
         dpisToggleButton.setText(buttonText);
         dpisToggleButton.setBackgroundTintList(
-                enabledActive
-                        ? ColorStateList.valueOf(activeBgColor)
-                        : style.defaultBgTint
-        );
+                enabledActive ? style.defaultBgTint : ColorStateList.valueOf(activeBgColor));
         dpisToggleButton.setTextColor(
-                enabledActive ? activeFgColor : style.defaultTextColor
+                enabledActive ? style.defaultTextColor : activeFgColor
         );
         dpisToggleButton.setStrokeWidth(
-                enabledActive ? 0 : style.defaultStrokeWidth
+                enabledActive ? style.defaultStrokeWidth : 0
         );
         dpisToggleButton.setContentDescription(buttonText);
         dpisToggleButton.setEnabled(!state.previewFromGlobalPrefill);

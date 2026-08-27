@@ -123,9 +123,9 @@
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_advanced_row_spacing_top" android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_scope_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_scope_button" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_scope_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_scope_apply" />
 
-            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_dpis_toggle_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/dialog_app_config_process_button_spacing_start" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_dpis_disable_button" />
+            <com.google.android.material.button.MaterialButton android:id="@+id/dialog_dpis_toggle_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="@dimen/dialog_app_config_process_button_spacing_start" android:layout_weight="1" android:minWidth="0dp" android:text="@string/dialog_config_disable" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton android:id="@+id/dialog_disable_button" style="@style/Widget.Dpis.DialogActionButton.Outlined" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/dialog_app_config_disable_button_spacing_top" android:minWidth="0dp" android:paddingStart="@dimen/dialog_app_config_disable_button_padding_horizontal" android:paddingEnd="@dimen/dialog_app_config_disable_button_padding_horizontal" android:text="@string/dialog_disable_button" />

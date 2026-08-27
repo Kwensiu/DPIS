@@ -75,7 +75,7 @@ class InstalledAppCatalogCoordinator(
             val inScope = scopePackages?.contains(item.packageName) == true
             if (item.packageName in configuredPackages) {
                 // Configured rows retain compatibility-aware values used when reopening editors.
-                result += createAppListItem(
+                val listItem = createAppListItem(
                     store,
                     scopePackages,
                     scopeKnown,
@@ -86,8 +86,11 @@ class InstalledAppCatalogCoordinator(
                     true,
                     null,
                 )
+                listItem.firstInstallTime = item.firstInstallTime
+                listItem.lastUpdateTime = item.lastUpdateTime
+                result += listItem
             } else {
-                result += createUnconfiguredAppListItem(
+                val listItem = createUnconfiguredAppListItem(
                     item.label,
                     item.packageName,
                     inScope,
@@ -96,6 +99,9 @@ class InstalledAppCatalogCoordinator(
                     item.hyperOsNativeProxyCandidate,
                     true,
                 )
+                listItem.firstInstallTime = item.firstInstallTime
+                listItem.lastUpdateTime = item.lastUpdateTime
+                result += listItem
             }
         }
         for (packageName in configuredPackagesMissingFromCatalog(configuredPackages, catalog)) {
