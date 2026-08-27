@@ -25,7 +25,6 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertTrue(source.contains("interface Host"));
         assertTrue(source.contains("boolean isActivityAlive()"));
         assertTrue(source.contains("void onDownloadSuccess(File targetFile)"));
-        assertTrue(source.contains("void onSucceeded(File targetFile)"));
         assertTrue(source.contains("void startDownload("));
         assertTrue(source.contains("void cancelActiveDownload()"));
         assertTrue(source.contains("void shutdown()"));

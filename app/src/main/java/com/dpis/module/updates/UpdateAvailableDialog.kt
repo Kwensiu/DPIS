@@ -5,6 +5,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,8 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -29,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -123,10 +125,6 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
         end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
         bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primaryContainer) {
-            Icon(painterResource(R.drawable.ic_refresh_24), null, Modifier.padding(12.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer)
-        }
         Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_title_spacing_top)))
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
@@ -134,8 +132,11 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
         Text(message, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_release_notes_spacing_top)))
-        Surface(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
-            shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
+        val releaseNotesShape = RoundedCornerShape(8.dp)
+        Surface(modifier = Modifier.fillMaxWidth()
+            .clip(releaseNotesShape)
+            .clickable { expanded = !expanded },
+            shape = releaseNotesShape, color = MaterialTheme.colorScheme.surfaceContainer) {
             Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(R.string.about_update_release_notes_title),
@@ -157,10 +158,27 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
                 color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
         Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_primary_button_spacing_top)))
-        Button(onClick = onPrimary, enabled = state.primaryEnabled, modifier = Modifier.fillMaxWidth()) {
-            Text(state.primaryLabel)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Keep the action row full-width while giving longer labels more room.
+            val cancelWeight = state.cancelLabel.length.toFloat() + 2f
+            val primaryWeight = state.primaryLabel.length.toFloat() + 2f
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.weight(cancelWeight),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) { Text(state.cancelLabel) }
+            Button(
+                onClick = onPrimary,
+                enabled = state.primaryEnabled,
+                modifier = Modifier.weight(primaryWeight),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            ) { Text(state.primaryLabel) }
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_cancel_button_spacing_top)))
-        OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text(state.cancelLabel) }
     }
 }

@@ -35,11 +35,6 @@
     <color name="help_tutorial_scale_badge_text">#236B43</color>
     <color name="help_tutorial_width_card_container">#F7F3FF</color>
     <color name="help_tutorial_width_card_stroke">#E4D8FF</color>
-    <color name="home_update_action_card_container">#F0EFFB</color>
-    <color name="home_update_action_card_notes_text">#4C4772</color>
-    <color name="home_update_action_card_install_container">#D7E4FF</color>
-    <color name="home_update_action_card_install_progress_fill">#7BA8E8</color>
-    <color name="home_update_action_card_install_text">#0F5CB8</color>
     <color name="dpis_fab_ripple">#332D61D8</color>
     <color name="app_config_wizard_bubble_container">#6A6F77</color>
     <color name="app_config_wizard_bubble_text">#F7F7F7</color>

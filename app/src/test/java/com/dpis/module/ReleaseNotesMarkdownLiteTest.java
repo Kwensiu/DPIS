@@ -97,4 +97,20 @@ public class ReleaseNotesMarkdownLiteTest {
         assertTrue(rendered.contains("```java"));
         assertTrue(rendered.contains("still text"));
     }
+
+    @Test
+    public void removesGithubGeneratedPublicationMetadata() {
+        String markdown = "## What's Changed\n* fix one\n\n"
+                + "## New Contributors\n* @bot made their first contribution\n\n"
+                + "## Full Changelog\nhttps://github.com/example/compare";
+
+        String rendered = ReleaseNotesMarkdownLite.filterBodyForLocale(
+                markdown,
+                Locale.ENGLISH);
+
+        assertTrue(rendered.contains("fix one"));
+        assertFalse(rendered.contains("New Contributors"));
+        assertFalse(rendered.contains("first contribution"));
+        assertFalse(rendered.contains("Full Changelog"));
+    }
 }

@@ -65,7 +65,6 @@ import com.dpis.module.R
 import com.dpis.module.SettingsUiState
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.home.HomeWorkspaceBinder
 import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.templates.TemplateWorkspacePresentation
@@ -379,23 +378,18 @@ private fun WearHookChainEditorPage(
 @Composable
 internal fun WearHomeWorkspaceContent(state: HomeWorkspaceBinder.State) {
     val context = LocalContext.current
+    val checkForUpdates: () -> Unit = if (state.xposedModuleActivated) {
+        state.actions::checkForUpdates
+    } else {
+        {}
+    }
     WearWorkspaceList(title = R.string.workspace_home) {
         wearButton(
             key = "status",
             label = context.getString(if (state.xposedModuleActivated) R.string.home_workspace_status_enabled else R.string.home_workspace_status_enable_in_lsposed),
-            secondaryLabel = state.updateState.subtitle(context),
             icon = if (state.xposedModuleActivated) R.drawable.ic_check_24 else R.drawable.ic_error_outline_24,
-            onClick = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) state.actions::retryUpdateCheck else ({})
+            onClick = checkForUpdates
         )
-        if (state.updateState.showsUpdateActionCard()) {
-            wearButton("release-notes", context.getString(R.string.home_update_action_release_notes), icon = R.drawable.ic_assignment_24, onClick = state.actions::showReleaseNotes)
-            wearButton(
-                "update-action",
-                context.getString(if (state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY) R.string.home_update_action_install_ready else R.string.home_update_action_install),
-                icon = R.drawable.ic_save_24dp,
-                onClick = if (state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY) state.actions::installDownloadedUpdate else state.actions::startUpdateDownload
-            )
-        }
         wearButton(
             key = "apps",
             label = context.getString(R.string.workspace_app),

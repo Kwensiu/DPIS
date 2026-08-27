@@ -38,18 +38,13 @@ public class AboutActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/ui/compose/AndroidTextInterop.kt");
         String manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java");
 
-        assertTrue(source.contains("String downloadUrl = manifest.apkUrl;"));
         assertTrue(source.contains("UpdateManifestFetcher.fetch("));
-        assertTrue(source.contains("R.string.about_update_action_view_release"));
-        assertTrue(source.contains("UpdateDownloadCoordinator.showDialogIdleState("));
-        assertTrue(source.contains("updateDownloadCoordinator.startDownload("));
-        assertTrue(source.contains("showManualUpdatePromptDialog(manifest);"));
-        assertTrue(source.contains("showCenteredManualUpdatePromptDialog("));
-        assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
+        assertTrue(source.contains("updatePromptDialogCoordinator.showUpdateAvailableDialog("));
+        assertTrue(source.contains("new UpdatePromptDialogCoordinator("));
         assertTrue(!source.contains("ReleaseNotesMarkdownLite.format("));
-        assertTrue(source.contains("DialogWindowSizer.applyLargeWidth(dialogHandle.getDialog(), this)"));
+        assertTrue(!source.contains("UpdateAvailableDialog.create("));
+        assertTrue(!source.contains("private void loadReleaseNotes("));
         assertTrue(manifestFetcherSource.contains("final class UpdateManifestFetcher"));
-        assertTrue(source.contains("UpdateAvailableDialog.create("));
         assertTrue(dialogSource.contains("class DialogHandle"));
         assertTrue(dialogSource.contains("toComposeAnnotatedString()"));
         assertTrue(textInteropSource.contains("LinkAnnotation.Url(span.url)"));
@@ -57,7 +52,7 @@ public class AboutActivitySourceSmokeTest {
         assertTrue(dialogSource.contains("verticalScroll(rememberScrollState())"));
         assertTrue(dialogSource.contains("R.dimen.dialog_surface_padding_horizontal"));
         assertTrue(dialogSource.contains("R.dimen.update_dialog_primary_button_spacing_top"));
-        assertTrue(dialogSource.contains("R.dimen.update_dialog_cancel_button_spacing_top"));
+        assertTrue(dialogSource.contains("RoundedCornerShape(16.dp)"));
         assertTrue(!source.contains("private void executeApkDownload("));
         assertTrue(!source.contains("private void verifyDownloadedApk("));
         assertTrue(!source.contains("private static StartupUpdateManifest fetchUpdateManifest("));

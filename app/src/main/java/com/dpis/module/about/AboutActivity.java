@@ -5,15 +5,11 @@ import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
-import com.dpis.module.ui.DialogWindowSizer;
-
 import com.dpis.module.updates.UpdateManifestFetcher;
 
 import com.dpis.module.updates.UpdateDownloadCoordinator;
 
 import com.dpis.module.updates.UpdateCoordinator;
-
-import com.dpis.module.updates.UpdateAvailableDialog;
 
 import com.dpis.module.updates.StartupUpdatePackageHandler;
 
@@ -21,20 +17,16 @@ import com.dpis.module.updates.StartupUpdateManifest;
 
 import com.dpis.module.updates.StartupUpdateDownloadExecutor;
 
+import com.dpis.module.updates.UpdatePromptDialogCoordinator;
 import com.dpis.module.updates.ReleaseNotesController;
-
 import com.dpis.module.updates.ReleaseNotesCacheStore;
+import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Toast;
-
-import androidx.appcompat.app.AlertDialog;
-
-import com.dpis.module.updates.GitHubReleaseNotesFetcher;
-import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
 
 import java.io.File;
 import java.util.Locale;
@@ -56,7 +48,7 @@ public final class AboutActivity extends LocalizedActivity {
     private final StartupUpdatePackageHandler packageHandler = new StartupUpdatePackageHandler(this);
     private final ExecutorService updateExecutor = Executors.newSingleThreadExecutor();
     private UpdateDownloadCoordinator updateDownloadCoordinator;
-    private ReleaseNotesController releaseNotesController;
+    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator;
     private volatile boolean updateCheckInProgress = false;
     private volatile boolean updateDownloadInProgress = false;
     private volatile boolean updateDownloadCancelRequested = false;
@@ -69,14 +61,17 @@ public final class AboutActivity extends LocalizedActivity {
                 updateCoordinator,
                 downloadExecutor,
                 updateExecutor);
-        releaseNotesController = new ReleaseNotesController(
-                new ReleaseNotesCacheStore(this),
-                updateExecutor,
-                this::runOnUiThread,
-                GitHubReleaseNotesFetcher::fetchByVersionName,
-                System::currentTimeMillis,
-                UPDATE_CONNECT_TIMEOUT_MS,
-                UPDATE_READ_TIMEOUT_MS);
+        updatePromptDialogCoordinator = new UpdatePromptDialogCoordinator(
+                this,
+                createUpdatePromptDialogHost(),
+                new ReleaseNotesController(
+                        new ReleaseNotesCacheStore(this),
+                        updateExecutor,
+                        this::runOnUiThread,
+                        GitHubReleaseNotesFetcher::fetchByVersionName,
+                        System::currentTimeMillis,
+                        UPDATE_CONNECT_TIMEOUT_MS,
+                        UPDATE_READ_TIMEOUT_MS));
 
         SupportActivityContent.installAbout(
                 this,
@@ -140,107 +135,12 @@ public final class AboutActivity extends LocalizedActivity {
             showToast(R.string.about_update_up_to_date);
             return;
         }
-        showManualUpdatePromptDialog(manifest);
-    }
-
-    private void showManualUpdatePromptDialog(StartupUpdateManifest manifest) {
-        String releasePageUrl = manifest.releasePage.isEmpty()
-                ? getString(R.string.about_releases_url)
-                : manifest.releasePage;
-        String downloadUrl = manifest.apkUrl;
-        showCenteredManualUpdatePromptDialog(manifest, downloadUrl, releasePageUrl);
-    }
-
-    private void showCenteredManualUpdatePromptDialog(StartupUpdateManifest manifest,
-            String downloadUrl,
-            String releasePageUrl) {
-        UpdateAvailableDialog.DialogHandle dialogHandle = UpdateAvailableDialog.create(
-                this,
-                getString(R.string.about_update_available_title),
-                getString(
-                        R.string.about_update_available_message,
-                        BuildConfig.VERSION_NAME,
-                        BuildConfig.VERSION_CODE,
-                        manifest.versionName,
-                        manifest.versionCode));
-
-        UpdateDownloadCoordinator.showDialogIdleState(dialogHandle);
-        bindDialogCancelButton(dialogHandle);
-        String embeddedReleaseNotes = manifest.releaseNotes == null ? "" : manifest.releaseNotes.trim();
-        Locale locale = getResources().getConfiguration().getLocales().get(0);
-        if (!embeddedReleaseNotes.isEmpty()) {
-            dialogHandle.setReleaseNotes(ReleaseNotesMarkdownRenderer.render(
-                    this,
-                    embeddedReleaseNotes,
-                    locale));
-        } else {
-            dialogHandle.setReleaseNotes(getString(R.string.about_update_release_notes_loading));
-        }
-        loadReleaseNotes(dialogHandle, locale, manifest.versionName, !embeddedReleaseNotes.isEmpty());
-
-        boolean hasDirectDownload = downloadUrl != null && !downloadUrl.trim().isEmpty();
-        if (!hasDirectDownload) {
-            dialogHandle.setPrimary(getString(R.string.about_update_action_view_release),
-                    () -> openUrl(releasePageUrl));
-            dialogHandle.show();
-            DialogWindowSizer.applyLargeWidth(dialogHandle.getDialog(), this);
-            return;
-        }
-
-        dialogHandle.setPrimary(getString(R.string.about_update_action_download), () -> {
-            if (updateDownloadCoordinator.isDownloadInProgress()) {
-                updateDownloadCoordinator.cancelActiveDownload();
-                return;
-            }
-            updateDownloadCoordinator.startDownload(
-                    manifest.versionName,
-                    downloadUrl,
-                    dialogHandle);
-        });
-
-        dialogHandle.setOnDismissListener(updateDownloadCoordinator::cancelActiveDownload);
-        dialogHandle.show();
-        DialogWindowSizer.applyLargeWidth(dialogHandle.getDialog(), this);
-    }
-
-    private void loadReleaseNotes(UpdateAvailableDialog.DialogHandle dialogHandle,
-            Locale locale,
-            String targetVersionName,
-            boolean hasEmbeddedReleaseNotes) {
-        releaseNotesController.load(targetVersionName, hasEmbeddedReleaseNotes,
-                new ReleaseNotesController.Listener() {
-                    @Override
-                    public boolean isAlive() {
-                        return !isFinishing() && !isDestroyed();
-                    }
-
-                    @Override
-                    public void onBody(String body) {
-                        dialogHandle.setReleaseNotes(ReleaseNotesMarkdownRenderer.render(
-                                AboutActivity.this,
-                                body,
-                                locale));
-                    }
-
-                    @Override
-                    public void onEmptyBody() {
-                        dialogHandle.setReleaseNotes(getString(R.string.about_update_release_notes_empty));
-                    }
-
-                    @Override
-                    public void onFailure() {
-                        dialogHandle.setReleaseNotes(getString(R.string.about_update_release_notes_failed));
-                    }
-                });
-    }
-
-    private void bindDialogCancelButton(UpdateAvailableDialog.DialogHandle dialogHandle) {
-        dialogHandle.setCancel(getString(R.string.about_update_action_cancel_dialog), () -> {
-            if (updateDownloadCoordinator.isDownloadInProgress()) {
-                updateDownloadCoordinator.cancelActiveDownload();
-            }
-            dialogHandle.dismiss();
-        });
+        updatePromptDialogCoordinator.showUpdateAvailableDialog(
+                manifest.versionName,
+                manifest.versionCode,
+                manifest.apkUrl,
+                manifest.releasePage,
+                manifest.releaseNotes);
     }
 
     private UpdateDownloadCoordinator.Host createUpdateDownloadHost() {
@@ -288,6 +188,53 @@ public final class AboutActivity extends LocalizedActivity {
                 }
                 updateDownloadInProgress = state.downloadInProgress;
                 updateDownloadCancelRequested = state.downloadCancelRequested;
+            }
+        };
+    }
+
+    private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
+        return new UpdatePromptDialogCoordinator.Host() {
+            @Override
+            public void markPromptedVersion(int versionCode) {
+                // About-triggered prompts do not participate in startup suppression state.
+            }
+
+            @Override
+            public boolean isDownloadInProgress() {
+                return updateDownloadCoordinator.isDownloadInProgress();
+            }
+
+            @Override
+            public void cancelActiveUpdateDownload() {
+                updateDownloadCoordinator.cancelActiveDownload();
+            }
+
+            @Override
+            public void startStartupUpdateDownload(
+                    String targetVersionName,
+                    String downloadUrl,
+                    com.dpis.module.updates.UpdateAvailableDialog.DialogHandle dialogHandle) {
+                updateDownloadCoordinator.startDownload(targetVersionName, downloadUrl, dialogHandle);
+            }
+
+            @Override
+            public void openUrl(String url) {
+                AboutActivity.this.openUrl(url);
+            }
+
+            @Override
+            public void showToast(int messageResId) {
+                AboutActivity.this.showToast(messageResId);
+            }
+
+            @Override
+            public void applyLargeDialogWidth(androidx.appcompat.app.AlertDialog dialog) {
+                com.dpis.module.ui.DialogWindowSizer.applyLargeWidth(dialog, AboutActivity.this);
+            }
+
+            @Override
+            public void finishActivity() {
+                AboutActivity.this.finish();
             }
         };
     }

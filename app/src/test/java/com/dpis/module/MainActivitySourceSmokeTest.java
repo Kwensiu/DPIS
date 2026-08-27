@@ -11,6 +11,25 @@ import org.junit.Test;
 public class MainActivitySourceSmokeTest {
 
     @Test
+    public void homeStatusReflectsUpdateCheckProgressWhilePromptOwnsUpdateActions()
+            throws IOException {
+        String activity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String homeState = read("src/main/java/com/dpis/module/home/HomeUpdateUiState.java");
+        String composeHome = read(
+                "src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt"
+        );
+
+        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.CHECKING)"));
+        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.available(manifest))"));
+        assertTrue(activity.contains("showUpdateAvailableDialog("));
+        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE)"));
+        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.FAILED)"));
+        assertTrue(homeState.contains("CHECKING,"));
+        assertTrue(homeState.contains("AVAILABLE -> context.getString"));
+        assertTrue(composeHome.contains("state.updateState.subtitle(context)"));
+    }
+
+    @Test
     public void composeOwnsMainWorkspaceSearchAndNavigationControls() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
         String composeWorkspace = read(
@@ -477,221 +496,19 @@ public class MainActivitySourceSmokeTest {
     }
 
     @Test
-    public void startupUpdateCheckPublishesHomeUpdateCardState()
-        throws IOException {
+    public void homeStatusCardRetainsManualUpdateCheckEntry() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String coordinatorSource = read(
-            "src/main/java/com/dpis/module/updates/StartupUpdateCheckCoordinator.java"
-        );
-        String homeBinderSource = read(
+        String binder = read(
             "src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java"
         );
-        String homeActivationSource = read(
-            "src/main/java/com/dpis/module/home/HomeActivationStateResolver.java"
-        );
-        String homeUpdateStateSource = read(
-            "src/main/java/com/dpis/module/home/HomeUpdateUiState.java"
-        );
-        String homeLayout = read("src/main/res/layout/home_workspace.xml");
-        String downloadCoordinatorSource = read(
-            "src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java"
-        );
-        String manifestFetcherSource = read(
-            "src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java"
-        );
-        String storeSource = read(
-            "src/main/java/com/dpis/module/updates/UpdateStateStore.java"
+        String compose = read(
+            "src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt"
         );
 
-        assertTrue(source.contains("maybeCheckForUpdatesOnStartup();"));
-        assertTrue(source.contains("HomeActivationStateResolver.isActivatedForHome("));
-        assertTrue(homeBinderSource.contains("final boolean xposedModuleActivated;"));
-        assertTrue(homeBinderSource.contains("return !state.xposedModuleActivated;"));
-        assertTrue(homeActivationSource.contains("isModernLibXposedServiceApi(int apiVersion)"));
-        assertTrue(source.contains("DpisApplication.isXposedSelfLoaded()"));
-        assertTrue(source.contains("new UpdateCoordinator("));
-        assertTrue(source.contains("new StartupUpdateCheckCoordinator("));
-        assertTrue(source.contains("StartupUpdateCheckOnce.consume()"));
-        assertTrue(
-            source.contains(
-                "startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();"
-            )
-        );
-        assertTrue(
-            source.contains(
-                "private volatile boolean startupUpdateDownloadInProgress;"
-            )
-        );
-        assertTrue(
-            source.contains(
-                "private volatile boolean startupUpdateDownloadCancelRequested;"
-            )
-        );
-        assertTrue(
-            coordinatorSource.contains(
-                "updateCoordinator.evaluateStartupCheck("
-            )
-        );
-        assertTrue(
-            coordinatorSource.contains(
-                "updateCoordinator.markStartupCheckStarted(state)"
-            )
-        );
-        assertTrue(coordinatorSource.contains("void maybeCheckForUpdatesOnStartup()"));
-        assertTrue(coordinatorSource.contains("checkForUpdates(true);"));
-        assertTrue(coordinatorSource.contains("void checkForUpdatesNow()"));
-        assertTrue(
-            coordinatorSource.contains(
-                "UpdateCoordinator.isRemoteVersionNewer("
-            )
-        );
-        assertTrue(coordinatorSource.contains("onStartupUpdateAvailable"));
-        assertTrue(coordinatorSource.contains("onStartupUpdateUpToDate"));
-        assertTrue(coordinatorSource.contains("onStartupUpdateCheckFailed"));
-        assertFalse(coordinatorSource.contains("launchStartupUpdateDialog"));
-        assertFalse(source.contains("private void launchStartupUpdateDialog("));
-        assertTrue(source.contains("HomeUpdateUiState.CHECKING"));
-        assertTrue(source.contains("HomeUpdateUiState.available(manifest)"));
-        assertTrue(source.contains("HomeUpdateUiState.UP_TO_DATE"));
-        assertTrue(source.contains("HomeUpdateUiState.FAILED"));
-        assertTrue(homeUpdateStateSource.contains("INSTALL_READY"));
-        assertTrue(homeUpdateStateSource.contains("asInstallReady(File apkFile)"));
-        assertTrue(homeUpdateStateSource.contains("boolean showsUpdateActionCard()"));
-        assertTrue(source.contains("showHomeUpdateReleaseNotesDialog()"));
-        assertTrue(source.contains("startHomeUpdateDownload()"));
-        assertTrue(source.contains("installHomeDownloadedUpdate()"));
         assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow();"));
-        assertTrue(homeBinderSource.contains("bindUpdateActions("));
-        assertTrue(homeBinderSource.contains("home_update_action_card"));
-        assertFalse(homeBinderSource.contains("bringToFront();"));
-        assertTrue(homeLayout.contains("com.dpis.module.home.HomePrimaryStatusClusterLayout"));
-        assertFalse(homeBinderSource.contains("bindPrimaryStatusShape("));
-        assertFalse(homeBinderSource.contains("setBottomLeftCornerSize("));
-        assertTrue(homeLayout.contains("android:id=\"@+id/home_primary_status_cluster\""));
-        assertTrue(homeLayout.contains("android:clipChildren=\"false\""));
-        assertTrue(
-            homeLayout.contains(
-                "app:cardCornerRadius=\"@dimen/home_workspace_primary_status_corner_radius\""
-            )
-        );
-        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_card\""));
-        assertTrue(homeLayout.contains("app:cardElevation=\"0dp\""));
-        assertFalse(homeLayout.contains("android:translationZ="));
-        assertFalse(homeLayout.contains("home_primary_status_foreground_elevation"));
-        assertTrue(homeLayout.contains("android:layout_height=\"@dimen/home_update_action_card_height\""));
-        assertTrue(homeLayout.contains("android:layout_marginTop=\"@dimen/home_update_action_card_hidden_offset_top\""));
-        assertTrue(homeLayout.contains("app:cardBackgroundColor=\"@color/home_update_action_card_container\""));
-        assertTrue(homeLayout.contains("app:strokeColor=\"?attr/colorOutlineVariant\""));
-        assertTrue(homeLayout.contains("android:gravity=\"bottom|center_vertical\""));
-        assertFalse(homeLayout.contains("android:background=\"@drawable/bg_home_update_drawer\""));
-        assertFalse(homeLayout.contains("home_update_drawer"));
-        assertFalse(homeLayout.contains("home_update_card_"));
-        assertFalse(homeLayout.contains("home_update_foreground_card_elevation"));
-        assertFalse(homeLayout.contains("android:background=\"?attr/colorOutlineVariant\""));
-        assertTrue(homeLayout.contains("android:layout_height=\"@dimen/home_update_action_card_button_height\""));
-        assertTrue(homeLayout.contains("android:paddingStart=\"@dimen/home_update_action_card_padding_start\""));
-        assertTrue(homeLayout.contains("android:paddingEnd=\"@dimen/home_update_action_card_padding_end\""));
-        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_release_notes_button\""));
-        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_frame\""));
-        assertTrue(homeLayout.contains("android:background=\"@drawable/bg_home_update_action_install_button\""));
-        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_progress_fill\""));
-        assertTrue(homeLayout.contains("android:background=\"@drawable/bg_home_update_action_install_progress\""));
-        assertTrue(homeLayout.contains("android:id=\"@+id/home_update_action_install_button\""));
-        assertFalse(homeLayout.contains("android:id=\"@+id/home_update_download_progress\""));
-        assertTrue(homeLayout.contains("style=\"@style/Widget.Dpis.HomeUpdateActionCard.NotesButton\""));
-        assertTrue(homeLayout.contains("style=\"@style/Widget.Dpis.HomeUpdateActionCard.InstallButton\""));
-        assertTrue(homeLayout.contains("android:layout_width=\"wrap_content\""));
-        assertTrue(homeLayout.contains("android:minWidth=\"0dp\""));
-        assertTrue(homeLayout.contains("android:text=\"@string/home_update_action_release_notes\""));
-        assertTrue(homeBinderSource.contains("PrimaryStatusTone.DISABLED"));
-        assertTrue(homeBinderSource.contains("PrimaryStatusTone.ENABLED"));
-        assertTrue(homeBinderSource.contains("PrimaryStatusTone.UPDATE_AVAILABLE"));
-        assertFalse(homeBinderSource.contains("home_status_checking"));
-        assertTrue(homeBinderSource.contains("state.updateState.showsUpdateActionCard()"));
-        assertTrue(homeBinderSource.contains("installButton.setOnClickListener(downloading"));
-        assertTrue(homeBinderSource.contains("state.actions.installDownloadedUpdate();"));
-        assertTrue(homeBinderSource.contains("R.string.home_update_action_downloading"));
-        assertTrue(homeBinderSource.contains("R.string.home_update_action_install_ready"));
-        assertFalse(homeBinderSource.contains("installButton.setClickable(false)"));
-        assertFalse(homeBinderSource.contains("R.id.home_update_download_progress)"));
-        assertFalse(homeLayout.contains("ic_download_24"));
-        assertTrue(
-            coordinatorSource.contains(
-                "updateCoordinator.markStartupCheckFinished("
-            )
-        );
-        assertTrue(coordinatorSource.contains("manifestFetcher.fetch("));
-        assertTrue(storeSource.contains("KEY_LAST_UPDATE_CHECK_FAILED"));
-        assertTrue(
-            storeSource.contains("KEY_LAST_PROMPTED_UPDATE_VERSION_CODE")
-        );
-        assertTrue(
-            manifestFetcherSource.contains(
-                "static StartupUpdateManifest fetch("
-            )
-        );
-        assertTrue(source.contains("markPromptedVersion("));
-        assertTrue(
-            downloadCoordinatorSource.contains(
-                "updateCoordinator.requestDownloadStart("
-            )
-        );
-        assertTrue(downloadCoordinatorSource.contains("interface HomeDownloadListener"));
-        assertTrue(downloadCoordinatorSource.contains("void startHomeDownload("));
-        assertTrue(
-            downloadCoordinatorSource.contains(
-                "updateCoordinator.requestDownloadCancel("
-            )
-        );
-        assertTrue(
-            downloadCoordinatorSource.contains(
-                "updateCoordinator.markDownloadFinished("
-            )
-        );
-        assertTrue(
-            downloadCoordinatorSource.contains("downloadExecutor.download(")
-        );
-        assertTrue(source.contains("new StartupUpdatePackageHandler(this)"));
-        assertFalse(
-            downloadCoordinatorSource.contains("verifyDownloadedApk(")
-        );
-        assertFalse(
-            downloadCoordinatorSource.contains("UntrustedUpdateException")
-        );
-        assertFalse(
-            downloadCoordinatorSource.contains("about_update_download_untrusted")
-        );
-        assertTrue(downloadCoordinatorSource.contains("void onSucceeded(File targetFile)"));
-        assertTrue(source.contains("current.asInstallReady(targetFile)"));
-        assertTrue(
-            source.contains(
-                "startupUpdatePackageHandler.launchPackageInstaller(targetFile);"
-            )
-        );
-        assertTrue(source.contains("new ReleaseNotesController("));
-        assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("));
-        assertFalse(source.contains("ReleaseNotesMarkdownLite.format("));
-        assertFalse(
-            source.contains("private void verifyDownloadedApk(File apkFile)")
-        );
-        assertFalse(source.contains("updatePromptDialogCoordinator().showUpdateAvailableDialog("));
-        assertTrue(source.contains("current.releaseNotes"));
-        assertTrue(source.contains("startStartupUpdateDownload("));
-        assertTrue(
-            source.contains(
-                "startupUpdateDownloadInProgress = state.downloadInProgress;"
-            )
-        );
-        assertTrue(
-            source.contains(
-                "startupUpdateDownloadCancelRequested = state.downloadCancelRequested;"
-            )
-        );
-        assertFalse(
-            source.contains(
-                "startActivity(AboutActivity.createStartupUpdateIntent("
-            )
-        );
+        assertTrue(binder.contains("state.updateState.subtitle(context)"));
+        assertTrue(binder.contains("state.actions::checkForUpdates"));
+        assertTrue(compose.contains("state.actions.checkForUpdates()"));
     }
 
     @Test

@@ -97,9 +97,6 @@ fun HomeWorkspaceContent(
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
             item { HomePrimaryStatus(state) }
-            if (state.updateState.showsUpdateActionCard()) {
-                item { HomeUpdateActions(state) }
-            }
             item {
                 Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     HomeCountCard(Modifier.weight(1f).fillMaxHeight(), R.string.home_workspace_status_configured_apps, state.configuredAppCount, state.actions::openConfiguredAppsWorkspace)
@@ -130,64 +127,28 @@ private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
     val context = LocalContext.current
     val confirmFeedback = rememberDpisConfirmFeedback()
     val disabled = !state.xposedModuleActivated
+    val onClick = rememberDpisConfirmAction {
+        if (!disabled) state.actions.checkForUpdates()
+    }
     val container = when {
         disabled -> MaterialTheme.colorScheme.errorContainer
-        state.updateState.showsUpdateActionCard() -> MaterialTheme.colorScheme.tertiaryContainer
         else -> MaterialTheme.colorScheme.primaryContainer
     }
     val content = when {
         disabled -> MaterialTheme.colorScheme.onErrorContainer
-        state.updateState.showsUpdateActionCard() -> MaterialTheme.colorScheme.onTertiaryContainer
         else -> MaterialTheme.colorScheme.onPrimaryContainer
     }
-    Card(colors = CardDefaults.cardColors(containerColor = container), modifier = Modifier.fillMaxWidth()) {
+    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = container), modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(if (disabled) R.drawable.ic_error_outline_24 else R.drawable.ic_check_24), null, tint = content)
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
                 Text(stringResource(if (disabled) R.string.home_workspace_status_enable_in_lsposed else R.string.home_workspace_status_enabled), style = MaterialTheme.typography.titleMedium, color = content, fontWeight = FontWeight.Bold)
-                Text(
-                    state.updateState.subtitle(context),
-                    modifier = if (state.updateState.status == HomeUpdateUiState.Status.FAILED) {
-                        Modifier.clickable {
-                            confirmFeedback()
-                            state.actions.retryUpdateCheck()
-                        }
-                    } else Modifier,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = content
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HomeUpdateActions(state: HomeWorkspaceBinder.State) {
-    val showReleaseNotes = rememberDpisConfirmAction(state.actions::showReleaseNotes)
-    val applyUpdate = rememberDpisConfirmAction {
-        if (state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY) {
-            state.actions.installDownloadedUpdate()
-        } else {
-            state.actions.startUpdateDownload()
-        }
-    }
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
-            Text(stringResource(R.string.home_update_available, state.updateState.versionName), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            if (state.updateState.status == HomeUpdateUiState.Status.DOWNLOADING) {
-                LinearProgressIndicator(progress = { state.updateState.downloadProgress / 100f }, modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
-            }
-            Row(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = showReleaseNotes) { Text(stringResource(R.string.home_update_action_release_notes)) }
-                Button(
-                    onClick = applyUpdate,
-                    enabled = state.updateState.status != HomeUpdateUiState.Status.DOWNLOADING
-                ) {
-                    Text(stringResource(when (state.updateState.status) {
-                        HomeUpdateUiState.Status.INSTALL_READY -> R.string.home_update_action_install_ready
-                        HomeUpdateUiState.Status.DOWNLOADING -> R.string.home_update_action_downloading
-                        else -> R.string.home_update_action_install
-                    }))
+                if (!disabled) {
+                    Text(
+                        state.updateState.subtitle(context),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = content
+                    )
                 }
             }
         }

@@ -13,27 +13,27 @@ import org.junit.Test;
 public class UpdateStateStoreTest {
     @Test
     public void storeDefinesSharedPreferencesKeysAndReadsWritesUpdateState() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.kt");
 
-        assertTrue(source.contains("final class UpdateStateStore"));
-        assertTrue(source.contains("static final String PREFS_NAME"));
-        assertTrue(source.contains("static final String KEY_LAST_UPDATE_CHECK_TIMESTAMP"));
-        assertTrue(source.contains("static final String KEY_LAST_UPDATE_CHECK_FAILED"));
-        assertTrue(source.contains("static final String KEY_LAST_PROMPTED_UPDATE_VERSION_CODE"));
-        assertTrue(source.contains("long getLastUpdateCheckTimestamp()"));
-        assertTrue(source.contains("boolean wasLastUpdateCheckFailed()"));
-        assertTrue(source.contains("int getLastPromptedUpdateVersionCode()"));
-        assertTrue(source.contains("void setLastUpdateCheckTimestamp("));
-        assertTrue(source.contains("void setLastUpdateCheckFailed("));
-        assertTrue(source.contains("void setLastPromptedUpdateVersionCode("));
-        assertTrue(source.contains("UpdateCoordinator.State buildCoordinatorState("));
-        assertTrue(source.contains("void applyStartupCheckState("));
-        assertTrue(source.contains("void applyPromptedVersion("));
+        assertTrue(source.contains("class UpdateStateStore"));
+        assertTrue(source.contains("const val PREFS_NAME"));
+        assertTrue(source.contains("const val KEY_LAST_UPDATE_CHECK_TIMESTAMP"));
+        assertTrue(source.contains("const val KEY_LAST_UPDATE_CHECK_FAILED"));
+        assertTrue(source.contains("const val KEY_LAST_PROMPTED_UPDATE_VERSION_CODE"));
+        assertTrue(source.contains("fun getLastUpdateCheckTimestamp()"));
+        assertTrue(source.contains("fun wasLastUpdateCheckFailed()"));
+        assertTrue(source.contains("fun getLastPromptedUpdateVersionCode()"));
+        assertTrue(source.contains("fun setLastUpdateCheckTimestamp("));
+        assertTrue(source.contains("fun setLastUpdateCheckFailed("));
+        assertTrue(source.contains("fun setLastPromptedUpdateVersionCode("));
+        assertTrue(source.contains("fun buildCoordinatorState("));
+        assertTrue(source.contains("fun applyStartupCheckState("));
+        assertTrue(source.contains("fun applyPromptedVersion("));
     }
 
     @Test
     public void storeBuildsCoordinatorStateFromPersistedFields() throws IOException {
-        String storeSource = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
+        String storeSource = read("src/main/java/com/dpis/module/updates/UpdateStateStore.kt");
         String coordinatorSource = read("src/main/java/com/dpis/module/updates/UpdateCoordinator.java");
 
         assertTrue(storeSource.contains("getLastUpdateCheckTimestamp()"));
@@ -46,7 +46,7 @@ public class UpdateStateStoreTest {
 
     @Test
     public void storeApplyStartupCheckStatePersistsTimestampAndFailure() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.kt");
 
         assertTrue(source.contains("setLastUpdateCheckTimestamp(state.lastUpdateCheckTimestampMs)"));
         assertTrue(source.contains("setLastUpdateCheckFailed(state.lastUpdateCheckFailed)"));
@@ -54,17 +54,17 @@ public class UpdateStateStoreTest {
 
     @Test
     public void storeApplyPromptedVersionPersistsVersionCode() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.kt");
 
         assertTrue(source.contains("setLastPromptedUpdateVersionCode(state.lastPromptedUpdateVersionCode)"));
     }
 
     @Test
     public void storeNullGuardsAreInPlace() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.java");
+        String source = read("src/main/java/com/dpis/module/updates/UpdateStateStore.kt");
 
-        assertTrue(source.contains("if (state == null) {"));
-        assertTrue(source.contains("throw new IllegalArgumentException("));
+        assertTrue(source.contains("if (state == null) return"));
+        assertTrue(source.contains("requireNotNull"));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -116,15 +116,6 @@ Mini Programs are not supported yet.</string>
     <string name="home_workspace_status_configured_apps">Настроенные приложения</string>
     <string name="home_workspace_status_imported_fonts">Импортированные шрифты</string>
     <string name="home_workspace_status_templates">Шаблоны</string>
-    <string name="home_update_checking">Проверка наличия обновлений</string>
-    <string name="home_update_up_to_date">Уже обновлено</string>
-    <string name="home_update_check_failed_retry">Проверка обновлений завершилась неудачно. Нажмите, чтобы повторить попытку</string>
-    <string name="home_update_available">Доступна новая версия: %1$s</string>
-    <string name="home_update_version_unknown">неизвестно</string>
-    <string name="home_update_action_release_notes">Информация о выпуске</string>
-    <string name="home_update_action_install">Обновление</string>
-    <string name="home_update_action_downloading">Загрузка</string>
-    <string name="home_update_action_install_ready">Установить</string>
     <string name="home_workspace_basic_info_title">Основная информация</string>
     <string name="home_workspace_info_version">Версия модуля</string>
     <string name="home_workspace_info_system">Система</string>
@@ -376,7 +367,7 @@ Mini Programs are not supported yet.</string>
     <string name="settings_clear_cache_done">Кэш очищен</string>
     <string name="settings_clear_cache_legacy_public_file_blocked">Файлы отладки из предыдущих версий остаются в папке «Download/DPIS» и их необходимо удалить вручную.</string>
     <string name="about_title">О приложении</string>
-    <string name="about_version_format">Версия: %1$s (%2$d)</string>
+    <string name="about_version_format">Версия: %1$s(%2$d)</string>
     <string name="about_link_source_title">Просмотреть исходный код</string>
     <string name="about_link_source_desc">Репозиторий DPIS на GitHub</string>
     <string name="about_link_update_title">Проверить обновления</string>
@@ -409,7 +400,7 @@ Mini Programs are not supported yet.</string>
     <string name="about_update_check_failed">Проверка обновлений завершилась неудачно. Повторите попытку позже.</string>
     <string name="about_update_up_to_date">Уже обновлено</string>
     <string name="about_update_available_title">Доступна новая версия</string>
-    <string name="about_update_available_message">Текущая версия: %1$s (%2$d)\nПоследняя версия: %3$s (%4$d)</string>
+    <string name="about_update_available_message">%1$s(%2$d)</string>
     <string name="about_update_release_notes_title">Информация о выпуске</string>
     <string name="about_update_release_notes_loading">Загрузка списка изменений...</string>
     <string name="about_update_release_notes_failed">Не удалось загрузить информацию о выпуске.</string>

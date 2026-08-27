@@ -6,6 +6,12 @@ import java.util.regex.Pattern;
 public final class ReleaseNotesMarkdownLite {
     private static final Pattern VERSION_HEADING_PATTERN = Pattern.compile(
             "^##\\s*\\[.+?]\\(https?://[^)]+\\)\\s*\\(\\d{4}-\\d{2}-\\d{2}\\)\\s*$");
+    private static final Pattern GENERATED_SECTION_PATTERN = Pattern.compile(
+            "^##\\s+(?:new contributors|contributors)\\s*$",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern FULL_CHANGELOG_PATTERN = Pattern.compile(
+            "^(?:#+\\s*)?\\*?\\*?full changelog\\*?\\*?:?.*$",
+            Pattern.CASE_INSENSITIVE);
 
     private ReleaseNotesMarkdownLite() {
     }
@@ -31,7 +37,7 @@ public final class ReleaseNotesMarkdownLite {
                 body.append('\n');
             }
         }
-        String content = body.toString();
+        String content = removeGeneratedReleaseMetadata(body.toString()).trim();
         String[] sectionSplit = splitByDividerLine(content);
         if (sectionSplit == null) {
             return content.trim();
@@ -45,6 +51,29 @@ public final class ReleaseNotesMarkdownLite {
             return preferred;
         }
         return (englishPart + "\n" + chinesePart).trim();
+    }
+
+    /** Removes GitHub-generated publication metadata while retaining release-note prose. */
+    private static String removeGeneratedReleaseMetadata(String content) {
+        String[] lines = content.split("\\n", -1);
+        StringBuilder filtered = new StringBuilder();
+        boolean skippingGeneratedSection = false;
+        for (String raw : lines) {
+            String line = raw != null ? raw : "";
+            String trimmed = line.trim();
+            if (GENERATED_SECTION_PATTERN.matcher(trimmed).matches()) {
+                skippingGeneratedSection = true;
+                continue;
+            }
+            if (skippingGeneratedSection && trimmed.startsWith("#")) {
+                skippingGeneratedSection = false;
+            }
+            if (skippingGeneratedSection || FULL_CHANGELOG_PATTERN.matcher(trimmed).matches()) {
+                continue;
+            }
+            appendLine(filtered, line);
+        }
+        return filtered.toString();
     }
 
     private static String[] splitByDividerLine(String content) {

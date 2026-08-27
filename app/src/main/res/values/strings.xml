@@ -236,20 +236,17 @@ Mini Programs are not supported yet.</string>
     <string name="home_workspace_title" translatable="false">DPIS</string>
     <string name="home_workspace_subtitle">Per-app DPI &amp; text size adjustment</string>
     <string name="home_workspace_status_enabled">Enabled</string>
+    <string name="home_workspace_status_check_updates">Check for updates</string>
+    <string name="home_update_checking">Checking for updates...</string>
+    <string name="home_update_up_to_date">You are up to date. Tap to check again</string>
+    <string name="home_update_check_failed_retry">Update check failed. Tap to retry</string>
+    <string name="home_update_available">Version %1$s is available</string>
+    <string name="home_update_version_unknown">a new version</string>
     <string name="home_workspace_status_enable_in_lsposed">Enable the module in LSPosed</string>
     <string name="home_workspace_status_configured_apps">Configured apps</string>
     <string name="home_workspace_status_configured_apps_value" translatable="false">%1$d</string>
     <string name="home_workspace_status_imported_fonts">Imported fonts</string>
     <string name="home_workspace_status_templates">Templates</string>
-    <string name="home_update_checking">Checking for updates</string>
-    <string name="home_update_up_to_date">Already up to date</string>
-    <string name="home_update_check_failed_retry">Update check failed. Tap to retry</string>
-    <string name="home_update_available">New version available: %1$s</string>
-    <string name="home_update_version_unknown">unknown</string>
-    <string name="home_update_action_release_notes">Release notes</string>
-    <string name="home_update_action_install">Update</string>
-    <string name="home_update_action_downloading">Downloading</string>
-    <string name="home_update_action_install_ready">Install</string>
     <string name="home_workspace_basic_info_title">Basic info</string>
     <string name="home_workspace_info_version">Module version</string>
     <string name="home_workspace_info_version_value" translatable="false">%1$s (%2$d)</string>
@@ -626,7 +623,7 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="settings_clear_cache_done">Cache cleared</string>
     <string name="settings_clear_cache_legacy_public_file_blocked">Debug files from older versions remain in Download/DPIS and need to be deleted manually.</string>
     <string name="about_title">About</string>
-    <string name="about_version_format">Version: %1$s (%2$d)</string>
+    <string name="about_version_format">Version: %1$s(%2$d)</string>
     <string name="about_link_source_title">View source code</string>
     <string name="about_link_source_desc">DPIS repository on GitHub</string>
     <string name="about_link_update_title">Check for updates</string>
@@ -671,7 +668,7 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="about_update_check_failed">Update check failed. Try again later.</string>
     <string name="about_update_up_to_date">Already up to date</string>
     <string name="about_update_available_title">New version available</string>
-    <string name="about_update_available_message">Current version: %1$s (%2$d)\nLatest version: %3$s (%4$d)</string>
+    <string name="about_update_available_message">%1$s(%2$d)</string>
     <string name="about_update_release_notes_title">Release notes</string>
     <string name="about_update_release_notes_loading">Loading release notes...</string>
     <string name="about_update_release_notes_failed">Failed to load release notes.</string>

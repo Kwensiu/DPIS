@@ -22,11 +22,6 @@
     <color name="help_tutorial_compat_card_stroke">#5C4732</color>
     <color name="help_tutorial_compat_badge_container">#5A4020</color>
     <color name="help_tutorial_compat_badge_text">#FFE2B2</color>
-    <color name="home_update_action_card_container">#232638</color>
-    <color name="home_update_action_card_notes_text">#E6DEFF</color>
-    <color name="home_update_action_card_install_container">#30476C</color>
-    <color name="home_update_action_card_install_progress_fill">#8FB9F4</color>
-    <color name="home_update_action_card_install_text">#D9E6FF</color>
     <color name="dpis_fab_ripple">#33D9E4FF</color>
     <color name="app_config_wizard_bubble_container">#4D535B</color>
     <color name="app_config_wizard_bubble_text">#F1F3F4</color>

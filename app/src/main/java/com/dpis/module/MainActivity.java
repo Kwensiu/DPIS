@@ -102,8 +102,8 @@ import com.dpis.module.ui.compose.AppFilterComposeSheet;
 import com.dpis.module.ui.compose.ComposeConfirmDialog;
 import com.dpis.module.ui.compose.ComposeMessageDialog;
 
-import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceBinder;
+import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeActivationStateResolver;
 import com.dpis.module.home.DonateActivity;
 import com.dpis.module.home.ModeHelpActivity;
@@ -399,7 +399,6 @@ public final class MainActivity
                     retainedState.quickTemplateTargetSelectionActivityStarted;
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
             retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
-            homeUpdateUiState = retainedState.homeUpdateUiState;
             feedbackDiagnosticPageRequest = retainedState.feedbackDiagnosticPageRequest;
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
             initialRefreshingPages = decodeRefreshingPages(
@@ -833,7 +832,6 @@ public final class MainActivity
                 quickTemplateTargetSelectionActivityStarted,
                 retainedGlobalPrefillDraft,
                 retainedQuickTemplateDraft,
-                homeUpdateUiState,
                 feedbackDiagnosticSession,
                 feedbackDiagnosticPageRequest,
                 feedbackDiagnosticPageController.presentation() != null
@@ -2244,10 +2242,6 @@ public final class MainActivity
         startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();
     }
 
-    private void retryHomeUpdateCheck() {
-        startupUpdateCheckCoordinator.checkForUpdatesNow();
-    }
-
     private void startStartupUpdateDownload(
             String targetVersionName,
             String downloadUrl,
@@ -2258,115 +2252,6 @@ public final class MainActivity
                 downloadUrl,
                 dialogHandle
         );
-    }
-
-    private void startHomeUpdateDownload() {
-        HomeUpdateUiState current = homeUpdateUiState;
-        if (current == null || current.status != HomeUpdateUiState.Status.AVAILABLE) {
-            return;
-        }
-        markPromptedVersion(current.versionCode);
-        updateDownloadCoordinator.startHomeDownload(
-                current.versionName,
-                current.apkUrl,
-                new UpdateDownloadCoordinator.HomeDownloadListener() {
-                    @Override
-                    public void onStarted() {
-                        homeUpdateUiState = current.asDownloading(0);
-                        bindHomeWorkspaceIfVisible();
-                    }
-
-                    @Override
-                    public void onProgress(int progress) {
-                        homeUpdateUiState = current.asDownloading(progress);
-                        bindHomeWorkspaceIfVisible();
-                    }
-
-                    @Override
-                    public void onSucceeded(File targetFile) {
-                        homeUpdateUiState = current.asInstallReady(targetFile);
-                        bindHomeWorkspaceIfVisible();
-                    }
-
-                    @Override
-                    public void onFinished() {
-                        if (homeUpdateUiState.status == HomeUpdateUiState.Status.DOWNLOADING) {
-                            homeUpdateUiState = current.asAvailable();
-                            bindHomeWorkspaceIfVisible();
-                        }
-                    }
-                });
-    }
-
-    private void installHomeDownloadedUpdate() {
-        HomeUpdateUiState current = homeUpdateUiState;
-        if (current == null || current.status != HomeUpdateUiState.Status.INSTALL_READY) {
-            return;
-        }
-        File apkFile = current.downloadedApkPath.isEmpty()
-                ? null
-                : new File(current.downloadedApkPath);
-        if (apkFile == null || !apkFile.exists()) {
-            homeUpdateUiState = current.asAvailable();
-            bindHomeWorkspaceIfVisible();
-            showToast(R.string.about_update_download_failed);
-            return;
-        }
-        startupUpdatePackageHandler.launchPackageInstaller(apkFile);
-    }
-
-    private void showHomeUpdateReleaseNotesDialog() {
-        HomeUpdateUiState current = homeUpdateUiState;
-        if (current == null || !current.showsUpdateActionCard()) {
-            return;
-        }
-        String embedded = current.releaseNotes;
-        CharSequence initialMessage = embedded.isEmpty()
-                ? getString(R.string.about_update_release_notes_loading)
-                : ReleaseNotesMarkdownRenderer.render(
-                        this,
-                        embedded,
-                        getResources().getConfiguration().getLocales().get(0));
-        ComposeMessageDialog.Handle dialogHandle = ComposeMessageDialog.showLarge(
-                this,
-                getString(R.string.about_update_release_notes_title),
-                initialMessage,
-                getString(R.string.about_update_action_cancel_dialog)
-        );
-        if (embedded.isEmpty()) {
-            loadHomeReleaseNotes(dialogHandle, current.versionName);
-        }
-    }
-
-    private void loadHomeReleaseNotes(ComposeMessageDialog.Handle dialogHandle,
-            String versionName) {
-        releaseNotesController.load(versionName, false,
-                new ReleaseNotesController.Listener() {
-                    @Override
-                    public boolean isAlive() {
-                        return !isFinishing()
-                                && !isDestroyed()
-                                && dialogHandle.isShowing();
-                    }
-
-                    @Override
-                    public void onBody(String body) {
-                        dialogHandle.setMessage(ReleaseNotesMarkdownRenderer.render(
-                                MainActivity.this,
-                                body,
-                                getResources().getConfiguration().getLocales().get(0)));
-                    }
-
-                    @Override
-                    public void onEmptyBody() {
-                        dialogHandle.setMessage(getString(R.string.about_update_release_notes_empty));
-                    }
-
-                    @Override
-                    public void onFailure() {
-                        dialogHandle.setMessage(getString(R.string.about_update_release_notes_failed));
-                    }
-                });
     }
 
     private void cancelActiveUpdateDownload() {
@@ -2522,8 +2407,13 @@ public final class MainActivity
 
             @Override
             public void onStartupUpdateAvailable(StartupUpdateManifest manifest) {
-                MainActivity.this.applyHomeUpdateState(
-                        HomeUpdateUiState.available(manifest)
+                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.available(manifest));
+                updatePromptDialogCoordinator().showUpdateAvailableDialog(
+                        manifest.versionName,
+                        manifest.versionCode,
+                        manifest.apkUrl,
+                        manifest.releasePage,
+                        manifest.releaseNotes
                 );
             }
 
@@ -2952,23 +2842,8 @@ public final class MainActivity
     private HomeWorkspaceBinder.Actions createHomeWorkspaceActions() {
         return new HomeWorkspaceBinder.Actions() {
             @Override
-            public void retryUpdateCheck() {
-                retryHomeUpdateCheck();
-            }
-
-            @Override
-            public void showReleaseNotes() {
-                showHomeUpdateReleaseNotesDialog();
-            }
-
-            @Override
-            public void startUpdateDownload() {
-                startHomeUpdateDownload();
-            }
-
-            @Override
-            public void installDownloadedUpdate() {
-                installHomeDownloadedUpdate();
+            public void checkForUpdates() {
+                startupUpdateCheckCoordinator.checkForUpdatesNow();
             }
 
             @Override
@@ -4690,7 +4565,6 @@ public final class MainActivity
                                  boolean quickTemplateTargetSelectionActivityStarted,
                                  TemplateEditorDraft globalPrefillDraft,
                                  TemplateEditorDraft quickTemplateDraft,
-                                 HomeUpdateUiState homeUpdateUiState,
                                  Session feedbackDiagnosticSession,
                                  FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                                  com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
@@ -4714,7 +4588,6 @@ public final class MainActivity
                     boolean quickTemplateTargetSelectionActivityStarted,
                     TemplateEditorDraft globalPrefillDraft,
                     TemplateEditorDraft quickTemplateDraft,
-                    HomeUpdateUiState homeUpdateUiState,
                     Session feedbackDiagnosticSession,
                     FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                     com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
@@ -4753,9 +4626,6 @@ public final class MainActivity
                         quickTemplateTargetSelectionActivityStarted;
                 this.globalPrefillDraft = globalPrefillDraft;
                 this.quickTemplateDraft = quickTemplateDraft;
-                this.homeUpdateUiState = homeUpdateUiState != null
-                        ? homeUpdateUiState
-                        : HomeUpdateUiState.UP_TO_DATE;
                 this.feedbackDiagnosticSession = feedbackDiagnosticSession;
                 this.feedbackDiagnosticPageRequest = feedbackDiagnosticPageRequest;
                 this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;

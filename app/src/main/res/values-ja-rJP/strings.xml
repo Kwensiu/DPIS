@@ -179,15 +179,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="home_workspace_status_configured_apps">設定済みアプリ</string>
     <string name="home_workspace_status_imported_fonts">インポート済みフォント</string>
     <string name="home_workspace_status_templates">テンプレート</string>
-    <string name="home_update_checking">更新を確認中</string>
-    <string name="home_update_up_to_date">すでに最新です</string>
-    <string name="home_update_check_failed_retry">更新確認に失敗しました。タップして再試行</string>
-    <string name="home_update_available">新しいバージョンがあります: %1$s</string>
-    <string name="home_update_version_unknown">不明</string>
-    <string name="home_update_action_release_notes">リリースノート</string>
-    <string name="home_update_action_install">更新</string>
-    <string name="home_update_action_downloading">ダウンロード中</string>
-    <string name="home_update_action_install_ready">インストール</string>
     <string name="home_workspace_basic_info_title">基本情報</string>
     <string name="home_workspace_info_version">モジュールバージョン</string>
     <string name="home_workspace_info_system">システム</string>
@@ -442,7 +433,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="settings_clear_cache_done">キャッシュをクリアしました</string>
     <string name="settings_clear_cache_legacy_public_file_blocked">古いバージョンのデバッグファイルが Download/DPIS に残っており、手動で削除する必要があります。</string>
     <string name="about_title">情報</string>
-    <string name="about_version_format">バージョン: %1$s (%2$d)</string>
+    <string name="about_version_format">バージョン: %1$s(%2$d)</string>
     <string name="about_link_source_title">ソースコードを表示</string>
     <string name="about_link_source_desc">GitHub 上の DPIS リポジトリ</string>
     <string name="about_link_update_title">更新を確認</string>
@@ -475,7 +466,7 @@ Mini Programs はまだサポートされていません。</string>
     <string name="about_update_check_failed">更新確認に失敗しました。後でもう一度試してください。</string>
     <string name="about_update_up_to_date">すでに最新です</string>
     <string name="about_update_available_title">新しいバージョンがあります</string>
-    <string name="about_update_available_message">現在のバージョン: %1$s (%2$d)\n最新バージョン: %3$s (%4$d)</string>
+    <string name="about_update_available_message">%1$s(%2$d)</string>
     <string name="about_update_release_notes_title">リリースノート</string>
     <string name="about_update_release_notes_loading">リリースノートを読み込み中...</string>
     <string name="about_update_release_notes_failed">リリースノートの読み込みに失敗しました。</string>

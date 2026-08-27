@@ -60,19 +60,7 @@ public final class HomeWorkspaceBinder {
     public interface Actions {
         Actions NO_OP = new Actions() {
             @Override
-            public void retryUpdateCheck() {
-            }
-
-            @Override
-            public void showReleaseNotes() {
-            }
-
-            @Override
-            public void startUpdateDownload() {
-            }
-
-            @Override
-            public void installDownloadedUpdate() {
+            public void checkForUpdates() {
             }
 
             @Override
@@ -88,13 +76,7 @@ public final class HomeWorkspaceBinder {
             }
         };
 
-        void retryUpdateCheck();
-
-        void showReleaseNotes();
-
-        void startUpdateDownload();
-
-        void installDownloadedUpdate();
+        void checkForUpdates();
 
         void openConfiguredAppsWorkspace();
 
@@ -119,10 +101,6 @@ public final class HomeWorkspaceBinder {
         ENABLED(
                 R.color.home_status_enabled_container,
                 R.color.home_status_enabled_content
-        ),
-        UPDATE_AVAILABLE(
-                R.color.home_status_update_container,
-                R.color.home_status_update_content
         );
 
         final int containerColorRes;
@@ -154,11 +132,16 @@ public final class HomeWorkspaceBinder {
                 workspaceView.findViewById(R.id.home_primary_status_title),
                 primaryStatusTitleRes(state)
         );
-        setText(
-                workspaceView.findViewById(R.id.home_primary_status_summary),
-                state.updateState.subtitle(context)
+        MaterialTextView statusSummary = workspaceView.findViewById(
+                R.id.home_primary_status_summary
         );
-        bindUpdateActions(workspaceView, state);
+
+        if (statusSummary != null) {
+            statusSummary.setVisibility(state.xposedModuleActivated ? View.VISIBLE : View.GONE);
+            if (state.xposedModuleActivated) {
+                statusSummary.setText(state.updateState.subtitle(context));
+            }
+        }
         setText(
                 workspaceView.findViewById(R.id.home_configured_apps_value),
                 context.getString(
@@ -296,6 +279,10 @@ public final class HomeWorkspaceBinder {
 
     private void bindStatusCardActions(View workspaceView, State state) {
         bindStatusCardAction(
+                workspaceView.findViewById(R.id.home_primary_status_card),
+                state.xposedModuleActivated ? state.actions::checkForUpdates : null
+        );
+        bindStatusCardAction(
                 workspaceView.findViewById(R.id.home_configured_apps_card),
                 state.actions::openConfiguredAppsWorkspace
         );
@@ -310,7 +297,12 @@ public final class HomeWorkspaceBinder {
     }
 
     private void bindStatusCardAction(View card, Runnable action) {
-        if (card == null || action == null) {
+        if (card == null) {
+            return;
+        }
+        if (action == null) {
+            card.setOnClickListener(null);
+            card.setClickable(false);
             return;
         }
         TouchFeedbackBinder.bindPressHaptic(card);
@@ -359,138 +351,14 @@ public final class HomeWorkspaceBinder {
     }
 
     private PrimaryStatusTone resolvePrimaryStatusTone(State state) {
-        // The primary card color represents module availability plus update availability.
-        // Update-check progress only changes the subtitle, not the card tone.
         if (isPrimaryStatusDisabled(state)) {
             return PrimaryStatusTone.DISABLED;
-        }
-        if (shouldShowUpdateActionCard(state)) {
-            return PrimaryStatusTone.UPDATE_AVAILABLE;
         }
         return PrimaryStatusTone.ENABLED;
     }
 
     private boolean isPrimaryStatusDisabled(State state) {
         return !state.xposedModuleActivated;
-    }
-
-    private void bindUpdateActions(View workspaceView, State state) {
-        bindRetrySummary(workspaceView, state);
-        bindUpdateActionCard(workspaceView, state);
-        bindReleaseNotesAction(workspaceView, state);
-        bindInstallAction(workspaceView, state);
-    }
-
-    private void bindRetrySummary(View workspaceView, State state) {
-        View summary = workspaceView.findViewById(R.id.home_primary_status_summary);
-        if (summary == null) {
-            return;
-        }
-        boolean retry = state.updateState.status == HomeUpdateUiState.Status.FAILED;
-        summary.setClickable(retry);
-        summary.setFocusable(retry);
-        summary.setOnClickListener(retry ? v -> state.actions.retryUpdateCheck() : null);
-        if (retry) {
-            TouchFeedbackBinder.bindPressHaptic(summary);
-        } else {
-            summary.setOnTouchListener(null);
-        }
-    }
-
-    private void bindUpdateActionCard(View workspaceView, State state) {
-        View actionCard = workspaceView.findViewById(R.id.home_update_action_card);
-        if (actionCard != null) {
-            actionCard.setVisibility(shouldShowUpdateActionCard(state) ? View.VISIBLE : View.GONE);
-        }
-    }
-
-    private void bindReleaseNotesAction(View workspaceView, State state) {
-        MaterialButton notesButton = workspaceView.findViewById(
-                R.id.home_update_action_release_notes_button);
-        if (notesButton != null) {
-            TouchFeedbackBinder.bindPressHaptic(notesButton);
-            notesButton.setOnClickListener(v -> state.actions.showReleaseNotes());
-        }
-    }
-
-    private void bindInstallAction(View workspaceView, State state) {
-        MaterialButton installButton = workspaceView.findViewById(
-                R.id.home_update_action_install_button);
-        View installButtonFrame = workspaceView.findViewById(
-                R.id.home_update_action_install_frame);
-        View progressFill = workspaceView.findViewById(
-                R.id.home_update_action_install_progress_fill);
-        boolean downloading = state.updateState.status == HomeUpdateUiState.Status.DOWNLOADING;
-        boolean installReady = state.updateState.status == HomeUpdateUiState.Status.INSTALL_READY;
-        if (installButton != null) {
-            TouchFeedbackBinder.bindPressHaptic(installButton);
-            installButton.setEnabled(!downloading);
-            installButton.setClickable(!downloading);
-            installButton.setFocusable(!downloading);
-            installButton.setText(resolveInstallActionText(state.updateState.status));
-            installButton.setOnClickListener(downloading
-                    ? null
-                    : v -> {
-                        if (installReady) {
-                            state.actions.installDownloadedUpdate();
-                            return;
-                        }
-                        state.actions.startUpdateDownload();
-                    });
-        }
-        if (installButtonFrame != null) {
-            installButtonFrame.setEnabled(!downloading);
-            installButtonFrame.setOnClickListener(null);
-        }
-        if (progressFill != null) {
-            boolean showFill = downloading && state.updateState.downloadProgress > 0;
-            progressFill.setVisibility(showFill ? View.VISIBLE : View.GONE);
-            if (showFill) {
-                View parent = progressFill.getParent() instanceof View
-                        ? (View) progressFill.getParent()
-                        : null;
-                int parentWidth = parent != null ? parent.getWidth() : 0;
-                if (parentWidth > 0) {
-                    bindProgressFillWidth(
-                            progressFill,
-                            parentWidth,
-                            state.updateState.downloadProgress
-                    );
-                } else if (parent != null) {
-                    parent.post(() -> bindProgressFillWidth(
-                            progressFill,
-                            parent.getWidth(),
-                            state.updateState.downloadProgress
-                    ));
-                }
-            }
-        }
-    }
-
-    private static boolean shouldShowUpdateActionCard(State state) {
-        return state.updateState.showsUpdateActionCard();
-    }
-
-    private static int resolveInstallActionText(HomeUpdateUiState.Status status) {
-        return switch (status) {
-            case DOWNLOADING -> R.string.home_update_action_downloading;
-            case INSTALL_READY -> R.string.home_update_action_install_ready;
-            default -> R.string.home_update_action_install;
-        };
-    }
-
-    private static void bindProgressFillWidth(View progressFill,
-            int parentWidth,
-            int progress) {
-        if (progressFill == null || parentWidth <= 0) {
-            return;
-        }
-        int fillWidth = parentWidth * Math.max(0, Math.min(100, progress)) / 100;
-        ViewGroup.LayoutParams params = progressFill.getLayoutParams();
-        if (params != null && params.width != fillWidth) {
-            params.width = fillWidth;
-            progressFill.setLayoutParams(params);
-        }
     }
 
     private void bindInfoRow(View rowView, int labelResId, String value) {

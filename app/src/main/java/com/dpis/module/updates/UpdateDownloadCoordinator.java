@@ -10,16 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 public final class UpdateDownloadCoordinator {
-    public interface HomeDownloadListener {
-        void onStarted();
-
-        void onProgress(int progress);
-
-        void onSucceeded(File targetFile);
-
-        void onFinished();
-    }
-
     public interface Host {
         boolean isActivityAlive();
 
@@ -102,49 +92,6 @@ public final class UpdateDownloadCoordinator {
                 downloadUri,
                 targetFile,
                 dialogHandle));
-    }
-
-    public void startHomeDownload(String targetVersionName,
-            String downloadUrl,
-            HomeDownloadListener listener) {
-        UpdateCoordinator.DownloadDecision downloadDecision = updateCoordinator.requestDownloadStart(
-                host.buildUpdateCoordinatorState(),
-                downloadUrl);
-        if (!downloadDecision.started) {
-            switch (downloadDecision.reason) {
-                case ALREADY_IN_PROGRESS -> host.showToast(R.string.about_update_download_in_progress);
-                case HTTPS_REQUIRED -> host.showToast(R.string.about_update_download_https_required);
-                case EMPTY_URL, INVALID_URL -> host.showToast(R.string.about_update_download_failed);
-                default -> host.showToast(R.string.about_update_download_failed);
-            }
-            return;
-        }
-
-        applyDownloadState(downloadDecision.nextState);
-        if (listener != null) {
-            listener.onStarted();
-        }
-        Uri downloadUri = Uri.parse(downloadDecision.normalizedUrl);
-
-        final File targetFile;
-        try {
-            UpdatePackageInstaller.clearUpdateCache(host.getContext());
-            targetFile = UpdatePackageInstaller.prepareTargetFile(host.getContext(), targetVersionName);
-        } catch (RuntimeException ignored) {
-            UpdateCoordinator.State rollbackState = updateCoordinator.markDownloadFinished(
-                    host.buildUpdateCoordinatorState());
-            applyDownloadState(rollbackState);
-            if (listener != null) {
-                listener.onFinished();
-            }
-            host.showToast(R.string.about_update_download_failed);
-            return;
-        }
-
-        activeDownloadFuture = executor.submit(() -> executeHomeDownload(
-                downloadUri,
-                targetFile,
-                listener));
     }
 
     public void cancelActiveDownload() {
@@ -246,75 +193,6 @@ public final class UpdateDownloadCoordinator {
             UpdateCoordinator.State nextState = updateCoordinator.markDownloadFinished(
                     host.buildUpdateCoordinatorState());
             applyDownloadState(nextState);
-        }
-    }
-
-    private void executeHomeDownload(Uri downloadUri,
-            File targetFile,
-            HomeDownloadListener listener) {
-        try {
-            final int[] lastProgress = new int[] { -1 };
-            downloadExecutor.download(
-                    downloadUri,
-                    targetFile,
-                    () -> downloadCancelRequested || Thread.currentThread().isInterrupted(),
-                    new StartupUpdateDownloadExecutor.Listener() {
-                        @Override
-                        public void onConnectionOpened(HttpURLConnection connection, long totalBytes) {
-                            activeDownloadConnection = connection;
-                        }
-
-                        @Override
-                        public void onProgress(long downloadedBytes, long totalBytes) {
-                            if (totalBytes <= 0L || listener == null) {
-                                return;
-                            }
-                            int progress = (int) Math.min(100L, (downloadedBytes * 100L) / totalBytes);
-                            if (progress == lastProgress[0]) {
-                                return;
-                            }
-                            lastProgress[0] = progress;
-                            host.runOnUiThread(() -> listener.onProgress(progress));
-                        }
-                    });
-
-            // Product decision: downloaded update files are handed to Android's installer
-            // without an app-side package/signature trust gate.
-            UpdatePackageInstaller.persistDownloadedFile(host.getContext(), targetFile);
-            host.runOnUiThread(() -> {
-                if (host.isActivityAlive()) {
-                    if (listener != null) {
-                        listener.onSucceeded(targetFile);
-                    }
-                    host.onDownloadSuccess(targetFile);
-                }
-            });
-        } catch (StartupUpdateDownloadExecutor.DownloadCanceledException ignored) {
-            StartupUpdatePackageHandler.safeDeleteFile(targetFile);
-            host.runOnUiThread(() -> {
-                if (host.isActivityAlive()) {
-                    host.showToast(R.string.about_update_download_canceled);
-                }
-            });
-        } catch (Exception ignored) {
-            boolean canceled = downloadCancelRequested || Thread.currentThread().isInterrupted();
-            StartupUpdatePackageHandler.safeDeleteFile(targetFile);
-            host.runOnUiThread(() -> {
-                if (host.isActivityAlive()) {
-                    host.showToast(canceled
-                            ? R.string.about_update_download_canceled
-                            : R.string.about_update_download_failed);
-                }
-            });
-        } finally {
-            activeDownloadConnection = null;
-            activeDownloadFuture = null;
-            UpdateCoordinator.State nextState = updateCoordinator.markDownloadFinished(
-                    host.buildUpdateCoordinatorState());
-            applyDownloadState(nextState);
-            if (listener != null) {
-                host.runOnUiThread(listener::onFinished);
-            }
         }
     }
 

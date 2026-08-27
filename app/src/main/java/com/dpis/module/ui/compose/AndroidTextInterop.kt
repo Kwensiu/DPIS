@@ -8,9 +8,12 @@ import androidx.compose.ui.text.buildAnnotatedString
 
 /** Preserves Android URL spans when controller-owned rich text crosses into Compose. */
 internal fun CharSequence.toComposeAnnotatedString(): AnnotatedString {
-    if (this !is Spanned) return AnnotatedString(toString())
+    val plainText = toString()
+    if (this !is Spanned) return AnnotatedString(plainText)
     return buildAnnotatedString {
-        append(toString())
+        // Capture the source text before entering the builder receiver scope. Calling
+        // toString() here would stringify AnnotatedString.Builder instead of the notes.
+        append(plainText)
         getSpans(0, length, URLSpan::class.java).forEach { span ->
             val start = getSpanStart(span).coerceAtLeast(0)
             val end = getSpanEnd(span).coerceAtMost(length)
