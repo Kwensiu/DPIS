@@ -499,7 +499,7 @@ class AppConfigSaveHandler {
             if (ViewportApplyMode.isEnabled(draftMode)) {
                 return draftMode
             }
-            val persistedMode = if (store != null)
+            val persistedMode = if (store != null && packageName != null)
                 store.getTargetViewportApplyMode(packageName)
             else
                 ViewportApplyMode.OFF

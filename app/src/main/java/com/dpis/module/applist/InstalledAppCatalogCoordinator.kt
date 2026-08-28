@@ -218,7 +218,7 @@ class InstalledAppCatalogCoordinator(
         @JvmStatic
         fun userVisibleConfiguredPackages(store: DpisConfigStore?): Set<String> {
             if (store == null) return emptySet()
-            return store.configuredPackages
+            return store.configuredPackages.filterNotNull().toSet()
                 .filterTo(HashSet()) {
                     !SystemFrameworkScope.isFrameworkScopePackage(it) &&
                         store.hasUserVisiblePackageConfig(it)
