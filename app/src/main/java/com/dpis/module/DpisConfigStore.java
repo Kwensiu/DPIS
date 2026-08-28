@@ -1753,13 +1753,19 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
 
     public BackupReplaceResult replaceBackupResult(Map<String, Object> entries) {
         if (entries == null) return BackupReplaceResult.failed(BackupReplaceStage.MANAGED_CONFIG);
+        Map<String, Object> previous = snapshotBackup();
         if (!replaceBackupEntries(preferences, entries)) {
             return BackupReplaceResult.failed(BackupReplaceStage.MANAGED_CONFIG);
         }
         if (!migrateLegacyPackageConfigToAggregated()) {
+            replaceBackupEntries(preferences, previous);
             return BackupReplaceResult.failed(BackupReplaceStage.LEGACY_MIGRATION);
         }
-        mirrorLegacySharedPrefsFile();
+        if (!mirrorLegacySharedPrefsFile()) {
+            replaceBackupEntries(preferences, previous);
+            mirrorLegacySharedPrefsFile();
+            return BackupReplaceResult.failed(BackupReplaceStage.LEGACY_MIRROR);
+        }
         return BackupReplaceResult.success();
     }
 
@@ -1993,9 +1999,9 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         void apply(SharedPreferences.Editor editor);
     }
 
-    private void mirrorLegacySharedPrefsFile() {
+    private boolean mirrorLegacySharedPrefsFile() {
         if (legacySharedPrefsMirrorFile == null) {
-            return;
+            return true;
         }
         try {
             // Some Android builds back SharedPreferences with an APEX-managed prefs
@@ -2004,7 +2010,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
             // committed logical preference snapshot there after each local commit.
             File parent = legacySharedPrefsMirrorFile.getParentFile();
             if (parent == null || (!parent.exists() && !parent.mkdirs() && !parent.exists())) {
-                return;
+                return false;
             }
             File tempFile = new File(parent, legacySharedPrefsMirrorFile.getName() + ".tmp");
             writeSharedPreferencesXml(preferences.getAll(), tempFile);
@@ -2020,10 +2026,13 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
                         legacySharedPrefsMirrorFile.toPath(),
                         StandardCopyOption.REPLACE_EXISTING);
             }
+            return true;
         } catch (IOException throwable) {
             DpisLog.e("legacy shared prefs mirror failed", throwable);
+            return false;
         } catch (Throwable throwable) {
             DpisLog.e("legacy shared prefs mirror failed", throwable);
+            return false;
         }
     }
 

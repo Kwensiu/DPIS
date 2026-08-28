@@ -81,6 +81,7 @@ public final class ConfigBackupCoordinator {
                         new IllegalArgumentException("Unknown backup key: " + key));
             }
         }
+        normalizeLegacyTargetPackages(incoming);
         Map<String, Object> snapshot = configStore.snapshotBackup();
         templateStore.copyToBackup(snapshot);
         Map<String, Object> configEntries = new LinkedHashMap<>(incoming);
@@ -111,5 +112,25 @@ public final class ConfigBackupCoordinator {
             output.write(buffer, 0, read);
         }
         return output.toString(StandardCharsets.UTF_8.name());
+    }
+
+    private static void normalizeLegacyTargetPackages(Map<String, Object> entries) {
+        boolean hasAggregatedPackages = entries.keySet().stream()
+                .anyMatch(key -> key.startsWith("package_config."));
+        if (hasAggregatedPackages) {
+            entries.remove("target_packages");
+            return;
+        }
+        Object raw = entries.get("target_packages");
+        if (!(raw instanceof java.util.Set<?> values)) return;
+        java.util.LinkedHashSet<String> valid = new java.util.LinkedHashSet<>();
+        for (Object value : values) {
+            if (value instanceof String packageName
+                    && packageName.matches("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+")) {
+                valid.add(packageName);
+            }
+        }
+        if (valid.isEmpty()) entries.remove("target_packages");
+        else entries.put("target_packages", valid);
     }
 }
