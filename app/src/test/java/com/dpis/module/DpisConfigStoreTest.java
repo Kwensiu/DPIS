@@ -1227,7 +1227,8 @@ public class DpisConfigStoreTest {
 
         Map<String, Object> snapshot = store.snapshotBackup();
 
-        assertFalse(snapshot.containsKey(DpisConfigStore.KEY_TARGET_PACKAGES));
+        assertEquals(Set.of("com.max.xiaoheihe"),
+                snapshot.get(DpisConfigStore.KEY_TARGET_PACKAGES));
         assertFalse(snapshot.containsKey("font.com.max.xiaoheihe.typeface_id"));
         assertEquals("font_abcd1234",
                 snapshot.get("package_config.com.max.xiaoheihe.font.typeface_id"));

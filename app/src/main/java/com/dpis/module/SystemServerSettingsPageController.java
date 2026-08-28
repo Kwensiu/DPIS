@@ -30,7 +30,6 @@ import com.dpis.module.home.DonateActivity;
 
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
@@ -50,7 +49,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.dpis.module.backup.ConfigBackupCodec;
+import com.dpis.module.backup.ConfigBackupCoordinator;
 import com.dpis.module.templates.QuickTemplateStore;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -58,22 +57,13 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.textview.MaterialTextView;
 
-import org.json.JSONException;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import io.github.libxposed.service.XposedService;
 
@@ -397,10 +387,6 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
 
     private android.content.Context getApplicationContext() {
         return activity.getApplicationContext();
-    }
-
-    private ContentResolver getContentResolver() {
-        return activity.getContentResolver();
     }
 
     private String getPackageName() {
@@ -763,19 +749,11 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         new Thread(() -> {
-            Map<String, Object> entries = localStore.snapshotBackup();
-            new QuickTemplateStore(activity).copyToBackup(entries);
-            boolean success = false;
-            try {
-                String payload = ConfigBackupCodec.encode(entries);
-                writeUtf8(uri, payload);
-                success = true;
-            } catch (IOException | JSONException | RuntimeException ignored) {
-                success = false;
-            }
-            boolean finalSuccess = success;
+            ConfigBackupCoordinator.Result result = new ConfigBackupCoordinator(
+                    activity.getContentResolver(), localStore, new QuickTemplateStore(activity))
+                    .export(uri);
             runOnUiThread(() -> {
-                if (finalSuccess) {
+                if (result.isSuccess()) {
                     showToast(R.string.config_backup_export_success);
                     publishPresentationState();
                     return;
@@ -793,34 +771,17 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
             return;
         }
         new Thread(() -> {
-            Map<String, Object> entries;
-            try {
-                String payload = readUtf8(uri);
-                entries = ConfigBackupCodec.decode(payload);
-            } catch (IOException | JSONException | IllegalArgumentException ignored) {
-                runOnUiThread(() -> { showToast(R.string.config_backup_import_invalid); publishPresentationState(); });
-                return;
-            }
-            QuickTemplateStore templateStore = new QuickTemplateStore(activity);
-            Map<String, Object> currentEntries = localStore.snapshotBackup();
-            templateStore.copyToBackup(currentEntries);
-            boolean hasTemplates = QuickTemplateStore.containsTemplateEntries(entries);
-            Map<String, Object> configEntries = new java.util.LinkedHashMap<>(entries);
-            configEntries.entrySet().removeIf(entry -> entry.getKey().startsWith("template."));
-            if (!localStore.replaceBackup(configEntries)) {
-                runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
-                return;
-            }
-            boolean templatesRestored = !hasTemplates || templateStore.restoreFromBackup(entries);
-            if (!templatesRestored) {
-                Map<String, Object> rollbackConfig = new java.util.LinkedHashMap<>(currentEntries);
-                rollbackConfig.entrySet().removeIf(entry -> entry.getKey().startsWith("template."));
-                localStore.replaceBackup(rollbackConfig);
-                templateStore.restoreFromBackup(currentEntries);
-                runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
-                return;
-            }
+            ConfigBackupCoordinator.Result result = new ConfigBackupCoordinator(
+                    activity.getContentResolver(), localStore, new QuickTemplateStore(activity))
+                    .restore(uri);
             runOnUiThread(() -> {
+                if (!result.isSuccess()) {
+                    showToast(result.code == ConfigBackupCoordinator.Code.INVALID_FILE
+                            ? R.string.config_backup_import_invalid
+                            : R.string.config_backup_import_failed);
+                    publishPresentationState();
+                    return;
+                }
                 showToast(R.string.config_backup_import_success);
                 publishPresentationState();
                 relaunchDpisTask();
@@ -951,37 +912,6 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 Locale.US,
                 "dpis-backup-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS.json",
                 new Date());
-    }
-
-    private void writeUtf8(Uri uri, String content) throws IOException {
-        ContentResolver resolver = getContentResolver();
-        try (OutputStream output = resolver.openOutputStream(uri, "wt")) {
-            if (output == null) {
-                throw new IOException("Unable to open backup output stream");
-            }
-            try (OutputStreamWriter writer = new OutputStreamWriter(output, StandardCharsets.UTF_8)) {
-                writer.write(content);
-            }
-        }
-    }
-
-    private String readUtf8(Uri uri) throws IOException {
-        ContentResolver resolver = getContentResolver();
-        try (InputStream input = resolver.openInputStream(uri)) {
-            if (input == null) {
-                throw new IOException("Unable to open backup input stream");
-            }
-            StringBuilder builder = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(input, StandardCharsets.UTF_8))) {
-                char[] buffer = new char[1024];
-                int read;
-                while ((read = reader.read(buffer)) != -1) {
-                    builder.append(buffer, 0, read);
-                }
-            }
-            return builder.toString();
-        }
     }
 
     private void showFontDebugDialog(View anchor) {

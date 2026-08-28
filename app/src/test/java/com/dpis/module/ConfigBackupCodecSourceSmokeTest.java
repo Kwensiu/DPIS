@@ -37,8 +37,8 @@ public class ConfigBackupCodecSourceSmokeTest {
         String settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
 
         assertTrue(store.contains("\"font.\" + packageName + \".typeface_id\""));
-        assertTrue(settings.contains("Map<String, Object> entries = localStore.snapshotBackup();"));
-        assertTrue(settings.contains("String payload = ConfigBackupCodec.encode(entries);"));
+        assertTrue(settings.contains("ConfigBackupCoordinator"));
+        assertTrue(settings.contains(".export(uri)"));
         assertTrue(codec.contains("putPackageConfigEntry"));
         assertTrue(codec.contains("putPackageOwnedConfigEntry"));
         assertTrue(codec.contains("putDefaultPrefillEntry"));
@@ -46,12 +46,39 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(codec.contains("decodePackageConfigsInto"));
         assertTrue(codec.contains("decodePackageOwnedConfigsInto"));
         assertTrue(codec.contains("decodeTemplatesInto"));
-        assertTrue(settings.contains("ConfigBackupCodec.decode(payload)"));
-        assertTrue(settings.contains("localStore.replaceBackup(entries)"));
-        assertTrue(store.contains("BACKUP_EXCLUDED_PREFIXES"));
-        assertTrue(store.contains("\"font.library.\""));
-        assertTrue(store.contains("\"font.debug.\""));
-        assertTrue(store.contains("\"runtime.\""));
+        assertTrue(settings.contains(".restore(uri)"));
+        assertTrue(store.contains("BackupKeyPolicy"));
+        assertTrue(read("src/main/java/com/dpis/module/backup/BackupKeyPolicy.java")
+                .contains("font.library."));
+    }
+
+    @Test
+    public void backupKeyPolicyKeepsRuntimeStateLocal() throws IOException {
+        String policy = read("src/main/java/com/dpis/module/backup/BackupKeyPolicy.java");
+        assertTrue(policy.contains("font.library."));
+        assertTrue(policy.contains("runtime."));
+        assertTrue(policy.contains("isImportable"));
+    }
+
+    @Test
+    public void codecExposesTypedDocumentBoundaryAndInputLimit() throws IOException {
+        String codec = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.java");
+        assertTrue(codec.contains("decodeDocument"));
+        assertTrue(codec.contains("MAX_JSON_CHARS"));
+        assertTrue(read("src/main/java/com/dpis/module/backup/BackupDocument.java")
+                .contains("BackupMetadata metadata"));
+    }
+
+    @Test
+    public void backupPolicyRejectsUnknownKeys() {
+        org.junit.Assert.assertFalse(
+                com.dpis.module.backup.BackupKeyPolicy.isImportable("unknown.preference"));
+        org.junit.Assert.assertTrue(
+                com.dpis.module.backup.BackupKeyPolicy.isImportable("package_config.com.example.viewport.width_dp"));
+        org.junit.Assert.assertTrue(
+                com.dpis.module.backup.BackupKeyPolicy.isImportable("fluid_cloud.hole_left"));
+        org.junit.Assert.assertTrue(
+                com.dpis.module.backup.BackupKeyPolicy.isImportable("ui.interface_scale_percent"));
     }
 
     private static String read(String relativePath) throws IOException {

@@ -17,6 +17,8 @@ import java.util.Set;
 
 public final class ConfigBackupCodec {
     private static final int SCHEMA_VERSION = 3;
+    private static final int MAX_JSON_CHARS = 4 * 1024 * 1024;
+    private static final int MAX_SECTION_ENTRIES = 10_000;
 
     private static final String KEY_SCHEMA_VERSION = "schemaVersion";
     private static final String KEY_CREATED_AT_EPOCH_MS = "createdAtEpochMs";
@@ -52,6 +54,18 @@ public final class ConfigBackupCodec {
     };
 
     private ConfigBackupCodec() {
+    }
+
+    public static BackupDocument decodeDocument(String rawJson) throws JSONException {
+        JSONObject root = new JSONObject(rawJson);
+        int schema = root.optInt(KEY_SCHEMA_VERSION, -1);
+        Map<String, Object> entries = decode(rawJson);
+        BackupMetadata metadata = new BackupMetadata(
+                schema, root.optLong(KEY_CREATED_AT_EPOCH_MS, 0L),
+                root.optString(KEY_PACKAGE_NAME, ""),
+                root.optLong(KEY_APP_VERSION_CODE, 0L),
+                root.optString(KEY_APP_VERSION_NAME, ""));
+        return new BackupDocument(metadata, entries);
     }
 
     public static String encode(Map<String, Object> entries) throws JSONException {
@@ -115,6 +129,9 @@ public final class ConfigBackupCodec {
     }
 
     public static Map<String, Object> decode(String rawJson) throws JSONException {
+        if (rawJson == null || rawJson.length() > MAX_JSON_CHARS) {
+            throw new IllegalArgumentException("Backup exceeds size limit");
+        }
         JSONObject root = new JSONObject(rawJson);
         int schemaVersion = root.optInt(KEY_SCHEMA_VERSION, -1);
         if (schemaVersion == SCHEMA_VERSION) {
@@ -490,7 +507,8 @@ public final class ConfigBackupCodec {
                 || value instanceof Boolean) {
             return value;
         }
-        return null;
+        throw new JSONException("Unsupported backup value type: "
+                + (value == null ? "null" : value.getClass().getName()));
     }
 
     private static Object decodeDirectValue(Object value) throws JSONException {

@@ -3,6 +3,7 @@ package com.dpis.module.templates;
 import android.content.SharedPreferences;
 import android.content.Context;
 import com.dpis.module.DpisConfigStore;
+import com.dpis.module.backup.TemplateBackup;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,6 +71,37 @@ public final class QuickTemplateStore {
             if (entry.getKey().startsWith("template.")) putTypedValue(editor, entry.getKey(), entry.getValue());
         }
         return editor.commit();
+    }
+
+    /** Exports templates as domain values; preference key layout stays private to this store. */
+    public List<TemplateBackup> exportBackup() {
+        List<TemplateBackup> result = new ArrayList<>();
+        for (QuickTemplate template : readAll()) {
+            result.add(new TemplateBackup(template.id, template.name, template.updatedAt,
+                    template.selectedPackages, template.configValue));
+        }
+        return result;
+    }
+
+    /** Restores the complete ordered template catalog from domain values. */
+    public boolean restoreBackup(List<TemplateBackup> backups) {
+        if (backups == null) return false;
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()) {
+            if (key.startsWith("template.")) editor.remove(key);
+        }
+        if (!editor.commit()) return false;
+        for (TemplateBackup backup : backups) {
+            if (backup == null || !save(new QuickTemplate(backup.id, backup.name,
+                    backup.updatedAt, backup.selectedPackages, backup.configValue))) {
+                return false;
+            }
+        }
+        List<String> orderedIds = new ArrayList<>();
+        for (TemplateBackup backup : backups) {
+            if (backup != null) orderedIds.add(backup.id);
+        }
+        return reorder(orderedIds);
     }
 
     /**

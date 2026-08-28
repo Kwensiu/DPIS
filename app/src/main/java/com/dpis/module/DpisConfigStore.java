@@ -25,6 +25,9 @@ import com.dpis.module.appconfig.WechatDpiConfig;
 import android.content.SharedPreferences;
 
 import com.dpis.module.settings.AppUiScaleManager;
+import com.dpis.module.backup.BackupKeyPolicy;
+import com.dpis.module.backup.BackupReplaceResult;
+import com.dpis.module.backup.BackupReplaceStage;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,11 +86,6 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
     private static final String[] LOCAL_ONLY_RUNTIME_DELIVERY_PREFIXES = {
             "default_config.",
             "template."
-    };
-    private static final String[] BACKUP_EXCLUDED_PREFIXES = {
-            "font.library.",
-            "font.debug.",
-            "runtime."
     };
     private static final PackageConfigKeySpec[] PACKAGE_CONFIG_KEYS = {
             PackageConfigKeySpec.positiveInteger("viewport.", ".width_dp",
@@ -1698,7 +1696,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         return snapshot;
     }
 
-    Map<String, Object> snapshotBackup() {
+    public Map<String, Object> snapshotBackup() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
         copyEntries(snapshot, preferences.getAll(), true);
         // The package catalog is derived backup state, not local UI state. It must
@@ -1707,7 +1705,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         for (String key : snapshot.keySet()) {
             if (key.startsWith("package_config.")) {
                 int start = "package_config.".length();
-                int end = key.indexOf('.', start);
+                int end = packageConfigDomainStart(key, start);
                 if (end > start) {
                     packages.add(key.substring(start, end));
                 }
@@ -1717,6 +1715,18 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
             snapshot.put(KEY_TARGET_PACKAGES, packages);
         }
         return snapshot;
+    }
+
+    private static int packageConfigDomainStart(String key, int packageStart) {
+        int end = key.length();
+        String[] domains = {".viewport.", ".font.", ".target.", ".wechat.", ".app."};
+        for (String domain : domains) {
+            int candidate = key.indexOf(domain, packageStart);
+            if (candidate > packageStart && candidate < end) {
+                end = candidate;
+            }
+        }
+        return end == key.length() ? -1 : end;
     }
 
     boolean replaceAll(Map<String, Object> entries) {
@@ -1737,8 +1747,20 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         }
     }
 
-    boolean replaceBackup(Map<String, Object> entries) {
-        return replaceBackupEntries(entries);
+    public boolean replaceBackup(Map<String, Object> entries) {
+        return replaceBackupResult(entries).isSuccess();
+    }
+
+    public BackupReplaceResult replaceBackupResult(Map<String, Object> entries) {
+        if (entries == null) return BackupReplaceResult.failed(BackupReplaceStage.MANAGED_CONFIG);
+        if (!replaceBackupEntries(preferences, entries)) {
+            return BackupReplaceResult.failed(BackupReplaceStage.MANAGED_CONFIG);
+        }
+        if (!migrateLegacyPackageConfigToAggregated()) {
+            return BackupReplaceResult.failed(BackupReplaceStage.LEGACY_MIGRATION);
+        }
+        mirrorLegacySharedPrefsFile();
+        return BackupReplaceResult.success();
     }
 
     private boolean replaceEntries(Map<String, Object> entries) {
@@ -1758,18 +1780,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
     }
 
     private boolean replaceBackupEntries(Map<String, Object> entries) {
-        if (entries == null) {
-            return false;
-        }
-        boolean replaced = replaceBackupEntries(preferences, entries);
-        if (!replaced) {
-            return false;
-        }
-        boolean migrated = migrateLegacyPackageConfigToAggregated();
-        if (migrated) {
-            mirrorLegacySharedPrefsFile();
-        }
-        return migrated;
+        return replaceBackupResult(entries).isSuccess();
     }
 
     private static boolean replaceBackupEntries(
@@ -1785,7 +1796,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
         }
         for (Map.Entry<String, Object> entry : entries.entrySet()) {
             String key = entry.getKey();
-            if (key == null || key.isEmpty() || isBackupExcludedKey(key)) {
+            if (!BackupKeyPolicy.isImportable(key)) {
                 continue;
             }
             putTypedValue(editor, key, entry.getValue());
@@ -1829,15 +1840,7 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
     }
 
     private static boolean isBackupExcludedKey(String key) {
-        if (key == null) {
-            return false;
-        }
-        for (String prefix : BACKUP_EXCLUDED_PREFIXES) {
-            if (key.startsWith(prefix)) {
-                return true;
-            }
-        }
-        return false;
+        return BackupKeyPolicy.isLocalOnly(key);
     }
 
     private static void copyExcludedBackupEntries(
