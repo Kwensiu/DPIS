@@ -115,6 +115,7 @@ public final class ConfigBackupCoordinator {
     }
 
     private static void normalizeLegacyTargetPackages(Map<String, Object> entries) {
+        normalizeLegacyResolutionKeys(entries);
         boolean hasAggregatedPackages = entries.keySet().stream()
                 .anyMatch(key -> key.startsWith("package_config."));
         if (hasAggregatedPackages) {
@@ -132,5 +133,27 @@ public final class ConfigBackupCoordinator {
         }
         if (valid.isEmpty()) entries.remove("target_packages");
         else entries.put("target_packages", valid);
+    }
+
+    private static void normalizeLegacyResolutionKeys(Map<String, Object> entries) {
+        Map<String, Object> migrated = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : entries.entrySet()) {
+            String key = entry.getKey();
+            String marker = "package_config.";
+            String resolution = ".resolution.";
+            int markerStart = key.indexOf(marker);
+            int resolutionStart = key.indexOf(resolution, marker.length());
+            if (markerStart == 0 && resolutionStart > marker.length()) {
+                String packageName = key.substring(marker.length(), resolutionStart);
+                String field = key.substring(resolutionStart + resolution.length());
+                if (!packageName.isEmpty() && !field.isEmpty()) {
+                    migrated.put("resolution." + packageName + "." + field, entry.getValue());
+                    continue;
+                }
+            }
+            migrated.put(key, entry.getValue());
+        }
+        entries.clear();
+        entries.putAll(migrated);
     }
 }
