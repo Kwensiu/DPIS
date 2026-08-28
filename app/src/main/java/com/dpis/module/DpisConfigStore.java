@@ -1701,6 +1701,21 @@ public final class DpisConfigStore implements ConfigSnapshotStore {
     Map<String, Object> snapshotBackup() {
         LinkedHashMap<String, Object> snapshot = new LinkedHashMap<>();
         copyEntries(snapshot, preferences.getAll(), true);
+        // The package catalog is derived backup state, not local UI state. It must
+        // travel with package_config.* or restored configs become unreachable.
+        LinkedHashSet<String> packages = new LinkedHashSet<>();
+        for (String key : snapshot.keySet()) {
+            if (key.startsWith("package_config.")) {
+                int start = "package_config.".length();
+                int end = key.indexOf('.', start);
+                if (end > start) {
+                    packages.add(key.substring(start, end));
+                }
+            }
+        }
+        if (!packages.isEmpty()) {
+            snapshot.put(KEY_TARGET_PACKAGES, packages);
+        }
         return snapshot;
     }
 

@@ -801,9 +801,22 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
                 runOnUiThread(() -> { showToast(R.string.config_backup_import_invalid); publishPresentationState(); });
                 return;
             }
-            new QuickTemplateStore(activity).restoreFromBackup(entries);
-            entries.entrySet().removeIf(entry -> entry.getKey().startsWith("template."));
-            if (!localStore.replaceBackup(entries)) {
+            QuickTemplateStore templateStore = new QuickTemplateStore(activity);
+            Map<String, Object> currentEntries = localStore.snapshotBackup();
+            templateStore.copyToBackup(currentEntries);
+            boolean hasTemplates = QuickTemplateStore.containsTemplateEntries(entries);
+            Map<String, Object> configEntries = new java.util.LinkedHashMap<>(entries);
+            configEntries.entrySet().removeIf(entry -> entry.getKey().startsWith("template."));
+            if (!localStore.replaceBackup(configEntries)) {
+                runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
+                return;
+            }
+            boolean templatesRestored = !hasTemplates || templateStore.restoreFromBackup(entries);
+            if (!templatesRestored) {
+                Map<String, Object> rollbackConfig = new java.util.LinkedHashMap<>(currentEntries);
+                rollbackConfig.entrySet().removeIf(entry -> entry.getKey().startsWith("template."));
+                localStore.replaceBackup(rollbackConfig);
+                templateStore.restoreFromBackup(currentEntries);
                 runOnUiThread(() -> { showToast(R.string.config_backup_import_failed); publishPresentationState(); });
                 return;
             }

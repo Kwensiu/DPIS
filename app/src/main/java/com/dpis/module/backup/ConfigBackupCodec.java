@@ -117,6 +117,17 @@ public final class ConfigBackupCodec {
     public static Map<String, Object> decode(String rawJson) throws JSONException {
         JSONObject root = new JSONObject(rawJson);
         int schemaVersion = root.optInt(KEY_SCHEMA_VERSION, -1);
+        if (schemaVersion == SCHEMA_VERSION) {
+            String packageName = root.optString(KEY_PACKAGE_NAME, "");
+            if (!BuildConfig.APPLICATION_ID.equals(packageName)) {
+                throw new IllegalArgumentException("Backup belongs to another application");
+            }
+            if (!root.has(KEY_CREATED_AT_EPOCH_MS)
+                    || !root.has(KEY_APP_VERSION_CODE)
+                    || !root.has(KEY_APP_VERSION_NAME)) {
+                throw new IllegalArgumentException("Missing backup metadata");
+            }
+        }
         if (schemaVersion == 1) {
             return decodeSchemaV1(root);
         }
