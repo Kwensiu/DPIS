@@ -75,7 +75,7 @@ object ConfigBackupCodec {
         val encodedTemplates = JSONObject()
         val keys = entries.keys.sorted()
         for (key in keys) {
-            if (key == null || key.isEmpty()) {
+            if (!BackupKeyPolicy.isImportable(key)) {
                 continue
             }
             val value = entries.get(key)
@@ -99,9 +99,7 @@ object ConfigBackupCodec {
                 continue
             }
             val encoded = encodeDirectValue(value)
-            if (encoded != null) {
-                putNestedValue(encodedGlobal, key, encoded)
-            }
+            putNestedValue(encodedGlobal, key, encoded)
         }
         if (encodedPackageConfigs.length() > 0) {
             root.put(KEY_PACKAGE_CONFIGS, encodedPackageConfigs)
@@ -123,7 +121,7 @@ object ConfigBackupCodec {
 
     @Throws(JSONException::class)
     fun decode(rawJson: String): MutableMap<String?, Any?> {
-        require(!(rawJson == null || rawJson.length > MAX_JSON_CHARS)) { "Backup exceeds size limit" }
+        require(rawJson.length <= MAX_JSON_CHARS) { "Backup exceeds size limit" }
         val root = JSONObject(rawJson)
         val schemaVersion = root.optInt(KEY_SCHEMA_VERSION, -1)
         if (schemaVersion == SCHEMA_VERSION) {
@@ -240,9 +238,7 @@ object ConfigBackupCodec {
             packageEntries.put(domain, domainEntries)
         }
         val encoded = encodeDirectValue(value)
-        if (encoded != null) {
-            putNestedValue(domainEntries, field, encoded)
-        }
+        putNestedValue(domainEntries, field, encoded)
         return true
     }
 
@@ -267,9 +263,6 @@ object ConfigBackupCodec {
             return false
         }
         val encoded = encodeDirectValue(value)
-        if (encoded == null) {
-            return true
-        }
         var packageEntries = encodedPackages.optJSONObject(packageName)
         if (packageEntries == null) {
             packageEntries = JSONObject()
@@ -290,9 +283,7 @@ object ConfigBackupCodec {
             return false
         }
         val encoded = encodeDirectValue(value)
-        if (encoded != null) {
-            putNestedValue(encodedDefaultPrefill, key.substring(prefix.length), encoded)
-        }
+        putNestedValue(encodedDefaultPrefill, key.substring(prefix.length), encoded)
         return true
     }
 
@@ -307,9 +298,6 @@ object ConfigBackupCodec {
             return false
         }
         val encoded = encodeDirectValue(value)
-        if (encoded == null) {
-            return true
-        }
         val remainder = key.substring(prefix.length)
         if ("ids" == remainder || "order" == remainder) {
             var meta = encodedTemplates.optJSONObject(KEY_TEMPLATE_META)
@@ -515,52 +503,6 @@ object ConfigBackupCodec {
             return decodeStringSet(value)
         }
         return value
-    }
-
-    @Throws(JSONException::class)
-    private fun encodeValue(value: Any?): JSONObject? {
-        if (value == null) {
-            return null
-        }
-        val encoded = JSONObject()
-        if (value is String) {
-            encoded.put(KEY_TYPE, "string")
-            encoded.put(KEY_VALUE, value)
-            return encoded
-        }
-        if (value is Int) {
-            encoded.put(KEY_TYPE, "int")
-            encoded.put(KEY_VALUE, value)
-            return encoded
-        }
-        if (value is Long) {
-            encoded.put(KEY_TYPE, "long")
-            encoded.put(KEY_VALUE, value)
-            return encoded
-        }
-        if (value is Float) {
-            encoded.put(KEY_TYPE, "float")
-            encoded.put(KEY_VALUE, value)
-            return encoded
-        }
-        if (value is Boolean) {
-            encoded.put(KEY_TYPE, "boolean")
-            encoded.put(KEY_VALUE, value)
-            return encoded
-        }
-        if (value is Set<*>) {
-            val values = mutableListOf<String>()
-            for (item in value) {
-                if (item is String) {
-                    values.add(item)
-                }
-            }
-            values.sort()
-            encoded.put(KEY_TYPE, "string_set")
-            encoded.put(KEY_VALUE, values)
-            return encoded
-        }
-        return null
     }
 
     @Throws(JSONException::class)

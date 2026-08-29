@@ -83,7 +83,7 @@ internal class ConfigSnapshotRepository(
     }
 
     private fun isBackupConfigKey(key: String): Boolean =
-        !BackupKeyPolicy.isLocalOnly(key) && key != targetPackagesKey && !isLegacyPackageConfigKey(key)
+        BackupKeyPolicy.isImportable(key) && key != targetPackagesKey && !isLegacyPackageConfigKey(key)
 
     private fun packageNameFromAggregatedKey(key: String): String? {
         if (!key.startsWith("package_config.")) return null
