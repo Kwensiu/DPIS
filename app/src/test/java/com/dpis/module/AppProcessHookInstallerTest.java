@@ -516,7 +516,7 @@ public class AppProcessHookInstallerTest {
     public void debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() throws Exception {
         String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         String planner = readSource("src/main/java/com/dpis/module/hooks/HookExecutionPlanner.java");
-        String packagePlan = readSource("src/main/java/com/dpis/module/config/ModulePackagePlan.java");
+        String packagePlan = readSource("src/main/java/com/dpis/module/config/ModulePackagePlan.kt");
 
         assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"));
         assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"));

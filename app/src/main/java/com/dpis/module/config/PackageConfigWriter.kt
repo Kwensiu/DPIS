@@ -375,9 +375,10 @@ internal class PackageConfigWriter(
             putBoolean(persistence.keyForDpisEnabled(packageName), false)
             putBoolean(persistence.keyForPackageDpisEnabled(packageName), false)
         }
-        if (includeAppSpecific && value.wechatDpi() != null && WechatDpiConfig.appliesTo(packageName)) {
-            putInt(persistence.keyForWechatDpi(packageName), value.wechatDpi())
-            putInt(persistence.keyForPackageWechatDpi(packageName), value.wechatDpi())
+        val wechatDpi = value.wechatDpi()
+        if (includeAppSpecific && wechatDpi != null && WechatDpiConfig.appliesTo(packageName)) {
+            putInt(persistence.keyForWechatDpi(packageName), wechatDpi)
+            putInt(persistence.keyForPackageWechatDpi(packageName), wechatDpi)
         }
     }
 

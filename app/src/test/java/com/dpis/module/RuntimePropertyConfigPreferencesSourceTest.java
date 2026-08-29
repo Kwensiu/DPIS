@@ -12,25 +12,25 @@ import org.junit.Test;
 public class RuntimePropertyConfigPreferencesSourceTest {
     @Test
     public void usesTtlBasedSnapshotRefresh() throws Exception {
-        String source = read("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.java");
+        String source = read("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.kt");
 
         assertTrue(source.contains("SNAPSHOT_TTL_MILLIS = 2_000L"));
         assertTrue(source.contains("cachedAtMillis"));
-        assertTrue(source.contains("(now - cachedAtMillis) < SNAPSHOT_TTL_MILLIS"));
+        assertTrue(source.contains("now - cachedAtMillis < SNAPSHOT_TTL_MILLIS"));
     }
 
     @Test
     public void readsHookDomainOverrideFromRuntimePropertyMirror() throws Exception {
-        String source = read("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.java");
+        String source = read("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.kt");
 
         assertTrue(source.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
-        assertTrue(source.contains("values.put(hookDomainsKey(), String.join(\",\""));
-        assertTrue(source.contains("font.\" + packageName + \".hook_domains"));
+        assertTrue(source.contains("values[hookDomainsKey()]"));
+        assertTrue(source.contains("font.$packageName.hook_domains"));
     }
 
     @Test
     public void readsDebugSwitchesFromRuntimePropertyMirror() throws Exception {
-        String source = read("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.java");
+        String source = read("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.kt");
 
         assertTrue(source.contains("ConfigPreferenceKeys.GLOBAL_LOG_ENABLED"));
         assertTrue(source.contains("RuntimeDebugPropertyBridge.readGlobalLogEnabled()"));

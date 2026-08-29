@@ -87,7 +87,7 @@ public class HyperOsFlutterFontHookConfigTest {
     @Test
     public void legacyFactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
         String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
-        String prefs = readSource("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.java");
+        String prefs = readSource("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.kt");
         String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
 
         assertTrue(factory.contains("createForLegacyHost(String packageName)"));
@@ -97,7 +97,7 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)"));
-        assertTrue(prefs.contains("viewportTargetSpec.isAbsoluteDp()"));
+        assertTrue(prefs.contains("targetSpec.absoluteWidthDp()"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontMode(packageName)"));
         assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readTypefaceId(packageName)"));
