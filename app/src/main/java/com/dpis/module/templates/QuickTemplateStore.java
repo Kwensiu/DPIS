@@ -3,6 +3,8 @@ package com.dpis.module.templates;
 import android.content.SharedPreferences;
 import android.content.Context;
 import com.dpis.module.DpisConfigStore;
+import com.dpis.module.backup.TemplateBackup;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +64,7 @@ public final class QuickTemplateStore {
         }
     }
 
-    public boolean restoreFromBackup(Map<String, Object> entries) {
+    public boolean restoreFromBackup(@Nullable Map<String, Object> entries) {
         if (!containsTemplateEntries(entries)) return false;
         SharedPreferences.Editor editor = preferences.edit();
         for (String key : preferences.getAll().keySet()) if (key.startsWith("template.")) editor.remove(key);
@@ -72,11 +74,42 @@ public final class QuickTemplateStore {
         return editor.commit();
     }
 
+    /** Exports templates as domain values; preference key layout stays private to this store. */
+    public List<TemplateBackup> exportBackup() {
+        List<TemplateBackup> result = new ArrayList<>();
+        for (QuickTemplate template : readAll()) {
+            result.add(new TemplateBackup(template.id, template.name, template.updatedAt,
+                    template.selectedPackages, template.configValue));
+        }
+        return result;
+    }
+
+    /** Restores the complete ordered template catalog from domain values. */
+    public boolean restoreBackup(List<TemplateBackup> backups) {
+        if (backups == null) return false;
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()) {
+            if (key.startsWith("template.")) editor.remove(key);
+        }
+        if (!editor.commit()) return false;
+        for (TemplateBackup backup : backups) {
+            if (backup == null || !save(new QuickTemplate(backup.id, backup.name,
+                    backup.updatedAt, backup.selectedPackages, backup.configValue))) {
+                return false;
+            }
+        }
+        List<String> orderedIds = new ArrayList<>();
+        for (TemplateBackup backup : backups) {
+            if (backup != null) orderedIds.add(backup.id);
+        }
+        return reorder(orderedIds);
+    }
+
     /**
      * A backup from before template storage was introduced has no template
      * entries. Such a backup must not delete the user's current local catalog.
      */
-    public static boolean containsTemplateEntries(Map<String, ?> entries) {
+    public static boolean containsTemplateEntries(@Nullable Map<String, ?> entries) {
         if (entries == null) return false;
         for (String key : entries.keySet()) {
             if (key != null && key.startsWith("template.")) return true;

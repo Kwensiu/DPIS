@@ -353,6 +353,9 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
     testImplementation(libs.junit4)
+    // Local JVM tests otherwise resolve Android's org.json stubs, which throw
+    // for normal JSONObject mutations used by the backup codec.
+    testImplementation("org.json:json:20250517")
     testRuntimeOnly(libs.legacy.xposed.api)
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.compose.ui.test.junit4)

@@ -17,6 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
@@ -289,6 +290,28 @@ public class QuickTemplateStoreTest {
 
         assertNull(store.read("template_a"));
         assertEquals("New", store.read("template_b").name);
+    }
+
+    @Test
+    public void domainBackupRoundTripPreservesOrderTargetsAndTypeface() {
+        QuickTemplateStore source = new QuickTemplateStore(new FakePrefs());
+        TemplateConfigValue value = new TemplateConfigValue(
+                TemplateConfigValue.VIEWPORT_TARGET_RELATIVE_SCALE,
+                125_000, null, TemplateConfigValue.VIEWPORT_MODE_AUTO,
+                110, TemplateConfigValue.FONT_MODE_FIELD_REWRITE,
+                "font_face_1", "system_server,activity_thread");
+        assertTrue(source.save(new QuickTemplateStore.QuickTemplate(
+                "template_a", "A", 1L, Set.of("com.example.a"), value)));
+        assertTrue(source.save(new QuickTemplateStore.QuickTemplate(
+                "template_b", "B", 2L, Set.of("com.example.b"), TemplateConfigValue.EMPTY)));
+        assertTrue(source.reorder(List.of("template_b", "template_a")));
+
+        QuickTemplateStore restored = new QuickTemplateStore(new FakePrefs());
+        assertTrue(restored.restoreBackup(source.exportBackup()));
+        assertEquals(List.of("template_b", "template_a"),
+                restored.readAll().stream().map(template -> template.id).toList());
+        assertEquals("font_face_1", restored.read("template_a").configValue.typefaceId);
+        assertEquals(Set.of("com.example.a"), restored.read("template_a").selectedPackages);
     }
 }
 

@@ -270,11 +270,10 @@ public class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     public void releaseBuildForcesSystemHooksEnabledAtStoreReadBoundary() throws IOException {
-        String source = read("src/main/java/com/dpis/module/DpisConfigStore.java");
+        String source = read("src/main/java/com/dpis/module/config/GlobalConfigStore.kt");
 
-        assertTrue(source.contains("if (!BuildConfig.DEBUG) {"));
-        assertTrue(source.contains("return true;"));
-        assertTrue(source.contains("return getBoolean(KEY_SYSTEM_SERVER_HOOKS_ENABLED, true);"));
+        assertTrue(source.contains("!BuildConfig.DEBUG"));
+        assertTrue(source.contains("SYSTEM_SERVER_HOOKS_ENABLED, true"));
     }
 
     @Test
