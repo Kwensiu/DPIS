@@ -3,7 +3,7 @@ package com.dpis.module.process;
 import com.dpis.module.R;
 import com.dpis.module.applist.AppListItem;
 
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.root.RootAppProcessLauncher;

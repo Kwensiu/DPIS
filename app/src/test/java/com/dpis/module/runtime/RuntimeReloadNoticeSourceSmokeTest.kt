@@ -11,7 +11,7 @@ class RuntimeReloadNoticeSourceSmokeTest {
         val coordinator = read(
             "src/main/java/com/dpis/module/runtime/ModuleRuntimeReloadNoticeCoordinator.kt",
         )
-        val dialog = read("src/main/java/com/dpis/module/ui/compose/LocalToolDialogs.kt")
+        val dialog = read("src/main/java/com/dpis/module/tools/presentation/LocalToolDialogs.kt")
 
         assertTrue(advisor.contains(".commit()"))
         assertTrue(coordinator.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceShown(host)"))

@@ -67,7 +67,7 @@ import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.quickconfig.QuickConfigTargetDecision;
 import com.dpis.module.ui.compose.QuickConfigPresentation;
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeMessageDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 

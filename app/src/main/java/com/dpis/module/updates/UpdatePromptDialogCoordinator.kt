@@ -3,7 +3,7 @@ package com.dpis.module.updates
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
-import com.dpis.module.ui.compose.StartupDisclaimerGate
+import com.dpis.module.ui.dialog.StartupDisclaimerGate
 import java.util.Locale
 import java.util.function.BooleanSupplier
 

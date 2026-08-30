@@ -10,7 +10,7 @@ import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.ui.DialogWindowSizer;
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.ui.compose.LanguageDialogOption;
 import com.dpis.module.ui.compose.SettingsComposeDialogs;
 import com.dpis.module.ui.compose.FontDebugComposeSheet;

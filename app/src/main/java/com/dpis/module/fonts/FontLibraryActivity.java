@@ -8,7 +8,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.ui.compose.FontLibraryPresentation;
 import com.dpis.module.ui.compose.FontLibraryUiItem;
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeTextInputDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 

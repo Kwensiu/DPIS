@@ -13,7 +13,7 @@ import com.dpis.module.ui.compose.FontDetailPresentation;
 import com.dpis.module.ui.compose.FontDetailUiState;
 import com.dpis.module.ui.compose.FontReferenceUiItem;
 import com.dpis.module.ui.compose.SupportActivityContent;
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeTextInputDialog;
 
 import android.content.pm.ApplicationInfo;

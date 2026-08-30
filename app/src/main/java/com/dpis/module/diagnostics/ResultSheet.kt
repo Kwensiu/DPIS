@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.compose.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
 import com.google.android.material.bottomsheet.BottomSheetDialog

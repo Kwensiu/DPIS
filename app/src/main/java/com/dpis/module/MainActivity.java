@@ -99,7 +99,7 @@ import com.dpis.module.ui.WindowInsetsBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.compose.AppFilterComposeSheet;
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeMessageDialog;
 
 import com.dpis.module.home.HomeWorkspaceBinder;

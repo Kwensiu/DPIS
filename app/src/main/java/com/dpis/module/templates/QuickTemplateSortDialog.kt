@@ -42,7 +42,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.compose.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DialogColumn
 import com.dpis.module.ui.compose.DialogTitle
 import com.dpis.module.ui.compose.DpisTheme

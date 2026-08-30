@@ -19,8 +19,8 @@ import androidx.compose.ui.platform.ComposeView
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationContent
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
-import com.dpis.module.ui.compose.StartupDisclaimerDialog
-import com.dpis.module.ui.compose.StartupDisclaimerGate
+import com.dpis.module.ui.dialog.StartupDisclaimerDialog
+import com.dpis.module.ui.dialog.StartupDisclaimerGate
 import com.dpis.module.ui.compose.dpisDarkTheme
 import java.util.function.BooleanSupplier
 

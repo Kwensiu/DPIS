@@ -50,17 +50,17 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         String packageActions = read(
                 "src/main/java/com/dpis/module/diagnostics/PackageActions.kt");
         String preparation = read(
-                "src/main/java/com/dpis/module/ui/compose/"
+                "src/main/java/com/dpis/module/diagnostics/presentation/"
                         + "FeedbackDiagnosticPreparationContent.kt");
         String theme = read(
-                "src/main/java/com/dpis/module/ui/compose/ThemeSettingsContent.kt");
+                "src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt");
         String edgeFade = read(
-                "src/main/java/com/dpis/module/ui/compose/HorizontalScrollEdgeFade.kt");
+                "src/main/java/com/dpis/module/ui/presentation/HorizontalScrollEdgeFade.kt");
         String shell = read("src/main/java/com/dpis/module/MainComposeShellHost.kt");
         String segmentedPolicy = read(
-                "src/main/java/com/dpis/module/ui/compose/SegmentedListItemPolicy.kt");
+                "src/main/java/com/dpis/module/ui/presentation/SegmentedListItemPolicy.kt");
         String hookChain = read(
-                "src/main/java/com/dpis/module/ui/compose/HookChainEditorPage.kt");
+                "src/main/java/com/dpis/module/fonts/presentation/HookChainEditorPage.kt");
         String coordinator = read(
                 "src/main/java/com/dpis/module/diagnostics/Coordinator.java");
         String summary = read(
@@ -75,7 +75,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(main.contains("private Session.Host createFeedbackDiagnosticHost()"));
         assertTrue(main.contains("LogGate.ensureEnabled("));
         assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"));
-        assertTrue(main.contains("ComposeConfirmDialog.showWithLabels("));
+        assertTrue(main.contains("ConfirmDialog.showWithLabels("));
         assertTrue(main.contains("resolvePackageVersionName(item.packageName)"));
         assertTrue(main.contains("feedbackDiagnosticSession.start("));
         assertTrue(pageController.contains("selectedDurationSeconds()"));
@@ -166,7 +166,7 @@ public final class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(hookChain.contains("SingleItemShape"));
         assertFalse(main.contains("postDelayed(() -> finish("));
         assertFalse(main.contains("summaryBuilder.build("));
-        assertTrue(logGate.contains("ComposeConfirmDialog.showWithLabels("));
+        assertTrue(logGate.contains("ConfirmDialog.showWithLabels("));
         assertFalse(logGate.contains("MaterialAlertDialogBuilder"));
 
         assertTrue(coordinator.contains("handler.postDelayed("));

@@ -15,7 +15,7 @@ class MainActivitySourceSmokeTest {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val homeState = read("src/main/java/com/dpis/module/home/HomeUpdateUiState.java")
         val composeHome = read(
-                "src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt"
+                "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
         assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.CHECKING)"))
@@ -32,7 +32,7 @@ class MainActivitySourceSmokeTest {
     fun composeOwnsMainWorkspaceSearchAndNavigationControls() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val composeWorkspace = read(
-                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
         assertFalse(source.contains("searchFocusFab = findViewById"))
         assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"))
@@ -85,7 +85,7 @@ class MainActivitySourceSmokeTest {
     fun composeWorkspaceOwnsFilterEntry() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val composeWorkspace = read(
-                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
         assertFalse(source.contains("focusSearchInputAndShowKeyboard()"))
         assertFalse(source.contains("hideSearchFocusFab()"))
@@ -260,8 +260,8 @@ class MainActivitySourceSmokeTest {
         val coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
         )
-        val iconSource = read("src/main/java/com/dpis/module/ui/compose/InstalledAppIcon.kt")
-        val workspaceSource = read("src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt")
+        val iconSource = read("src/main/java/com/dpis/module/applist/presentation/InstalledAppIcon.kt")
+        val workspaceSource = read("src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
         assertTrue(
             source.contains("installedAppCatalogCoordinator.loadInstalledApps(")
@@ -328,7 +328,7 @@ class MainActivitySourceSmokeTest {
     fun savesAndRestoresPageScrollStatesForRotation() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val compose = read(
-                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
         assertTrue(source.contains("appWorkspaceScrollStateStore.snapshot()"))
         assertTrue(source.contains("appWorkspaceScrollStateStore.restore("))
@@ -342,7 +342,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appWorkspaceSupportsTabClicksAndHorizontalPageSwipes() {
         val compose = read(
-                "src/main/java/com/dpis/module/ui/compose/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
         assertTrue(compose.contains("rememberPagerState("))
         assertTrue(compose.contains("HorizontalPager("))
@@ -357,7 +357,7 @@ class MainActivitySourceSmokeTest {
     fun startupDisclaimerUsesMaterialDialogAndPersistsConsent() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val runtimeLayout = read(
-            "src/main/java/com/dpis/module/ui/compose/LocalToolDialogs.kt"
+            "src/main/java/com/dpis/module/tools/presentation/LocalToolDialogs.kt"
         )
         val strings = read("src/main/res/values/strings.xml")
         val zhStrings = read("src/main/res/values-zh-rCN/strings.xml")
@@ -506,7 +506,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java"
         )
         val compose = read(
-            "src/main/java/com/dpis/module/ui/compose/HomeWorkspaceContent.kt"
+            "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
         assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow()"));
@@ -1274,11 +1274,11 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
             "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
         val workspace = read(
-            "src/main/java/com/dpis/module/ui/compose/TemplateWorkspaceContent.kt")
+            "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
         val editorSurface = read(
-            "src/main/java/com/dpis/module/ui/compose/TemplateEditorContent.kt")
+            "src/main/java/com/dpis/module/templates/presentation/TemplateEditorContent.kt")
         val editorSheet = read(
-            "src/main/java/com/dpis/module/ui/compose/DpisEditorBottomSheet.kt")
+            "src/main/java/com/dpis/module/ui/presentation/DpisEditorBottomSheet.kt")
 
         assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"))
         assertTrue(activity.contains("boolean dirty = form.isDirty()"));

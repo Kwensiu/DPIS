@@ -6,7 +6,7 @@ import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
-import com.dpis.module.ui.compose.ConfirmDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 
 import android.content.Context;
 import android.widget.Toast;

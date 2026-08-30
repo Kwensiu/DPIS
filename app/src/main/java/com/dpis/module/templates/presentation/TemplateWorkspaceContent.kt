@@ -1,0 +1,1042 @@
+package com.dpis.module.ui.compose
+
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
+import com.dpis.module.ui.dialog.ModalDialog
+
+import android.content.res.Configuration
+import android.widget.Toast
+
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import com.dpis.module.R
+import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.QuickTemplateTargetsPresentationController
+import com.dpis.module.templates.TemplateConfigSummaryFormatter
+import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.templates.TemplateWorkspacePresentation
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun TemplateWorkspaceContent(
+    state: TemplateWorkspacePresentation.State,
+    padding: PaddingValues,
+    onQueryChanged: (String) -> Unit,
+    onEditorOpened: (quickTemplate: Boolean, templateId: String?) -> Unit = { _, _ -> },
+    onEditorChanged: (TemplateEditorForm) -> Unit = {},
+    onEditorDestinationChanged: (ConfigEditorDestination) -> Unit = {},
+    onEditorClosed: () -> Unit = {},
+    scrollStore: PageScrollPositionStore,
+) {
+    val activeScrollStore = scrollStore
+    var editorKind by rememberSaveable {
+        mutableStateOf(editorKindFor(state.detailKind))
+    }
+    var editorTemplateId by rememberSaveable { mutableStateOf(state.detailTemplateId) }
+    var targetsTemplateId by rememberSaveable {
+        mutableStateOf(
+            state.detailTemplateId.takeIf {
+                state.detailKind == TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS
+            }
+        )
+    }
+    var targetSessionDirty by rememberSaveable { mutableStateOf(false) }
+    var pendingTargetTemplateId by rememberSaveable { mutableStateOf<String?>(null) }
+    var targetSwitchDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var targetSaveRequest by rememberSaveable { mutableStateOf(0) }
+    var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
+    var editorSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var editorSheetClosing by remember { mutableStateOf(false) }
+    val editorDestination = state.editorDestination
+    val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    LaunchedEffect(state.detailKind, state.detailTemplateId) {
+        when (state.detailKind) {
+            TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL -> {
+                editorKind = EDITOR_GLOBAL
+                editorTemplateId = null
+                targetsTemplateId = null
+            }
+            TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE -> {
+                editorKind = EDITOR_QUICK
+                editorTemplateId = state.detailTemplateId
+                targetsTemplateId = null
+            }
+            TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS -> {
+                editorKind = null
+                editorTemplateId = null
+                targetsTemplateId = state.detailTemplateId
+            }
+            TemplateWorkspacePresentation.DetailKind.NONE -> Unit
+        }
+    }
+
+    // Compose owns the visible editor on both portrait and landscape. Activity callbacks retain
+    // only the route contract used by saved-instance and portrait target-Activity migration.
+    fun openEditor(kind: String, templateId: String?) {
+        editorKind = kind
+        editorTemplateId = templateId
+        targetsTemplateId = null
+        editorSheetVisible = true
+        editorSheetClosing = false
+        onEditorDestinationChanged(ConfigEditorDestination.MAIN)
+        onEditorOpened(kind == EDITOR_QUICK, templateId)
+    }
+
+    val selectedTemplate = state.templates.firstOrNull { it.id == editorTemplateId }
+    val editorKey = "${editorKind.orEmpty()}:${editorTemplateId.orEmpty()}"
+    val editorDraft = rememberTemplateEditorDraftState(editorKey) {
+        when (editorKind) {
+            EDITOR_GLOBAL -> TemplateEditorForm.global(state.globalPrefill).also {
+                it.applyDraft(state.globalPrefillDraft)
+            }
+            EDITOR_QUICK -> {
+                val template = selectedTemplate
+                TemplateEditorForm.quick(
+                    template?.let {
+                        QuickTemplateStore.QuickTemplate(
+                            it.id, it.name, 0L, linkedSetOf(), it.configValue
+                        )
+                    },
+                    ""
+                ).also { it.applyDraft(state.quickTemplateDraft) }
+            }
+            else -> TemplateEditorForm.global(state.globalPrefill).also {
+                it.applyDraft(state.globalPrefillDraft)
+            }
+        }
+    }
+
+    fun notifyEditorChanged() {
+        editorDraft.changed()
+        onEditorChanged(editorDraft.form)
+    }
+
+    fun finishEditorClose() {
+        if (editorKind == null) return
+        editorKind = null
+        editorTemplateId = null
+        deleteConfirmationVisible = false
+        editorSheetVisible = false
+        editorSheetClosing = false
+        onEditorClosed()
+    }
+
+    fun closeEditor() {
+        if (editorKind == null) return
+        if (!isLandscape && editorSheetClosing) return
+        if (!isLandscape && editorSheetVisible) {
+            editorSheetClosing = true
+            editorSheetVisible = false
+            return
+        }
+        finishEditorClose()
+    }
+
+    fun saveEditor() {
+        val createdNewTemplate = editorDraft.form.quickTemplate && editorDraft.form.newTemplate
+        val result = if (editorDraft.form.quickTemplate) {
+            state.actions.saveQuickTemplate(editorDraft.form)
+        } else {
+            state.actions.saveGlobalPrefill(editorDraft.form)
+        }
+        if (result.success) {
+            editorDraft.form.markSaved(result.templateId)
+            editorTemplateId = editorDraft.form.templateId
+            notifyEditorChanged()
+            if (createdNewTemplate) {
+                closeEditor()
+                return
+            }
+            if (editorDraft.form.quickTemplate) {
+                onEditorOpened(true, editorDraft.form.templateId)
+            }
+        }
+    }
+
+    val draftRevision = editorDraft.observe()
+    @Composable fun hookChainPage(
+        bottomPadding: androidx.compose.ui.unit.Dp,
+        modifier: Modifier = Modifier
+    ) {
+        HookChainEditorPage(
+            destination = editorDestination,
+            rawDomains = editorDraft.form.fontHookDomainsRaw,
+            fontDomainsResetRequested = editorDraft.form.fontHookDomainsRaw == null,
+            automaticDomains = FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+            fontDomainsEditable = editorDraft.form.fontMode ==
+                com.dpis.module.fonts.FontApplyMode.FIELD_REWRITE,
+            viewportApplyMode = editorDraft.form.viewportApplyMode,
+            onHookChainChanged = { raw, reset, mode, _ ->
+                editorDraft.form.fontHookDomainsRaw = if (reset) null else raw
+                editorDraft.form.viewportApplyMode = mode
+                notifyEditorChanged()
+            },
+            onDestinationChanged = onEditorDestinationChanged,
+            onBack = { onEditorDestinationChanged(editorDestination.backDestination()) },
+            modifier = modifier,
+            bottomPadding = bottomPadding
+        )
+    }
+    @Composable fun typefacePage(modifier: Modifier = Modifier) {
+        AppTypefacePickerPage(
+            selectedTypefaceId = editorDraft.form.selectedTypefaceId,
+            onTypefaceSelected = {
+                editorDraft.form.selectedTypefaceId = it
+                notifyEditorChanged()
+            },
+            onBack = {
+                onEditorDestinationChanged(editorDestination.backDestination())
+            },
+            modifier = modifier
+        )
+    }
+    val editorBody: @Composable () -> Unit = {
+            TemplateEditorSurface(
+                form = editorDraft.form,
+                surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
+                draftRevision = draftRevision,
+                topSafePadding = topSafePadding,
+                bottomSafePadding = padding.calculateBottomPadding(),
+                sheetVisible = false,
+                onFormChanged = ::notifyEditorChanged,
+                onSelectTypeface = {
+                    onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
+                },
+            onEditHookDomains = {
+                onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
+            },
+            onReset = { editorDraft.form.reset(); notifyEditorChanged() },
+            onDismissRequest = ::closeEditor,
+            onDelete = if (editorDraft.form.quickTemplate && !editorDraft.form.newTemplate) {
+                { deleteConfirmationVisible = true }
+            } else null,
+            onSave = ::saveEditor,
+            destination = editorDestination,
+            hookContent = {
+                hookChainPage(
+                    padding.calculateBottomPadding(),
+                    Modifier.padding(top = topSafePadding)
+                )
+            },
+            typefaceContent = {
+                typefacePage(Modifier.padding(top = topSafePadding))
+            }
+        )
+    }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        val twoPane = isLandscape && maxWidth >= WorkspaceTwoPaneMinWidth
+        val openTargets: (String) -> Unit = { templateId ->
+            if (twoPane) {
+                if (targetsTemplateId != null && targetsTemplateId != templateId && targetSessionDirty) {
+                    pendingTargetTemplateId = templateId
+                    targetSwitchDialogVisible = true
+                } else {
+                    editorKind = null
+                    editorTemplateId = null
+                    targetsTemplateId = templateId
+                    state.actions.openEmbeddedTargets(templateId)
+                }
+            } else {
+                state.actions.selectTargets(templateId)
+            }
+        }
+
+        if (twoPane) {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Transparent)
+            ) {
+                TemplateWorkspaceListPane(
+                    state = state,
+                    padding = padding,
+                    onQueryChanged = onQueryChanged,
+                    onEditorOpened = ::openEditor,
+                    onTargetsOpened = openTargets,
+                    scrollStore = activeScrollStore,
+                    modifier = Modifier.weight(1f)
+                )
+                VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(Color.Transparent)
+                ) {
+                    when {
+                        targetsTemplateId != null -> Box(
+                            Modifier.padding(bottom = padding.calculateBottomPadding())
+                        ) {
+                            EmbeddedQuickTemplateTargets(
+                                templateId = targetsTemplateId.orEmpty(),
+                                onClose = {
+                                    targetSessionDirty = false
+                                    val next = pendingTargetTemplateId
+                                    pendingTargetTemplateId = null
+                                    targetsTemplateId = next
+                                    if (next != null) {
+                                        state.actions.openEmbeddedTargets(next)
+                                    } else {
+                                        onEditorClosed()
+                                    }
+                                },
+                                onUnsavedChanged = { targetSessionDirty = it },
+                                saveRequest = targetSaveRequest
+                            )
+                        }
+                        editorKind != null -> editorBody()
+                        else -> TemplateDetailEmptyState(
+                            modifier = Modifier.padding(top = topSafePadding)
+                        )
+                    }
+                }
+            }
+        } else {
+            TemplateWorkspaceListPane(
+                state = state,
+                padding = padding,
+                onQueryChanged = onQueryChanged,
+                onEditorOpened = ::openEditor,
+                onTargetsOpened = openTargets,
+                scrollStore = activeScrollStore,
+                modifier = Modifier
+            )
+            if (editorKind != null) {
+                TemplateEditorSurface(
+                    form = editorDraft.form,
+                    surface = TemplateEditorSurfaceKind.PORTRAIT_SHEET,
+                    draftRevision = draftRevision,
+                    sheetVisible = editorSheetVisible,
+                    onSheetHidden = { if (editorSheetClosing) finishEditorClose() },
+                    onFormChanged = ::notifyEditorChanged,
+                    onSelectTypeface = {
+                        onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
+                    },
+                    onEditHookDomains = {
+                        onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
+                    },
+                    onReset = { editorDraft.form.reset(); notifyEditorChanged() },
+                    onDismissRequest = ::closeEditor,
+                    onDelete = if (
+                        editorDraft.form.quickTemplate && !editorDraft.form.newTemplate
+                    ) {
+                        { deleteConfirmationVisible = true }
+                    } else null,
+                    onSave = ::saveEditor,
+                    destination = editorDestination,
+                    hookContent = { hookChainPage(padding.calculateBottomPadding()) },
+                    typefaceContent = { typefacePage() }
+                )
+            }
+        }
+    }
+    if (deleteConfirmationVisible) {
+        ConfirmAlertDialog(
+            onDismissRequest = { deleteConfirmationVisible = false },
+            title = stringResource(R.string.quick_template_delete_title),
+            message = stringResource(
+                R.string.quick_template_delete_message,
+                editorDraft.form.nameInput
+            ),
+            cancelLabel = stringResource(R.string.dialog_cancel_button),
+            confirmLabel = stringResource(R.string.font_library_delete_action),
+            onConfirm = {
+                deleteConfirmationVisible = false
+                val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId)
+                if (result.success) closeEditor()
+            }
+        )
+    }
+    if (targetSwitchDialogVisible) {
+        ModalDialog(onDismissRequest = { targetSwitchDialogVisible = false }) {
+            Column(Modifier.padding(24.dp)) {
+                Text(
+                    stringResource(R.string.quick_template_targets_unsaved_title),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    stringResource(R.string.quick_template_targets_unsaved_message),
+                    modifier = Modifier.padding(top = 12.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    Modifier.fillMaxWidth().padding(top = 20.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = {
+                        val next = pendingTargetTemplateId
+                        pendingTargetTemplateId = null
+                        targetSwitchDialogVisible = false
+                        targetSessionDirty = false
+                        targetsTemplateId = next
+                        if (next != null) state.actions.openEmbeddedTargets(next)
+                    }) {
+                        Text(stringResource(R.string.quick_template_targets_discard_changes))
+                    }
+                    TextButton(onClick = {
+                        targetSwitchDialogVisible = false
+                        targetSaveRequest++
+                    }) {
+                        Text(stringResource(R.string.quick_template_targets_save_and_switch))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun editorKindFor(kind: TemplateWorkspacePresentation.DetailKind): String? = when (kind) {
+    TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL -> EDITOR_GLOBAL
+    TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE -> EDITOR_QUICK
+    else -> null
+}
+
+@Composable
+private fun TemplateWorkspaceListPane(
+    state: TemplateWorkspacePresentation.State,
+    padding: PaddingValues,
+    onQueryChanged: (String) -> Unit,
+    onEditorOpened: (String, String?) -> Unit,
+    onTargetsOpened: (String) -> Unit,
+    scrollStore: PageScrollPositionStore,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+    val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Transparent)
+            .padding(top = topSafePadding)
+    ) {
+        val searchDividerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
+        WorkspaceSearchCard(
+            query = state.query,
+            onQueryChanged = onQueryChanged,
+            hintRes = R.string.template_search_hint,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
+                .padding(
+                    top = TemplateUiTokens.SearchTopPadding,
+                    bottom = TemplateUiTokens.SearchBottomPadding
+                )
+                .height(TemplateUiTokens.SearchCardHeight),
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(searchDividerColor),
+        )
+        val listState = rememberRestorableLazyListState(
+            key = "templates",
+            store = scrollStore,
+            enabled = !state.searching,
+        )
+        val listScrolled = listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                state = listState,
+                contentPadding = PaddingValues(
+                start = TemplateUiTokens.WorkspaceHorizontalPadding,
+                top = TemplateUiTokens.WorkspaceTopPadding,
+                end = TemplateUiTokens.WorkspaceHorizontalPadding,
+                bottom = padding.calculateBottomPadding() + TemplateUiTokens.WorkspaceBottomReserve
+            ),
+            verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clearTextInputFocusOnPointerDown(focusManager)
+            ) {
+            if (!state.searching) {
+                item {
+                    GlobalPrefillCard(state, rememberConfirmAction {
+                        onEditorOpened(EDITOR_GLOBAL, null)
+                    })
+                }
+                item {
+                    TemplateHeader(state, rememberConfirmAction {
+                        onEditorOpened(EDITOR_QUICK, null)
+                    })
+                }
+            }
+            if (state.templates.isEmpty()) {
+                item {
+                    val searching = state.searching
+                    Box(
+                        modifier = if (searching) {
+                            Modifier.fillMaxWidth()
+                        } else {
+                            Modifier
+                                .fillParentMaxWidth()
+                                .fillParentMaxHeight(TemplateUiTokens.EmptyStateViewportFraction)
+                                .padding(bottom = TemplateUiTokens.EmptyStateBottomBias)
+                        },
+                        contentAlignment = if (searching) Alignment.CenterStart else Alignment.Center
+                    ) {
+                        Text(
+                            stringResource(
+                                if (searching) R.string.quick_template_search_empty
+                                else R.string.template_workspace_quick_templates_empty
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = if (searching) {
+                                Modifier.padding(
+                                    top = TemplateUiTokens.EmptyStateTopGap,
+                                    bottom = TemplateUiTokens.EmptyStatePadding,
+                                    end = TemplateUiTokens.EmptyStatePadding
+                                )
+                            } else Modifier
+                        )
+                    }
+                }
+            } else {
+                items(state.templates.size, key = { state.templates[it].id }) { index ->
+                    val template = state.templates[index]
+                    TemplateCard(
+                        template = template,
+                        actions = state.actions,
+                        onEdit = rememberConfirmAction {
+                            onEditorOpened(EDITOR_QUICK, template.id)
+                        },
+                        onTargets = rememberConfirmAction {
+                            onTargetsOpened(template.id)
+                        }
+                    )
+                }
+            }
+            }
+            if (listScrolled) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(EdgeOcclusionFadeTokens.Height)
+                        .edgeOcclusionFade(
+                            visibility = 1f,
+                            direction = EdgeOcclusionFadeDirection.TOP_TO_BOTTOM,
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmbeddedQuickTemplateTargets(
+    templateId: String,
+    onClose: () -> Unit,
+    onUnsavedChanged: (Boolean) -> Unit,
+    saveRequest: Int
+) {
+    val context = LocalContext.current
+    val controller = remember(templateId) {
+        QuickTemplateTargetsPresentationController(context.applicationContext)
+    }
+    var targetState by remember(templateId) {
+        mutableStateOf<QuickTemplateTargetsPresentationController.State?>(null)
+    }
+
+    DisposableEffect(controller, templateId) {
+        val listener = QuickTemplateTargetsPresentationController.Listener { next ->
+            targetState = next
+        }
+        controller.addListener(listener)
+        controller.load(templateId)
+        onDispose {
+            controller.removeListener(listener)
+            controller.dispose()
+        }
+    }
+
+    LaunchedEffect(targetState?.missingTemplate) {
+        if (targetState?.missingTemplate == true) {
+            Toast.makeText(context, R.string.quick_template_target_missing, Toast.LENGTH_SHORT)
+                .show()
+            onClose()
+        }
+    }
+
+    LaunchedEffect(targetState?.hasUnsavedChanges) {
+        onUnsavedChanged(targetState?.hasUnsavedChanges == true)
+    }
+    LaunchedEffect(saveRequest) {
+        if (saveRequest <= 0) return@LaunchedEffect
+        val result = controller.save()
+        Toast.makeText(context, result.messageResId, Toast.LENGTH_SHORT).show()
+        if (result.success) onClose()
+    }
+
+    QuickTemplateTargetsContent(
+        state = targetState,
+        onBack = onClose,
+        onQueryChanged = controller::setQuery,
+        onFiltersChanged = controller::setFilters,
+        onSelectionChanged = controller::toggleSelection,
+        onSaveAndExit = {
+            val result = controller.save()
+            Toast.makeText(context, result.messageResId, Toast.LENGTH_SHORT).show()
+            if (result.success) onClose()
+            result.success
+        },
+        showBackButton = false
+    )
+}
+
+@Composable
+private fun TemplateDetailEmptyState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_template_24),
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.template_detail_empty_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.template_detail_empty_message),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360, heightDp = 640)
+@Composable
+private fun TemplateDetailEmptyStatePreview() {
+    DpisTheme(darkTheme = false, dynamicColor = false) {
+        TemplateDetailEmptyState()
+    }
+}
+
+@Composable
+private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = TemplateUiTokens.GlobalCardShape,
+        border = BorderStroke(
+            TemplateUiTokens.CardBorderWidth,
+            MaterialTheme.colorScheme.outlineVariant
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
+    ) {
+        Column(Modifier.padding(TemplateUiTokens.CardPadding)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        stringResource(R.string.template_workspace_global_prefill_title),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        stringResource(R.string.template_workspace_global_prefill_subtitle),
+                        modifier = Modifier.padding(top = TemplateUiTokens.TextSpacingTop),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                 IconButton(onClick = onEdit) {
+                     Icon(
+                         painter = painterResource(R.drawable.ic_chevron_right_24),
+                         contentDescription = stringResource(
+                             R.string.template_workspace_action_edit_global_prefill
+                         ),
+                         modifier = Modifier.size(20.dp)
+                     )
+                }
+            }
+            SummaryPills(
+                state.globalPrefillSummaryParts,
+                state.globalPrefillTypefaceStatus
+            )
+        }
+    }
+}
+
+@Composable
+private fun TemplateHeader(
+    state: TemplateWorkspacePresentation.State,
+    onCreate: () -> Unit
+) {
+    val sort = rememberConfirmAction(state.actions::sortTemplates)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(
+                start = TemplateUiTokens.SectionTitleInset,
+                top = TemplateUiTokens.SectionTopGap,
+                end = TemplateUiTokens.SectionActionInset
+            ),
+        horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            stringResource(R.string.template_workspace_quick_templates_title),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing)) {
+            TemplateActionIconButton(
+                iconRes = R.drawable.ic_sort_24,
+                contentDescription = stringResource(R.string.quick_template_sort_action),
+                enabled = state.templates.isNotEmpty(),
+                onClick = sort,
+                visualSize = TemplateUiTokens.HeaderActionVisualSize
+            )
+            TemplateActionIconButton(
+                iconRes = R.drawable.ic_add_24,
+                contentDescription = stringResource(R.string.quick_template_create_action),
+                onClick = onCreate,
+                visualSize = TemplateUiTokens.HeaderActionVisualSize
+            )
+        }
+    }
+}
+
+@Composable
+private fun TemplateCard(
+    template: TemplateWorkspacePresentation.Template,
+    actions: TemplateWorkspacePresentation.Actions,
+    onEdit: () -> Unit,
+    onTargets: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = TemplateUiTokens.TemplateCardShape,
+        border = BorderStroke(
+            TemplateUiTokens.CardBorderWidth,
+            MaterialTheme.colorScheme.outlineVariant
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
+    ) {
+        Column(Modifier.padding(TemplateUiTokens.CardPadding)) {
+            Text(
+                template.name,
+                style = MaterialTheme.typography.titleMedium
+            )
+            SummaryPills(template.summaryParts, template.typefaceStatus)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = TemplateUiTokens.CardActionsTopGap),
+                horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.ActionSpacing),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TemplateActionIconButton(
+                    iconRes = R.drawable.ic_checklist_rtl_24,
+                    contentDescription = stringResource(R.string.template_workspace_action_select_apps),
+                    onClick = onTargets,
+                    visualSize = TemplateUiTokens.CardActionVisualSize,
+                    style = TemplateActionButtonStyle.Plain
+                )
+                TemplateActionIconButton(
+                    iconRes = R.drawable.ic_edit_24,
+                    contentDescription = stringResource(R.string.template_workspace_action_edit_template),
+                    onClick = onEdit,
+                    visualSize = TemplateUiTokens.CardActionVisualSize,
+                    style = TemplateActionButtonStyle.Plain
+                )
+                Spacer(Modifier.weight(1f))
+                TemplateApplyAction(
+                    onClick = rememberConfirmAction { actions.applyTemplate(template.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TemplateApplyAction(onClick: () -> Unit) {
+    TemplateActionIconButton(
+        iconRes = R.drawable.ic_done_all_24,
+        contentDescription = stringResource(R.string.template_workspace_action_apply),
+        onClick = onClick,
+        visualSize = TemplateUiTokens.ApplyActionVisualSize,
+        style = TemplateActionButtonStyle.Primary
+    )
+}
+
+private const val EDITOR_GLOBAL = "global"
+private const val EDITOR_QUICK = "quick"
+
+@Composable
+private fun SummaryPills(
+    parts: List<String>,
+    typefaceStatus: TemplateConfigSummaryFormatter.TypefaceStatus
+) {
+    if (parts.isEmpty() && !typefaceStatus.missing) {
+        EmptySummary()
+        return
+    }
+    FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = TemplateUiTokens.SummaryTopGap),
+        horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SummaryHorizontalGap),
+        verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.SummaryVerticalGap)
+    ) {
+        parts.forEachIndexed { index, part ->
+            Surface(
+                modifier = Modifier.heightIn(min = TemplateUiTokens.SummaryMinHeight),
+                shape = TemplateUiTokens.SummaryShape,
+                color = if (index == 0) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHighest
+                },
+                contentColor = if (index == 0) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                }
+            ) {
+                Text(
+                    part,
+                    modifier = Modifier.padding(
+                        horizontal = TemplateUiTokens.SummaryHorizontalPadding,
+                        vertical = TemplateUiTokens.SummaryVerticalPadding
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                )
+            }
+        }
+        if (typefaceStatus.missing) {
+            SummaryPill(
+                text = stringResource(
+                    R.string.template_workspace_missing_font,
+                    typefaceStatus.typefaceId.orEmpty()
+                ),
+                containerColor = colorResource(R.color.dpis_warn_container),
+                contentColor = colorResource(R.color.dpis_on_warn_container)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryPill(
+    text: String,
+    containerColor: Color,
+    contentColor: Color
+) {
+    Surface(
+        modifier = Modifier.heightIn(min = TemplateUiTokens.SummaryMinHeight),
+        shape = TemplateUiTokens.SummaryShape,
+        color = containerColor,
+        contentColor = contentColor
+    ) {
+        Text(
+            text,
+            modifier = Modifier.padding(
+                horizontal = TemplateUiTokens.SummaryHorizontalPadding,
+                vertical = TemplateUiTokens.SummaryVerticalPadding
+            ),
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun EmptySummary() {
+    val shape = TemplateUiTokens.EmptySummaryShape
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = TemplateUiTokens.EmptySummaryTopGap)
+            .heightIn(min = TemplateUiTokens.EmptySummaryMinHeight),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceBright
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .templateDashedBorder(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    cornerRadius = 16.dp
+                )
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                stringResource(R.string.template_workspace_summary_empty),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun TemplateActionIconButton(
+    iconRes: Int,
+    contentDescription: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    visualSize: androidx.compose.ui.unit.Dp,
+    style: TemplateActionButtonStyle = TemplateActionButtonStyle.TonalOutlined
+) {
+    val shape = TemplateUiTokens.CircularActionShape
+    val containerColor = when (style) {
+        TemplateActionButtonStyle.TonalOutlined -> MaterialTheme.colorScheme.surfaceContainerHigh
+        TemplateActionButtonStyle.Plain -> Color.Transparent
+        TemplateActionButtonStyle.Primary -> MaterialTheme.colorScheme.primary
+    }
+    val contentColor = when (style) {
+        TemplateActionButtonStyle.Primary -> MaterialTheme.colorScheme.onPrimary
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val borderStroke = when (style) {
+        TemplateActionButtonStyle.TonalOutlined -> BorderStroke(
+            TemplateUiTokens.CardBorderWidth,
+            MaterialTheme.colorScheme.outlineVariant
+        )
+        TemplateActionButtonStyle.Plain,
+        TemplateActionButtonStyle.Primary -> null
+    }
+    var buttonModifier = Modifier
+        .size(visualSize)
+        .clip(shape)
+    if (style != TemplateActionButtonStyle.Plain) {
+        buttonModifier = buttonModifier.background(containerColor)
+    }
+    if (borderStroke != null) {
+        buttonModifier = buttonModifier.border(borderStroke, shape)
+    }
+    Box(
+        modifier = buttonModifier
+            .alpha(if (enabled) 1f else TemplateUiTokens.DisabledActionAlpha)
+            .clickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = contentDescription,
+            modifier = Modifier.size(20.dp),
+            tint = contentColor
+        )
+    }
+}
+
+private enum class TemplateActionButtonStyle {
+    TonalOutlined,
+    Plain,
+    Primary
+}
+
+private fun Modifier.templateDashedBorder(
+    color: Color,
+    cornerRadius: androidx.compose.ui.unit.Dp,
+    strokeWidth: androidx.compose.ui.unit.Dp = 1.dp
+): Modifier = drawWithCache {
+    val stroke = strokeWidth.toPx()
+    val radius = cornerRadius.toPx()
+    val effect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))
+    onDrawBehind {
+        drawRoundRect(
+            color = color,
+            topLeft = Offset(stroke / 2, stroke / 2),
+            size = Size(size.width - stroke, size.height - stroke),
+            cornerRadius = CornerRadius(radius, radius),
+            style = Stroke(width = stroke, pathEffect = effect)
+        )
+    }
+}
