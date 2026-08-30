@@ -12,7 +12,7 @@ public final class FakePrefs implements SharedPreferences {
     private final Map<String, Object> values = new HashMap<>();
     private boolean commitResult = true;
 
-    void setCommitResult(boolean commitResult) {
+    public void setCommitResult(boolean commitResult) {
         this.commitResult = commitResult;
     }
 

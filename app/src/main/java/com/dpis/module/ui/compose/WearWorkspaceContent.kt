@@ -218,8 +218,8 @@ internal fun WearAppConfigEditorContent(state: EditorPresentation.State) {
             onBack = closeOrBack
         )
         state.destination == ConfigEditorDestination.TYPEFACE -> WearTypefacePickerPage(
-            selectedTypefaceId = state.draft.selectedTypefaceId,
-            onTypefaceSelected = state.actions::updateTypeface,
+            selectedTypefaceId = state.draft.selectedTypefaceId ?: "",
+            onTypefaceSelected = { typefaceId -> state.actions.updateTypeface(typefaceId ?: "") },
             onBack = closeOrBack
         )
         else -> WearWorkspaceList(title = R.string.dialog_title) {
