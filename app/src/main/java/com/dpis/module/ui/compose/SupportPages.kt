@@ -87,7 +87,7 @@ fun DonateSupportPage(onBack: () -> Unit) {
             item {
                 SupportCard(
                     modifier = Modifier.clickable(
-                        onClick = rememberDpisConfirmAction { supportersVisible = true }
+                        onClick = rememberConfirmAction { supportersVisible = true }
                     )
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -167,7 +167,7 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth().clickable(
-                        onClick = rememberDpisConfirmAction(onOpenModeGuide)
+                        onClick = rememberConfirmAction(onOpenModeGuide)
                     ),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
                     border = CardDefaults.outlinedCardBorder()

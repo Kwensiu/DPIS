@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.content.res.Configuration
 import android.widget.Toast
 
@@ -403,7 +404,7 @@ fun TemplateWorkspaceContent(
         }
     }
     if (deleteConfirmationVisible) {
-        DpisConfirmAlertDialog(
+        ConfirmAlertDialog(
             onDismissRequest = { deleteConfirmationVisible = false },
             title = stringResource(R.string.quick_template_delete_title),
             message = stringResource(
@@ -420,7 +421,7 @@ fun TemplateWorkspaceContent(
         )
     }
     if (targetSwitchDialogVisible) {
-        DpisModalDialog(onDismissRequest = { targetSwitchDialogVisible = false }) {
+        ModalDialog(onDismissRequest = { targetSwitchDialogVisible = false }) {
             Column(Modifier.padding(24.dp)) {
                 Text(
                     stringResource(R.string.quick_template_targets_unsaved_title),
@@ -524,12 +525,12 @@ private fun TemplateWorkspaceListPane(
             ) {
             if (!state.searching) {
                 item {
-                    GlobalPrefillCard(state, rememberDpisConfirmAction {
+                    GlobalPrefillCard(state, rememberConfirmAction {
                         onEditorOpened(EDITOR_GLOBAL, null)
                     })
                 }
                 item {
-                    TemplateHeader(state, rememberDpisConfirmAction {
+                    TemplateHeader(state, rememberConfirmAction {
                         onEditorOpened(EDITOR_QUICK, null)
                     })
                 }
@@ -570,10 +571,10 @@ private fun TemplateWorkspaceListPane(
                     TemplateCard(
                         template = template,
                         actions = state.actions,
-                        onEdit = rememberDpisConfirmAction {
+                        onEdit = rememberConfirmAction {
                             onEditorOpened(EDITOR_QUICK, template.id)
                         },
-                        onTargets = rememberDpisConfirmAction {
+                        onTargets = rememberConfirmAction {
                             onTargetsOpened(template.id)
                         }
                     )
@@ -745,7 +746,7 @@ private fun TemplateHeader(
     state: TemplateWorkspacePresentation.State,
     onCreate: () -> Unit
 ) {
-    val sort = rememberDpisConfirmAction(state.actions::sortTemplates)
+    val sort = rememberConfirmAction(state.actions::sortTemplates)
     Row(
         Modifier
             .fillMaxWidth()
@@ -826,7 +827,7 @@ private fun TemplateCard(
                 )
                 Spacer(Modifier.weight(1f))
                 TemplateApplyAction(
-                    onClick = rememberDpisConfirmAction { actions.applyTemplate(template.id) }
+                    onClick = rememberConfirmAction { actions.applyTemplate(template.id) }
                 )
             }
         }

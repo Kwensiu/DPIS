@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.widget.ImageView
 
 import androidx.compose.foundation.BorderStroke
@@ -445,7 +446,7 @@ fun QuickTemplateTargetsContent(
     }
 
     if (discardDialogVisible) {
-        DpisModalDialog(onDismissRequest = { discardDialogVisible = false }) {
+        ModalDialog(onDismissRequest = { discardDialogVisible = false }) {
             Column(Modifier.padding(24.dp)) {
                 Text(
                     text = stringResource(R.string.quick_template_targets_unsaved_title),

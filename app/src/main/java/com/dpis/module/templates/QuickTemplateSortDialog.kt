@@ -42,7 +42,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.compose.DpisConfirmDialogUiTokens
+import com.dpis.module.ui.compose.ConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DialogColumn
 import com.dpis.module.ui.compose.DialogTitle
 import com.dpis.module.ui.compose.DpisTheme
@@ -117,8 +117,8 @@ internal fun QuickTemplateSortContent(
             ) {
                 OutlinedButton(
                     onClick = onDone,
-                    modifier = Modifier.fillMaxWidth().height(DpisConfirmDialogUiTokens.ActionHeight),
-                    shape = DpisConfirmDialogUiTokens.ActionShape,
+                    modifier = Modifier.fillMaxWidth().height(ConfirmDialogUiTokens.ActionHeight),
+                    shape = ConfirmDialogUiTokens.ActionShape,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
                 ) {
                     Text(stringResource(R.string.quick_template_sort_done))

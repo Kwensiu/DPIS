@@ -417,8 +417,8 @@ private fun TemplateEditorSheetHeader(
     onReset: () -> Unit,
     onDelete: (() -> Unit)?
 ) {
-    val resetAction = rememberDpisConfirmAction(onReset)
-    val deleteAction = onDelete?.let { rememberDpisConfirmAction(it) }
+    val resetAction = rememberConfirmAction(onReset)
+    val deleteAction = onDelete?.let { rememberConfirmAction(it) }
     val titleRes = when {
         !form.quickTemplate -> R.string.template_workspace_global_prefill_title
         form.newTemplate -> R.string.quick_template_edit_page_title_new

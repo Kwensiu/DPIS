@@ -169,7 +169,7 @@ fun LogContent(
                         .forEachIndexed { index, textRes ->
                             Tab(
                                 selected = state.selectedPage == index,
-                                onClick = rememberDpisConfirmAction { onSelectPage(index) },
+                                onClick = rememberConfirmAction { onSelectPage(index) },
                                 text = {
                                     Text(
                                         stringResource(textRes),
@@ -323,7 +323,7 @@ private fun LogTopBarAction(iconRes: Int, descriptionRes: Int, onClick: () -> Un
         tooltip = { PlainTooltip { Text(description) } },
         state = rememberTooltipState()
     ) {
-        IconButton(onClick = rememberDpisConfirmAction(onClick)) {
+        IconButton(onClick = rememberConfirmAction(onClick)) {
             Icon(
                 painterResource(iconRes),
                 contentDescription = description

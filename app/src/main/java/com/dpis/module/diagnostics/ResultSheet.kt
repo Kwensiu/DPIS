@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.compose.DpisConfirmDialogUiTokens
+import com.dpis.module.ui.compose.ConfirmDialogUiTokens
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -186,16 +186,16 @@ internal fun FeedbackDiagnosticResultContent(
         ) {
             OutlinedButton(
                 onClick = onSave,
-                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-                shape = DpisConfirmDialogUiTokens.ActionShape,
+                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                shape = ConfirmDialogUiTokens.ActionShape,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.feedback_diagnostic_save_action))
             }
             Button(
                 onClick = onShare,
-                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-                shape = DpisConfirmDialogUiTokens.ActionShape,
+                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                shape = ConfirmDialogUiTokens.ActionShape,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.feedback_diagnostic_share_action))

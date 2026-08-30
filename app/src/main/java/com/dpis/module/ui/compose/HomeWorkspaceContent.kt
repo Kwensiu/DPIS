@@ -125,9 +125,9 @@ fun HomeWorkspaceContent(
 @Composable
 private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
     val context = LocalContext.current
-    val confirmFeedback = rememberDpisConfirmFeedback()
+    val confirmFeedback = rememberConfirmFeedback()
     val disabled = !state.xposedModuleActivated
-    val onClick = rememberDpisConfirmAction {
+    val onClick = rememberConfirmAction {
         if (!disabled) state.actions.checkForUpdates()
     }
     val container = when {
@@ -157,7 +157,7 @@ private fun HomePrimaryStatus(state: HomeWorkspaceBinder.State) {
 
 @Composable
 private fun HomeCountCard(modifier: Modifier, titleRes: Int, count: Int, onClick: () -> Unit) {
-    val hapticClick = rememberDpisConfirmAction(onClick)
+    val hapticClick = rememberConfirmAction(onClick)
     Card(
         onClick = hapticClick,
         modifier = modifier,
@@ -218,7 +218,7 @@ private fun HomeInfoRow(titleRes: Int, value: String, shape: RoundedCornerShape)
 
 @Composable
 private fun HomeNavigationEntry(titleRes: Int, summaryRes: Int, onClick: () -> Unit) {
-    val hapticClick = rememberDpisConfirmAction(onClick)
+    val hapticClick = rememberConfirmAction(onClick)
     Card(
         onClick = hapticClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
@@ -258,7 +258,7 @@ private fun HomeFeedbackEntry(context: android.content.Context) {
 
 @Composable
 private fun HomeFeedbackAction(@androidx.annotation.DrawableRes iconRes: Int, @androidx.annotation.StringRes descriptionRes: Int, url: String, context: android.content.Context) {
-    val openFeedbackTarget = rememberDpisConfirmAction {
+    val openFeedbackTarget = rememberConfirmAction {
         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     }
     Box(

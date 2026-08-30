@@ -133,7 +133,7 @@ fun FontLibraryContent(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = rememberDpisConfirmAction(onImportFont),
+                onClick = rememberConfirmAction(onImportFont),
                 modifier = Modifier.navigationBarsPadding()
             ) {
                 Icon(
@@ -166,7 +166,7 @@ fun FontLibraryContent(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(items, key = { it.id }) { item ->
-                    FontLibraryCard(item, rememberDpisConfirmAction { onFontSelected(item.id) })
+                    FontLibraryCard(item, rememberConfirmAction { onFontSelected(item.id) })
                 }
             }
         }
@@ -371,7 +371,7 @@ private fun FontReferenceSection(
                                 )
                             }
                             AssistChip(
-                                onClick = rememberDpisConfirmAction {
+                                onClick = rememberConfirmAction {
                                     onRemoveReference(reference.packageName)
                                 },
                                 label = { Text(stringResource(R.string.font_library_remove_app_action)) }
@@ -413,7 +413,7 @@ private fun DpisToolbarIconButton(iconRes: Int, descriptionRes: Int, onClick: ()
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        onClick = rememberDpisConfirmAction(onClick)
+        onClick = rememberConfirmAction(onClick)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(

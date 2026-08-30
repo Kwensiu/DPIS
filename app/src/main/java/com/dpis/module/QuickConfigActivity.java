@@ -67,7 +67,7 @@ import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.quickconfig.QuickConfigTargetDecision;
 import com.dpis.module.ui.compose.QuickConfigPresentation;
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeMessageDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
@@ -728,7 +728,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        ComposeConfirmDialog.showWithLabels(
+        ConfirmDialog.showWithLabels(
                 this,
                 getString(R.string.feedback_diagnostic_action),
                 getString(

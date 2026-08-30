@@ -13,7 +13,7 @@ import com.dpis.module.ui.compose.FontDetailPresentation;
 import com.dpis.module.ui.compose.FontDetailUiState;
 import com.dpis.module.ui.compose.FontReferenceUiItem;
 import com.dpis.module.ui.compose.SupportActivityContent;
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeTextInputDialog;
 
 import android.content.pm.ApplicationInfo;
@@ -125,7 +125,7 @@ public final class FontDetailActivity extends LocalizedActivity {
     }
 
     private void showFallbackExplanationDialog() {
-        ComposeConfirmDialog.showWithLabels(this,
+        ConfirmDialog.showWithLabels(this,
                 getString(R.string.font_library_fallback_dialog_title),
                 getString(R.string.font_library_fallback_dialog_message),
                 getString(R.string.dialog_close_button),
@@ -282,7 +282,7 @@ public final class FontDetailActivity extends LocalizedActivity {
 
     private void showFontConfirmation(int titleResId, String message, int confirmResId,
             Runnable onConfirm) {
-        ComposeConfirmDialog.showWithLabels(this, getString(titleResId), message,
+        ConfirmDialog.showWithLabels(this, getString(titleResId), message,
                 getString(R.string.dialog_process_action_confirm_negative),
                 getString(confirmResId), onConfirm, () -> {});
     }

@@ -128,6 +128,9 @@ internal fun PageScaffold(
         // Keep the page canvas at the same surface level as the top app bar.
         // Individual cards then provide the intentional brighter elevation contrast.
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        // Transparent cannot resolve a contrasting content color itself; keep descendants on the
+        // DPIS surface foreground instead of inheriting LocalContentColor's black fallback.
+        contentColor = MaterialTheme.colorScheme.onSurface,
         topBar = {
             when (pageBar) {
                 PageBarBehavior.Collapsing -> CollapsingPageTopBar(onBack = onBack, includeHorizontalSafeInsets = onBack != null, actions = actions, scrollBehavior = scrollBehavior, collapsedTitleScale = collapsedTitleScale, title = title, collapsedTitle = collapsedTitle)

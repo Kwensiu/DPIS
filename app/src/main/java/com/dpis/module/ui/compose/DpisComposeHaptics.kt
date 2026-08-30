@@ -10,16 +10,16 @@ import androidx.compose.ui.platform.LocalHapticFeedback
  * touch listeners. Continuous controls use their own step feedback instead.
  */
 @Composable
-fun rememberDpisConfirmAction(action: () -> Unit): () -> Unit =
-    rememberDpisConfirmAction(hapticFeedbackEnabled = true, action = action)
+fun rememberConfirmAction(action: () -> Unit): () -> Unit =
+    rememberConfirmAction(hapticFeedbackEnabled = true, action = action)
 
 /** Allows a future user preference to suppress touch feedback without changing action semantics. */
 @Composable
-fun rememberDpisConfirmAction(
+fun rememberConfirmAction(
     hapticFeedbackEnabled: Boolean,
     action: () -> Unit
 ): () -> Unit {
-    val performFeedback = rememberDpisConfirmFeedback(hapticFeedbackEnabled)
+    val performFeedback = rememberConfirmFeedback(hapticFeedbackEnabled)
     return remember(action, performFeedback) {
         {
             performFeedback()
@@ -30,7 +30,7 @@ fun rememberDpisConfirmAction(
 
 /** Shared policy-aware feedback hook for callbacks whose parameters must be preserved. */
 @Composable
-fun rememberDpisConfirmFeedback(hapticFeedbackEnabled: Boolean = true): () -> Unit {
+fun rememberConfirmFeedback(hapticFeedbackEnabled: Boolean = true): () -> Unit {
     val hapticFeedback = LocalHapticFeedback.current
     val policyEnabled = LocalDpisClickHapticsEnabled.current
     return remember(hapticFeedback, hapticFeedbackEnabled, policyEnabled) {

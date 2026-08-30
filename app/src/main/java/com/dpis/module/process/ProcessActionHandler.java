@@ -3,7 +3,7 @@ package com.dpis.module.process;
 import com.dpis.module.R;
 import com.dpis.module.applist.AppListItem;
 
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.root.RootAppProcessLauncher;
@@ -47,7 +47,7 @@ public final class ProcessActionHandler {
 
     private void showSystemAppActionConfirmation(AppListItem item, Action action) {
         String actionLabel = resolveActionLabel(action);
-        ComposeConfirmDialog.show(
+        ConfirmDialog.show(
                 activity,
                 activity.getString(R.string.dialog_process_action_confirm_title),
                 activity.getString(

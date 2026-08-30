@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Column
@@ -126,14 +127,14 @@ internal fun TextInputDialogContent(
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
         Row(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = onCancel,
-                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-                shape = DpisConfirmDialogUiTokens.ActionShape) {
+                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                shape = ConfirmDialogUiTokens.ActionShape) {
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_process_action_confirm_negative))
             }
             Spacer(Modifier.weight(0.05f))
             Button(onClick = { onSubmit(value.text) },
-                modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-                shape = DpisConfirmDialogUiTokens.ActionShape) {
+                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                shape = ConfirmDialogUiTokens.ActionShape) {
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_confirm_button))
             }
         }

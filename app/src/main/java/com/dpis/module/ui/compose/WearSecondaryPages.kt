@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -104,7 +105,7 @@ internal fun WearThemeSettingsContent(
         )
     }
     if (showScaleDialog) {
-        DpisModalDialog(onDismissRequest = { showScaleDialog = false }) {
+        ModalDialog(onDismissRequest = { showScaleDialog = false }) {
             InterfaceScaleDialogContent(
                 initialPercent = pendingScale.toInt(),
                 minimumPercent = AppUiScaleManager.MIN_SCALE_PERCENT,

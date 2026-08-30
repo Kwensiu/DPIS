@@ -48,7 +48,7 @@ fun OpenSourceLicenseContent(
                 key = { index -> "${items[index].name}\u0000${items[index].website}" }
             ) { index ->
                 val item = items[index]
-                val select = rememberDpisConfirmAction { onItemSelected(item) }
+                val select = rememberConfirmAction { onItemSelected(item) }
                 LicenseEntry(
                     item = item,
                     index = index,

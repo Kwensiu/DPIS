@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Column
@@ -102,7 +103,7 @@ internal fun MessageDialogContent(
     closeLabel: String,
     onClose: () -> Unit
 ) {
-    val closeAction = rememberDpisConfirmAction(onClose)
+    val closeAction = rememberConfirmAction(onClose)
     Column(
         modifier = Modifier.fillMaxWidth().padding(
             start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
@@ -132,8 +133,8 @@ internal fun MessageDialogContent(
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
         OutlinedButton(
             onClick = closeAction,
-            modifier = Modifier.fillMaxWidth().height(DpisConfirmDialogUiTokens.ActionHeight),
-            shape = DpisConfirmDialogUiTokens.ActionShape
+            modifier = Modifier.fillMaxWidth().height(ConfirmDialogUiTokens.ActionHeight),
+            shape = ConfirmDialogUiTokens.ActionShape
         ) {
             Text(closeLabel)
         }

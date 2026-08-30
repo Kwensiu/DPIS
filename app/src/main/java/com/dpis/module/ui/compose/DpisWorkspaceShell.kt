@@ -159,7 +159,7 @@ fun DpisWorkspaceShell(
                     ) {
                             DpisWorkspaceDestination.entries.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
-                                val onDestinationClick = rememberDpisConfirmAction {
+                                val onDestinationClick = rememberConfirmAction {
                                     if (destination != selectedDestination) {
                                         onDestinationSelected(destination)
                                     }
@@ -212,7 +212,7 @@ fun DpisWorkspaceShell(
                             Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
                                 DpisWorkspaceDestination.entries.forEach { destination ->
                                     val label = stringResource(destination.labelRes)
-                                    val onDestinationClick = rememberDpisConfirmAction {
+                                    val onDestinationClick = rememberConfirmAction {
                                         if (destination != selectedDestination) {
                                             onDestinationSelected(destination)
                                         }
@@ -253,7 +253,7 @@ fun DpisWorkspaceShell(
                             )
                             DpisWorkspaceDestination.entries.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
-                                val onDestinationClick = rememberDpisConfirmAction {
+                                val onDestinationClick = rememberConfirmAction {
                                     if (destination != selectedDestination) {
                                         onDestinationSelected(destination)
                                     }
@@ -341,7 +341,7 @@ private fun CompactWearWorkspaceNavigation(
                         ) { index ->
                             val destination = DpisWorkspaceDestination.entries[index]
                             val label = stringResource(destination.labelRes)
-                            val select = rememberDpisConfirmAction {
+                            val select = rememberConfirmAction {
                                 expanded = false
                                 if (destination != selectedDestination) {
                                     onDestinationSelected(destination)
@@ -372,7 +372,7 @@ private fun CompactWearWorkspaceNavigation(
                 Box(Modifier.fillMaxSize()) {
                     content(legacyWorkspaceInsetsFor(selectedDestination))
                     if (showNavigation) {
-                        val openNavigation = rememberDpisConfirmAction { expanded = true }
+                        val openNavigation = rememberConfirmAction { expanded = true }
                         WearCompactButton(
                         onClick = openNavigation,
                         modifier = Modifier

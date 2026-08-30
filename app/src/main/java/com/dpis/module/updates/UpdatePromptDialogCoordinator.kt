@@ -3,8 +3,9 @@ package com.dpis.module.updates
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
-import com.dpis.module.ui.compose.StartupDisclaimerDialog
+import com.dpis.module.ui.compose.StartupDisclaimerGate
 import java.util.Locale
+import java.util.function.BooleanSupplier
 
 class UpdatePromptDialogCoordinator(
     private val activity: Activity,
@@ -36,14 +37,12 @@ class UpdatePromptDialogCoordinator(
         onAccepted: Runnable?
     ): Boolean {
         if (acceptance == null || acceptance.isAccepted() || !activityAlive()) return false
-        StartupDisclaimerDialog.show(
-            activity,
-            { acceptance.markAccepted() },
+        return StartupDisclaimerGate.show(
+            BooleanSupplier { acceptance.markAccepted() },
             { host.showToast(R.string.startup_disclaimer_save_failed) },
             { onAccepted?.run() },
             { host.finishActivity() }
         )
-        return true
     }
 
     fun showUpdateAvailableDialog(

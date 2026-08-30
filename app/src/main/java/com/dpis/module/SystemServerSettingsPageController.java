@@ -10,7 +10,7 @@ import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 
 import com.dpis.module.ui.DialogWindowSizer;
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 import com.dpis.module.ui.compose.LanguageDialogOption;
 import com.dpis.module.ui.compose.SettingsComposeDialogs;
 import com.dpis.module.ui.compose.FontDebugComposeSheet;
@@ -734,7 +734,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showImportBackupConfirmDialog(Uri uri) {
-        ComposeConfirmDialog.show(
+        ConfirmDialog.show(
                 activity,
                 getString(R.string.config_backup_import_confirm_title),
                 getString(R.string.config_backup_import_confirm_message),
@@ -1093,7 +1093,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showDisableSafeModeConfirmationDialog() {
-        ComposeConfirmDialog.show(
+        ConfirmDialog.show(
                 activity,
                 activity.getString(R.string.system_safe_mode_disable_confirm_title),
                 activity.getString(R.string.system_safe_mode_disable_confirm_message),
@@ -1142,7 +1142,7 @@ final class SystemServerSettingsPageController implements DpisApplication.Servic
     }
 
     private void showHideLauncherIconConfirmationDialog() {
-        ComposeConfirmDialog.show(
+        ConfirmDialog.show(
                 activity,
                 activity.getString(R.string.settings_hide_launcher_icon_confirm_title),
                 activity.getString(R.string.settings_hide_launcher_icon_confirm_message),

@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.clickable
@@ -231,7 +232,7 @@ private fun LanguageDialogOptionRow(
     hapticFeedbackEnabled: Boolean,
     onSelected: () -> Unit
 ) {
-    val select = rememberDpisConfirmAction(hapticFeedbackEnabled, onSelected)
+    val select = rememberConfirmAction(hapticFeedbackEnabled, onSelected)
     val shape = RoundedCornerShape(10.dp)
     Surface(
         modifier = Modifier
@@ -312,7 +313,7 @@ private fun BackupActionTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val action = rememberDpisConfirmAction(onClick)
+    val action = rememberConfirmAction(onClick)
     Surface(
         onClick = action,
         modifier = modifier.heightIn(min = 144.dp, max = 220.dp),
@@ -386,15 +387,15 @@ private fun DialogActionRow(onCancel: () -> Unit, onSave: () -> Unit, saveEnable
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
             onClick = onCancel,
-            modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-            shape = DpisConfirmDialogUiTokens.ActionShape,
+            modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+            shape = ConfirmDialogUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
         ) { Text(stringResource(R.string.dialog_process_action_confirm_negative)) }
         Button(
             onClick = onSave,
             enabled = saveEnabled,
-            modifier = Modifier.weight(1f).height(DpisConfirmDialogUiTokens.ActionHeight),
-            shape = DpisConfirmDialogUiTokens.ActionShape,
+            modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+            shape = ConfirmDialogUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
         ) { Text(stringResource(R.string.status_save_button)) }
     }

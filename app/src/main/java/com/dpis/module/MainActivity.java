@@ -99,7 +99,7 @@ import com.dpis.module.ui.WindowInsetsBinder;
 
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.compose.AppFilterComposeSheet;
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeMessageDialog;
 
 import com.dpis.module.home.HomeWorkspaceBinder;
@@ -1743,7 +1743,7 @@ public final class MainActivity
             AppListItem item,
             EditorDraft draft
     ) {
-        ComposeConfirmDialog.showWithLabels(
+        ConfirmDialog.showWithLabels(
                 this,
                 getString(R.string.feedback_diagnostic_action),
                 getString(R.string.feedback_diagnostic_confirm_message, item.label),
@@ -3164,7 +3164,7 @@ public final class MainActivity
                         return getString(R.string.quick_template_apply_scope_note);
                     }
                 });
-        ComposeConfirmDialog.showWithLabels(
+        ConfirmDialog.showWithLabels(
                 this,
                 getString(R.string.quick_template_apply_confirm_title, template.name),
                 message,
@@ -3524,7 +3524,7 @@ public final class MainActivity
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        ComposeConfirmDialog.showWithLabels(
+        ConfirmDialog.showWithLabels(
                 this,
                 getString(R.string.feedback_diagnostic_action),
                 getString(
@@ -3793,7 +3793,7 @@ public final class MainActivity
             dismissFeedbackDiagnosticPage();
             return;
         }
-        ComposeConfirmDialog.showWithLabels(
+        ConfirmDialog.showWithLabels(
                 this,
                 getString(R.string.feedback_diagnostic_action),
                 getString(R.string.feedback_diagnostic_exit_confirm_message),

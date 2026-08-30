@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.clickable
@@ -256,7 +257,7 @@ fun SettingsWorkspaceContent(
     }
     }
     if (showLanguageDialog) {
-        DpisModalDialog(onDismissRequest = { showLanguageDialog = false }) {
+        ModalDialog(onDismissRequest = { showLanguageDialog = false }) {
             LanguageDialogContent(
                 options = languageOptions,
                 selectedTag = AppLocaleManager.getLanguageTag(context),
@@ -303,7 +304,7 @@ private fun SettingsSwitchRow(
     total: Int,
     onChanged: (Boolean) -> Unit
 ) {
-    val confirmFeedback = rememberDpisConfirmFeedback()
+    val confirmFeedback = rememberConfirmFeedback()
     val hapticChanged = { value: Boolean ->
         confirmFeedback()
         onChanged(value)
@@ -346,7 +347,7 @@ private fun SettingsEntry(
     onClick: () -> Unit,
     showTrailingIcon: Boolean = true,
 ) {
-    val hapticClick = rememberDpisConfirmAction(onClick)
+    val hapticClick = rememberConfirmAction(onClick)
     SegmentedListItem(
         onClick = hapticClick,
         enabled = enabled,

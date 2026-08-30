@@ -8,7 +8,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.ui.compose.FontLibraryPresentation;
 import com.dpis.module.ui.compose.FontLibraryUiItem;
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 import com.dpis.module.ui.compose.ComposeTextInputDialog;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
@@ -281,7 +281,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
             return;
         }
         long sizeMiB = (sizeBytes + 1024L * 1024L - 1L) / (1024L * 1024L);
-        ComposeConfirmDialog.showWithLabels(this,
+        ConfirmDialog.showWithLabels(this,
                 getString(R.string.font_library_large_import_title),
                 getString(R.string.font_library_large_import_message, sizeMiB),
                 getString(R.string.dialog_process_action_confirm_negative),
@@ -413,7 +413,7 @@ public final class FontLibraryActivity extends LocalizedActivity {
     }
 
     private void showPublishedFallbackRepairPrompt(FontLibraryStore.HealthReport report) {
-        ComposeConfirmDialog.showWithLabels(this,
+        ConfirmDialog.showWithLabels(this,
                 getString(R.string.font_library_publication_repair_title),
                 getString(R.string.font_library_publication_repair_message,
                         report.missingPublishedFallbackCount),

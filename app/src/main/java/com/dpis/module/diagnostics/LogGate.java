@@ -6,7 +6,7 @@ import com.dpis.module.LocalizedActivity;
 import com.dpis.module.R;
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
-import com.dpis.module.ui.compose.ComposeConfirmDialog;
+import com.dpis.module.ui.compose.ConfirmDialog;
 
 import android.content.Context;
 import android.widget.Toast;
@@ -27,7 +27,7 @@ public final class LogGate {
         if (store.isGlobalLogEnabled()) {
             return true;
         }
-        ComposeConfirmDialog.showWithLabels(
+        ConfirmDialog.showWithLabels(
                 activity,
                 activity.getString(R.string.diagnostic_log_required_title),
                 activity.getString(R.string.diagnostic_log_required_message),

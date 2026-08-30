@@ -10,14 +10,19 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationContent
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
+import com.dpis.module.ui.compose.StartupDisclaimerDialog
+import com.dpis.module.ui.compose.StartupDisclaimerGate
 import com.dpis.module.ui.compose.dpisDarkTheme
+import java.util.function.BooleanSupplier
 
 /** Installs the Compose shell; domain state and actions remain Activity-owned. */
 internal class MainComposeShellHost(
@@ -29,9 +34,22 @@ internal class MainComposeShellHost(
 ) {
     private var state by mutableStateOf(initialState)
     private var diagnosticPreparation by mutableStateOf<FeedbackDiagnosticPreparationPresentation?>(null)
+    private var startupDisclaimer by mutableStateOf<StartupDisclaimerRequest?>(null)
 
     init {
         composeView.setContent {
+            val disclaimerPresenter = remember {
+                StartupDisclaimerGate.Presenter {
+                        markAccepted,
+                        onSaveFailed,
+                        onAccepted,
+                        onBack,
+                    -> showStartupDisclaimer(markAccepted, onSaveFailed, onAccepted, onBack) }
+            }
+            DisposableEffect(disclaimerPresenter) {
+                StartupDisclaimerGate.bind(disclaimerPresenter)
+                onDispose { StartupDisclaimerGate.clear(disclaimerPresenter) }
+            }
             DpisTheme(darkTheme = dpisDarkTheme()) {
                 Box(Modifier.fillMaxSize()) {
                     val preparation = diagnosticPreparation
@@ -69,6 +87,12 @@ internal class MainComposeShellHost(
                             workspacePresentation.RenderAppEditorOverlay(state.workspaceMode, isCompactUi)
                         }
                     }
+                    startupDisclaimer?.let { request ->
+                        StartupDisclaimerDialog(
+                            onAccept = { acceptStartupDisclaimer(request) },
+                            onBack = request.onBack,
+                        )
+                    }
                 }
             }
         }
@@ -86,6 +110,32 @@ internal class MainComposeShellHost(
         diagnosticPreparation = null
     }
 
+    /**
+     * Shows one mandatory first-start dialog at a time. Its view lifetime belongs to the root
+     * composition, so activity recreation cannot leave a detached platform dialog behind.
+     */
+    fun showStartupDisclaimer(
+        markAccepted: BooleanSupplier,
+        onSaveFailed: () -> Unit,
+        onAccepted: () -> Unit,
+        onBack: () -> Unit,
+    ): Boolean {
+        if (startupDisclaimer == null) {
+            startupDisclaimer = StartupDisclaimerRequest(markAccepted, onSaveFailed, onAccepted, onBack)
+        }
+        return true
+    }
+
+    private fun acceptStartupDisclaimer(request: StartupDisclaimerRequest) {
+        if (!request.markAccepted.asBoolean) {
+            request.onSaveFailed()
+            return
+        }
+        // Clear before continuing startup work, which may synchronously request another dialog.
+        startupDisclaimer = null
+        request.onAccepted()
+    }
+
     fun refreshApps() = workspacePresentation.refreshApps()
 
     fun refreshHome() = workspacePresentation.refreshHome()
@@ -98,4 +148,11 @@ internal class MainComposeShellHost(
     fun refreshSettings() = workspacePresentation.refreshSettings()
 
     fun refreshTemplates() = workspacePresentation.refreshTemplates()
+
+    private data class StartupDisclaimerRequest(
+        val markAccepted: BooleanSupplier,
+        val onSaveFailed: () -> Unit,
+        val onAccepted: () -> Unit,
+        val onBack: () -> Unit,
+    )
 }

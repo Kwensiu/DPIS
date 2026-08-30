@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
@@ -184,7 +185,7 @@ fun ThemeSettingsContent(
         )
     }
     if (showScaleDialog) {
-        DpisModalDialog(onDismissRequest = { showScaleDialog = false }) {
+        ModalDialog(onDismissRequest = { showScaleDialog = false }) {
             InterfaceScaleDialogContent(
                 initialPercent = pendingScale.roundToInt(),
                 minimumPercent = AppUiScaleManager.MIN_SCALE_PERCENT,
@@ -454,7 +455,7 @@ private fun ThemeChoiceDialog(
     onSelected: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    DpisModalDialog(onDismissRequest = onDismiss) {
+    ModalDialog(onDismissRequest = onDismiss) {
         DialogColumn(
             title = { DialogTitle(title) },
             actions = {
@@ -497,7 +498,7 @@ private fun ThemeModeDialog(
         ThemeModeStore.FOLLOW_SYSTEM to
             R.string.settings_theme_mode_follow_system,
     )
-    DpisModalDialog(onDismissRequest = onDismiss) {
+    ModalDialog(onDismissRequest = onDismiss) {
         DialogColumn(
             title = { DialogTitle(stringResource(R.string.settings_theme_mode_label)) },
             actions = {
@@ -596,7 +597,7 @@ private fun ThemeSettingsEntry(
     onClick: () -> Unit,
 ) {
     SegmentedListItem(
-        onClick = rememberDpisConfirmAction(onClick),
+        onClick = rememberConfirmAction(onClick),
         shapes = dpisSegmentedShapes(index, total),
         colors = ListItemDefaults.segmentedColors(
             containerColor = MaterialTheme.colorScheme.surfaceBright,
