@@ -1,5 +1,61 @@
 # Changelog
 
+## [2.0.0](https://github.com/Kwensiu/DPIS/compare/v1.15.0...v2.0.0) (2026-08-30)
+
+
+### Features
+
+* adapt workspace UI for compact watches ([bcacc39](https://github.com/Kwensiu/DPIS/commit/bcacc39c24f0827944e1f94925d704920ae39dab))
+* add compose theme settings ([d51a0e1](https://github.com/Kwensiu/DPIS/commit/d51a0e1f671839da5677f0d94960898798ed35b3))
+* improve language settings ([e75d52d](https://github.com/Kwensiu/DPIS/commit/e75d52d5850d92a988565ba44a64d3ddbd3dc815))
+* promote TTC font collections ([e07143f](https://github.com/Kwensiu/DPIS/commit/e07143fe44107dee9c9b10e688379af240eb1cba))
+* refine template target filters ([57d25e3](https://github.com/Kwensiu/DPIS/commit/57d25e3d560ae69837c4ec7f0a7f795002fd5c5a))
+* **ui:** establish Compose design system and adaptive app shell ([#100](https://github.com/Kwensiu/DPIS/issues/100)) ([36c1aa1](https://github.com/Kwensiu/DPIS/commit/36c1aa16616b0e42e4e228bd3dab812d33683e66))
+
+
+### Bug Fixes
+
+* align diagnostic log gate ([aeb0725](https://github.com/Kwensiu/DPIS/commit/aeb0725493f887da6883e83a98762ed4720de603))
+* **api:** support modern 101 baseline with 102 capabilities ([26ac481](https://github.com/Kwensiu/DPIS/commit/26ac481e3d6fbdc1704f5b329af98bc7fa878b64))
+* **app-config:** align saved state and configured app lists ([0b0ef82](https://github.com/Kwensiu/DPIS/commit/0b0ef82a34c0ab85b3614a94df8ed20d29c5773b))
+* **app-list:** hide system scope from configured apps ([5ea227f](https://github.com/Kwensiu/DPIS/commit/5ea227fc11d54937be04c7881e1199d03378bf45))
+* **applist:** restore launcher catalog fallback ([9d4e557](https://github.com/Kwensiu/DPIS/commit/9d4e557e56257b781b040d6ef21c3a534b7f142f))
+* Flutter Typeface Routing ([#102](https://github.com/Kwensiu/DPIS/issues/102)) ([e9d745e](https://github.com/Kwensiu/DPIS/commit/e9d745eaf9da278536eb4a02831109627584149e))
+* harden imported font library ([bfbc82e](https://github.com/Kwensiu/DPIS/commit/bfbc82e29bd61b82378c005859211941b740fd9e))
+* harden independent WeChat DPI route diagnostics ([4bdaab5](https://github.com/Kwensiu/DPIS/commit/4bdaab58c5298718cbeeaef38f074ae8546e28df))
+* preserve hook chain domains across editor sessions ([90b2873](https://github.com/Kwensiu/DPIS/commit/90b287337ed122ae04b9f28f90fa2e7328d70b2b))
+* preserve imported package target types ([82cd152](https://github.com/Kwensiu/DPIS/commit/82cd152ad7f39b4b6ba4157682bf346108307a1b))
+* prioritize active config editor page interactions [skip preview] ([3b5d910](https://github.com/Kwensiu/DPIS/commit/3b5d91016a186a30d5c0ddd94adc28ee09a8716a))
+* provide fallback round dialog dimensions ([8a4d3a0](https://github.com/Kwensiu/DPIS/commit/8a4d3a05768693a147b58669142afe074f2a0733))
+* render theme swatches with seed colors ([8b61a95](https://github.com/Kwensiu/DPIS/commit/8b61a9525e27fedb9887f8ea3cb1b009bd3f3100))
+* restore startup update prompts [skip preview] ([eb24dfc](https://github.com/Kwensiu/DPIS/commit/eb24dfc7754cc8ca164644d9289557da9eecc10c))
+* show reload notice once per install ([df4cbf6](https://github.com/Kwensiu/DPIS/commit/df4cbf619edf5efe5e86c9b6beb9a11b6362b4f5))
+* **ui:** align WeChat DPI editor spacing ([c4df5b5](https://github.com/Kwensiu/DPIS/commit/c4df5b5fa14b140a59fd1ca1ea4f7ffebfcaf1a4))
+* **ui:** refine compose edge-to-edge surfaces ([2775d3c](https://github.com/Kwensiu/DPIS/commit/2775d3c4f109fed4405ecb7cb391cf20fc14e1c9))
+* **ui:** refine configuration editor surfaces ([aca087e](https://github.com/Kwensiu/DPIS/commit/aca087e08bea90390df3bbefc577dde39fe62be0))
+* **ui:** refine quick template target picker ([ab8a5cd](https://github.com/Kwensiu/DPIS/commit/ab8a5cd215186b84d2f91b53f05d1989a7acf1ee))
+* **ui:** stabilize compose workspace surfaces ([90136e5](https://github.com/Kwensiu/DPIS/commit/90136e59d1e13a6010b1c8a5e2590d416517fd75))
+* **ui:** TypefacePicker page ([8fc2817](https://github.com/Kwensiu/DPIS/commit/8fc28172ba55270f8e6a4d13b65d4275b49963d8))
+* unify workspace sheet semantics ([15e78d9](https://github.com/Kwensiu/DPIS/commit/15e78d99ccacdd69e389a3e724bb618db7917859))
+
+
+### Refactoring
+
+* clarify app filter and configuration state semantics ([a620006](https://github.com/Kwensiu/DPIS/commit/a620006a10db7a29b88abfda7fbc40877893e4bd))
+* consolidate template workspace architecture ([0e32930](https://github.com/Kwensiu/DPIS/commit/0e32930ad5514c85011b0abc50b8c889a997fbcb))
+* harden config backup lifecycle ([#105](https://github.com/Kwensiu/DPIS/issues/105)) ([c87faeb](https://github.com/Kwensiu/DPIS/commit/c87faeb5b3cff60eb3866f73707e5db4787dea26))
+* migrate workspace code and tests to Kotlin ([#106](https://github.com/Kwensiu/DPIS/issues/106)) ([5c39fc1](https://github.com/Kwensiu/DPIS/commit/5c39fc145fc22545308ef100ebce7560ebca11fa))
+* redesign diagnostics & runtime evidence collection ([#104](https://github.com/Kwensiu/DPIS/issues/104)) ([fce7fd5](https://github.com/Kwensiu/DPIS/commit/fce7fd584f7d6053d08c266a7481d136da04fd5c))
+* **ui:** consolidate md3 surface migration ([5c8316a](https://github.com/Kwensiu/DPIS/commit/5c8316a898f55df160b81f16de0d3bb2b2072c5f))
+* **ui:** reorganize log entry ([7c57573](https://github.com/Kwensiu/DPIS/commit/7c57573888db212de1c5fe6623bca232ce57ea99))
+* **ui:** streamline app editor ownership ([150cd6f](https://github.com/Kwensiu/DPIS/commit/150cd6f4ebbfa0824da898226f734e1d55d72255))
+* **ui:** Wear OS UI/UX ([586ba30](https://github.com/Kwensiu/DPIS/commit/586ba30efd057badf189cfc98fc8a09fcdbdeb62))
+
+
+### Chores
+
+* prepare 2.0.0 release ([7446c52](https://github.com/Kwensiu/DPIS/commit/7446c52aaa196a5c0d5f3c510c7d3f730583c629))
+
 ## [1.15.0](https://github.com/Kwensiu/DPIS/compare/v1.14.0...v1.15.0) (2026-07-07)
 
 
