@@ -273,9 +273,9 @@ fun AppWorkspaceContent(
                                 },
                                 typefaceContent = {
                                     AppTypefacePickerPage(
-                                        selectedTypefaceId = editorState.draft.selectedTypefaceId,
+                                        selectedTypefaceId = editorState.draft.selectedTypefaceId ?: "",
                                         onTypefaceSelected = { typefaceId ->
-                                            editorState.actions.updateTypeface(typefaceId)
+                                            editorState.actions.updateTypeface(typefaceId ?: "")
                                             editorState.actions.navigate(ConfigEditorDestination.MAIN)
                                         },
                                         onBack = {

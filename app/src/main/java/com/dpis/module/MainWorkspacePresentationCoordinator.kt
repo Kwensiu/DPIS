@@ -413,9 +413,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                     },
                     typefaceContent = {
                         AppTypefacePickerPage(
-                            selectedTypefaceId = editorState.draft.selectedTypefaceId,
+                            selectedTypefaceId = editorState.draft.selectedTypefaceId ?: "",
                             onTypefaceSelected = { typefaceId ->
-                                editorState.actions.updateTypeface(typefaceId)
+                                editorState.actions.updateTypeface(typefaceId ?: "")
                                 onReturnFromChild()
                             },
                             onBack = onReturnFromChild,

@@ -336,7 +336,7 @@ fun AppConfigEditorContent(
                 verticalAlignment = Alignment.Bottom
             ) {
                 DpisCompactEditorTextField(
-                    value = draft.wechatDpiInput ?: "",
+                    value = draft.wechatDpiInput,
                     onValueChange = state.actions::updateWechatDpiInput,
                     modifier = Modifier
                         .weight(1f)
@@ -505,7 +505,7 @@ fun AppConfigEditorContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppConfigSheetUiTokens.ProcessActionGap)
         ) {
-            if (state.isScopeSelected()) {
+            if (state.isScopeSelected) {
                 Button(
                     onClick = {
                         completeInput()
@@ -530,7 +530,7 @@ fun AppConfigEditorContent(
                     shape = AppConfigSheetUiTokens.ActionShape
                 ) { Text(stringResource(R.string.dialog_scope_apply), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
-            if (state.isDpisEnabled()) {
+            if (state.isDpisEnabled) {
                 OutlinedButton(
                     onClick = {
                         completeInput()
