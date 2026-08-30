@@ -334,6 +334,7 @@ Mini Programs are not supported yet.</string>
     <string name="scope_add_success">Scope add requested: %1$s</string>
     <string name="scope_remove_success">Removed from scope: %1$s</string>
     <string name="scope_add_failed">Failed to add to scope: %1$s</string>
+    <string name="scope_request_pending">A scope request is already awaiting confirmation</string>
     <string name="scope_remove_failed">Failed to remove from scope</string>
     <string name="dialog_title">App configs</string>
     <string name="dialog_advanced_section_title">Advanced</string>

@@ -320,6 +320,7 @@
     <string name="scope_add_success">已请求加入作用域：%1$s</string>
     <string name="scope_remove_success">已移出作用域：%1$s</string>
     <string name="scope_add_failed">加入作用域失败：%1$s</string>
+    <string name="scope_request_pending">已有作用域申请正在等待确认</string>
     <string name="scope_remove_failed">移出作用域失败，请重试</string>
     <string name="dialog_title">应用设置</string>
     <string name="dialog_advanced_section_title">高级操作</string>
