@@ -1289,23 +1289,8 @@ public final class AppConfigDialogBinder {
         }
     }
 
-    public static final class AppConfigDialogState {
-        public boolean scopeSelected;
-        public boolean scopeKnown;
+    public static final class AppConfigDialogState extends AppConfigDialogStateModel {
         public boolean scopeRequestPending;
-        public boolean dpisEnabled;
-        public boolean previewFromGlobalPrefill;
-        public String packageName;
-        public String draftFontHookDomainsRaw;
-        public String viewportApplyMode;
-        public String selectedTypefaceId;
-        public boolean fontHookDomainsResetRequested;
-        public boolean viewportApplyModeResetRequested;
-        public String viewportScaleInput = "";
-        public String viewportAbsoluteInput = "";
-        private UnsavedBadgeBinder unsavedBadgeBinder;
-        private String savedDraftSignature = "";
-
         public AppConfigDialogState(boolean scopeSelected,
                 boolean scopeKnown,
                 boolean dpisEnabled,
@@ -1318,22 +1303,10 @@ public final class AppConfigDialogBinder {
                 String initialViewportInput,
                 String initialViewportScaleInput,
                 String initialViewportAbsoluteInput) {
-            this.scopeSelected = scopeSelected;
-            this.scopeKnown = scopeKnown;
-            this.dpisEnabled = dpisEnabled;
-            this.previewFromGlobalPrefill = previewFromGlobalPrefill;
-            this.packageName = packageName;
-            this.draftFontHookDomainsRaw = draftFontHookDomainsRaw;
-            this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode);
-            this.selectedTypefaceId = selectedTypefaceId;
-            this.viewportScaleInput = valueOrEmpty(initialViewportScaleInput);
-            this.viewportAbsoluteInput = valueOrEmpty(initialViewportAbsoluteInput);
-            if (ViewportTargetType.ABSOLUTE_DP.equals(
-                    ViewportTargetType.normalize(initialViewportType))) {
-                this.viewportAbsoluteInput = valueOrEmpty(initialViewportInput);
-            } else {
-                this.viewportScaleInput = valueOrEmpty(initialViewportInput);
-            }
+            super(scopeSelected, scopeKnown, dpisEnabled, previewFromGlobalPrefill, packageName,
+                    draftFontHookDomainsRaw, viewportApplyMode, selectedTypefaceId,
+                    initialViewportType, initialViewportInput, initialViewportScaleInput,
+                    initialViewportAbsoluteInput);
         }
 
         public static AppConfigDialogState fromItem(AppListItem item) {
@@ -1360,91 +1333,6 @@ public final class AppConfigDialogBinder {
                     viewportAbsoluteInput);
         }
 
-        public void updateViewportInput(String viewportTargetType, CharSequence input) {
-            String normalized = ViewportTargetType.normalize(viewportTargetType);
-            String value = input != null ? input.toString() : "";
-            if (ViewportTargetType.ABSOLUTE_DP.equals(normalized)) {
-                viewportAbsoluteInput = value;
-                return;
-            }
-            viewportScaleInput = value;
-        }
-
-        public String viewportInputFor(String viewportTargetType) {
-            return ViewportTargetType.ABSOLUTE_DP.equals(
-                    ViewportTargetType.normalize(viewportTargetType))
-                            ? viewportAbsoluteInput
-                            : viewportScaleInput;
-        }
-
-        public void clearViewportInputs() {
-            viewportScaleInput = "";
-            viewportAbsoluteInput = "";
-        }
-
-        public void clearHookChainStateForReset() {
-            draftFontHookDomainsRaw = null;
-            viewportApplyMode = ViewportApplyMode.OFF;
-            fontHookDomainsResetRequested = true;
-            viewportApplyModeResetRequested = true;
-        }
-
-        public void bindUnsavedBadge(UnsavedBadgeBinder binder) {
-            unsavedBadgeBinder = binder;
-            refreshUnsavedBadge();
-        }
-
-        public void captureSavedDraft(AppConfigDialogViews views, boolean previewBaseline) {
-            savedDraftSignature = previewBaseline
-                    ? emptyDraftSignature()
-                    : currentDraftSignature(views);
-            refreshUnsavedBadge();
-        }
-
-        public boolean hasUnsavedChanges(AppConfigDialogViews views) {
-            return !savedDraftSignature.equals(currentDraftSignature(views));
-        }
-
-        public void refreshUnsavedBadge() {
-            if (unsavedBadgeBinder != null) {
-                unsavedBadgeBinder.refresh();
-            }
-        }
-
-        private String currentDraftSignature(AppConfigDialogViews views) {
-            return String.join("|",
-                    normalizeDraftText(textOf(views.viewportInputView)),
-                    AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
-                    ViewportApplyMode.normalize(viewportApplyMode),
-                    normalizeDraftText(textOf(views.fontInputView)),
-                    AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
-                    normalizeDraftText(selectedTypefaceId),
-                    normalizeDraftText(normalizedHookDomainsRaw()));
-        }
-
-        private String emptyDraftSignature() {
-            return String.join("|",
-                    "",
-                    ViewportTargetType.RELATIVE_SCALE,
-                    ViewportApplyMode.OFF,
-                    "",
-                    FontApplyMode.SYSTEM_EMULATION,
-                    "",
-                    "");
-        }
-
-        private String normalizedHookDomainsRaw() {
-            if (fontHookDomainsResetRequested) {
-                return null;
-            }
-            return FontHookDomainPresentation
-                    .forAutomaticDomainsRaw(draftFontHookDomainsRaw)
-                    .normalizedRawOrNull();
-        }
-
-        private static String valueOrEmpty(String value) {
-            return value != null ? value : "";
-        }
     }
 
     public static final class AppConfigDialogActionStyle extends com.dpis.module.appconfig.AppConfigDialogActionStyle {

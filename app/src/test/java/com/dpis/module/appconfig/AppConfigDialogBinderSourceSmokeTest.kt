@@ -55,6 +55,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun binder_wiresExpectedActionButtons() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
         val interactionsSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
         val source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java") +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
@@ -182,6 +183,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
         val layout = read("src/main/res/layout/dialog_app_config.xml")
 
         assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"))
@@ -191,8 +193,8 @@ class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(layout.contains("dialog_global_prefill_preview_status"))
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill)"));
         assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("))
-        assertTrue(binderSource.contains("normalizeDraftText(normalizedHookDomainsRaw())"))
-        assertTrue(binderSource.contains(".forAutomaticDomainsRaw(draftFontHookDomainsRaw)"))
+        assertTrue(stateSource.contains("normalizedHookDomainsRaw().orEmpty()"))
+        assertTrue(stateSource.contains("forAutomaticDomainsRaw(draftFontHookDomainsRaw)"))
         assertFalse(binderSource.contains("fontHookDomainsResetRequested ? \"font-reset\""))
         assertFalse(binderSource.contains("viewportApplyModeResetRequested ? \"viewport-reset\""))
         assertFalse(binderSource.contains("previewFromGlobalPrefill ? \"preview\" : \"stored\""))
@@ -475,7 +477,8 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun viewportModeSwitchKeepsSeparateInputValues() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
-        val source = binderSource +
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
+        val source = binderSource + stateSource +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java") +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
         val switchStart = binderSource.indexOf("static void switchViewportTargetType")
@@ -495,8 +498,8 @@ class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(switchBlock.contains("bindViewportModeToggle(viewportModeToggle, nextType, animate)"));
         assertTrue(switchBlock.contains("state.updateViewportInput(resolveViewportMode(viewportModeToggle),"))
         assertTrue(switchBlock.contains("viewportInputView.setText(state.viewportInputFor(nextType))"));
-        assertTrue(source.contains("String viewportInputFor(String viewportTargetType)"))
-        assertTrue(source.contains("void clearViewportInputs()"))
+        assertTrue(source.contains("fun viewportInputFor(viewportTargetType: String?)"))
+        assertTrue(source.contains("fun clearViewportInputs()"))
         assertFalse(source.contains("viewportScaleText"))
         assertFalse(source.contains("viewportAbsoluteText"))
     }
@@ -637,11 +640,12 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
         val actionSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
 
-        assertTrue(binderSource.contains("String viewportApplyMode"));
-        assertTrue(binderSource.contains("this.viewportApplyMode = ViewportApplyMode.normalize(viewportApplyMode)"));
+        assertTrue(stateSource.contains("viewportApplyMode: String?"));
+        assertTrue(stateSource.contains("var viewportApplyMode: String = ViewportApplyMode.normalize(viewportApplyMode)"));
         assertTrue(binderSource.contains("state.viewportApplyMode"))
         assertTrue(actionSource.contains("state.viewportApplyMode"))
         assertTrue(actionSource.contains("state.viewportApplyModeResetRequested"))
