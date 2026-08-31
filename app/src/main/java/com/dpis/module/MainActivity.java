@@ -1744,10 +1744,6 @@ public final class MainActivity
                             showQuickTemplateEditor(templateId);
                         }
 
-                        @Override public void applyQuickTemplate(String templateId) {
-                            MainActivity.this.applyQuickTemplate(templateId);
-                        }
-
                         @Override public void selectQuickTemplateTargets(String templateId) {
                             showQuickTemplateTargets(templateId);
                         }
@@ -1762,12 +1758,48 @@ public final class MainActivity
                             bindTemplateWorkspace();
                         }
 
-                        @Override public void showToast(int messageResId) {
-                            MainActivity.this.showToast(messageResId);
+                        @Override public void showToast(int messageResId, Object... formatArgs) {
+                            MainActivity.this.showToast(messageResId, formatArgs);
                         }
 
                         @Override public AppConfigDialogBinder.Host appConfigDialogHost() {
                             return createAppConfigDialogHost();
+                        }
+
+                        @Override public DpisConfigStore hookConfigStore() {
+                            return getHookConfigStore();
+                        }
+
+                        @Override public boolean isInstalledTemplateTargetPackage(String packageName) {
+                            if (packageName == null || packageName.isBlank()
+                                    || getPackageName().equals(packageName)) {
+                                return false;
+                            }
+                            try {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    getPackageManager().getApplicationInfo(
+                                            packageName,
+                                            PackageManager.ApplicationInfoFlags.of(0)
+                                    );
+                                } else {
+                                    getPackageManager().getApplicationInfo(packageName, 0);
+                                }
+                                return true;
+                            } catch (PackageManager.NameNotFoundException ignored) {
+                                return false;
+                            }
+                        }
+
+                        @Override public void onTemplateRuntimeConfigSaved() {
+                            onRuntimeConfigSaved();
+                        }
+
+                        @Override public void requestAppsLoad() {
+                            MainActivity.this.requestAppsLoad();
+                        }
+
+                        @Override public void runOnUiThread(Runnable runnable) {
+                            MainActivity.this.runOnUiThread(runnable);
                         }
                     },
                     initialQuery,
@@ -2991,148 +3023,6 @@ public final class MainActivity
             @Override
             public void sort(List<QuickTemplateStore.QuickTemplate> templates) {
                 ensureTemplateWorkspaceCoordinator().state().getActions().sortTemplates();
-            }
-        };
-    }
-
-    private void applyQuickTemplate(String templateId) {
-        QuickTemplateStore store = new QuickTemplateStore(this);
-        QuickTemplateStore.QuickTemplate template = store.read(templateId);
-        if (template == null) {
-            showToast(R.string.quick_template_target_missing);
-            bindTemplateWorkspace();
-            return;
-        }
-        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
-                QuickTemplateApplyAdapters.from(getHookConfigStore());
-        QuickTemplateApplyCoordinator.TargetPackageFilter installedPackageFilter
-                = this::isInstalledTemplateTargetPackage;
-        QuickTemplateApplyCoordinator.Plan plan = coordinator.plan(
-                template,
-                installedPackageFilter
-        );
-        if (plan.targetCount <= 0) {
-            showToast(R.string.quick_template_apply_empty_selection);
-            return;
-        }
-        String message = QuickTemplateApplyConfirmationMessage.format(
-                plan.targetCount,
-                plan.overwriteCount,
-                new QuickTemplateApplyConfirmationMessage.Strings() {
-                    @Override
-                    public String plain(int targetCount) {
-                        return getString(
-                                R.string.quick_template_apply_confirm_message,
-                                targetCount
-                        );
-                    }
-
-                    @Override
-                    public String overwrite(int targetCount, int overwriteCount) {
-                        return getString(
-                                R.string.quick_template_apply_confirm_message_overwrite,
-                                targetCount,
-                                overwriteCount
-                        );
-                    }
-
-                    @Override
-                    public String scopeNote() {
-                        return getString(R.string.quick_template_apply_scope_note);
-                    }
-                });
-        ConfirmDialog.showWithLabels(
-                this,
-                getString(R.string.quick_template_apply_confirm_title, template.name),
-                message,
-                getString(R.string.dialog_process_action_confirm_negative),
-                getString(R.string.template_workspace_action_apply),
-                () -> finishQuickTemplateApply(
-                        coordinator,
-                        template,
-                        installedPackageFilter
-                ),
-                () -> { }
-        );
-    }
-
-    private void finishQuickTemplateApply(
-            QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator,
-            QuickTemplateStore.QuickTemplate template
-    ) {
-        finishQuickTemplateApply(coordinator, template, null);
-    }
-
-    private void finishQuickTemplateApply(
-            QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator,
-            QuickTemplateStore.QuickTemplate template,
-            QuickTemplateApplyCoordinator.TargetPackageFilter targetPackageFilter
-    ) {
-        QuickTemplateApplyCoordinator.Result result = coordinator.apply(
-                template,
-                targetPackageFilter
-        );
-        if (result.emptySelection) {
-            showToast(R.string.quick_template_apply_empty_selection);
-            return;
-        }
-        if (result.failureCount() > 0) {
-            showToast(
-                    R.string.quick_template_apply_result_partial,
-                    result.successCount(),
-                    result.failureCount()
-            );
-        } else {
-            showToast(
-                    R.string.quick_template_apply_result_success,
-                    result.successCount()
-            );
-        }
-        if (result.successCount() > 0) {
-            onRuntimeConfigSaved();
-        }
-        new BatchScopeRequestCoordinator(
-                createBatchScopeRequestHost()
-        ).requestMissingScope(result.successfulPackages);
-        bindTemplateWorkspace();
-    }
-
-    private boolean isInstalledTemplateTargetPackage(String packageName) {
-        if (packageName == null
-                || packageName.isBlank()
-                || getPackageName().equals(packageName)) {
-            return false;
-        }
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                getPackageManager().getApplicationInfo(
-                        packageName,
-                        PackageManager.ApplicationInfoFlags.of(0)
-                );
-            } else {
-                getPackageManager().getApplicationInfo(packageName, 0);
-            }
-            return true;
-        } catch (PackageManager.NameNotFoundException ignored) {
-            return false;
-        }
-    }
-
-    private BatchScopeRequestCoordinator.Host createBatchScopeRequestHost() {
-        return new BatchScopeRequestCoordinator.Host() {
-            @Override
-            public void showToast(int messageResId, Object... formatArgs) {
-                MainActivity.this.showToast(messageResId, formatArgs);
-            }
-
-            @Override
-            public void requestAppsLoad() {
-                MainActivity.this.requestAppsLoad();
-            }
-
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
             }
         };
     }

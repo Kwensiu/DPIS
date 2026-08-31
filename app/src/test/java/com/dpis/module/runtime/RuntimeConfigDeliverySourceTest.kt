@@ -9,6 +9,7 @@ class RuntimeConfigDeliverySourceTest {
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
         val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val templateWorkspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
         val appConfigHost = hostBlock(mainActivity)
         val sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java")
@@ -35,8 +36,8 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(appConfigHost.contains("public void onRuntimeConfigSaved()"))
         assertTrue(appConfigHost.contains("MainActivity.this.onRuntimeConfigSaved();"))
         assertTrue(sheetActions.contains("AppConfigSaveHandler.Result result = host.saveAppConfig("))
-        assertTrue(mainActivity.contains("if (result.successCount() > 0)"))
-        assertTrue(mainActivity.contains("onRuntimeConfigSaved();"))
+        assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
+        assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
         assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
         assertTrue(occurrences(fontDetail, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
         assertTrue(systemHooks.contains("RuntimeConfigDelivery::publishLocalSnapshotAfterSave"))

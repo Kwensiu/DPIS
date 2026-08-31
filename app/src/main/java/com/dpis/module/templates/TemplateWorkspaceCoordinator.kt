@@ -13,6 +13,7 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.viewport.ViewportApplyMode
+import com.dpis.module.ui.dialog.ConfirmDialog
 import com.google.android.material.button.MaterialButton
 
 /**
@@ -120,12 +121,16 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
     interface Host {
         fun editGlobalPrefill()
         fun editQuickTemplate(templateId: String?)
-        fun applyQuickTemplate(templateId: String)
         fun selectQuickTemplateTargets(templateId: String)
         fun openEmbeddedQuickTemplateTargets(templateId: String)
         fun refreshTemplateWorkspace()
-        fun showToast(messageResId: Int)
+        fun showToast(messageResId: Int, vararg formatArgs: Any?)
         fun appConfigDialogHost(): AppConfigDialogBinder.Host
+        fun hookConfigStore(): DpisConfigStore
+        fun isInstalledTemplateTargetPackage(packageName: String): Boolean
+        fun onTemplateRuntimeConfigSaved()
+        fun requestAppsLoad()
+        fun runOnUiThread(runnable: Runnable)
     }
 
     private val actions = object : TemplateWorkspacePresentation.Actions {
@@ -155,7 +160,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             return reordered
         }
 
-        override fun applyTemplate(id: String) = host.applyQuickTemplate(id)
+        override fun applyTemplate(id: String) = applyQuickTemplate(id)
 
         override fun editTemplate(id: String) = host.editQuickTemplate(id)
 
@@ -289,6 +294,52 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     fun route() = routeState
 
+    /** Runs the complete apply confirmation and persistence workflow inside the template module. */
+    fun applyQuickTemplate(templateId: String) {
+        val template = QuickTemplateStore(activity).read(templateId)
+        if (template == null) {
+            host.showToast(R.string.quick_template_target_missing)
+            host.refreshTemplateWorkspace()
+            return
+        }
+        val coordinator = QuickTemplateApplyAdapters.from(host.hookConfigStore())
+        val installedOnly = QuickTemplateApplyCoordinator.TargetPackageFilter(
+            host::isInstalledTemplateTargetPackage,
+        )
+        val plan = coordinator.plan(template, installedOnly)
+        if (plan.targetCount <= 0) {
+            host.showToast(R.string.quick_template_apply_empty_selection)
+            return
+        }
+        val message = QuickTemplateApplyConfirmationMessage.format(
+            plan.targetCount,
+            plan.overwriteCount,
+            object : QuickTemplateApplyConfirmationMessage.Strings {
+                override fun plain(targetCount: Int) = activity.getString(
+                    R.string.quick_template_apply_confirm_message,
+                    targetCount,
+                )
+
+                override fun overwrite(targetCount: Int, overwriteCount: Int) = activity.getString(
+                    R.string.quick_template_apply_confirm_message_overwrite,
+                    targetCount,
+                    overwriteCount,
+                )
+
+                override fun scopeNote() = activity.getString(R.string.quick_template_apply_scope_note)
+            },
+        )
+        ConfirmDialog.showWithLabels(
+            activity,
+            activity.getString(R.string.quick_template_apply_confirm_title, template.name),
+            message,
+            activity.getString(R.string.dialog_process_action_confirm_negative),
+            activity.getString(R.string.template_workspace_action_apply),
+            Runnable { finishQuickTemplateApply(coordinator, template, installedOnly) },
+            Runnable { },
+        )
+    }
+
     fun refresh(query: String) {
         presentation.refresh(
             query,
@@ -298,6 +349,40 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             routeState.globalPrefillDraft(),
             routeState.quickTemplateDraft(),
         )
+    }
+
+    private fun finishQuickTemplateApply(
+        coordinator: QuickTemplateApplyCoordinator<TemplateConfigValue>,
+        template: QuickTemplateStore.QuickTemplate,
+        installedOnly: QuickTemplateApplyCoordinator.TargetPackageFilter,
+    ) {
+        val result = coordinator.apply(template, installedOnly)
+        if (result.emptySelection) {
+            host.showToast(R.string.quick_template_apply_empty_selection)
+            return
+        }
+        if (result.failureCount() > 0) {
+            host.showToast(
+                R.string.quick_template_apply_result_partial,
+                result.successCount(),
+                result.failureCount(),
+            )
+        } else {
+            host.showToast(R.string.quick_template_apply_result_success, result.successCount())
+        }
+        if (result.successCount() > 0) {
+            host.onTemplateRuntimeConfigSaved()
+        }
+        BatchScopeRequestCoordinator(object : BatchScopeRequestCoordinator.Host {
+            override fun showToast(messageResId: Int, vararg formatArgs: Any?) {
+                host.showToast(messageResId, *formatArgs)
+            }
+
+            override fun requestAppsLoad() = host.requestAppsLoad()
+
+            override fun runOnUiThread(runnable: Runnable) = host.runOnUiThread(runnable)
+        }).requestMissingScope(result.successfulPackages)
+        host.refreshTemplateWorkspace()
     }
 
     private fun RouteState.detailKind() = when (selection().kind) {
