@@ -1253,19 +1253,10 @@ public final class AppConfigDialogBinder {
         button.setContentDescription(buttonText);
     }
 
-    public static final class ModeToggle {
-        public final View container;
-        public final View thumb;
-        public final MaterialTextView emulationLabel;
-        public final MaterialTextView replaceLabel;
-        private boolean emulationActive;
-
+    public static final class ModeToggle extends AppConfigDialogModeToggle {
         public ModeToggle(View container, View thumb, MaterialTextView emulationLabel,
                 MaterialTextView replaceLabel) {
-            this.container = container;
-            this.thumb = thumb;
-            this.emulationLabel = emulationLabel;
-            this.replaceLabel = replaceLabel;
+            super(container, thumb, emulationLabel, replaceLabel);
         }
     }
 
@@ -1492,17 +1483,11 @@ public final class AppConfigDialogBinder {
         }
     }
 
-    public static final class AppConfigDialogActionStyle {
-        public final ColorStateList defaultActionBgTint;
-        public final int defaultActionStrokeWidth;
-        public final int defaultActionTextColor;
-
+    public static final class AppConfigDialogActionStyle extends com.dpis.module.appconfig.AppConfigDialogActionStyle {
         AppConfigDialogActionStyle(ColorStateList defaultActionBgTint,
                 int defaultActionStrokeWidth,
                 int defaultActionTextColor) {
-            this.defaultActionBgTint = defaultActionBgTint;
-            this.defaultActionStrokeWidth = defaultActionStrokeWidth;
-            this.defaultActionTextColor = defaultActionTextColor;
+            super(defaultActionBgTint, defaultActionStrokeWidth, defaultActionTextColor);
         }
     }
 
