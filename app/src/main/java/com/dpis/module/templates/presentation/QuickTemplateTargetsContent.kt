@@ -1,46 +1,43 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.templates.presentation
 
-import com.dpis.module.ui.dialog.ModalDialog
-
+import android.graphics.drawable.Drawable
 import android.widget.ImageView
-
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.clickable
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,11 +48,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
@@ -63,10 +59,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -77,9 +71,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-
+import androidx.compose.ui.zIndex
 import com.dpis.module.R
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
+import com.dpis.module.ui.compose.AppIdentityMarqueeText
+import com.dpis.module.ui.compose.SecondaryPageTopBar
+import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
+import com.dpis.module.ui.compose.dialogListContentFade
+import com.dpis.module.ui.dialog.ModalDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,49 +152,49 @@ fun QuickTemplateTargetsContent(
                     onBack = requestBack.takeIf { showBackButton },
                     includeHorizontalSafeInsets = showBackButton,
                     title = {
-                    Column {
-                        Text(
-                            text = current.templateName.orEmpty(),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Text(
-                            text = stringResource(
-                                R.string.quick_template_targets_selected_count,
-                                current.selectedCount
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                        Column {
+                            Text(
+                                text = current.templateName.orEmpty(),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.quick_template_targets_selected_count,
+                                    current.selectedCount
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     },
                     actions = {
-                    IconButton(
-                        onClick = {
-                            searchVisible = !searchVisible
-                            if (!searchVisible) focusManager.clearFocus()
+                        IconButton(
+                            onClick = {
+                                searchVisible = !searchVisible
+                                if (!searchVisible) focusManager.clearFocus()
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_search_24),
+                                contentDescription = stringResource(R.string.quick_search_button),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_search_24),
-                            contentDescription = stringResource(R.string.quick_search_button),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            focusManager.clearFocus()
-                            filterSheetVisible = true
+                        IconButton(
+                            onClick = {
+                                focusManager.clearFocus()
+                                filterSheetVisible = true
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_tune_24),
+                                contentDescription = stringResource(R.string.filter_button),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_tune_24),
-                            contentDescription = stringResource(R.string.filter_button),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                     }
                 )
             }
@@ -216,8 +215,13 @@ fun QuickTemplateTargetsContent(
                                     )
                                 }
                             }
+
                             current.apps.isEmpty() -> {
-                                Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                                Column(
+                                    Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
                                     Text(
                                         text = stringResource(R.string.quick_template_targets_empty),
                                         modifier = Modifier.padding(bottom = 8.dp),
@@ -226,13 +230,21 @@ fun QuickTemplateTargetsContent(
                                     if (!current.missingTemplate && (current.query.isNotBlank() || !current.showAllApps || current.showConfiguredApps || current.sortMode != QuickTemplateTargetsPresentationController.SORT_NAME || current.reverseOrder)) {
                                         Button(onClick = {
                                             onQueryChanged("")
-                                            onFiltersChanged(true, false, false, true, QuickTemplateTargetsPresentationController.SORT_NAME, false)
+                                            onFiltersChanged(
+                                                true,
+                                                false,
+                                                false,
+                                                true,
+                                                QuickTemplateTargetsPresentationController.SORT_NAME,
+                                                false
+                                            )
                                         }, shape = RoundedCornerShape(50)) {
                                             Text(stringResource(R.string.reset_filters_button))
                                         }
                                     }
                                 }
                             }
+
                             else -> {
                                 LazyColumn(
                                     modifier = Modifier
@@ -298,7 +310,7 @@ fun QuickTemplateTargetsContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 20.dp)
-                .navigationBarsPadding()
+                    .navigationBarsPadding()
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -307,7 +319,9 @@ fun QuickTemplateTargetsContent(
                 ) {
                     IconButton(
                         onClick = { filterSheetVisible = false },
-                        modifier = Modifier.size(40.dp).offset(x = (-8).dp)
+                        modifier = Modifier
+                            .size(40.dp)
+                            .offset(x = (-8).dp)
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_close_24),
@@ -325,8 +339,10 @@ fun QuickTemplateTargetsContent(
                         shape = RoundedCornerShape(50),
                         selected = current.reverseOrder,
                         onClick = {
-                            onFiltersChanged(current.showAllApps, current.showSystemApps, current.showUserApps,
-                                current.showConfiguredApps, current.sortMode, !current.reverseOrder)
+                            onFiltersChanged(
+                                current.showAllApps, current.showSystemApps, current.showUserApps,
+                                current.showConfiguredApps, current.sortMode, !current.reverseOrder
+                            )
                         },
                         label = { Text(stringResource(R.string.quick_template_targets_filter_reverse)) }
                     )
@@ -336,11 +352,16 @@ fun QuickTemplateTargetsContent(
                             .size(32.dp)
                             .clip(RoundedCornerShape(50))
                             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(50))
+                            .border(
+                                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                                RoundedCornerShape(50)
+                            )
                             .clickable(role = Role.Button) {
-                                onFiltersChanged(true, false, false, true,
-                                    QuickTemplateTargetsPresentationController.SORT_NAME, false)
-                        },
+                                onFiltersChanged(
+                                    true, false, false, true,
+                                    QuickTemplateTargetsPresentationController.SORT_NAME, false
+                                )
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -364,26 +385,53 @@ fun QuickTemplateTargetsContent(
                 ) {
                     FilterChip(
                         selected = current.showAllApps,
-                        onClick = { onFiltersChanged(true, false, false, current.showConfiguredApps, current.sortMode, current.reverseOrder) },
+                        onClick = {
+                            onFiltersChanged(
+                                true,
+                                false,
+                                false,
+                                current.showConfiguredApps,
+                                current.sortMode,
+                                current.reverseOrder
+                            )
+                        },
                         label = { Text(stringResource(R.string.quick_template_targets_filter_all)) }
                     )
                     FilterChip(
                         selected = current.showSystemApps,
                         onClick = {
-                            onFiltersChanged(false, !current.showSystemApps, current.showUserApps,
-                                current.showConfiguredApps, current.sortMode, current.reverseOrder)
+                            onFiltersChanged(
+                                false, !current.showSystemApps, current.showUserApps,
+                                current.showConfiguredApps, current.sortMode, current.reverseOrder
+                            )
                         },
                         label = { Text(stringResource(R.string.quick_template_targets_filter_system)) },
-                        leadingIcon = if (current.showSystemApps && !current.showAllApps) { { Icon(painterResource(R.drawable.ic_check_24), contentDescription = null) } } else null
+                        leadingIcon = if (current.showSystemApps && !current.showAllApps) {
+                            {
+                                Icon(
+                                    painterResource(R.drawable.ic_check_24),
+                                    contentDescription = null
+                                )
+                            }
+                        } else null
                     )
                     FilterChip(
                         selected = current.showUserApps,
                         onClick = {
-                            onFiltersChanged(false, current.showSystemApps, !current.showUserApps,
-                                current.showConfiguredApps, current.sortMode, current.reverseOrder)
+                            onFiltersChanged(
+                                false, current.showSystemApps, !current.showUserApps,
+                                current.showConfiguredApps, current.sortMode, current.reverseOrder
+                            )
                         },
                         label = { Text(stringResource(R.string.quick_template_targets_filter_user)) },
-                        leadingIcon = if (current.showUserApps && !current.showAllApps) { { Icon(painterResource(R.drawable.ic_check_24), contentDescription = null) } } else null
+                        leadingIcon = if (current.showUserApps && !current.showAllApps) {
+                            {
+                                Icon(
+                                    painterResource(R.drawable.ic_check_24),
+                                    contentDescription = null
+                                )
+                            }
+                        } else null
                     )
                 }
                 Spacer(Modifier.height(4.dp))
@@ -427,17 +475,44 @@ fun QuickTemplateTargetsContent(
                 ) {
                     FilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_NAME,
-                        onClick = { onFiltersChanged(current.showAllApps, current.showSystemApps, current.showUserApps, current.showConfiguredApps, QuickTemplateTargetsPresentationController.SORT_NAME, current.reverseOrder) },
+                        onClick = {
+                            onFiltersChanged(
+                                current.showAllApps,
+                                current.showSystemApps,
+                                current.showUserApps,
+                                current.showConfiguredApps,
+                                QuickTemplateTargetsPresentationController.SORT_NAME,
+                                current.reverseOrder
+                            )
+                        },
                         label = { Text(stringResource(R.string.quick_template_targets_sort_name)) }
                     )
                     FilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_UPDATED,
-                        onClick = { onFiltersChanged(current.showAllApps, current.showSystemApps, current.showUserApps, current.showConfiguredApps, QuickTemplateTargetsPresentationController.SORT_UPDATED, current.reverseOrder) },
+                        onClick = {
+                            onFiltersChanged(
+                                current.showAllApps,
+                                current.showSystemApps,
+                                current.showUserApps,
+                                current.showConfiguredApps,
+                                QuickTemplateTargetsPresentationController.SORT_UPDATED,
+                                current.reverseOrder
+                            )
+                        },
                         label = { Text(stringResource(R.string.quick_template_targets_sort_updated)) }
                     )
                     FilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_INSTALLED,
-                        onClick = { onFiltersChanged(current.showAllApps, current.showSystemApps, current.showUserApps, current.showConfiguredApps, QuickTemplateTargetsPresentationController.SORT_INSTALLED, current.reverseOrder) },
+                        onClick = {
+                            onFiltersChanged(
+                                current.showAllApps,
+                                current.showSystemApps,
+                                current.showUserApps,
+                                current.showConfiguredApps,
+                                QuickTemplateTargetsPresentationController.SORT_INSTALLED,
+                                current.reverseOrder
+                            )
+                        },
                         label = { Text(stringResource(R.string.quick_template_targets_sort_installed)) }
                     )
                 }
@@ -481,7 +556,6 @@ fun QuickTemplateTargetsContent(
         }
     }
 }
-
 @Composable
 private fun TargetSearchCard(
     query: String,
@@ -608,7 +682,7 @@ private fun TargetAppRow(
 }
 
 @Composable
-private fun TargetAppIcon(icon: android.graphics.drawable.Drawable?) {
+private fun TargetAppIcon(icon: Drawable?) {
     Box(
         modifier = Modifier
             .size(40.dp)
@@ -654,24 +728,3 @@ private fun ConfiguredBadge() {
     }
 }
 
-@Composable
-private fun TargetFilterSwitch(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .toggleable(
-                value = checked,
-                role = Role.Switch,
-                onValueChange = onCheckedChange
-            ),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(label, modifier = Modifier.weight(1f))
-        Switch(checked = checked, onCheckedChange = null)
-    }
-}

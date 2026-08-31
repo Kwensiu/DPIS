@@ -1,7 +1,6 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.templates.presentation
 
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
@@ -13,22 +12,25 @@ import androidx.compose.ui.unit.dp
  */
 internal object TemplateUiTokens {
     val WorkspaceHorizontalPadding = 16.dp
+
     // The shell is edge-to-edge; this reserve reproduces the old workspace's visible top gutter
     // without stacking the full status-bar inset on top of the shell boundary.
     val WorkspaceTopPadding = 14.dp
     val WorkspaceBottomReserve = 120.dp
+
     // Both workspace pages use the same 64dp pinned MD3 top-app-bar slot.
     val SearchTopPadding = 6.dp
     val SearchBottomPadding = 6.dp
     val SearchCardHeight = 52.dp
     val SectionTopGap = 10.dp
+
     // The LazyColumn already owns the page gutter; header actions must align to it directly.
     val SectionTitleInset = 12.dp
     val SectionActionInset = 12.dp
     val ListGap = 12.dp
     val EmptyStateTopGap = 8.dp
     val EmptyStatePadding = 20.dp
-    const val EmptyStateViewportFraction = 0.5f
+    const val EMPTY_STATE_VIEWPORT_FRACTION = 0.5f
     val EmptyStateBottomBias = 32.dp
 
     val GlobalCardShape = RoundedCornerShape(24.dp)
@@ -50,9 +52,10 @@ internal object TemplateUiTokens {
     val EmptySummaryTopGap = 14.dp
 
     val HeaderActionVisualSize = 36.dp
+
     // Card actions are compact secondary controls; keep them visibly below the 36dp page actions.
     val CardActionVisualSize = 28.dp
-    const val DisabledActionAlpha = 0.45f
+    const val DISABLED_ACTION_ALPHA = 0.45f
     val ActionSpacing = 8.dp
     val CardActionsTopGap = 14.dp
     val HeaderActionSpacing = 8.dp
@@ -63,5 +66,5 @@ internal object TemplateUiTokens {
     val UnsavedBadgeMinHeight = 22.dp
     val UnsavedBadgeShape = RoundedCornerShape(14.dp)
 
-    val ModeAnimationDurationMillis = 200
+    const val MODE_ANIMATION_DURATION_MILLIS = 200
 }

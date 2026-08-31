@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.templates.presentation
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -22,15 +22,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -48,11 +50,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.templates.TemplateConfigSummaryFormatter
 import com.dpis.module.templates.TemplateWorkspacePresentation
+import com.dpis.module.ui.compose.EdgeOcclusionFadeDirection
+import com.dpis.module.ui.compose.EdgeOcclusionFadeTokens
+import com.dpis.module.ui.compose.PageScrollPositionStore
+import com.dpis.module.ui.compose.WorkspaceSearchCard
+import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
+import com.dpis.module.ui.compose.edgeOcclusionFade
+import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.rememberRestorableLazyListState
 
 private const val EDITOR_GLOBAL = "global"
 private const val EDITOR_QUICK = "quick"
@@ -97,87 +108,95 @@ internal fun TemplateWorkspaceListPane(
                 .height(1.dp)
                 .background(searchDividerColor),
         )
-        val listState = rememberRestorableLazyListState(
-            key = "templates",
-            store = scrollStore,
-            enabled = !state.searching,
-        )
-        val listScrolled = listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+        val listState =
+            rememberRestorableLazyListState(
+                key = "templates",
+                store = scrollStore,
+                enabled = !state.searching,
+            )
+        val listScrolled by remember {
+            derivedStateOf {
+                listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
+            }
+        }
+        Box(Modifier
+            .weight(1f)
+            .fillMaxWidth()) {
             LazyColumn(
                 state = listState,
                 contentPadding = PaddingValues(
-                start = TemplateUiTokens.WorkspaceHorizontalPadding,
-                top = TemplateUiTokens.WorkspaceTopPadding,
-                end = TemplateUiTokens.WorkspaceHorizontalPadding,
-                bottom = padding.calculateBottomPadding() + TemplateUiTokens.WorkspaceBottomReserve
-            ),
-            verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
+                    start = TemplateUiTokens.WorkspaceHorizontalPadding,
+                    top = TemplateUiTokens.WorkspaceTopPadding,
+                    end = TemplateUiTokens.WorkspaceHorizontalPadding,
+                    bottom = padding.calculateBottomPadding() + TemplateUiTokens.WorkspaceBottomReserve
+                ),
+                verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
                 modifier = Modifier
                     .fillMaxSize()
                     .clearTextInputFocusOnPointerDown(focusManager)
             ) {
-            if (!state.searching) {
-                item {
-                    GlobalPrefillCard(state, rememberConfirmAction {
-                        onEditorOpened(EDITOR_GLOBAL, null)
-                    })
-                }
-                item {
-                    TemplateHeader(
-                        state = state,
-                        onSort = onSortRequested,
-                        onCreate = rememberConfirmAction {
-                            onEditorOpened(EDITOR_QUICK, null)
-                        },
-                    )
-                }
-            }
-            if (state.templates.isEmpty()) {
-                item {
-                    val searching = state.searching
-                    Box(
-                        modifier = if (searching) {
-                            Modifier.fillMaxWidth()
-                        } else {
-                            Modifier
-                                .fillParentMaxWidth()
-                                .fillParentMaxHeight(TemplateUiTokens.EmptyStateViewportFraction)
-                                .padding(bottom = TemplateUiTokens.EmptyStateBottomBias)
-                        },
-                        contentAlignment = if (searching) Alignment.CenterStart else Alignment.Center
-                    ) {
-                        Text(
-                            stringResource(
-                                if (searching) R.string.quick_template_search_empty
-                                else R.string.template_workspace_quick_templates_empty
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = if (searching) {
-                                Modifier.padding(
-                                    top = TemplateUiTokens.EmptyStateTopGap,
-                                    bottom = TemplateUiTokens.EmptyStatePadding,
-                                    end = TemplateUiTokens.EmptyStatePadding
-                                )
-                            } else Modifier
+                if (!state.searching) {
+                    item {
+                        GlobalPrefillCard(state,
+                            rememberConfirmAction {
+                                onEditorOpened(EDITOR_GLOBAL, null)
+                            })
+                    }
+                    item {
+                        TemplateHeader(
+                            state = state,
+                            onSort = onSortRequested,
+                            onCreate = rememberConfirmAction {
+                                onEditorOpened(EDITOR_QUICK, null)
+                            },
                         )
                     }
                 }
-            } else {
-                items(state.templates.size, key = { state.templates[it].id }) { index ->
-                    val template = state.templates[index]
-                    TemplateCard(
-                        template = template,
-                        actions = state.actions,
-                        onEdit = rememberConfirmAction {
-                            onEditorOpened(EDITOR_QUICK, template.id)
-                        },
-                        onTargets = rememberConfirmAction {
-                            onTargetsOpened(template.id)
+                if (state.templates.isEmpty()) {
+                    item {
+                        val searching = state.searching
+                        Box(
+                            modifier = if (searching) {
+                                Modifier.fillMaxWidth()
+                            } else {
+                                Modifier
+                                    .fillParentMaxWidth()
+                                    .fillParentMaxHeight(TemplateUiTokens.EMPTY_STATE_VIEWPORT_FRACTION)
+                                    .padding(bottom = TemplateUiTokens.EmptyStateBottomBias)
+                            },
+                            contentAlignment = if (searching) Alignment.CenterStart else Alignment.Center
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (searching) R.string.quick_template_search_empty
+                                    else R.string.template_workspace_quick_templates_empty
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = if (searching) {
+                                    Modifier.padding(
+                                        top = TemplateUiTokens.EmptyStateTopGap,
+                                        bottom = TemplateUiTokens.EmptyStatePadding,
+                                        end = TemplateUiTokens.EmptyStatePadding
+                                    )
+                                } else Modifier
+                            )
                         }
-                    )
+                    }
+                } else {
+                    items(state.templates.size, key = { state.templates[it].id }) { index ->
+                        val template = state.templates[index]
+                        TemplateCard(
+                            template = template,
+                            actions = state.actions,
+                            onEdit = rememberConfirmAction {
+                                onEditorOpened(EDITOR_QUICK, template.id)
+                            },
+                            onTargets = rememberConfirmAction {
+                                onTargetsOpened(template.id)
+                            }
+                        )
+                    }
                 }
-            }
             }
             if (listScrolled) {
                 Box(
@@ -222,14 +241,14 @@ private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                 IconButton(onClick = onEdit) {
-                     Icon(
-                         painter = painterResource(R.drawable.ic_chevron_right_24),
-                         contentDescription = stringResource(
-                             R.string.template_workspace_action_edit_global_prefill
-                         ),
-                         modifier = Modifier.size(20.dp)
-                     )
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_chevron_right_24),
+                        contentDescription = stringResource(
+                            R.string.template_workspace_action_edit_global_prefill
+                        ),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
             SummaryPills(
@@ -327,7 +346,11 @@ private fun TemplateCard(
                 )
                 Spacer(Modifier.weight(1f))
                 TemplateApplyAction(
-                    onClick = rememberConfirmAction { actions.applyTemplate(template.id) }
+                    onClick = rememberConfirmAction {
+                        actions.applyTemplate(
+                            template.id
+                        )
+                    }
                 )
             }
         }
@@ -384,7 +407,7 @@ private fun SummaryPills(
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
@@ -421,7 +444,7 @@ private fun SummaryPill(
             ),
             style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
@@ -462,7 +485,7 @@ private fun TemplateActionIconButton(
     contentDescription: String,
     enabled: Boolean = true,
     onClick: () -> Unit,
-    visualSize: androidx.compose.ui.unit.Dp,
+    visualSize: Dp,
     style: TemplateActionButtonStyle = TemplateActionButtonStyle.TonalOutlined
 ) {
     val shape = TemplateUiTokens.CircularActionShape
@@ -480,6 +503,7 @@ private fun TemplateActionIconButton(
             TemplateUiTokens.CardBorderWidth,
             MaterialTheme.colorScheme.outlineVariant
         )
+
         TemplateActionButtonStyle.Plain,
         TemplateActionButtonStyle.Primary -> null
     }
@@ -494,7 +518,7 @@ private fun TemplateActionIconButton(
     }
     Box(
         modifier = buttonModifier
-            .alpha(if (enabled) 1f else TemplateUiTokens.DisabledActionAlpha)
+            .alpha(if (enabled) 1f else TemplateUiTokens.DISABLED_ACTION_ALPHA)
             .clickable(
                 enabled = enabled,
                 role = Role.Button,
@@ -519,8 +543,8 @@ private enum class TemplateActionButtonStyle {
 
 private fun Modifier.templateDashedBorder(
     color: Color,
-    cornerRadius: androidx.compose.ui.unit.Dp,
-    strokeWidth: androidx.compose.ui.unit.Dp = 1.dp
+    cornerRadius: Dp,
+    strokeWidth: Dp = 1.dp
 ): Modifier = drawWithCache {
     val stroke = strokeWidth.toPx()
     val radius = cornerRadius.toPx()

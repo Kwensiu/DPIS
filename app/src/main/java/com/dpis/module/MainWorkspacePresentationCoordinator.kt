@@ -60,7 +60,7 @@ import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.compose.PageScrollPositionStore
-import com.dpis.module.ui.compose.TemplateWorkspaceContent
+import com.dpis.module.templates.presentation.TemplateWorkspaceContent
 import com.dpis.module.ui.compose.WearAppWorkspaceContent
 import com.dpis.module.ui.compose.WearHomeWorkspaceContent
 import com.dpis.module.ui.compose.WearSettingsWorkspaceContent

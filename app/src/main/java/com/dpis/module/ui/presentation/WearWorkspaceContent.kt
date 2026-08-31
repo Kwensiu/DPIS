@@ -78,6 +78,7 @@ import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.hooks.HookDomainOverrideStore
+import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
 
 /** Wear-native presentation for the five main workspaces. Domain state remains Java-owned. */
 @Composable

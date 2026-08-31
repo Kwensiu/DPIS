@@ -1,21 +1,13 @@
-package com.dpis.module.ui.compose
-
-import com.dpis.module.ui.dialog.ConfirmAlertDialog
-import com.dpis.module.ui.dialog.ModalDialog
+package com.dpis.module.templates.presentation
 
 import android.content.res.Configuration
 import android.widget.Toast
-
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,21 +17,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,42 +31,37 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.dpis.module.R
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.R
+import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.QuickTemplateSortContent
+import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
-import com.dpis.module.templates.TemplateConfigSummaryFormatter
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentation
+import com.dpis.module.ui.compose.PageScrollPositionStore
+import com.dpis.module.ui.compose.WorkspaceTwoPaneMinWidth
+import com.dpis.module.ui.compose.AppTypefacePickerPage
+import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.HookChainEditorPage
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
+import com.dpis.module.ui.dialog.ModalDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -98,7 +75,6 @@ fun TemplateWorkspaceContent(
     onEditorClosed: () -> Unit = {},
     scrollStore: PageScrollPositionStore,
 ) {
-    val activeScrollStore = scrollStore
     var editorKind by rememberSaveable {
         mutableStateOf(editorKindFor(state.detailKind))
     }
@@ -113,7 +89,7 @@ fun TemplateWorkspaceContent(
     var targetSessionDirty by rememberSaveable { mutableStateOf(false) }
     var pendingTargetTemplateId by rememberSaveable { mutableStateOf<String?>(null) }
     var targetSwitchDialogVisible by rememberSaveable { mutableStateOf(false) }
-    var targetSaveRequest by rememberSaveable { mutableStateOf(0) }
+    var targetSaveRequest by rememberSaveable { mutableIntStateOf(0) }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     var sortDialogVisible by rememberSaveable { mutableStateOf(false) }
     var editorSheetVisible by rememberSaveable { mutableStateOf(false) }
@@ -129,16 +105,19 @@ fun TemplateWorkspaceContent(
                 editorTemplateId = null
                 targetsTemplateId = null
             }
+
             TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE -> {
                 editorKind = EDITOR_QUICK
                 editorTemplateId = state.detailTemplateId
                 targetsTemplateId = null
             }
+
             TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS -> {
                 editorKind = null
                 editorTemplateId = null
                 targetsTemplateId = state.detailTemplateId
             }
+
             TemplateWorkspacePresentation.DetailKind.NONE -> Unit
         }
     }
@@ -157,27 +136,29 @@ fun TemplateWorkspaceContent(
 
     val selectedTemplate = state.templates.firstOrNull { it.id == editorTemplateId }
     val editorKey = "${editorKind.orEmpty()}:${editorTemplateId.orEmpty()}"
-    val editorDraft = rememberTemplateEditorDraftState(editorKey) {
-        when (editorKind) {
-            EDITOR_GLOBAL -> TemplateEditorForm.global(state.globalPrefill).also {
-                it.applyDraft(state.globalPrefillDraft)
-            }
-            EDITOR_QUICK -> {
-                val template = selectedTemplate
-                TemplateEditorForm.quick(
-                    template?.let {
-                        QuickTemplateStore.QuickTemplate(
-                            it.id, it.name, 0L, linkedSetOf(), it.configValue
-                        )
-                    },
-                    ""
-                ).also { it.applyDraft(state.quickTemplateDraft) }
-            }
-            else -> TemplateEditorForm.global(state.globalPrefill).also {
-                it.applyDraft(state.globalPrefillDraft)
+    val editorDraft =
+        rememberTemplateEditorDraftState(editorKey) {
+            when (editorKind) {
+                EDITOR_GLOBAL -> TemplateEditorForm.global(state.globalPrefill).also {
+                    it.applyDraft(state.globalPrefillDraft)
+                }
+
+                EDITOR_QUICK -> {
+                    TemplateEditorForm.quick(
+                        selectedTemplate?.let {
+                            QuickTemplateStore.QuickTemplate(
+                                it.id, it.name, 0L, linkedSetOf(), it.configValue
+                            )
+                        },
+                        ""
+                    ).also { it.applyDraft(state.quickTemplateDraft) }
+                }
+
+                else -> TemplateEditorForm.global(state.globalPrefill).also {
+                    it.applyDraft(state.globalPrefillDraft)
+                }
             }
         }
-    }
 
     fun notifyEditorChanged() {
         editorDraft.changed()
@@ -227,8 +208,9 @@ fun TemplateWorkspaceContent(
     }
 
     val draftRevision = editorDraft.observe()
-    @Composable fun hookChainPage(
-        bottomPadding: androidx.compose.ui.unit.Dp,
+    @Composable
+    fun hookChainPage(
+        bottomPadding: Dp,
         modifier: Modifier = Modifier
     ) {
         HookChainEditorPage(
@@ -237,7 +219,7 @@ fun TemplateWorkspaceContent(
             fontDomainsResetRequested = editorDraft.form.fontHookDomainsRaw == null,
             automaticDomains = FontHookDomainRegistry.automaticCustomizableDomains(),
             fontDomainsEditable = editorDraft.form.fontMode ==
-                com.dpis.module.fonts.FontApplyMode.FIELD_REWRITE,
+                    FontApplyMode.FIELD_REWRITE,
             viewportApplyMode = editorDraft.form.viewportApplyMode,
             onHookChainChanged = { raw, reset, mode, _ ->
                 editorDraft.form.fontHookDomainsRaw = if (reset) null else raw
@@ -250,7 +232,9 @@ fun TemplateWorkspaceContent(
             bottomPadding = bottomPadding
         )
     }
-    @Composable fun typefacePage(modifier: Modifier = Modifier) {
+
+    @Composable
+    fun typefacePage(modifier: Modifier = Modifier) {
         AppTypefacePickerPage(
             selectedTypefaceId = editorDraft.form.selectedTypefaceId,
             onTypefaceSelected = {
@@ -263,18 +247,19 @@ fun TemplateWorkspaceContent(
             modifier = modifier
         )
     }
+
     val editorBody: @Composable () -> Unit = {
-            TemplateEditorSurface(
-                form = editorDraft.form,
-                surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
-                draftRevision = draftRevision,
-                topSafePadding = topSafePadding,
-                bottomSafePadding = padding.calculateBottomPadding(),
-                sheetVisible = false,
-                onFormChanged = ::notifyEditorChanged,
-                onSelectTypeface = {
-                    onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
-                },
+        TemplateEditorSurface(
+            form = editorDraft.form,
+            surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
+            draftRevision = draftRevision,
+            topSafePadding = topSafePadding,
+            bottomSafePadding = padding.calculateBottomPadding(),
+            sheetVisible = false,
+            onFormChanged = ::notifyEditorChanged,
+            onSelectTypeface = {
+                onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
+            },
             onEditHookDomains = {
                 onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
             },
@@ -331,7 +316,7 @@ fun TemplateWorkspaceContent(
                     onEditorOpened = ::openEditor,
                     onSortRequested = { sortDialogVisible = true },
                     onTargetsOpened = openTargets,
-                    scrollStore = activeScrollStore,
+                    scrollStore = scrollStore,
                     modifier = Modifier.weight(1f)
                 )
                 VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -362,6 +347,7 @@ fun TemplateWorkspaceContent(
                                 saveRequest = targetSaveRequest
                             )
                         }
+
                         editorKind != null -> editorBody()
                         else -> TemplateDetailEmptyState(
                             modifier = Modifier.padding(top = topSafePadding)
@@ -377,7 +363,7 @@ fun TemplateWorkspaceContent(
                 onEditorOpened = ::openEditor,
                 onSortRequested = { sortDialogVisible = true },
                 onTargetsOpened = openTargets,
-                scrollStore = activeScrollStore,
+                scrollStore = scrollStore,
                 modifier = Modifier
             )
             if (editorKind != null) {
@@ -430,7 +416,8 @@ fun TemplateWorkspaceContent(
             confirmLabel = stringResource(R.string.font_library_delete_action),
             onConfirm = {
                 deleteConfirmationVisible = false
-                val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId.orEmpty())
+                val result =
+                    state.actions.deleteQuickTemplate(editorDraft.form.templateId.orEmpty())
                 if (result.success) closeEditor()
             }
         )
@@ -449,7 +436,9 @@ fun TemplateWorkspaceContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Row(
-                    Modifier.fillMaxWidth().padding(top = 20.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 20.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = {
@@ -512,7 +501,8 @@ private fun EmbeddedQuickTemplateTargets(
 
     LaunchedEffect(targetState?.missingTemplate) {
         if (targetState?.missingTemplate == true) {
-            Toast.makeText(context, R.string.quick_template_target_missing, Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, R.string.quick_template_target_missing, Toast.LENGTH_SHORT)
+                .show()
             onClose()
         }
     }
@@ -575,7 +565,10 @@ private fun TemplateDetailEmptyState(modifier: Modifier = Modifier) {
 @Preview(showBackground = true, widthDp = 360, heightDp = 640)
 @Composable
 private fun TemplateDetailEmptyStatePreview() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    DpisTheme(
+        darkTheme = false,
+        dynamicColor = false
+    ) {
         TemplateDetailEmptyState()
     }
 }

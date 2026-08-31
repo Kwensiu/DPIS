@@ -18,7 +18,7 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
     @Test
     fun targetSelectionPagePersistsSelectedPackagesAndShowsConfiguredBadge() {
         val manifest = read("src/main/AndroidManifest.xml");
-        val activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.java");
+        val activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.kt")
         val contract = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java");
         val targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.kt");
@@ -52,9 +52,9 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(activity.contains("shouldClosePortraitPageInLandscape()"));
         assertTrue(activity.contains(
                 "finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_ORIENTATION_MIGRATION)"));
-        assertTrue(activity.contains("new QuickTemplateTargetsPresentationController(this)"));
-        assertTrue(activity.contains("targetsController.dispose();"));
-        assertTrue(activity.contains("finish();"));
+        assertTrue(activity.contains("val controller = QuickTemplateTargetsPresentationController(this)"))
+        assertTrue(activity.contains("targetsController?.dispose()"))
+        assertTrue(activity.contains("finish()"))
         assertFalse(activity.contains("quickTemplateStore.setSelectedPackages(template.id, selectedPackages)"));
         assertFalse(composeHost.contains("controller::onIconVisible"));
         assertTrue(composeHost.contains("result.messageResId"));

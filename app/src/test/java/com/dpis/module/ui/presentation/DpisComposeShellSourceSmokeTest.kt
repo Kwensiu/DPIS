@@ -257,10 +257,10 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(workspace.contains("draftRevision = draftRevision"))
         assertTrue(editor.contains("draftRevision: Int"))
         assertTrue(editor.contains("DpisEditorBottomSheet("))
-        assertTrue(editor.contains("DpisSheetVisualChrome(showUnsaved = form.isDirty)"))
-        assertTrue(editor.contains("contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }"))
-        assertTrue(editor.contains(
-                "padding(bottom = edgeToEdgeContentBottomPadding(extraBottomPadding))"))
+        assertTrue(editor.contains("DpisSheetVisualChrome("))
+        assertTrue(editor.contains("showUnsaved = form.isDirty"))
+        assertTrue(editor.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
+        assertTrue(editor.contains("edgeToEdgeContentBottomPadding("))
     }
 
     @Test
@@ -279,7 +279,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(search.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"))
         assertTrue(search.contains("R.drawable.ic_close_24"))
         assertTrue(template.contains("role = Role.Button"))
-        assertTrue(template.contains("TemplateUiTokens.DisabledActionAlpha"))
+        assertTrue(template.contains("TemplateUiTokens.DISABLED_ACTION_ALPHA"))
         assertTrue(template.contains("TemplateUiTokens.EmptySummaryTopGap"))
         assertTrue(template.contains("TemplateUiTokens.CardActionVisualSize"))
         assertTrue(template.contains("TemplateApplyAction("))
@@ -294,7 +294,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(tokens.contains("val HeaderActionVisualSize = 36.dp"))
         assertTrue(tokens.contains("val CardActionVisualSize = 28.dp"))
         assertTrue(tokens.contains("val ApplyActionVisualSize = CardActionVisualSize"))
-        assertTrue(tokens.contains("const val DisabledActionAlpha = 0.45f"))
+        assertTrue(tokens.contains("const val DISABLED_ACTION_ALPHA = 0.45f"))
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.templates.presentation
 
 import android.widget.Toast
 
@@ -7,7 +7,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.dpis.module.R
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
+import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.dpisDarkTheme
 
 /** Compose host for the manifest-owned portrait target-selection Activity contract. */
 object QuickTemplateTargetActivityContent {
@@ -25,7 +28,7 @@ object QuickTemplateTargetActivityContent {
             if (next.missingTemplate) {
                 Toast.makeText(
                     activity,
-                    com.dpis.module.R.string.quick_template_target_missing,
+                    R.string.quick_template_target_missing,
                     Toast.LENGTH_SHORT
                 ).show()
                 onMissingTemplate.run()
