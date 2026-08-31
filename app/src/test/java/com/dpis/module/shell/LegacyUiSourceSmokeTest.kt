@@ -19,13 +19,13 @@ class LegacyUiSourceSmokeTest {
     @Test
     fun unknownScopeHidesInjectionStatusAndDisablesScopeAction() {
         val source = read("src/main/java/com/dpis/module/applist/AppStatusFormatter.java")
-        val dialogBinder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
+        val dialogBinder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.kt")
         val strings = read("src/main/res/values-zh-rCN/strings.xml")
 
         assertTrue(source.contains("scopeKnown"))
         assertFalse(source.contains("labels.scopeUnknown"))
-        assertTrue(dialogBinder.contains("scopeButton.setEnabled(scopeKnown);"))
-        assertTrue(dialogBinder.contains("scopeButton.setAlpha(scopeKnown ? 1f : 0.6f);"))
+        assertTrue(dialogBinder.contains("scopeButton.isEnabled = scopeKnown"))
+        assertTrue(dialogBinder.contains("scopeButton.alpha = if (scopeKnown) 1f else 0.6f"))
         assertFalse(strings.contains("<string name=\"app_status_scope_unknown\">"))
         assertFalse(strings.contains("<string name=\"scope_manual_button\">"))
         assertTrue(strings.contains("LSPosed"))
