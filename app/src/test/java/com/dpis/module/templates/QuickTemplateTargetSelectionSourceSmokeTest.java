@@ -142,9 +142,9 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(mainActivity.contains("startQuickTemplateTargetSelectionActivity(selection.templateId);"));
         assertTrue(mainActivity.contains("startQuickTemplateTargetSelectionActivity(templateId);"));
         assertTrue(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"));
-        assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted"));
-        assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted = true;"));
-        assertTrue(mainActivity.contains("quickTemplateTargetSelectionActivityStarted = false;"));
+        assertTrue(mainActivity.contains("templateRoute().targetSelectionActivityStarted()"));
+        assertTrue(mainActivity.contains("templateRoute().markTargetSelectionActivityStarted()"));
+        assertTrue(mainActivity.contains("templateRoute().markTargetSelectionActivityFinished()"));
         assertTrue(mainActivity.contains("startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);"));
         assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("));
         assertTrue(mainActivity.contains("requestCode == REQUEST_QUICK_TEMPLATE_TARGETS"));
@@ -156,6 +156,9 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(carrierState.contains("ORIENTATION_MIGRATION"));
         assertTrue(mainActivity.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
         assertTrue(mainActivity.contains("TemplateDetailPaneController"));
+        String routeState = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
+        assertTrue(routeState.contains("class RouteState"));
+        assertTrue(routeState.contains("fun resetTargetSelectionActivityForConfiguration()"));
         String detailController = read("src/main/java/com/dpis/module/templates/TemplateDetailPaneController.kt");
         assertTrue(detailController.contains("view_land_quick_template_targets_detail"));
         assertTrue(detailController.contains("QuickTemplateTargetsBinder(activity, detailView, host)"));

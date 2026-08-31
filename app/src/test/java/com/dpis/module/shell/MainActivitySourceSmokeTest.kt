@@ -134,7 +134,7 @@ class MainActivitySourceSmokeTest {
             )
         )
         assertTrue(source.contains("STATE_TEMPLATE_QUERY"))
-        assertTrue(source.contains("QuickTemplateSortDialog.show"))
+        assertTrue(source.contains("getActions().sortTemplates()"))
         assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"));
         assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"));
         assertFalse(source.contains("workspaceModeForButtonId(int checkedId)"))
@@ -178,16 +178,16 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("restoreTemplateDetailPane()"));
         assertTrue(source.contains("showGlobalPrefillEditor()"))
         assertTrue(source.contains("showQuickTemplateEditor(String templateId)"))
-        assertTrue(source.contains("TemplateDetailSelection.quickTemplate(templateId)"))
-        assertTrue(source.contains("showQuickTemplateEditor(null)"));
+        assertTrue(source.contains("templateRoute().openQuickTemplate(templateId)"))
+        assertTrue(source.contains("getActions().createTemplate()"));
         assertFalse(source.contains("GlobalPrefillEditorBinder"))
         assertFalse(source.contains("QuickTemplateEditorBinder"))
         assertFalse(source.contains("GlobalPrefillSheetDialog"))
         assertFalse(source.contains("QuickTemplateEditSheetDialog"))
-        assertTrue(source.contains("templateDetailSelection = TemplateDetailSelection.none()"));
+        assertTrue(source.contains("templateRoute().clear()"));
         assertTrue(source.contains("TemplateDetailPaneController"))
         assertTrue(source.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"))
-        assertTrue(source.contains("TemplateDetailSelection.quickTemplateTargets(templateId)"))
+        assertTrue(source.contains("templateRoute().openQuickTemplateTargets(templateId)"))
         assertTrue(source.contains("templateDetailPaneController.dispose()"));
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"))
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"))
@@ -242,14 +242,11 @@ class MainActivitySourceSmokeTest {
         val workspace = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt")
 
-        assertTrue(source.contains("retainedGlobalPrefillDraft"))
-        assertTrue(source.contains("retainedQuickTemplateDraft"))
-        assertTrue(source.contains("retainedState.globalPrefillDraft"))
-        assertTrue(source.contains("retainedState.quickTemplateDraft"))
-        assertTrue(source.contains("retainedGlobalPrefillDraft"))
-        assertTrue(source.contains("retainedQuickTemplateDraft"))
-        assertTrue(source.contains("TemplateEditorDraft globalPrefillDraft"))
-        assertTrue(source.contains("TemplateEditorDraft quickTemplateDraft"))
+        assertTrue(source.contains("TemplateWorkspaceCoordinator.RouteState initialTemplateRoute"))
+        assertTrue(source.contains("initialTemplateRoute = retainedState.templateRoute"))
+        assertTrue(source.contains("templateRoute.globalPrefillDraft()"))
+        assertTrue(source.contains("templateRoute.quickTemplateDraft()"))
+        assertTrue(source.contains("new TemplateWorkspaceCoordinator.RouteState("))
         assertTrue(draft.contains("viewportScaleInput"))
         assertTrue(draft.contains("viewportAbsoluteInput"))
         assertTrue(workspace.contains("globalPrefillDraft: TemplateEditorDraft?"))
@@ -1285,9 +1282,9 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/ui/presentation/DpisEditorBottomSheet.kt")
 
         assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"))
-        assertTrue(activity.contains("boolean dirty = form.isDirty()"));
-        assertTrue(activity.contains("retainedGlobalPrefillDraft = dirty ? form.globalDraft() : null"));
-        assertTrue(activity.contains("retainedQuickTemplateDraft = dirty ? form.quickDraft() : null"));
+        assertTrue(activity.contains("boolean dirty = templateRoute().updateDraft(form)"));
+        assertTrue(activity.contains("TemplateWorkspaceCoordinator.RouteState"));
+        assertTrue(activity.contains("templateRoute().openQuickTemplate(templateId)"));
         assertTrue(activity.contains("private void onComposeTemplateEditorClosed()"))
         assertTrue(activity.contains("clearTemplateDetailSelection()"));
         val closeStart = activity.indexOf("private void onComposeTemplateEditorClosed()")

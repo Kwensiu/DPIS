@@ -62,7 +62,6 @@ import com.dpis.module.quirks.WechatDpiSheetBinder;
 
 import com.dpis.module.process.ProcessActionHandler;
 
-import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;
 import com.dpis.module.templates.BatchScopeRequestCoordinator;
@@ -312,10 +311,6 @@ public final class MainActivity
     private FrameLayout landDetailContent;
     private View templateDetailEmptyView;
     private FrameLayout templateDetailContent;
-    private TemplateDetailSelection templateDetailSelection
-            = TemplateDetailSelection.none();
-    private ConfigEditorDestination templateEditorDestination
-            = ConfigEditorDestination.MAIN;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
@@ -343,10 +338,6 @@ public final class MainActivity
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
     private boolean mainActivityResumed;
-    private TemplateEditorDraft retainedGlobalPrefillDraft;
-    private TemplateEditorDraft retainedQuickTemplateDraft;
-    // TODO: Promote quick-template target carrier decisions into a full state machine.
-    private boolean quickTemplateTargetSelectionActivityStarted;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -385,6 +376,8 @@ public final class MainActivity
         );
         String initialQuery = "";
         String initialTemplateQuery = "";
+        TemplateWorkspaceCoordinator.RouteState initialTemplateRoute
+                = new TemplateWorkspaceCoordinator.RouteState();
         AppListFilterState initialFilterState = appListFilterStateStore.load();
         MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.HOME;
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
@@ -396,12 +389,7 @@ public final class MainActivity
             initialTemplateQuery = retainedState.templateQuery;
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
-            templateDetailSelection = retainedState.templateDetailSelection;
-            templateEditorDestination = retainedState.templateEditorDestination;
-            quickTemplateTargetSelectionActivityStarted =
-                    retainedState.quickTemplateTargetSelectionActivityStarted;
-            retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
-            retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
+            initialTemplateRoute = retainedState.templateRoute;
             feedbackDiagnosticPageRequest = retainedState.feedbackDiagnosticPageRequest;
             pendingUpdatePrompt = retainedState.pendingUpdatePrompt;
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
@@ -441,19 +429,21 @@ public final class MainActivity
             initialRefreshingPages = decodeRefreshingPages(
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
             );
-            templateDetailSelection = restoreTemplateDetailSelection(savedInstanceState);
-            templateEditorDestination = ConfigEditorDestination.fromName(
-                    savedInstanceState.getString(STATE_TEMPLATE_EDITOR_DESTINATION)
-            );
-            quickTemplateTargetSelectionActivityStarted = savedInstanceState.getBoolean(
-                    STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
-                    false
-            );
-            retainedGlobalPrefillDraft = TemplateWorkspaceStateCodec.restoreGlobalPrefillDraft(
-                    savedInstanceState.getBundle(STATE_GLOBAL_PREFILL_DRAFT)
-            );
-            retainedQuickTemplateDraft = TemplateWorkspaceStateCodec.restoreQuickTemplateDraft(
-                    savedInstanceState.getBundle(STATE_QUICK_TEMPLATE_DRAFT)
+            initialTemplateRoute = new TemplateWorkspaceCoordinator.RouteState(
+                    restoreTemplateDetailSelection(savedInstanceState),
+                    ConfigEditorDestination.fromName(
+                            savedInstanceState.getString(STATE_TEMPLATE_EDITOR_DESTINATION)
+                    ),
+                    savedInstanceState.getBoolean(
+                            STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
+                            false
+                    ),
+                    TemplateWorkspaceStateCodec.restoreGlobalPrefillDraft(
+                            savedInstanceState.getBundle(STATE_GLOBAL_PREFILL_DRAFT)
+                    ),
+                    TemplateWorkspaceStateCodec.restoreQuickTemplateDraft(
+                            savedInstanceState.getBundle(STATE_QUICK_TEMPLATE_DRAFT)
+                    )
             );
         }
         mainViewModel = new MainViewModel(
@@ -466,6 +456,7 @@ public final class MainActivity
                         initialWorkspaceMode
                 )
         );
+        initializeTemplateWorkspaceCoordinator(initialTemplateRoute, initialTemplateQuery);
         composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
                 mainViewModel,
                 (item, onApproved) -> systemScopeCoordinator.requestScope(
@@ -713,10 +704,10 @@ public final class MainActivity
             toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
         }
         if (requestCode == REQUEST_QUICK_TEMPLATE_TARGETS) {
-            quickTemplateTargetSelectionActivityStarted = false;
+            templateRoute().markTargetSelectionActivityFinished();
             if (QuickTemplateTargetCarrierState.shouldClearPendingAfterResult(
                     isLandscapeDetailMode(),
-                    hasPendingQuickTemplateTargets(),
+                    templateRoute().hasPendingQuickTemplateTargets(),
                     quickTemplateTargetCloseReason(data)
             )) {
                 clearTemplateDetailSelection();
@@ -732,11 +723,6 @@ public final class MainActivity
                     feedbackDiagnosticSession.diagnosticPackage()
             );
         }
-    }
-
-    private boolean hasPendingQuickTemplateTargets() {
-        return templateDetailSelection != null
-                && templateDetailSelection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS;
     }
 
     private static QuickTemplateTargetCarrierState.CloseReason quickTemplateTargetCloseReason(
@@ -791,25 +777,26 @@ public final class MainActivity
                 STATE_REFRESHING_PAGES,
                 captureRefreshingPagePositions()
         );
-        saveTemplateDetailSelection(outState, templateDetailSelection);
+        TemplateWorkspaceCoordinator.RouteState templateRoute = templateRoute();
+        saveTemplateDetailSelection(outState, templateRoute.selection());
         outState.putString(
                 STATE_TEMPLATE_EDITOR_DESTINATION,
-                templateEditorDestination.name()
+                templateRoute.editorDestination().name()
         );
         outState.putBoolean(
                 STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
-                quickTemplateTargetSelectionActivityStarted
+                templateRoute.targetSelectionActivityStarted()
         );
-        if (retainedGlobalPrefillDraft != null) {
+        if (templateRoute.globalPrefillDraft() != null) {
             outState.putBundle(
                     STATE_GLOBAL_PREFILL_DRAFT,
-                    TemplateWorkspaceStateCodec.saveGlobalPrefillDraft(retainedGlobalPrefillDraft)
+                    TemplateWorkspaceStateCodec.saveGlobalPrefillDraft(templateRoute.globalPrefillDraft())
             );
         }
-        if (retainedQuickTemplateDraft != null) {
+        if (templateRoute.quickTemplateDraft() != null) {
             outState.putBundle(
                     STATE_QUICK_TEMPLATE_DRAFT,
-                    TemplateWorkspaceStateCodec.saveQuickTemplateDraft(retainedQuickTemplateDraft)
+                    TemplateWorkspaceStateCodec.saveQuickTemplateDraft(templateRoute.quickTemplateDraft())
             );
         }
     }
@@ -863,11 +850,7 @@ public final class MainActivity
                 mainViewModel != null
                         ? mainViewModel.getEditingDestination()
                         : ConfigEditorDestination.MAIN,
-                templateDetailSelection,
-                templateEditorDestination,
-                quickTemplateTargetSelectionActivityStarted,
-                retainedGlobalPrefillDraft,
-                retainedQuickTemplateDraft,
+                templateRoute(),
                 feedbackDiagnosticSession,
                 feedbackDiagnosticPageRequest,
                 feedbackDiagnosticPageController.presentation() != null
@@ -1186,9 +1169,7 @@ public final class MainActivity
                     @Override public void updateTemplateEditorDestination(
                             ConfigEditorDestination destination
                     ) {
-                        templateEditorDestination = destination != null
-                                ? destination
-                                : ConfigEditorDestination.MAIN;
+                        templateRoute().updateEditorDestination(destination);
                         bindTemplateWorkspace();
                     }
                     @Override public void closeTemplateEditor() {
@@ -1289,12 +1270,11 @@ public final class MainActivity
         setVisible(landDetailContent, appWorkspace
                 && landDetailContent != null
                 && landDetailContent.getChildCount() > 0);
+        TemplateDetailSelection templateSelection = templateRoute().selection();
         setVisible(templateDetailEmptyView, templateWorkspace
-                && (templateDetailSelection == null
-                || templateDetailSelection.kind == TemplateDetailKind.NONE));
+                && templateSelection.kind == TemplateDetailKind.NONE);
         setVisible(templateDetailContent, templateWorkspace
-                && templateDetailSelection != null
-                && templateDetailSelection.kind != TemplateDetailKind.NONE);
+                && templateSelection.kind != TemplateDetailKind.NONE);
     }
 
     private boolean isLandscapeDetailMode() {
@@ -1303,16 +1283,7 @@ public final class MainActivity
 
     private void bindTemplateWorkspace() {
         if (composeShellHost != null) {
-            ensureTemplateWorkspaceCoordinator().refresh(
-                    requireUiState().currentQuery(),
-                    composeTemplateDetailKind(),
-                    templateDetailSelection != null
-                            ? templateDetailSelection.templateId
-                            : null,
-                    templateEditorDestination,
-                    retainedGlobalPrefillDraft,
-                    retainedQuickTemplateDraft
-            );
+            ensureTemplateWorkspaceCoordinator().refresh(requireUiState().currentQuery());
             composeShellHost.refreshTemplates();
             return;
         }
@@ -1343,10 +1314,10 @@ public final class MainActivity
     }
 
     private void restoreTemplateDetailPane() {
+        TemplateDetailSelection selection = templateRoute().selection();
         if (!isLandscapeDetailMode()
                 || templateDetailContent == null
-                || templateDetailSelection == null
-                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
+                || selection.kind == TemplateDetailKind.NONE) {
             applyLandscapeDetailVisibility(false, true);
             return;
         }
@@ -1355,12 +1326,11 @@ public final class MainActivity
             applyLandscapeDetailVisibility(false, true);
             return;
         }
-        showTemplateDetailPane(templateDetailSelection);
+        showTemplateDetailPane(selection);
     }
 
     private void showGlobalPrefillEditor() {
-        templateDetailSelection = TemplateDetailSelection.globalPrefill();
-        retainedQuickTemplateDraft = null;
+        templateRoute().openGlobalPrefill();
         disposeActiveQuickTemplateTargetsBinder();
         bindTemplateWorkspace();
     }
@@ -1407,32 +1377,16 @@ public final class MainActivity
         }
     }
 
-    private TemplateWorkspacePresentation.DetailKind composeTemplateDetailKind() {
-        if (templateDetailSelection == null) {
-            return TemplateWorkspacePresentation.DetailKind.NONE;
-        }
-        return switch (templateDetailSelection.kind) {
-            case GLOBAL_PREFILL -> TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL;
-            case QUICK_TEMPLATE -> TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE;
-            case QUICK_TEMPLATE_TARGETS ->
-                    TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS;
-            case NONE -> TemplateWorkspacePresentation.DetailKind.NONE;
-        };
-    }
-
     /**
      * Compose owns the visible portrait sheet, while this Activity owns the cross-configuration
      * detail selection. Keep the two lifetimes linked at the editor boundary instead of making
      * the Compose workspace reach into Activity fields directly.
      */
     private void onComposeTemplateEditorOpened(boolean quickTemplate, String templateId) {
-        templateEditorDestination = ConfigEditorDestination.MAIN;
         if (quickTemplate) {
-            templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
-            retainedGlobalPrefillDraft = null;
+            templateRoute().openQuickTemplate(templateId);
         } else {
-            templateDetailSelection = TemplateDetailSelection.globalPrefill();
-            retainedQuickTemplateDraft = null;
+            templateRoute().openGlobalPrefill();
         }
         disposeActiveQuickTemplateTargetsBinder();
     }
@@ -1441,14 +1395,7 @@ public final class MainActivity
         if (form == null) {
             return;
         }
-        boolean dirty = form.isDirty();
-        if (form.quickTemplate) {
-            retainedQuickTemplateDraft = dirty ? form.quickDraft() : null;
-            retainedGlobalPrefillDraft = null;
-        } else {
-            retainedGlobalPrefillDraft = dirty ? form.globalDraft() : null;
-            retainedQuickTemplateDraft = null;
-        }
+        boolean dirty = templateRoute().updateDraft(form);
         if (!dirty) {
             // A successful save adopts the store as the only new-editor baseline. Clear the
             // presentation seed immediately so a later route/configuration refresh cannot
@@ -1465,29 +1412,25 @@ public final class MainActivity
     }
 
     private void showQuickTemplateEditor(String templateId) {
-        templateDetailSelection = TemplateDetailSelection.quickTemplate(templateId);
-        retainedGlobalPrefillDraft = null;
+        templateRoute().openQuickTemplate(templateId);
         disposeActiveQuickTemplateTargetsBinder();
         bindTemplateWorkspace();
     }
 
     private void showQuickTemplateTargets(String templateId) {
-        templateDetailSelection = TemplateDetailSelection.quickTemplateTargets(templateId);
-        retainedGlobalPrefillDraft = null;
-        retainedQuickTemplateDraft = null;
+        templateRoute().openQuickTemplateTargets(templateId);
         if (!isLandscapeDetailMode()) {
             startQuickTemplateTargetSelectionActivity(templateId);
             return;
         }
-        showTemplateDetailPane(templateDetailSelection);
+        showTemplateDetailPane(templateRoute().selection());
     }
 
     private void startQuickTemplateTargetSelectionActivity(String templateId) {
         if (!QuickTemplateTargetCarrierState.shouldStartPortraitActivity(
                 isLandscapeDetailMode(),
-                templateDetailSelection != null
-                        && templateDetailSelection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS,
-                quickTemplateTargetSelectionActivityStarted
+                templateRoute().hasPendingQuickTemplateTargets(),
+                templateRoute().targetSelectionActivityStarted()
         )) {
             return;
         }
@@ -1499,17 +1442,16 @@ public final class MainActivity
                 QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID,
                 templateId
         );
-        quickTemplateTargetSelectionActivityStarted = true;
+        templateRoute().markTargetSelectionActivityStarted();
         startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);
     }
 
     private void restoreTemplateEditorForCurrentConfiguration() {
         if (requireUiState().workspaceMode != MainUiState.WorkspaceMode.TEMPLATE
-                || templateDetailSelection == null
-                || templateDetailSelection.kind == TemplateDetailKind.NONE) {
+                || templateRoute().selection().kind == TemplateDetailKind.NONE) {
             return;
         }
-        TemplateDetailSelection selection = templateDetailSelection;
+        TemplateDetailSelection selection = templateRoute().selection();
         if (composeShellHost != null) {
             // Compose owns both the portrait sheet and the expanded detail surface. Re-publish
             // the route after a configuration change without reviving the retired XML editor.
@@ -1517,18 +1459,14 @@ public final class MainActivity
             return;
         }
         if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            quickTemplateTargetSelectionActivityStarted = false;
+            templateRoute().resetTargetSelectionActivityForConfiguration();
             restoreTemplateDetailPane();
             startQuickTemplateTargetSelectionActivity(selection.templateId);
         }
     }
 
     private void clearTemplateDetailSelection() {
-        templateDetailSelection = TemplateDetailSelection.none();
-        templateEditorDestination = ConfigEditorDestination.MAIN;
-        retainedGlobalPrefillDraft = null;
-        retainedQuickTemplateDraft = null;
-        quickTemplateTargetSelectionActivityStarted = false;
+        templateRoute().clear();
         disposeActiveQuickTemplateTargetsBinder();
         if (templateDetailContent != null) {
             if (templateDetailPaneController != null) {
@@ -1543,9 +1481,8 @@ public final class MainActivity
         if (templateDetailPaneController == null || selection == null) {
             return;
         }
-        templateDetailSelection = selection;
         if (!templateDetailPaneController.show(selection)) {
-            templateDetailSelection = TemplateDetailSelection.none();
+            templateRoute().clear();
             bindTemplateWorkspace();
             applyLandscapeDetailVisibility(false, true);
             return;
@@ -1791,7 +1728,10 @@ public final class MainActivity
         executeHyperOsNativeProxyMount(item, false, success -> { });
     }
 
-    private TemplateWorkspaceCoordinator ensureTemplateWorkspaceCoordinator() {
+    private void initializeTemplateWorkspaceCoordinator(
+            TemplateWorkspaceCoordinator.RouteState initialRoute,
+            String initialQuery
+    ) {
         if (templateWorkspaceCoordinator == null) {
             templateWorkspaceCoordinator = new TemplateWorkspaceCoordinator(
                     this,
@@ -1813,10 +1753,7 @@ public final class MainActivity
                         }
 
                         @Override public void openEmbeddedQuickTemplateTargets(String templateId) {
-                            templateDetailSelection =
-                                    TemplateDetailSelection.quickTemplateTargets(templateId);
-                            retainedGlobalPrefillDraft = null;
-                            retainedQuickTemplateDraft = null;
+                            templateRoute().openEmbeddedQuickTemplateTargets(templateId);
                             disposeActiveQuickTemplateTargetsBinder();
                             bindTemplateWorkspace();
                         }
@@ -1833,10 +1770,22 @@ public final class MainActivity
                             return createAppConfigDialogHost();
                         }
                     },
-                    requireUiState().currentQuery()
+                    initialQuery,
+                    initialRoute
             );
         }
+    }
+
+    private TemplateWorkspaceCoordinator ensureTemplateWorkspaceCoordinator() {
+        initializeTemplateWorkspaceCoordinator(
+                new TemplateWorkspaceCoordinator.RouteState(),
+                requireUiState().currentQuery()
+        );
         return templateWorkspaceCoordinator;
+    }
+
+    private TemplateWorkspaceCoordinator.RouteState templateRoute() {
+        return ensureTemplateWorkspaceCoordinator().route();
     }
 
     private static void setVisible(View view, boolean visible) {
@@ -3012,7 +2961,7 @@ public final class MainActivity
         return new TemplateWorkspaceBinder.GlobalPrefillActions() {
             @Override
             public void edit() {
-                showGlobalPrefillEditor();
+                ensureTemplateWorkspaceCoordinator().state().getActions().editGlobalPrefill();
             }
         };
     }
@@ -3021,41 +2970,27 @@ public final class MainActivity
         return new TemplateWorkspaceBinder.QuickTemplateActions() {
             @Override
             public void apply(String templateId) {
-                applyQuickTemplate(templateId);
+                ensureTemplateWorkspaceCoordinator().state().getActions().applyTemplate(templateId);
             }
 
             @Override
             public void edit(String templateId) {
-                showQuickTemplateEditor(templateId);
+                ensureTemplateWorkspaceCoordinator().state().getActions().editTemplate(templateId);
             }
 
             @Override
             public void select(String templateId) {
-                showQuickTemplateTargets(templateId);
+                ensureTemplateWorkspaceCoordinator().state().getActions().selectTargets(templateId);
             }
 
             @Override
             public void create() {
-                showQuickTemplateEditor(null);
+                ensureTemplateWorkspaceCoordinator().state().getActions().createTemplate();
             }
 
             @Override
             public void sort(List<QuickTemplateStore.QuickTemplate> templates) {
-                QuickTemplateSortDialog.show(
-                        MainActivity.this,
-                        templates,
-                        new QuickTemplateSortDialog.Host() {
-                    @Override
-                    public boolean onOrderChanged(List<String> orderedIds) {
-                        return new QuickTemplateStore(MainActivity.this).reorder(orderedIds);
-                    }
-
-                    @Override
-                    public void showToast(int messageResId) {
-                        MainActivity.this.showToast(messageResId);
-                    }
-                }
-                );
+                ensureTemplateWorkspaceCoordinator().state().getActions().sortTemplates();
             }
         };
     }
@@ -4306,11 +4241,7 @@ public final class MainActivity
                                  String editingPackageName, EditorDraft editingDraft,
                                  EditorDraft savedEditingDraft,
                                  ConfigEditorDestination editingDestination,
-                                 TemplateDetailSelection templateDetailSelection,
-                                 ConfigEditorDestination templateEditorDestination,
-                                 boolean quickTemplateTargetSelectionActivityStarted,
-                                 TemplateEditorDraft globalPrefillDraft,
-                                 TemplateEditorDraft quickTemplateDraft,
+                                 TemplateWorkspaceCoordinator.RouteState templateRoute,
                                  Session feedbackDiagnosticSession,
                                  FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                                  com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
@@ -4330,11 +4261,7 @@ public final class MainActivity
                     EditorDraft editingDraft,
                     EditorDraft savedEditingDraft,
                     ConfigEditorDestination editingDestination,
-                    TemplateDetailSelection templateDetailSelection,
-                    ConfigEditorDestination templateEditorDestination,
-                    boolean quickTemplateTargetSelectionActivityStarted,
-                    TemplateEditorDraft globalPrefillDraft,
-                    TemplateEditorDraft quickTemplateDraft,
+                    TemplateWorkspaceCoordinator.RouteState templateRoute,
                     Session feedbackDiagnosticSession,
                     FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                     com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
@@ -4364,16 +4291,9 @@ public final class MainActivity
                 this.editingDestination = editingDestination != null
                         ? editingDestination
                         : ConfigEditorDestination.MAIN;
-                this.templateDetailSelection = templateDetailSelection != null
-                        ? templateDetailSelection
-                        : TemplateDetailSelection.none();
-                this.templateEditorDestination = templateEditorDestination != null
-                        ? templateEditorDestination
-                        : ConfigEditorDestination.MAIN;
-                this.quickTemplateTargetSelectionActivityStarted =
-                        quickTemplateTargetSelectionActivityStarted;
-                this.globalPrefillDraft = globalPrefillDraft;
-                this.quickTemplateDraft = quickTemplateDraft;
+                this.templateRoute = templateRoute != null
+                        ? templateRoute
+                        : new TemplateWorkspaceCoordinator.RouteState();
                 this.feedbackDiagnosticSession = feedbackDiagnosticSession;
                 this.feedbackDiagnosticPageRequest = feedbackDiagnosticPageRequest;
                 this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;

@@ -71,7 +71,8 @@ class TemplateWorkspaceLayoutSmokeTest {
         read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt").assertContainsAll("DialogWindowSizer.applyLargeWidth(dialog, activity)")
         read("src/main/java/com/dpis/module/MainActivity.java").apply {
             assertContainsAll("private TemplateWorkspaceCoordinator templateWorkspaceCoordinator;", "ensureTemplateWorkspaceCoordinator()")
-            assertNotContainsAll("ensureComposeTemplateWorkspacePresentation()", "new GlobalPrefillSaveHandler().save(", "new QuickTemplateSaveHandler().save(")
+            assertContainsAll("TemplateWorkspaceCoordinator.RouteState", "getActions().sortTemplates()")
+            assertNotContainsAll("ensureComposeTemplateWorkspacePresentation()", "new GlobalPrefillSaveHandler().save(", "new QuickTemplateSaveHandler().save(", "QuickTemplateSortDialog.show(")
         }
     }
 

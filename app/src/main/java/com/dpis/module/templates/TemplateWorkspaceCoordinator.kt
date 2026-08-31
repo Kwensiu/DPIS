@@ -5,6 +5,8 @@ import android.content.Context
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
+import com.dpis.module.TemplateDetailKind
+import com.dpis.module.TemplateDetailSelection
 import com.dpis.module.appconfig.AppConfigDialogBinder
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
@@ -14,16 +16,107 @@ import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.button.MaterialButton
 
 /**
- * Owns template-workspace presentation and mutations.
+ * Owns template-workspace presentation, mutations, and the retained editor route.
  *
- * Activity routing remains in [Host], while template storage and every successful mutation share
- * one refresh path here. This prevents the main shell from becoming another template workflow.
+ * The Activity still renders platform-specific surfaces through [Host], while template storage,
+ * session transitions, and every successful mutation share one refresh path here. This prevents
+ * the main shell from becoming another template workflow.
  */
-class TemplateWorkspaceCoordinator(
+class TemplateWorkspaceCoordinator @JvmOverloads constructor(
     private val activity: Activity,
     private val host: Host,
     initialQuery: String,
+    initialRoute: RouteState = RouteState(),
 ) {
+    /**
+     * Template-only session state that must survive configuration changes without becoming
+     * Activity state. The Activity remains responsible for rendering the selected platform
+     * surface, while this value owns which surface and editor session are active.
+     */
+    class RouteState(
+        selection: TemplateDetailSelection = TemplateDetailSelection.none(),
+        destination: ConfigEditorDestination = ConfigEditorDestination.MAIN,
+        targetSelectionActivityStarted: Boolean = false,
+        globalDraft: TemplateEditorDraft? = null,
+        quickDraft: TemplateEditorDraft? = null,
+    ) {
+        private var detailSelection = selection
+        private var editorDestination = destination
+        private var quickTemplateTargetSelectionActivityStarted = targetSelectionActivityStarted
+        private var globalPrefillDraft = globalDraft
+        private var quickTemplateDraft = quickDraft
+
+        fun selection() = detailSelection
+        fun editorDestination() = editorDestination
+        fun globalPrefillDraft() = globalPrefillDraft
+        fun quickTemplateDraft() = quickTemplateDraft
+        fun targetSelectionActivityStarted() = quickTemplateTargetSelectionActivityStarted
+        fun hasPendingQuickTemplateTargets() =
+            detailSelection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS
+
+        fun openGlobalPrefill() {
+            detailSelection = TemplateDetailSelection.globalPrefill()
+            editorDestination = ConfigEditorDestination.MAIN
+            quickTemplateDraft = null
+        }
+
+        fun openQuickTemplate(templateId: String?) {
+            detailSelection = TemplateDetailSelection.quickTemplate(templateId)
+            editorDestination = ConfigEditorDestination.MAIN
+            globalPrefillDraft = null
+        }
+
+        fun openQuickTemplateTargets(templateId: String?) {
+            detailSelection = TemplateDetailSelection.quickTemplateTargets(templateId)
+            globalPrefillDraft = null
+            quickTemplateDraft = null
+        }
+
+        fun openEmbeddedQuickTemplateTargets(templateId: String?) {
+            openQuickTemplateTargets(templateId)
+            quickTemplateTargetSelectionActivityStarted = false
+        }
+
+        fun updateEditorDestination(destination: ConfigEditorDestination?) {
+            editorDestination = destination ?: ConfigEditorDestination.MAIN
+        }
+
+        fun updateDraft(form: TemplateEditorForm?): Boolean {
+            if (form == null) return false
+            val dirty = form.isDirty
+            if (form.quickTemplate) {
+                quickTemplateDraft = if (dirty) form.quickDraft() else null
+                globalPrefillDraft = null
+            } else {
+                globalPrefillDraft = if (dirty) form.globalDraft() else null
+                quickTemplateDraft = null
+            }
+            return dirty
+        }
+
+        fun markTargetSelectionActivityStarted() {
+            quickTemplateTargetSelectionActivityStarted = true
+        }
+
+        fun markTargetSelectionActivityFinished() {
+            quickTemplateTargetSelectionActivityStarted = false
+        }
+
+        fun resetTargetSelectionActivityForConfiguration() {
+            if (hasPendingQuickTemplateTargets()) {
+                quickTemplateTargetSelectionActivityStarted = false
+            }
+        }
+
+        fun clear() {
+            detailSelection = TemplateDetailSelection.none()
+            editorDestination = ConfigEditorDestination.MAIN
+            globalPrefillDraft = null
+            quickTemplateDraft = null
+            quickTemplateTargetSelectionActivityStarted = false
+        }
+    }
+
     interface Host {
         fun editGlobalPrefill()
         fun editQuickTemplate(templateId: String?)
@@ -189,26 +282,30 @@ class TemplateWorkspaceCoordinator(
         }
     }
 
+    private val routeState = initialRoute
     private val presentation = TemplateWorkspacePresentationController(activity, actions, initialQuery)
 
     fun state() = presentation.state()
 
-    fun refresh(
-        query: String,
-        detailKind: TemplateWorkspacePresentation.DetailKind,
-        detailTemplateId: String?,
-        editorDestination: ConfigEditorDestination,
-        globalPrefillDraft: TemplateEditorDraft?,
-        quickTemplateDraft: TemplateEditorDraft?,
-    ) {
+    fun route() = routeState
+
+    fun refresh(query: String) {
         presentation.refresh(
             query,
-            detailKind,
-            detailTemplateId,
-            editorDestination,
-            globalPrefillDraft,
-            quickTemplateDraft,
+            routeState.detailKind(),
+            routeState.selection().templateId,
+            routeState.editorDestination(),
+            routeState.globalPrefillDraft(),
+            routeState.quickTemplateDraft(),
         )
+    }
+
+    private fun RouteState.detailKind() = when (selection().kind) {
+        TemplateDetailKind.GLOBAL_PREFILL -> TemplateWorkspacePresentation.DetailKind.GLOBAL_PREFILL
+        TemplateDetailKind.QUICK_TEMPLATE -> TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE
+        TemplateDetailKind.QUICK_TEMPLATE_TARGETS ->
+            TemplateWorkspacePresentation.DetailKind.QUICK_TEMPLATE_TARGETS
+        TemplateDetailKind.NONE -> TemplateWorkspacePresentation.DetailKind.NONE
     }
 
     private fun templatePackageName(form: TemplateEditorForm) =
