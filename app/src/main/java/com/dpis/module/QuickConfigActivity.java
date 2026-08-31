@@ -55,7 +55,6 @@ import com.dpis.module.quirks.WechatDpiSheetBinder;
 
 import com.dpis.module.process.ProcessActionHandler;
 
-import com.dpis.module.templates.GlobalPrefillStore;
 
 import com.dpis.module.appconfig.WechatDpiConfig;
 
@@ -178,11 +177,10 @@ public final class QuickConfigActivity extends LocalizedActivity {
             finish();
             return;
         }
-        editingItem = AppConfigPrefillPreview.applyIfEligible(
+        editingItem = AppConfigPrefillPreview.resolveForEditor(
+                this,
                 item,
-                getHookConfigStore(),
-                new GlobalPrefillStore(
-                        getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)).read());
+                getHookConfigStore());
         editingDraft = EditorDraft.fromItem(editingItem);
         savedEditingDraft = editingDraft;
         refreshComposeEditor();
@@ -232,11 +230,11 @@ public final class QuickConfigActivity extends LocalizedActivity {
                         .typefaceSelectorText(draft.selectedTypefaceId),
                 FontHookDomainPresentation.forOverride(
                         resolveFontHookDomainsForDraft(item, dialogState),
-                        recommendedTemplateFontHookDomains()).buttonText(this),
+                        FontHookDomainRegistry.automaticCustomizableDomains()).buttonText(this),
                 savedEditingDraft,
                 editingSaveFeedback,
                 isSystemHookEnabled(),
-                recommendedTemplateFontHookDomains(),
+                FontHookDomainRegistry.automaticCustomizableDomains(),
                 editingDestination,
                 createComposeActions(item, draft)
         ));
@@ -514,7 +512,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
             ) {
                 return FontHookDomainPresentation.forOverride(
                         resolveFontHookDomainsForDraft(item, state),
-                        recommendedTemplateFontHookDomains())
+                        FontHookDomainRegistry.automaticCustomizableDomains())
                         .buttonText(QuickConfigActivity.this);
             }
 
@@ -1025,7 +1023,7 @@ public final class QuickConfigActivity extends LocalizedActivity {
             return;
         }
         DpisConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = recommendedTemplateFontHookDomains();
+        Set<String> automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains();
         HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
         FontHookDomainDialog.show(
                 this,
@@ -1111,12 +1109,12 @@ public final class QuickConfigActivity extends LocalizedActivity {
                         || state.draftFontHookDomainsRaw != null)) {
             return normalizedFontHookDomainsOverride(
                     HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                    recommendedTemplateFontHookDomains());
+                    FontHookDomainRegistry.automaticCustomizableDomains());
         }
         return normalizedFontHookDomainsOverride(
                 new HookDomainOverrideStore(getHookConfigStore()).read(
                         item != null ? item.packageName : null),
-                recommendedTemplateFontHookDomains());
+                FontHookDomainRegistry.automaticCustomizableDomains());
     }
 
     private HookDomainOverride normalizedFontHookDomainsOverride(
@@ -1126,11 +1124,6 @@ public final class QuickConfigActivity extends LocalizedActivity {
         return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
                 override,
                 automaticKnownDomains);
-    }
-
-    private Set<String> recommendedTemplateFontHookDomains() {
-        // Custom hook-chain edits are global-route semantics, not target guesses.
-        return FontHookDomainRegistry.recommendedTemplateKnownDomains();
     }
 
     private void executeHyperOsNativeProxyMount(

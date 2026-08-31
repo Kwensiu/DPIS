@@ -60,7 +60,7 @@ import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.compose.PageScrollPositionStore
-import com.dpis.module.ui.compose.TemplateWorkspaceContent
+import com.dpis.module.templates.presentation.TemplateWorkspaceContent
 import com.dpis.module.ui.compose.WearAppWorkspaceContent
 import com.dpis.module.ui.compose.WearHomeWorkspaceContent
 import com.dpis.module.ui.compose.WearSettingsWorkspaceContent
@@ -68,6 +68,7 @@ import com.dpis.module.ui.compose.WearTemplateWorkspaceContent
 import com.dpis.module.ui.compose.WearToolsWorkspaceContent
 import com.dpis.module.ui.compose.WearAppConfigEditorContent
 import com.dpis.module.templates.TemplateWorkspacePresentation
+import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
@@ -94,12 +95,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun openSettingsScaleDetails()
         fun openSettingsFontDebug(); fun openSettingsFontLibrary(); fun openSettingsExperimental(); fun openThemeSettings()
         fun setSettingsLanguage(tag: String); fun openSettingsLanguage(); fun openSettingsBackup(); fun clearSettingsCache(); fun openSettingsAbout(); fun openSettingsDonate()
-        fun templateState(): TemplateWorkspacePresentation.State
-        fun changeTemplateQuery(query: String)
-        fun openTemplateEditor(quickTemplate: Boolean, templateId: String?)
-        fun updateTemplateEditor(form: com.dpis.module.templates.TemplateEditorForm)
-        fun updateTemplateEditorDestination(destination: ConfigEditorDestination)
-        fun closeTemplateEditor()
+        fun templateWorkspace(): TemplateWorkspacePresentationSource
     }
     private var appRevision by mutableIntStateOf(0)
     private var homeRevision by mutableIntStateOf(0)
@@ -202,15 +198,15 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 templateRevision
                 ComposeWorkspaceSurface {
                     TemplateWorkspaceContent(
-                        state = content.templateState(),
+                        state = content.templateWorkspace().state(),
                         padding = padding,
-                        onQueryChanged = content::changeTemplateQuery,
+                        onQueryChanged = content.templateWorkspace()::changeQuery,
                         onEditorOpened = { quickTemplate, templateId ->
-                            content.openTemplateEditor(quickTemplate, templateId)
+                            content.templateWorkspace().openEditor(quickTemplate, templateId)
                         },
-                        onEditorChanged = content::updateTemplateEditor,
-                        onEditorDestinationChanged = content::updateTemplateEditorDestination,
-                        onEditorClosed = content::closeTemplateEditor,
+                        onEditorChanged = content.templateWorkspace()::updateEditor,
+                        onEditorDestinationChanged = content.templateWorkspace()::updateEditorDestination,
+                        onEditorClosed = content.templateWorkspace()::closeEditor,
                         scrollStore = pageScrollPositions,
                     )
                 }
@@ -252,10 +248,10 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         MainUiState.WorkspaceMode.TEMPLATE -> {
             templateRevision
             WearTemplateWorkspaceContent(
-                state = content.templateState(),
-                onEditorChanged = content::updateTemplateEditor,
-                onDestinationChanged = content::updateTemplateEditorDestination,
-                onEditorClosed = content::closeTemplateEditor
+                state = content.templateWorkspace().state(),
+                onEditorChanged = content.templateWorkspace()::updateEditor,
+                onDestinationChanged = content.templateWorkspace()::updateEditorDestination,
+                onEditorClosed = content.templateWorkspace()::closeEditor
             )
             true
         }
@@ -272,7 +268,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         MainUiState.WorkspaceMode.APP -> { appRevision; content.appEditorState() != null }
         MainUiState.WorkspaceMode.TEMPLATE -> {
             templateRevision
-            content.templateState().detailKind != TemplateWorkspacePresentation.DetailKind.NONE
+            content.templateWorkspace().state().detailKind != TemplateWorkspacePresentation.DetailKind.NONE
         }
         else -> false
     }

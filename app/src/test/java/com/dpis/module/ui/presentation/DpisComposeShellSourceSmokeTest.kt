@@ -120,13 +120,13 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(presentation.contains("GlobalPrefillStore(preferences).read()"))
         assertTrue(presentation.contains("fun applyTemplate(id: String)"))
         assertTrue(presentation.contains("fun selectTargets(id: String)"))
-        assertTrue(mainActivity.contains("ensureComposeTemplateWorkspacePresentation().state()"))
-        assertTrue(coordinator.contains("state = content.templateState()"))
-        assertTrue(coordinator.contains("onQueryChanged = content::changeTemplateQuery"))
+        assertTrue(mainActivity.contains("TemplateWorkspacePresentationSource templateWorkspace()"))
+        assertTrue(coordinator.contains("state = content.templateWorkspace().state()"))
+        assertTrue(coordinator.contains("onQueryChanged = content.templateWorkspace()::changeQuery"))
         assertTrue(coordinator.contains("onEditorOpened ="))
-        assertTrue(coordinator.contains("onEditorChanged = content::updateTemplateEditor"))
-        assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"))
-        assertTrue(coordinator.contains("fun changeTemplateQuery(query: String)"))
+        assertTrue(coordinator.contains("onEditorChanged = content.templateWorkspace()::updateEditor"))
+        assertTrue(coordinator.contains("onEditorClosed = content.templateWorkspace()::closeEditor"))
+        assertTrue(coordinator.contains("fun templateWorkspace(): TemplateWorkspacePresentationSource"))
         assertFalse(coordinator.contains("usesComposeTemplateWorkspace"))
         assertTrue(appWorkspace.contains("fun AppWorkspaceContent("))
         assertTrue(coordinator.contains("appRevision"))
@@ -257,16 +257,16 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(workspace.contains("draftRevision = draftRevision"))
         assertTrue(editor.contains("draftRevision: Int"))
         assertTrue(editor.contains("DpisEditorBottomSheet("))
-        assertTrue(editor.contains("DpisSheetVisualChrome(showUnsaved = form.isDirty())"))
-        assertTrue(editor.contains("contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }"))
-        assertTrue(editor.contains(
-                "padding(bottom = edgeToEdgeContentBottomPadding(extraBottomPadding))"))
+        assertTrue(editor.contains("DpisSheetVisualChrome("))
+        assertTrue(editor.contains("showUnsaved = form.isDirty"))
+        assertTrue(editor.contains("contentWindowInsets = { WindowInsets(0, 0, 0, 0) }"))
+        assertTrue(editor.contains("edgeToEdgeContentBottomPadding("))
     }
 
     @Test
     fun templateWorkspaceKeepsTheLegacySearchAndHeaderActionSemantics() {
         val template = read(
-                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceList.kt")
         val tokens = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateUiTokens.kt")
         val search = read(
@@ -279,7 +279,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(search.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"))
         assertTrue(search.contains("R.drawable.ic_close_24"))
         assertTrue(template.contains("role = Role.Button"))
-        assertTrue(template.contains("TemplateUiTokens.DisabledActionAlpha"))
+        assertTrue(template.contains("TemplateUiTokens.DISABLED_ACTION_ALPHA"))
         assertTrue(template.contains("TemplateUiTokens.EmptySummaryTopGap"))
         assertTrue(template.contains("TemplateUiTokens.CardActionVisualSize"))
         assertTrue(template.contains("TemplateApplyAction("))
@@ -294,7 +294,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(tokens.contains("val HeaderActionVisualSize = 36.dp"))
         assertTrue(tokens.contains("val CardActionVisualSize = 28.dp"))
         assertTrue(tokens.contains("val ApplyActionVisualSize = CardActionVisualSize"))
-        assertTrue(tokens.contains("const val DisabledActionAlpha = 0.45f"))
+        assertTrue(tokens.contains("const val DISABLED_ACTION_ALPHA = 0.45f"))
     }
 
     @Test
@@ -314,7 +314,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"))
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"))
         assertTrue(editor.contains("val hookDomainsButtonText = FontHookDomainPresentation"))
-        assertTrue(editor.contains("forRecommendedTemplateRaw(form.fontHookDomainsRaw)"))
+        assertTrue(editor.contains("forAutomaticDomainsRaw(form.fontHookDomainsRaw)"))
         assertTrue(editor.contains(".buttonText(context)"))
         assertFalse(editor.contains("dialog_font_hook_domains_title_with_count, 1, 1"))
     }
@@ -496,8 +496,9 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(templates.contains("val editorDestination = state.editorDestination"))
         assertTrue(templatePresentation.contains(
                 "val editorDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("retainedState.templateEditorDestination"))
-        assertTrue(activity.contains("STATE_TEMPLATE_EDITOR_DESTINATION"))
+        assertTrue(activity.contains("retainedState.workspaceSessionState"))
+        assertTrue(templatePresentation.contains("val editorDestination: ConfigEditorDestination"))
+        assertTrue(activity.contains("ensureWorkspaceSession().saveState(outState)"))
         assertTrue(templates.contains("HookChainEditorPage("))
         assertTrue(templates.contains("AppTypefacePickerPage("))
         assertTrue(templates.contains("destination = editorDestination"))
@@ -534,7 +535,7 @@ class DpisComposeShellSourceSmokeTest {
         val targets = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt")
         val templates = read(
-                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceList.kt")
 
         assertTrue(controls.contains("fun Modifier.clearTextInputFocusOnPointerDown("))
         assertTrue(controls.contains("focusManager.clearFocus(force = true)"))

@@ -30,9 +30,9 @@ public class AppConfigPrefillPreviewTest {
     @Test
     public void prefillEligibilityReadsPackageConfigThroughRepository() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/appconfig/AppConfigPrefillPreview.java");
+                "src/main/java/com/dpis/module/appconfig/AppConfigPrefillPreview.kt");
 
-        assertTrue(source.contains("new PackageConfigRepository(store)"));
+        assertTrue(source.contains("PackageConfigRepository(store)"));
         assertTrue(source.contains("packageConfigRepository.hasRealPackageConfig("));
     }
 

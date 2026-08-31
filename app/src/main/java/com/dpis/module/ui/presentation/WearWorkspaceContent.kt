@@ -78,6 +78,7 @@ import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.hooks.HookDomainOverrideStore
+import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
 
 /** Wear-native presentation for the five main workspaces. Domain state remains Java-owned. */
 @Composable
@@ -513,7 +514,7 @@ private fun WearTemplateEditorContent(
             destination = state.editorDestination,
             rawDomains = editorDraft.form.fontHookDomainsRaw,
             resetDomains = editorDraft.form.fontHookDomainsRaw == null,
-            automaticDomains = FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+            automaticDomains = FontHookDomainRegistry.automaticCustomizableDomains(),
             editable = editorDraft.form.fontMode == FontApplyMode.FIELD_REWRITE,
             viewportApplyMode = editorDraft.form.viewportApplyMode,
             onChanged = { raw, reset, mode, _ ->

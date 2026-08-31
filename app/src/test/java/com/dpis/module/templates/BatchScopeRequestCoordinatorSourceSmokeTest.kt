@@ -8,7 +8,7 @@ class BatchScopeRequestCoordinatorSourceSmokeTest {
     @Test
     fun batchScopeRequestUsesOneListRequestAndManualFallbacks() {
         val coordinator = read("src/main/java/com/dpis/module/templates/BatchScopeRequestCoordinator.kt")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
 
         assertTrue(coordinator.contains("BuildConfig.FLAVOR == \"modern\""))
         assertTrue(coordinator.contains("requester.getScope()"))
@@ -18,9 +18,8 @@ class BatchScopeRequestCoordinatorSourceSmokeTest {
         assertTrue(coordinator.contains("onScopeRequestApproved"))
         assertTrue(coordinator.contains("requestHost.requestAppsLoad()"))
         assertTrue(coordinator.contains("ScopeRequestGate.shared().tryStart"))
-        assertTrue(mainActivity.contains("import com.dpis.module.templates.BatchScopeRequestCoordinator;"))
-        assertTrue(mainActivity.contains("new BatchScopeRequestCoordinator("))
-        assertTrue(mainActivity.contains("createBatchScopeRequestHost()"))
+        assertTrue(workspace.contains("BatchScopeRequestCoordinator(object : BatchScopeRequestCoordinator.Host"))
+        assertTrue(workspace.contains("host.requestAppsLoad()"))
     }
 
     private fun read(relativePath: String) = SourceSmokeTestPaths.read(relativePath)

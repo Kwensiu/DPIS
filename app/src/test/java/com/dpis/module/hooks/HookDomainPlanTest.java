@@ -54,15 +54,15 @@ public class HookDomainPlanTest {
     public void registryCustomizableDomainsStayCompatOnly() {
         assertEquals(FontHookDomainRegistry.ID_RESOURCES_FONT,
                 FontHookDomainRegistry.orderedCustomizableDisplayIdsList().get(0));
-        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+        assertFalse(FontHookDomainRegistry.automaticCustomizableDomains().contains(
                 FontHookDomainRegistry.ID_RESOURCES_FONT));
         assertFalse(FontHookDomainRegistry.orderedCustomizableDisplayIdsList().contains(
                 FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
         assertFalse(FontHookDomainRegistry.orderedCustomizableDisplayIdsList().contains(
                 FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
-        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+        assertFalse(FontHookDomainRegistry.automaticCustomizableDomains().contains(
                 FontHookDomainRegistry.ID_SYSTEM_SERVER_FONT));
-        assertFalse(FontHookDomainRegistry.recommendedTemplateKnownDomains().contains(
+        assertFalse(FontHookDomainRegistry.automaticCustomizableDomains().contains(
                 FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT));
     }
 

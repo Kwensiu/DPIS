@@ -70,11 +70,11 @@ public class QuickTemplateUiPolishSmokeTest {
 
     @Test
     public void quickTemplateApplyCopyAvoidsFailureZeroMessage() throws IOException {
-        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
 
-        assertTrue(mainActivity.contains("if (result.failureCount() > 0)"));
-        assertTrue(mainActivity.contains("quick_template_apply_result_partial"));
-        assertTrue(mainActivity.contains("quick_template_apply_result_success"));
+        assertTrue(workspace.contains("if (result.failureCount() > 0)"));
+        assertTrue(workspace.contains("quick_template_apply_result_partial"));
+        assertTrue(workspace.contains("quick_template_apply_result_success"));
     }
 
     private static String read(String relativePath) throws IOException {

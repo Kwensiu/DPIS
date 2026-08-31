@@ -7,8 +7,6 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
 import com.dpis.module.R
-import com.dpis.module.TemplateDetailKind
-import com.dpis.module.TemplateDetailSelection
 import com.dpis.module.ui.WindowInsetsBinder
 
 /** Owns the legacy landscape template-detail view and its target-picker lifetime. */

@@ -20,8 +20,9 @@ import java.io.IOException;
 
 public class QuickTemplateApplySourceSmokeTest {
     @Test
-    public void mainActivityWiresApplyConfirmationAndResultCopy() throws IOException {
+    public void templateWorkspaceCoordinatorOwnsApplyConfirmationAndResultCopy() throws IOException {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
         String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
         String coordinator = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateApplyCoordinator.java");
@@ -30,21 +31,24 @@ public class QuickTemplateApplySourceSmokeTest {
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
         assertTrue(binder.contains("fun apply(templateId: String)"));
-        assertTrue(mainActivity.contains("applyQuickTemplate(templateId)"));
-        assertTrue(mainActivity.contains("R.string.quick_template_apply_confirm_message"));
-        assertTrue(mainActivity.contains("R.string.quick_template_apply_confirm_message_overwrite"));
-        assertTrue(mainActivity.contains("QuickTemplateApplyConfirmationMessage.format("));
-        assertTrue(mainActivity.contains("R.string.quick_template_apply_scope_note"));
-        assertTrue(mainActivity.contains("finishQuickTemplateApply("));
-        assertTrue(mainActivity.contains("ConfirmDialog.showWithLabels("));
-        assertTrue(mainActivity.contains("QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator"));
-        assertTrue(mainActivity.contains("QuickTemplateApplyAdapters.from(getHookConfigStore())"));
+        assertFalse(mainActivity.contains("private void applyQuickTemplate("));
+        assertFalse(mainActivity.contains("finishQuickTemplateApply("));
+        assertTrue(workspace.contains("fun applyQuickTemplate(templateId: String)"));
+        assertTrue(workspace.contains("R.string.quick_template_apply_confirm_message"));
+        assertTrue(workspace.contains("R.string.quick_template_apply_confirm_message_overwrite"));
+        assertTrue(workspace.contains("QuickTemplateApplyConfirmationMessage.format("));
+        assertTrue(workspace.contains("R.string.quick_template_apply_scope_note"));
+        assertTrue(workspace.contains("finishQuickTemplateApply("));
+        assertTrue(workspace.contains("ConfirmDialog.showWithLabels("));
+        assertTrue(workspace.contains("QuickTemplateApplyCoordinator<TemplateConfigValue>"));
+        assertTrue(workspace.contains("QuickTemplateApplyAdapters.from(host.hookConfigStore())"));
         assertTrue(mainActivity.contains("getHookConfigStore()"));
         assertTrue(mainActivity.contains("return DpisApplication.getActiveHookConfigStore(this);"));
-        assertTrue(mainActivity.contains("this::isInstalledTemplateTargetPackage"));
-        assertTrue(mainActivity.contains("getPackageManager().getApplicationInfo("));
-        assertTrue(mainActivity.contains("R.string.quick_template_apply_result_success"));
-        assertTrue(mainActivity.contains("R.string.quick_template_apply_result_partial"));
+        assertTrue(workspace.contains("host::isInstalledTemplateTargetPackage"));
+        String activityHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt");
+        assertTrue(activityHost.contains("packageManager.getApplicationInfo("));
+        assertTrue(workspace.contains("R.string.quick_template_apply_result_success"));
+        assertTrue(workspace.contains("R.string.quick_template_apply_result_partial"));
         assertTrue(coordinator.contains("public interface ConfigWriter<T>"));
         assertTrue(coordinator.contains("public interface RuntimePublisher<T>"));
         assertTrue(coordinator.contains("boolean writePackageTemplateConfigValue("));

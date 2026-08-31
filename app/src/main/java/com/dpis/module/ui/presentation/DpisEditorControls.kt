@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -59,7 +57,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -70,6 +67,7 @@ import androidx.compose.ui.unit.Constraints
 import kotlin.math.roundToInt
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
+import com.dpis.module.templates.presentation.TemplateUiTokens
 
 /**
  * Compact outlined input used by DPIS editor rows.
@@ -325,7 +323,7 @@ internal fun DpisModeSelector(
     val controlHeight = rememberEditorControlHeight()
     val thumbOffset by animateDpAsState(
         targetValue = if (selectedFirst) 0.dp else AppConfigSheetUiTokens.SecondaryControlWidth / 2,
-        animationSpec = tween(TemplateUiTokens.ModeAnimationDurationMillis),
+        animationSpec = tween(TemplateUiTokens.MODE_ANIMATION_DURATION_MILLIS),
         label = "dpis-mode-thumb"
     )
     val thumbWidth = AppConfigSheetUiTokens.SecondaryControlWidth / 2

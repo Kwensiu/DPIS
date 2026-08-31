@@ -1,20 +1,17 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.templates.presentation
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
@@ -23,51 +20,47 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import com.dpis.module.R
 import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
+import com.dpis.module.ui.compose.DpisEditorBottomSheet
+import com.dpis.module.ui.compose.DpisCompactEditorTextField
+import com.dpis.module.ui.compose.DpisEditorClearButton
+import com.dpis.module.ui.compose.DpisEditorTypefaceHookRow
+import com.dpis.module.ui.compose.DpisModeSelector
+import com.dpis.module.ui.compose.DpisSheetVisualChrome
+import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.rememberEditorControlHeight
 import com.dpis.module.viewport.ViewportTargetType
 
 enum class TemplateEditorSurfaceKind {
@@ -86,8 +79,8 @@ fun TemplateEditorSurface(
     form: TemplateEditorForm,
     surface: TemplateEditorSurfaceKind,
     draftRevision: Int = 0,
-    topSafePadding: androidx.compose.ui.unit.Dp = 0.dp,
-    bottomSafePadding: androidx.compose.ui.unit.Dp = 0.dp,
+    topSafePadding: Dp = 0.dp,
+    bottomSafePadding: Dp = 0.dp,
     sheetVisible: Boolean = true,
     onSheetHidden: () -> Unit = {},
     onFormChanged: () -> Unit,
@@ -144,9 +137,13 @@ fun TemplateEditorSurface(
             visible = sheetVisible,
             onDismissRequest = onDismissRequest,
             onHidden = onSheetHidden,
-            topChrome = { DpisSheetVisualChrome(showUnsaved = form.isDirty()) },
+            topChrome = {
+                DpisSheetVisualChrome(
+                    showUnsaved = form.isDirty
+                )
+            },
             // The editor body owns the shared bottom reserve. Do not add a second navigation inset.
-            contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }
+            contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
         ) {
             editor()
         }
@@ -162,9 +159,9 @@ fun TemplateEditorSurface(
  * same draft before requesting recomposition, so a form never depends on View widget state.
  */
 @Composable
+@Suppress("UNUSED_PARAMETER")
 fun TemplateEditorContent(
     form: TemplateEditorForm,
-    draftRevision: Int = 0,
     onFormChanged: () -> Unit,
     onSelectTypeface: () -> Unit,
     onEditHookDomains: () -> Unit,
@@ -172,14 +169,13 @@ fun TemplateEditorContent(
     onDelete: (() -> Unit)?,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    draftRevision: Int = 0,
     showSheetBadge: Boolean = true,
-    extraTopPadding: androidx.compose.ui.unit.Dp = 0.dp,
-    extraBottomPadding: androidx.compose.ui.unit.Dp = 0.dp
+    extraTopPadding: Dp = 0.dp,
+    extraBottomPadding: Dp = 0.dp
 ) {
-    // The revision is intentionally passed as a parameter. The form is a mutable Java draft and
-    // its stable object identity must not allow Compose to skip the updated editor subtree.
-    @Suppress("UNUSED_VARIABLE")
-    val observedDraftRevision = draftRevision
+    // The revision is intentionally part of the parameter list. The form is a mutable Java draft
+    // and its stable object identity must not allow Compose to skip the updated editor subtree.
     val inputErrorMessage = stringResource(R.string.status_save_invalid)
     val nameErrorMessage = stringResource(R.string.quick_template_name_required)
     val nameError = if (form.isNameValid()) null else nameErrorMessage
@@ -187,7 +183,7 @@ fun TemplateEditorContent(
     val fontError = if (form.isFontInputValid()) null else inputErrorMessage
     val context = LocalContext.current
     val hookDomainsButtonText = FontHookDomainPresentation
-        .forRecommendedTemplateRaw(form.fontHookDomainsRaw)
+        .forAutomaticDomainsRaw(form.fontHookDomainsRaw)
         .buttonText(context)
     Column(
         modifier = modifier
@@ -196,7 +192,10 @@ fun TemplateEditorContent(
             .verticalScroll(rememberScrollState())
             .padding(AppConfigSheetUiTokens.ContentPadding)
             .padding(top = extraTopPadding)
-            .padding(bottom = edgeToEdgeContentBottomPadding(extraBottomPadding))
+            .padding(bottom = edgeToEdgeContentBottomPadding(
+                extraBottomPadding
+            )
+            )
     ) {
         TemplateEditorSheetHeader(
             form = form,
@@ -206,7 +205,9 @@ fun TemplateEditorContent(
         )
 
         if (form.quickTemplate) {
-            Spacer(Modifier.height(AppConfigSheetUiTokens.HeaderToFirstInputGap))
+            Spacer(
+                Modifier.height(
+                    AppConfigSheetUiTokens.HeaderToFirstInputGap))
             Column(Modifier.fillMaxWidth()) {
                 DpisCompactEditorTextField(
                     value = form.nameInput,
@@ -334,7 +335,9 @@ fun TemplateEditorContent(
                 selectedFirst = form.fontMode == FontApplyMode.SYSTEM_EMULATION,
                 firstLabel = stringResource(R.string.dialog_font_mode_system),
                 secondLabel = stringResource(R.string.dialog_font_mode_compat),
-                onFirstSelected = { form.fontMode = FontApplyMode.SYSTEM_EMULATION; onFormChanged() },
+                onFirstSelected = {
+                    form.fontMode = FontApplyMode.SYSTEM_EMULATION; onFormChanged()
+                },
                 onSecondSelected = { form.fontMode = FontApplyMode.FIELD_REWRITE; onFormChanged() },
                 modifier = Modifier.padding(top = AppConfigSheetUiTokens.FieldTopInset),
                 labelStyle = MaterialTheme.typography.labelMedium
@@ -346,7 +349,9 @@ fun TemplateEditorContent(
             primary = {
                 OutlinedButton(
                     onClick = onSelectTypeface,
-                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
@@ -367,7 +372,8 @@ fun TemplateEditorContent(
             secondary = {
                 OutlinedButton(
                     onClick = onEditHookDomains,
-                    modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
+                    modifier = Modifier
+                        .width(AppConfigSheetUiTokens.SecondaryControlWidth)
                         .height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
@@ -387,7 +393,7 @@ fun TemplateEditorContent(
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         Button(
             onClick = onSave,
-            enabled = form.isValid(),
+            enabled = form.isValid,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(rememberEditorControlHeight()),
@@ -418,7 +424,11 @@ private fun TemplateEditorSheetHeader(
     onDelete: (() -> Unit)?
 ) {
     val resetAction = rememberConfirmAction(onReset)
-    val deleteAction = onDelete?.let { rememberConfirmAction(it) }
+    val deleteAction = onDelete?.let {
+        rememberConfirmAction(
+            it
+        )
+    }
     val titleRes = when {
         !form.quickTemplate -> R.string.template_workspace_global_prefill_title
         form.newTemplate -> R.string.quick_template_edit_page_title_new
@@ -446,7 +456,7 @@ private fun TemplateEditorSheetHeader(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                if (showInlineBadge && form.isDirty()) {
+                if (showInlineBadge && form.isDirty) {
                     Spacer(Modifier.width(8.dp))
                     UnsavedBadge()
                 }
@@ -485,9 +495,9 @@ private fun EditorHeaderIconButton(
     iconRes: Int,
     contentDescription: String,
     onClick: () -> Unit,
-    containerColor: androidx.compose.ui.graphics.Color,
-    borderColor: androidx.compose.ui.graphics.Color,
-    iconTint: androidx.compose.ui.graphics.Color
+    containerColor: Color,
+    borderColor: Color,
+    iconTint: Color
 ) {
     Box(
         modifier = Modifier

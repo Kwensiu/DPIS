@@ -12,6 +12,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.templates.presentation.TemplateEditorDraftState
+import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test

@@ -252,7 +252,7 @@ class AppConfigSaveHandler {
                 return true
             }
             val normalizedRaw = FontHookDomainPresentation
-                .forRecommendedTemplateRaw(draftFontHookDomainsRaw)
+                .forAutomaticDomainsRaw(draftFontHookDomainsRaw)
                 .normalizedRawOrNull()
             if (normalizedRaw == null) {
                 return HookDomainOverrideStore(store).restoreRecommended(item.packageName)
@@ -394,7 +394,7 @@ class AppConfigSaveHandler {
                 return currentFontHookDomainsRaw
             }
             val presentation = FontHookDomainPresentation
-                .forRecommendedTemplateRaw(draftFontHookDomainsRaw)
+                .forAutomaticDomainsRaw(draftFontHookDomainsRaw)
             return presentation.normalizedRawOrNull()
         }
 
