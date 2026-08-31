@@ -157,6 +157,19 @@ Chinese unless the user explicitly requests that locale's content.
   `./gradlew :app:testAllDebugUnitTests`. Do not rely only on targeted tests
   unless the user explicitly agrees to skip full verification; if skipped,
   state that clearly in the final response.
+- Before declaring work complete, and whenever a code review is about to begin,
+  use the Android CLI as an additional optimization pass when Android Studio is
+  available. Run `android studio check` first, then use
+  `android studio analyze-file --project=<project> <path>` for touched Java or
+  Kotlin files; for Compose UI changes, use
+  `android studio render-compose-preview` when a suitable `@Preview` exists.
+  Treat the reported inspections, warnings, and preview findings as
+  optimization leads only: they supplement, and never replace, Gradle, Lint,
+  unit-test, device, or runtime validation. If the CLI or an active Studio
+  project is unavailable, record that the supplemental pass was skipped and
+  why.
+- `android studio analyze-file` expects the project name reported by
+  `android studio check` (for example, `--project=DPIS`), not the project path.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
 - When changing UI structure, resource ids, shared binders/helpers, navigation,
   or layout ownership, explicitly check and update source/layout smoke tests.
@@ -169,6 +182,9 @@ Chinese unless the user explicitly requests that locale's content.
 - After Java-to-Kotlin conversion, update source smoke tests to read the active
   `.kt` source and assert semantic anchors rather than Java-specific local
   variables, generic syntax, or the old file extension.
+- When Kotlin idioms replace Java getters, lambdas, or inferred local types,
+  update affected source-smoke anchors in the same change; do not preserve
+  Java syntax solely because a test previously matched it.
 - For Compose UI changes, run the relevant unit/source smoke tests, build the
   Modern Debug APK, and install it on the active device after a successful
   build. For shared Java/Kotlin interoperability, dependency, R8, or flavor
