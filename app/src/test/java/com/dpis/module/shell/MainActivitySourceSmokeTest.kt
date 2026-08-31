@@ -11,14 +11,16 @@ import org.junit.Test
 class MainActivitySourceSmokeTest {
 
     @Test
-    fun templateWorkspaceImplementationLivesBehindTheCoordinator() {
+    fun templateWorkspaceImplementationLivesBehindTheActivitySession() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val session = read(
+                "src/main/java/com/dpis/module/templates/TemplateWorkspaceActivitySession.kt")
 
-        assertTrue(source.contains("private TemplateWorkspaceCoordinator templateWorkspaceCoordinator"))
+        assertTrue(source.contains("private TemplateWorkspaceActivitySession workspaceSession"))
         assertTrue(source.contains(".handleActivityResult(requestCode, data)"))
-        assertTrue(source.contains(".saveRoute(outState)"))
+        assertTrue(source.contains(".saveState(outState)"))
         assertTrue(source.contains(".onDestroy()"))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("TemplateDetailPaneController"))
@@ -30,6 +32,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(coordinator.contains("fun attachLegacyViews("))
         assertTrue(coordinator.contains("fun presentationSource("))
         assertTrue(coordinator.contains("fun handleActivityResult("))
+        assertTrue(session.contains("fun attachLegacyViews("))
+        assertTrue(session.contains("fun saveState("))
     }
 
     @Test
@@ -136,12 +140,12 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("setVisible(toolsWorkspaceContainer, toolsWorkspace)"));
         assertTrue(source.contains("setVisible(settingsWorkspaceContainer, settingsWorkspace)"));
         assertFalse(source.contains("setSearchFocusFabVisible("))
-        assertTrue(source.contains("attachLegacyViews("))
+        assertTrue(source.contains("ensureWorkspaceSession().attachLegacyViews("))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
-        assertTrue(source.contains("bindTemplateWorkspace()"));
-        assertTrue(source.contains("ensureTemplateWorkspaceCoordinator().present("))
+        assertTrue(source.contains("bindWorkspaceSession()"));
+        assertTrue(source.contains("ensureWorkspaceSession().present("))
         assertTrue(source.contains("STATE_TEMPLATE_QUERY"))
         assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"));
         assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"));
@@ -243,7 +247,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun templateEditorDraftMigratesBetweenSheetAndPane() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val draft = read("src/main/java/com/dpis/module/templates/TemplateEditorDraft.java")
+        val draft = read("src/main/java/com/dpis/module/templates/TemplateEditorDraft.kt")
         val workspace = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt")
         val coordinator = read(
@@ -253,7 +257,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("initialTemplateRoute = retainedState.templateRoute"))
         assertTrue(coordinator.contains("routeState.globalPrefillDraft()"))
         assertTrue(coordinator.contains("routeState.quickTemplateDraft()"))
-        assertTrue(source.contains("ensureTemplateWorkspaceCoordinator().restoreRoute(savedInstanceState)"))
+        assertTrue(source.contains("ensureWorkspaceSession().restore(savedInstanceState)"))
+        assertTrue(source.contains("new TemplateWorkspaceActivitySession("))
         assertTrue(draft.contains("viewportScaleInput"))
         assertTrue(draft.contains("viewportAbsoluteInput"))
         assertTrue(workspace.contains("globalPrefillDraft: TemplateEditorDraft?"))
@@ -1334,7 +1339,7 @@ class MainActivitySourceSmokeTest {
     fun composeTemplateRestorePublishesDetailWithoutLegacyEditorFallback() {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val methodStart = activity.indexOf(
-                "private void restoreTemplateEditorForCurrentConfiguration()")
+                "private void restoreWorkspaceEditorForCurrentConfiguration()")
         val methodEnd = activity.indexOf("private static AppListFilterState.AppType", methodStart)
         val method = activity.substring(methodStart, methodEnd)
         assertTrue(method.contains("restoreForConfiguration("));

@@ -146,6 +146,8 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(workspaceCoordinator.contains("REQUEST_TARGET_SELECTION"));
         assertTrue(workspaceCoordinator.contains("routeState.targetSelectionActivityStarted()"));
         assertTrue(workspaceCoordinator.contains("routeState.markTargetSelectionActivityStarted()"));
+        assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"));
+        assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"));
         assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"));
         assertTrue(workspaceCoordinator.contains("activity.startActivityForResult("));
         assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("));

@@ -65,8 +65,8 @@ import com.dpis.module.process.ProcessActionHandler;
 
 import com.dpis.module.templates.GlobalPrefillStore;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
+import com.dpis.module.templates.TemplateWorkspaceActivitySession;
 import com.dpis.module.templates.TemplateWorkspaceCoordinator;
-import com.dpis.module.templates.TemplateWorkspaceActivityHost;
 
 import com.dpis.module.templates.TemplateConfigValue;
 
@@ -282,7 +282,7 @@ public final class MainActivity
     private FrameLayout landDetailContent;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private HomeWorkspaceBinder homeWorkspaceBinder;
-    private TemplateWorkspaceCoordinator templateWorkspaceCoordinator;
+    private TemplateWorkspaceActivitySession workspaceSession;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemFontScaleToolPresenter composeToolsPresenter;
     private SystemServerSettingsPageController settingsPageController;
@@ -407,8 +407,8 @@ public final class MainActivity
                         initialWorkspaceMode
                 )
         );
-        initializeTemplateWorkspaceCoordinator(initialTemplateRoute, initialTemplateQuery);
-        ensureTemplateWorkspaceCoordinator().restoreRoute(savedInstanceState);
+        initializeWorkspaceSession(initialTemplateRoute, initialTemplateQuery);
+        ensureWorkspaceSession().restore(savedInstanceState);
         composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
                 mainViewModel,
                 (item, onApproved) -> systemScopeCoordinator.requestScope(
@@ -451,7 +451,7 @@ public final class MainActivity
         landDetailDivider = findViewById(R.id.land_detail_divider);
         landDetailEmptyView = findViewById(R.id.land_detail_empty);
         landDetailContent = findViewById(R.id.land_detail_content);
-        ensureTemplateWorkspaceCoordinator().attachLegacyViews(
+        ensureWorkspaceSession().attachLegacyViews(
                 findViewById(R.id.template_workspace_container),
                 findViewById(R.id.template_detail_empty),
                 findViewById(R.id.template_detail_content)
@@ -523,7 +523,7 @@ public final class MainActivity
             );
             restoreAppEditorForCurrentWorkspace();
         }
-        restoreTemplateEditorForCurrentConfiguration();
+        restoreWorkspaceEditorForCurrentConfiguration();
         if (pendingUpdatePrompt != null) {
             showPendingUpdatePrompt();
             return;
@@ -541,7 +541,7 @@ public final class MainActivity
         super.onStart();
         refreshSystemHookEffectiveEnabled();
         if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            bindTemplateWorkspace();
+            bindWorkspaceSession();
         } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
         } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TOOLS) {
@@ -602,7 +602,7 @@ public final class MainActivity
         if (updateDownloadCoordinator != null) {
             updateDownloadCoordinator.shutdown();
         }
-        ensureTemplateWorkspaceCoordinator().onDestroy();
+        ensureWorkspaceSession().onDestroy();
         installedAppCatalogCoordinator.shutdown();
         super.onDestroy();
     }
@@ -637,7 +637,7 @@ public final class MainActivity
         } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
         }
-        if (ensureTemplateWorkspaceCoordinator().handleActivityResult(requestCode, data)) {
+        if (ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
             return;
         }
         if (requestCode == REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
@@ -694,7 +694,7 @@ public final class MainActivity
                 STATE_REFRESHING_PAGES,
                 captureRefreshingPagePositions()
         );
-        ensureTemplateWorkspaceCoordinator().saveRoute(outState);
+        ensureWorkspaceSession().saveState(outState);
     }
 
     @Override
@@ -746,7 +746,7 @@ public final class MainActivity
                 mainViewModel != null
                         ? mainViewModel.getEditingDestination()
                         : ConfigEditorDestination.MAIN,
-                templateRoute(),
+                ensureWorkspaceSession().retainedRoute(),
                 feedbackDiagnosticSession,
                 feedbackDiagnosticPageRequest,
                 feedbackDiagnosticPageController.presentation() != null
@@ -1048,7 +1048,7 @@ public final class MainActivity
                     @Override public void openSettingsAbout() { ensureComposeSettingsController().showAboutFromPresentation(); }
                     @Override public void openSettingsDonate() { ensureComposeSettingsController().showDonateFromPresentation(); }
                     @Override public TemplateWorkspacePresentationSource templateWorkspace() {
-                        return ensureTemplateWorkspaceCoordinator().presentationSource(
+                        return ensureWorkspaceSession().presentationSource(
                                 query -> {
                                     dispatchMainUiAction(MainUiAction.queryChanged(query));
                                     return Unit.INSTANCE;
@@ -1093,8 +1093,8 @@ public final class MainActivity
         if (homeWorkspace) {
             bindHomeWorkspace();
         } else if (templateWorkspace) {
-            bindTemplateWorkspace();
-            restoreTemplateEditorForCurrentConfiguration();
+            bindWorkspaceSession();
+            restoreWorkspaceEditorForCurrentConfiguration();
         } else if (toolsWorkspace) {
             bindToolsWorkspace(enteringToolsWorkspace);
         } else if (settingsWorkspace) {
@@ -1149,15 +1149,15 @@ public final class MainActivity
         setVisible(landDetailContent, appWorkspace
                 && landDetailContent != null
                 && landDetailContent.getChildCount() > 0);
-        ensureTemplateWorkspaceCoordinator().updateLegacyDetailVisibility(templateWorkspace);
+        ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace);
     }
 
     private boolean isLandscapeDetailMode() {
         return landDetailContent != null && landDetailEmptyView != null;
     }
 
-    private void bindTemplateWorkspace() {
-        ensureTemplateWorkspaceCoordinator().present(
+    private void bindWorkspaceSession() {
+        ensureWorkspaceSession().present(
                 requireUiState().currentQuery(), composeShellHost != null
         );
     }
@@ -1180,9 +1180,9 @@ public final class MainActivity
         }
     }
 
-    private void restoreTemplateEditorForCurrentConfiguration() {
+    private void restoreWorkspaceEditorForCurrentConfiguration() {
         if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            ensureTemplateWorkspaceCoordinator().restoreForConfiguration(
+            ensureWorkspaceSession().restoreForConfiguration(
                     requireUiState().currentQuery(), composeShellHost != null
             );
         }
@@ -1383,34 +1383,30 @@ public final class MainActivity
         executeHyperOsNativeProxyMount(item, false, success -> { });
     }
 
-    private void initializeTemplateWorkspaceCoordinator(
+    private void initializeWorkspaceSession(
             TemplateWorkspaceCoordinator.RouteState initialRoute,
             String initialQuery
     ) {
-        if (templateWorkspaceCoordinator == null) {
-            templateWorkspaceCoordinator = new TemplateWorkspaceCoordinator(
+        if (workspaceSession == null) {
+            workspaceSession = new TemplateWorkspaceActivitySession(
                     this,
-                    new TemplateWorkspaceActivityHost(this, () -> {
+                    initialQuery,
+                    initialRoute,
+                    () -> {
                         if (composeShellHost != null) {
                             composeShellHost.refreshTemplates();
                         }
-                    }),
-                    initialQuery,
-                    initialRoute
+                    }
             );
         }
     }
 
-    private TemplateWorkspaceCoordinator ensureTemplateWorkspaceCoordinator() {
-        initializeTemplateWorkspaceCoordinator(
+    private TemplateWorkspaceActivitySession ensureWorkspaceSession() {
+        initializeWorkspaceSession(
                 new TemplateWorkspaceCoordinator.RouteState(),
                 requireUiState().currentQuery()
         );
-        return templateWorkspaceCoordinator;
-    }
-
-    private TemplateWorkspaceCoordinator.RouteState templateRoute() {
-        return ensureTemplateWorkspaceCoordinator().route();
+        return workspaceSession;
     }
 
     private static void setVisible(View view, boolean visible) {
@@ -2137,7 +2133,7 @@ public final class MainActivity
                         this,
                         DpisApplication.getXposedService()
                 ).listFonts().size(),
-                ensureTemplateWorkspaceCoordinator().quickTemplateCount(),
+                ensureWorkspaceSession().quickItemCount(),
                 RootAccessProbe.cachedResult(),
                 homeUpdateUiState,
                 createHomeWorkspaceActions()

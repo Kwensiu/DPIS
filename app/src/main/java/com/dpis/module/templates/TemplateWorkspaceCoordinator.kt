@@ -9,9 +9,6 @@ import android.os.Bundle
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
-import com.dpis.module.TemplateDetailKind
-import com.dpis.module.TemplateDetailSelection
-import com.dpis.module.TemplateWorkspaceStateCodec
 import com.dpis.module.appconfig.AppConfigDialogBinder
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
@@ -638,7 +635,8 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         legacyDetailController?.clear()
     }
 
-    private fun isLegacyLandscapeDetailMode() = legacyDetailContent != null && legacyDetailEmpty != null
+    private fun isLegacyLandscapeDetailMode() =
+        !composePresentation && legacyDetailContent != null && legacyDetailEmpty != null
 
     private fun publish() {
         if (composePresentation) {

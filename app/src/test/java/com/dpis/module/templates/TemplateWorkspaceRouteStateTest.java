@@ -6,8 +6,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.dpis.module.ConfigEditorDestination;
-import com.dpis.module.TemplateDetailKind;
-import com.dpis.module.TemplateDetailSelection;
 
 import org.junit.Test;
 
