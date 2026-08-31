@@ -994,11 +994,7 @@ public final class AppConfigDialogBinder {
     }
 
     public static String resolveFontMode(ModeToggle fontModeToggle) {
-        Object modeTag = fontModeToggle.container.getTag();
-        if (FontApplyMode.SYSTEM_EMULATION.equals(modeTag)) {
-            return FontApplyMode.SYSTEM_EMULATION;
-        }
-        return FontApplyMode.FIELD_REWRITE;
+        return AppConfigDialogModeLogic.resolveFontMode(fontModeToggle);
     }
 
     private static String initialFontMode(String fontMode) {
@@ -1006,11 +1002,7 @@ public final class AppConfigDialogBinder {
     }
 
     public static String resolveViewportMode(ModeToggle viewportModeToggle) {
-        Object modeTag = viewportModeToggle.container.getTag();
-        if (ViewportTargetType.ABSOLUTE_DP.equals(modeTag)) {
-            return ViewportTargetType.ABSOLUTE_DP;
-        }
-        return ViewportTargetType.RELATIVE_SCALE;
+        return AppConfigDialogModeLogic.resolveViewportMode(viewportModeToggle);
     }
 
     private static String initialViewportTargetType(AppListItem item) {
@@ -1027,30 +1019,17 @@ public final class AppConfigDialogBinder {
     public static void bindFontModeToggle(ModeToggle fontModeToggle,
             String fontMode,
             boolean animate) {
-        String resolved = FontApplyMode.SYSTEM_EMULATION.equals(fontMode)
-                ? FontApplyMode.SYSTEM_EMULATION
-                : FontApplyMode.FIELD_REWRITE;
-        fontModeToggle.container.setTag(resolved);
-        updateModeToggleVisual(fontModeToggle, FontApplyMode.SYSTEM_EMULATION.equals(resolved), animate);
+        AppConfigDialogModeLogic.bindFontModeToggle(fontModeToggle, fontMode, animate);
     }
 
     public static void toggleFontMode(ModeToggle fontModeToggle) {
-        String nextMode = FontApplyMode.FIELD_REWRITE.equals(resolveFontMode(fontModeToggle))
-                ? FontApplyMode.SYSTEM_EMULATION
-                : FontApplyMode.FIELD_REWRITE;
-        bindFontModeToggle(fontModeToggle, nextMode, true);
+        AppConfigDialogModeLogic.toggleFontMode(fontModeToggle);
     }
 
     public static void bindViewportModeToggle(ModeToggle viewportModeToggle,
             String viewportTargetType,
             boolean animate) {
-        String resolved = ViewportTargetType.ABSOLUTE_DP.equals(
-                ViewportTargetType.normalize(viewportTargetType))
-                        ? ViewportTargetType.ABSOLUTE_DP
-                        : ViewportTargetType.RELATIVE_SCALE;
-        viewportModeToggle.container.setTag(resolved);
-        updateModeToggleVisual(viewportModeToggle,
-                ViewportTargetType.RELATIVE_SCALE.equals(resolved), animate);
+        AppConfigDialogModeLogic.bindViewportModeToggle(viewportModeToggle, viewportTargetType, animate);
     }
 
     public void bindViewportInputHint(TextInputLayout viewportInputLayout, String viewportTargetType) {
@@ -1066,11 +1045,7 @@ public final class AppConfigDialogBinder {
     public static void toggleViewportMode(ModeToggle viewportModeToggle,
             TextInputEditText viewportInputView,
             AppConfigDialogState state) {
-        String nextMode = ViewportTargetType.ABSOLUTE_DP.equals(
-                resolveViewportMode(viewportModeToggle))
-                        ? ViewportTargetType.RELATIVE_SCALE
-                        : ViewportTargetType.ABSOLUTE_DP;
-        switchViewportTargetType(viewportModeToggle, viewportInputView, state, nextMode, true);
+        AppConfigDialogModeLogic.toggleViewportMode(viewportModeToggle, viewportInputView, state);
     }
 
     public static void switchViewportTargetType(ModeToggle viewportModeToggle,
@@ -1078,13 +1053,11 @@ public final class AppConfigDialogBinder {
             AppConfigDialogState state,
             String nextType,
             boolean animate) {
-        state.updateViewportInput(resolveViewportMode(viewportModeToggle),
-                viewportInputView.getText());
-        bindViewportModeToggle(viewportModeToggle, nextType, animate);
-        viewportInputView.setText(state.viewportInputFor(nextType));
+        AppConfigDialogModeLogic.switchViewportTargetType(
+                viewportModeToggle, viewportInputView, state, nextType, animate);
     }
 
-    private static void updateModeToggleVisual(ModeToggle toggle,
+    static void updateModeToggleVisual(ModeToggle toggle,
             boolean emulationActive,
             boolean animate) {
         toggle.emulationActive = emulationActive;

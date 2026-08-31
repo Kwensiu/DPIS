@@ -478,12 +478,13 @@ class AppConfigDialogBinderSourceSmokeTest {
     fun viewportModeSwitchKeepsSeparateInputValues() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
         val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
+        val modeSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModeLogic.kt")
         val source = binderSource + stateSource +
+            modeSource +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java") +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
-        val switchStart = binderSource.indexOf("static void switchViewportTargetType")
-        val visualStart = binderSource.indexOf("private static void updateModeToggleVisual", switchStart)
-        val switchBlock = binderSource.substring(switchStart, visualStart)
+        val switchStart = modeSource.indexOf("fun switchViewportTargetType(")
+        val switchBlock = modeSource.substring(switchStart)
 
         assertTrue(source.contains("String initialViewportInput = formatViewportInput(item.viewportTargetSpec)"))
         assertTrue(source.contains("state.updateViewportInput("))
@@ -495,9 +496,9 @@ class AppConfigDialogBinderSourceSmokeTest {
         assertFalse(fontWatcherBlock.contains("state.updateViewportInput("))
         assertTrue(source.contains("AppConfigDialogBinder.toggleViewportMode("))
         assertTrue(source.contains("views.viewportModeToggle, views.viewportInputView, state)"));
-        assertTrue(switchBlock.contains("bindViewportModeToggle(viewportModeToggle, nextType, animate)"));
-        assertTrue(switchBlock.contains("state.updateViewportInput(resolveViewportMode(viewportModeToggle),"))
-        assertTrue(switchBlock.contains("viewportInputView.setText(state.viewportInputFor(nextType))"));
+        assertTrue(switchBlock.contains("bindViewportModeToggle(toggle, nextType, animate)"));
+        assertTrue(switchBlock.contains("state.updateViewportInput(resolveViewportMode(toggle), inputView.text)"))
+        assertTrue(switchBlock.contains("inputView.text = state.viewportInputFor(nextType)"));
         assertTrue(source.contains("fun viewportInputFor(viewportTargetType: String?)"))
         assertTrue(source.contains("fun clearViewportInputs()"))
         assertFalse(source.contains("viewportScaleText"))
