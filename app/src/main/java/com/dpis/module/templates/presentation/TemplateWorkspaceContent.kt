@@ -480,148 +480,15 @@ private fun editorKindFor(kind: TemplateWorkspacePresentation.DetailKind): Strin
     else -> null
 }
 
-@Composable
-private fun TemplateWorkspaceListPane(
-    state: TemplateWorkspacePresentation.State,
-    padding: PaddingValues,
-    onQueryChanged: (String) -> Unit,
-    onEditorOpened: (String, String?) -> Unit,
-    onSortRequested: () -> Unit,
-    onTargetsOpened: (String) -> Unit,
-    scrollStore: PageScrollPositionStore,
-    modifier: Modifier = Modifier
-) {
-    val focusManager = LocalFocusManager.current
-    val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color.Transparent)
-            .padding(top = topSafePadding)
-    ) {
-        val searchDividerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
-        WorkspaceSearchCard(
-            query = state.query,
-            onQueryChanged = onQueryChanged,
-            hintRes = R.string.template_search_hint,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = TemplateUiTokens.WorkspaceHorizontalPadding)
-                .padding(
-                    top = TemplateUiTokens.SearchTopPadding,
-                    bottom = TemplateUiTokens.SearchBottomPadding
-                )
-                .height(TemplateUiTokens.SearchCardHeight),
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(searchDividerColor),
-        )
-        val listState = rememberRestorableLazyListState(
-            key = "templates",
-            store = scrollStore,
-            enabled = !state.searching,
-        )
-        val listScrolled = listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-            LazyColumn(
-                state = listState,
-                contentPadding = PaddingValues(
-                start = TemplateUiTokens.WorkspaceHorizontalPadding,
-                top = TemplateUiTokens.WorkspaceTopPadding,
-                end = TemplateUiTokens.WorkspaceHorizontalPadding,
-                bottom = padding.calculateBottomPadding() + TemplateUiTokens.WorkspaceBottomReserve
-            ),
-            verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.ListGap),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clearTextInputFocusOnPointerDown(focusManager)
-            ) {
-            if (!state.searching) {
-                item {
-                    GlobalPrefillCard(state, rememberConfirmAction {
-                        onEditorOpened(EDITOR_GLOBAL, null)
-                    })
-                }
-                item {
-                    TemplateHeader(
-                        state = state,
-                        onSort = onSortRequested,
-                        onCreate = rememberConfirmAction {
-                            onEditorOpened(EDITOR_QUICK, null)
-                        },
-                    )
-                }
-            }
-            if (state.templates.isEmpty()) {
-                item {
-                    val searching = state.searching
-                    Box(
-                        modifier = if (searching) {
-                            Modifier.fillMaxWidth()
-                        } else {
-                            Modifier
-                                .fillParentMaxWidth()
-                                .fillParentMaxHeight(TemplateUiTokens.EmptyStateViewportFraction)
-                                .padding(bottom = TemplateUiTokens.EmptyStateBottomBias)
-                        },
-                        contentAlignment = if (searching) Alignment.CenterStart else Alignment.Center
-                    ) {
-                        Text(
-                            stringResource(
-                                if (searching) R.string.quick_template_search_empty
-                                else R.string.template_workspace_quick_templates_empty
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = if (searching) {
-                                Modifier.padding(
-                                    top = TemplateUiTokens.EmptyStateTopGap,
-                                    bottom = TemplateUiTokens.EmptyStatePadding,
-                                    end = TemplateUiTokens.EmptyStatePadding
-                                )
-                            } else Modifier
-                        )
-                    }
-                }
-            } else {
-                items(state.templates.size, key = { state.templates[it].id }) { index ->
-                    val template = state.templates[index]
-                    TemplateCard(
-                        template = template,
-                        actions = state.actions,
-                        onEdit = rememberConfirmAction {
-                            onEditorOpened(EDITOR_QUICK, template.id)
-                        },
-                        onTargets = rememberConfirmAction {
-                            onTargetsOpened(template.id)
-                        }
-                    )
-                }
-            }
-            }
-            if (listScrolled) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(EdgeOcclusionFadeTokens.Height)
-                        .edgeOcclusionFade(
-                            visibility = 1f,
-                            direction = EdgeOcclusionFadeDirection.TOP_TO_BOTTOM,
-                        )
-                )
-            }
-        }
-    }
-}
+private const val EDITOR_GLOBAL = "global"
+private const val EDITOR_QUICK = "quick"
 
 @Composable
 private fun EmbeddedQuickTemplateTargets(
     templateId: String,
     onClose: () -> Unit,
     onUnsavedChanged: (Boolean) -> Unit,
-    saveRequest: Int
+    saveRequest: Int,
 ) {
     val context = LocalContext.current
     val controller = remember(templateId) {
@@ -645,12 +512,10 @@ private fun EmbeddedQuickTemplateTargets(
 
     LaunchedEffect(targetState?.missingTemplate) {
         if (targetState?.missingTemplate == true) {
-            Toast.makeText(context, R.string.quick_template_target_missing, Toast.LENGTH_SHORT)
-                .show()
+            Toast.makeText(context, R.string.quick_template_target_missing, Toast.LENGTH_SHORT).show()
             onClose()
         }
     }
-
     LaunchedEffect(targetState?.hasUnsavedChanges) {
         onUnsavedChanged(targetState?.hasUnsavedChanges == true)
     }
@@ -673,7 +538,7 @@ private fun EmbeddedQuickTemplateTargets(
             if (result.success) onClose()
             result.success
         },
-        showBackButton = false
+        showBackButton = false,
     )
 }
 
@@ -684,25 +549,25 @@ private fun TemplateDetailEmptyState(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_template_24),
             contentDescription = null,
             modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(16.dp))
         Text(
             text = stringResource(R.string.template_detail_empty_title),
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.template_detail_empty_message),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -712,350 +577,5 @@ private fun TemplateDetailEmptyState(modifier: Modifier = Modifier) {
 private fun TemplateDetailEmptyStatePreview() {
     DpisTheme(darkTheme = false, dynamicColor = false) {
         TemplateDetailEmptyState()
-    }
-}
-
-@Composable
-private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = TemplateUiTokens.GlobalCardShape,
-        border = BorderStroke(
-            TemplateUiTokens.CardBorderWidth,
-            MaterialTheme.colorScheme.outlineVariant
-        ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
-    ) {
-        Column(Modifier.padding(TemplateUiTokens.CardPadding)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        stringResource(R.string.template_workspace_global_prefill_title),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        stringResource(R.string.template_workspace_global_prefill_subtitle),
-                        modifier = Modifier.padding(top = TemplateUiTokens.TextSpacingTop),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                 IconButton(onClick = onEdit) {
-                     Icon(
-                         painter = painterResource(R.drawable.ic_chevron_right_24),
-                         contentDescription = stringResource(
-                             R.string.template_workspace_action_edit_global_prefill
-                         ),
-                         modifier = Modifier.size(20.dp)
-                     )
-                }
-            }
-            SummaryPills(
-                state.globalPrefillSummaryParts,
-                state.globalPrefillTypefaceStatus
-            )
-        }
-    }
-}
-
-@Composable
-private fun TemplateHeader(
-    state: TemplateWorkspacePresentation.State,
-    onSort: () -> Unit,
-    onCreate: () -> Unit
-) {
-    val sort = rememberConfirmAction(onSort)
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(
-                start = TemplateUiTokens.SectionTitleInset,
-                top = TemplateUiTokens.SectionTopGap,
-                end = TemplateUiTokens.SectionActionInset
-            ),
-        horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            stringResource(R.string.template_workspace_quick_templates_title),
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing)) {
-            TemplateActionIconButton(
-                iconRes = R.drawable.ic_sort_24,
-                contentDescription = stringResource(R.string.quick_template_sort_action),
-                enabled = state.templates.isNotEmpty(),
-                onClick = sort,
-                visualSize = TemplateUiTokens.HeaderActionVisualSize
-            )
-            TemplateActionIconButton(
-                iconRes = R.drawable.ic_add_24,
-                contentDescription = stringResource(R.string.quick_template_create_action),
-                onClick = onCreate,
-                visualSize = TemplateUiTokens.HeaderActionVisualSize
-            )
-        }
-    }
-}
-
-@Composable
-private fun TemplateCard(
-    template: TemplateWorkspacePresentation.Template,
-    actions: TemplateWorkspacePresentation.Actions,
-    onEdit: () -> Unit,
-    onTargets: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = TemplateUiTokens.TemplateCardShape,
-        border = BorderStroke(
-            TemplateUiTokens.CardBorderWidth,
-            MaterialTheme.colorScheme.outlineVariant
-        ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright)
-    ) {
-        Column(Modifier.padding(TemplateUiTokens.CardPadding)) {
-            Text(
-                template.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-            SummaryPills(template.summaryParts, template.typefaceStatus)
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = TemplateUiTokens.CardActionsTopGap),
-                horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.ActionSpacing),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TemplateActionIconButton(
-                    iconRes = R.drawable.ic_checklist_rtl_24,
-                    contentDescription = stringResource(R.string.template_workspace_action_select_apps),
-                    onClick = onTargets,
-                    visualSize = TemplateUiTokens.CardActionVisualSize,
-                    style = TemplateActionButtonStyle.Plain
-                )
-                TemplateActionIconButton(
-                    iconRes = R.drawable.ic_edit_24,
-                    contentDescription = stringResource(R.string.template_workspace_action_edit_template),
-                    onClick = onEdit,
-                    visualSize = TemplateUiTokens.CardActionVisualSize,
-                    style = TemplateActionButtonStyle.Plain
-                )
-                Spacer(Modifier.weight(1f))
-                TemplateApplyAction(
-                    onClick = rememberConfirmAction { actions.applyTemplate(template.id) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun TemplateApplyAction(onClick: () -> Unit) {
-    TemplateActionIconButton(
-        iconRes = R.drawable.ic_done_all_24,
-        contentDescription = stringResource(R.string.template_workspace_action_apply),
-        onClick = onClick,
-        visualSize = TemplateUiTokens.ApplyActionVisualSize,
-        style = TemplateActionButtonStyle.Primary
-    )
-}
-
-private const val EDITOR_GLOBAL = "global"
-private const val EDITOR_QUICK = "quick"
-
-@Composable
-private fun SummaryPills(
-    parts: List<String>,
-    typefaceStatus: TemplateConfigSummaryFormatter.TypefaceStatus
-) {
-    if (parts.isEmpty() && !typefaceStatus.missing) {
-        EmptySummary()
-        return
-    }
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = TemplateUiTokens.SummaryTopGap),
-        horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.SummaryHorizontalGap),
-        verticalArrangement = Arrangement.spacedBy(TemplateUiTokens.SummaryVerticalGap)
-    ) {
-        parts.forEachIndexed { index, part ->
-            Surface(
-                modifier = Modifier.heightIn(min = TemplateUiTokens.SummaryMinHeight),
-                shape = TemplateUiTokens.SummaryShape,
-                color = if (index == 0) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHighest
-                },
-                contentColor = if (index == 0) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            ) {
-                Text(
-                    part,
-                    modifier = Modifier.padding(
-                        horizontal = TemplateUiTokens.SummaryHorizontalPadding,
-                        vertical = TemplateUiTokens.SummaryVerticalPadding
-                    ),
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                )
-            }
-        }
-        if (typefaceStatus.missing) {
-            SummaryPill(
-                text = stringResource(
-                    R.string.template_workspace_missing_font,
-                    typefaceStatus.typefaceId.orEmpty()
-                ),
-                containerColor = colorResource(R.color.dpis_warn_container),
-                contentColor = colorResource(R.color.dpis_on_warn_container)
-            )
-        }
-    }
-}
-
-@Composable
-private fun SummaryPill(
-    text: String,
-    containerColor: Color,
-    contentColor: Color
-) {
-    Surface(
-        modifier = Modifier.heightIn(min = TemplateUiTokens.SummaryMinHeight),
-        shape = TemplateUiTokens.SummaryShape,
-        color = containerColor,
-        contentColor = contentColor
-    ) {
-        Text(
-            text,
-            modifier = Modifier.padding(
-                horizontal = TemplateUiTokens.SummaryHorizontalPadding,
-                vertical = TemplateUiTokens.SummaryVerticalPadding
-            ),
-            style = MaterialTheme.typography.labelMedium,
-            maxLines = 1,
-            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun EmptySummary() {
-    val shape = TemplateUiTokens.EmptySummaryShape
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = TemplateUiTokens.EmptySummaryTopGap)
-            .heightIn(min = TemplateUiTokens.EmptySummaryMinHeight),
-        shape = shape,
-        color = MaterialTheme.colorScheme.surfaceBright
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .templateDashedBorder(
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    cornerRadius = 16.dp
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                stringResource(R.string.template_workspace_summary_empty),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun TemplateActionIconButton(
-    iconRes: Int,
-    contentDescription: String,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-    visualSize: androidx.compose.ui.unit.Dp,
-    style: TemplateActionButtonStyle = TemplateActionButtonStyle.TonalOutlined
-) {
-    val shape = TemplateUiTokens.CircularActionShape
-    val containerColor = when (style) {
-        TemplateActionButtonStyle.TonalOutlined -> MaterialTheme.colorScheme.surfaceContainerHigh
-        TemplateActionButtonStyle.Plain -> Color.Transparent
-        TemplateActionButtonStyle.Primary -> MaterialTheme.colorScheme.primary
-    }
-    val contentColor = when (style) {
-        TemplateActionButtonStyle.Primary -> MaterialTheme.colorScheme.onPrimary
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val borderStroke = when (style) {
-        TemplateActionButtonStyle.TonalOutlined -> BorderStroke(
-            TemplateUiTokens.CardBorderWidth,
-            MaterialTheme.colorScheme.outlineVariant
-        )
-        TemplateActionButtonStyle.Plain,
-        TemplateActionButtonStyle.Primary -> null
-    }
-    var buttonModifier = Modifier
-        .size(visualSize)
-        .clip(shape)
-    if (style != TemplateActionButtonStyle.Plain) {
-        buttonModifier = buttonModifier.background(containerColor)
-    }
-    if (borderStroke != null) {
-        buttonModifier = buttonModifier.border(borderStroke, shape)
-    }
-    Box(
-        modifier = buttonModifier
-            .alpha(if (enabled) 1f else TemplateUiTokens.DisabledActionAlpha)
-            .clickable(
-                enabled = enabled,
-                role = Role.Button,
-                onClick = onClick
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = contentDescription,
-            modifier = Modifier.size(20.dp),
-            tint = contentColor
-        )
-    }
-}
-
-private enum class TemplateActionButtonStyle {
-    TonalOutlined,
-    Plain,
-    Primary
-}
-
-private fun Modifier.templateDashedBorder(
-    color: Color,
-    cornerRadius: androidx.compose.ui.unit.Dp,
-    strokeWidth: androidx.compose.ui.unit.Dp = 1.dp
-): Modifier = drawWithCache {
-    val stroke = strokeWidth.toPx()
-    val radius = cornerRadius.toPx()
-    val effect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))
-    onDrawBehind {
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(stroke / 2, stroke / 2),
-            size = Size(size.width - stroke, size.height - stroke),
-            cornerRadius = CornerRadius(radius, radius),
-            style = Stroke(width = stroke, pathEffect = effect)
-        )
     }
 }

@@ -120,7 +120,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(presentation.contains("GlobalPrefillStore(preferences).read()"))
         assertTrue(presentation.contains("fun applyTemplate(id: String)"))
         assertTrue(presentation.contains("fun selectTargets(id: String)"))
-        assertTrue(mainActivity.contains("ensureComposeTemplateWorkspacePresentation().state()"))
+        assertTrue(mainActivity.contains("ensureTemplateWorkspaceCoordinator().state()"))
         assertTrue(coordinator.contains("state = content.templateState()"))
         assertTrue(coordinator.contains("onQueryChanged = content::changeTemplateQuery"))
         assertTrue(coordinator.contains("onEditorOpened ="))
@@ -266,7 +266,7 @@ class DpisComposeShellSourceSmokeTest {
     @Test
     fun templateWorkspaceKeepsTheLegacySearchAndHeaderActionSemantics() {
         val template = read(
-                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceList.kt")
         val tokens = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateUiTokens.kt")
         val search = read(
@@ -534,7 +534,7 @@ class DpisComposeShellSourceSmokeTest {
         val targets = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt")
         val templates = read(
-                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceList.kt")
 
         assertTrue(controls.contains("fun Modifier.clearTextInputFocusOnPointerDown("))
         assertTrue(controls.contains("focusManager.clearFocus(force = true)"))

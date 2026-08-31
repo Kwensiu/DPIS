@@ -123,6 +123,10 @@ class MainActivitySourceSmokeTest {
             )
         )
         assertTrue(source.contains("createTemplateWorkspaceActions()"))
+        assertTrue(source.contains("new TemplateWorkspaceBinder.GlobalPrefillActions()"))
+        assertTrue(source.contains("new TemplateWorkspaceBinder.QuickTemplateActions()"))
+        assertFalse(source.contains("GlobalPrefillActionsAdapter"))
+        assertFalse(source.contains("QuickTemplateActionsAdapter"))
         assertTrue(source.contains("bindTemplateWorkspace()"));
         assertTrue(
             compact(source).contains(

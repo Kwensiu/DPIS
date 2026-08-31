@@ -65,7 +65,6 @@ import com.dpis.module.process.ProcessActionHandler;
 import com.dpis.module.templates.QuickTemplateSortDialog;
 
 import com.dpis.module.templates.GlobalPrefillStore;
-import com.dpis.module.templates.GlobalPrefillSaveHandler;
 import com.dpis.module.templates.BatchScopeRequestCoordinator;
 import com.dpis.module.templates.QuickTemplateApplyAdapters;
 import com.dpis.module.templates.TemplateEditorDraft;
@@ -74,12 +73,9 @@ import com.dpis.module.templates.QuickTemplateTargetsBinder;
 import com.dpis.module.templates.TemplateDetailPaneController;
 import com.dpis.module.templates.TemplateWorkspaceBinder;
 import com.dpis.module.templates.TemplateWorkspacePresentation;
-import com.dpis.module.templates.TemplateWorkspacePresentationController;
+import com.dpis.module.templates.TemplateWorkspaceCoordinator;
 
 import com.dpis.module.templates.QuickTemplateStore;
-import com.dpis.module.templates.QuickTemplateActionsAdapter;
-import com.dpis.module.templates.GlobalPrefillActionsAdapter;
-import com.dpis.module.templates.QuickTemplateSaveHandler;
 import com.dpis.module.templates.TemplateEditorForm;
 
 import com.dpis.module.templates.TemplateConfigValue;
@@ -323,7 +319,7 @@ public final class MainActivity
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceBinder templateWorkspaceBinder;
-    private TemplateWorkspacePresentationController templateWorkspacePresentationController;
+    private TemplateWorkspaceCoordinator templateWorkspaceCoordinator;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemFontScaleToolPresenter composeToolsPresenter;
     private SystemServerSettingsPageController settingsPageController;
@@ -1173,7 +1169,7 @@ public final class MainActivity
                     @Override public void openSettingsAbout() { ensureComposeSettingsController().showAboutFromPresentation(); }
                     @Override public void openSettingsDonate() { ensureComposeSettingsController().showDonateFromPresentation(); }
                     @Override public TemplateWorkspacePresentation.State templateState() {
-                        return ensureComposeTemplateWorkspacePresentation().state();
+                        return ensureTemplateWorkspaceCoordinator().state();
                     }
                     @Override public void changeTemplateQuery(String query) {
                         dispatchMainUiAction(MainUiAction.queryChanged(query));
@@ -1307,7 +1303,7 @@ public final class MainActivity
 
     private void bindTemplateWorkspace() {
         if (composeShellHost != null) {
-            ensureComposeTemplateWorkspacePresentation().refresh(
+            ensureTemplateWorkspaceCoordinator().refresh(
                     requireUiState().currentQuery(),
                     composeTemplateDetailKind(),
                     templateDetailSelection != null
@@ -1795,133 +1791,52 @@ public final class MainActivity
         executeHyperOsNativeProxyMount(item, false, success -> { });
     }
 
-    private TemplateWorkspacePresentationController ensureComposeTemplateWorkspacePresentation() {
-        if (templateWorkspacePresentationController == null) {
-            templateWorkspacePresentationController = new TemplateWorkspacePresentationController(
+    private TemplateWorkspaceCoordinator ensureTemplateWorkspaceCoordinator() {
+        if (templateWorkspaceCoordinator == null) {
+            templateWorkspaceCoordinator = new TemplateWorkspaceCoordinator(
                     this,
-                    new TemplateWorkspacePresentation.Actions() {
-                        @Override public void editGlobalPrefill() { showGlobalPrefillEditor(); }
-                        @Override public void createTemplate() { showQuickTemplateEditor(null); }
-                        @Override public void sortTemplates() {
-                            createQuickTemplateActions().sort(new QuickTemplateStore(MainActivity.this).readAll());
+                    new TemplateWorkspaceCoordinator.Host() {
+                        @Override public void editGlobalPrefill() {
+                            showGlobalPrefillEditor();
                         }
-                        @Override public boolean reorderTemplates(List<String> orderedIds) {
-                            boolean reordered = new QuickTemplateStore(MainActivity.this).reorder(orderedIds);
-                            if (reordered) {
-                                bindTemplateWorkspace();
-                            } else {
-                                showToast(R.string.quick_template_sort_failed);
-                            }
-                            return reordered;
+
+                        @Override public void editQuickTemplate(String templateId) {
+                            showQuickTemplateEditor(templateId);
                         }
-                        @Override public void applyTemplate(String id) { applyQuickTemplate(id); }
-                        @Override public void editTemplate(String id) { showQuickTemplateEditor(id); }
-                        @Override public void selectTargets(String id) { showQuickTemplateTargets(id); }
-                        @Override public void openEmbeddedTargets(String id) {
+
+                        @Override public void applyQuickTemplate(String templateId) {
+                            MainActivity.this.applyQuickTemplate(templateId);
+                        }
+
+                        @Override public void selectQuickTemplateTargets(String templateId) {
+                            showQuickTemplateTargets(templateId);
+                        }
+
+                        @Override public void openEmbeddedQuickTemplateTargets(String templateId) {
                             templateDetailSelection =
-                                    TemplateDetailSelection.quickTemplateTargets(id);
+                                    TemplateDetailSelection.quickTemplateTargets(templateId);
                             retainedGlobalPrefillDraft = null;
                             retainedQuickTemplateDraft = null;
                             disposeActiveQuickTemplateTargetsBinder();
                             bindTemplateWorkspace();
                         }
-                        @Override public TemplateWorkspacePresentation.EditorResult saveGlobalPrefill(
-                                TemplateEditorForm form) {
-                            GlobalPrefillSaveHandler.Result result = new GlobalPrefillSaveHandler().save(
-                                    new GlobalPrefillStore(getSharedPreferences(
-                                            DpisConfigStore.GROUP, Context.MODE_PRIVATE)),
-                                    new GlobalPrefillSaveHandler.Request(
-                                            form.viewportInput, form.viewportMode, form.viewportApplyMode,
-                                            form.viewportScaleInput, form.viewportAbsoluteInput,
-                                            form.fontInput, form.fontMode, form.selectedTypefaceId,
-                                            form.fontHookDomainsRaw));
-                            showToast(result.messageResId);
-                            if (result.success) bindTemplateWorkspace();
-                            return new TemplateWorkspacePresentation.EditorResult(
-                                    result.success, result.messageResId, null);
+
+                        @Override public void refreshTemplateWorkspace() {
+                            bindTemplateWorkspace();
                         }
-                        @Override public TemplateWorkspacePresentation.EditorResult saveQuickTemplate(
-                                TemplateEditorForm form) {
-                            QuickTemplateSaveHandler.Result result = new QuickTemplateSaveHandler().save(
-                                    new QuickTemplateStore(MainActivity.this),
-                                    new QuickTemplateSaveHandler.Request(
-                                            form.templateId, form.nameInput, form.viewportInput,
-                                            form.viewportMode, form.viewportApplyMode,
-                                            form.viewportScaleInput, form.viewportAbsoluteInput,
-                                            form.fontInput, form.fontMode, form.selectedTypefaceId,
-                                            form.fontHookDomainsRaw));
-                            showToast(result.messageResId);
-                            if (result.success) bindTemplateWorkspace();
-                            return new TemplateWorkspacePresentation.EditorResult(
-                                    result.success, result.messageResId, result.templateId);
+
+                        @Override public void showToast(int messageResId) {
+                            MainActivity.this.showToast(messageResId);
                         }
-                        @Override public TemplateWorkspacePresentation.EditorResult deleteQuickTemplate(
-                                String id) {
-                            boolean deleted = new QuickTemplateStore(MainActivity.this).delete(id);
-                            int messageResId = deleted
-                                    ? R.string.quick_template_delete_success
-                                    : R.string.quick_template_delete_failed;
-                            showToast(messageResId);
-                            if (deleted) bindTemplateWorkspace();
-                            return new TemplateWorkspacePresentation.EditorResult(deleted, messageResId, id);
-                        }
-                        @Override public void selectTypeface(
-                                TemplateEditorForm form, Runnable onChanged) {
-                            AppConfigDialogBinder.AppConfigDialogState state =
-                                    new AppConfigDialogBinder.AppConfigDialogState(
-                                            false, true, true, false,
-                                            form.quickTemplate ? "__quick_template__" : "__global_prefill__",
-                                            form.fontHookDomainsRaw, form.viewportApplyMode,
-                                            form.selectedTypefaceId, form.viewportMode,
-                                            form.viewportInput, form.viewportScaleInput,
-                                            form.viewportAbsoluteInput);
-                            MaterialButton anchor = new MaterialButton(MainActivity.this);
-                            new AppConfigDialogBinder(MainActivity.this, createAppConfigDialogHost())
-                                    .showTypefaceSelector(anchor, state, () -> {
-                                        form.selectedTypefaceId = state.selectedTypefaceId;
-                                        onChanged.run();
-                                    });
-                        }
-                        @Override public void editHookDomains(
-                                TemplateEditorForm form, Runnable onChanged) {
-                            FontHookDomainDialog.show(
-                                    MainActivity.this,
-                                    new FontHookDomainDialog.Host() {
-                                        @Override public boolean saveCustom(String packageName,
-                                                Set<String> selectedKnownDomains,
-                                                Set<String> automaticKnownDomains,
-                                                Set<String> unknownDomains) {
-                                            form.fontHookDomainsRaw = HookDomainOverrideStore
-                                                    .rawValueForSelection(selectedKnownDomains,
-                                                            automaticKnownDomains, unknownDomains);
-                                            onChanged.run();
-                                            return true;
-                                        }
-                                        @Override public boolean restoreRecommended(String packageName) {
-                                            form.fontHookDomainsRaw = null;
-                                            onChanged.run();
-                                            return true;
-                                        }
-                                        @Override public boolean saveViewportApplyMode(
-                                                String packageName, String mode) {
-                                            form.viewportApplyMode = ViewportApplyMode.normalize(mode);
-                                            onChanged.run();
-                                            return true;
-                                        }
-                                    },
-                                    form.quickTemplate ? "__quick_template__" : "__global_prefill__",
-                                    FontHookDomainRegistry.recommendedTemplateKnownDomains(),
-                                    HookDomainOverrideStore.fromRaw(form.fontHookDomainsRaw),
-                                    form.viewportApplyMode,
-                                    FontApplyMode.FIELD_REWRITE.equals(form.fontMode),
-                                    onChanged
-                            );
+
+                        @Override public AppConfigDialogBinder.Host appConfigDialogHost() {
+                            return createAppConfigDialogHost();
                         }
                     },
                     requireUiState().currentQuery()
             );
         }
-        return templateWorkspacePresentationController;
+        return templateWorkspaceCoordinator;
     }
 
     private static void setVisible(View view, boolean visible) {
@@ -3094,16 +3009,16 @@ public final class MainActivity
     }
 
     private TemplateWorkspaceBinder.GlobalPrefillActions createTemplateWorkspaceActions() {
-        return new GlobalPrefillActionsAdapter(new GlobalPrefillActionsAdapter.Host() {
+        return new TemplateWorkspaceBinder.GlobalPrefillActions() {
             @Override
             public void edit() {
                 showGlobalPrefillEditor();
             }
-        });
+        };
     }
 
     private TemplateWorkspaceBinder.QuickTemplateActions createQuickTemplateActions() {
-        return new QuickTemplateActionsAdapter(new QuickTemplateActionsAdapter.Host() {
+        return new TemplateWorkspaceBinder.QuickTemplateActions() {
             @Override
             public void apply(String templateId) {
                 applyQuickTemplate(templateId);
@@ -3142,7 +3057,7 @@ public final class MainActivity
                 }
                 );
             }
-        });
+        };
     }
 
     private void applyQuickTemplate(String templateId) {
