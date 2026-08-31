@@ -1260,28 +1260,7 @@ public final class AppConfigDialogBinder {
         }
     }
 
-    public static final class AppConfigDialogViews {
-        public final android.widget.ImageView iconView;
-        public final MaterialTextView titleView;
-        public final MaterialTextView packageView;
-        public final MaterialTextView statusView;
-        public final TextInputLayout viewportInputLayout;
-        public final TextInputEditText viewportInputView;
-        public final TextInputLayout fontInputLayout;
-        public final TextInputEditText fontInputView;
-        public final ModeToggle viewportModeToggle;
-        public final ModeToggle fontModeToggle;
-        public final MaterialButton typefaceSelectorButton;
-        public final MaterialButton scopeButton;
-        public final MaterialButton startButton;
-        public final MaterialButton restartButton;
-        public final MaterialButton stopButton;
-        public final MaterialButton dpisToggleButton;
-        public final MaterialButton fontHookDomainsButton;
-        public final MaterialButton disableButton;
-        public final MaterialButton saveButton;
-        public final MaterialButton feedbackDiagnosticButton;
-
+    public static final class AppConfigDialogViews extends com.dpis.module.appconfig.AppConfigDialogViews {
         AppConfigDialogViews(android.widget.ImageView iconView,
                 MaterialTextView titleView,
                 MaterialTextView packageView,
@@ -1302,26 +1281,11 @@ public final class AppConfigDialogBinder {
                 MaterialButton disableButton,
                 MaterialButton saveButton,
                 MaterialButton feedbackDiagnosticButton) {
-            this.iconView = iconView;
-            this.titleView = titleView;
-            this.packageView = packageView;
-            this.statusView = statusView;
-            this.viewportInputLayout = viewportInputLayout;
-            this.viewportInputView = viewportInputView;
-            this.fontInputLayout = fontInputLayout;
-            this.fontInputView = fontInputView;
-            this.viewportModeToggle = viewportModeToggle;
-            this.fontModeToggle = fontModeToggle;
-            this.typefaceSelectorButton = typefaceSelectorButton;
-            this.scopeButton = scopeButton;
-            this.startButton = startButton;
-            this.restartButton = restartButton;
-            this.stopButton = stopButton;
-            this.dpisToggleButton = dpisToggleButton;
-            this.fontHookDomainsButton = fontHookDomainsButton;
-            this.disableButton = disableButton;
-            this.saveButton = saveButton;
-            this.feedbackDiagnosticButton = feedbackDiagnosticButton;
+            super(iconView, titleView, packageView, statusView, viewportInputLayout,
+                    viewportInputView, fontInputLayout, fontInputView, viewportModeToggle,
+                    fontModeToggle, typefaceSelectorButton, scopeButton, startButton,
+                    restartButton, stopButton, dpisToggleButton, fontHookDomainsButton,
+                    disableButton, saveButton, feedbackDiagnosticButton);
         }
     }
 
