@@ -1343,26 +1343,9 @@ public final class AppConfigDialogBinder {
         }
     }
 
-    private static final class TypefaceOption {
-        static final String DISABLED_ID = "__disabled__";
-
-        public final String id;
-        public final String label;
-
+    private static final class TypefaceOption extends TypefaceOptionModel {
         TypefaceOption(String id, String label) {
-            this.id = id;
-            this.label = label;
-        }
-
-        public boolean isDisabled() {
-            return DISABLED_ID.equals(id);
-        }
-
-        public boolean matches(String selectedTypefaceId) {
-            if (id == null) {
-                return selectedTypefaceId == null || selectedTypefaceId.isBlank();
-            }
-            return id.equals(selectedTypefaceId);
+            super(id, label);
         }
     }
 }
