@@ -144,7 +144,7 @@ fun TemplateEditorSurface(
             visible = sheetVisible,
             onDismissRequest = onDismissRequest,
             onHidden = onSheetHidden,
-            topChrome = { DpisSheetVisualChrome(showUnsaved = form.isDirty()) },
+            topChrome = { DpisSheetVisualChrome(showUnsaved = form.isDirty) },
             // The editor body owns the shared bottom reserve. Do not add a second navigation inset.
             contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }
         ) {
@@ -187,7 +187,7 @@ fun TemplateEditorContent(
     val fontError = if (form.isFontInputValid()) null else inputErrorMessage
     val context = LocalContext.current
     val hookDomainsButtonText = FontHookDomainPresentation
-        .forRecommendedTemplateRaw(form.fontHookDomainsRaw)
+        .forAutomaticDomainsRaw(form.fontHookDomainsRaw)
         .buttonText(context)
     Column(
         modifier = modifier
@@ -387,7 +387,7 @@ fun TemplateEditorContent(
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         Button(
             onClick = onSave,
-            enabled = form.isValid(),
+            enabled = form.isValid,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(rememberEditorControlHeight()),
@@ -446,7 +446,7 @@ private fun TemplateEditorSheetHeader(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                if (showInlineBadge && form.isDirty()) {
+                if (showInlineBadge && form.isDirty) {
                     Spacer(Modifier.width(8.dp))
                     UnsavedBadge()
                 }

@@ -257,7 +257,7 @@ public class AppConfigSaveHandlerTest {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app");
         String recommendedRaw = HookDomainOverrideStore.formatCsv(
-                FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                FontHookDomainRegistry.automaticCustomizableDomains(),
                 Set.of());
         assertTrue(store.setPackageFontHookDomainsRaw(item.packageName, "resources_font"));
 

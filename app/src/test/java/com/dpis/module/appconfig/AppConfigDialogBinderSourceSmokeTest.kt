@@ -192,7 +192,7 @@ class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item != null && item.previewFromGlobalPrefill)"));
         assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("))
         assertTrue(binderSource.contains("normalizeDraftText(normalizedHookDomainsRaw())"))
-        assertTrue(binderSource.contains(".forRecommendedTemplateRaw(draftFontHookDomainsRaw)"))
+        assertTrue(binderSource.contains(".forAutomaticDomainsRaw(draftFontHookDomainsRaw)"))
         assertFalse(binderSource.contains("fontHookDomainsResetRequested ? \"font-reset\""))
         assertFalse(binderSource.contains("viewportApplyModeResetRequested ? \"viewport-reset\""))
         assertFalse(binderSource.contains("previewFromGlobalPrefill ? \"preview\" : \"stored\""))

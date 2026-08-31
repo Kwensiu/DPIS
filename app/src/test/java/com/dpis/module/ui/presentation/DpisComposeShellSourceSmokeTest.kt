@@ -257,7 +257,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(workspace.contains("draftRevision = draftRevision"))
         assertTrue(editor.contains("draftRevision: Int"))
         assertTrue(editor.contains("DpisEditorBottomSheet("))
-        assertTrue(editor.contains("DpisSheetVisualChrome(showUnsaved = form.isDirty())"))
+        assertTrue(editor.contains("DpisSheetVisualChrome(showUnsaved = form.isDirty)"))
         assertTrue(editor.contains("contentWindowInsets = { androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0) }"))
         assertTrue(editor.contains(
                 "padding(bottom = edgeToEdgeContentBottomPadding(extraBottomPadding))"))
@@ -314,7 +314,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"))
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"))
         assertTrue(editor.contains("val hookDomainsButtonText = FontHookDomainPresentation"))
-        assertTrue(editor.contains("forRecommendedTemplateRaw(form.fontHookDomainsRaw)"))
+        assertTrue(editor.contains("forAutomaticDomainsRaw(form.fontHookDomainsRaw)"))
         assertTrue(editor.contains(".buttonText(context)"))
         assertFalse(editor.contains("dialog_font_hook_domains_title_with_count, 1, 1"))
     }

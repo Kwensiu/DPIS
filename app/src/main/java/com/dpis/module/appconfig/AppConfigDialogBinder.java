@@ -1483,7 +1483,7 @@ public final class AppConfigDialogBinder {
                 return null;
             }
             return FontHookDomainPresentation
-                    .forRecommendedTemplateRaw(draftFontHookDomainsRaw)
+                    .forAutomaticDomainsRaw(draftFontHookDomainsRaw)
                     .normalizedRawOrNull();
         }
 

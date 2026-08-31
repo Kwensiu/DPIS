@@ -1357,7 +1357,7 @@ public final class LandAppDetailPaneBinder {
 
         FontHookDomainPresentation hookDomains = FontHookDomainPresentation.forOverride(
                 resolveHookDomainOverride(activity, item, state),
-                FontHookDomainRegistry.recommendedTemplateKnownDomains());
+                FontHookDomainRegistry.automaticCustomizableDomains());
         if (!hookDomains.displaysAsAutomatic()) {
             parts.add(
                     activity.getString(
@@ -1389,7 +1389,7 @@ public final class LandAppDetailPaneBinder {
                         || state.draftFontHookDomainsRaw != null)) {
             return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
                     HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                    FontHookDomainRegistry.recommendedTemplateKnownDomains());
+                    FontHookDomainRegistry.automaticCustomizableDomains());
         }
         if (item == null || item.packageName == null || item.packageName.isBlank()) {
             return HookDomainOverride.automatic();
@@ -1397,7 +1397,7 @@ public final class LandAppDetailPaneBinder {
         DpisConfigStore store = DpisApplication.getActiveHookConfigStore(activity);
         return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
                 new HookDomainOverrideStore(store).read(item.packageName),
-                FontHookDomainRegistry.recommendedTemplateKnownDomains());
+                FontHookDomainRegistry.automaticCustomizableDomains());
     }
 
     private static final class ActionButtonStyle {

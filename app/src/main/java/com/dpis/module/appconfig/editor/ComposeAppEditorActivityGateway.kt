@@ -7,9 +7,8 @@ import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.quirks.WechatDpiSheetBinder
-import com.dpis.module.templates.GlobalPrefillStore
-import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.viewport.ViewportTargetSpec
 
 /** Android-facing capability bridge for the primary Compose app editor. */
@@ -27,10 +26,7 @@ internal class ComposeAppEditorActivityGateway(
             ?: return null
         val store = activity.getHookConfigStore()
         if (store != null) item = item.withDpisEnabled(store.isTargetDpisEnabled(packageName))
-        val globalPrefill: TemplateConfigValue = GlobalPrefillStore(
-            activity.getSharedPreferences(DpisConfigStore.GROUP, MainActivity.MODE_PRIVATE),
-        ).read()
-        return AppConfigPrefillPreview.applyIfEligible(item, store, globalPrefill)
+        return AppConfigPrefillPreview.resolveForEditor(activity, item, store)
     }
 
     override fun resolvePackageVersionName(packageName: String): String =
@@ -47,7 +43,8 @@ internal class ComposeAppEditorActivityGateway(
         activity.getFontHookDomainsButtonText(item, state)
 
     override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore()
-    override fun automaticFontHookDomains(): Set<String> = activity.recommendedTemplateFontHookDomains()
+    override fun automaticFontHookDomains(): Set<String> =
+        FontHookDomainRegistry.automaticCustomizableDomains()
 
     override fun restoreClosedDraft(item: AppListItem, draft: EditorDraft?): EditorDraft? {
         val store = activity.getHookConfigStore()

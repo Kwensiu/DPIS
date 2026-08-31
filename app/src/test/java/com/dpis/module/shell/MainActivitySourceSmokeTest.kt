@@ -667,8 +667,7 @@ class MainActivitySourceSmokeTest {
     fun showEditDialog_usesSheetCoordinatorInPortraitAndDetailPaneInLandscape() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
-        assertTrue(source.contains("new GlobalPrefillStore("))
-        assertTrue(source.contains("AppConfigPrefillPreview.applyIfEligible("))
+        assertTrue(source.contains("AppConfigPrefillPreview.resolveForEditor(this, item, store)"))
         assertTrue(
             source.contains("dialogView, sheetItem, systemHooksEnabled")
         )
@@ -1215,7 +1214,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"));
         assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"));
-        assertTrue(source.contains("FontHookDomainRegistry.recommendedTemplateKnownDomains()"))
+        assertTrue(source.contains("FontHookDomainRegistry.automaticCustomizableDomains()"))
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("))
         assertTrue(source.contains("FontHookDomainPresentation.forOverride("))
         assertTrue(source.contains(".buttonText(this)"));
@@ -1270,7 +1269,7 @@ class MainActivitySourceSmokeTest {
             "String getFontHookDomainsButtonText("
         )
         val methodEnd = source.indexOf(
-            "Set<String> recommendedTemplateFontHookDomains",
+            "private HookDomainOverride normalizedFontHookDomainsOverride(",
             methodStart
         )
         val method = source.substring(methodStart, methodEnd)

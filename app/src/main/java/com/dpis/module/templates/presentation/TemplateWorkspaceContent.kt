@@ -235,7 +235,7 @@ fun TemplateWorkspaceContent(
             destination = editorDestination,
             rawDomains = editorDraft.form.fontHookDomainsRaw,
             fontDomainsResetRequested = editorDraft.form.fontHookDomainsRaw == null,
-            automaticDomains = FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+            automaticDomains = FontHookDomainRegistry.automaticCustomizableDomains(),
             fontDomainsEditable = editorDraft.form.fontMode ==
                 com.dpis.module.fonts.FontApplyMode.FIELD_REWRITE,
             viewportApplyMode = editorDraft.form.viewportApplyMode,
@@ -430,7 +430,7 @@ fun TemplateWorkspaceContent(
             confirmLabel = stringResource(R.string.font_library_delete_action),
             onConfirm = {
                 deleteConfirmationVisible = false
-                val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId)
+                val result = state.actions.deleteQuickTemplate(editorDraft.form.templateId.orEmpty())
                 if (result.success) closeEditor()
             }
         )

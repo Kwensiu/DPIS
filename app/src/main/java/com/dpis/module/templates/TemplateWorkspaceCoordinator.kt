@@ -294,7 +294,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                     }
                 },
                 templatePackageName(form),
-                FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+                FontHookDomainRegistry.automaticCustomizableDomains(),
                 HookDomainOverrideStore.fromRaw(form.fontHookDomainsRaw),
                 form.viewportApplyMode,
                 FontApplyMode.FIELD_REWRITE == form.fontMode,

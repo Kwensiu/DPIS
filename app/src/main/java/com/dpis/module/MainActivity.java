@@ -63,11 +63,8 @@ import com.dpis.module.quirks.WechatDpiSheetBinder;
 import com.dpis.module.process.ProcessActionHandler;
 
 
-import com.dpis.module.templates.GlobalPrefillStore;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.templates.TemplateWorkspaceActivitySession;
-
-import com.dpis.module.templates.TemplateConfigValue;
 
 import com.dpis.module.applist.AppListFilterStateStore;
 
@@ -1860,14 +1857,7 @@ public final class MainActivity
             return;
         }
         DpisConfigStore store = getHookConfigStore();
-        TemplateConfigValue globalPrefill = new GlobalPrefillStore(
-                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
-        ).read();
-        AppListItem sheetItem = AppConfigPrefillPreview.applyIfEligible(
-                item,
-                store,
-                globalPrefill
-        );
+        AppListItem sheetItem = AppConfigPrefillPreview.resolveForEditor(this, item, store);
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         ViewGroup root = findViewById(android.R.id.content);
         View dialogView = LayoutInflater.from(this).inflate(
@@ -1931,14 +1921,7 @@ public final class MainActivity
             return;
         }
         DpisConfigStore store = getHookConfigStore();
-        TemplateConfigValue globalPrefill = new GlobalPrefillStore(
-                getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
-        ).read();
-        AppListItem sheetItem = AppConfigPrefillPreview.applyIfEligible(
-                item,
-                store,
-                globalPrefill
-        );
+        AppListItem sheetItem = AppConfigPrefillPreview.resolveForEditor(this, item, store);
         boolean systemHooksEnabled = isSystemHookEnabledFromStore();
         View dialogView = LayoutInflater.from(this).inflate(
                 R.layout.view_land_app_detail,
@@ -3166,7 +3149,7 @@ public final class MainActivity
             return;
         }
         DpisConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = recommendedTemplateFontHookDomains();
+        Set<String> automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains();
         HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
         FontHookDomainDialog.show(
                 this,
@@ -3253,7 +3236,7 @@ public final class MainActivity
     ) {
         return FontHookDomainPresentation.forOverride(
                 resolveFontHookDomainsForDraft(item, state),
-                recommendedTemplateFontHookDomains())
+                FontHookDomainRegistry.automaticCustomizableDomains())
                 .buttonText(this);
     }
 
@@ -3269,12 +3252,12 @@ public final class MainActivity
                         || state.draftFontHookDomainsRaw != null)) {
             return normalizedFontHookDomainsOverride(
                     HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                    recommendedTemplateFontHookDomains());
+                    FontHookDomainRegistry.automaticCustomizableDomains());
         }
         return normalizedFontHookDomainsOverride(
                 new HookDomainOverrideStore(getHookConfigStore()).read(
                         item != null ? item.packageName : null),
-                recommendedTemplateFontHookDomains());
+                FontHookDomainRegistry.automaticCustomizableDomains());
     }
 
     private HookDomainOverride normalizedFontHookDomainsOverride(
@@ -3283,15 +3266,6 @@ public final class MainActivity
         return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
                 override,
                 automaticKnownDomains);
-    }
-
-    Set<String> recommendedTemplateFontHookDomains() {
-        // The custom hook-chain editor owns the compat/field-rewrite route.
-        // System-mode font routes are scheduled separately and must not share
-        // this user-editable switch state. This template is intentionally not
-        // package-specific; built-in app routes must not become implicit custom
-        // hook-chain selections.
-        return FontHookDomainRegistry.recommendedTemplateKnownDomains();
     }
 
     private void executeHyperOsNativeProxyMount(

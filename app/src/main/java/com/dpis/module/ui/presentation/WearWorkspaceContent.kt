@@ -513,7 +513,7 @@ private fun WearTemplateEditorContent(
             destination = state.editorDestination,
             rawDomains = editorDraft.form.fontHookDomainsRaw,
             resetDomains = editorDraft.form.fontHookDomainsRaw == null,
-            automaticDomains = FontHookDomainRegistry.recommendedTemplateKnownDomains(),
+            automaticDomains = FontHookDomainRegistry.automaticCustomizableDomains(),
             editable = editorDraft.form.fontMode == FontApplyMode.FIELD_REWRITE,
             viewportApplyMode = editorDraft.form.viewportApplyMode,
             onChanged = { raw, reset, mode, _ ->
