@@ -241,12 +241,14 @@ class MainActivitySourceSmokeTest {
         val draft = read("src/main/java/com/dpis/module/templates/TemplateEditorDraft.java")
         val workspace = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt")
+        val coordinator = read(
+                "src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
 
         assertTrue(source.contains("TemplateWorkspaceCoordinator.RouteState initialTemplateRoute"))
         assertTrue(source.contains("initialTemplateRoute = retainedState.templateRoute"))
-        assertTrue(source.contains("templateRoute.globalPrefillDraft()"))
-        assertTrue(source.contains("templateRoute.quickTemplateDraft()"))
-        assertTrue(source.contains("new TemplateWorkspaceCoordinator.RouteState("))
+        assertTrue(coordinator.contains("routeState.globalPrefillDraft()"))
+        assertTrue(coordinator.contains("routeState.quickTemplateDraft()"))
+        assertTrue(source.contains("ensureTemplateWorkspaceCoordinator().restoreRoute(savedInstanceState)"))
         assertTrue(draft.contains("viewportScaleInput"))
         assertTrue(draft.contains("viewportAbsoluteInput"))
         assertTrue(workspace.contains("globalPrefillDraft: TemplateEditorDraft?"))

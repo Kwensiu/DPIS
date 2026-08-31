@@ -429,22 +429,6 @@ public final class MainActivity
             initialRefreshingPages = decodeRefreshingPages(
                     savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
             );
-            initialTemplateRoute = new TemplateWorkspaceCoordinator.RouteState(
-                    restoreTemplateDetailSelection(savedInstanceState),
-                    ConfigEditorDestination.fromName(
-                            savedInstanceState.getString(STATE_TEMPLATE_EDITOR_DESTINATION)
-                    ),
-                    savedInstanceState.getBoolean(
-                            STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
-                            false
-                    ),
-                    TemplateWorkspaceStateCodec.restoreGlobalPrefillDraft(
-                            savedInstanceState.getBundle(STATE_GLOBAL_PREFILL_DRAFT)
-                    ),
-                    TemplateWorkspaceStateCodec.restoreQuickTemplateDraft(
-                            savedInstanceState.getBundle(STATE_QUICK_TEMPLATE_DRAFT)
-                    )
-            );
         }
         mainViewModel = new MainViewModel(
                 MainUiState.initial(
@@ -457,6 +441,7 @@ public final class MainActivity
                 )
         );
         initializeTemplateWorkspaceCoordinator(initialTemplateRoute, initialTemplateQuery);
+        ensureTemplateWorkspaceCoordinator().restoreRoute(savedInstanceState);
         composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
                 mainViewModel,
                 (item, onApproved) -> systemScopeCoordinator.requestScope(
@@ -703,15 +688,7 @@ public final class MainActivity
         } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);
         }
-        if (requestCode == REQUEST_QUICK_TEMPLATE_TARGETS) {
-            templateRoute().markTargetSelectionActivityFinished();
-            if (QuickTemplateTargetCarrierState.shouldClearPendingAfterResult(
-                    isLandscapeDetailMode(),
-                    templateRoute().hasPendingQuickTemplateTargets(),
-                    quickTemplateTargetCloseReason(data)
-            )) {
-                clearTemplateDetailSelection();
-            }
+        if (ensureTemplateWorkspaceCoordinator().handleActivityResult(requestCode, data)) {
             return;
         }
         if (requestCode == REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
@@ -723,15 +700,6 @@ public final class MainActivity
                     feedbackDiagnosticSession.diagnosticPackage()
             );
         }
-    }
-
-    private static QuickTemplateTargetCarrierState.CloseReason quickTemplateTargetCloseReason(
-            Intent data
-    ) {
-        String reason = data != null
-                ? data.getStringExtra(QuickTemplateTargetSelectionContract.EXTRA_CLOSE_REASON)
-                : null;
-        return QuickTemplateTargetSelectionContract.closeReasonFrom(reason);
     }
 
     @Override
@@ -777,28 +745,7 @@ public final class MainActivity
                 STATE_REFRESHING_PAGES,
                 captureRefreshingPagePositions()
         );
-        TemplateWorkspaceCoordinator.RouteState templateRoute = templateRoute();
-        saveTemplateDetailSelection(outState, templateRoute.selection());
-        outState.putString(
-                STATE_TEMPLATE_EDITOR_DESTINATION,
-                templateRoute.editorDestination().name()
-        );
-        outState.putBoolean(
-                STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED,
-                templateRoute.targetSelectionActivityStarted()
-        );
-        if (templateRoute.globalPrefillDraft() != null) {
-            outState.putBundle(
-                    STATE_GLOBAL_PREFILL_DRAFT,
-                    TemplateWorkspaceStateCodec.saveGlobalPrefillDraft(templateRoute.globalPrefillDraft())
-            );
-        }
-        if (templateRoute.quickTemplateDraft() != null) {
-            outState.putBundle(
-                    STATE_QUICK_TEMPLATE_DRAFT,
-                    TemplateWorkspaceStateCodec.saveQuickTemplateDraft(templateRoute.quickTemplateDraft())
-            );
-        }
+        ensureTemplateWorkspaceCoordinator().saveRoute(outState);
     }
 
     @Override
@@ -1800,6 +1747,14 @@ public final class MainActivity
 
                         @Override public void runOnUiThread(Runnable runnable) {
                             MainActivity.this.runOnUiThread(runnable);
+                        }
+
+                        @Override public boolean isLandscapeTemplateDetailMode() {
+                            return isLandscapeDetailMode();
+                        }
+
+                        @Override public void onTemplateRouteClosed() {
+                            clearTemplateDetailSelection();
                         }
                     },
                     initialQuery,

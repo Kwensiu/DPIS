@@ -22,6 +22,7 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         String contract = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java");
         String targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.kt");
+        String routeState = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
         String filterState = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetFilterState.kt");
         String catalogLoader = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetCatalogLoader.kt");
         String presentation = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsPresentationController.java");
@@ -144,19 +145,16 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"));
         assertTrue(mainActivity.contains("templateRoute().targetSelectionActivityStarted()"));
         assertTrue(mainActivity.contains("templateRoute().markTargetSelectionActivityStarted()"));
-        assertTrue(mainActivity.contains("templateRoute().markTargetSelectionActivityFinished()"));
+        assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"));
         assertTrue(mainActivity.contains("startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);"));
         assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("));
-        assertTrue(mainActivity.contains("requestCode == REQUEST_QUICK_TEMPLATE_TARGETS"));
-        assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldStartPortraitActivity("));
-        assertTrue(mainActivity.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("));
-        assertTrue(mainActivity.contains("quickTemplateTargetCloseReason(data)"));
-        assertTrue(mainActivity.contains("QuickTemplateTargetSelectionContract.closeReasonFrom(reason)"));
+        assertFalse(mainActivity.contains("requestCode == REQUEST_QUICK_TEMPLATE_TARGETS"));
+        assertTrue(routeState.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("));
+        assertTrue(routeState.contains("QuickTemplateTargetSelectionContract.closeReasonFrom("));
         assertTrue(carrierState.contains("enum CloseReason"));
         assertTrue(carrierState.contains("ORIENTATION_MIGRATION"));
         assertTrue(mainActivity.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
         assertTrue(mainActivity.contains("TemplateDetailPaneController"));
-        String routeState = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
         assertTrue(routeState.contains("class RouteState"));
         assertTrue(routeState.contains("fun resetTargetSelectionActivityForConfiguration()"));
         String detailController = read("src/main/java/com/dpis/module/templates/TemplateDetailPaneController.kt");

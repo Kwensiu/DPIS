@@ -2,11 +2,14 @@ package com.dpis.module.templates
 
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.os.Bundle
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.TemplateDetailKind
 import com.dpis.module.TemplateDetailSelection
+import com.dpis.module.TemplateWorkspaceStateCodec
 import com.dpis.module.appconfig.AppConfigDialogBinder
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
@@ -116,6 +119,20 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             quickTemplateDraft = null
             quickTemplateTargetSelectionActivityStarted = false
         }
+
+        fun restore(
+            selection: TemplateDetailSelection,
+            destination: ConfigEditorDestination,
+            targetActivityStarted: Boolean,
+            globalDraft: TemplateEditorDraft?,
+            quickDraft: TemplateEditorDraft?,
+        ) {
+            detailSelection = selection
+            editorDestination = destination
+            quickTemplateTargetSelectionActivityStarted = targetActivityStarted
+            globalPrefillDraft = globalDraft
+            quickTemplateDraft = quickDraft
+        }
     }
 
     interface Host {
@@ -131,6 +148,8 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         fun onTemplateRuntimeConfigSaved()
         fun requestAppsLoad()
         fun runOnUiThread(runnable: Runnable)
+        fun isLandscapeTemplateDetailMode(): Boolean
+        fun onTemplateRouteClosed()
     }
 
     private val actions = object : TemplateWorkspacePresentation.Actions {
@@ -294,6 +313,51 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     fun route() = routeState
 
+    fun restoreRoute(savedState: Bundle?) {
+        if (savedState == null) return
+        routeState.restore(
+            restoreSelection(savedState),
+            ConfigEditorDestination.fromName(savedState.getString(STATE_EDITOR_DESTINATION)),
+            savedState.getBoolean(STATE_TARGET_ACTIVITY_STARTED, false),
+            TemplateWorkspaceStateCodec.restoreGlobalPrefillDraft(
+                savedState.getBundle(STATE_GLOBAL_DRAFT),
+            ),
+            TemplateWorkspaceStateCodec.restoreQuickTemplateDraft(
+                savedState.getBundle(STATE_QUICK_DRAFT),
+            ),
+        )
+    }
+
+    fun saveRoute(outState: Bundle) {
+        val selection = routeState.selection()
+        outState.putString(STATE_DETAIL_KIND, selection.kind.name)
+        outState.putString(STATE_DETAIL_ID, selection.templateId)
+        outState.putString(STATE_EDITOR_DESTINATION, routeState.editorDestination().name)
+        outState.putBoolean(STATE_TARGET_ACTIVITY_STARTED, routeState.targetSelectionActivityStarted())
+        routeState.globalPrefillDraft()?.let {
+            outState.putBundle(STATE_GLOBAL_DRAFT, TemplateWorkspaceStateCodec.saveGlobalPrefillDraft(it))
+        }
+        routeState.quickTemplateDraft()?.let {
+            outState.putBundle(STATE_QUICK_DRAFT, TemplateWorkspaceStateCodec.saveQuickTemplateDraft(it))
+        }
+    }
+
+    /** @return true only when this result belongs to the template module. */
+    fun handleActivityResult(requestCode: Int, data: Intent?): Boolean {
+        if (requestCode != REQUEST_TARGET_SELECTION) return false
+        routeState.markTargetSelectionActivityFinished()
+        if (QuickTemplateTargetCarrierState.shouldClearPendingAfterResult(
+                host.isLandscapeTemplateDetailMode(),
+                routeState.hasPendingQuickTemplateTargets(),
+                closeReason(data),
+            )
+        ) {
+            routeState.clear()
+            host.onTemplateRouteClosed()
+        }
+        return true
+    }
+
     /** Runs the complete apply confirmation and persistence workflow inside the template module. */
     fun applyQuickTemplate(templateId: String) {
         val template = QuickTemplateStore(activity).read(templateId)
@@ -393,10 +457,35 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         TemplateDetailKind.NONE -> TemplateWorkspacePresentation.DetailKind.NONE
     }
 
+    private fun restoreSelection(savedState: Bundle): TemplateDetailSelection = when (
+        TemplateDetailKind.fromName(savedState.getString(STATE_DETAIL_KIND))
+    ) {
+        TemplateDetailKind.GLOBAL_PREFILL -> TemplateDetailSelection.globalPrefill()
+        TemplateDetailKind.QUICK_TEMPLATE -> TemplateDetailSelection.quickTemplate(
+            savedState.getString(STATE_DETAIL_ID),
+        )
+        TemplateDetailKind.QUICK_TEMPLATE_TARGETS -> TemplateDetailSelection.quickTemplateTargets(
+            savedState.getString(STATE_DETAIL_ID),
+        )
+        TemplateDetailKind.NONE -> TemplateDetailSelection.none()
+    }
+
+    private fun closeReason(data: Intent?): QuickTemplateTargetCarrierState.CloseReason =
+        QuickTemplateTargetSelectionContract.closeReasonFrom(
+            data?.getStringExtra(QuickTemplateTargetSelectionContract.EXTRA_CLOSE_REASON),
+        )
+
     private fun templatePackageName(form: TemplateEditorForm) =
         if (form.quickTemplate) QUICK_TEMPLATE_PACKAGE else GLOBAL_PREFILL_PACKAGE
 
     private companion object {
+        const val REQUEST_TARGET_SELECTION = 10023
+        const val STATE_DETAIL_KIND = "state.template_detail.kind"
+        const val STATE_DETAIL_ID = "state.template_detail.id"
+        const val STATE_EDITOR_DESTINATION = "state.template_editor.destination"
+        const val STATE_TARGET_ACTIVITY_STARTED = "state.quick_template.targets_activity_started"
+        const val STATE_GLOBAL_DRAFT = "state.global_prefill.draft"
+        const val STATE_QUICK_DRAFT = "state.quick_template.draft"
         const val QUICK_TEMPLATE_PACKAGE = "__quick_template__"
         const val GLOBAL_PREFILL_PACKAGE = "__global_prefill__"
     }
