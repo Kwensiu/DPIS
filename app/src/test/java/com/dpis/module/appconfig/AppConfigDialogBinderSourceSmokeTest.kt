@@ -55,7 +55,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun binder_wiresExpectedActionButtons() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
-        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
         val interactionsSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
         val source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java") +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
@@ -183,7 +183,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
-        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
         val layout = read("src/main/res/layout/dialog_app_config.xml")
 
         assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"))
@@ -462,13 +462,14 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun appConfigSheetDefaultsToScaleAndSystemFontMode() {
-        val source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
+        val source = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java") +
+            read("src/main/java/com/dpis/module/appconfig/AppConfigDialogPolicy.kt")
 
         assertTrue(source.contains("String initialViewportType = initialViewportTargetType(item)"))
         assertTrue(source.contains("bindViewportModeToggle(views.viewportModeToggle, initialViewportType, false)"))
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"))
         assertTrue(source.contains("bindFontModeToggle(views.fontModeToggle, initialFontMode(item.fontMode), false)"))
-        assertTrue(source.contains("private static String initialViewportTargetType(AppListItem item)"))
+        assertTrue(source.contains("fun initialViewportTargetType(item: AppListItem?)"))
         assertTrue(source.contains("ViewportTargetType.normalize(item.viewportTargetType)"))
         assertTrue(source.contains("AppConfigInputValidation.initialFontMode(fontMode)"))
         assertTrue(source.contains("AppConfigInputValidation.initialViewportTargetType("))
@@ -477,8 +478,8 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun viewportModeSwitchKeepsSeparateInputValues() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
-        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
-        val modeSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModeLogic.kt")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
+        val modeSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogPolicy.kt")
         val source = binderSource + stateSource +
             modeSource +
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java") +
@@ -641,7 +642,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.java")
-        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogStateModel.kt")
+        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
         val actionSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
 

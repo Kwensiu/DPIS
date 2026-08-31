@@ -977,20 +977,17 @@ public final class AppConfigDialogBinder {
     }
 
     private static Integer parsePositiveIntOrNullSafe(TextInputEditText inputView) {
-        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
-        return AppConfigInputValidation.parsePositiveIntOrNull(raw);
+        return AppConfigDialogInputLogic.parsePositiveIntOrNull(inputView);
     }
 
     private static ViewportTargetSpec parseViewportTargetSpecOrNullSafe(
             TextInputEditText inputView,
             String viewportTargetType) {
-        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
-        return AppConfigInputValidation.parseViewportTargetSpec(raw, viewportTargetType);
+        return AppConfigDialogInputLogic.parseViewportTargetSpecOrNull(inputView, viewportTargetType);
     }
 
     private static Integer parseFontScalePercentOrNullSafe(TextInputEditText inputView) {
-        String raw = inputView.getText() != null ? inputView.getText().toString() : "";
-        return AppConfigInputValidation.parseFontScalePercentOrNull(raw);
+        return AppConfigDialogInputLogic.parseFontScalePercentOrNull(inputView);
     }
 
     public static String resolveFontMode(ModeToggle fontModeToggle) {
@@ -998,7 +995,7 @@ public final class AppConfigDialogBinder {
     }
 
     private static String initialFontMode(String fontMode) {
-        return AppConfigInputValidation.initialFontMode(fontMode);
+        return AppConfigDialogInputLogic.initialFontMode(fontMode);
     }
 
     public static String resolveViewportMode(ModeToggle viewportModeToggle) {
@@ -1006,14 +1003,7 @@ public final class AppConfigDialogBinder {
     }
 
     private static String initialViewportTargetType(AppListItem item) {
-        if (item != null
-                && item.viewportTargetSpec != null
-                && !item.viewportTargetSpec.isEnabled()
-                && !ViewportTargetType.OFF.equals(ViewportTargetType.normalize(item.viewportTargetType))) {
-            return ViewportTargetType.normalize(item.viewportTargetType);
-        }
-        return AppConfigInputValidation.initialViewportTargetType(
-                item != null ? item.viewportTargetSpec : null);
+        return AppConfigDialogInputLogic.initialViewportTargetType(item);
     }
 
     public static void bindFontModeToggle(ModeToggle fontModeToggle,
