@@ -3,6 +3,8 @@ package com.dpis.module.templates
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.view.View
+import android.widget.FrameLayout
 import android.os.Bundle
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.DpisConfigStore
@@ -136,10 +138,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
     }
 
     interface Host {
-        fun editGlobalPrefill()
-        fun editQuickTemplate(templateId: String?)
-        fun selectQuickTemplateTargets(templateId: String)
-        fun openEmbeddedQuickTemplateTargets(templateId: String)
         fun refreshTemplateWorkspace()
         fun showToast(messageResId: Int, vararg formatArgs: Any?)
         fun appConfigDialogHost(): AppConfigDialogBinder.Host
@@ -148,14 +146,12 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         fun onTemplateRuntimeConfigSaved()
         fun requestAppsLoad()
         fun runOnUiThread(runnable: Runnable)
-        fun isLandscapeTemplateDetailMode(): Boolean
-        fun onTemplateRouteClosed()
     }
 
     private val actions = object : TemplateWorkspacePresentation.Actions {
-        override fun editGlobalPrefill() = host.editGlobalPrefill()
+        override fun editGlobalPrefill() = openGlobalPrefill()
 
-        override fun createTemplate() = host.editQuickTemplate(null)
+        override fun createTemplate() = openQuickTemplate(null)
 
         override fun sortTemplates() {
             QuickTemplateSortDialog.show(
@@ -172,7 +168,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         override fun reorderTemplates(orderedIds: List<String>): Boolean {
             val reordered = QuickTemplateStore(activity).reorder(orderedIds)
             if (reordered) {
-                host.refreshTemplateWorkspace()
+                publish()
             } else {
                 host.showToast(R.string.quick_template_sort_failed)
             }
@@ -181,11 +177,15 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
         override fun applyTemplate(id: String) = applyQuickTemplate(id)
 
-        override fun editTemplate(id: String) = host.editQuickTemplate(id)
+        override fun editTemplate(id: String) = openQuickTemplate(id)
 
-        override fun selectTargets(id: String) = host.selectQuickTemplateTargets(id)
+        override fun selectTargets(id: String) = openQuickTemplateTargets(id)
 
-        override fun openEmbeddedTargets(id: String) = host.openEmbeddedQuickTemplateTargets(id)
+        override fun openEmbeddedTargets(id: String) {
+            routeState.openEmbeddedQuickTemplateTargets(id)
+            legacyDetailController?.dispose()
+            publish()
+        }
 
         override fun saveGlobalPrefill(form: TemplateEditorForm): TemplateWorkspacePresentation.EditorResult {
             val result = GlobalPrefillSaveHandler().save(
@@ -203,7 +203,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 ),
             )
             host.showToast(result.messageResId)
-            if (result.success) host.refreshTemplateWorkspace()
+            if (result.success) publish()
             return TemplateWorkspacePresentation.EditorResult(result.success, result.messageResId, null)
         }
 
@@ -225,7 +225,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 ),
             )
             host.showToast(result.messageResId)
-            if (result.success) host.refreshTemplateWorkspace()
+            if (result.success) publish()
             return TemplateWorkspacePresentation.EditorResult(result.success, result.messageResId, result.templateId)
         }
 
@@ -237,7 +237,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 R.string.quick_template_delete_failed
             }
             host.showToast(messageResId)
-            if (deleted) host.refreshTemplateWorkspace()
+            if (deleted) publish()
             return TemplateWorkspacePresentation.EditorResult(deleted, messageResId, id)
         }
 
@@ -308,10 +308,121 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     private val routeState = initialRoute
     private val presentation = TemplateWorkspacePresentationController(activity, actions, initialQuery)
+    private var legacyWorkspace: View? = null
+    private var legacyDetailEmpty: View? = null
+    private var legacyDetailContent: FrameLayout? = null
+    private var legacyWorkspaceBinder: TemplateWorkspaceBinder? = null
+    private var legacyDetailController: TemplateDetailPaneController? = null
+    private var composePresentation = false
 
     fun state() = presentation.state()
 
+    fun quickTemplateCount() = QuickTemplateStore(activity).readAll().size
+
+    /**
+     * Exposes the workspace to the app shell as one deep presentation interface. The callback is
+     * intentionally limited to the shell-owned query state; all template route transitions stay
+     * within this coordinator.
+     */
+    fun presentationSource(onQueryChanged: (String) -> Unit): TemplateWorkspacePresentationSource =
+        object : TemplateWorkspacePresentationSource {
+            override fun state() = this@TemplateWorkspaceCoordinator.state()
+
+            override fun changeQuery(query: String) {
+                onQueryChanged(query)
+                refresh(query)
+            }
+
+            override fun openEditor(quickTemplate: Boolean, templateId: String?) {
+                if (quickTemplate) routeState.openQuickTemplate(templateId)
+                else routeState.openGlobalPrefill()
+                publish()
+            }
+
+            override fun updateEditor(form: TemplateEditorForm) {
+                if (!routeState.updateDraft(form)) publish()
+            }
+
+            override fun updateEditorDestination(destination: ConfigEditorDestination) {
+                routeState.updateEditorDestination(destination)
+                publish()
+            }
+
+            override fun closeEditor() {
+                routeState.clear()
+                publish()
+            }
+        }
+
     fun route() = routeState
+
+    /** Attaches the retained View-only surfaces without leaking their binders into MainActivity. */
+    fun attachLegacyViews(workspace: View?, detailEmpty: View?, detailContent: FrameLayout?) {
+        legacyWorkspace = workspace
+        legacyDetailEmpty = detailEmpty
+        legacyDetailContent = detailContent
+        legacyDetailController = TemplateDetailPaneController(
+            activity,
+            detailContent,
+            detailEmpty,
+            legacyTargetsHost(),
+            Runnable { closeRoute() },
+        )
+        legacyWorkspaceBinder = TemplateWorkspaceBinder(
+            activity,
+            object : TemplateWorkspaceBinder.GlobalPrefillActions {
+                override fun edit() = openGlobalPrefill()
+            },
+            object : TemplateWorkspaceBinder.QuickTemplateActions {
+                override fun apply(templateId: String) = applyQuickTemplate(templateId)
+                override fun edit(templateId: String) = openQuickTemplate(templateId)
+                override fun select(templateId: String) = openQuickTemplateTargets(templateId)
+                override fun create() = openQuickTemplate(null)
+                override fun sort(templates: List<QuickTemplateStore.QuickTemplate>) = actions.sortTemplates()
+            },
+        )
+    }
+
+    /** Rebinds whichever presentation is active after a template state transition. */
+    fun present(query: String, compose: Boolean) {
+        composePresentation = compose
+        refresh(query)
+        if (compose) {
+            publish()
+            return
+        }
+        legacyWorkspaceBinder?.bind(legacyWorkspace, query)
+        updateLegacyDetailVisibility(true)
+    }
+
+    fun restoreForConfiguration(query: String, compose: Boolean) {
+        val selection = routeState.selection()
+        if (selection.kind == TemplateDetailKind.NONE) return
+        if (compose) {
+            present(query, true)
+            return
+        }
+        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
+            routeState.resetTargetSelectionActivityForConfiguration()
+            showLegacyDetail(selection)
+            startPortraitTargetSelection(selection.templateId)
+        }
+    }
+
+    fun updateLegacyDetailVisibility(templateWorkspaceVisible: Boolean) {
+        val hasSelection = routeState.selection().kind != TemplateDetailKind.NONE
+        legacyDetailEmpty?.visibility = if (templateWorkspaceVisible && !hasSelection) View.VISIBLE else View.GONE
+        legacyDetailContent?.visibility = if (templateWorkspaceVisible && hasSelection) View.VISIBLE else View.GONE
+    }
+
+    fun onDestroy() {
+        legacyDetailController?.dispose()
+        legacyDetailController = null
+        legacyWorkspaceBinder = null
+        legacyWorkspace = null
+        legacyDetailEmpty = null
+        legacyDetailContent = null
+    }
 
     fun restoreRoute(savedState: Bundle?) {
         if (savedState == null) return
@@ -347,13 +458,13 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         if (requestCode != REQUEST_TARGET_SELECTION) return false
         routeState.markTargetSelectionActivityFinished()
         if (QuickTemplateTargetCarrierState.shouldClearPendingAfterResult(
-                host.isLandscapeTemplateDetailMode(),
+                isLegacyLandscapeDetailMode(),
                 routeState.hasPendingQuickTemplateTargets(),
                 closeReason(data),
             )
         ) {
-            routeState.clear()
-            host.onTemplateRouteClosed()
+            closeRoute()
+            publish()
         }
         return true
     }
@@ -363,7 +474,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         val template = QuickTemplateStore(activity).read(templateId)
         if (template == null) {
             host.showToast(R.string.quick_template_target_missing)
-            host.refreshTemplateWorkspace()
+            publish()
             return
         }
         val coordinator = QuickTemplateApplyAdapters.from(host.hookConfigStore())
@@ -446,7 +557,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
             override fun runOnUiThread(runnable: Runnable) = host.runOnUiThread(runnable)
         }).requestMissingScope(result.successfulPackages)
-        host.refreshTemplateWorkspace()
+        publish()
     }
 
     private fun RouteState.detailKind() = when (selection().kind) {
@@ -477,6 +588,76 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     private fun templatePackageName(form: TemplateEditorForm) =
         if (form.quickTemplate) QUICK_TEMPLATE_PACKAGE else GLOBAL_PREFILL_PACKAGE
+
+    private fun openGlobalPrefill() {
+        routeState.openGlobalPrefill()
+        legacyDetailController?.dispose()
+        publish()
+    }
+
+    private fun openQuickTemplate(templateId: String?) {
+        routeState.openQuickTemplate(templateId)
+        legacyDetailController?.dispose()
+        publish()
+    }
+
+    private fun openQuickTemplateTargets(templateId: String) {
+        routeState.openQuickTemplateTargets(templateId)
+        if (isLegacyLandscapeDetailMode()) {
+            showLegacyDetail(routeState.selection())
+        } else {
+            startPortraitTargetSelection(templateId)
+        }
+    }
+
+    private fun startPortraitTargetSelection(templateId: String?) {
+        if (templateId == null || !QuickTemplateTargetCarrierState.shouldStartPortraitActivity(
+                isLegacyLandscapeDetailMode(), routeState.hasPendingQuickTemplateTargets(),
+                routeState.targetSelectionActivityStarted(),
+            )
+        ) return
+        routeState.markTargetSelectionActivityStarted()
+        activity.startActivityForResult(
+            Intent(activity, QuickTemplateTargetSelectionActivity::class.java).putExtra(
+                QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID, templateId,
+            ),
+            REQUEST_TARGET_SELECTION,
+        )
+    }
+
+    private fun showLegacyDetail(selection: TemplateDetailSelection) {
+        if (legacyDetailController?.show(selection) != true) {
+            closeRoute()
+            return
+        }
+        updateLegacyDetailVisibility(true)
+    }
+
+    private fun closeRoute() {
+        routeState.clear()
+        legacyDetailController?.clear()
+    }
+
+    private fun isLegacyLandscapeDetailMode() = legacyDetailContent != null && legacyDetailEmpty != null
+
+    private fun publish() {
+        if (composePresentation) {
+            host.refreshTemplateWorkspace()
+        } else {
+            legacyWorkspaceBinder?.bind(legacyWorkspace, presentation.state().query)
+            updateLegacyDetailVisibility(true)
+        }
+    }
+
+    private fun legacyTargetsHost() = object : QuickTemplateTargetsBinder.Host {
+        override fun getPackageManager() = activity.packageManager
+        override fun getSelfPackageName() = activity.packageName
+        override fun runOnUiThread(runnable: Runnable) = activity.runOnUiThread(runnable)
+        override fun getIconRefreshAnchor(): View? = legacyDetailContent?.findViewById(R.id.quick_template_targets_list)
+        override fun onSaved() = publish()
+        override fun onMissingTemplate() = closeRoute()
+        override fun showToast(messageResId: Int) = host.showToast(messageResId)
+    }
 
     private companion object {
         const val REQUEST_TARGET_SELECTION = 10023

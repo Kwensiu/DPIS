@@ -139,31 +139,32 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(itemLayout.contains("@dimen/template_target_icon_size"));
         assertTrue(itemLayout.contains("?attr/textAppearanceTitleSmall"));
         assertTrue(itemLayout.contains("@string/quick_template_targets_configured_badge"));
-        assertTrue(mainActivity.contains("showQuickTemplateTargets(templateId);"));
-        assertTrue(mainActivity.contains("startQuickTemplateTargetSelectionActivity(selection.templateId);"));
-        assertTrue(mainActivity.contains("startQuickTemplateTargetSelectionActivity(templateId);"));
-        assertTrue(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"));
-        assertTrue(mainActivity.contains("templateRoute().targetSelectionActivityStarted()"));
-        assertTrue(mainActivity.contains("templateRoute().markTargetSelectionActivityStarted()"));
+        String workspaceCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
+        assertTrue(workspaceCoordinator.contains("openQuickTemplateTargets(templateId)"));
+        assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(selection.templateId)"));
+        assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"));
+        assertTrue(workspaceCoordinator.contains("REQUEST_TARGET_SELECTION"));
+        assertTrue(workspaceCoordinator.contains("routeState.targetSelectionActivityStarted()"));
+        assertTrue(workspaceCoordinator.contains("routeState.markTargetSelectionActivityStarted()"));
         assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"));
-        assertTrue(mainActivity.contains("startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);"));
+        assertTrue(workspaceCoordinator.contains("activity.startActivityForResult("));
         assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("));
-        assertFalse(mainActivity.contains("requestCode == REQUEST_QUICK_TEMPLATE_TARGETS"));
+        assertFalse(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"));
         assertTrue(routeState.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("));
         assertTrue(routeState.contains("QuickTemplateTargetSelectionContract.closeReasonFrom("));
         assertTrue(carrierState.contains("enum CloseReason"));
         assertTrue(carrierState.contains("ORIENTATION_MIGRATION"));
-        assertTrue(mainActivity.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
-        assertTrue(mainActivity.contains("TemplateDetailPaneController"));
+        assertTrue(workspaceCoordinator.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"));
+        assertTrue(workspaceCoordinator.contains("TemplateDetailPaneController"));
         assertTrue(routeState.contains("class RouteState"));
         assertTrue(routeState.contains("fun resetTargetSelectionActivityForConfiguration()"));
         String detailController = read("src/main/java/com/dpis/module/templates/TemplateDetailPaneController.kt");
         assertTrue(detailController.contains("view_land_quick_template_targets_detail"));
         assertTrue(detailController.contains("QuickTemplateTargetsBinder(activity, detailView, host)"));
-        assertTrue(mainActivity.contains("QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID"));
-        String showTargetsMethod = mainActivity.substring(
-                mainActivity.indexOf("private void showQuickTemplateTargets("),
-                mainActivity.indexOf("private void startQuickTemplateTargetSelectionActivity("));
+        assertTrue(workspaceCoordinator.contains("QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID"));
+        String showTargetsMethod = workspaceCoordinator.substring(
+                workspaceCoordinator.indexOf("private fun openQuickTemplateTargets("),
+                workspaceCoordinator.indexOf("private fun startPortraitTargetSelection("));
         assertFalse(showTargetsMethod.contains("clearTemplateDetailSelection();"));
         assertTrue(binder.contains("fun select(templateId: String)"));
         assertFalse(targetsBinder.contains("target_packages"));

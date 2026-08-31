@@ -10,6 +10,7 @@ class RuntimeConfigDeliverySourceTest {
         val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
         val templateWorkspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val templateHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt")
         val appConfigHost = hostBlock(mainActivity)
         val sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java")
@@ -23,7 +24,7 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(read("src/main/java/com/dpis/module/DpisApplication.java").contains(
             "RuntimeConfigDelivery.setLocalSnapshotReloader(DpisApplication::reloadConfigStore);",
         ))
-        assertTrue(mainActivity.contains("private void onRuntimeConfigSaved()"))
+        assertTrue(mainActivity.contains("public void onRuntimeConfigSaved()"))
         assertTrue(mainActivity.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"))
         assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi("))
         assertTrue(mainActivity.contains("AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync("))
@@ -38,6 +39,7 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(sheetActions.contains("AppConfigSaveHandler.Result result = host.saveAppConfig("))
         assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
         assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
+        assertTrue(templateHost.contains("activity.onRuntimeConfigSaved()"))
         assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
         assertTrue(occurrences(fontDetail, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
         assertTrue(systemHooks.contains("RuntimeConfigDelivery::publishLocalSnapshotAfterSave"))

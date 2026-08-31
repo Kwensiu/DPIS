@@ -11,6 +11,28 @@ import org.junit.Test
 class MainActivitySourceSmokeTest {
 
     @Test
+    fun templateWorkspaceImplementationLivesBehindTheCoordinator() {
+        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val coordinator = read(
+                "src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+
+        assertTrue(source.contains("private TemplateWorkspaceCoordinator templateWorkspaceCoordinator"))
+        assertTrue(source.contains(".handleActivityResult(requestCode, data)"))
+        assertTrue(source.contains(".saveRoute(outState)"))
+        assertTrue(source.contains(".onDestroy()"))
+        assertFalse(source.contains("TemplateWorkspaceBinder"))
+        assertFalse(source.contains("TemplateDetailPaneController"))
+        assertFalse(source.contains("QuickTemplateTargetsBinder"))
+        assertFalse(source.contains("QuickTemplateTargetSelectionActivity"))
+        assertFalse(source.contains("TemplateEditorForm"))
+        assertFalse(source.contains("QuickTemplateStore"))
+        assertFalse(source.contains("REQUEST_QUICK_TEMPLATE_TARGETS"))
+        assertTrue(coordinator.contains("fun attachLegacyViews("))
+        assertTrue(coordinator.contains("fun presentationSource("))
+        assertTrue(coordinator.contains("fun handleActivityResult("))
+    }
+
+    @Test
     fun homeStatusReflectsUpdateCheckProgressWhilePromptOwnsUpdateActions() {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val homeState = read("src/main/java/com/dpis/module/home/HomeUpdateUiState.java")
@@ -111,30 +133,16 @@ class MainActivitySourceSmokeTest {
             )
         )
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"))
-        assertTrue(source.contains(
-                "setVisible(templateWorkspaceContainer, templateWorkspace)"
-        ))
         assertTrue(source.contains("setVisible(toolsWorkspaceContainer, toolsWorkspace)"));
         assertTrue(source.contains("setVisible(settingsWorkspaceContainer, settingsWorkspace)"));
         assertFalse(source.contains("setSearchFocusFabVisible("))
-        assertTrue(
-            source.contains(
-                "templateWorkspaceBinder = new TemplateWorkspaceBinder("
-            )
-        )
-        assertTrue(source.contains("createTemplateWorkspaceActions()"))
-        assertTrue(source.contains("new TemplateWorkspaceBinder.GlobalPrefillActions()"))
-        assertTrue(source.contains("new TemplateWorkspaceBinder.QuickTemplateActions()"))
+        assertTrue(source.contains("attachLegacyViews("))
+        assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
         assertTrue(source.contains("bindTemplateWorkspace()"));
-        assertTrue(
-            compact(source).contains(
-                "templateWorkspaceBinder.bind( templateWorkspaceContainer, requireUiState().currentQuery() )"
-            )
-        )
+        assertTrue(source.contains("ensureTemplateWorkspaceCoordinator().present("))
         assertTrue(source.contains("STATE_TEMPLATE_QUERY"))
-        assertTrue(source.contains("getActions().sortTemplates()"))
         assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"));
         assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"));
         assertFalse(source.contains("workspaceModeForButtonId(int checkedId)"))
@@ -171,24 +179,21 @@ class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/land_detail_divider\""))
         assertTrue(source.contains("private View landDetailPane"));
         assertTrue(source.contains("private View landDetailDivider"));
-        assertTrue(source.contains("private FrameLayout templateDetailContent"));
-        assertTrue(source.contains("TemplateDetailSelection"))
+        val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        assertFalse(source.contains("templateDetailContent"));
+        assertFalse(source.contains("TemplateDetailPaneController"))
         assertTrue(source.contains("applyLandscapeDetailVisibility(appWorkspace, templateWorkspace)"));
         assertTrue(source.contains("appWorkspace || templateWorkspace"))
-        assertTrue(source.contains("restoreTemplateDetailPane()"));
-        assertTrue(source.contains("showGlobalPrefillEditor()"))
-        assertTrue(source.contains("showQuickTemplateEditor(String templateId)"))
-        assertTrue(source.contains("templateRoute().openQuickTemplate(templateId)"))
-        assertTrue(source.contains("getActions().createTemplate()"));
+        assertTrue(source.contains("restoreForConfiguration("));
+        assertTrue(templateCoordinator.contains("fun attachLegacyViews("))
+        assertTrue(templateCoordinator.contains("TemplateDetailPaneController("))
+        assertTrue(templateCoordinator.contains("startPortraitTargetSelection("))
         assertFalse(source.contains("GlobalPrefillEditorBinder"))
         assertFalse(source.contains("QuickTemplateEditorBinder"))
         assertFalse(source.contains("GlobalPrefillSheetDialog"))
         assertFalse(source.contains("QuickTemplateEditSheetDialog"))
-        assertTrue(source.contains("templateRoute().clear()"));
-        assertTrue(source.contains("TemplateDetailPaneController"))
-        assertTrue(source.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"))
-        assertTrue(source.contains("templateRoute().openQuickTemplateTargets(templateId)"))
-        assertTrue(source.contains("templateDetailPaneController.dispose()"));
+        assertTrue(templateCoordinator.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"))
+        assertTrue(templateCoordinator.contains("legacyDetailController?.dispose()"));
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"))
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"))
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""))
@@ -1283,20 +1288,18 @@ class MainActivitySourceSmokeTest {
         val editorSheet = read(
             "src/main/java/com/dpis/module/ui/presentation/DpisEditorBottomSheet.kt")
 
-        assertTrue(activity.contains("onComposeTemplateEditorOpened(quickTemplate, templateId)"))
-        assertTrue(activity.contains("boolean dirty = templateRoute().updateDraft(form)"));
-        assertTrue(activity.contains("TemplateWorkspaceCoordinator.RouteState"));
-        assertTrue(activity.contains("templateRoute().openQuickTemplate(templateId)"));
-        assertTrue(activity.contains("private void onComposeTemplateEditorClosed()"))
-        assertTrue(activity.contains("clearTemplateDetailSelection()"));
-        val closeStart = activity.indexOf("private void onComposeTemplateEditorClosed()")
-        val closeEnd = activity.indexOf("private void showQuickTemplateEditor", closeStart)
-        val closeMethod = activity.substring(closeStart, closeEnd)
-        assertTrue(closeMethod.indexOf("clearTemplateDetailSelection()")
-                < closeMethod.indexOf("bindTemplateWorkspace()"));
+        val templateSource = read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentationSource.kt")
+        val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        assertTrue(activity.contains("TemplateWorkspacePresentationSource templateWorkspace()"))
+        assertFalse(activity.contains("onComposeTemplateEditorOpened"))
+        assertTrue(templateSource.contains("fun openEditor("))
+        assertTrue(templateSource.contains("fun updateEditor("))
+        assertTrue(templateSource.contains("fun closeEditor()"))
+        assertTrue(templateCoordinator.contains("fun presentationSource("))
+        assertTrue(templateCoordinator.contains("override fun closeEditor()"))
         assertTrue(coordinator.contains("onEditorOpened ="))
-        assertTrue(coordinator.contains("onEditorChanged = content::updateTemplateEditor"))
-        assertTrue(coordinator.contains("onEditorClosed = content::closeTemplateEditor"))
+        assertTrue(coordinator.contains("onEditorChanged = content.templateWorkspace()::updateEditor"))
+        assertTrue(coordinator.contains("onEditorClosed = content.templateWorkspace()::closeEditor"))
         assertTrue(workspace.contains("onEditorOpened: (quickTemplate: Boolean, templateId: String?)"))
         assertTrue(workspace.contains("onEditorChanged: (TemplateEditorForm) -> Unit"))
         assertTrue(workspace.contains("onEditorClosed: () -> Unit"))
@@ -1332,13 +1335,9 @@ class MainActivitySourceSmokeTest {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val methodStart = activity.indexOf(
                 "private void restoreTemplateEditorForCurrentConfiguration()")
-        val methodEnd = activity.indexOf(
-                "private void clearTemplateDetailSelection()", methodStart)
+        val methodEnd = activity.indexOf("private static AppListFilterState.AppType", methodStart)
         val method = activity.substring(methodStart, methodEnd)
-
-        val composeBranch = method.indexOf("if (composeShellHost != null)")
-        assertTrue(composeBranch >= 0)
-        assertTrue(method.contains("bindTemplateWorkspace()"));
+        assertTrue(method.contains("restoreForConfiguration("));
         assertFalse(method.contains("showGlobalPrefillSheet"))
         assertFalse(method.contains("showQuickTemplateSheet"))
         assertFalse(method.contains("closeActiveTemplateSheetForMigration"))

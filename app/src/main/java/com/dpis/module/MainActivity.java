@@ -64,18 +64,9 @@ import com.dpis.module.process.ProcessActionHandler;
 
 
 import com.dpis.module.templates.GlobalPrefillStore;
-import com.dpis.module.templates.BatchScopeRequestCoordinator;
-import com.dpis.module.templates.QuickTemplateApplyAdapters;
-import com.dpis.module.templates.TemplateEditorDraft;
-import com.dpis.module.templates.QuickTemplateTargetSelectionActivity;
-import com.dpis.module.templates.QuickTemplateTargetsBinder;
-import com.dpis.module.templates.TemplateDetailPaneController;
-import com.dpis.module.templates.TemplateWorkspaceBinder;
-import com.dpis.module.templates.TemplateWorkspacePresentation;
+import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.templates.TemplateWorkspaceCoordinator;
-
-import com.dpis.module.templates.QuickTemplateStore;
-import com.dpis.module.templates.TemplateEditorForm;
+import com.dpis.module.templates.TemplateWorkspaceActivityHost;
 
 import com.dpis.module.templates.TemplateConfigValue;
 
@@ -107,12 +98,6 @@ import com.dpis.module.settings.ToolsWorkspaceBinder;
 import com.dpis.module.settings.SystemFontScaleToolPresenter;
 import com.dpis.module.settings.StartupDisclaimerStore;
 
-import com.dpis.module.templates.QuickTemplateTargetCarrierState;
-
-import com.dpis.module.templates.QuickTemplateTargetSelectionContract;
-
-import com.dpis.module.templates.QuickTemplateApplyConfirmationMessage;
-import com.dpis.module.templates.QuickTemplateApplyCoordinator;
 
 import com.dpis.module.root.RootAccessProbe;
 
@@ -211,18 +196,6 @@ public final class MainActivity
     private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
-    private static final String STATE_TEMPLATE_DETAIL_KIND
-            = "state.template_detail.kind";
-    private static final String STATE_TEMPLATE_DETAIL_ID
-            = "state.template_detail.id";
-    private static final String STATE_TEMPLATE_EDITOR_DESTINATION
-            = "state.template_editor.destination";
-    private static final String STATE_QUICK_TEMPLATE_TARGETS_ACTIVITY_STARTED
-            = "state.quick_template.targets_activity_started";
-    private static final String STATE_GLOBAL_PREFILL_DRAFT
-            = "state.global_prefill.draft";
-    private static final String STATE_QUICK_TEMPLATE_DRAFT
-            = "state.quick_template.draft";
     private static final String STATE_DRAFT_NAME = "name";
     private static final String STATE_DRAFT_VIEWPORT_INPUT = "viewport_input";
     private static final String STATE_DRAFT_VIEWPORT_MODE = "viewport_mode";
@@ -241,7 +214,6 @@ public final class MainActivity
     private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
             = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
-    private static final int REQUEST_QUICK_TEMPLATE_TARGETS = 10023;
     private static final int REQUEST_SAVE_FEEDBACK_DIAGNOSTIC = 10024;
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
@@ -302,18 +274,14 @@ public final class MainActivity
     private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
     private View topContainer;
     private View homeWorkspaceContainer;
-    private View templateWorkspaceContainer;
     private View toolsWorkspaceContainer;
     private View settingsWorkspaceContainer;
     private View landDetailPane;
     private View landDetailDivider;
     private View landDetailEmptyView;
     private FrameLayout landDetailContent;
-    private View templateDetailEmptyView;
-    private FrameLayout templateDetailContent;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private HomeWorkspaceBinder homeWorkspaceBinder;
-    private TemplateWorkspaceBinder templateWorkspaceBinder;
     private TemplateWorkspaceCoordinator templateWorkspaceCoordinator;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemFontScaleToolPresenter composeToolsPresenter;
@@ -333,7 +301,6 @@ public final class MainActivity
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
-    private TemplateDetailPaneController templateDetailPaneController;
     private PageController feedbackDiagnosticPageController;
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
@@ -473,9 +440,6 @@ public final class MainActivity
 
         topContainer = findViewById(R.id.top_container);
         homeWorkspaceContainer = findViewById(R.id.home_workspace_container);
-        templateWorkspaceContainer = findViewById(
-                R.id.template_workspace_container
-        );
         toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
         settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
         WatchWorkspaceChromeBinder.applyIfSupported(
@@ -487,25 +451,10 @@ public final class MainActivity
         landDetailDivider = findViewById(R.id.land_detail_divider);
         landDetailEmptyView = findViewById(R.id.land_detail_empty);
         landDetailContent = findViewById(R.id.land_detail_content);
-        templateDetailEmptyView = findViewById(R.id.template_detail_empty);
-        templateDetailContent = findViewById(R.id.template_detail_content);
-        templateDetailPaneController = new TemplateDetailPaneController(
-                this,
-                templateDetailContent,
-                templateDetailEmptyView,
-                createQuickTemplateTargetsHost(),
-                new Runnable() {
-                    @Override
-                    public void run() {
-                    clearTemplateDetailSelection();
-                    applyLandscapeDetailVisibility(false, true);
-                    }
-                }
-        );
-        templateWorkspaceBinder = new TemplateWorkspaceBinder(
-                this,
-                createTemplateWorkspaceActions(),
-                createQuickTemplateActions()
+        ensureTemplateWorkspaceCoordinator().attachLegacyViews(
+                findViewById(R.id.template_workspace_container),
+                findViewById(R.id.template_detail_empty),
+                findViewById(R.id.template_detail_content)
         );
         homeWorkspaceBinder = new HomeWorkspaceBinder(this);
         toolsWorkspaceBinder = new ToolsWorkspaceBinder(new ToolsWorkspaceBinder.Host() {
@@ -653,7 +602,7 @@ public final class MainActivity
         if (updateDownloadCoordinator != null) {
             updateDownloadCoordinator.shutdown();
         }
-        disposeActiveQuickTemplateTargetsBinder();
+        ensureTemplateWorkspaceCoordinator().onDestroy();
         installedAppCatalogCoordinator.shutdown();
         super.onDestroy();
     }
@@ -843,7 +792,7 @@ public final class MainActivity
         }
     }
 
-    void requestAppsLoad() {
+    public void requestAppsLoad() {
         requestAppsLoad(false);
     }
 
@@ -941,7 +890,7 @@ public final class MainActivity
         showToast(getString(messageResId));
     }
 
-    private void showToast(int messageResId, Object... formatArgs) {
+    public void showToast(int messageResId, Object... formatArgs) {
         showToast(getString(messageResId, formatArgs));
     }
 
@@ -1098,29 +1047,13 @@ public final class MainActivity
                     @Override public void clearSettingsCache() { ensureComposeSettingsController().clearCacheFromPresentation(); }
                     @Override public void openSettingsAbout() { ensureComposeSettingsController().showAboutFromPresentation(); }
                     @Override public void openSettingsDonate() { ensureComposeSettingsController().showDonateFromPresentation(); }
-                    @Override public TemplateWorkspacePresentation.State templateState() {
-                        return ensureTemplateWorkspaceCoordinator().state();
-                    }
-                    @Override public void changeTemplateQuery(String query) {
-                        dispatchMainUiAction(MainUiAction.queryChanged(query));
-                    }
-                    @Override public void openTemplateEditor(
-                            boolean quickTemplate,
-                            String templateId
-                    ) {
-                        onComposeTemplateEditorOpened(quickTemplate, templateId);
-                    }
-                    @Override public void updateTemplateEditor(TemplateEditorForm form) {
-                        onComposeTemplateEditorChanged(form);
-                    }
-                    @Override public void updateTemplateEditorDestination(
-                            ConfigEditorDestination destination
-                    ) {
-                        templateRoute().updateEditorDestination(destination);
-                        bindTemplateWorkspace();
-                    }
-                    @Override public void closeTemplateEditor() {
-                        onComposeTemplateEditorClosed();
+                    @Override public TemplateWorkspacePresentationSource templateWorkspace() {
+                        return ensureTemplateWorkspaceCoordinator().presentationSource(
+                                query -> {
+                                    dispatchMainUiAction(MainUiAction.queryChanged(query));
+                                    return Unit.INSTANCE;
+                                }
+                        );
                     }
                 });
         composeShellHost = new MainComposeShellHost(
@@ -1150,7 +1083,6 @@ public final class MainActivity
                 && renderedWorkspaceMode != mode;
         renderedWorkspaceMode = mode;
         setVisible(homeWorkspaceContainer, homeWorkspace);
-        setVisible(templateWorkspaceContainer, templateWorkspace);
         setVisible(toolsWorkspaceContainer, toolsWorkspace);
         setVisible(settingsWorkspaceContainer, settingsWorkspace);
         resetHiddenWorkspacePresentation(mode);
@@ -1217,11 +1149,7 @@ public final class MainActivity
         setVisible(landDetailContent, appWorkspace
                 && landDetailContent != null
                 && landDetailContent.getChildCount() > 0);
-        TemplateDetailSelection templateSelection = templateRoute().selection();
-        setVisible(templateDetailEmptyView, templateWorkspace
-                && templateSelection.kind == TemplateDetailKind.NONE);
-        setVisible(templateDetailContent, templateWorkspace
-                && templateSelection.kind != TemplateDetailKind.NONE);
+        ensureTemplateWorkspaceCoordinator().updateLegacyDetailVisibility(templateWorkspace);
     }
 
     private boolean isLandscapeDetailMode() {
@@ -1229,17 +1157,9 @@ public final class MainActivity
     }
 
     private void bindTemplateWorkspace() {
-        if (composeShellHost != null) {
-            ensureTemplateWorkspaceCoordinator().refresh(requireUiState().currentQuery());
-            composeShellHost.refreshTemplates();
-            return;
-        }
-        if (templateWorkspaceBinder != null) {
-            templateWorkspaceBinder.bind(
-                    templateWorkspaceContainer,
-                    requireUiState().currentQuery()
-            );
-        }
+        ensureTemplateWorkspaceCoordinator().present(
+                requireUiState().currentQuery(), composeShellHost != null
+        );
     }
 
     private void bindToolsWorkspace() {
@@ -1260,181 +1180,12 @@ public final class MainActivity
         }
     }
 
-    private void restoreTemplateDetailPane() {
-        TemplateDetailSelection selection = templateRoute().selection();
-        if (!isLandscapeDetailMode()
-                || templateDetailContent == null
-                || selection.kind == TemplateDetailKind.NONE) {
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        if (templateDetailPaneController != null
-                && templateDetailPaneController.hasContent()) {
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        showTemplateDetailPane(selection);
-    }
-
-    private void showGlobalPrefillEditor() {
-        templateRoute().openGlobalPrefill();
-        disposeActiveQuickTemplateTargetsBinder();
-        bindTemplateWorkspace();
-    }
-
-    private static void saveTemplateDetailSelection(
-            Bundle outState,
-            TemplateDetailSelection selection
-    ) {
-        TemplateDetailSelection normalized = selection != null
-                ? selection
-                : TemplateDetailSelection.none();
-        outState.putString(STATE_TEMPLATE_DETAIL_KIND, normalized.kind.name());
-        outState.putString(STATE_TEMPLATE_DETAIL_ID, normalized.templateId);
-    }
-
-    private static TemplateDetailSelection restoreTemplateDetailSelection(
-            Bundle savedInstanceState
-    ) {
-        if (savedInstanceState == null) {
-            return TemplateDetailSelection.none();
-        }
-        TemplateDetailKind kind = TemplateDetailKind.fromName(
-                savedInstanceState.getString(STATE_TEMPLATE_DETAIL_KIND)
-        );
-        if (kind == TemplateDetailKind.GLOBAL_PREFILL) {
-            return TemplateDetailSelection.globalPrefill();
-        }
-        if (kind == TemplateDetailKind.QUICK_TEMPLATE) {
-            return TemplateDetailSelection.quickTemplate(
-                    savedInstanceState.getString(STATE_TEMPLATE_DETAIL_ID)
-            );
-        }
-        if (kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            return TemplateDetailSelection.quickTemplateTargets(
-                    savedInstanceState.getString(STATE_TEMPLATE_DETAIL_ID)
-            );
-        }
-        return TemplateDetailSelection.none();
-    }
-
-    private void disposeActiveQuickTemplateTargetsBinder() {
-        if (templateDetailPaneController != null) {
-            templateDetailPaneController.dispose();
-        }
-    }
-
-    /**
-     * Compose owns the visible portrait sheet, while this Activity owns the cross-configuration
-     * detail selection. Keep the two lifetimes linked at the editor boundary instead of making
-     * the Compose workspace reach into Activity fields directly.
-     */
-    private void onComposeTemplateEditorOpened(boolean quickTemplate, String templateId) {
-        if (quickTemplate) {
-            templateRoute().openQuickTemplate(templateId);
-        } else {
-            templateRoute().openGlobalPrefill();
-        }
-        disposeActiveQuickTemplateTargetsBinder();
-    }
-
-    private void onComposeTemplateEditorChanged(TemplateEditorForm form) {
-        if (form == null) {
-            return;
-        }
-        boolean dirty = templateRoute().updateDraft(form);
-        if (!dirty) {
-            // A successful save adopts the store as the only new-editor baseline. Clear the
-            // presentation seed immediately so a later route/configuration refresh cannot
-            // resurrect the just-saved pre-normalized draft.
-            bindTemplateWorkspace();
-        }
-    }
-
-    private void onComposeTemplateEditorClosed() {
-        // Closing is one Activity-owned session transition. Publish only after selection,
-        // destination, and retained drafts are all cleared so Compose cannot re-open stale state.
-        clearTemplateDetailSelection();
-        bindTemplateWorkspace();
-    }
-
-    private void showQuickTemplateEditor(String templateId) {
-        templateRoute().openQuickTemplate(templateId);
-        disposeActiveQuickTemplateTargetsBinder();
-        bindTemplateWorkspace();
-    }
-
-    private void showQuickTemplateTargets(String templateId) {
-        templateRoute().openQuickTemplateTargets(templateId);
-        if (!isLandscapeDetailMode()) {
-            startQuickTemplateTargetSelectionActivity(templateId);
-            return;
-        }
-        showTemplateDetailPane(templateRoute().selection());
-    }
-
-    private void startQuickTemplateTargetSelectionActivity(String templateId) {
-        if (!QuickTemplateTargetCarrierState.shouldStartPortraitActivity(
-                isLandscapeDetailMode(),
-                templateRoute().hasPendingQuickTemplateTargets(),
-                templateRoute().targetSelectionActivityStarted()
-        )) {
-            return;
-        }
-        Intent intent = new Intent(
-                MainActivity.this,
-                QuickTemplateTargetSelectionActivity.class
-        );
-        intent.putExtra(
-                QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID,
-                templateId
-        );
-        templateRoute().markTargetSelectionActivityStarted();
-        startActivityForResult(intent, REQUEST_QUICK_TEMPLATE_TARGETS);
-    }
-
     private void restoreTemplateEditorForCurrentConfiguration() {
-        if (requireUiState().workspaceMode != MainUiState.WorkspaceMode.TEMPLATE
-                || templateRoute().selection().kind == TemplateDetailKind.NONE) {
-            return;
+        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
+            ensureTemplateWorkspaceCoordinator().restoreForConfiguration(
+                    requireUiState().currentQuery(), composeShellHost != null
+            );
         }
-        TemplateDetailSelection selection = templateRoute().selection();
-        if (composeShellHost != null) {
-            // Compose owns both the portrait sheet and the expanded detail surface. Re-publish
-            // the route after a configuration change without reviving the retired XML editor.
-            bindTemplateWorkspace();
-            return;
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            templateRoute().resetTargetSelectionActivityForConfiguration();
-            restoreTemplateDetailPane();
-            startQuickTemplateTargetSelectionActivity(selection.templateId);
-        }
-    }
-
-    private void clearTemplateDetailSelection() {
-        templateRoute().clear();
-        disposeActiveQuickTemplateTargetsBinder();
-        if (templateDetailContent != null) {
-            if (templateDetailPaneController != null) {
-                templateDetailPaneController.clear();
-            } else {
-                templateDetailContent.removeAllViews();
-            }
-        }
-    }
-
-    private void showTemplateDetailPane(TemplateDetailSelection selection) {
-        if (templateDetailPaneController == null || selection == null) {
-            return;
-        }
-        if (!templateDetailPaneController.show(selection)) {
-            templateRoute().clear();
-            bindTemplateWorkspace();
-            applyLandscapeDetailVisibility(false, true);
-            return;
-        }
-        applyLandscapeDetailVisibility(false, true);
     }
 
     private static AppListFilterState.AppType parseAppType(String value, boolean legacyShowSystem) {
@@ -1458,49 +1209,6 @@ public final class MainActivity
         }
         return AppListFilterState.SortOrder.NAME;
     }
-
-    private QuickTemplateTargetsBinder.Host createQuickTemplateTargetsHost() {
-        return new QuickTemplateTargetsBinder.Host() {
-            @Override
-            public PackageManager getPackageManager() {
-                return MainActivity.this.getPackageManager();
-            }
-
-            @Override
-            public String getSelfPackageName() {
-                return MainActivity.this.getPackageName();
-            }
-
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @Override
-            public View getIconRefreshAnchor() {
-                return templateDetailContent != null
-                        ? templateDetailContent.findViewById(R.id.quick_template_targets_list)
-                        : null;
-            }
-
-            @Override
-            public void onSaved() {
-                bindTemplateWorkspace();
-            }
-
-            @Override
-            public void onMissingTemplate() {
-                clearTemplateDetailSelection();
-                applyLandscapeDetailVisibility(false, true);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-        };
-    }
-
 
     private void bindSettingsWorkspace() {
         if (composeShellHost != null) {
@@ -1682,81 +1390,11 @@ public final class MainActivity
         if (templateWorkspaceCoordinator == null) {
             templateWorkspaceCoordinator = new TemplateWorkspaceCoordinator(
                     this,
-                    new TemplateWorkspaceCoordinator.Host() {
-                        @Override public void editGlobalPrefill() {
-                            showGlobalPrefillEditor();
+                    new TemplateWorkspaceActivityHost(this, () -> {
+                        if (composeShellHost != null) {
+                            composeShellHost.refreshTemplates();
                         }
-
-                        @Override public void editQuickTemplate(String templateId) {
-                            showQuickTemplateEditor(templateId);
-                        }
-
-                        @Override public void selectQuickTemplateTargets(String templateId) {
-                            showQuickTemplateTargets(templateId);
-                        }
-
-                        @Override public void openEmbeddedQuickTemplateTargets(String templateId) {
-                            templateRoute().openEmbeddedQuickTemplateTargets(templateId);
-                            disposeActiveQuickTemplateTargetsBinder();
-                            bindTemplateWorkspace();
-                        }
-
-                        @Override public void refreshTemplateWorkspace() {
-                            bindTemplateWorkspace();
-                        }
-
-                        @Override public void showToast(int messageResId, Object... formatArgs) {
-                            MainActivity.this.showToast(messageResId, formatArgs);
-                        }
-
-                        @Override public AppConfigDialogBinder.Host appConfigDialogHost() {
-                            return createAppConfigDialogHost();
-                        }
-
-                        @Override public DpisConfigStore hookConfigStore() {
-                            return getHookConfigStore();
-                        }
-
-                        @Override public boolean isInstalledTemplateTargetPackage(String packageName) {
-                            if (packageName == null || packageName.isBlank()
-                                    || getPackageName().equals(packageName)) {
-                                return false;
-                            }
-                            try {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    getPackageManager().getApplicationInfo(
-                                            packageName,
-                                            PackageManager.ApplicationInfoFlags.of(0)
-                                    );
-                                } else {
-                                    getPackageManager().getApplicationInfo(packageName, 0);
-                                }
-                                return true;
-                            } catch (PackageManager.NameNotFoundException ignored) {
-                                return false;
-                            }
-                        }
-
-                        @Override public void onTemplateRuntimeConfigSaved() {
-                            onRuntimeConfigSaved();
-                        }
-
-                        @Override public void requestAppsLoad() {
-                            MainActivity.this.requestAppsLoad();
-                        }
-
-                        @Override public void runOnUiThread(Runnable runnable) {
-                            MainActivity.this.runOnUiThread(runnable);
-                        }
-
-                        @Override public boolean isLandscapeTemplateDetailMode() {
-                            return isLandscapeDetailMode();
-                        }
-
-                        @Override public void onTemplateRouteClosed() {
-                            clearTemplateDetailSelection();
-                        }
-                    },
+                    }),
                     initialQuery,
                     initialRoute
             );
@@ -1784,8 +1422,6 @@ public final class MainActivity
     private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
         resetWorkspacePresentationUnlessMode(
                 homeWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.HOME);
-        resetWorkspacePresentationUnlessMode(
-                templateWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TEMPLATE);
         resetWorkspacePresentationUnlessMode(
                 toolsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TOOLS);
         resetWorkspacePresentationUnlessMode(
@@ -1843,7 +1479,7 @@ public final class MainActivity
             return homeWorkspaceContainer;
         }
         if (mode == MainUiState.WorkspaceMode.TEMPLATE) {
-            return templateWorkspaceContainer;
+            return null;
         }
         if (mode == MainUiState.WorkspaceMode.TOOLS) {
             return toolsWorkspaceContainer;
@@ -2501,7 +2137,7 @@ public final class MainActivity
                         this,
                         DpisApplication.getXposedService()
                 ).listFonts().size(),
-                new QuickTemplateStore(this).readAll().size(),
+                ensureTemplateWorkspaceCoordinator().quickTemplateCount(),
                 RootAccessProbe.cachedResult(),
                 homeUpdateUiState,
                 createHomeWorkspaceActions()
@@ -2815,7 +2451,7 @@ public final class MainActivity
         return saveResult;
     }
 
-    private void onRuntimeConfigSaved() {
+    public void onRuntimeConfigSaved() {
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
         requestAppsLoad();
     }
@@ -2944,45 +2580,7 @@ public final class MainActivity
         showFontHookDomains(item, state, onChanged);
     }
 
-    private TemplateWorkspaceBinder.GlobalPrefillActions createTemplateWorkspaceActions() {
-        return new TemplateWorkspaceBinder.GlobalPrefillActions() {
-            @Override
-            public void edit() {
-                ensureTemplateWorkspaceCoordinator().state().getActions().editGlobalPrefill();
-            }
-        };
-    }
-
-    private TemplateWorkspaceBinder.QuickTemplateActions createQuickTemplateActions() {
-        return new TemplateWorkspaceBinder.QuickTemplateActions() {
-            @Override
-            public void apply(String templateId) {
-                ensureTemplateWorkspaceCoordinator().state().getActions().applyTemplate(templateId);
-            }
-
-            @Override
-            public void edit(String templateId) {
-                ensureTemplateWorkspaceCoordinator().state().getActions().editTemplate(templateId);
-            }
-
-            @Override
-            public void select(String templateId) {
-                ensureTemplateWorkspaceCoordinator().state().getActions().selectTargets(templateId);
-            }
-
-            @Override
-            public void create() {
-                ensureTemplateWorkspaceCoordinator().state().getActions().createTemplate();
-            }
-
-            @Override
-            public void sort(List<QuickTemplateStore.QuickTemplate> templates) {
-                ensureTemplateWorkspaceCoordinator().state().getActions().sortTemplates();
-            }
-        };
-    }
-
-    AppConfigDialogBinder.Host createAppConfigDialogHost() {
+    public AppConfigDialogBinder.Host createAppConfigDialogHost() {
         return new AppConfigDialogBinder.Host() {
             @Override
             public void toggleScope(
@@ -3835,7 +3433,7 @@ public final class MainActivity
                 );
     }
 
-    DpisConfigStore getHookConfigStore() {
+    public DpisConfigStore getHookConfigStore() {
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
