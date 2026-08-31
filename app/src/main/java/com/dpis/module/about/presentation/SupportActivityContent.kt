@@ -8,17 +8,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.dpis.module.home.ModeGuideActivity
+import com.dpis.module.LocalizedActivity
 import com.dpis.module.LogActivity
 import com.dpis.module.QuickConfigActivity
-import com.dpis.module.LocalizedActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
-import com.dpis.module.ui.WatchUiMode
-import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.home.ModeGuideActivity
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.InterfaceScaleStore
+import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.ui.WatchUiMode
 import java.util.function.Consumer
 
 /** Type-safe Compose entry points for Java-owned standalone Activity contracts. */
@@ -138,7 +138,10 @@ object SupportActivityContent {
         presentation: QuickConfigPresentation
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            DpisTheme(
+                darkTheme = dpisDarkTheme(),
+                transparentWindowBackground = true,
+            ) {
                 QuickConfigContent(presentation = presentation, onDismiss = activity::finish)
             }
         }
