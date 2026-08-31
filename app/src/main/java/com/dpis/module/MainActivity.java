@@ -66,7 +66,6 @@ import com.dpis.module.process.ProcessActionHandler;
 import com.dpis.module.templates.GlobalPrefillStore;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.templates.TemplateWorkspaceActivitySession;
-import com.dpis.module.templates.TemplateWorkspaceCoordinator;
 
 import com.dpis.module.templates.TemplateConfigValue;
 
@@ -343,8 +342,7 @@ public final class MainActivity
         );
         String initialQuery = "";
         String initialTemplateQuery = "";
-        TemplateWorkspaceCoordinator.RouteState initialTemplateRoute
-                = new TemplateWorkspaceCoordinator.RouteState();
+        TemplateWorkspaceActivitySession.State initialWorkspaceSessionState = null;
         AppListFilterState initialFilterState = appListFilterStateStore.load();
         MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.HOME;
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
@@ -356,7 +354,7 @@ public final class MainActivity
             initialTemplateQuery = retainedState.templateQuery;
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
-            initialTemplateRoute = retainedState.templateRoute;
+            initialWorkspaceSessionState = retainedState.workspaceSessionState;
             feedbackDiagnosticPageRequest = retainedState.feedbackDiagnosticPageRequest;
             pendingUpdatePrompt = retainedState.pendingUpdatePrompt;
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
@@ -407,7 +405,7 @@ public final class MainActivity
                         initialWorkspaceMode
                 )
         );
-        initializeWorkspaceSession(initialTemplateRoute, initialTemplateQuery);
+        initializeWorkspaceSession(initialWorkspaceSessionState, initialTemplateQuery);
         ensureWorkspaceSession().restore(savedInstanceState);
         composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
                 mainViewModel,
@@ -746,7 +744,7 @@ public final class MainActivity
                 mainViewModel != null
                         ? mainViewModel.getEditingDestination()
                         : ConfigEditorDestination.MAIN,
-                ensureWorkspaceSession().retainedRoute(),
+                ensureWorkspaceSession().retainedState(),
                 feedbackDiagnosticSession,
                 feedbackDiagnosticPageRequest,
                 feedbackDiagnosticPageController.presentation() != null
@@ -1384,14 +1382,14 @@ public final class MainActivity
     }
 
     private void initializeWorkspaceSession(
-            TemplateWorkspaceCoordinator.RouteState initialRoute,
+            TemplateWorkspaceActivitySession.State initialState,
             String initialQuery
     ) {
         if (workspaceSession == null) {
             workspaceSession = new TemplateWorkspaceActivitySession(
                     this,
                     initialQuery,
-                    initialRoute,
+                    initialState,
                     () -> {
                         if (composeShellHost != null) {
                             composeShellHost.refreshTemplates();
@@ -1403,7 +1401,7 @@ public final class MainActivity
 
     private TemplateWorkspaceActivitySession ensureWorkspaceSession() {
         initializeWorkspaceSession(
-                new TemplateWorkspaceCoordinator.RouteState(),
+                null,
                 requireUiState().currentQuery()
         );
         return workspaceSession;
@@ -3680,7 +3678,7 @@ public final class MainActivity
                                  String editingPackageName, EditorDraft editingDraft,
                                  EditorDraft savedEditingDraft,
                                  ConfigEditorDestination editingDestination,
-                                 TemplateWorkspaceCoordinator.RouteState templateRoute,
+                                 TemplateWorkspaceActivitySession.State workspaceSessionState,
                                  Session feedbackDiagnosticSession,
                                  FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                                  com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
@@ -3700,7 +3698,7 @@ public final class MainActivity
                     EditorDraft editingDraft,
                     EditorDraft savedEditingDraft,
                     ConfigEditorDestination editingDestination,
-                    TemplateWorkspaceCoordinator.RouteState templateRoute,
+                    TemplateWorkspaceActivitySession.State workspaceSessionState,
                     Session feedbackDiagnosticSession,
                     FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                     com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
@@ -3730,9 +3728,7 @@ public final class MainActivity
                 this.editingDestination = editingDestination != null
                         ? editingDestination
                         : ConfigEditorDestination.MAIN;
-                this.templateRoute = templateRoute != null
-                        ? templateRoute
-                        : new TemplateWorkspaceCoordinator.RouteState();
+                this.workspaceSessionState = workspaceSessionState;
                 this.feedbackDiagnosticSession = feedbackDiagnosticSession;
                 this.feedbackDiagnosticPageRequest = feedbackDiagnosticPageRequest;
                 this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;

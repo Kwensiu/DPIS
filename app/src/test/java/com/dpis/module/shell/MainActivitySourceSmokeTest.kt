@@ -253,8 +253,8 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
 
-        assertTrue(source.contains("TemplateWorkspaceCoordinator.RouteState initialTemplateRoute"))
-        assertTrue(source.contains("initialTemplateRoute = retainedState.templateRoute"))
+        assertTrue(source.contains("TemplateWorkspaceActivitySession.State initialWorkspaceSessionState"))
+        assertTrue(source.contains("initialWorkspaceSessionState = retainedState.workspaceSessionState"))
         assertTrue(coordinator.contains("routeState.globalPrefillDraft()"))
         assertTrue(coordinator.contains("routeState.quickTemplateDraft()"))
         assertTrue(source.contains("ensureWorkspaceSession().restore(savedInstanceState)"))

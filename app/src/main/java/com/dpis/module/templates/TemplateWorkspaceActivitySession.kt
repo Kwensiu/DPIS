@@ -16,14 +16,17 @@ import com.dpis.module.MainActivity
 class TemplateWorkspaceActivitySession(
     activity: MainActivity,
     initialQuery: String,
-    initialRoute: TemplateWorkspaceCoordinator.RouteState,
+    initialState: State? = null,
     refreshPresentation: Runnable,
 ) {
+    /** Opaque retained state for this module; the app shell never handles route internals. */
+    class State internal constructor(internal val route: TemplateWorkspaceCoordinator.RouteState)
+
     private val coordinator = TemplateWorkspaceCoordinator(
         activity,
         TemplateWorkspaceActivityHost(activity, refreshPresentation),
         initialQuery,
-        initialRoute,
+        initialState?.route ?: TemplateWorkspaceCoordinator.RouteState(),
     )
 
     fun restore(savedState: Bundle?) = coordinator.restoreRoute(savedState)
@@ -47,7 +50,7 @@ class TemplateWorkspaceActivitySession(
 
     fun saveState(outState: Bundle) = coordinator.saveRoute(outState)
 
-    fun retainedRoute(): TemplateWorkspaceCoordinator.RouteState = coordinator.route()
+    fun retainedState() = State(coordinator.route())
 
     fun presentationSource(onQueryChanged: (String) -> Unit) =
         coordinator.presentationSource(onQueryChanged)

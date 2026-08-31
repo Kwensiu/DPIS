@@ -496,7 +496,7 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(templates.contains("val editorDestination = state.editorDestination"))
         assertTrue(templatePresentation.contains(
                 "val editorDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("retainedState.templateRoute"))
+        assertTrue(activity.contains("retainedState.workspaceSessionState"))
         assertTrue(templatePresentation.contains("val editorDestination: ConfigEditorDestination"))
         assertTrue(activity.contains("ensureWorkspaceSession().saveState(outState)"))
         assertTrue(templates.contains("HookChainEditorPage("))

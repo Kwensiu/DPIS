@@ -1,44 +1,44 @@
-package com.dpis.module;
+package com.dpis.module
 
-import com.dpis.module.applist.AppListFilter;
-import com.dpis.module.applist.AppListFilterState;
-import com.dpis.module.applist.AppListFilterStateStore;
-import com.dpis.module.templates.QuickTemplateTargetsBinder;
 
-import com.dpis.module.templates.QuickTemplateTargetCarrierState;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
 
-import java.io.IOException;
 
-public class QuickTemplateTargetSelectionSourceSmokeTest {
+
+
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+
+import org.junit.Test
+
+
+
+class QuickTemplateTargetSelectionSourceSmokeTest {
     @Test
-    public void targetSelectionPagePersistsSelectedPackagesAndShowsConfiguredBadge() throws IOException {
-        String manifest = read("src/main/AndroidManifest.xml");
-        String activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.java");
-        String contract = read(
+    fun targetSelectionPagePersistsSelectedPackagesAndShowsConfiguredBadge() {
+        val manifest = read("src/main/AndroidManifest.xml");
+        val activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.java");
+        val contract = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java");
-        String targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.kt");
-        String routeState = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
-        String filterState = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetFilterState.kt");
-        String catalogLoader = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetCatalogLoader.kt");
-        String presentation = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsPresentationController.java");
-        String carrierState = read(
+        val targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.kt");
+        val routeState = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
+        val filterState = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetFilterState.kt");
+        val catalogLoader = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetCatalogLoader.kt");
+        val presentation = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsPresentationController.java");
+        val carrierState = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetCarrierState.java");
-        String adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetAdapter.java");
-        String layout = read("src/main/res/layout/activity_quick_template_targets.xml");
-        String landLayout = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
-        String filterLayout = read("src/main/res/layout/dialog_quick_template_target_filters.xml");
-        String itemLayout = read("src/main/res/layout/item_quick_template_target_app.xml");
-        String composeContent = read(
+        val adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetAdapter.java");
+        val layout = read("src/main/res/layout/activity_quick_template_targets.xml");
+        val landLayout = read("src/main/res/layout/view_land_quick_template_targets_detail.xml");
+        val filterLayout = read("src/main/res/layout/dialog_quick_template_target_filters.xml");
+        val itemLayout = read("src/main/res/layout/item_quick_template_target_app.xml");
+        val composeContent = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt");
-        String composeHost = read(
+        val composeHost = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetActivityContent.kt");
-        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
+        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        val binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
 
         assertTrue(manifest.contains("android:name=\".templates.QuickTemplateTargetSelectionActivity\""));
         assertTrue(manifest.contains("android:exported=\"false\""));
@@ -139,13 +139,14 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(itemLayout.contains("@dimen/template_target_icon_size"));
         assertTrue(itemLayout.contains("?attr/textAppearanceTitleSmall"));
         assertTrue(itemLayout.contains("@string/quick_template_targets_configured_badge"));
-        String workspaceCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
+        val workspaceCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
         assertTrue(workspaceCoordinator.contains("openQuickTemplateTargets(templateId)"));
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(selection.templateId)"));
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"));
         assertTrue(workspaceCoordinator.contains("REQUEST_TARGET_SELECTION"));
         assertTrue(workspaceCoordinator.contains("routeState.targetSelectionActivityStarted()"));
         assertTrue(workspaceCoordinator.contains("routeState.markTargetSelectionActivityStarted()"));
+        assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"));
         assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"));
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"));
         assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"));
@@ -160,11 +161,11 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(workspaceCoordinator.contains("TemplateDetailPaneController"));
         assertTrue(routeState.contains("class RouteState"));
         assertTrue(routeState.contains("fun resetTargetSelectionActivityForConfiguration()"));
-        String detailController = read("src/main/java/com/dpis/module/templates/TemplateDetailPaneController.kt");
+        val detailController = read("src/main/java/com/dpis/module/templates/TemplateDetailPaneController.kt");
         assertTrue(detailController.contains("view_land_quick_template_targets_detail"));
         assertTrue(detailController.contains("QuickTemplateTargetsBinder(activity, detailView, host)"));
         assertTrue(workspaceCoordinator.contains("QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID"));
-        String showTargetsMethod = workspaceCoordinator.substring(
+        val showTargetsMethod = workspaceCoordinator.substring(
                 workspaceCoordinator.indexOf("private fun openQuickTemplateTargets("),
                 workspaceCoordinator.indexOf("private fun startPortraitTargetSelection("));
         assertFalse(showTargetsMethod.contains("clearTemplateDetailSelection();"));
@@ -172,7 +173,5 @@ public class QuickTemplateTargetSelectionSourceSmokeTest {
         assertFalse(targetsBinder.contains("target_packages"));
     }
 
-    private static String read(String relativePath) throws IOException {
-        return SourceSmokeTestPaths.read(relativePath);
-    }
+    private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)
 }
