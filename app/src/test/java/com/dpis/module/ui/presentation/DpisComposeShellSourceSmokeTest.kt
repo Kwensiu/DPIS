@@ -226,8 +226,18 @@ class DpisComposeShellSourceSmokeTest {
         assertTrue(theme.contains("R.string.settings_theme_color_spec_label"))
         assertTrue(theme.contains("ThemeColorOption(ThemeModeStore.DEFAULT_STATIC_THEME_COLOR)"))
         assertFalse(theme.contains("ThemeColorOption(\"default\")"))
+        assertTrue(theme.contains("private fun ThemeSegmentedSurfaceRow("))
+        assertFalse(theme.contains("SegmentedListItem("))
+        assertTrue(theme.contains("edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh"))
+        assertFalse(theme.contains("edgeColor = MaterialTheme.colorScheme.surfaceVariant"))
         assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(activity, enabled)"))
         assertTrue(support.contains("dynamicColorEnabled = enabled"))
+        assertTrue(support.contains("var mode by remember"))
+        assertTrue(support.contains("ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme())"))
+        assertTrue(support.contains("activity.markAppearanceAppliedInPlace()"))
+        assertFalse(support.substringAfter("onModeSelected = { selectedMode ->")
+            .substringBefore("onDynamicColorChanged")
+            .contains("activity.recreate()"))
         assertTrue(colors.contains("ThemeModeStore.isDynamicColorEnabled(context)"))
     }
 

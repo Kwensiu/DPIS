@@ -3,6 +3,7 @@ package com.dpis.module.ui.compose
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -10,6 +11,7 @@ import androidx.compose.runtime.setValue
 import com.dpis.module.home.ModeGuideActivity
 import com.dpis.module.LogActivity
 import com.dpis.module.QuickConfigActivity
+import com.dpis.module.LocalizedActivity
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
@@ -24,6 +26,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installThemeSettings(activity: ComponentActivity) {
         activity.setContent {
+            var mode by remember { mutableStateOf(ThemeModeStore.getMode(activity)) }
             var dynamicColorEnabled by remember {
                 mutableStateOf(ThemeModeStore.isDynamicColorEnabled(activity))
             }
@@ -33,7 +36,9 @@ object SupportActivityContent {
                 mutableStateOf(ThemeModeStore.getColorSpecification(activity))
             }
             DpisTheme(
-                darkTheme = dpisDarkTheme(),
+                // Appearance state is intentionally read at this root so every saved choice
+                // recolors the same composition instead of recreating the Activity.
+                darkTheme = ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme()),
                 dynamicColor = dynamicColorEnabled,
                 themeColor = themeColor,
                 paletteStyle = paletteStyle,
@@ -41,35 +46,36 @@ object SupportActivityContent {
             ) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearThemeSettingsContent(
-                        mode = ThemeModeStore.getMode(activity),
+                        mode = mode,
                         dynamicColorEnabled = dynamicColorEnabled,
                         themeColor = themeColor,
                         paletteStyle = paletteStyle,
                         colorSpecification = colorSpecification,
                         interfaceScalePercent = AppUiScaleManager.getScalePercent(activity),
-                        onModeSelected = { mode ->
-                            ThemeModeStore.setMode(activity, mode)
-                            activity.recreate()
+                        onModeSelected = { selectedMode ->
+                            ThemeModeStore.setMode(activity, selectedMode)
+                            mode = selectedMode
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onDynamicColorChanged = { enabled ->
                             ThemeModeStore.setDynamicColorEnabled(activity, enabled)
                             dynamicColorEnabled = enabled
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onThemeColorSelected = { color ->
                             ThemeModeStore.setThemeColor(activity, color)
                             themeColor = color
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onPaletteStyleSelected = { style ->
                             ThemeModeStore.setPaletteStyle(activity, style)
                             paletteStyle = style
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onColorSpecificationSelected = { specification ->
                             ThemeModeStore.setColorSpecification(activity, specification)
                             colorSpecification = specification
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onInterfaceScaleChanged = { percent ->
                             val store = InterfaceScaleStore(activity)
@@ -81,35 +87,36 @@ object SupportActivityContent {
                     )
                 } else {
                     ThemeSettingsContent(
-                        mode = ThemeModeStore.getMode(activity),
+                        mode = mode,
                         dynamicColorEnabled = dynamicColorEnabled,
                         themeColor = themeColor,
                         paletteStyle = paletteStyle,
                         colorSpecification = colorSpecification,
                         interfaceScalePercent = AppUiScaleManager.getScalePercent(activity),
-                        onModeSelected = { mode ->
-                            ThemeModeStore.setMode(activity, mode)
-                            activity.recreate()
+                        onModeSelected = { selectedMode ->
+                            ThemeModeStore.setMode(activity, selectedMode)
+                            mode = selectedMode
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onDynamicColorChanged = { enabled ->
                             ThemeModeStore.setDynamicColorEnabled(activity, enabled)
                             dynamicColorEnabled = enabled
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onThemeColorSelected = { color ->
                             ThemeModeStore.setThemeColor(activity, color)
                             themeColor = color
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onPaletteStyleSelected = { style ->
                             ThemeModeStore.setPaletteStyle(activity, style)
                             paletteStyle = style
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onColorSpecificationSelected = { specification ->
                             ThemeModeStore.setColorSpecification(activity, specification)
                             colorSpecification = specification
-                            activity.recreate()
+                            activity.markAppearanceAppliedInPlace()
                         },
                         onInterfaceScaleChanged = { percent ->
                             val store = InterfaceScaleStore(activity)
@@ -330,5 +337,13 @@ object SupportActivityContent {
                 )
             }
         }
+    }
+
+    /**
+     * Only LocalizedActivity needs lifecycle reconciliation. Other ComponentActivity callers
+     * receive the same in-place Compose recoloring without an additional contract.
+     */
+    private fun ComponentActivity.markAppearanceAppliedInPlace() {
+        (this as? LocalizedActivity)?.markAppearanceAppliedInPlace()
     }
 }

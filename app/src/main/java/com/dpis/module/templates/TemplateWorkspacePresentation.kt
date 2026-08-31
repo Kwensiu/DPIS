@@ -27,6 +27,7 @@ object TemplateWorkspacePresentation {
         val globalPrefillSummaryParts: List<String>,
         val globalPrefillTypefaceStatus: TemplateConfigSummaryFormatter.TypefaceStatus,
         val templates: List<Template>,
+        val sortItems: List<QuickTemplateSortItem>,
         val query: String,
         val searching: Boolean,
         val detailKind: DetailKind,
@@ -50,7 +51,10 @@ object TemplateWorkspacePresentation {
     interface Actions {
         fun editGlobalPrefill()
         fun createTemplate()
+        /** Legacy View and Wear entry point while those surfaces retain platform dialog ownership. */
         fun sortTemplates()
+        /** Persists the full template order; the Compose page owns dialog visibility. */
+        fun reorderTemplates(orderedIds: List<String>): Boolean
         fun applyTemplate(id: String)
         fun editTemplate(id: String)
         fun selectTargets(id: String)
@@ -88,7 +92,8 @@ object TemplateWorkspacePresentation {
         }
         val preferences = context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
         val normalizedQuery = query?.trim()?.lowercase().orEmpty()
-        val templates = QuickTemplateStore(context).readAll()
+        val allTemplates = QuickTemplateStore(context).readAll()
+        val templates = allTemplates
             .asSequence()
             .filter { normalizedQuery.isEmpty() || it.name.lowercase().contains(normalizedQuery) }
             .map {
@@ -103,6 +108,7 @@ object TemplateWorkspacePresentation {
             globalResult.summaryParts,
             globalResult.typefaceStatus,
             templates,
+            allTemplates.map { QuickTemplateSortItem(it.id, it.name) },
             query.orEmpty(),
             normalizedQuery.isNotEmpty(),
             detailKind,

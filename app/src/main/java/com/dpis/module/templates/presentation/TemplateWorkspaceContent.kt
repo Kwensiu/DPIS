@@ -80,6 +80,7 @@ import com.dpis.module.R
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.QuickTemplateSortContent
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.templates.TemplateConfigSummaryFormatter
 import com.dpis.module.templates.TemplateEditorForm
@@ -114,6 +115,7 @@ fun TemplateWorkspaceContent(
     var targetSwitchDialogVisible by rememberSaveable { mutableStateOf(false) }
     var targetSaveRequest by rememberSaveable { mutableStateOf(0) }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
+    var sortDialogVisible by rememberSaveable { mutableStateOf(false) }
     var editorSheetVisible by rememberSaveable { mutableStateOf(false) }
     var editorSheetClosing by remember { mutableStateOf(false) }
     val editorDestination = state.editorDestination
@@ -327,6 +329,7 @@ fun TemplateWorkspaceContent(
                     padding = padding,
                     onQueryChanged = onQueryChanged,
                     onEditorOpened = ::openEditor,
+                    onSortRequested = { sortDialogVisible = true },
                     onTargetsOpened = openTargets,
                     scrollStore = activeScrollStore,
                     modifier = Modifier.weight(1f)
@@ -372,6 +375,7 @@ fun TemplateWorkspaceContent(
                 padding = padding,
                 onQueryChanged = onQueryChanged,
                 onEditorOpened = ::openEditor,
+                onSortRequested = { sortDialogVisible = true },
                 onTargetsOpened = openTargets,
                 scrollStore = activeScrollStore,
                 modifier = Modifier
@@ -403,6 +407,15 @@ fun TemplateWorkspaceContent(
                     typefaceContent = { typefacePage() }
                 )
             }
+        }
+    }
+    if (sortDialogVisible) {
+        ModalDialog(onDismissRequest = { sortDialogVisible = false }) {
+            QuickTemplateSortContent(
+                initialItems = state.sortItems,
+                onOrderChanged = state.actions::reorderTemplates,
+                onDone = { sortDialogVisible = false },
+            )
         }
     }
     if (deleteConfirmationVisible) {
@@ -473,6 +486,7 @@ private fun TemplateWorkspaceListPane(
     padding: PaddingValues,
     onQueryChanged: (String) -> Unit,
     onEditorOpened: (String, String?) -> Unit,
+    onSortRequested: () -> Unit,
     onTargetsOpened: (String) -> Unit,
     scrollStore: PageScrollPositionStore,
     modifier: Modifier = Modifier
@@ -532,9 +546,13 @@ private fun TemplateWorkspaceListPane(
                     })
                 }
                 item {
-                    TemplateHeader(state, rememberConfirmAction {
-                        onEditorOpened(EDITOR_QUICK, null)
-                    })
+                    TemplateHeader(
+                        state = state,
+                        onSort = onSortRequested,
+                        onCreate = rememberConfirmAction {
+                            onEditorOpened(EDITOR_QUICK, null)
+                        },
+                    )
                 }
             }
             if (state.templates.isEmpty()) {
@@ -746,9 +764,10 @@ private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit
 @Composable
 private fun TemplateHeader(
     state: TemplateWorkspacePresentation.State,
+    onSort: () -> Unit,
     onCreate: () -> Unit
 ) {
-    val sort = rememberConfirmAction(state.actions::sortTemplates)
+    val sort = rememberConfirmAction(onSort)
     Row(
         Modifier
             .fillMaxWidth()

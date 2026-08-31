@@ -14,10 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,14 +43,13 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
-import com.dpis.module.ui.compose.DialogColumn
-import com.dpis.module.ui.compose.DialogTitle
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-/** Compose-owned template ordering dialog; persistence remains in the Java host. */
+/** Legacy platform-dialog bridge for View and Wear callers; Compose pages use the content below. */
 object QuickTemplateSortDialog {
     // TODO: Migrate after Java callers stop retaining the AlertDialog for imperative dismissal.
     interface Host {
@@ -97,7 +97,8 @@ object QuickTemplateSortDialog {
     }
 }
 
-internal data class QuickTemplateSortItem(val id: String, val name: String)
+/** Immutable template row passed through the presentation snapshot while sorting is open. */
+data class QuickTemplateSortItem(val id: String, val name: String)
 
 @Composable
 internal fun QuickTemplateSortContent(
@@ -115,10 +116,10 @@ internal fun QuickTemplateSortContent(
                     8.dp
                 )
             ) {
-                OutlinedButton(
+                Button(
                     onClick = onDone,
-                    modifier = Modifier.fillMaxWidth().height(ConfirmDialogUiTokens.ActionHeight),
-                    shape = ConfirmDialogUiTokens.ActionShape,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
                 ) {
                     Text(stringResource(R.string.quick_template_sort_done))

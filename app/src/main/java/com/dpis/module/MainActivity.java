@@ -127,6 +127,7 @@ import com.dpis.module.ui.WatchUiMode;
 import com.dpis.module.updates.UpdateStateStore;
 
 import com.dpis.module.updates.UpdatePromptDialogCoordinator;
+import com.dpis.module.updates.UpdatePromptRequest;
 
 import com.dpis.module.updates.UpdateDownloadCoordinator;
 
@@ -336,6 +337,8 @@ public final class MainActivity
     private volatile boolean startupUpdateCheckInProgress;
     private volatile boolean startupUpdateDownloadInProgress;
     private volatile boolean startupUpdateDownloadCancelRequested;
+    // A visible update prompt is user work, so retain it across a configuration change.
+    private UpdatePromptRequest pendingUpdatePrompt;
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
@@ -404,6 +407,7 @@ public final class MainActivity
             retainedGlobalPrefillDraft = retainedState.globalPrefillDraft;
             retainedQuickTemplateDraft = retainedState.quickTemplateDraft;
             feedbackDiagnosticPageRequest = retainedState.feedbackDiagnosticPageRequest;
+            pendingUpdatePrompt = retainedState.pendingUpdatePrompt;
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
@@ -599,6 +603,10 @@ public final class MainActivity
             restoreAppEditorForCurrentWorkspace();
         }
         restoreTemplateEditorForCurrentConfiguration();
+        if (pendingUpdatePrompt != null) {
+            showPendingUpdatePrompt();
+            return;
+        }
         if (maybeShowModuleRuntimeReloadAdvice()) {
             return;
         }
@@ -868,7 +876,8 @@ public final class MainActivity
                 feedbackDiagnosticPageRequest,
                 feedbackDiagnosticPageController.presentation() != null
                         ? feedbackDiagnosticPageController.presentation().getState()
-                        : null
+                        : null,
+                pendingUpdatePrompt
         );
     }
 
@@ -1796,6 +1805,15 @@ public final class MainActivity
                         @Override public void sortTemplates() {
                             createQuickTemplateActions().sort(new QuickTemplateStore(MainActivity.this).readAll());
                         }
+                        @Override public boolean reorderTemplates(List<String> orderedIds) {
+                            boolean reordered = new QuickTemplateStore(MainActivity.this).reorder(orderedIds);
+                            if (reordered) {
+                                bindTemplateWorkspace();
+                            } else {
+                                showToast(R.string.quick_template_sort_failed);
+                            }
+                            return reordered;
+                        }
                         @Override public void applyTemplate(String id) { applyQuickTemplate(id); }
                         @Override public void editTemplate(String id) { showQuickTemplateEditor(id); }
                         @Override public void selectTargets(String id) { showQuickTemplateTargets(id); }
@@ -2212,13 +2230,8 @@ public final class MainActivity
             @Override
             public void onStartupUpdateAvailable(StartupUpdateManifest manifest) {
                 MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.available(manifest));
-                updatePromptDialogCoordinator().showUpdateAvailableDialog(
-                        manifest.versionName,
-                        manifest.versionCode,
-                        manifest.apkUrl,
-                        manifest.releasePage,
-                        manifest.releaseNotes
-                );
+                pendingUpdatePrompt = UpdatePromptRequest.from(manifest);
+                showPendingUpdatePrompt();
             }
 
             @Override
@@ -2242,6 +2255,13 @@ public final class MainActivity
             );
         }
         return updatePromptDialogCoordinator;
+    }
+
+    private void showPendingUpdatePrompt() {
+        UpdatePromptRequest request = pendingUpdatePrompt;
+        if (request != null) {
+            updatePromptDialogCoordinator().showUpdateAvailableDialog(request);
+        }
     }
 
     private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
@@ -2287,6 +2307,13 @@ public final class MainActivity
             @Override
             public void applyLargeDialogWidth(androidx.appcompat.app.AlertDialog dialog) {
                 DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this);
+            }
+
+            @Override
+            public void onUpdatePromptDismissed() {
+                if (!isChangingConfigurations()) {
+                    pendingUpdatePrompt = null;
+                }
             }
 
             @Override
@@ -4372,7 +4399,8 @@ public final class MainActivity
                                  Session feedbackDiagnosticSession,
                                  FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                                  com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
-                                         feedbackDiagnosticPresentationState) {
+                                         feedbackDiagnosticPresentationState,
+                                 UpdatePromptRequest pendingUpdatePrompt) {
 
             private RetainedState(
                     List<AppListItem> appsSnapshot,
@@ -4395,7 +4423,8 @@ public final class MainActivity
                     Session feedbackDiagnosticSession,
                     FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
                     com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
-                            feedbackDiagnosticPresentationState
+                            feedbackDiagnosticPresentationState,
+                    UpdatePromptRequest pendingUpdatePrompt
             ) {
                 this.appsSnapshot = appsSnapshot;
                 this.query = query != null ? query : "";
@@ -4433,6 +4462,7 @@ public final class MainActivity
                 this.feedbackDiagnosticSession = feedbackDiagnosticSession;
                 this.feedbackDiagnosticPageRequest = feedbackDiagnosticPageRequest;
                 this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;
+                this.pendingUpdatePrompt = pendingUpdatePrompt;
             }
         }
 

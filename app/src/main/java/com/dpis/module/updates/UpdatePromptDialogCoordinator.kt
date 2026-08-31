@@ -24,6 +24,8 @@ class UpdatePromptDialogCoordinator(
         fun openUrl(url: String)
         fun showToast(messageResId: Int)
         fun applyLargeDialogWidth(dialog: AlertDialog)
+        /** Clears the Activity-owned request when the user has ended the prompt. */
+        fun onUpdatePromptDismissed()
         fun finishActivity()
     }
 
@@ -46,11 +48,7 @@ class UpdatePromptDialogCoordinator(
     }
 
     fun showUpdateAvailableDialog(
-        remoteVersionName: String,
-        remoteVersionCode: Int,
-        remoteApkUrl: String?,
-        remoteReleasePage: String?,
-        remoteReleaseNotes: String?
+        request: UpdatePromptRequest
     ) {
         if (!activityAlive()) return
 
@@ -59,11 +57,11 @@ class UpdatePromptDialogCoordinator(
             activity.getString(R.string.about_update_available_title),
             activity.getString(
                 R.string.about_update_available_message,
-                remoteVersionName,
-                remoteVersionCode
+                request.versionName,
+                request.versionCode
             )
         )
-        val embeddedReleaseNotes = remoteReleaseNotes.orEmpty().trim()
+        val embeddedReleaseNotes = request.releaseNotes.orEmpty().trim()
         if (embeddedReleaseNotes.isEmpty()) {
             dialogHandle.setReleaseNotes(
                 activity.getString(R.string.about_update_release_notes_loading)
@@ -87,13 +85,13 @@ class UpdatePromptDialogCoordinator(
             }
         )
 
-        val releasePageUrl = remoteReleasePage.takeUnless { it.isNullOrEmpty() }
+        val releasePageUrl = request.releasePage.takeUnless { it.isNullOrEmpty() }
             ?: activity.getString(R.string.about_releases_url)
-        if (remoteApkUrl.isNullOrBlank()) {
+        if (request.apkUrl.isNullOrBlank()) {
             dialogHandle.setPrimary(
                 activity.getString(R.string.about_update_action_view_release),
                 Runnable {
-                    host.markPromptedVersion(remoteVersionCode)
+                    host.markPromptedVersion(request.versionCode)
                     dialogHandle.dismiss()
                     host.openUrl(releasePageUrl)
                 }
@@ -102,20 +100,26 @@ class UpdatePromptDialogCoordinator(
             dialogHandle.setPrimary(
                 activity.getString(R.string.about_update_action_download),
                 Runnable {
-                    host.markPromptedVersion(remoteVersionCode)
+                    host.markPromptedVersion(request.versionCode)
                     host.startStartupUpdateDownload(
-                        remoteVersionName,
-                        remoteApkUrl,
+                        request.versionName,
+                        request.apkUrl,
                         dialogHandle
                     )
                 }
             )
-            dialogHandle.setOnDismissListener(Runnable { host.cancelActiveUpdateDownload() })
         }
+
+        dialogHandle.setOnDismissListener(Runnable {
+            host.onUpdatePromptDismissed()
+            if (!activity.isChangingConfigurations && host.isDownloadInProgress()) {
+                host.cancelActiveUpdateDownload()
+            }
+        })
 
         dialogHandle.show()
         host.applyLargeDialogWidth(dialogHandle.dialog)
-        loadReleaseNotes(dialogHandle, remoteVersionName, embeddedReleaseNotes.isNotEmpty())
+        loadReleaseNotes(dialogHandle, request.versionName, embeddedReleaseNotes.isNotEmpty())
     }
 
     private fun loadReleaseNotes(

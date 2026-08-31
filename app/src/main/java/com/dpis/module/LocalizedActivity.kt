@@ -52,4 +52,15 @@ abstract class LocalizedActivity : ComponentActivity() {
             recreate()
         }
     }
+
+    /**
+     * Records an appearance change that this Activity has already rendered through Compose.
+     *
+     * Theme settings update the active color scheme in place. Without this acknowledgement,
+     * returning to the page later would make {@link #onResume()} recreate the Activity for the
+     * same preference change and unnecessarily dismiss any restored transient UI.
+     */
+    fun markAppearanceAppliedInPlace() {
+        activeAppearance = ThemeModeStore.getAppearance(this)
+    }
 }

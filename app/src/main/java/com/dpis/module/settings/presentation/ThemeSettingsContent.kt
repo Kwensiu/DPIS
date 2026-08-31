@@ -1,6 +1,8 @@
 package com.dpis.module.ui.compose
 
 import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.clickable
@@ -32,7 +34,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -54,6 +55,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
@@ -210,16 +212,16 @@ private fun ThemeDynamicColorRow(
     index: Int,
     total: Int,
 ) {
-    SegmentedListItem(
+    ThemeSegmentedSurfaceRow(
         onClick = { onCheckedChange(!checked) },
-        shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
+        index = index,
+        total = total,
         leadingContent = {
-            Icon(painterResource(R.drawable.ic_palette_24), contentDescription = null)
+            Icon(
+                painterResource(R.drawable.ic_palette_24),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         },
         content = {
             Text(
@@ -249,16 +251,16 @@ private fun ThemeStaticOptionRow(
     total: Int,
     onClick: () -> Unit,
 ) {
-    SegmentedListItem(
+    ThemeSegmentedSurfaceRow(
         onClick = onClick,
-        shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
+        index = index,
+        total = total,
         leadingContent = {
-            Icon(painterResource(icon), contentDescription = null)
+            Icon(
+                painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         },
         content = {
             Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
@@ -460,7 +462,11 @@ private fun ThemeChoiceDialog(
         DialogColumn(
             title = { DialogTitle(title) },
             actions = {
-                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape,
+                ) {
                     Text(stringResource(R.string.dialog_typeface_done_action))
                 }
             }
@@ -470,7 +476,9 @@ private fun ThemeChoiceDialog(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp)
                     .dialogListContentFade(
                         state = listState,
-                        edgeColor = MaterialTheme.colorScheme.surfaceVariant,
+                        // The list is inside ModalDialog's surfaceContainerHigh, not its option rows.
+                        // Fade into the owning dialog surface so the scroll cue does not darken it.
+                        edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -513,7 +521,7 @@ private fun ThemeModeDialog(
                 modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp)
                     .dialogListContentFade(
                         state = listState,
-                        edgeColor = MaterialTheme.colorScheme.surfaceVariant,
+                        edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -597,17 +605,16 @@ private fun ThemeSettingsEntry(
     total: Int,
     onClick: () -> Unit,
 ) {
-    SegmentedListItem(
+    ThemeSegmentedSurfaceRow(
         onClick = rememberConfirmAction(onClick),
-        shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-        verticalAlignment = Alignment.CenterVertically,
+        index = index,
+        total = total,
         leadingContent = {
-            Icon(painterResource(icon), contentDescription = null)
+            Icon(
+                painterResource(icon),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         },
         content = {
             Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
@@ -623,6 +630,51 @@ private fun ThemeSettingsEntry(
             )
         },
     )
+}
+
+/**
+ * Theme changes already animate at the DpisTheme boundary. This row consumes those animated
+ * colors directly so Material list-item transitions do not delay some cards a second time.
+ */
+@Composable
+private fun ThemeSegmentedSurfaceRow(
+    onClick: () -> Unit,
+    index: Int,
+    total: Int,
+    leadingContent: @Composable () -> Unit,
+    content: @Composable () -> Unit,
+    supportingContent: (@Composable () -> Unit)? = null,
+    trailingContent: (@Composable () -> Unit)? = null,
+) {
+    val shape = dpisSegmentedShapes(index, total).shape
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .clickable(onClick = onClick, role = Role.Button),
+        shape = shape,
+        color = MaterialTheme.colorScheme.surfaceBright,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            leadingContent()
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                content()
+                supportingContent?.let { supporting ->
+                    Spacer(Modifier.height(2.dp))
+                    supporting()
+                }
+            }
+            trailingContent?.let { trailing ->
+                Spacer(Modifier.width(12.dp))
+                trailing()
+            }
+        }
+    }
 }
 
 @Composable

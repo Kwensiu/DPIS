@@ -1,6 +1,8 @@
 package com.dpis.module.ui.compose
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
@@ -8,7 +10,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,7 +43,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -336,51 +336,6 @@ private fun BackupActionTile(
             Text(text = label, style = MaterialTheme.typography.titleSmall)
         }
     }
-}
-
-@Composable
-internal fun DialogColumn(
-    title: @Composable () -> Unit,
-    actions: @Composable ColumnScope.() -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val maxHeight = (LocalConfiguration.current.screenHeightDp * 0.9f)
-        .coerceAtLeast(240f)
-        .dp
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(max = maxHeight)
-            .padding(
-                start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-                top = dimensionResource(R.dimen.dialog_surface_padding_top),
-                end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-                bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-            )
-    ) {
-        title()
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false),
-            content = content
-        )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_footer_spacing_top)))
-        actions()
-    }
-}
-
-@Composable
-internal fun DialogTitle(text: String, textAlign: TextAlign = TextAlign.Center) {
-    Text(
-        text = text,
-        modifier = Modifier.fillMaxWidth(),
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.onSurface,
-        textAlign = textAlign
-    )
 }
 
 @Composable
