@@ -1,20 +1,24 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.EditorPresentation
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -23,61 +27,57 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.dpis.module.home.HomeWorkspaceBinder
+import com.dpis.module.appconfig.AppConfigSheetWizardStore
+import com.dpis.module.appconfig.EditorPresentation
+import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.settings.SystemFontScaleToolState
-import com.dpis.module.ui.compose.HomeWorkspaceContent
-import com.dpis.module.ui.compose.AppWorkspaceContent
-import com.dpis.module.ui.compose.AppConfigEditorOverlay
-import com.dpis.module.ui.compose.AppConfigEditorContent
-import com.dpis.module.ui.compose.AppHookChainEditorPage
-import com.dpis.module.ui.compose.AppTypefacePickerPage
-import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
-import com.dpis.module.ui.compose.AppConfigSheetUiTokens
-import com.dpis.module.ui.compose.rememberEditorControlHeight
-import com.dpis.module.ui.compose.ToolsWorkspaceContent
-import com.dpis.module.ui.compose.SettingsWorkspaceContent
-import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.compose.PageScrollPositionStore
-import com.dpis.module.templates.presentation.TemplateWorkspaceContent
-import com.dpis.module.ui.compose.WearAppWorkspaceContent
-import com.dpis.module.ui.compose.WearHomeWorkspaceContent
-import com.dpis.module.ui.compose.WearSettingsWorkspaceContent
-import com.dpis.module.ui.compose.WearTemplateWorkspaceContent
-import com.dpis.module.ui.compose.WearToolsWorkspaceContent
-import com.dpis.module.ui.compose.WearAppConfigEditorContent
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
-import com.dpis.module.appconfig.AppConfigSheetWizardStore
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
+import com.dpis.module.templates.presentation.TemplateWorkspaceContent
+import com.dpis.module.ui.compose.AppConfigEditorContent
+import com.dpis.module.ui.compose.AppConfigEditorOverlay
+import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.AppHookChainEditorPage
+import com.dpis.module.ui.compose.AppTypefacePickerPage
+import com.dpis.module.ui.compose.AppWorkspaceContent
+import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
+import com.dpis.module.ui.compose.HomeWorkspaceContent
+import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.compose.PageScrollPositionStore
+import com.dpis.module.ui.compose.SettingsWorkspaceContent
+import com.dpis.module.ui.compose.ToolsWorkspaceContent
+import com.dpis.module.ui.presentation.WearAppConfigEditorContent
+import com.dpis.module.ui.presentation.WearAppWorkspaceContent
+import com.dpis.module.ui.presentation.WearHomeWorkspaceContent
+import com.dpis.module.ui.presentation.WearSettingsWorkspaceContent
+import com.dpis.module.ui.presentation.WearTemplateWorkspaceContent
+import com.dpis.module.ui.presentation.WearToolsWorkspaceContent
+import com.dpis.module.ui.compose.rememberEditorControlHeight
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
 internal class MainWorkspacePresentationCoordinator(private val content: Content) {
     interface Content {
-        fun homeState(): HomeWorkspaceBinder.State
+        fun homeState(): HomeWorkspaceState
         fun appState(): AppWorkspacePresentation.State
         fun appEditorState(): EditorPresentation.State?
         fun toolsState(): SystemFontScaleToolState?
@@ -333,7 +333,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                     .background(MaterialTheme.colorScheme.onSurfaceVariant)
                             )
                         }
-                        if (!editorState.destination.isChildPage()) Box(
+                        if (!editorState.destination.isChildPage) Box(
                             modifier = androidx.compose.ui.Modifier
                                 // Keep the diagnostic action on the same center line as the
                                 // visual white bar; it is not independently top-aligned chrome.
@@ -420,7 +420,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 )
             },
             overlayContent = {
-                if (showAdvancedHint && !editorState.destination.isChildPage()) {
+                if (showAdvancedHint && !editorState.destination.isChildPage) {
                     Column(
                         modifier = androidx.compose.ui.Modifier
                             .align(Alignment.TopCenter)

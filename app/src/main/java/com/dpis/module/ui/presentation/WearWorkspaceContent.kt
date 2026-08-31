@@ -1,15 +1,19 @@
-@file:android.annotation.SuppressLint("LocalContextGetResourceValueCall")
+@file:SuppressLint("LocalContextGetResourceValueCall")
 
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.widget.ImageView
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,66 +23,70 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.activity.compose.BackHandler
-import androidx.compose.material3.Surface
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
-import androidx.wear.compose.material3.Card
-import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
+import androidx.wear.compose.material3.Card
+import androidx.wear.compose.material3.CardDefaults
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.ListHeader
+import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.OutlinedButton
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
 import androidx.wear.compose.material3.SwitchButton
 import androidx.wear.compose.material3.Text
+import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.AppWorkspacePresentation
-import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
+import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.home.HomeWorkspaceBinder
-import com.dpis.module.settings.SystemFontScaleToolState
-import com.dpis.module.templates.TemplateWorkspacePresentation
-import com.dpis.module.templates.TemplateEditorForm
-import com.dpis.module.templates.QuickTemplateStore
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.viewport.ViewportTargetType
-import com.dpis.module.viewport.ViewportApplyMode
-import com.dpis.module.ConfigStoreFactory
-import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.FontLibraryActivity
+import com.dpis.module.fonts.SystemFontRegistry
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
+import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.hooks.HookDomainOverrideStore
+import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
+import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.rememberInstalledAppIcon
+import com.dpis.module.viewport.ViewportApplyMode
+import com.dpis.module.viewport.ViewportTargetType
 
 /** Wear-native presentation for the five main workspaces. Domain state remains Java-owned. */
 @Composable
@@ -377,7 +385,7 @@ private fun WearHookChainEditorPage(
 }
 
 @Composable
-internal fun WearHomeWorkspaceContent(state: HomeWorkspaceBinder.State) {
+internal fun WearHomeWorkspaceContent(state: HomeWorkspaceState) {
     val context = LocalContext.current
     val checkForUpdates: () -> Unit = if (state.xposedModuleActivated) {
         state.actions::checkForUpdates
@@ -657,7 +665,8 @@ internal fun WearSettingsWorkspaceContent(
         wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
         wearSectionHeader(R.string.settings_section_other)
         wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onBackup)
-        wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24, state?.storeAvailable == true && state.cacheClearInProgress != true, onClearCache)
+        wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24,
+            state?.storeAvailable == true && !state.cacheClearInProgress, onClearCache)
         wearSwitch("launcher", R.string.settings_hide_launcher_icon_label, state?.launcherIconHidden == true, state?.storeAvailable == true, onLauncherHiddenChanged)
         wearSectionHeader(R.string.settings_section_about)
         wearButton("about", context.getString(R.string.settings_about_label), icon = R.drawable.ic_info_24, onClick = onAbout)
@@ -665,8 +674,8 @@ internal fun WearSettingsWorkspaceContent(
 }
 
 internal class WearListScope(
-    private val scope: androidx.wear.compose.foundation.lazy.TransformingLazyColumnScope,
-    private val transformationSpec: androidx.wear.compose.material3.lazy.TransformationSpec
+    private val scope: TransformingLazyColumnScope,
+    private val transformationSpec: TransformationSpec
 ) {
     fun wearSectionHeader(@StringRes title: Int) = with(scope) {
         item(key = "section:$title") {
@@ -693,11 +702,11 @@ internal class WearListScope(
                     value = value,
                     onValueChange = onValueChanged,
                     singleLine = true,
-                    textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
-                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface
                     ),
                     cursorBrush = SolidColor(
-                        androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                        MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier.fillMaxWidth()
                         .onFocusChanged { focused = it.isFocused },
@@ -707,7 +716,7 @@ internal class WearListScope(
                                 Text(
                                     label,
                                     maxLines = 1,
-                                    color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                             inner()
@@ -743,11 +752,11 @@ internal class WearListScope(
                         value = value,
                         onValueChange = onValueChanged,
                         singleLine = true,
-                        textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
-                            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         cursorBrush = SolidColor(
-                            androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.fillMaxWidth()
                             .onFocusChanged { focused = it.isFocused },
@@ -757,7 +766,7 @@ internal class WearListScope(
                                     Text(
                                         label,
                                         maxLines = 1,
-                                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                                 inner()
@@ -793,17 +802,17 @@ internal class WearListScope(
                     Text(
                         label,
                         maxLines = 1,
-                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     BasicTextField(
                         value = value,
                         onValueChange = onValueChanged,
                         singleLine = true,
-                        textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
-                            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         cursorBrush = SolidColor(
-                            androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     )
@@ -834,17 +843,17 @@ internal class WearListScope(
                     Text(
                         label,
                         maxLines = 1,
-                        color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     BasicTextField(
                         value = value,
                         onValueChange = onValueChanged,
                         singleLine = true,
-                        textStyle = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium.copy(
-                            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurface
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
                         ),
                         cursorBrush = SolidColor(
-                            androidx.wear.compose.material3.MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     )
@@ -956,7 +965,7 @@ internal class WearListScope(
                                 modifier = Modifier.padding(top = 2.dp),
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
-                                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                         tertiaryLabel?.takeIf(String::isNotBlank)?.let { value ->
@@ -965,7 +974,7 @@ internal class WearListScope(
                                 modifier = Modifier.padding(top = 2.dp),
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
-                                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -978,7 +987,7 @@ internal class WearListScope(
         key: Any,
         label: String,
         secondaryLabel: String,
-        icon: android.graphics.drawable.Drawable?,
+        icon: Drawable?,
         onClick: () -> Unit
     ) = with(scope) {
         item(key = key) {
@@ -1013,7 +1022,7 @@ internal class WearListScope(
                                 secondaryLabel,
                                 maxLines = 1,
                                 overflow = TextOverflow.Clip,
-                                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -1277,7 +1286,7 @@ internal class WearListScope(
 @Composable
 private fun WearAppIcon(
     packageName: String,
-    initialIcon: android.graphics.drawable.Drawable?,
+    initialIcon: Drawable?,
     modifier: Modifier = Modifier
 ) {
     val icon = rememberInstalledAppIcon(packageName, initialIcon)
@@ -1289,7 +1298,7 @@ private fun WearAppIcon(
             .then(
                 if (icon == null) {
                     Modifier.background(
-                        androidx.wear.compose.material3.MaterialTheme.colorScheme.surfaceContainer
+                        MaterialTheme.colorScheme.surfaceContainer
                     )
                 } else {
                     Modifier
@@ -1323,7 +1332,7 @@ internal fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() 
     WearDpisMaterialTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = androidx.wear.compose.material3.MaterialTheme.colorScheme.background
+            color = MaterialTheme.colorScheme.background
         ) {
             ScreenScaffold(
                 scrollState = state,
@@ -1348,7 +1357,7 @@ internal fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() 
 @Composable
 internal fun WearDpisMaterialTheme(content: @Composable () -> Unit) {
     val phoneColors = androidx.compose.material3.MaterialTheme.colorScheme
-    val wearColors = androidx.wear.compose.material3.MaterialTheme.colorScheme.copy(
+    val wearColors = MaterialTheme.colorScheme.copy(
         primary = phoneColors.primary,
         primaryContainer = phoneColors.primaryContainer,
         onPrimary = phoneColors.onPrimary,
@@ -1375,5 +1384,5 @@ internal fun WearDpisMaterialTheme(content: @Composable () -> Unit) {
         onError = phoneColors.onError,
         onErrorContainer = phoneColors.onErrorContainer
     )
-    androidx.wear.compose.material3.MaterialTheme(colorScheme = wearColors, content = content)
+    MaterialTheme(colorScheme = wearColors, content = content)
 }

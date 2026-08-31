@@ -1,132 +1,8 @@
 package com.dpis.module;
-import com.dpis.module.appconfig.EditorPresentation;
-import com.dpis.module.appconfig.EditorDraft;
-
-import com.dpis.module.appconfig.LandAppDetailPaneBinder;
-import com.dpis.module.diagnostics.LogGate;
-
-import com.dpis.module.settings.SystemScopeCoordinator;
-
-import com.dpis.module.applist.InstalledAppCatalogCoordinator;
-
-
-import com.dpis.module.fonts.FontApplyMode;
-import com.dpis.module.fonts.FontLibraryActivity;
-import com.dpis.module.fonts.HyperOsNativeAppDetector;
-
-
-
-import com.dpis.module.runtime.RuntimeConfigDelivery;
-import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
-import com.dpis.module.updates.UpdateAvailableDialog;
-
-import com.dpis.module.diagnostics.ResultSheet;
-
-import com.dpis.module.diagnostics.ExportBuilder;
-import com.dpis.module.diagnostics.PackageActions;
-import com.dpis.module.diagnostics.PageController;
-import com.dpis.module.diagnostics.Session;
-
-import com.dpis.module.diagnostics.Coordinator;
-
-import com.dpis.module.appconfig.AppConfigDialogBinder;
-import com.dpis.module.appconfig.EditorActions;
-import com.dpis.module.appconfig.EditorDialogStateFactory;
-import com.dpis.module.appconfig.EditorPresentationFactory;
-import com.dpis.module.appconfig.EditorSessionResolver;
-import com.dpis.module.appconfig.AppConfigInputValidation;
-import com.dpis.module.appconfig.AppConfigPrefillPreview;
-import com.dpis.module.appconfig.AppConfigSaveHandler;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
-
-import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-
-import com.dpis.module.viewport.ViewportPropertySyncer;
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportTargetSpec;
-import com.dpis.module.viewport.ViewportTargetType;
-
-import com.dpis.module.applist.AppListItem;
-import com.dpis.module.applist.AppListPage;
-import com.dpis.module.hooks.HookDomainOverride;
-import com.dpis.module.hooks.HookDomainOverrideStore;
-
-import com.dpis.module.quirks.WechatDpiSheetBinder;
-
-import com.dpis.module.process.ProcessActionHandler;
-
-
-import com.dpis.module.templates.TemplateWorkspacePresentationSource;
-import com.dpis.module.templates.TemplateWorkspaceActivitySession;
-
-import com.dpis.module.applist.AppListFilterStateStore;
-
-import com.dpis.module.applist.AppListFilterState;
-
-import com.dpis.module.appconfig.WechatDpiConfig;
-
-import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
-import com.dpis.module.diagnostics.AppLauncher;
-
-import com.dpis.module.ui.TouchFeedbackBinder;
-
-import com.dpis.module.ui.WindowInsetsBinder;
-
-import com.dpis.module.ui.DialogWindowSizer;
-import com.dpis.module.ui.compose.AppFilterComposeSheet;
-import com.dpis.module.ui.dialog.ConfirmDialog;
-import com.dpis.module.ui.compose.ComposeMessageDialog;
-
-import com.dpis.module.home.HomeWorkspaceBinder;
-import com.dpis.module.home.HomeUpdateUiState;
-import com.dpis.module.home.HomeActivationStateResolver;
-import com.dpis.module.home.DonateActivity;
-import com.dpis.module.home.ModeHelpActivity;
-
-import com.dpis.module.settings.ToolsWorkspaceBinder;
-import com.dpis.module.settings.SystemFontScaleToolPresenter;
-import com.dpis.module.settings.StartupDisclaimerStore;
-
-
-import com.dpis.module.root.RootAccessProbe;
-
-import com.dpis.module.ui.WatchWorkspaceChromeBinder;
-import com.dpis.module.ui.WatchUiMode;
-
-import com.dpis.module.updates.UpdateStateStore;
-
-import com.dpis.module.updates.UpdatePromptDialogCoordinator;
-import com.dpis.module.updates.UpdatePromptRequest;
-
-import com.dpis.module.updates.UpdateDownloadCoordinator;
-
-import com.dpis.module.updates.UpdateCoordinator;
-
-import com.dpis.module.updates.StartupUpdatePackageHandler;
-
-import com.dpis.module.updates.StartupUpdateManifest;
-
-import com.dpis.module.updates.StartupUpdateDownloadExecutor;
-
-import com.dpis.module.updates.StartupUpdateCheckOnce;
-
-import com.dpis.module.updates.StartupUpdateCheckCoordinator;
-
-import com.dpis.module.updates.ReleaseNotesController;
-
-import com.dpis.module.updates.ReleaseNotesCacheStore;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
@@ -136,34 +12,112 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.Toast;
-import androidx.core.view.ViewCompat;
+
+import androidx.annotation.NonNull;
 import androidx.compose.ui.platform.ComposeView;
+import androidx.core.view.ViewCompat;
+
+import com.dpis.module.appconfig.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
+import com.dpis.module.appconfig.AppConfigInputValidation;
+import com.dpis.module.appconfig.AppConfigPrefillPreview;
+import com.dpis.module.appconfig.AppConfigSaveHandler;
+import com.dpis.module.appconfig.EditorDialogStateFactory;
+import com.dpis.module.appconfig.EditorDraft;
+import com.dpis.module.appconfig.EditorPresentation;
+import com.dpis.module.appconfig.LandAppDetailPaneBinder;
+import com.dpis.module.appconfig.WechatDpiConfig;
+import com.dpis.module.applist.AppListFilterState;
+import com.dpis.module.applist.AppListFilterStateStore;
+import com.dpis.module.applist.AppListItem;
+import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+import com.dpis.module.diagnostics.AppLauncher;
+import com.dpis.module.diagnostics.Coordinator;
+import com.dpis.module.diagnostics.ExportBuilder;
+import com.dpis.module.diagnostics.LogGate;
+import com.dpis.module.diagnostics.PackageActions;
+import com.dpis.module.diagnostics.PageController;
+import com.dpis.module.diagnostics.ResultSheet;
+import com.dpis.module.diagnostics.Session;
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.fonts.FontLibraryActivity;
+import com.dpis.module.fonts.HyperOsNativeAppDetector;
+import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
+import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
+import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+import com.dpis.module.home.DonateActivity;
+import com.dpis.module.home.HomeActivationStateResolver;
+import com.dpis.module.home.HomeUpdateUiState;
+import com.dpis.module.home.HomeWorkspaceActions;
+import com.dpis.module.home.HomeWorkspaceState;
+import com.dpis.module.home.ModeHelpActivity;
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.hooks.HookDomainOverrideStore;
+import com.dpis.module.process.ProcessActionHandler;
+import com.dpis.module.quirks.WechatDpiSheetBinder;
+import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
+import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+import com.dpis.module.settings.StartupDisclaimerStore;
+import com.dpis.module.settings.SystemFontScaleToolPresenter;
+import com.dpis.module.settings.SystemScopeCoordinator;
+import com.dpis.module.settings.ToolsWorkspaceBinder;
+import com.dpis.module.templates.TemplateWorkspaceActivitySession;
+import com.dpis.module.templates.TemplateWorkspacePresentationSource;
+import com.dpis.module.ui.DialogWindowSizer;
+import com.dpis.module.ui.TouchFeedbackBinder;
+import com.dpis.module.ui.WatchUiMode;
+import com.dpis.module.ui.WatchWorkspaceChromeBinder;
+import com.dpis.module.ui.WindowInsetsBinder;
+import com.dpis.module.ui.compose.AppFilterComposeSheet;
+import com.dpis.module.ui.compose.ComposeMessageDialog;
+import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
+import com.dpis.module.updates.ReleaseNotesCacheStore;
+import com.dpis.module.updates.ReleaseNotesController;
+import com.dpis.module.updates.StartupUpdateCheckCoordinator;
+import com.dpis.module.updates.StartupUpdateCheckOnce;
+import com.dpis.module.updates.StartupUpdateDownloadExecutor;
+import com.dpis.module.updates.StartupUpdateManifest;
+import com.dpis.module.updates.StartupUpdatePackageHandler;
+import com.dpis.module.updates.UpdateAvailableDialog;
+import com.dpis.module.updates.UpdateCoordinator;
+import com.dpis.module.updates.UpdateDownloadCoordinator;
+import com.dpis.module.updates.UpdatePromptDialogCoordinator;
+import com.dpis.module.updates.UpdatePromptRequest;
+import com.dpis.module.updates.UpdateStateStore;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportPropertySyncer;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
-import com.dpis.module.updates.ReleaseNotesMarkdownRenderer;
-import io.github.libxposed.service.XposedService;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import io.github.libxposed.service.XposedService;
 import kotlin.Unit;
 
 public final class MainActivity
         extends LocalizedActivity
         implements DpisApplication.ServiceStateListener {
 
-    private static final long MODE_TOGGLE_ANIM_DURATION_MS = 200L;
     private static final long WORKSPACE_TRANSITION_DURATION_MS = 300L;
     private static final float WORKSPACE_CONTENT_ENTER_START_SCALE = 0.96f;
     private static final AccelerateDecelerateInterpolator
@@ -192,16 +146,6 @@ public final class MainActivity
     private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
-    private static final String STATE_DRAFT_NAME = "name";
-    private static final String STATE_DRAFT_VIEWPORT_INPUT = "viewport_input";
-    private static final String STATE_DRAFT_VIEWPORT_MODE = "viewport_mode";
-    private static final String STATE_DRAFT_VIEWPORT_APPLY_MODE = "viewport_apply_mode";
-    private static final String STATE_DRAFT_VIEWPORT_SCALE_INPUT = "viewport_scale_input";
-    private static final String STATE_DRAFT_VIEWPORT_ABSOLUTE_INPUT = "viewport_absolute_input";
-    private static final String STATE_DRAFT_FONT_INPUT = "font_input";
-    private static final String STATE_DRAFT_FONT_MODE = "font_mode";
-    private static final String STATE_DRAFT_TYPEFACE_ID = "typeface_id";
-    private static final String STATE_DRAFT_FONT_HOOK_DOMAINS = "font_hook_domains";
     private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
     private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
     private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
@@ -264,12 +208,8 @@ public final class MainActivity
     private MainViewModel mainViewModel;
     private ComposeAppEditorController composeAppEditorController;
     private ComposeAppEditorSaveWorkflow composeAppEditorSaveWorkflow;
-    private ComposeEditorScopeRequestCoordinator composeEditorScopeRequestCoordinator;
-    private ComposeAppEditorActivityGateway composeAppEditorGateway;
     private MainComposeShellHost composeShellHost;
-    private MainWorkspacePresentationCoordinator workspacePresentationCoordinator;
     private View topContainer;
-    private View homeWorkspaceContainer;
     private View toolsWorkspaceContainer;
     private View settingsWorkspaceContainer;
     private View landDetailPane;
@@ -277,7 +217,6 @@ public final class MainActivity
     private View landDetailEmptyView;
     private FrameLayout landDetailContent;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
-    private HomeWorkspaceBinder homeWorkspaceBinder;
     private TemplateWorkspaceActivitySession workspaceSession;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemFontScaleToolPresenter composeToolsPresenter;
@@ -300,7 +239,6 @@ public final class MainActivity
     private PageController feedbackDiagnosticPageController;
     private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
-    private boolean mainActivityResumed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -404,7 +342,7 @@ public final class MainActivity
         );
         initializeWorkspaceSession(initialWorkspaceSessionState, initialTemplateQuery);
         ensureWorkspaceSession().restore(savedInstanceState);
-        composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
+        ComposeEditorScopeRequestCoordinator composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
                 mainViewModel,
                 (item, onApproved) -> systemScopeCoordinator.requestScope(
                         item.packageName,
@@ -420,7 +358,7 @@ public final class MainActivity
                 },
                 () -> showToast(R.string.save_scope_request_notice)
         );
-        composeAppEditorGateway = new ComposeAppEditorActivityGateway(
+        ComposeAppEditorActivityGateway composeAppEditorGateway = new ComposeAppEditorActivityGateway(
                 this,
                 composeEditorScopeRequestCoordinator
         );
@@ -434,12 +372,10 @@ public final class MainActivity
         );
 
         topContainer = findViewById(R.id.top_container);
-        homeWorkspaceContainer = findViewById(R.id.home_workspace_container);
         toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
         settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
         WatchWorkspaceChromeBinder.applyIfSupported(
                 this,
-                homeWorkspaceContainer,
                 settingsWorkspaceContainer
         );
         landDetailPane = findViewById(R.id.land_detail_pane);
@@ -451,7 +387,6 @@ public final class MainActivity
                 findViewById(R.id.template_detail_empty),
                 findViewById(R.id.template_detail_content)
         );
-        homeWorkspaceBinder = new HomeWorkspaceBinder(this);
         toolsWorkspaceBinder = new ToolsWorkspaceBinder(new ToolsWorkspaceBinder.Host() {
             @Override
             public android.app.Activity activity() {
@@ -558,7 +493,6 @@ public final class MainActivity
     @Override
     protected void onResume() {
         super.onResume();
-        mainActivityResumed = true;
         maybeStartRootAccessProbe();
         if (composeShellHost != null && composeToolsPresenter != null) {
             composeToolsPresenter.refresh();
@@ -572,7 +506,6 @@ public final class MainActivity
 
     @Override
     protected void onStop() {
-        mainActivityResumed = false;
         if (composeShellHost == null && toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStop();
         }
@@ -647,7 +580,7 @@ public final class MainActivity
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         MainUiState state = requireUiState();
         outState.putString(STATE_CURRENT_QUERY, state.appQuery);
@@ -780,8 +713,7 @@ public final class MainActivity
     }
 
     private void setCurrentAppListPage(AppListPage page, boolean submit) {
-        AppListPage nextPage = page != null ? page : AppListPage.ALL_APPS;
-        landCurrentPage = nextPage;
+        landCurrentPage = page != null ? page : AppListPage.ALL_APPS;
         if (submit && composeShellHost != null) {
             composeShellHost.refreshApps();
         }
@@ -938,10 +870,8 @@ public final class MainActivity
         }
         try {
             List<String> scope = service.getScope();
-            if (scope != null) {
-                scopePackages.addAll(scope);
-                return new ScopeState(scopePackages, true);
-            }
+            scopePackages.addAll(scope);
+            return new ScopeState(scopePackages, true);
         } catch (RuntimeException ignored) {
             scopePackages.clear();
         }
@@ -1005,10 +935,17 @@ public final class MainActivity
                         ViewGroup.LayoutParams.MATCH_PARENT
                 )
         );
-        workspacePresentationCoordinator = new MainWorkspacePresentationCoordinator(
+        MainWorkspacePresentationCoordinator workspacePresentationCoordinator = new MainWorkspacePresentationCoordinator(
                 new MainWorkspacePresentationCoordinator.Content() {
-                    @Override public HomeWorkspaceBinder.State homeState() { return createHomeWorkspaceState(); }
-                    @Override public AppWorkspacePresentation.State appState() {
+                    @NonNull
+                    @Override
+                    public HomeWorkspaceState homeState() {
+                        return createHomeWorkspaceState();
+                    }
+
+                    @NonNull
+                    @Override
+                    public AppWorkspacePresentation.State appState() {
                         return AppWorkspacePresentation.create(
                                 requireUiState(),
                                 landCurrentPage,
@@ -1016,33 +953,130 @@ public final class MainActivity
                                 appWorkspaceScrollStateStore,
                                 createComposeAppWorkspaceActions());
                     }
-                    @Override public EditorPresentation.State appEditorState() {
+
+                    @Override
+                    public EditorPresentation.State appEditorState() {
                         return createComposeAppEditorState();
                     }
-                    @Override public com.dpis.module.settings.SystemFontScaleToolState toolsState() { return composeToolsPresenter != null ? composeToolsPresenter.state() : null; }
-                    @Override public void changeToolsPending(int percent) { composeToolsPresenter.selectPendingPercent(percent); }
-                    @Override public void applyTools() { composeToolsPresenter.apply(); }
-                    @Override public void restoreTools() { composeToolsPresenter.restoreDefault(); }
-                    @Override public void requestToolsPermission() { startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, android.net.Uri.parse("package:" + getPackageName()))); }
-                    @Override public SettingsUiState settingsState() { return ensureComposeSettingsController().presentationState(); }
-                    @Override public void setSettingsHooks(boolean enabled) { ensureComposeSettingsController().setHooksEnabledFromPresentation(enabled); }
-                    @Override public void setSettingsSafeMode(boolean enabled) { ensureComposeSettingsController().presentationController().setSafeModeEnabled(enabled); }
-                    @Override public void setSettingsGlobalLog(boolean enabled) { ensureComposeSettingsController().presentationController().setGlobalLogEnabled(enabled); }
-                    @Override public void openSettingsLogs() { startActivity(new Intent(MainActivity.this, LogActivity.class)); }
-                    @Override public void setSettingsLauncherHidden(boolean hidden) { ensureComposeSettingsController().presentationController().setLauncherIconHidden(hidden); }
-                    @Override public void setSettingsScale(int percent) { ensureComposeSettingsController().saveInterfaceScaleFromPresentation(percent); }
-                    @Override public void openSettingsScaleDetails() { ensureComposeSettingsController().showInterfaceScaleFromPresentation(); }
-                    @Override public void openSettingsFontDebug() { ensureComposeSettingsController().showFontDebugFromPresentation(); }
-                    @Override public void openSettingsFontLibrary() { ensureComposeSettingsController().showFontLibraryFromPresentation(); }
-                    @Override public void openSettingsExperimental() { ensureComposeSettingsController().showExperimentalSettingsFromPresentation(); }
-                    @Override public void openThemeSettings() { ensureComposeSettingsController().showThemeSettingsFromPresentation(); }
-                    @Override public void setSettingsLanguage(String tag) { ensureComposeSettingsController().setLanguageFromPresentation(tag); }
-                    @Override public void openSettingsLanguage() { ensureComposeSettingsController().showLanguageFromPresentation(); }
-                    @Override public void openSettingsBackup() { ensureComposeSettingsController().showConfigBackupFromPresentation(); }
-                    @Override public void clearSettingsCache() { ensureComposeSettingsController().clearCacheFromPresentation(); }
-                    @Override public void openSettingsAbout() { ensureComposeSettingsController().showAboutFromPresentation(); }
-                    @Override public void openSettingsDonate() { ensureComposeSettingsController().showDonateFromPresentation(); }
-                    @Override public TemplateWorkspacePresentationSource templateWorkspace() {
+
+                    @Override
+                    public com.dpis.module.settings.SystemFontScaleToolState toolsState() {
+                        return composeToolsPresenter != null ? composeToolsPresenter.state() : null;
+                    }
+
+                    @Override
+                    public void changeToolsPending(int percent) {
+                        composeToolsPresenter.selectPendingPercent(percent);
+                    }
+
+                    @Override
+                    public void applyTools() {
+                        composeToolsPresenter.apply();
+                    }
+
+                    @Override
+                    public void restoreTools() {
+                        composeToolsPresenter.restoreDefault();
+                    }
+
+                    @Override
+                    public void requestToolsPermission() {
+                        startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS, android.net.Uri.parse("package:" + getPackageName())));
+                    }
+
+                    @Override
+                    public SettingsUiState settingsState() {
+                        return ensureComposeSettingsController().presentationState();
+                    }
+
+                    @Override
+                    public void setSettingsHooks(boolean enabled) {
+                        ensureComposeSettingsController().setHooksEnabledFromPresentation(enabled);
+                    }
+
+                    @Override
+                    public void setSettingsSafeMode(boolean enabled) {
+                        ensureComposeSettingsController().presentationController().setSafeModeEnabled(enabled);
+                    }
+
+                    @Override
+                    public void setSettingsGlobalLog(boolean enabled) {
+                        ensureComposeSettingsController().presentationController().setGlobalLogEnabled(enabled);
+                    }
+
+                    @Override
+                    public void openSettingsLogs() {
+                        startActivity(new Intent(MainActivity.this, LogActivity.class));
+                    }
+
+                    @Override
+                    public void setSettingsLauncherHidden(boolean hidden) {
+                        ensureComposeSettingsController().presentationController().setLauncherIconHidden(hidden);
+                    }
+
+                    @Override
+                    public void setSettingsScale(int percent) {
+                        ensureComposeSettingsController().saveInterfaceScaleFromPresentation(percent);
+                    }
+
+                    @Override
+                    public void openSettingsScaleDetails() {
+                        ensureComposeSettingsController().showInterfaceScaleFromPresentation();
+                    }
+
+                    @Override
+                    public void openSettingsFontDebug() {
+                        ensureComposeSettingsController().showFontDebugFromPresentation();
+                    }
+
+                    @Override
+                    public void openSettingsFontLibrary() {
+                        ensureComposeSettingsController().showFontLibraryFromPresentation();
+                    }
+
+                    @Override
+                    public void openSettingsExperimental() {
+                        ensureComposeSettingsController().showExperimentalSettingsFromPresentation();
+                    }
+
+                    @Override
+                    public void openThemeSettings() {
+                        ensureComposeSettingsController().showThemeSettingsFromPresentation();
+                    }
+
+                    @Override
+                    public void setSettingsLanguage(@NonNull String tag) {
+                        ensureComposeSettingsController().setLanguageFromPresentation(tag);
+                    }
+
+                    @Override
+                    public void openSettingsLanguage() {
+                        ensureComposeSettingsController().showLanguageFromPresentation();
+                    }
+
+                    @Override
+                    public void openSettingsBackup() {
+                        ensureComposeSettingsController().showConfigBackupFromPresentation();
+                    }
+
+                    @Override
+                    public void clearSettingsCache() {
+                        ensureComposeSettingsController().clearCacheFromPresentation();
+                    }
+
+                    @Override
+                    public void openSettingsAbout() {
+                        ensureComposeSettingsController().showAboutFromPresentation();
+                    }
+
+                    @Override
+                    public void openSettingsDonate() {
+                        ensureComposeSettingsController().showDonateFromPresentation();
+                    }
+
+                    @NonNull
+                    @Override
+                    public TemplateWorkspacePresentationSource templateWorkspace() {
                         return ensureWorkspaceSession().presentationSource(
                                 query -> {
                                     dispatchMainUiAction(MainUiAction.queryChanged(query));
@@ -1069,7 +1103,6 @@ public final class MainActivity
         boolean enteringToolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
                 && renderedWorkspaceMode != MainUiState.WorkspaceMode.TOOLS;
         boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;
-        boolean homeWorkspace = mode == MainUiState.WorkspaceMode.HOME;
         boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
         boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
         boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
@@ -1077,7 +1110,6 @@ public final class MainActivity
         boolean animateWorkspace = renderedWorkspaceMode != null
                 && renderedWorkspaceMode != mode;
         renderedWorkspaceMode = mode;
-        setVisible(homeWorkspaceContainer, homeWorkspace);
         setVisible(toolsWorkspaceContainer, toolsWorkspace);
         setVisible(settingsWorkspaceContainer, settingsWorkspace);
         resetHiddenWorkspacePresentation(mode);
@@ -1085,9 +1117,7 @@ public final class MainActivity
             animateVisibleWorkspaceContent(mode);
         }
         applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
-        if (homeWorkspace) {
-            bindHomeWorkspace();
-        } else if (templateWorkspace) {
+        if (templateWorkspace) {
             bindWorkspaceSession();
             restoreWorkspaceEditorForCurrentConfiguration();
         } else if (toolsWorkspace) {
@@ -1113,9 +1143,7 @@ public final class MainActivity
         if (editingPackage == null || editingPackage.isBlank()) {
             return;
         }
-        if (isLandscapeDetailMode()
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0) {
+        if (isLandscapeDetailMode() && landDetailContent.getChildCount() > 0) {
             return;
         }
         for (AppListItem appItem : requireUiState().visibleItems(landCurrentPage)) {
@@ -1412,8 +1440,6 @@ public final class MainActivity
 
     private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
         resetWorkspacePresentationUnlessMode(
-                homeWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.HOME);
-        resetWorkspacePresentationUnlessMode(
                 toolsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TOOLS);
         resetWorkspacePresentationUnlessMode(
                 settingsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.SETTINGS);
@@ -1465,9 +1491,6 @@ public final class MainActivity
     private View workspaceViewForMode(MainUiState.WorkspaceMode mode) {
         if (mode == MainUiState.WorkspaceMode.APP) {
             return null;
-        }
-        if (mode == MainUiState.WorkspaceMode.HOME) {
-            return homeWorkspaceContainer;
         }
         if (mode == MainUiState.WorkspaceMode.TEMPLATE) {
             return null;
@@ -1624,11 +1647,13 @@ public final class MainActivity
 
     private InstalledAppCatalogCoordinator.Host createInstalledAppCatalogHost() {
         return new InstalledAppCatalogCoordinator.Host() {
+            @NonNull
             @Override
             public PackageManager getPackageManager() {
                 return MainActivity.this.getPackageManager();
             }
 
+            @NonNull
             @Override
             public String getSelfPackageName() {
                 return MainActivity.this.getPackageName();
@@ -1650,7 +1675,7 @@ public final class MainActivity
             }
 
             @Override
-            public void runOnUiThread(Runnable runnable) {
+            public void runOnUiThread(@NonNull Runnable runnable) {
                 MainActivity.this.runOnUiThread(runnable);
             }
         };
@@ -1663,6 +1688,7 @@ public final class MainActivity
                 return !isFinishing() && !isDestroyed();
             }
 
+            @NonNull
             @Override
             public String getManifestUrl() {
                 return MainActivity.this.getString(
@@ -1671,22 +1697,23 @@ public final class MainActivity
             }
 
             @Override
-            public void executeBackground(Runnable runnable) {
+            public void executeBackground(@NonNull Runnable runnable) {
                 startupUpdateExecutor.execute(runnable);
             }
 
             @Override
-            public void runOnUiThread(Runnable runnable) {
+            public void runOnUiThread(@NonNull Runnable runnable) {
                 MainActivity.this.runOnUiThread(runnable);
             }
 
+            @NonNull
             @Override
             public UpdateCoordinator.State buildUpdateCoordinatorState() {
                 return MainActivity.this.buildUpdateCoordinatorState();
             }
 
             @Override
-            public void applyStartupCheckState(UpdateCoordinator.State state) {
+            public void applyStartupCheckState(@NonNull UpdateCoordinator.State state) {
                 MainActivity.this.applyStartupCheckState(state);
             }
 
@@ -1695,6 +1722,7 @@ public final class MainActivity
                 return BuildConfig.VERSION_CODE;
             }
 
+            @NonNull
             @Override
             public String getLocalVersionName() {
                 return BuildConfig.VERSION_NAME;
@@ -1706,7 +1734,7 @@ public final class MainActivity
             }
 
             @Override
-            public void onStartupUpdateAvailable(StartupUpdateManifest manifest) {
+            public void onStartupUpdateAvailable(@NonNull StartupUpdateManifest manifest) {
                 MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.available(manifest));
                 pendingUpdatePrompt = UpdatePromptRequest.from(manifest);
                 showPendingUpdatePrompt();
@@ -1761,9 +1789,9 @@ public final class MainActivity
 
             @Override
             public void startStartupUpdateDownload(
-                    String targetVersionName,
-                    String downloadUrl,
-                    UpdateAvailableDialog.DialogHandle dialogHandle
+                    @NonNull String targetVersionName,
+                    @NonNull String downloadUrl,
+                    @NonNull UpdateAvailableDialog.DialogHandle dialogHandle
             ) {
                 MainActivity.this.startStartupUpdateDownload(
                         targetVersionName,
@@ -1773,7 +1801,7 @@ public final class MainActivity
             }
 
             @Override
-            public void openUrl(String url) {
+            public void openUrl(@NonNull String url) {
                 MainActivity.this.openUrl(url);
             }
 
@@ -1783,7 +1811,7 @@ public final class MainActivity
             }
 
             @Override
-            public void applyLargeDialogWidth(androidx.appcompat.app.AlertDialog dialog) {
+            public void applyLargeDialogWidth(@NonNull androidx.appcompat.app.AlertDialog dialog) {
                 DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this);
             }
 
@@ -2091,23 +2119,16 @@ public final class MainActivity
     private void bindHomeWorkspace() {
         if (composeShellHost != null) {
             composeShellHost.refreshHome();
-            return;
-        }
-        if (homeWorkspaceBinder != null) {
-            homeWorkspaceBinder.bind(
-                    homeWorkspaceContainer,
-                    createHomeWorkspaceState()
-            );
         }
     }
 
-    private HomeWorkspaceBinder.State createHomeWorkspaceState() {
+    private HomeWorkspaceState createHomeWorkspaceState() {
         DpisConfigStore configStore = getHookConfigStore();
         int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
                 configStore,
                 loadScopeState()
         );
-        return new HomeWorkspaceBinder.State(
+        return new HomeWorkspaceState(
                 isActivatedForHome(),
                 visibleConfiguredAppCount,
                 ConfigStoreFactory.createLocalUiFontLibraryStore(
@@ -2134,8 +2155,8 @@ public final class MainActivity
         return activated;
     }
 
-    private HomeWorkspaceBinder.Actions createHomeWorkspaceActions() {
-        return new HomeWorkspaceBinder.Actions() {
+    private HomeWorkspaceActions createHomeWorkspaceActions() {
+        return new HomeWorkspaceActions() {
             @Override
             public void checkForUpdates() {
                 startupUpdateCheckCoordinator.checkForUpdatesNow();
@@ -2193,13 +2214,11 @@ public final class MainActivity
         }
 
     private void maybeStartRootAccessProbe() {
-        RootAccessProbe.refreshAsync(result -> {
-            runOnUiThread(() -> {
-                if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                    bindHomeWorkspace();
-                }
-            });
-        });
+        RootAccessProbe.refreshAsync(result -> runOnUiThread(() -> {
+            if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
+                bindHomeWorkspace();
+            }
+        }));
     }
 
     private void saveAppConfigDraft(
@@ -2398,7 +2417,7 @@ public final class MainActivity
                 packageName,
                 dpisEnabled,
                 store);
-        if (result == null || !result.success) {
+        if (!result.success) {
             return result;
         }
         scheduleRuntimePropertiesForTargetLaunch(packageName);
@@ -2738,7 +2757,7 @@ public final class MainActivity
     private Session.Host createFeedbackDiagnosticHost() {
         return new Session.Host() {
             @Override
-            public boolean restartTargetAppForDiagnostic(String packageName) {
+            public boolean restartTargetAppForDiagnostic(@NonNull String packageName) {
                 syncRuntimePropertiesForTargetLaunch(packageName);
                 boolean launched = feedbackDiagnosticAppLauncher
                         .restartForDiagnostic(packageName);
@@ -2780,7 +2799,7 @@ public final class MainActivity
 
             @Override
             public void onPackageReady(
-                    ExportBuilder.DiagnosticPackage diagnosticPackage
+                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 showFeedbackDiagnosticReady(diagnosticPackage);
             }
@@ -3069,14 +3088,14 @@ public final class MainActivity
         new ResultSheet(this, new ResultSheet.Host() {
             @Override
             public void shareFeedbackDiagnostic(
-                    ExportBuilder.DiagnosticPackage diagnosticPackage
+                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
             }
 
             @Override
             public void saveFeedbackDiagnostic(
-                    ExportBuilder.DiagnosticPackage diagnosticPackage
+                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
                         diagnosticPackage
@@ -3444,7 +3463,7 @@ public final class MainActivity
         String fontMode = fontInput != null
                 ? AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))
                 : FontApplyMode.SYSTEM_EMULATION;
-        if (state != null && state.packageName != null && !state.packageName.isBlank()) {
+        if (state != null && !state.packageName.isBlank()) {
             packageName = state.packageName;
         }
         if ((packageName == null || packageName.isBlank()) && mainViewModel != null) {
@@ -3453,10 +3472,8 @@ public final class MainActivity
         EditorDraft current = mainViewModel != null
                 ? mainViewModel.getEditingDraft()
                 : null;
-        boolean useCurrentState = current != null
-                && current.packageName != null
-                && current.packageName.equals(packageName);
-        EditorDraft draft = new EditorDraft(
+        boolean useCurrentState = current != null && current.packageName.equals(packageName);
+        return new EditorDraft(
                 packageName,
                 viewportText,
                 state != null ? state.viewportScaleInput
@@ -3484,7 +3501,6 @@ public final class MainActivity
                 state != null ? state.dpisEnabled
                         : useCurrentState && current.dpisEnabled
         );
-        return draft;
     }
 
     private void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
@@ -3497,7 +3513,7 @@ public final class MainActivity
             return;
         }
         EditorDraft current = mainViewModel.getEditingDraft();
-        String packageName = state.packageName != null && !state.packageName.isBlank()
+        String packageName = !state.packageName.isBlank()
                 ? state.packageName
                 : mainViewModel.getEditingPackageName();
         EditorDraft draft = new EditorDraft(
@@ -3569,10 +3585,10 @@ public final class MainActivity
                 draft.fontMode,
                 false
         );
-        if (viewportInput != null && draft.viewportInput != null) {
+        if (viewportInput != null) {
             viewportInput.setText(draft.viewportInput);
         }
-        if (fontInput != null && draft.fontInput != null) {
+        if (fontInput != null) {
             fontInput.setText(draft.fontInput);
         }
     }
@@ -3736,7 +3752,7 @@ public final class MainActivity
 
             @Override
             public void showDiagnosticPreparation(
-                    com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
+                    @NonNull com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
             ) {
                 if (composeShellHost != null) {
                     composeShellHost.showDiagnosticPreparation(presentation);
@@ -3745,8 +3761,8 @@ public final class MainActivity
 
             @Override
             public void showFallbackConfirmation(
-                    AppListItem item,
-                    EditorDraft draft
+                    @NonNull AppListItem item,
+                    @NonNull EditorDraft draft
             ) {
                 showComposeFeedbackDiagnosticConfirmation(item, draft);
             }
@@ -3757,13 +3773,13 @@ public final class MainActivity
             }
 
             @Override
-            public boolean saveAppConfig(AppListItem item, EditorDraft draft) {
+            public boolean saveAppConfig(@NonNull AppListItem item, @NonNull EditorDraft draft) {
                 return composeAppEditorSaveWorkflow != null
                         && composeAppEditorSaveWorkflow.save(item, draft);
             }
 
             @Override
-            public void markAppConfigSaved(EditorDraft draft) {
+            public void markAppConfigSaved(@NonNull EditorDraft draft) {
                 if (composeAppEditorController != null) {
                     composeAppEditorController.markSaved(draft);
                 }
@@ -3771,9 +3787,9 @@ public final class MainActivity
 
             @Override
             public boolean startDiagnostic(
-                    AppListItem item,
-                    EditorDraft draft,
-                    String versionName,
+                    @NonNull AppListItem item,
+                    @NonNull EditorDraft draft,
+                    @NonNull String versionName,
                     boolean durationEnabled,
                     int durationSeconds
             ) {
@@ -3796,7 +3812,7 @@ public final class MainActivity
 
             @Override
             public void saveDiagnosticPackage(
-                    ExportBuilder.DiagnosticPackage diagnosticPackage
+                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
                         diagnosticPackage
@@ -3805,7 +3821,7 @@ public final class MainActivity
 
             @Override
             public void shareDiagnosticPackage(
-                    ExportBuilder.DiagnosticPackage diagnosticPackage
+                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
             ) {
                 feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
             }
@@ -3816,7 +3832,7 @@ public final class MainActivity
             }
 
             @Override
-            public void showLsposedExplanation(String title, String explanation) {
+            public void showLsposedExplanation(@NonNull String title, @NonNull String explanation) {
                 ComposeMessageDialog.show(
                         MainActivity.this,
                         title,
@@ -3831,7 +3847,7 @@ public final class MainActivity
             }
 
             @Override
-            public void runOnUiThread(Runnable action) {
+            public void runOnUiThread(@NonNull Runnable action) {
                 MainActivity.this.runOnUiThread(action);
             }
 

@@ -16,10 +16,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.Text
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.ui.presentation.WearDpisMaterialTheme
+import com.dpis.module.ui.presentation.WearWorkspaceList
 
 @Composable
 internal fun WearThemeSettingsContent(
@@ -255,14 +259,14 @@ internal fun WearExperimentalSettingsContent() {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(androidx.wear.compose.material3.MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(LocalWearWorkspaceContentPadding.current),
             contentAlignment = Alignment.Center,
         ) {
-            androidx.wear.compose.material3.Text(
+            Text(
                 text = stringResource(R.string.settings_experimental_empty),
-                style = androidx.wear.compose.material3.MaterialTheme.typography.bodyMedium,
-                color = androidx.wear.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

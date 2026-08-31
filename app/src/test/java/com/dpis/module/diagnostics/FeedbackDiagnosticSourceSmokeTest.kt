@@ -266,7 +266,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java")
 
         assertTrue(main.contains("new AppLauncher(this)"))
-        assertTrue(main.contains("restartTargetAppForDiagnostic(String packageName)"))
+        assertTrue(main.contains("restartTargetAppForDiagnostic("))
         assertTrue(main.contains(".restartForDiagnostic(packageName)"))
         assertFalse(main.contains("public boolean launchTargetApp(String packageName)"))
 

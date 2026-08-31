@@ -1,11 +1,9 @@
-package com.dpis.module
+package com.dpis.module.shell
 
+import com.dpis.module.SourceSmokeTestPaths
 import com.dpis.module.ui.DialogWindowSizer
-
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-
-import java.io.IOException
 import org.junit.Test
 
 class MainActivitySourceSmokeTest {
@@ -71,9 +69,9 @@ class MainActivitySourceSmokeTest {
     fun formInputFocusCanMoveFocusToFallbackView() {
         val source = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java")
 
-        assertTrue(source.contains("fallbackFocusView.setFocusable(true)"));
-        assertTrue(source.contains("fallbackFocusView.setFocusableInTouchMode(true)"));
-        assertTrue(source.contains("fallbackFocusView.requestFocus()"));
+        assertTrue(source.contains("fallbackFocusView.setFocusable(true)"))
+        assertTrue(source.contains("fallbackFocusView.setFocusableInTouchMode(true)"))
+        assertTrue(source.contains("fallbackFocusView.requestFocus()"))
         assertTrue(source.contains("hideSoftInputFromWindow("))
     }
 
@@ -84,12 +82,12 @@ class MainActivitySourceSmokeTest {
 
         assertTrue(binder.contains("void saveDraft("))
         assertTrue(binder.contains("AppConfigDialogBinder.AppConfigDialogState state,"))
-        assertTrue(source.contains("requestLandDetailScopeAfterSuccessfulSave(item, state)"));
+        assertTrue(source.contains("requestLandDetailScopeAfterSuccessfulSave(item, state)"))
         assertTrue(source.contains("!state.scopeKnown"))
         assertTrue(source.contains("state.scopeSelected"))
         assertTrue(source.contains("state.scopeRequestPending"))
         assertTrue(source.contains("systemScopeCoordinator.requestScope("))
-        assertTrue(source.contains("showToast(R.string.save_scope_request_notice)"));
+        assertTrue(source.contains("showToast(R.string.save_scope_request_notice)"))
     }
 
     @Test
@@ -128,27 +126,27 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("MainUiState.WorkspaceMode.fromName("))
         assertFalse(source.contains("bindWorkspaceSwitch()"))
         assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"))
-        assertFalse(source.contains("private boolean updatingWorkspaceSelection"));
+        assertFalse(source.contains("private boolean updatingWorkspaceSelection"))
         assertTrue(source.contains("MainUiAction.workspaceModeChanged("))
-        assertTrue(source.contains("applyWorkspaceMode(state.workspaceMode)"));
+        assertTrue(source.contains("applyWorkspaceMode(state.workspaceMode)"))
         assertTrue(
             source.contains(
                 "boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP"
             )
         )
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"))
-        assertTrue(source.contains("setVisible(toolsWorkspaceContainer, toolsWorkspace)"));
-        assertTrue(source.contains("setVisible(settingsWorkspaceContainer, settingsWorkspace)"));
+        assertTrue(source.contains("setVisible(toolsWorkspaceContainer, toolsWorkspace)"))
+        assertTrue(source.contains("setVisible(settingsWorkspaceContainer, settingsWorkspace)"))
         assertFalse(source.contains("setSearchFocusFabVisible("))
         assertTrue(source.contains("ensureWorkspaceSession().attachLegacyViews("))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
-        assertTrue(source.contains("bindWorkspaceSession()"));
+        assertTrue(source.contains("bindWorkspaceSession()"))
         assertTrue(source.contains("ensureWorkspaceSession().present("))
         assertTrue(source.contains("STATE_TEMPLATE_QUERY"))
-        assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"));
-        assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"));
+        assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"))
+        assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"))
         assertFalse(source.contains("workspaceModeForButtonId(int checkedId)"))
         assertTrue(source.contains("new MainComposeShellHost("))
     }
@@ -181,14 +179,14 @@ class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/template_detail_content\""))
         assertTrue(layout.contains("android:id=\"@+id/template_detail_empty\""))
         assertTrue(layout.contains("android:id=\"@+id/land_detail_divider\""))
-        assertTrue(source.contains("private View landDetailPane"));
-        assertTrue(source.contains("private View landDetailDivider"));
+        assertTrue(source.contains("private View landDetailPane"))
+        assertTrue(source.contains("private View landDetailDivider"))
         val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
-        assertFalse(source.contains("templateDetailContent"));
+        assertFalse(source.contains("templateDetailContent"))
         assertFalse(source.contains("TemplateDetailPaneController"))
-        assertTrue(source.contains("applyLandscapeDetailVisibility(appWorkspace, templateWorkspace)"));
+        assertTrue(source.contains("applyLandscapeDetailVisibility(appWorkspace, templateWorkspace)"))
         assertTrue(source.contains("appWorkspace || templateWorkspace"))
-        assertTrue(source.contains("restoreForConfiguration("));
+        assertTrue(source.contains("restoreForConfiguration("))
         assertTrue(templateCoordinator.contains("fun attachLegacyViews("))
         assertTrue(templateCoordinator.contains("TemplateDetailPaneController("))
         assertTrue(templateCoordinator.contains("startPortraitTargetSelection("))
@@ -197,7 +195,7 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("GlobalPrefillSheetDialog"))
         assertFalse(source.contains("QuickTemplateEditSheetDialog"))
         assertTrue(templateCoordinator.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"))
-        assertTrue(templateCoordinator.contains("legacyDetailController?.dispose()"));
+        assertTrue(templateCoordinator.contains("legacyDetailController?.dispose()"))
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"))
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"))
         assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""))
@@ -214,15 +212,15 @@ class MainActivitySourceSmokeTest {
     fun appEditorRestoreIsScopedToAppWorkspace() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
-        assertTrue(source.contains("restoreAppEditorForCurrentWorkspace()"));
+        assertTrue(source.contains("restoreAppEditorForCurrentWorkspace()"))
         assertTrue(source.contains("private void restoreAppEditorForCurrentWorkspace()"))
         assertTrue(source.contains("requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
-        assertTrue(source.contains("showEditBottomSheet(appItem)"));
-        assertTrue(source.contains("showEditDetailPane(appItem)"));
-        assertTrue(source.contains("private BottomSheetDialog activeAppEditorDialog"));
+        assertTrue(source.contains("showEditBottomSheet(appItem)"))
+        assertTrue(source.contains("showEditDetailPane(appItem)"))
+        assertTrue(source.contains("private BottomSheetDialog activeAppEditorDialog"))
         assertTrue(source.contains("activeAppEditorDialog != null && activeAppEditorDialog.isShowing()"))
         assertTrue(source.contains("if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing())"))
-        assertTrue(source.contains("activeAppEditorDialog = dialog"));
+        assertTrue(source.contains("activeAppEditorDialog = dialog"))
     }
 
     @Test
@@ -236,7 +234,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(landLayout.contains("android:id=\"@+id/workspace_switch_scroll\""))
         assertTrue(landLayout.contains("android:fillViewport=\"true\""))
         assertTrue(landLayout.contains("app:labelVisibilityMode=\"selected\""))
-        assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight()"));
+        assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight()"))
         assertFalse(source.contains("workspaceSwitch instanceof NavigationRailView"))
         assertFalse(source.contains("availableHeight / railView.getMenu().size()"))
         assertTrue(dimensions.contains("main_land_workspace_rail_item_min_height\">64dp"))
@@ -427,11 +425,11 @@ class MainActivitySourceSmokeTest {
             )
         )
         assertTrue(source.contains("new StartupDisclaimerStore(this)"))
-        assertTrue(source.contains("return store.isAccepted()"));
-        assertTrue(source.contains("return store.setAccepted(true)"));
+        assertTrue(source.contains("return store.isAccepted()"))
+        assertTrue(source.contains("return store.setAccepted(true)"))
         assertTrue(
             source.contains(
-                "void applyLargeDialogWidth(androidx.appcompat.app.AlertDialog dialog)"
+                "void applyLargeDialogWidth("
             )
         )
         assertTrue(
@@ -515,16 +513,20 @@ class MainActivitySourceSmokeTest {
     @Test
     fun homeStatusCardRetainsManualUpdateCheckEntry() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val binder = read(
-            "src/main/java/com/dpis/module/home/HomeWorkspaceBinder.java"
+        val homeState = read(
+            "src/main/java/com/dpis/module/home/HomeWorkspaceState.kt"
         )
         val compose = read(
             "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow()"));
-        assertTrue(binder.contains("state.updateState.subtitle(context)"))
-        assertTrue(binder.contains("state.actions::checkForUpdates"))
+        assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow()"))
+        assertTrue(homeState.contains("interface HomeWorkspaceActions"))
+        val primaryStatus = compose
+            .substringAfter("private fun HomePrimaryStatus")
+            .substringBefore("private fun HomeCountCard")
+        assertTrue(primaryStatus.contains("state.updateState.subtitle(context)"))
+        assertFalse(primaryStatus.contains("if (!disabled) {\n                    Text("))
         assertTrue(compose.contains("state.actions.checkForUpdates()"))
     }
 
@@ -603,7 +605,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(refreshEnd > refreshStart)
 
         val refreshBody = source.substring(refreshStart, refreshEnd)
-        assertTrue(refreshBody.contains("requestAppsLoad(true)"));
+        assertTrue(refreshBody.contains("requestAppsLoad(true)"))
     }
 
     @Test
@@ -715,9 +717,9 @@ class MainActivitySourceSmokeTest {
                 "public boolean setDpisEnabled(String packageName, boolean enabled)"
             )
         )
-        assertFalse(source.contains("resetLandDetailConfig(editorItem)"));
+        assertFalse(source.contains("resetLandDetailConfig(editorItem)"))
         assertTrue(source.contains("appConfigSaveHandler.saveResolved("))
-        assertTrue(source.contains("updateEditingDraft(state)"));
+        assertTrue(source.contains("updateEditingDraft(state)"))
         assertTrue(source.contains("void onDraftStateChanged("))
         assertTrue(source.contains("if (draft == null && mainViewModel != null)"))
         assertTrue(
@@ -974,7 +976,7 @@ class MainActivitySourceSmokeTest {
             binder.contains("AppConfigDialogBinder.bindFontModeToggle(")
         )
         assertTrue(binder.contains("actions.toggleScope("))
-        assertTrue(binder.contains("actions.startFeedbackDiagnostic(item, state)"));
+        assertTrue(binder.contains("actions.startFeedbackDiagnostic(item, state)"))
         assertTrue(binder.contains("state.scopeSelected,"))
         assertTrue(compact(binder).contains("actions.setDpisEnabled(item.packageName, nextEnabled)"))
         assertTrue(binder.contains("resetDraft("))
@@ -983,8 +985,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(binder.contains("FormInputFocusBinder.bindDismissOnOutsideTouch"))
         assertTrue(binder.contains("FormInputFocusBinder.clearFocusAndHideIme"))
         assertTrue(binder.contains("WechatDpiSheetBinder.inputViewForFocus(root)"))
-        assertTrue(binder.contains("state.clearViewportInputs()"));
-        assertTrue(binder.contains("WechatDpiSheetBinder.clearDraft(root)"));
+        assertTrue(binder.contains("state.clearViewportInputs()"))
+        assertTrue(binder.contains("WechatDpiSheetBinder.clearDraft(root)"))
         assertTrue(
             binder.contains(
                 "AppConfigDialogBinder.AppConfigDialogState.fromItem(item)"
@@ -1032,9 +1034,9 @@ class MainActivitySourceSmokeTest {
         assertTrue(methodBody.contains(
                 "WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true)"
         ))
-        assertFalse(methodBody.contains("ViewCompat.requestApplyInsets(scrollView)"));
-        assertTrue(source.contains("applyLandDetailContentInsets(dialogView)"));
-        assertTrue(source.contains("ViewCompat.requestApplyInsets(scrollView)"));
+        assertFalse(methodBody.contains("ViewCompat.requestApplyInsets(scrollView)"))
+        assertTrue(source.contains("applyLandDetailContentInsets(dialogView)"))
+        assertTrue(source.contains("ViewCompat.requestApplyInsets(scrollView)"))
     }
 
     @Test
@@ -1071,7 +1073,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("loadInstalledApps(forceInstalledAppCatalogReload)"))
         assertTrue(coordinatorSource.contains("val catalog = loadInstalledAppCatalog("))
         assertTrue(coordinatorSource.contains("applicationInfo.loadIcon(packageManager)"))
-        assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo)"));
+        assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo)"))
         assertFalse(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("))
         assertFalse(coordinatorSource.contains("ExecutorService"))
         assertFalse(coordinatorSource.contains("onIconsLoaded("))
@@ -1212,12 +1214,12 @@ class MainActivitySourceSmokeTest {
         assertFalse(
             saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         )
-        assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"));
-        assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"));
+        assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
         assertTrue(source.contains("FontHookDomainRegistry.automaticCustomizableDomains()"))
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("))
         assertTrue(source.contains("FontHookDomainPresentation.forOverride("))
-        assertTrue(source.contains(".buttonText(this)"));
+        assertTrue(source.contains(".buttonText(this)"))
         assertFalse(source.contains("item.fontScalePercent != null && item.fontScalePercent > 0"))
         assertFalse(source.contains("publishFontRuntimeTarget("))
     }
@@ -1244,7 +1246,7 @@ class MainActivitySourceSmokeTest {
                 "state.draftFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection("
             )
         )
-        assertTrue(method.contains("state.draftFontHookDomainsRaw = null"));
+        assertTrue(method.contains("state.draftFontHookDomainsRaw = null"))
         assertTrue(
             compact(method).contains(
                 "state.viewportApplyMode = ViewportApplyMode.normalize(mode)"
@@ -1259,7 +1261,7 @@ class MainActivitySourceSmokeTest {
         assertFalse(compactMethod.contains("saveCustomIfDifferentFromAutomatic("))
         assertFalse(compactMethod.contains("restoreRecommended(packageName)"))
         assertFalse(compactMethod.contains("store.setTargetViewportApplyMode("))
-        assertFalse(compactMethod.contains("requestAppsLoad()"));
+        assertFalse(compactMethod.contains("requestAppsLoad()"))
     }
 
     @Test
@@ -1341,7 +1343,7 @@ class MainActivitySourceSmokeTest {
                 "private void restoreWorkspaceEditorForCurrentConfiguration()")
         val methodEnd = activity.indexOf("private static AppListFilterState.AppType", methodStart)
         val method = activity.substring(methodStart, methodEnd)
-        assertTrue(method.contains("restoreForConfiguration("));
+        assertTrue(method.contains("restoreForConfiguration("))
         assertFalse(method.contains("showGlobalPrefillSheet"))
         assertFalse(method.contains("showQuickTemplateSheet"))
         assertFalse(method.contains("closeActiveTemplateSheetForMigration"))
@@ -1352,7 +1354,7 @@ class MainActivitySourceSmokeTest {
     }
 
     private fun stringEntry(source: String, name: String): String {
-        val marker = "name=\"" + name + "\""
+        val marker = "name=\"$name\""
         val start = source.indexOf(marker)
         if (start < 0) {
             return ""
