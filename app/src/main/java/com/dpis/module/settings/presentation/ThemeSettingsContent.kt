@@ -4,8 +4,10 @@ import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 
+import android.widget.Toast
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -51,17 +54,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.settings.PageSettingsStore
 import kotlin.math.roundToInt
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 /** The first focused page in Theme settings; further appearance controls can join this list. */
 @Composable
@@ -72,18 +81,23 @@ fun ThemeSettingsContent(
     paletteStyle: String,
     colorSpecification: String,
     interfaceScalePercent: Int,
+    showHomeEditButton: Boolean = true,
+    defaultStartupPage: String = PageSettingsStore.HOME,
     onModeSelected: (String) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onThemeColorSelected: (String) -> Unit,
     onPaletteStyleSelected: (String) -> Unit,
     onColorSpecificationSelected: (String) -> Unit,
     onInterfaceScaleChanged: (Int) -> Unit,
+    onShowHomeEditButtonChanged: (Boolean) -> Unit = {},
+    onDefaultStartupPageSelected: (String) -> Unit = {},
     onBack: () -> Unit,
 ) {
     var showModeDialog by rememberSaveable { mutableStateOf(false) }
     var showPaletteDialog by rememberSaveable { mutableStateOf(false) }
     var showSpecificationDialog by rememberSaveable { mutableStateOf(false) }
     var showScaleDialog by rememberSaveable { mutableStateOf(false) }
+    var showStartupPageDialog by rememberSaveable { mutableStateOf(false) }
     var pendingScale by remember(interfaceScalePercent) {
         mutableFloatStateOf(interfaceScalePercent.toFloat())
     }
@@ -154,6 +168,26 @@ fun ThemeSettingsContent(
                     )
                 }
             }
+            item {
+                ThemeSettingsSection(R.string.settings_theme_section_page) {
+                    ThemeSegmentedSurfaceRow(
+                        onClick = { onShowHomeEditButtonChanged(!showHomeEditButton) },
+                        index = 0, total = 2,
+                        leadingContent = { Icon(painterResource(R.drawable.ic_edit_24), null) },
+                        content = { Text(stringResource(R.string.settings_page_home_edit_button), style = MaterialTheme.typography.titleMedium) },
+                        trailingContent = { Switch(checked = showHomeEditButton, onCheckedChange = onShowHomeEditButtonChanged) },
+                        compact = true,
+                    )
+                    ThemeSegmentedSurfaceRow(
+                        onClick = { showStartupPageDialog = true },
+                        index = 1, total = 2,
+                        leadingContent = { Icon(painterResource(R.drawable.ic_home_24), null) },
+                        content = { Text(stringResource(R.string.settings_page_default_startup), style = MaterialTheme.typography.titleMedium) },
+                        supportingContent = { Text(stringResource(R.string.settings_page_default_startup_hint), style = MaterialTheme.typography.bodyMedium) },
+                        trailingContent = { Text(stringResource(startupPageLabel(defaultStartupPage)), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge) },
+                    )
+                }
+            }
         }
     }
     if (showModeDialog) {
@@ -200,6 +234,96 @@ fun ThemeSettingsContent(
                     onInterfaceScaleChanged(it)
                 },
             )
+        }
+    }
+    if (showStartupPageDialog) {
+        PageNavigationDialog(
+            selectedStartupPage = defaultStartupPage,
+            onStartupPageSelected = onDefaultStartupPageSelected,
+            onDismiss = { showStartupPageDialog = false },
+        )
+    }
+}
+
+private val startupPageOptions = listOf(
+    "APP" to R.string.workspace_app,
+    PageSettingsStore.HOME to R.string.workspace_home,
+    "TEMPLATE" to R.string.workspace_template,
+    "TOOLS" to R.string.workspace_tools,
+    "SETTINGS" to R.string.workspace_settings,
+)
+
+private fun startupPageLabel(value: String): Int = startupPageOptions.firstOrNull { it.first == value }?.second
+    ?: R.string.workspace_home
+
+@Composable
+private fun PageNavigationDialog(
+    selectedStartupPage: String,
+    onStartupPageSelected: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val context = LocalContext.current
+    var hidden by remember { mutableStateOf(PageSettingsStore.getHiddenWorkspaces(context)) }
+    val order = remember { mutableStateListOf(*PageSettingsStore.getWorkspaceOrder(context).toTypedArray()) }
+    ModalDialog(onDismissRequest = onDismiss) {
+        DialogColumn(title = { Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(stringResource(R.string.settings_page_default_startup), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.settings_page_startup_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        } }, actions = {
+            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), shape = CircleShape) {
+                Text(stringResource(R.string.dialog_typeface_done_action))
+            }
+        }) {
+            val lazyListState = rememberLazyListState()
+            val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
+                val fromIndex = order.indexOf(from.key)
+                val toIndex = order.indexOf(to.key)
+                if (fromIndex >= 0 && toIndex >= 0) {
+                    val moved = order.removeAt(fromIndex)
+                    order.add(toIndex, moved)
+                    PageSettingsStore.setWorkspaceOrder(context, order)
+                }
+            }
+            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 320.dp), state = lazyListState, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(order, key = { it }) { page ->
+                    val label = startupPageLabel(page)
+                    val isHidden = page in hidden
+                    val isSettings = page == "SETTINGS"
+                    ReorderableItem(reorderableState, key = page) {
+                        Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .alpha(if (isHidden) 0.48f else 1f)
+                            .combinedClickable(
+                                onClick = {
+                                    if (isSettings) Toast.makeText(context, R.string.settings_page_settings_cannot_hide, Toast.LENGTH_SHORT).show()
+                                    else { PageSettingsStore.setWorkspaceVisible(context, page, isHidden); hidden = PageSettingsStore.getHiddenWorkspaces(context) }
+                                },
+                                onLongClick = { onStartupPageSelected(page) },
+                            )
+                            .background(MaterialTheme.colorScheme.surfaceBright)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(painterResource(R.drawable.ic_drag_indicator_24), stringResource(R.string.quick_template_sort_drag_handle), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.longPressDraggableHandle())
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(label), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                        if (selectedStartupPage == page) {
+                            Text(
+                                stringResource(R.string.settings_page_startup_badge),
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.primaryContainer)
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                style = MaterialTheme.typography.labelMedium,
+                            )
+                        }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -578,7 +702,7 @@ private fun ThemeSettingsSection(
     title: Int,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Column {
+    Column(modifier = Modifier.padding(bottom = SecondaryPageContentTokens.SectionLabelToFirstItemGap * 2)) {
         PageSectionLabel(
             stringResource(title),
             modifier = Modifier.padding(
@@ -645,6 +769,7 @@ private fun ThemeSegmentedSurfaceRow(
     content: @Composable () -> Unit,
     supportingContent: (@Composable () -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
+    compact: Boolean = false,
 ) {
     val shape = dpisSegmentedShapes(index, total).shape
     Surface(
@@ -657,7 +782,7 @@ private fun ThemeSegmentedSurfaceRow(
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = if (compact) 8.dp else 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             leadingContent()

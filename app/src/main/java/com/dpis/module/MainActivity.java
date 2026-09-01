@@ -55,6 +55,7 @@ import com.dpis.module.home.HomeWorkspaceActions;
 import com.dpis.module.home.HomeWorkspaceLayout;
 import com.dpis.module.home.HomeWorkspaceLayoutStore;
 import com.dpis.module.home.HomeWorkspaceState;
+import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.home.ModeHelpActivity;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
@@ -281,7 +282,9 @@ public final class MainActivity
         String initialTemplateQuery = "";
         TemplateWorkspaceActivitySession.State initialWorkspaceSessionState = null;
         AppListFilterState initialFilterState = appListFilterStateStore.load();
-        MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.HOME;
+        MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.valueOf(
+                PageSettingsStore.getDefaultStartupPage(this)
+        );
         List<AppListItem> initialAppsSnapshot = Collections.emptyList();
         Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(
                 AppListPage.class
@@ -2141,7 +2144,8 @@ public final class MainActivity
                 RootAccessProbe.cachedResult(),
                 homeUpdateUiState,
                 new HomeWorkspaceLayoutStore(this).load(),
-                createHomeWorkspaceActions()
+                createHomeWorkspaceActions(),
+                PageSettingsStore.isHomeEditButtonVisible(this)
         );
     }
 

@@ -18,6 +18,7 @@ import com.dpis.module.home.ModeGuideActivity
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.ui.WatchUiMode
 import java.util.function.Consumer
 
@@ -35,6 +36,8 @@ object SupportActivityContent {
             var colorSpecification by remember {
                 mutableStateOf(ThemeModeStore.getColorSpecification(activity))
             }
+            var showHomeEditButton by remember { mutableStateOf(PageSettingsStore.isHomeEditButtonVisible(activity)) }
+            var defaultStartupPage by remember { mutableStateOf(PageSettingsStore.getDefaultStartupPage(activity)) }
             DpisTheme(
                 // Appearance state is intentionally read at this root so every saved choice
                 // recolors the same composition instead of recreating the Activity.
@@ -125,6 +128,16 @@ object SupportActivityContent {
                                 if (store.setPercent(normalized)) activity.recreate()
                             }
                         },
+                        onShowHomeEditButtonChanged = { value ->
+                            PageSettingsStore.setHomeEditButtonVisible(activity, value)
+                            showHomeEditButton = value
+                        },
+                        onDefaultStartupPageSelected = { value ->
+                            PageSettingsStore.setDefaultStartupPage(activity, value)
+                            defaultStartupPage = value
+                        },
+                        showHomeEditButton = showHomeEditButton,
+                        defaultStartupPage = defaultStartupPage,
                         onBack = activity::finish,
                     )
                 }

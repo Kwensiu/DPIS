@@ -135,6 +135,7 @@ fun DpisWorkspaceShell(
     isCompactUi: Boolean,
     modifier: Modifier = Modifier,
     showCompactNavigation: Boolean = true,
+    destinations: List<DpisWorkspaceDestination> = DpisWorkspaceDestination.entries,
     content: @Composable (PaddingValues) -> Unit
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -146,6 +147,7 @@ fun DpisWorkspaceShell(
                 selectedDestination = selectedDestination,
                 onDestinationSelected = onDestinationSelected,
                 showNavigation = showCompactNavigation,
+                destinations = destinations,
                 content = content
             )
 
@@ -157,7 +159,7 @@ fun DpisWorkspaceShell(
                         containerColor = navigationContainerColor,
                         windowInsets = bottomNavigationSurfaceInsets()
                     ) {
-                            DpisWorkspaceDestination.entries.forEach { destination ->
+                            destinations.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
                                 val onDestinationClick = rememberConfirmAction {
                                     if (destination != selectedDestination) {
@@ -210,7 +212,7 @@ fun DpisWorkspaceShell(
                             windowInsets = verticalNavigationSurfaceInsets()
                         ) {
                             Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
-                                DpisWorkspaceDestination.entries.forEach { destination ->
+                                destinations.forEach { destination ->
                                     val label = stringResource(destination.labelRes)
                                     val onDestinationClick = rememberConfirmAction {
                                         if (destination != selectedDestination) {
@@ -251,7 +253,7 @@ fun DpisWorkspaceShell(
                                 modifier = Modifier.padding(LocalDpisTokens.current.spaceMd),
                                 style = MaterialTheme.typography.titleLarge
                             )
-                            DpisWorkspaceDestination.entries.forEach { destination ->
+                            destinations.forEach { destination ->
                                 val label = stringResource(destination.labelRes)
                                 val onDestinationClick = rememberConfirmAction {
                                     if (destination != selectedDestination) {
@@ -291,6 +293,7 @@ private fun CompactWearWorkspaceNavigation(
     selectedDestination: DpisWorkspaceDestination,
     onDestinationSelected: (DpisWorkspaceDestination) -> Unit,
     showNavigation: Boolean,
+    destinations: List<DpisWorkspaceDestination>,
     content: @Composable (PaddingValues) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -336,10 +339,10 @@ private fun CompactWearWorkspaceNavigation(
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(
-                            count = DpisWorkspaceDestination.entries.size,
-                            key = { index -> DpisWorkspaceDestination.entries[index].name }
+                            count = destinations.size,
+                            key = { index -> destinations[index].name }
                         ) { index ->
-                            val destination = DpisWorkspaceDestination.entries[index]
+                            val destination = destinations[index]
                             val label = stringResource(destination.labelRes)
                             val select = rememberConfirmAction {
                                 expanded = false
