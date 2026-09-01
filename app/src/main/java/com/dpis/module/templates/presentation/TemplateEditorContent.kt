@@ -3,7 +3,6 @@ package com.dpis.module.templates.presentation
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,12 +22,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,7 +56,10 @@ import com.dpis.module.ui.compose.DpisEditorTypefaceHookRow
 import com.dpis.module.ui.compose.DpisModeSelector
 import com.dpis.module.ui.compose.DpisSheetVisualChrome
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
-import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.compose.FeedbackButton
+import com.dpis.module.ui.compose.FeedbackOutlinedButton
+import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberEditorControlHeight
 import com.dpis.module.viewport.ViewportTargetType
 
@@ -217,7 +217,7 @@ fun TemplateEditorContent(
                     isError = nameError != null,
                     trailingIcon = if (form.nameInput.isNotEmpty()) {
                         {
-                            IconButton(onClick = {
+                            IconButton(onClick = rememberClickAction {
                                 form.nameInput = ""
                                 onFormChanged()
                             }) {
@@ -347,7 +347,7 @@ fun TemplateEditorContent(
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         DpisEditorTypefaceHookRow(
             primary = {
-                OutlinedButton(
+                FeedbackOutlinedButton(
                     onClick = onSelectTypeface,
                     modifier = Modifier
                         .weight(1f)
@@ -370,7 +370,7 @@ fun TemplateEditorContent(
                 }
             },
             secondary = {
-                OutlinedButton(
+                FeedbackOutlinedButton(
                     onClick = onEditHookDomains,
                     modifier = Modifier
                         .width(AppConfigSheetUiTokens.SecondaryControlWidth)
@@ -391,7 +391,7 @@ fun TemplateEditorContent(
         )
 
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
-        Button(
+        FeedbackButton(
             onClick = onSave,
             enabled = form.isValid,
             modifier = Modifier
@@ -423,9 +423,9 @@ private fun TemplateEditorSheetHeader(
     onReset: () -> Unit,
     onDelete: (() -> Unit)?
 ) {
-    val resetAction = rememberConfirmAction(onReset)
+    val resetAction = rememberClickAction(onReset)
     val deleteAction = onDelete?.let {
-        rememberConfirmAction(
+        rememberClickAction(
             it
         )
     }
@@ -505,7 +505,7 @@ private fun EditorHeaderIconButton(
             .clip(CircleShape)
             .background(containerColor)
             .border(BorderStroke(1.dp, borderColor), CircleShape)
-            .clickable(role = Role.Button, onClick = onClick),
+            .dpisClickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Icon(

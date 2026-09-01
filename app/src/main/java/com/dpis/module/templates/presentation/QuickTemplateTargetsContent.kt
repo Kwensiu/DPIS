@@ -13,7 +13,6 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,9 +74,21 @@ import androidx.compose.ui.zIndex
 import com.dpis.module.R
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.ui.compose.AppIdentityMarqueeText
+import com.dpis.module.ui.compose.FeedbackButton
+import com.dpis.module.ui.compose.FeedbackFilterChip
+import com.dpis.module.ui.compose.FeedbackIconButton
+import com.dpis.module.ui.compose.FeedbackTextButton
 import com.dpis.module.ui.compose.SecondaryPageTopBar
 import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
 import com.dpis.module.ui.compose.dialogListContentFade
+import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.compose.rememberClickValueAction
+import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.ui.compose.inputFocusFeedback
+import com.dpis.module.ui.compose.clearTextInputFocusOutside
+import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
+import com.dpis.module.ui.compose.reportTextInputFocusBounds
+import com.dpis.module.ui.compose.TextInputFocusBoundary
 import com.dpis.module.ui.dialog.ModalDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +105,7 @@ fun QuickTemplateTargetsContent(
 ) {
     val current = state ?: return
     val focusManager = LocalFocusManager.current
+    val inputFocusBoundary = rememberTextInputFocusBoundary()
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
     var discardDialogVisible by rememberSaveable { mutableStateOf(false) }
@@ -123,7 +135,7 @@ fun QuickTemplateTargetsContent(
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                Button(
+                FeedbackButton(
                     onClick = {
                         focusManager.clearFocus()
                         onSaveAndExit()
@@ -171,10 +183,11 @@ fun QuickTemplateTargetsContent(
                         }
                     },
                     actions = {
-                        IconButton(
+                        FeedbackIconButton(
                             onClick = {
-                                searchVisible = !searchVisible
-                                if (!searchVisible) focusManager.clearFocus()
+                                // The search field owns IME focus. Once it is visible, a
+                                // repeated toolbar tap must not recreate it or re-open the IME.
+                                if (!searchVisible) searchVisible = true
                             }
                         ) {
                             Icon(
@@ -183,7 +196,7 @@ fun QuickTemplateTargetsContent(
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        IconButton(
+                        FeedbackIconButton(
                             onClick = {
                                 focusManager.clearFocus()
                                 filterSheetVisible = true
@@ -202,7 +215,7 @@ fun QuickTemplateTargetsContent(
                 Modifier
                     .fillMaxSize()
                     .weight(1f)
-                    .clearTextInputFocusOnPointerDown(focusManager)
+                    .clearTextInputFocusOutside(focusManager, inputFocusBoundary)
             ) {
                 Box(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize()) {
@@ -228,7 +241,7 @@ fun QuickTemplateTargetsContent(
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                     if (!current.missingTemplate && (current.query.isNotBlank() || !current.showAllApps || current.showConfiguredApps || current.sortMode != QuickTemplateTargetsPresentationController.SORT_NAME || current.reverseOrder)) {
-                                        Button(onClick = {
+                                        Button(onClick = rememberClickAction {
                                             onQueryChanged("")
                                             onFiltersChanged(
                                                 true,
@@ -289,6 +302,7 @@ fun QuickTemplateTargetsContent(
                             query = current.query,
                             onQueryChanged = onQueryChanged,
                             onClearQuery = { onQueryChanged("") },
+                            inputFocusBoundary = inputFocusBoundary,
                             modifier = Modifier.padding(top = 12.dp, bottom = 12.dp)
                         )
                     }
@@ -317,7 +331,7 @@ fun QuickTemplateTargetsContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    IconButton(
+                    FeedbackIconButton(
                         onClick = { filterSheetVisible = false },
                         modifier = Modifier
                             .size(40.dp)
@@ -335,7 +349,7 @@ fun QuickTemplateTargetsContent(
                         modifier = Modifier.offset(x = (-4).dp)
                     )
                     Spacer(Modifier.weight(1f))
-                    FilterChip(
+                    FeedbackFilterChip(
                         shape = RoundedCornerShape(50),
                         selected = current.reverseOrder,
                         onClick = {
@@ -356,12 +370,12 @@ fun QuickTemplateTargetsContent(
                                 BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 RoundedCornerShape(50)
                             )
-                            .clickable(role = Role.Button) {
+                            .dpisClickable(role = Role.Button, onClick = {
                                 onFiltersChanged(
                                     true, false, false, true,
                                     QuickTemplateTargetsPresentationController.SORT_NAME, false
                                 )
-                            },
+                            }),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -383,7 +397,7 @@ fun QuickTemplateTargetsContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.showAllApps,
                         onClick = {
                             onFiltersChanged(
@@ -397,7 +411,7 @@ fun QuickTemplateTargetsContent(
                         },
                         label = { Text(stringResource(R.string.quick_template_targets_filter_all)) }
                     )
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.showSystemApps,
                         onClick = {
                             onFiltersChanged(
@@ -415,7 +429,7 @@ fun QuickTemplateTargetsContent(
                             }
                         } else null
                     )
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.showUserApps,
                         onClick = {
                             onFiltersChanged(
@@ -439,7 +453,7 @@ fun QuickTemplateTargetsContent(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Start
                 ) {
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.showConfiguredApps,
                         onClick = {
                             onFiltersChanged(
@@ -473,7 +487,7 @@ fun QuickTemplateTargetsContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_NAME,
                         onClick = {
                             onFiltersChanged(
@@ -487,7 +501,7 @@ fun QuickTemplateTargetsContent(
                         },
                         label = { Text(stringResource(R.string.quick_template_targets_sort_name)) }
                     )
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_UPDATED,
                         onClick = {
                             onFiltersChanged(
@@ -501,7 +515,7 @@ fun QuickTemplateTargetsContent(
                         },
                         label = { Text(stringResource(R.string.quick_template_targets_sort_updated)) }
                     )
-                    FilterChip(
+                    FeedbackFilterChip(
                         selected = current.sortMode == QuickTemplateTargetsPresentationController.SORT_INSTALLED,
                         onClick = {
                             onFiltersChanged(
@@ -540,13 +554,13 @@ fun QuickTemplateTargetsContent(
                         .padding(top = 20.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = {
+                    FeedbackTextButton(onClick = {
                         discardDialogVisible = false
                         onBack()
                     }) {
                         Text(stringResource(R.string.quick_template_targets_discard_changes))
                     }
-                    TextButton(onClick = {
+                    FeedbackTextButton(onClick = {
                         if (onSaveAndExit()) discardDialogVisible = false
                     }) {
                         Text(stringResource(R.string.quick_template_targets_save_and_back))
@@ -561,12 +575,14 @@ private fun TargetSearchCard(
     query: String,
     onQueryChanged: (String) -> Unit,
     onClearQuery: () -> Unit,
+    inputFocusBoundary: TextInputFocusBoundary,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .reportTextInputFocusBounds(inputFocusBoundary, "target-search"),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -588,7 +604,8 @@ private fun TargetSearchCard(
                 onValueChange = onQueryChanged,
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .inputFocusFeedback(),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
@@ -614,7 +631,7 @@ private fun TargetSearchCard(
                 }
             )
             if (query.isNotEmpty()) {
-                IconButton(
+                FeedbackIconButton(
                     onClick = onClearQuery,
                     modifier = Modifier.size(40.dp)
                 ) {
@@ -641,7 +658,7 @@ private fun TargetAppRow(
             .toggleable(
                 value = app.selected,
                 role = Role.Checkbox,
-                onValueChange = onSelected
+                onValueChange = rememberClickValueAction(onSelected)
             )
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically

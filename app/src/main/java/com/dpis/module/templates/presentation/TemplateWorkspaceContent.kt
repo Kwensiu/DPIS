@@ -56,6 +56,7 @@ import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.ui.compose.PageScrollPositionStore
+import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.WorkspaceTwoPaneMinWidth
 import com.dpis.module.ui.compose.AppTypefacePickerPage
 import com.dpis.module.ui.compose.DpisTheme
@@ -441,7 +442,7 @@ fun TemplateWorkspaceContent(
                         .padding(top = 20.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = {
+                    TextButton(onClick = rememberClickAction {
                         val next = pendingTargetTemplateId
                         pendingTargetTemplateId = null
                         targetSwitchDialogVisible = false
@@ -451,7 +452,7 @@ fun TemplateWorkspaceContent(
                     }) {
                         Text(stringResource(R.string.quick_template_targets_discard_changes))
                     }
-                    TextButton(onClick = {
+                    TextButton(onClick = rememberClickAction {
                         targetSwitchDialogVisible = false
                         targetSaveRequest++
                     }) {

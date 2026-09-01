@@ -147,7 +147,7 @@ private fun AboutEntry(
     total: Int,
     onClick: () -> Unit
 ) {
-    val confirm = rememberConfirmAction(onClick)
+    val confirm = rememberClickAction(onClick)
     SegmentedListItem(
         onClick = confirm,
         // The leading icon follows the full row, not the first text baseline. A wrapped

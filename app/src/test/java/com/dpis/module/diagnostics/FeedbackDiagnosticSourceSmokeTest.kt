@@ -51,6 +51,13 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/presentation/"
                     + "FeedbackDiagnosticPreparationContent.kt"
         )
+        assertTrue(preparation.contains("FeedbackIconButton("))
+        assertTrue(preparation.contains("onClick = presentation::explainLsposedAvailability"))
+        assertFalse(preparation.contains(
+                "onClick = rememberClickAction(presentation::explainLsposedAvailability)"))
+        assertTrue(preparation.contains("onCheckedChange = presentation::setDurationEnabled"))
+        assertFalse(preparation.contains(
+                "onCheckedChange = rememberClickValueAction(presentation::setDurationEnabled)"))
         val theme = read(
             "src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt"
         )

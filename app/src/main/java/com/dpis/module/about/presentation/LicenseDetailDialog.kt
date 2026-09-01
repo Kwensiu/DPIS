@@ -52,6 +52,8 @@ object LicenseDetailDialog {
 @Composable
 internal fun LicenseDetailContent(title: String, detail: String, hasWebsite: Boolean,
     onWebsite: () -> Unit, onClose: () -> Unit) {
+    val website = rememberClickAction(onWebsite)
+    val close = rememberClickAction(onClose)
     Column(Modifier.fillMaxWidth().padding(dimensionResource(R.dimen.dialog_surface_padding_horizontal))) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface)
@@ -62,12 +64,12 @@ internal fun LicenseDetailContent(title: String, detail: String, hasWebsite: Boo
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth()) {
             if (hasWebsite) {
-                OutlinedButton(onClick = onWebsite, modifier = Modifier.weight(1f)) {
+                OutlinedButton(onClick = website, modifier = Modifier.weight(1f)) {
                     Text(androidx.compose.ui.res.stringResource(R.string.about_link_source_title))
                 }
                 Spacer(Modifier.weight(0.05f))
             }
-            Button(onClick = onClose, modifier = Modifier.weight(1f)) {
+            Button(onClick = close, modifier = Modifier.weight(1f)) {
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_close_button))
             }
         }

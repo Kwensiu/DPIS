@@ -6,7 +6,6 @@ import android.widget.ImageView
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,6 +74,8 @@ import com.dpis.module.applist.AppStatusFormatter
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
+import com.dpis.module.ui.compose.FeedbackButton
+import com.dpis.module.ui.compose.FeedbackOutlinedButton
 
 @Composable
 fun AppConfigEditorContent(
@@ -356,7 +357,7 @@ fun AppConfigEditorContent(
                         .clip(AppConfigSheetUiTokens.ActionShape)
                         .border(1.dp, MaterialTheme.colorScheme.outlineVariant,
                             AppConfigSheetUiTokens.ActionShape)
-                        .clickable(role = Role.Button, onClick = {
+                        .dpisClickable(role = Role.Button, onClick = {
                             completeInput()
                             state.actions.showWechatDpiHelp()
                         }),
@@ -377,7 +378,7 @@ fun AppConfigEditorContent(
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
         DpisEditorTypefaceHookRow(
             primary = {
-                OutlinedButton(
+                FeedbackOutlinedButton(
                     onClick = {
                         completeInput()
                         state.actions.navigate(ConfigEditorDestination.TYPEFACE)
@@ -397,7 +398,7 @@ fun AppConfigEditorContent(
                 }
             },
             secondary = {
-                OutlinedButton(
+                FeedbackOutlinedButton(
                     onClick = {
                         completeInput()
                         state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
@@ -419,7 +420,7 @@ fun AppConfigEditorContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(AppConfigSheetUiTokens.ProcessActionGap)
         ) {
-            Button(
+            FeedbackButton(
                 onClick = {
                     completeInput()
                     state.actions.stopProcess()
@@ -435,7 +436,7 @@ fun AppConfigEditorContent(
                 Text(stringResource(R.string.dialog_stop_button), style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center, maxLines = 1)
             }
-            Button(
+            FeedbackButton(
                 onClick = {
                     completeInput()
                     state.actions.restartProcess()
@@ -451,7 +452,7 @@ fun AppConfigEditorContent(
                 Text(stringResource(R.string.dialog_restart_button), style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center, maxLines = 1)
             }
-            Button(
+            FeedbackButton(
                 onClick = {
                     completeInput()
                     state.actions.startProcess()
@@ -469,7 +470,7 @@ fun AppConfigEditorContent(
             }
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
-        Button(
+        FeedbackButton(
             onClick = {
                 completeInput()
                 state.actions.save()
@@ -506,7 +507,7 @@ fun AppConfigEditorContent(
             horizontalArrangement = Arrangement.spacedBy(AppConfigSheetUiTokens.ProcessActionGap)
         ) {
             if (state.isScopeSelected) {
-                Button(
+                FeedbackButton(
                     onClick = {
                         completeInput()
                         state.actions.toggleScope()
@@ -520,7 +521,7 @@ fun AppConfigEditorContent(
                     )
                 ) { Text(stringResource(R.string.dialog_scope_in_scope), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             } else {
-                OutlinedButton(
+                FeedbackOutlinedButton(
                     onClick = {
                         completeInput()
                         state.actions.toggleScope()
@@ -531,7 +532,7 @@ fun AppConfigEditorContent(
                 ) { Text(stringResource(R.string.dialog_scope_apply), maxLines = 1, overflow = TextOverflow.Ellipsis) }
             }
             if (state.isDpisEnabled) {
-                OutlinedButton(
+                FeedbackOutlinedButton(
                     onClick = {
                         completeInput()
                         state.actions.toggleDpisEnabled()
@@ -542,7 +543,7 @@ fun AppConfigEditorContent(
                     Text(stringResource(R.string.dialog_config_disable), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             } else {
-                Button(
+                FeedbackButton(
                     onClick = {
                         completeInput()
                         state.actions.toggleDpisEnabled()
@@ -559,7 +560,7 @@ fun AppConfigEditorContent(
             }
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.DisableActionTopGap))
-        OutlinedButton(
+            FeedbackOutlinedButton(
             onClick = {
                 completeInput()
                 state.actions.reset()

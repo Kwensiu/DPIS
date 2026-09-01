@@ -2,7 +2,7 @@ package com.dpis.module.ui.dialog
 
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
-import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.rememberClickAction
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -121,8 +121,8 @@ internal fun ConfirmDialogContent(
     cancelLabel: String? = null,
     confirmLabel: String? = null
 ) {
-    val cancelAction = rememberConfirmAction(onCancel)
-    val confirmAction = rememberConfirmAction(onConfirm)
+    val cancelAction = rememberClickAction(onCancel)
+    val confirmAction = rememberClickAction(onConfirm)
     Column(
         modifier = Modifier.fillMaxWidth().padding(
             start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),

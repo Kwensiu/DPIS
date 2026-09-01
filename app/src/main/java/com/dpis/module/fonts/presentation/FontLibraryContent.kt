@@ -116,14 +116,14 @@ fun FontLibraryContent(
                 ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.font_library_export_archive_action)) },
-                        onClick = {
+                        onClick = rememberClickAction {
                             archiveMenuExpanded = false
                             onExportArchive()
                         }
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.font_library_import_archive_action)) },
-                        onClick = {
+                        onClick = rememberClickAction {
                             archiveMenuExpanded = false
                             onImportArchive()
                         }
@@ -133,7 +133,7 @@ fun FontLibraryContent(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = rememberConfirmAction(onImportFont),
+                onClick = rememberClickAction(onImportFont),
                 modifier = Modifier.navigationBarsPadding()
             ) {
                 Icon(
@@ -166,7 +166,7 @@ fun FontLibraryContent(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(items, key = { it.id }) { item ->
-                    FontLibraryCard(item, rememberConfirmAction { onFontSelected(item.id) })
+                    FontLibraryCard(item, rememberClickAction { onFontSelected(item.id) })
                 }
             }
         }
@@ -176,7 +176,7 @@ fun FontLibraryContent(
 @Composable
 private fun FontLibraryCard(item: FontLibraryUiItem, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().dpisClickable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceBright
     ) {
@@ -371,7 +371,7 @@ private fun FontReferenceSection(
                                 )
                             }
                             AssistChip(
-                                onClick = rememberConfirmAction {
+                                onClick = rememberClickAction {
                                     onRemoveReference(reference.packageName)
                                 },
                                 label = { Text(stringResource(R.string.font_library_remove_app_action)) }
@@ -413,7 +413,7 @@ private fun DpisToolbarIconButton(iconRes: Int, descriptionRes: Int, onClick: ()
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        onClick = rememberConfirmAction(onClick)
+        onClick = rememberClickAction(onClick)
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(

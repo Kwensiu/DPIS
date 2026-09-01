@@ -2,11 +2,11 @@ package com.dpis.module.ui.compose
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogDoneButton
 import com.dpis.module.ui.dialog.DialogTitle
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -161,6 +161,7 @@ internal fun InterfaceScaleDialogContent(
         focusRequester.requestFocus()
         keyboard?.show()
     }
+    val saveValue = rememberClickValueAction(onSave)
     DialogColumn(
         title = { DialogTitle(stringResource(R.string.settings_interface_scale_dialog_title)) },
         actions = {
@@ -170,7 +171,10 @@ internal fun InterfaceScaleDialogContent(
         OutlinedTextField(
             value = value,
             onValueChange = { if (it.length <= 3 && it.all(Char::isDigit)) value = it },
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+                .inputFocusFeedback(),
             label = { Text(stringResource(R.string.settings_interface_scale_input_hint)) },
             isError = invalid,
             supportingText = if (invalid) {
@@ -178,7 +182,7 @@ internal fun InterfaceScaleDialogContent(
             } else null,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { if (!invalid) onSave(parsed) })
+            keyboardActions = KeyboardActions(onDone = { if (!invalid) saveValue(parsed) })
         )
     }
 }
@@ -196,9 +200,7 @@ internal fun LanguageDialogContent(
     DialogColumn(
         title = { DialogTitle(stringResource(R.string.settings_language_dialog_title)) },
         actions = {
-            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.dialog_typeface_done_action))
-            }
+            DialogDoneButton(onClick = onDone)
         }
     ) {
         val listState = rememberLazyListState()
@@ -233,13 +235,16 @@ private fun LanguageDialogOptionRow(
     hapticFeedbackEnabled: Boolean,
     onSelected: () -> Unit
 ) {
-    val select = rememberConfirmAction(hapticFeedbackEnabled, onSelected)
     val shape = RoundedCornerShape(10.dp)
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .clickable(onClick = select, role = Role.RadioButton),
+            .dpisClickable(
+                onClick = onSelected,
+                role = Role.RadioButton,
+                hapticFeedbackEnabled = hapticFeedbackEnabled,
+            ),
         shape = shape,
         color = if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
@@ -276,7 +281,7 @@ internal fun BackupActionsDialogContent(
     DialogColumn(
         title = { DialogTitle(stringResource(R.string.config_backup_dialog_title), TextAlign.Start) },
         actions = {
-            OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = rememberClickAction(onClose), modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.dialog_close_button))
             }
         }
@@ -314,7 +319,7 @@ private fun BackupActionTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val action = rememberConfirmAction(onClick)
+    val action = rememberClickAction(onClick)
     Surface(
         onClick = action,
         modifier = modifier.heightIn(min = 144.dp, max = 220.dp),
@@ -340,15 +345,17 @@ private fun BackupActionTile(
 
 @Composable
 private fun DialogActionRow(onCancel: () -> Unit, onSave: () -> Unit, saveEnabled: Boolean) {
+    val cancel = rememberClickAction(onCancel)
+    val save = rememberClickAction(onSave)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
-            onClick = onCancel,
+            onClick = cancel,
             modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
             shape = ConfirmDialogUiTokens.ActionShape,
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
         ) { Text(stringResource(R.string.dialog_process_action_confirm_negative)) }
         Button(
-            onClick = onSave,
+            onClick = save,
             enabled = saveEnabled,
             modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
             shape = ConfirmDialogUiTokens.ActionShape,

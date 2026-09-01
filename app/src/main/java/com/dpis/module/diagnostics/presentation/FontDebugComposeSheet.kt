@@ -89,10 +89,10 @@ internal fun FontDebugSheetContent(state: FontDebugSheetState, onMode: () -> Uni
             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_filter_spacing_top)))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onMode, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = rememberClickAction(onMode), modifier = Modifier.weight(1f)) {
                 Text(state.modeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            OutlinedButton(onClick = onWindow, modifier = Modifier.weight(1f)) {
+            OutlinedButton(onClick = rememberClickAction(onWindow), modifier = Modifier.weight(1f)) {
                 Text(state.windowLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
@@ -107,17 +107,17 @@ internal fun FontDebugSheetContent(state: FontDebugSheetState, onMode: () -> Uni
                 color = MaterialTheme.colorScheme.onSurface)
         }
         Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_primary_action_spacing_top)))
-        Button(onClick = onOverlay, modifier = Modifier.fillMaxWidth(),
+        Button(onClick = rememberClickAction(onOverlay), modifier = Modifier.fillMaxWidth(),
             colors = if (state.overlayEnabled) ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer)
             else ButtonDefaults.buttonColors()) { Text(state.overlayLabel) }
         Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_secondary_action_spacing_top)))
-        OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = rememberClickAction(onClear), modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.font_debug_clear_button))
         }
         Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_close_action_spacing_top)))
-        OutlinedButton(onClick = onClose, modifier = Modifier.fillMaxWidth()) {
+        OutlinedButton(onClick = rememberClickAction(onClose), modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.dialog_cancel_button))
         }
     }

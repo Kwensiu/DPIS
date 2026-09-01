@@ -2,12 +2,11 @@ package com.dpis.module.ui.compose
 
 import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogDoneButton
 import com.dpis.module.ui.dialog.DialogTitle
 
 import android.widget.Toast
 import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -42,6 +42,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -71,6 +72,8 @@ import com.dpis.module.settings.PageSettingsStore
 import kotlin.math.roundToInt
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import com.dpis.module.ui.compose.ReorderableDragFeedback
+import com.dpis.module.ui.compose.dpisLongPress
 
 /** The first focused page in Theme settings; further appearance controls can join this list. */
 @Composable
@@ -247,8 +250,8 @@ fun ThemeSettingsContent(
 
 private val startupPageOptions = listOf(
     "APP" to R.string.workspace_app,
-    PageSettingsStore.HOME to R.string.workspace_home,
     "TEMPLATE" to R.string.workspace_template,
+    PageSettingsStore.HOME to R.string.workspace_home,
     "TOOLS" to R.string.workspace_tools,
     "SETTINGS" to R.string.workspace_settings,
 )
@@ -270,9 +273,7 @@ private fun PageNavigationDialog(
             Text(stringResource(R.string.settings_page_default_startup), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
             Text(stringResource(R.string.settings_page_startup_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         } }, actions = {
-            Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth(), shape = CircleShape) {
-                Text(stringResource(R.string.dialog_typeface_done_action))
-            }
+            DialogDoneButton(onClick = onDismiss)
         }) {
             val lazyListState = rememberLazyListState()
             val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -289,36 +290,55 @@ private fun PageNavigationDialog(
                     val label = startupPageLabel(page)
                     val isHidden = page in hidden
                     val isSettings = page == "SETTINGS"
-                    ReorderableItem(reorderableState, key = page) {
+                    val selectStartupPage = rememberLongPressAction { onStartupPageSelected(page) }
+                    ReorderableItem(reorderableState, key = page) { isDragging ->
+                        ReorderableDragFeedback(isDragging)
                         Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .alpha(if (isHidden) 0.48f else 1f)
-                            .combinedClickable(
-                                onClick = {
-                                    if (isSettings) Toast.makeText(context, R.string.settings_page_settings_cannot_hide, Toast.LENGTH_SHORT).show()
-                                    else { PageSettingsStore.setWorkspaceVisible(context, page, isHidden); hidden = PageSettingsStore.getHiddenWorkspaces(context) }
-                                },
-                                onLongClick = { onStartupPageSelected(page) },
-                            )
+                            .dpisClickable(onClick = {
+                                    if (isSettings) {
+                                        Toast.makeText(context, R.string.settings_page_settings_cannot_hide, Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        PageSettingsStore.setWorkspaceVisible(context, page, isHidden)
+                                        hidden = PageSettingsStore.getHiddenWorkspaces(context)
+                                    }
+                                })
                             .background(MaterialTheme.colorScheme.surfaceBright)
                             .padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(painterResource(R.drawable.ic_drag_indicator_24), stringResource(R.string.quick_template_sort_drag_handle), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.longPressDraggableHandle())
                         Spacer(Modifier.width(8.dp))
-                        Text(stringResource(label), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                        if (selectedStartupPage == page) {
-                            Text(
-                                stringResource(R.string.settings_page_startup_badge),
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                                    .padding(horizontal = 10.dp, vertical = 4.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                style = MaterialTheme.typography.labelMedium,
-                            )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .dpisLongPress(onLongPress = selectStartupPage),
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    stringResource(label),
+                                    modifier = Modifier.weight(1f),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                if (selectedStartupPage == page) {
+                                    Text(
+                                        stringResource(R.string.settings_page_startup_badge),
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(MaterialTheme.colorScheme.primaryContainer)
+                                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        style = MaterialTheme.typography.labelMedium,
+                                    )
+                                }
+                            }
                         }
                         }
                     }
@@ -336,8 +356,9 @@ private fun ThemeDynamicColorRow(
     index: Int,
     total: Int,
 ) {
+    val changeDynamicColor = rememberClickValueAction(onCheckedChange)
     ThemeSegmentedSurfaceRow(
-        onClick = { onCheckedChange(!checked) },
+        onClick = { changeDynamicColor(!checked) },
         index = index,
         total = total,
         leadingContent = {
@@ -360,7 +381,7 @@ private fun ThemeDynamicColorRow(
             )
         },
         trailingContent = {
-            Switch(checked = checked, onCheckedChange = onCheckedChange)
+            Switch(checked = checked, onCheckedChange = changeDynamicColor)
         },
     )
 }
@@ -503,7 +524,7 @@ private fun GeneratedThemeSwatch(
                     RoundedCornerShape(12.dp),
                 ) else Modifier,
             )
-            .clickable(onClick = onClick)
+            .dpisClickable(onClick = onClick)
             .padding(4.dp),
     ) {
         Canvas(Modifier.fillMaxSize().clip(CircleShape)) {
@@ -586,13 +607,7 @@ private fun ThemeChoiceDialog(
         DialogColumn(
             title = { DialogTitle(title) },
             actions = {
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = CircleShape,
-                ) {
-                    Text(stringResource(R.string.dialog_typeface_done_action))
-                }
+                DialogDoneButton(onClick = onDismiss)
             }
         ) {
             val listState = rememberLazyListState()
@@ -635,9 +650,7 @@ private fun ThemeModeDialog(
         DialogColumn(
             title = { DialogTitle(stringResource(R.string.settings_theme_mode_label)) },
             actions = {
-                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.dialog_typeface_done_action))
-                }
+                DialogDoneButton(onClick = onDismiss)
             }
         ) {
             val listState = rememberLazyListState()
@@ -666,7 +679,7 @@ private fun ThemeModeDialog(
 private fun ThemeChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
     val shape = RoundedCornerShape(10.dp)
     Surface(
-        modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(shape).dpisClickable(onClick = onClick),
         shape = shape,
         color = if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
@@ -730,7 +743,7 @@ private fun ThemeSettingsEntry(
     onClick: () -> Unit,
 ) {
     ThemeSegmentedSurfaceRow(
-        onClick = rememberConfirmAction(onClick),
+        onClick = onClick,
         index = index,
         total = total,
         leadingContent = {
@@ -776,7 +789,7 @@ private fun ThemeSegmentedSurfaceRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .clickable(onClick = onClick, role = Role.Button),
+            .dpisClickable(onClick = onClick, role = Role.Button),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceBright,
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -814,7 +827,7 @@ private fun ThemeInterfaceScaleRow(
 ) {
     val shape = dpisSegmentedShapes(index, total).shape
     Surface(
-        modifier = Modifier.fillMaxWidth().clip(shape).clickable(onClick = onClick),
+        modifier = Modifier.fillMaxWidth().clip(shape).dpisClickable(onClick = onClick),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceBright,
         contentColor = MaterialTheme.colorScheme.onSurface,

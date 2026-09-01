@@ -62,8 +62,12 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(composeContent.contains("R.drawable.ic_search_24"));
         assertTrue(composeContent.contains("R.drawable.ic_close_24"));
         assertTrue(composeContent.contains("R.drawable.ic_tune_24"));
+        assertTrue(composeContent.contains("if (!searchVisible) searchVisible = true"));
+        assertFalse(composeContent.contains("searchVisible = !searchVisible"));
         assertTrue(composeContent.contains("onValueChange = onQueryChanged"));
-        assertTrue(composeContent.contains("onValueChange = onSelected"));
+        assertTrue(composeContent.contains("clearTextInputFocusOutside(focusManager, inputFocusBoundary)"));
+        assertTrue(composeContent.contains("reportTextInputFocusBounds(inputFocusBoundary, \"target-search\")"));
+        assertTrue(composeContent.contains("onValueChange = rememberClickValueAction(onSelected)"));
         assertTrue(composeContent.contains("AndroidView("));
         assertFalse(composeContent.contains("onIconVisible(app.packageName)"));
         assertTrue(composeContent.contains("rememberBottomSheetState("));

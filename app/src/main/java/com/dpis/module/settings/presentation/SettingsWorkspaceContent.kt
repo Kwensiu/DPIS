@@ -305,11 +305,7 @@ private fun SettingsSwitchRow(
     total: Int,
     onChanged: (Boolean) -> Unit
 ) {
-    val confirmFeedback = rememberConfirmFeedback()
-    val hapticChanged = { value: Boolean ->
-        confirmFeedback()
-        onChanged(value)
-    }
+    val hapticChanged = rememberClickValueAction(onChanged)
     SegmentedListItem(
         onClick = { hapticChanged(!checked) },
         enabled = enabled,
@@ -348,7 +344,7 @@ private fun SettingsEntry(
     onClick: () -> Unit,
     showTrailingIcon: Boolean = true,
 ) {
-    val hapticClick = rememberConfirmAction(onClick)
+    val hapticClick = rememberClickAction(onClick)
     SegmentedListItem(
         onClick = hapticClick,
         enabled = enabled,

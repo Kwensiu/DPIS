@@ -18,13 +18,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -81,6 +78,9 @@ private fun TypefacePickerContent(
             && !SystemFontRegistry.isSystemFontId(selectedTypefaceId)) 1 else 0
     val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { 2 })
     val pagerScope = rememberCoroutineScope()
+    val selectPage = rememberClickValueAction<Int> { page ->
+        pagerScope.launch { pagerState.animateScrollToPage(page) }
+    }
     val catalog by produceState<TypefaceCatalogCache.Catalog?>(
         initialValue = TypefaceCatalogCache.cached(),
         key1 = context.applicationContext
@@ -118,7 +118,7 @@ private fun TypefacePickerContent(
                 Tab(
                     selected = pagerState.currentPage == page,
                     onClick = {
-                        pagerScope.launch { pagerState.animateScrollToPage(page) }
+                        if (pagerState.currentPage != page) selectPage(page)
                     },
                     text = { Text(stringResource(titleRes)) }
                 )
@@ -181,7 +181,7 @@ private fun TypefacePickerContent(
             }
         }
         Spacer(Modifier.height(TypefacePickerUiTokens.FooterTopGap))
-        OutlinedButton(
+        FeedbackOutlinedButton(
             onClick = {
                 onBack()
                 context.startActivity(Intent(context, FontLibraryActivity::class.java))
@@ -243,13 +243,13 @@ private fun TypefaceOptionList(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp),
     ) {
         items(options, key = { it.id ?: "default" }) { option ->
-            Button(
+            FeedbackButton(
                 onClick = { onTypefaceSelected(option.id) },
                 modifier = Modifier.fillMaxWidth()
                     .padding(vertical = TypefacePickerUiTokens.TypefaceOptionRowPadding)
                     .height(TypefacePickerUiTokens.TypefaceOptionHeight),
                 shape = TypefacePickerUiTokens.TypefaceOptionShape,
-                colors = ButtonDefaults.buttonColors(
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                     containerColor = if (option.id == selectedTypefaceId) {
                         MaterialTheme.colorScheme.secondaryContainer
                     } else {

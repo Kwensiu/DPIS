@@ -22,7 +22,7 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(content.contains("LazyColumn("));
         assertTrue(content.contains("items(state.entries.size"));
         assertTrue(content.contains("private fun LogEntryRow("));
-        assertTrue(content.contains("combinedClickable("));
+        assertTrue(content.contains("dpisCombinedClickable("));
         assertTrue(content.contains("snapshotFlow"));
         assertTrue(content.contains("presentation::updateAtLatestEdge"));
         assertTrue(content.contains("PageBarBehavior.Pinned"));

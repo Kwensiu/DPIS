@@ -4,7 +4,6 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,9 +85,7 @@ fun DonateSupportPage(onBack: () -> Unit) {
             }
             item {
                 SupportCard(
-                    modifier = Modifier.clickable(
-                        onClick = rememberConfirmAction { supportersVisible = true }
-                    )
+                    modifier = Modifier.dpisClickable(onClick = { supportersVisible = true })
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
@@ -166,9 +163,7 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
             item { Text(stringResource(R.string.mode_help_more_title), modifier = Modifier.padding(top = 6.dp), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold) }
             item {
                 Card(
-                    modifier = Modifier.fillMaxWidth().clickable(
-                        onClick = rememberConfirmAction(onOpenModeGuide)
-                    ),
+                    modifier = Modifier.fillMaxWidth().dpisClickable(onClick = onOpenModeGuide),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
                     border = CardDefaults.outlinedCardBorder()
                 ) {

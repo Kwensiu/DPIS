@@ -304,7 +304,7 @@ private fun DiagnosticActionButton(
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
     borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
 ) {
-    OutlinedButton(
+    FeedbackOutlinedButton(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         shape = RoundedCornerShape(18.dp),
@@ -326,7 +326,7 @@ private fun DiagnosticPrimaryActionButton(
     modifier: Modifier = Modifier,
     text: String,
 ) {
-    Button(
+    FeedbackButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.height(48.dp),
@@ -491,7 +491,7 @@ private fun DiagnosticLogOutputRow(status: String) {
         supportingContent = { Text(status) },
         // This switch represents the session policy. It is visible but not editable here.
         trailingContent = {
-            Switch(
+            FeedbackSwitch(
                 checked = true,
                 onCheckedChange = null,
                 enabled = false,
@@ -511,7 +511,7 @@ private fun DiagnosticLsposedRow(
     presentation: FeedbackDiagnosticPreparationPresentation,
 ) {
     SegmentedListItem(
-        onClick = presentation::refreshLsposedAvailability,
+        onClick = rememberClickAction(presentation::refreshLsposedAvailability),
         shapes = dpisSegmentedShapes(2, 3),
         colors = diagnosticItemColors(),
         verticalAlignment = Alignment.CenterVertically,
@@ -525,7 +525,7 @@ private fun DiagnosticLsposedRow(
                     .fillMaxHeight(),
                 contentAlignment = Alignment.Center,
             ) {
-                IconButton(
+                FeedbackIconButton(
                     onClick = presentation::explainLsposedAvailability,
                 ) {
                     Icon(
@@ -555,7 +555,7 @@ private fun DiagnosticSessionSection(
     val durationItemCount = if (state.durationEnabled) 2 else 1
     DiagnosticSection(R.string.feedback_diagnostic_duration_section) {
         SegmentedListItem(
-            onClick = { presentation.setDurationEnabled(!state.durationEnabled) },
+            onClick = rememberClickAction { presentation.setDurationEnabled(!state.durationEnabled) },
             shapes = dpisSegmentedShapes(0, durationItemCount),
             colors = diagnosticItemColors(),
             verticalAlignment = Alignment.CenterVertically,
@@ -563,7 +563,7 @@ private fun DiagnosticSessionSection(
             content = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_title)) },
             supportingContent = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_hint)) },
             trailingContent = {
-                Switch(
+                FeedbackSwitch(
                     checked = state.durationEnabled,
                     onCheckedChange = presentation::setDurationEnabled,
                 )
@@ -604,7 +604,7 @@ private fun DurationChipSelector(
         contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-            FilterChip(
+            FeedbackFilterChip(
                 selected = customSelected,
                 onClick = { customDialogVisible = true },
                 label = {
@@ -618,7 +618,7 @@ private fun DurationChipSelector(
                 },
             )
             presets.forEach { (seconds, label) ->
-                FilterChip(
+                FeedbackFilterChip(
                     selected = selectedSeconds == seconds,
                     onClick = { onSelect(seconds) },
                     label = { Text(label) },
@@ -670,15 +670,16 @@ private fun CustomDurationDialog(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
+                modifier = Modifier.inputFocusFeedback(),
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(seconds!!) }, enabled = valid) {
+            FeedbackTextButton(onClick = { onConfirm(seconds!!) }, enabled = valid) {
                 Text(stringResource(R.string.feedback_diagnostic_duration_custom_confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            FeedbackTextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.feedback_diagnostic_duration_custom_cancel))
             }
         },

@@ -104,7 +104,7 @@ internal fun MessageDialogContent(
     closeLabel: String,
     onClose: () -> Unit
 ) {
-    val closeAction = rememberConfirmAction(onClose)
+    val closeAction = rememberClickAction(onClose)
     Column(
         modifier = Modifier.fillMaxWidth().padding(
             start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),

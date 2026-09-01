@@ -33,13 +33,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -171,6 +169,9 @@ internal fun HookChainEditorPage(
     val destinationPage = destination.hookChainTabIndex()
     val pagerState = rememberPagerState(initialPage = destinationPage, pageCount = { 2 })
     val pagerScope = rememberCoroutineScope()
+    val selectDestination = rememberClickValueAction<ConfigEditorDestination> { nextDestination ->
+        pagerScope.launch { pagerState.animateScrollToPage(nextDestination.hookChainTabIndex()) }
+    }
     val currentDestination by rememberUpdatedState(destination)
     val interfacePage = ConfigEditorDestination.HOOK_CHAIN_INTERFACE.hookChainTabIndex()
     val fontPage = ConfigEditorDestination.HOOK_CHAIN_FONT.hookChainTabIndex()
@@ -231,8 +232,8 @@ internal fun HookChainEditorPage(
                 Tab(
                     selected = pagerState.currentPage == tabDestination.hookChainTabIndex(),
                     onClick = {
-                        pagerScope.launch {
-                            pagerState.animateScrollToPage(tabDestination.hookChainTabIndex())
+                        if (pagerState.currentPage != tabDestination.hookChainTabIndex()) {
+                            selectDestination(tabDestination)
                         }
                     },
                     text = { Text(stringResource(titleRes)) }
@@ -315,6 +316,7 @@ private fun ViewportApplyModePage(
     onModeSelected: (String) -> Unit,
     contentPadding: PaddingValues
 ) {
+    val selectMode = rememberClickValueAction(onModeSelected)
     val modes = listOf(
         Triple(
             ViewportApplyMode.AUTO,
@@ -347,7 +349,7 @@ private fun ViewportApplyModePage(
         modes.forEach { (mode, labelRes, subtitleRes) ->
             val selected = selectedMode == mode
             Surface(
-                onClick = { onModeSelected(mode) },
+                onClick = { selectMode(mode) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = HookChainPageTokens.InterfaceRowMinHeight),
@@ -376,7 +378,7 @@ private fun ViewportApplyModePage(
                     }
                     RadioButton(
                         selected = selected,
-                        onClick = { onModeSelected(mode) }
+                        onClick = null
                     )
                 }
             }
@@ -471,7 +473,7 @@ private fun FontDomainsPage(
             }
         }
         item {
-            OutlinedButton(
+            FeedbackOutlinedButton(
                 onClick = { onSelectedDomainsChanged(automaticDomains) },
                 enabled = editable,
                 modifier = Modifier.fillMaxWidth().padding(top = HookChainPageTokens.ActionTopGap)
@@ -493,12 +495,13 @@ private fun HookDomainOptionRow(
     total: Int,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val updateChecked = rememberClickValueAction(onCheckedChange)
     val shapes = dpisSegmentedShapes(index, total)
     val disabledScrim = MaterialTheme.colorScheme.surface.copy(
         alpha = HookChainPageTokens.DisabledScrimAlpha
     )
     SegmentedListItem(
-        onClick = { onCheckedChange(!checked) },
+        onClick = { updateChecked(!checked) },
         enabled = enabled,
         modifier = Modifier
             .drawWithContent {
@@ -539,7 +542,7 @@ private fun HookDomainOptionRow(
             }
         },
         trailingContent = {
-            Switch(
+            FeedbackSwitch(
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = onCheckedChange

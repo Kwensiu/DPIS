@@ -3,7 +3,6 @@ package com.dpis.module.templates.presentation
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,7 +61,8 @@ import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.WorkspaceSearchCard
 import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
 import com.dpis.module.ui.compose.edgeOcclusionFade
-import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberRestorableLazyListState
 
 private const val EDITOR_GLOBAL = "global"
@@ -138,7 +138,7 @@ internal fun TemplateWorkspaceListPane(
                 if (!state.searching) {
                     item {
                         GlobalPrefillCard(state,
-                            rememberConfirmAction {
+                            rememberClickAction {
                                 onEditorOpened(EDITOR_GLOBAL, null)
                             })
                     }
@@ -146,7 +146,7 @@ internal fun TemplateWorkspaceListPane(
                         TemplateHeader(
                             state = state,
                             onSort = onSortRequested,
-                            onCreate = rememberConfirmAction {
+                            onCreate = rememberClickAction {
                                 onEditorOpened(EDITOR_QUICK, null)
                             },
                         )
@@ -188,10 +188,10 @@ internal fun TemplateWorkspaceListPane(
                         TemplateCard(
                             template = template,
                             actions = state.actions,
-                            onEdit = rememberConfirmAction {
+                            onEdit = rememberClickAction {
                                 onEditorOpened(EDITOR_QUICK, template.id)
                             },
-                            onTargets = rememberConfirmAction {
+                            onTargets = rememberClickAction {
                                 onTargetsOpened(template.id)
                             }
                         )
@@ -241,7 +241,7 @@ private fun GlobalPrefillCard(state: TemplateWorkspacePresentation.State, onEdit
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                IconButton(onClick = onEdit) {
+                IconButton(onClick = rememberClickAction(onEdit)) {
                     Icon(
                         painter = painterResource(R.drawable.ic_chevron_right_24),
                         contentDescription = stringResource(
@@ -265,7 +265,7 @@ private fun TemplateHeader(
     onSort: () -> Unit,
     onCreate: () -> Unit
 ) {
-    val sort = rememberConfirmAction(onSort)
+    val sort = rememberClickAction(onSort)
     Row(
         Modifier
             .fillMaxWidth()
@@ -346,7 +346,7 @@ private fun TemplateCard(
                 )
                 Spacer(Modifier.weight(1f))
                 TemplateApplyAction(
-                    onClick = rememberConfirmAction {
+                    onClick = rememberClickAction {
                         actions.applyTemplate(
                             template.id
                         )
@@ -519,7 +519,7 @@ private fun TemplateActionIconButton(
     Box(
         modifier = buttonModifier
             .alpha(if (enabled) 1f else TemplateUiTokens.DISABLED_ACTION_ALPHA)
-            .clickable(
+            .dpisClickable(
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick

@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -73,6 +72,7 @@ import com.dpis.module.ui.presentation.WearSettingsWorkspaceContent
 import com.dpis.module.ui.presentation.WearTemplateWorkspaceContent
 import com.dpis.module.ui.presentation.WearToolsWorkspaceContent
 import com.dpis.module.ui.compose.rememberEditorControlHeight
+import com.dpis.module.ui.compose.dpisClickable
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
 internal class MainWorkspacePresentationCoordinator(private val content: Content) {
@@ -346,9 +346,9 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                     MaterialTheme.colorScheme.outlineVariant,
                                     AppConfigSheetUiTokens.FeedbackActionShape
                                 )
-                                .clickable(
+                                .dpisClickable(
                                     role = Role.Button,
-                                    onClick = editorState.actions::startFeedbackDiagnostic
+                                    onClick = editorState.actions::startFeedbackDiagnostic,
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
@@ -459,7 +459,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                                         .size(AppConfigSheetUiTokens.WizardHintCloseSize)
                                         .clip(CircleShape)
                                         .background(Color.White.copy(alpha = 0.15f))
-                                        .clickable(role = Role.Button, onClick = {
+                                        .dpisClickable(role = Role.Button, onClick = {
                                             AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
                                             showAdvancedHint = false
                                         }),

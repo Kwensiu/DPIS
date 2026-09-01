@@ -43,7 +43,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -98,7 +97,7 @@ internal fun DpisCompactEditorTextField(
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxSize()
-                .onFocusChanged { if (it.isFocused) onFocused?.invoke() },
+                .inputFocusFeedback(onFocused),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
             singleLine = true,
             keyboardOptions = keyboardOptions,
@@ -139,7 +138,7 @@ internal fun DpisCompactEditorTextField(
 
 @Composable
 internal fun DpisEditorClearButton(onClear: () -> Unit) {
-    IconButton(onClick = onClear) {
+    IconButton(onClick = rememberClickAction(onClear)) {
         Icon(painterResource(R.drawable.ic_close_24), stringResource(R.string.search_clear))
     }
 }
@@ -320,6 +319,8 @@ internal fun DpisModeSelector(
     modifier: Modifier = Modifier
 ) {
     val modeInteractionSource = remember { MutableInteractionSource() }
+    val selectFirst = rememberClickAction(onFirstSelected)
+    val selectSecond = rememberClickAction(onSecondSelected)
     val controlHeight = rememberEditorControlHeight()
     val thumbOffset by animateDpAsState(
         targetValue = if (selectedFirst) 0.dp else AppConfigSheetUiTokens.SecondaryControlWidth / 2,
@@ -353,11 +354,11 @@ internal fun DpisModeSelector(
         )
         Row(Modifier.fillMaxSize().zIndex(1f)) {
             DpisModeLabel(
-                firstLabel, selectedFirst, labelStyle, onFirstSelected,
+                firstLabel, selectedFirst, labelStyle, selectFirst,
                 modeInteractionSource, Modifier.weight(1f)
             )
             DpisModeLabel(
-                secondLabel, !selectedFirst, labelStyle, onSecondSelected,
+                secondLabel, !selectedFirst, labelStyle, selectSecond,
                 modeInteractionSource, Modifier.weight(1f)
             )
         }

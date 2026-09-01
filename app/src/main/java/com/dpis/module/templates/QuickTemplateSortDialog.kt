@@ -18,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,6 +46,9 @@ import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.compose.DpisTheme
 import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.compose.FeedbackButton
+import com.dpis.module.ui.compose.ReorderableDragFeedback
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** Legacy platform-dialog bridge for View and Wear callers; Compose pages use the content below. */
@@ -107,6 +109,7 @@ internal fun QuickTemplateSortContent(
     onDone: () -> Unit
 ) {
     val orderedItems = remember(initialItems) { mutableStateListOf(*initialItems.toTypedArray()) }
+    val done = rememberClickAction(onDone)
     DialogColumn(
         title = { DialogTitle(stringResource(R.string.quick_template_sort_title)) },
         actions = {
@@ -116,8 +119,8 @@ internal fun QuickTemplateSortContent(
                     8.dp
                 )
             ) {
-                Button(
-                    onClick = onDone,
+                FeedbackButton(
+                    onClick = done,
                     modifier = Modifier.fillMaxWidth(),
                     shape = CircleShape,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
@@ -158,10 +161,11 @@ internal fun QuickTemplateSortContent(
 private fun QuickTemplateSortRow(
     item: QuickTemplateSortItem,
     isDragging: Boolean,
-    modifier: Modifier = Modifier
+    dragHandleModifier: Modifier = Modifier,
 ) {
+    ReorderableDragFeedback(isDragging)
     Surface(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .shadow(if (isDragging) 12.dp else 0.dp, RoundedCornerShape(8.dp)),
@@ -177,7 +181,7 @@ private fun QuickTemplateSortRow(
                 painter = painterResource(R.drawable.ic_drag_indicator_24),
                 contentDescription = stringResource(R.string.quick_template_sort_drag_handle),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
+                modifier = dragHandleModifier
             )
             Text(
                 text = item.name,

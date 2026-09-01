@@ -146,7 +146,7 @@ internal fun RuntimeReloadNoticeContent(onAcknowledge: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
-        Button(onClick = onAcknowledge, modifier = Modifier.fillMaxWidth()) {
+        Button(onClick = rememberClickAction(onAcknowledge), modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.module_runtime_reload_ack_button))
         }
     }

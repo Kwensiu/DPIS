@@ -124,7 +124,7 @@ internal fun CollapsingPageTopBar(
                 }
             }
         },
-        navigationIcon = { PageNavigationIcon(onBack?.let { rememberConfirmAction(it) }) },
+        navigationIcon = { PageNavigationIcon(onBack?.let { rememberClickAction(it) }) },
         actions = actions,
         windowInsets = pageTopBarWindowInsets(includeHorizontalSafeInsets),
         colors = pageTopBarColors(),
@@ -157,7 +157,7 @@ internal fun PinnedPageTopBar(
             }
         },
         title = title,
-        navigationIcon = { PageNavigationIcon(onBack?.let { rememberConfirmAction(it) }) },
+        navigationIcon = { PageNavigationIcon(onBack?.let { rememberClickAction(it) }) },
         actions = actions,
         windowInsets = pageTopBarWindowInsets(includeHorizontalSafeInsets),
         colors = pageTopBarColors(),
@@ -188,7 +188,7 @@ internal fun InFlowPageHeader(
             }
         },
         title = title,
-        navigationIcon = { PageNavigationIcon(onBack?.let { rememberConfirmAction(it) }) },
+        navigationIcon = { PageNavigationIcon(onBack?.let { rememberClickAction(it) }) },
         actions = actions,
         windowInsets = pageTopBarWindowInsets(includeHorizontalSafeInsets),
         colors = pageTopBarColors()

@@ -2,7 +2,6 @@ package com.dpis.module.home.presentation
 
 import android.content.Intent
 import android.os.Build
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
@@ -65,7 +64,8 @@ import com.dpis.module.ui.compose.LocalDpisTokens
 import com.dpis.module.ui.compose.PageBarBehavior
 import com.dpis.module.ui.compose.PageScaffold
 import com.dpis.module.ui.compose.SecondaryPageContentTokens
-import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.rememberRestorableLazyListState
 
 private data class HomeCountItem(
@@ -85,6 +85,16 @@ fun HomeWorkspaceContent(
     val context = LocalContext.current
     var editing by rememberSaveable { mutableStateOf(false) }
     var draftLayout by remember(state.layout) { mutableStateOf(state.layout) }
+    val toggleEditing = rememberClickAction {
+        if (editing) {
+            state.actions.saveHomeWorkspaceLayout(draftLayout)
+            editing = false
+        } else {
+            draftLayout = state.layout
+            editing = true
+        }
+    }
+    val restoreAll = rememberClickAction { draftLayout = HomeWorkspaceLayout.defaults() }
     val listState = rememberRestorableLazyListState("home", scrollStore)
     val contentCanScroll by remember {
         derivedStateOf { listState.canScrollForward || listState.canScrollBackward }
@@ -118,15 +128,7 @@ fun HomeWorkspaceContent(
         actions = if (state.showEditButton) {
             {
             IconButton(
-                onClick = {
-                    if (editing) {
-                        state.actions.saveHomeWorkspaceLayout(draftLayout)
-                        editing = false
-                    } else {
-                        draftLayout = state.layout
-                        editing = true
-                    }
-                },
+                onClick = toggleEditing,
             ) {
                 Icon(
                     painterResource(if (editing) R.drawable.ic_save_24dp else R.drawable.ic_edit_24),
@@ -270,7 +272,7 @@ fun HomeWorkspaceContent(
                     contentAlignment = Alignment.Center,
                 ) {
                     FilledTonalButton(
-                        onClick = { draftLayout = HomeWorkspaceLayout.defaults() },
+                        onClick = restoreAll,
                         modifier = Modifier.heightIn(min = 52.dp),
                         shape = RoundedCornerShape(26.dp),
                     ) {
@@ -286,7 +288,7 @@ fun HomeWorkspaceContent(
 private fun HomePrimaryStatus(state: HomeWorkspaceState) {
     val context = LocalContext.current
     val disabled = !state.xposedModuleActivated
-    val onClick = rememberConfirmAction {
+    val onClick = rememberClickAction {
         if (!disabled) state.actions.checkForUpdates()
     }
     val container = when {
@@ -321,7 +323,7 @@ private fun HomeCountCard(
     pendingHidden: Boolean,
     onClick: () -> Unit,
 ) {
-    val hapticClick = rememberConfirmAction(onClick)
+    val hapticClick = rememberClickAction(onClick)
     HomeEditableBlock(modifier, editing, pendingHidden) { border ->
         Card(
             onClick = hapticClick,
@@ -345,7 +347,6 @@ private fun HomeInfoCard(
     pendingHidden: Boolean,
     onClick: () -> Unit,
 ) {
-    val confirmedClick = rememberConfirmAction(onClick)
     val rootText = when (state.rootAccess.status) {
         RootAccessProbe.Status.AVAILABLE -> stringResource(R.string.home_workspace_info_root_available, state.rootAccess.provider)
         RootAccessProbe.Status.UNAVAILABLE -> stringResource(R.string.home_workspace_info_root_unavailable)
@@ -362,7 +363,7 @@ private fun HomeInfoCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .homeEditOutline(border, RoundedCornerShape(16.dp))
-                .then(if (editing) Modifier.clickable(role = Role.Button, onClick = confirmedClick) else Modifier),
+                .then(if (editing) Modifier.dpisClickable(role = Role.Button, onClick = onClick) else Modifier),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             rows.forEachIndexed { index, (titleRes, value) ->
@@ -410,7 +411,7 @@ private fun HomeNavigationEntry(
     pendingHidden: Boolean,
     onClick: () -> Unit,
 ) {
-    val hapticClick = rememberConfirmAction(onClick)
+    val hapticClick = rememberClickAction(onClick)
     HomeEditableBlock(Modifier.fillMaxWidth(), editing, pendingHidden) { border ->
         Card(
             onClick = hapticClick,
@@ -437,7 +438,6 @@ private fun HomeFeedbackEntry(
     pendingHidden: Boolean,
     onClick: () -> Unit,
 ) {
-    val confirmedClick = rememberConfirmAction(onClick)
     HomeEditableBlock(Modifier.fillMaxWidth(), editing, pendingHidden) { border ->
         Card(
             modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
@@ -447,7 +447,7 @@ private fun HomeFeedbackEntry(
         ) {
             Row(
                 Modifier
-                    .then(if (editing) Modifier.clickable(role = Role.Button, onClick = confirmedClick) else Modifier)
+                    .then(if (editing) Modifier.dpisClickable(role = Role.Button, onClick = onClick) else Modifier)
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -544,16 +544,14 @@ private fun homeEditableColors(pendingHidden: Boolean) = CardDefaults.cardColors
 
 @Composable
 private fun HomeFeedbackAction(@androidx.annotation.DrawableRes iconRes: Int, @androidx.annotation.StringRes descriptionRes: Int, url: String, context: android.content.Context) {
-    val openFeedbackTarget = rememberConfirmAction {
+    val openFeedbackTarget = {
         context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
     }
     Box(
         Modifier
             .size(40.dp)
             .clip(CircleShape)
-            .clickable(role = Role.Button) {
-            openFeedbackTarget()
-        },
+            .dpisClickable(role = Role.Button, onClick = openFeedbackTarget),
         contentAlignment = Alignment.Center
     ) {
         Icon(painterResource(iconRes), stringResource(descriptionRes), tint = MaterialTheme.colorScheme.onSurfaceVariant)

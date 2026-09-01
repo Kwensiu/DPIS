@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +49,10 @@ internal fun WorkspaceSearchCard(
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChanged,
-                modifier = Modifier.weight(1f).fillMaxHeight(),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .inputFocusFeedback(),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
@@ -73,7 +75,7 @@ internal fun WorkspaceSearchCard(
                 }
             )
             if (query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChanged("") }) {
+                FeedbackIconButton(onClick = { onQueryChanged("") }) {
                     Icon(
                         painterResource(R.drawable.ic_close_24),
                         stringResource(R.string.search_clear),

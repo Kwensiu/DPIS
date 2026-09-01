@@ -83,7 +83,8 @@ import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.compose.rememberConfirmAction
+import com.dpis.module.ui.compose.inputFocusFeedback
+import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.rememberInstalledAppIcon
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
@@ -709,7 +710,8 @@ internal class WearListScope(
                         MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier.fillMaxWidth()
-                        .onFocusChanged { focused = it.isFocused },
+                        .onFocusChanged { focused = it.isFocused }
+                        .inputFocusFeedback(),
                     decorationBox = { inner ->
                         Box(Modifier.fillMaxWidth()) {
                             if (value.isEmpty() && !focused) {
@@ -759,7 +761,8 @@ internal class WearListScope(
                             MaterialTheme.colorScheme.primary
                         ),
                         modifier = Modifier.fillMaxWidth()
-                            .onFocusChanged { focused = it.isFocused },
+                            .onFocusChanged { focused = it.isFocused }
+                            .inputFocusFeedback(),
                         decorationBox = { inner ->
                             Box(Modifier.fillMaxWidth()) {
                                 if (value.isEmpty() && !focused) {
@@ -775,7 +778,7 @@ internal class WearListScope(
                     )
                 }
                 Button(
-                    onClick = rememberConfirmAction(onActionClick),
+                    onClick = rememberClickAction(onActionClick),
                     label = {},
                     icon = {
                         Icon(
@@ -814,7 +817,10 @@ internal class WearListScope(
                         cursorBrush = SolidColor(
                             MaterialTheme.colorScheme.primary
                         ),
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                            .inputFocusFeedback()
                     )
                 }
             }
@@ -855,7 +861,10 @@ internal class WearListScope(
                         cursorBrush = SolidColor(
                             MaterialTheme.colorScheme.primary
                         ),
-                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                            .inputFocusFeedback()
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
@@ -888,14 +897,14 @@ internal class WearListScope(
     ) {
         if (selected) {
             Button(
-                onClick = rememberConfirmAction(onClick),
+                onClick = rememberClickAction(onClick),
                 label = { wearCenteredButtonLabel(label) },
                 icon = {},
                 modifier = modifier
             )
         } else {
             OutlinedButton(
-                onClick = rememberConfirmAction(onClick),
+                onClick = rememberClickAction(onClick),
                 label = { wearCenteredButtonLabel(label) },
                 icon = {},
                 modifier = modifier
@@ -913,7 +922,7 @@ internal class WearListScope(
     ) = with(scope) {
         item(key = key) {
             Button(
-                onClick = rememberConfirmAction(onClick),
+                onClick = rememberClickAction(onClick),
                 enabled = enabled,
                 label = { Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                 secondaryLabel = secondaryLabel?.takeIf(String::isNotBlank)?.let { value ->
@@ -992,7 +1001,7 @@ internal class WearListScope(
     ) = with(scope) {
         item(key = key) {
             Card(
-                onClick = rememberConfirmAction(onClick),
+                onClick = rememberClickAction(onClick),
                 modifier = Modifier
                     .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
@@ -1053,14 +1062,14 @@ internal class WearListScope(
                 ) {
                     if (safeSelectedPage == AppListPage.ALL_APPS) {
                         Button(
-                            onClick = rememberConfirmAction { onSelect(AppListPage.ALL_APPS) },
+                            onClick = rememberClickAction { onSelect(AppListPage.ALL_APPS) },
                             label = { wearCenteredButtonLabel(allLabel) },
                             icon = {},
                             modifier = Modifier.weight(1f)
                         )
                     } else {
                         OutlinedButton(
-                            onClick = rememberConfirmAction { onSelect(AppListPage.ALL_APPS) },
+                            onClick = rememberClickAction { onSelect(AppListPage.ALL_APPS) },
                             label = { wearCenteredButtonLabel(allLabel) },
                             icon = {},
                             modifier = Modifier.weight(1f)
@@ -1068,14 +1077,14 @@ internal class WearListScope(
                     }
                     if (safeSelectedPage == AppListPage.CONFIGURED_APPS) {
                         Button(
-                            onClick = rememberConfirmAction { onSelect(AppListPage.CONFIGURED_APPS) },
+                            onClick = rememberClickAction { onSelect(AppListPage.CONFIGURED_APPS) },
                             label = { wearCenteredButtonLabel(configuredLabel) },
                             icon = {},
                             modifier = Modifier.weight(1f)
                         )
                     } else {
                         OutlinedButton(
-                            onClick = rememberConfirmAction { onSelect(AppListPage.CONFIGURED_APPS) },
+                            onClick = rememberClickAction { onSelect(AppListPage.CONFIGURED_APPS) },
                             label = { wearCenteredButtonLabel(configuredLabel) },
                             icon = {},
                             modifier = Modifier.weight(1f)
@@ -1102,7 +1111,7 @@ internal class WearListScope(
             ) {
                 if (startSelected) {
                     Button(
-                        onClick = rememberConfirmAction(onStartSelected),
+                        onClick = rememberClickAction(onStartSelected),
                         label = { wearCenteredButtonLabel(startLabel) },
                         icon = {},
                         modifier = Modifier.weight(1f),
@@ -1110,7 +1119,7 @@ internal class WearListScope(
                     )
                 } else {
                     OutlinedButton(
-                        onClick = rememberConfirmAction(onStartSelected),
+                        onClick = rememberClickAction(onStartSelected),
                         label = { wearCenteredButtonLabel(startLabel) },
                         icon = {},
                         modifier = Modifier.weight(1f),
@@ -1119,7 +1128,7 @@ internal class WearListScope(
                 }
                 if (!startSelected) {
                     Button(
-                        onClick = rememberConfirmAction(onEndSelected),
+                        onClick = rememberClickAction(onEndSelected),
                         label = { wearCenteredButtonLabel(endLabel) },
                         icon = {},
                         modifier = Modifier.weight(1f),
@@ -1127,7 +1136,7 @@ internal class WearListScope(
                     )
                 } else {
                     OutlinedButton(
-                        onClick = rememberConfirmAction(onEndSelected),
+                        onClick = rememberClickAction(onEndSelected),
                         label = { wearCenteredButtonLabel(endLabel) },
                         icon = {},
                         modifier = Modifier.weight(1f),
@@ -1146,7 +1155,7 @@ internal class WearListScope(
     ) = with(scope) {
         item(key = key) {
             Button(
-                onClick = rememberConfirmAction(onClick),
+                onClick = rememberClickAction(onClick),
                 label = { Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis) },
                 icon = {
                     Icon(
@@ -1221,7 +1230,7 @@ internal class WearListScope(
         onClick: () -> Unit
     ) {
         Button(
-            onClick = rememberConfirmAction(onClick),
+            onClick = rememberClickAction(onClick),
             enabled = enabled,
             label = { wearCenteredButtonLabel(label) },
             secondaryLabel = secondaryLabel?.let { value ->
@@ -1240,7 +1249,7 @@ internal class WearListScope(
         onClick: () -> Unit
     ) {
         Button(
-            onClick = rememberConfirmAction(onClick),
+            onClick = rememberClickAction(onClick),
             label = {
                 Box(
                     modifier = Modifier.fillMaxWidth(),

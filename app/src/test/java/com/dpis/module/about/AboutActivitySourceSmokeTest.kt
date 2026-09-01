@@ -97,7 +97,7 @@ class AboutActivitySourceSmokeTest {
         content.assertContainsAll(
             "fun AboutContent(", "SecondaryPageScaffold(", "SegmentedListItem(",
             "verticalAlignment = Alignment.CenterVertically", "dpisSegmentedShapes(index, total)",
-            "LazyColumn(", "rememberConfirmAction", "showDebugUpdateEntry", "AboutContentPreview",
+            "LazyColumn(", "rememberClickAction", "showDebugUpdateEntry", "AboutContentPreview",
         )
         source.assertContainsAll("BuildConfig.DEBUG")
         source.assertNotContainsAll("setContentView(R.layout.activity_about)")

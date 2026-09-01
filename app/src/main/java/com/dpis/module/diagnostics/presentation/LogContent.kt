@@ -139,14 +139,14 @@ fun LogContent(
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.log_action_save_logs)) },
-                            onClick = {
+                            onClick = rememberClickAction {
                                 exportMenuExpanded = false
                                 onSaveLogs()
                             }
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.log_action_share_logs)) },
-                            onClick = {
+                            onClick = rememberClickAction {
                                 exportMenuExpanded = false
                                 onShareLogs()
                             }
@@ -169,7 +169,7 @@ fun LogContent(
                         .forEachIndexed { index, textRes ->
                             Tab(
                                 selected = state.selectedPage == index,
-                                onClick = rememberConfirmAction { onSelectPage(index) },
+                                onClick = rememberClickAction { onSelectPage(index) },
                                 text = {
                                     Text(
                                         stringResource(textRes),
@@ -248,7 +248,7 @@ private fun LogEntryRow(
     onCopyEntry: (String) -> Unit
 ) {
     Surface(
-        modifier = Modifier.fillMaxWidth().combinedClickable(
+        modifier = Modifier.fillMaxWidth().dpisCombinedClickable(
             onClick = { onToggleExpanded(entry.key) },
             onLongClick = { onCopyEntry(entry.key) }
         ),
@@ -323,7 +323,7 @@ private fun LogTopBarAction(iconRes: Int, descriptionRes: Int, onClick: () -> Un
         tooltip = { PlainTooltip { Text(description) } },
         state = rememberTooltipState()
     ) {
-        IconButton(onClick = rememberConfirmAction(onClick)) {
+        IconButton(onClick = rememberClickAction(onClick)) {
             Icon(
                 painterResource(iconRes),
                 contentDescription = description

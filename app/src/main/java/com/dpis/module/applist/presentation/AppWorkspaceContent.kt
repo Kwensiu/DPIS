@@ -171,7 +171,7 @@ fun AppWorkspaceContent(
                     query = state.query,
                     onQueryChanged = state.actions::changeQuery,
                     trailingAction = {
-                        IconButton(onClick = {
+                        IconButton(onClick = rememberClickAction {
                             focusManager.clearFocus()
                             filterSheetVisible = true
                         }) {
@@ -194,7 +194,7 @@ fun AppWorkspaceContent(
                         AppListPage.entries.forEach { page ->
                             Tab(
                                 selected = page.position() == pagerState.currentPage,
-                                onClick = {
+                                onClick = rememberClickAction {
                                     focusManager.clearFocus()
                                     pagerScope.launch {
                                         pagerState.animateScrollToPage(page.position())
@@ -580,7 +580,7 @@ private fun AppRow(
             .fillMaxWidth()
             .heightIn(min = AppListRowMinHeight)
             .clip(RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick)
+            .dpisClickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
