@@ -52,6 +52,8 @@ import com.dpis.module.home.DonateActivity;
 import com.dpis.module.home.HomeActivationStateResolver;
 import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceActions;
+import com.dpis.module.home.HomeWorkspaceLayout;
+import com.dpis.module.home.HomeWorkspaceLayoutStore;
 import com.dpis.module.home.HomeWorkspaceState;
 import com.dpis.module.home.ModeHelpActivity;
 import com.dpis.module.hooks.HookDomainOverride;
@@ -2138,6 +2140,7 @@ public final class MainActivity
                 ensureWorkspaceSession().quickItemCount(),
                 RootAccessProbe.cachedResult(),
                 homeUpdateUiState,
+                new HomeWorkspaceLayoutStore(this).load(),
                 createHomeWorkspaceActions()
         );
     }
@@ -2190,6 +2193,12 @@ public final class MainActivity
             @Override
             public void openDonate() {
                 startActivity(DonateActivity.createIntent(MainActivity.this));
+            }
+
+            @Override
+            public void saveHomeWorkspaceLayout(HomeWorkspaceLayout layout) {
+                new HomeWorkspaceLayoutStore(MainActivity.this).save(layout);
+                bindHomeWorkspace();
             }
         };
     }

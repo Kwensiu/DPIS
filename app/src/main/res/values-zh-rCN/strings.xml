@@ -244,6 +244,11 @@
     <string name="home_workspace_info_root_available">已获取 (%1$s)</string>
     <string name="home_workspace_info_root_unavailable">不可用</string>
     <string name="home_workspace_info_device">设备</string>
+    <string name="home_workspace_action_edit">编辑主页</string>
+    <string name="home_workspace_action_save">保存主页布局</string>
+    <string name="home_workspace_action_restore_all">恢复所有区块</string>
+    <string name="home_workspace_visibility_hidden">区块已隐藏</string>
+    <string name="home_workspace_visibility_visible">区块可见</string>
     <string name="dialog_viewport_mode_toggle_description">切换界面数值类型</string>
     <string name="dialog_font_mode_toggle_description">切换字体应用路线</string>
     <string name="template_workspace_global_prefill_title">全局预填</string>
@@ -419,7 +424,14 @@
     <string name="settings_section_theme">外观</string>
     <string name="settings_theme_settings_title">主题设置</string>
     <string name="settings_theme_settings_hint">自定义应用外观</string>
-    <string name="settings_theme_section_appearance">外观</string>
+    <string name="settings_theme_section_appearance">风格</string>
+    <string name="settings_theme_section_page">页面</string>
+    <string name="settings_page_home_edit_button">主页编辑按钮</string>
+    <string name="settings_page_default_startup">页面调整</string>
+    <string name="settings_page_default_startup_hint">调整底栏入口与默认启动页</string>
+    <string name="settings_page_startup_badge">启动页</string>
+    <string name="settings_page_startup_hint">长按设置启动页</string>
+    <string name="settings_page_settings_cannot_hide">不可关闭设置页入口</string>
     <string name="settings_theme_mode_label">明暗主题</string>
     <string name="settings_theme_mode_hint">调整应用的明暗主题</string>
     <string name="settings_theme_mode_follow_system">跟随系统</string>

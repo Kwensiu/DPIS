@@ -19,6 +19,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 
@@ -68,6 +69,7 @@ internal fun PageScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     scrollStore: PageScrollPositionStore? = null,
     scrollKey: String? = null,
+    contentCanScroll: Boolean = true,
     content: @Composable (PaddingValues) -> Unit
 ) {
     PageScaffold(
@@ -81,6 +83,7 @@ internal fun PageScaffold(
         floatingActionButton = floatingActionButton,
         scrollStore = scrollStore,
         scrollKey = scrollKey,
+        contentCanScroll = contentCanScroll,
         title = { Text(stringResource(titleRes)) },
         content = content
     )
@@ -99,6 +102,7 @@ internal fun PageScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     scrollStore: PageScrollPositionStore? = null,
     scrollKey: String? = null,
+    contentCanScroll: Boolean = true,
     title: @Composable () -> Unit,
     collapsedTitle: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
@@ -107,12 +111,16 @@ internal fun PageScaffold(
         PageBarBehavior.Collapsing -> TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
         PageBarBehavior.Pinned -> TopAppBarDefaults.pinnedScrollBehavior()
     }
-    LaunchedEffect(scrollBehavior, pageBar, scrollStore, scrollKey) {
+    val hasStoredCollapse = scrollStore != null && scrollKey != null &&
+        scrollStore.topBarCollapsedFor(scrollKey)
+    val canCollapse = pageBar == PageBarBehavior.Collapsing &&
+        (contentCanScroll || scrollBehavior.state.collapsedFraction > 0f || hasStoredCollapse)
+    LaunchedEffect(scrollBehavior, pageBar, scrollStore, scrollKey, canCollapse) {
         if (pageBar != PageBarBehavior.Collapsing || scrollStore == null || scrollKey == null) return@LaunchedEffect
         snapshotFlow { scrollBehavior.state.heightOffsetLimit }
             .collect { limit ->
                 if (limit < 0f) {
-                    scrollBehavior.state.heightOffset = if (scrollStore.topBarCollapsedFor(scrollKey)) limit else 0f
+                    scrollBehavior.state.heightOffset = if (canCollapse && scrollStore.topBarCollapsedFor(scrollKey)) limit else 0f
                     return@collect
                 }
             }
@@ -122,8 +130,9 @@ internal fun PageScaffold(
         snapshotFlow { scrollBehavior.state.collapsedFraction }
             .collect { fraction -> scrollStore.updateTopBar(scrollKey, fraction >= 0.98f) }
     }
+    val pageScrollConnection = if (canCollapse) scrollBehavior.nestedScrollConnection else NoTopBarScrollConnection
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier.nestedScroll(pageScrollConnection),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         // Keep the page canvas at the same surface level as the top app bar.
         // Individual cards then provide the intentional brighter elevation contrast.
@@ -150,6 +159,8 @@ internal fun PageScaffold(
         )
     }
 }
+
+private object NoTopBarScrollConnection : NestedScrollConnection
 
 @Composable
 private fun pageContentPadding(

@@ -10,13 +10,16 @@ class HomeWorkspaceState(
     templateCount: Int,
     rootAccess: RootAccessProbe.Result?,
     updateState: HomeUpdateUiState?,
+    layout: HomeWorkspaceLayout?,
     actions: HomeWorkspaceActions?,
+    @JvmField val showEditButton: Boolean = true,
 ) {
     @JvmField val configuredAppCount = configuredAppCount.coerceAtLeast(0)
     @JvmField val importedFontCount = importedFontCount.coerceAtLeast(0)
     @JvmField val templateCount = templateCount.coerceAtLeast(0)
     @JvmField val rootAccess = rootAccess ?: RootAccessProbe.Result.unknown()
     @JvmField val updateState = updateState ?: HomeUpdateUiState.UP_TO_DATE
+    @JvmField val layout = layout ?: HomeWorkspaceLayout.defaults()
     @JvmField val actions = actions ?: HomeWorkspaceActions.NO_OP
 }
 
@@ -28,6 +31,7 @@ interface HomeWorkspaceActions {
     fun openTemplateWorkspace()
     fun openModeHelp()
     fun openDonate()
+    fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout)
 
     companion object {
         @JvmField
@@ -38,6 +42,7 @@ interface HomeWorkspaceActions {
             override fun openTemplateWorkspace() = Unit
             override fun openModeHelp() = Unit
             override fun openDonate() = Unit
+            override fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout) = Unit
         }
     }
 }

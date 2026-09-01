@@ -257,6 +257,11 @@ Mini Programs are not supported yet.</string>
     <string name="home_workspace_info_root_available">Granted (%1$s)</string>
     <string name="home_workspace_info_root_unavailable">Unavailable</string>
     <string name="home_workspace_info_device">Device</string>
+    <string name="home_workspace_action_edit">Edit Home</string>
+    <string name="home_workspace_action_save">Save Home layout</string>
+    <string name="home_workspace_action_restore_all">Restore all sections</string>
+    <string name="home_workspace_visibility_hidden">Section hidden</string>
+    <string name="home_workspace_visibility_visible">Section visible</string>
     <string name="dialog_viewport_mode_toggle_description">Switch interface value type</string>
     <string name="dialog_font_mode_toggle_description">Switch font apply route</string>
     <string name="template_workspace_global_prefill_title">Global prefill</string>
@@ -455,7 +460,14 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="settings_section_theme">Appearance</string>
     <string name="settings_theme_settings_title">Appearance</string>
     <string name="settings_theme_settings_hint">Customize the app appearance</string>
-    <string name="settings_theme_section_appearance">Appearance</string>
+    <string name="settings_theme_section_appearance">Style</string>
+    <string name="settings_theme_section_page">Page</string>
+    <string name="settings_page_home_edit_button">Home edit button</string>
+    <string name="settings_page_default_startup">Page adjustment</string>
+    <string name="settings_page_default_startup_hint">Adjust bottom navigation entries and default startup page</string>
+    <string name="settings_page_startup_badge">Startup page</string>
+    <string name="settings_page_startup_hint">Long press to set startup page</string>
+    <string name="settings_page_settings_cannot_hide">Settings entry cannot be hidden</string>
     <string name="settings_theme_mode_label">Light and dark theme</string>
     <string name="settings_theme_mode_hint">Adjust the app’s light and dark theme</string>
     <string name="settings_theme_mode_follow_system">Follow system</string>
