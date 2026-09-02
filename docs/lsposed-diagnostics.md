@@ -56,6 +56,28 @@ intentionally broad; it does not write one log line per callback. Perfetto
 trace capture is a separate follow-up layer and should be correlated with
 these counters before adding tighter sampling or thresholds.
 
+Interpret performance fields conservatively:
+
+- `measuredCalls=0`, or `calls=0` with non-zero `applied`/`skipped` counts,
+  means latency data is unavailable or the aggregate fields do not share the
+  same counting semantics. Zero-valued percentiles must not be reported as
+  zero callback latency.
+- Always report the Perfetto trace bounds separately from the diagnostic
+  session bounds. A short trace covers only the captured interval and cannot
+  prove that the complete diagnostic session was free of stalls.
+- Use Perfetto thread state and scheduling data to distinguish CPU execution,
+  runnable delay, and sleeping or blocked time. Do not infer a performance
+  problem from a high callback count alone.
+
+For route and framework anomalies, classify a hot-reload failure as
+recoverable only when a subsequent force-stop/start or normal entry produces
+module-loaded, session, callback, or mutation evidence. A `status=` warning
+without a later successful entry remains unresolved. `stable_metrics`,
+`stable_configuration`, `no_viewport_delta_after_resolution`, and similar
+policy skip reasons are expected decisions unless the selected configuration
+required a mutation. Empty viewport markers are evidence incompleteness; they
+must be cross-checked against raw LSPosed logs and runtime-hotpath events.
+
 High-frequency `DPIS_DIAG_HOTPATH` bridge lines are dispatched asynchronously
 from the injected process. This keeps LSPosed file logging off the hooked
 callback thread while preserving detailed bridge evidence during normal short

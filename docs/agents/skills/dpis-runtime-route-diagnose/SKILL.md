@@ -89,6 +89,27 @@ Probe one boundary at a time:
 `hook ready` proves only that installation ran. Require a callback, mutation,
 counter, or visible result before calling a route effective.
 
+## Diagnostic Evidence Rules
+
+When reviewing an exported diagnostic package:
+
+- Separate the diagnostic session window from the Perfetto trace window. Do
+  not generalize a short trace to the whole session.
+- Treat `measuredCalls=0`, `calls=0` with non-zero `applied`/`skipped`, and
+  zero latency percentiles as missing or inconsistent instrumentation, not as
+  proof of zero overhead.
+- Treat `stable_metrics`, `stable_configuration`, and
+  `no_viewport_delta_after_resolution` as policy skips. They are not failures
+  unless the selected config still required a change.
+- Treat an empty diagnostic marker as incomplete evidence. Cross-check raw
+  `lsposed-log.txt` and runtime-hotpath events before declaring a route absent.
+- A hot-reload warning is recoverable only if later module-entry and route
+  evidence exists after the restart/reload path. Otherwise report it as an
+  unresolved framework or loading failure.
+- For performance claims, check `thread_state` and `sched_slice` for the
+  target process and main thread. Distinguish Running, Runnable, and sleeping
+  or blocked states before naming a bottleneck.
+
 ## Flicker And Relaunch Checks
 
 For flicker or relaunch reports:
