@@ -14,14 +14,15 @@ public final class LegacyModuleManifestMetadataTest {
 
     @Test
     public void manifestDeclaresLegacyXposedMetadata() throws IOException {
-        String manifest = readProjectFile("src/main/AndroidManifest.xml");
+        String manifest = readProjectFile("src/legacy/AndroidManifest.xml");
 
         assertTrue(manifest.contains("android:name=\"xposedmodule\""));
         assertTrue(manifest.contains("android:name=\"xposeddescription\""));
         assertTrue(manifest.contains("android:name=\"xposedminversion\""));
         assertTrue(manifest.contains("android:name=\"xposedsharedprefs\""));
         assertTrue(manifest.contains("android:name=\"xposedscope\""));
-        assertTrue(manifest.contains("de.robv.android.xposed.category.MODULE_SETTINGS"));
+        assertTrue(readProjectFile("src/main/AndroidManifest.xml")
+                .contains("de.robv.android.xposed.category.MODULE_SETTINGS"));
     }
 
     @Test
@@ -36,6 +37,14 @@ public final class LegacyModuleManifestMetadataTest {
     public void modernScopeListIncludesSystemAsRecommendedScope() throws IOException {
         String scopeList = readProjectFile("src/modern/resources/META-INF/xposed/scope.list");
         assertTrue(scopeList.contains("system"));
+    }
+
+    @Test
+    public void modernManifestDoesNotDeclareClassicXposedMetadata() throws IOException {
+        String manifest = readProjectFile("src/main/AndroidManifest.xml");
+
+        assertFalse(manifest.contains("android:name=\"xposedminversion\""));
+        assertFalse(manifest.contains("android:name=\"xposedsharedprefs\""));
     }
 
     @Test
@@ -96,7 +105,7 @@ public final class LegacyModuleManifestMetadataTest {
                 "src/legacy/java/com/dpis/module/LegacyModuleHook.java");
 
         assertTrue(source.contains("implements IXposedHookLoadPackage"));
-        assertTrue(source.contains("createForLegacyHost(packageName)"));
+        assertTrue(source.contains("LegacyConfigStoreFactory.create(packageName)"));
         assertTrue(source.contains("shouldInstallLegacyHooks()"));
         assertFalse(source.contains("shouldInstallEarlyViewportHooks("));
         assertTrue(source.contains("XposedBridge.hookMethod("));
@@ -111,16 +120,24 @@ public final class LegacyModuleManifestMetadataTest {
     public void legacyDoesNotExposeConfigProvider() throws IOException {
         String factory = readProjectFile("src/main/java/com/dpis/module/ConfigStoreFactory.java");
 
-        assertFalse(SourceSmokeTestPaths.exists("src", "legacy", "AndroidManifest.xml"));
+        assertTrue(SourceSmokeTestPaths.exists("src", "legacy", "AndroidManifest.xml"));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "CompatConfigProvider.java"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
-        String compatFactory = factory.substring(factory.indexOf("createForLegacyHost"));
+        String compatFactory = readProjectFile(
+                "src/legacy/java/com/dpis/module/LegacyConfigStoreFactory.kt");
         int propertyIndex = compatFactory.indexOf("RuntimePropertyConfigPreferences");
         int xSharedIndex = compatFactory.indexOf("XSharedPreferencesAdapter");
         assertTrue(propertyIndex >= 0);
         assertTrue(xSharedIndex >= 0);
-        assertTrue(factory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
-        assertTrue(compatFactory.contains("new DpisConfigStore("));
+        assertTrue(compatFactory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
+        assertTrue(compatFactory.contains("DpisConfigStore("));
+    }
+
+    @Test
+    public void modernPreferenceBoundaryHasNoClassicFallback() throws IOException {
+        String factory = readProjectFile("src/main/java/com/dpis/module/ConfigStoreFactory.java");
+        assertFalse(factory.contains("XSharedPreferencesAdapter"));
+        assertTrue(factory.contains("requires libxposed remote preferences"));
     }
 
     @Test

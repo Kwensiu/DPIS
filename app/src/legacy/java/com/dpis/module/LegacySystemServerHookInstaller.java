@@ -79,7 +79,7 @@ final class LegacySystemServerHookInstaller {
                 PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback(
                         new PerAppDisplayConfigSource.RefreshingSnapshotProvider(
                                 () -> ConfigSnapshotLoader.fromStore(
-                                        ConfigStoreFactory.createForLegacySystemServerHost()),
+                                        LegacyConfigStoreFactory.createSystemServer()),
                                 ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
         boolean systemServerHooksEnabled = source.isSystemServerHooksEnabled();
         int hookedCount = 0;

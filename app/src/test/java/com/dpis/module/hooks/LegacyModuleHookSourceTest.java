@@ -87,7 +87,8 @@ public class LegacyModuleHookSourceTest {
         assertTrue(source.contains("ResourcesReadHookInstaller.applyMetricsOverride"));
         assertTrue(source.contains("resolveActivePackageName(packageName)"));
         assertTrue(source.contains("resolveStoreForPackage(activePackage, store)"));
-        assertTrue(source.contains("ConfigStoreFactory.createForLegacyHost(packageName)"));
+        assertTrue(source.contains("LegacyConfigStoreFactory.create(packageName)"));
+        assertTrue(source.contains("LegacyConfigStoreFactory::create"));
         assertTrue(source.contains("FONT_FIELD_REWRITE_HOOKED.set(false);"));
         assertTrue(source.contains("if (Boolean.TRUE.equals(FONT_TEXTVIEW_UPDATE.get()))"));
         assertTrue(source.contains("Android's one-argument TextView#setTextSize delegates"));
@@ -105,7 +106,7 @@ public class LegacyModuleHookSourceTest {
         assertTrue(source.contains("public void initZygote(StartupParam startupParam)"));
         assertTrue(source.contains("installSystemServerHooksForLegacy();"));
         assertTrue(source.contains("createLegacyStore(packageName, lpparam.processName)"));
-        assertTrue(source.contains("createForLegacyMainProcessHost(packageName)"));
+        assertTrue(source.contains("LegacyConfigStoreFactory.createMainProcess(packageName)"));
         assertTrue(source.contains("LegacyAppSpecificRouteInstaller.handleLoadPackage(lpparam)"));
         assertFalse(source.contains("com.tencent.mm"));
         assertFalse(source.contains("WECHAT_PACKAGE"));
@@ -139,7 +140,7 @@ public class LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs"));
         assertTrue(systemServerSource.contains(
                 "PerAppDisplayConfigSource.withLegacyRuntimePropertyFallback"));
-        assertTrue(systemServerSource.contains("createForLegacySystemServerHost"));
+        assertTrue(systemServerSource.contains("LegacyConfigStoreFactory.createSystemServer"));
         assertTrue(systemServerSource.contains(
                 "legacy system_server install enter: hooksEnabled="));
         assertTrue(systemServerSource.contains(

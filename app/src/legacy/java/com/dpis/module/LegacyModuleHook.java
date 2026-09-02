@@ -69,7 +69,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
     @Override
     public void initZygote(StartupParam startupParam) {
-        DpisLog.setLoggingEnabled(ConfigStoreFactory.createForLegacyHost().isGlobalLogEnabled());
+        DpisLog.setLoggingEnabled(LegacyConfigStoreFactory.create().isGlobalLogEnabled());
         compatDebugLog("legacy initZygote");
         installSystemServerHooksForLegacy();
     }
@@ -83,7 +83,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                 lpparam.classLoader,
                 "legacy-handle-load-package");
         if (SystemServerProcess.isSystemServer(lpparam.processName, packageName)) {
-            DpisLog.setLoggingEnabled(ConfigStoreFactory.createForLegacyHost().isGlobalLogEnabled());
+            DpisLog.setLoggingEnabled(LegacyConfigStoreFactory.create().isGlobalLogEnabled());
             compatDebugLog("legacy handleLoadPackage: package=" + packageName
                     + ", process=" + lpparam.processName);
             installSystemServerHooksForLegacy();
@@ -141,9 +141,9 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
     private static DpisConfigStore createLegacyStore(String packageName, String processName) {
         if (packageName != null && packageName.equals(processName)) {
-            return ConfigStoreFactory.createForLegacyMainProcessHost(packageName);
+            return LegacyConfigStoreFactory.createMainProcess(packageName);
         }
-        return ConfigStoreFactory.createForLegacyHost(packageName);
+        return LegacyConfigStoreFactory.create(packageName);
     }
 
     private static boolean shouldSuppressSecondaryProcessViewport(String processName,
@@ -175,7 +175,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                     packageName,
                     targetTypefaceId,
                     store,
-                    ConfigStoreFactory.createFontLibraryForLegacyHost());
+                    LegacyConfigStoreFactory.createFontLibrary());
         } catch (Throwable throwable) {
             compatErrorLog("legacy typeface override hook failed: "
                     + throwable.getClass().getName() + ": " + throwable.getMessage());
@@ -656,7 +656,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
         }
         try {
             return LEGACY_HOST_STORE_CACHE.computeIfAbsent(
-                    packageName, ConfigStoreFactory::createForLegacyHost);
+                    packageName, LegacyConfigStoreFactory::create);
         } catch (Throwable ignored) {
             return fallbackStore;
         }

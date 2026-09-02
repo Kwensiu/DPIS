@@ -86,12 +86,13 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void legacyFactoryUsesPackageSystemPropertiesWithoutExportedProvider() throws Exception {
-        String factory = readSource("src/main/java/com/dpis/module/ConfigStoreFactory.java");
+        String factory = readSource(
+                "src/legacy/java/com/dpis/module/LegacyConfigStoreFactory.kt");
         String prefs = readSource("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.kt");
         String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
 
-        assertTrue(factory.contains("createForLegacyHost(String packageName)"));
-        assertTrue(factory.contains("new RuntimePropertyConfigPreferences(packageName, autoViewportRuntimeRoute)"));
+        assertTrue(factory.contains("fun create(packageName: String?): DpisConfigStore"));
+        assertTrue(factory.contains("RuntimePropertyConfigPreferences(packageName, route)"));
         assertTrue(factory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"));
         assertFalse(factory.contains("CompatConfigProviderPreferences"));
         assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"));

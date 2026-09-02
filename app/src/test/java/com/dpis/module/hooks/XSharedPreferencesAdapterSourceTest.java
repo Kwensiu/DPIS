@@ -12,14 +12,15 @@ public final class XSharedPreferencesAdapterSourceTest {
     @Test
     public void legacyPreferencesAreSnapshottedToAvoidHotPathReloads() throws IOException {
         String source = readProjectFile(
-                "src/main/java/com/dpis/module/runtime/XSharedPreferencesAdapter.java");
+                "src/legacy/java/com/dpis/module/runtime/XSharedPreferencesAdapter.kt");
 
-        assertTrue(source.contains("private volatile Map<String, Object> snapshot;"));
-        assertTrue(source.contains("private final long reloadIntervalMs;"));
-        assertEquals(1, countOccurrences(source, "preferences.reload();"));
-        assertTrue(source.contains("snapshot = snapshot(preferences.getAll())"));
-        assertTrue(source.contains("private void maybeReload()"));
-        assertFalse(source.contains("private void reload()"));
+        assertTrue(source.contains("var snapshot: Map<String, Any> = emptyMap()"));
+        assertTrue(source.contains("reloadIntervalMs: Long = 0L"));
+        assertEquals(1, countOccurrences(source, "preferences.reload()"));
+        assertTrue(source.contains("private fun normalize(source: Map<String, *>?)"));
+        assertTrue(source.contains("Collections.unmodifiableMap(values)"));
+        assertTrue(source.contains("private fun maybeReload()"));
+        assertFalse(source.contains("private fun reload()"));
     }
 
     private static String readProjectFile(String relativePath) throws IOException {

@@ -53,6 +53,18 @@ Font mode
     -> custom hook-chain UI controls this mode only
 ```
 
+## Preference Boundary (LSPosed 2.3)
+
+Status: active compatibility boundary.
+
+Legacy remains the only hook family that owns the classic
+`XSharedPreferencesAdapter`. It is implemented in the Legacy source set as a
+Kotlin snapshot adapter and is used only when the runtime-property bridge or a
+Modern remote-preferences service is not available. The Legacy APK retains the
+classic Xposed metadata for hosts that still expose that API. Do not move this
+adapter back into shared code or add it to Modern fallback paths: LSPosed 2.3
+may remove the class and Modern must remain remote-preferences-only.
+
 ## Feedback Diagnostic Runtime Timeline
 
 Status: active first pass.

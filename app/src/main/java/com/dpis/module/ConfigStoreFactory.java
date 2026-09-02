@@ -1,15 +1,10 @@
 package com.dpis.module;
 
-import com.dpis.module.config.RuntimePropertyConfigPreferences;
-
-
 import com.dpis.module.fonts.FontLibraryStore;
 import com.dpis.module.fonts.FontLibraryConfigStore;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-
-import com.dpis.module.runtime.XSharedPreferencesAdapter;
 
 import java.io.File;
 
@@ -151,14 +146,14 @@ public final class ConfigStoreFactory {
             try {
                 remotePreferences = xposed.getRemotePreferences(DpisConfigStore.GROUP);
             } catch (Throwable ignored) {
-                // Fall back to legacy XSharedPreferences path when remote preferences are unavailable.
+                // The Modern runtime has no classic-preferences fallback.
             }
         }
         if (remotePreferences != null) {
             return new DpisConfigStore(remotePreferences);
         }
-        return new DpisConfigStore(
-                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP));
+        throw new UnsupportedOperationException(
+                "Modern runtime requires libxposed remote preferences");
     }
 
     public static FontLibraryStore createFontLibraryForXposedHost(XposedInterface xposed) {
@@ -167,57 +162,13 @@ public final class ConfigStoreFactory {
             try {
                 remotePreferences = xposed.getRemotePreferences(DpisConfigStore.GROUP);
             } catch (Throwable ignored) {
-                // Fall back to legacy XSharedPreferences path when remote preferences are unavailable.
+                // The Modern runtime has no classic-preferences fallback.
             }
         }
         if (remotePreferences != null) {
             return new FontLibraryStore(remotePreferences, null);
         }
-        return new FontLibraryStore(
-                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP),
-                null);
-    }
-
-    static FontLibraryStore createFontLibraryForLegacyHost() {
-        return new FontLibraryStore(
-                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP),
-                null);
-    }
-
-    static DpisConfigStore createForLegacyHost() {
-        return new DpisConfigStore(
-                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP));
-    }
-
-    static DpisConfigStore createForLegacySystemServerHost() {
-        // Long-lived system_server refresh is owned by the display config source.
-        return createForLegacyHost();
-    }
-
-    static DpisConfigStore createForLegacyHost(String packageName) {
-        return createForLegacyHost(packageName,
-                RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.NONE);
-    }
-
-    static DpisConfigStore createForLegacyMainProcessHost(String packageName) {
-        return createForLegacyHost(packageName,
-                RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET);
-    }
-
-    private static DpisConfigStore createForLegacyHost(
-            String packageName,
-            RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute autoViewportRuntimeRoute) {
-        SharedPreferences xSharedPreferences =
-                new XSharedPreferencesAdapter(BuildConfig.APPLICATION_ID, DpisConfigStore.GROUP);
-        if (packageName == null || packageName.isBlank()) {
-            return new DpisConfigStore(xSharedPreferences);
-        }
-        // The Legacy classic-Xposed entrypoint has no libxposed remote preferences
-        // service. Runtime app-process hooks read the per-package system-property
-        // bridge first, with XSharedPreferences kept only as a startup fallback for
-        // older or unsynced configuration.
-        return new DpisConfigStore(
-                new RuntimePropertyConfigPreferences(packageName, autoViewportRuntimeRoute),
-                xSharedPreferences);
+        throw new UnsupportedOperationException(
+                "Modern runtime requires libxposed remote preferences");
     }
 }

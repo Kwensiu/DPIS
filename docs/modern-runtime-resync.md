@@ -73,6 +73,23 @@ API 102 capability notes:
   install-and-restart path and must not depend on reload callbacks for
   correctness.
 
+## Preference Boundary (LSPosed 2.3)
+
+Status: active.
+
+Modern configuration is delivered exclusively through the libxposed remote
+preferences service. `ConfigStoreFactory.createForXposedHost` and the Modern
+font store fail explicitly when that service is unavailable; they do not link
+or instantiate classic `XSharedPreferences`. This keeps the Modern artifact
+compatible with LSPosed 2.3's removal path and makes a service outage visible
+as an unsupported configuration source instead of a late class-loading error.
+
+The classic adapter is Legacy-only under `app/src/legacy`. Legacy retains its
+startup snapshot fallback for classic Xposed hosts, but that path is a
+compatibility boundary and must not be introduced into shared or Modern code.
+The old `xposedminversion`/`xposedsharedprefs` Manifest metadata is likewise
+Legacy-only; Modern uses `META-INF/xposed/module.prop` and `remotePreferences`.
+
 Practical boundary:
 
 - the Modern artifact targets 102, but shared route semantics still use the 101
