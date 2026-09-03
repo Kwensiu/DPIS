@@ -1,5 +1,6 @@
-package com.dpis.module;
+package com.dpis.module.wechat;
 
+import com.dpis.module.DpisLog;
 import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.viewport.DpiConfig;
@@ -17,8 +18,11 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.view.View;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -45,6 +49,7 @@ final class WechatDpiModernHookInstaller {
             new AtomicBoolean(false);
     private static final AtomicBoolean WECHAT_BOTTOM_TAB_ICON_MUTATION_LOGGED =
             new AtomicBoolean(false);
+    private static final int BOTTOM_TAB_BITMAP_NORMALIZE_MAX_ATTEMPTS = 8;
 
     private WechatDpiModernHookInstaller() {
     }
@@ -69,10 +74,11 @@ final class WechatDpiModernHookInstaller {
         WechatDpiMethodLocator.Result locatorResult = WechatDpiMethodLocator.locate(
                 classLoader, applicationInfo, versionCode, phase.getAllowsDexKit());
         logRoutePlan(packageName, staticRoute, locatorResult, versionCode, phase);
-        // Bottom-tab compensation is structurally detected and intentionally
-        // independent of the density-manager version table. New WeChat builds
-        // can retain TabIconView while requiring DexKit for the main route.
-        installBottomTabIconScaleHook(xposed, classLoader, phase);
+        // WeChat can create tab bitmaps against the DPI-mutated metrics while
+        // the eventual view keeps its own layout size. Normalize the completed
+        // Bitmap/Rect pair after layout instead of guessing a pre-init scale.
+        installBottomTabIconHook(xposed, classLoader, phase,
+                staticRoute != null && staticRoute.bottomTabIconScaleEnabled);
         if (locatorResult.methods.isEmpty()) {
             boolean deferred = !phase.getAllowsDexKit();
             DpisLog.i("modern WeChat DPI hook " + (deferred ? "deferred" : "skipped")
@@ -96,8 +102,9 @@ final class WechatDpiModernHookInstaller {
                 : WechatDpiInstallOutcome.SKIPPED;
     }
 
-    private static void installBottomTabIconScaleHook(
-            XposedInterface xposed, ClassLoader classLoader, WechatDpiInstallPhase phase) {
+    private static void installBottomTabIconHook(
+            XposedInterface xposed, ClassLoader classLoader, WechatDpiInstallPhase phase,
+            boolean scaleCompensationEnabled) {
         if (xposed == null || classLoader == null) {
             return;
         }
@@ -145,21 +152,6 @@ final class WechatDpiModernHookInstaller {
                             + declaredMethodCount);
             return;
         }
-        if (scaleField == null) {
-            int candidateCount = bottomTabIconFloatFieldCount(bottomTabIconViewClass);
-            DpisLog.i("modern WeChat DPI bottom tab icon hook skipped: scale field not found"
-                    + ", class=" + bottomTabIconViewClass.getName()
-                    + ", floatFieldCandidates=" + candidateCount);
-            RuntimeHotPathEvents.event(
-                    WechatDpiConfig.PACKAGE_NAME,
-                    "wechat_dpi",
-                    "bottom_tab_icon",
-                    "skipped",
-                    "attempt=" + phase.getRouteName()
-                            + ", reason=scale_field_not_found, floatFieldCandidates="
-                            + candidateCount);
-            return;
-        }
         synchronized (HOOK_LOCK) {
             if (!HOOKED_BOTTOM_TAB_ICON_CLASSES.add(bottomTabIconViewClass)) {
                 return;
@@ -167,7 +159,9 @@ final class WechatDpiModernHookInstaller {
         }
         try {
             initMethod.setAccessible(true);
-            scaleField.setAccessible(true);
+            if (scaleField != null) {
+                scaleField.setAccessible(true);
+            }
             xposed.hook(initMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE)
                     .intercept(chain -> {
@@ -189,7 +183,8 @@ final class WechatDpiModernHookInstaller {
                                                     WechatDpiConfig.PACKAGE_NAME));
                         }
                         Integer configuredDpi = configuredWechatDpiOrNull();
-                        if (view != null && configuredDpi != null) {
+                        if (view != null && scaleField != null && configuredDpi != null
+                                && scaleCompensationEnabled) {
                             float oldScale = scaleField.getFloat(view);
                             float targetScale = WechatDpiRuntime.bottomTabIconScale(configuredDpi);
                             scaleField.setFloat(view, targetScale);
@@ -208,11 +203,15 @@ final class WechatDpiModernHookInstaller {
                                                 + ", scale=" + oldScale + "->" + targetScale);
                             }
                         }
-                        return chain.proceed();
+                        Object result = chain.proceed();
+                        if (view instanceof View tabIconView) {
+                            postBottomTabBitmapNormalization(tabIconView, 0);
+                        }
+                        return result;
                     });
             DpisLog.i("modern WeChat DPI bottom tab icon hook ready: method="
                     + methodName(initMethod)
-                    + ", field=" + scaleField.getName()
+                    + ", field=" + (scaleField == null ? "none" : scaleField.getName())
                     + ", classLoader=" + describeClassLoaderForLog(classLoader));
             RuntimeHotPathEvents.event(
                     WechatDpiConfig.PACKAGE_NAME,
@@ -220,7 +219,7 @@ final class WechatDpiModernHookInstaller {
                     "bottom_tab_icon",
                     "hook_ready",
                     "attempt=" + phase.getRouteName() + ", method=" + methodName(initMethod)
-                            + ", field=" + scaleField.getName());
+                            + ", field=" + (scaleField == null ? "none" : scaleField.getName()));
         } catch (Throwable throwable) {
             synchronized (HOOK_LOCK) {
                 HOOKED_BOTTOM_TAB_ICON_CLASSES.remove(bottomTabIconViewClass);
@@ -235,6 +234,114 @@ final class WechatDpiModernHookInstaller {
                     "skipped",
                     "attempt=" + phase.getRouteName() + ", hookFailed=true, error="
                             + throwable.getClass().getSimpleName());
+        }
+    }
+
+    private static void postBottomTabBitmapNormalization(View tabIconView, int attempt) {
+        if (tabIconView == null || attempt >= BOTTOM_TAB_BITMAP_NORMALIZE_MAX_ATTEMPTS) {
+            return;
+        }
+        tabIconView.postOnAnimation(() -> {
+            if (normalizeBottomTabBitmaps(tabIconView)) {
+                return;
+            }
+            postBottomTabBitmapNormalization(tabIconView, attempt + 1);
+        });
+    }
+
+    private static boolean normalizeBottomTabBitmaps(View tabIconView) {
+        int edge = Math.min(tabIconView.getWidth(), tabIconView.getHeight());
+        if (edge <= 0 || !hasOversizedBottomTabBitmap(tabIconView, edge)) {
+            return edge > 0;
+        }
+        boolean normalized = replaceOversizedBottomTabBitmaps(tabIconView, edge);
+        if (normalized) {
+            tabIconView.invalidate();
+        }
+        if (normalized && WECHAT_BOTTOM_TAB_ICON_MUTATION_LOGGED.compareAndSet(false, true)) {
+            DpisLog.i("modern WeChat DPI bottom tab icon bitmaps normalized: edge=" + edge);
+            RuntimeHotPathEvents.event(
+                    WechatDpiConfig.PACKAGE_NAME,
+                    "wechat_dpi",
+                    "bottom_tab_icon",
+                    "mutation_applied",
+                    "bitmapEdge=" + edge);
+        }
+        return normalized;
+    }
+
+    private static boolean hasOversizedBottomTabBitmap(Object view, int edge) {
+        for (Field field : view.getClass().getDeclaredFields()) {
+            if (field.getType() != Bitmap.class) {
+                continue;
+            }
+            try {
+                field.setAccessible(true);
+                Bitmap bitmap = (Bitmap) field.get(view);
+                if (bitmap != null && (bitmap.getWidth() > edge || bitmap.getHeight() > edge)) {
+                    return true;
+                }
+            } catch (Throwable ignored) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static boolean replaceOversizedBottomTabBitmaps(Object view, int edge) {
+        List<Field> bitmapFields = new ArrayList<>();
+        List<Field> rectFields = new ArrayList<>();
+        for (Field field : view.getClass().getDeclaredFields()) {
+            if (field.getType() == Bitmap.class) bitmapFields.add(field);
+            else if (field.getType() == Rect.class) rectFields.add(field);
+        }
+        if (bitmapFields.size() != 3 || rectFields.size() != 3) return false;
+        List<Bitmap> originalBitmaps = new ArrayList<>(bitmapFields.size());
+        List<Rect> originalRects = new ArrayList<>(rectFields.size());
+        try {
+            boolean replaced = false;
+            for (Field bitmapField : bitmapFields) {
+                bitmapField.setAccessible(true);
+                Bitmap bitmap = (Bitmap) bitmapField.get(view);
+                originalBitmaps.add(bitmap);
+                if (bitmap != null && (bitmap.getWidth() > edge || bitmap.getHeight() > edge)) {
+                    bitmapField.set(view, Bitmap.createScaledBitmap(bitmap, edge, edge, true));
+                    replaced = true;
+                }
+            }
+            if (replaced) {
+                // Rect fields are the shared source bounds for the three icon states;
+                // normalize only oversized bounds instead of relying on reflection ordering.
+                for (Field rectField : rectFields) {
+                    rectField.setAccessible(true);
+                    Rect rect = (Rect) rectField.get(view);
+                    originalRects.add(rect);
+                    if (rect != null && (rect.width() > edge || rect.height() > edge)) {
+                        rectField.set(view, new Rect(0, 0, edge, edge));
+                    }
+                }
+            }
+            return replaced;
+        } catch (Throwable throwable) {
+            for (int i = 0; i < bitmapFields.size() && i < originalBitmaps.size(); i++) {
+                try {
+                    bitmapFields.get(i).setAccessible(true);
+                    bitmapFields.get(i).set(view, originalBitmaps.get(i));
+                } catch (Throwable ignored) {
+                    // Best-effort rollback; the original failure remains the diagnostic signal.
+                }
+            }
+            for (int i = 0; i < rectFields.size() && i < originalRects.size(); i++) {
+                try {
+                    rectFields.get(i).setAccessible(true);
+                    rectFields.get(i).set(view, originalRects.get(i));
+                } catch (Throwable ignored) {
+                    // Best-effort rollback; the original failure remains the diagnostic signal.
+                }
+            }
+            DpisLog.e("modern WeChat DPI bottom tab bitmap normalization failed: "
+                    + throwable.getClass().getName() + ": " + throwable.getMessage(), throwable);
+            return false;
         }
     }
 

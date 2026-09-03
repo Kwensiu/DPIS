@@ -1,10 +1,12 @@
-package com.dpis.module
+package com.dpis.module.wechat
 
 import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.util.DisplayMetrics
+import com.dpis.module.DpisLog
+import com.dpis.module.WechatDpiRecoveryPolicy
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.quirks.WechatDpiRuntime
 import com.dpis.module.runtime.WechatDpiPropertyBridge

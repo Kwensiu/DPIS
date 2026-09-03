@@ -322,10 +322,10 @@ class FeedbackDiagnosticSourceSmokeTest {
         val webViewFont =
             read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java")
         val modernWechat = read(
-            "src/modern/java/com/dpis/module/WechatDpiModernHookInstaller.java"
+            "src/modern/java/com/dpis/module/wechat/WechatDpiModernHookInstaller.java"
         )
         val modernAppSpecific = read(
-            "src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.java"
+            "src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.kt"
         )
         val legacyWechat = read(
             "src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.java"
@@ -383,17 +383,12 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(modernWechat.contains("\"displaymetrics\""))
         assertTrue(modernWechat.contains("\"bottom_tab_icon\""))
         assertTrue(modernWechat.contains("reason=init_method_not_found"))
-        assertTrue(modernWechat.contains("reason=scale_field_not_found"))
         assertTrue(modernWechat.contains("modern WeChat DPI route plan: "))
         assertTrue(modernWechat.contains("retiredTargets="))
         assertTrue(modernWechat.contains("retiredActive=false"))
         assertTrue(modernWechat.contains("firstCallbackMethod="))
         assertTrue(modernWechat.contains("appliedMethod="))
-        assertTrue(modernAppSpecific.contains("\"wechat_dpi\""))
-        assertTrue(modernAppSpecific.contains("\"application_attach\""))
-        assertTrue(modernAppSpecific.contains("application-attach retry result"))
-        assertTrue(modernAppSpecific.contains("WechatDpiInstallOutcome"))
-        assertTrue(modernAppSpecific.contains("installOutcomeStage(outcome)"))
+        assertTrue(modernAppSpecific.contains("WechatDpiRouteCoordinator"))
         assertFalse(modernAppSpecific.contains("\"module_loaded_class\""))
         assertTrue(legacyWechat.contains("\"wechat_dpi\""))
         assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""))

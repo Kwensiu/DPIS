@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.wechat
 
 /**
  * Names a WeChat DPI installation attempt and whether it may perform the

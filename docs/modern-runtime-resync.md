@@ -473,6 +473,19 @@ Detailed app-specific runtime evidence lives in
   was later restored as a narrow WeChat-only classloader retry after 8.0.74
   validation showed the live density-manager class can come from Tinker
   `DelegateLastClassLoader`.
+- 2026-09-02 active: WeChat 8.0.77 / versionCode 3160 retains the
+  `TabIconView#a(int,int,int,boolean)` shape and default `p=1.1666666`, but
+  after independent DPI 380 is applied it creates `d/e/f` bitmaps at 83x83
+  before the eventual `TabIconView` has a 67x67 layout. The old pre-init `p`
+  rewrite was disproven as the cause because disabling it left the same crop.
+  The bottom-tab route therefore uses a version-independent structural rule:
+  after the matched init method, it posts until the View has a positive layout,
+  then retries for a bounded number of animation frames until layout is ready,
+  replacing only oversized Bitmap/Rect state with bitmaps scaled to the
+  measured square edge and invalidating the view. The output correction is
+  version-independent; the legacy pre-init scale supplement remains owned by
+  the existing validated route metadata. Both paths preserve the
+  DisplayMetrics route.
 - 2026-06-17 superseded: WeChat bottom-tab icon compensation was scoped to
   `com.tencent.mm.ui.TabIconView`, not to a WeChat version range. The route
   hooked the 4-argument bottom-tab icon init method when that
