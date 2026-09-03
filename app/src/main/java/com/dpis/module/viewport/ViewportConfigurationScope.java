@@ -28,7 +28,16 @@ public final class ViewportConfigurationScope {
     private ViewportConfigurationScope() {
     }
 
-    public static boolean isWindowScoped(Configuration config) {
+    public static boolean isValidDisplayConfiguration(Configuration config) {
+        return config != null
+                && config.screenWidthDp > 0
+                && config.screenHeightDp > 0
+                && config.smallestScreenWidthDp > 0
+                && config.densityDpi > 0
+                && config.fontScale > 0f;
+    }
+
+
         Object windowConfiguration = readWindowConfiguration(config);
         if (windowConfiguration == null) {
             return false;

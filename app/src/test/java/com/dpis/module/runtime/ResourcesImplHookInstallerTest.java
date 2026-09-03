@@ -5,6 +5,7 @@ import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
 import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
 
 import com.dpis.module.runtime.font.ResourcesFontScheduler;
+import com.dpis.module.runtime.font.FontScaleOverride;
 
 import com.dpis.module.viewport.DensityOverride;
 
@@ -35,6 +36,38 @@ public class ResourcesImplHookInstallerTest {
     public void tearDown() {
         VirtualDisplayState.set(null);
         ResourcesFontScheduler.clearForTest();
+    }
+
+    @Test
+    public void ignoresUninitializedConfigurationInsteadOfInventingSquareViewport() {
+        Configuration config = new Configuration();
+        config.fontScale = 1.0f;
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.densityDpi = 560;
+        metrics.density = 3.5f;
+        metrics.scaledDensity = 3.5f;
+        metrics.widthPixels = 1216;
+        metrics.heightPixels = 2640;
+        FakePrefs prefs = new FakePrefs();
+        putCompatViewport(prefs, "bin.mt.plus.canary", 466);
+        DpisConfigStore store = new DpisConfigStore(prefs);
+
+        ResourcesImplHookInstaller.applyDensityOverride("bin.mt.plus.canary", config, metrics, store);
+
+        assertEquals(0, config.screenWidthDp);
+        assertEquals(0, config.screenHeightDp);
+        assertEquals(0, config.smallestScreenWidthDp);
+        assertEquals(0, config.densityDpi);
+        assertEquals(1.0f, config.fontScale, 0.0001f);
+    }
+
+    @Test
+    public void rejectsNonPositiveFontScaleResult() {
+        Configuration config = new Configuration();
+        FontScaleOverride.Result result = new FontScaleOverride.Result(1.0f, 0.0f, 0, true);
+
+        assertFalse(FontScaleOverride.applyToConfiguration(config, result));
+        assertEquals(1.0f, config.fontScale, 0.0001f);
     }
 
     @Test

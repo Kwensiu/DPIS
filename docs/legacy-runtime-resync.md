@@ -1,6 +1,6 @@
 # Legacy Runtime Resync
 
-This is the living tracker for the Legacy viewport/runtime investigation.
+- 2026-09-04: Shared app-process viewport safeguards were tightened after an AyuGram diagnostic: incomplete `ResourcesImpl` configurations are ignored, non-positive font-scale results are never written, and Display metrics/size/info routes can reuse a package-scoped fallback derived from valid physical metrics when the shared display record is not yet available. This is a compatibility safeguard for Modern and Legacy shared code; AyuGram device validation remains pending.
 
 ## Living Document Rules
 

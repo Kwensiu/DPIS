@@ -1,6 +1,6 @@
 # Modern Runtime Resync
 
-This is the living tracker for the Modern viewport/runtime investigation.
+- 2026-09-04: AyuGram (`org.telegram.messenger`) diagnostic evidence showed the app-process ResourcesImpl route mutating an uninitialized configuration (`widthDp/heightDp/smallestWidthDp/densityDpi=0`, `fontScale` becoming `0.0`) and Display metrics/size hooks skipping because no package-scoped record existed. The compat route now rejects incomplete display configurations before mutation, rejects non-positive font-scale writes, and Display hooks retain a package-scoped fallback derived only from valid physical metrics. This prevents placeholder configuration corruption while preserving a usable Display fallback; runtime validation on AyuGram remains pending.
 
 ## Living Document Rules
 

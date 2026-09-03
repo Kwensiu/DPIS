@@ -371,6 +371,17 @@ public final class ResourcesReadHookInstaller {
         if (config == null) {
             return;
         }
+        if (!ViewportConfigurationScope.isValidDisplayConfiguration(config)) {
+            logIfChanged(packageName + ":" + sourceTag + ":invalid-config",
+                    "DPIS_VIEWPORT " + sourceTag + " skip: invalid display configuration"
+                            + ", widthDp=" + config.screenWidthDp
+                            + ", heightDp=" + config.screenHeightDp
+                            + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                            + ", densityDpi=" + config.densityDpi
+                            + ", fontScale=" + config.fontScale);
+            return;
+        }
+
         FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(resourceScope,
                 store, packageName, config.fontScale);
         boolean fontScaleApplied = fontConfigurationOverrideEnabled

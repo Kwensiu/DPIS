@@ -116,6 +116,16 @@ public final class ResourcesImplHookInstaller {
             logIfChanged(packageName + ":skip", "ResourcesImpl skip: config is null");
             return;
         }
+        if (!ViewportConfigurationScope.isValidDisplayConfiguration(config)) {
+            logIfChanged(packageName + ":invalid-config",
+                    "ResourcesImpl skip: invalid display configuration"
+                            + ", widthDp=" + config.screenWidthDp
+                            + ", heightDp=" + config.screenHeightDp
+                            + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                            + ", densityDpi=" + config.densityDpi
+                            + ", fontScale=" + config.fontScale);
+            return;
+        }
         FontScaleOverride.Result fontScale = FontScaleOverride.resolveForResources(
                 store, packageName, config.fontScale);
         boolean fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale);

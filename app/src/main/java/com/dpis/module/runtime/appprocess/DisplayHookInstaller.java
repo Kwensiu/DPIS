@@ -12,6 +12,7 @@ import com.dpis.module.viewport.VirtualDisplayState;
 
 import com.dpis.module.viewport.ViewportRuntimeRecord;
 import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportPropertyBridge;
 
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
@@ -36,6 +37,8 @@ public final class DisplayHookInstaller {
     private static volatile DpisConfigStore targetStore;
     private static volatile Method currentPackageNameMethod;
     private static volatile boolean currentPackageNameUnavailable;
+    private static final Map<String, VirtualDisplayOverride.Result> RUNTIME_FALLBACK_OVERRIDES =
+            new ConcurrentHashMap<>();
     private static final Map<String, String> LAST_MESSAGES = new ConcurrentHashMap<>();
     private static final RuntimeHotPathEvidenceSampler HOTPATH_SAMPLER =
             new RuntimeHotPathEvidenceSampler();
@@ -50,6 +53,7 @@ public final class DisplayHookInstaller {
 
     public static void resetForHotReload() {
         installedPid = -1;
+        RUNTIME_FALLBACK_OVERRIDES.clear();
     }
 
     public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)
@@ -175,6 +179,9 @@ public final class DisplayHookInstaller {
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
                 effectivePackageName, effectiveStore);
         if (override == null) {
+            override = derivePackageScopedOverride(effectivePackageName, effectiveStore, metrics);
+        }
+        if (override == null) {
             recordViewportSkipAtMostEvery(
                     routeName,
                     "source=" + sourceTag + ", reason=no_package_scoped_override");
@@ -185,6 +192,10 @@ public final class DisplayHookInstaller {
         float originalScaledDensity = metrics.scaledDensity;
         int originalWidthPixels = metrics.widthPixels;
         int originalHeightPixels = metrics.heightPixels;
+        if (override != null && override.densityDpi > 0
+                && override.widthPx > 0 && override.heightPx > 0) {
+            RUNTIME_FALLBACK_OVERRIDES.put(effectivePackageName, override);
+        }
         float fontScale = metrics.density > 0f ? (metrics.scaledDensity / metrics.density) : 1.0f;
         if (fontScale <= 0f) {
             fontScale = 1.0f;
@@ -255,6 +266,9 @@ public final class DisplayHookInstaller {
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
                 effectivePackageName, effectiveStore);
         if (override == null) {
+            override = RUNTIME_FALLBACK_OVERRIDES.get(effectivePackageName);
+        }
+        if (override == null) {
             recordViewportSkipAtMostEvery(
                     routeName,
                     "source=" + sourceTag + ", reason=no_package_scoped_override");
@@ -310,6 +324,9 @@ public final class DisplayHookInstaller {
                 targetStore, effectivePackageName);
         VirtualDisplayOverride.Result override = resolvePackageScopedOverride(
                 effectivePackageName, effectiveStore);
+        if (override == null) {
+            override = RUNTIME_FALLBACK_OVERRIDES.get(effectivePackageName);
+        }
         if (override == null) {
             recordViewportSkipAtMostEvery(
                     routeName,
@@ -370,6 +387,35 @@ public final class DisplayHookInstaller {
 
     private static VirtualDisplayOverride.Result resolvePackageScopedOverride() {
         return resolvePackageScopedOverride(targetPackageName, targetStore);
+    }
+
+    private static VirtualDisplayOverride.Result derivePackageScopedOverride(
+            String packageName, DpisConfigStore store, DisplayMetrics metrics) {
+        if (packageName == null || store == null || metrics == null
+                || metrics.widthPixels <= 0 || metrics.heightPixels <= 0
+                || metrics.densityDpi <= 0) {
+            return null;
+        }
+        ViewportTargetSpec targetSpec = ViewportPropertyBridge.readTargetSpec(packageName);
+        if (targetSpec == null || !targetSpec.isEnabled()) {
+            targetSpec = store.getTargetViewportSpec(packageName);
+        }
+        if (targetSpec == null || !targetSpec.isEnabled()) {
+            return null;
+        }
+        int sourceSmallestDp = Math.max(1, Math.round(Math.min(
+                metrics.widthPixels, metrics.heightPixels) * 160f / metrics.densityDpi));
+        int targetSmallestDp = targetSpec.isAbsoluteDp()
+                ? targetSpec.absoluteWidthDp()
+                : Math.max(1, Math.round(sourceSmallestDp
+                        * targetSpec.scaleMilliPercent() / 100000f));
+        int targetDensityDpi = Math.max(1, Math.round(
+                Math.min(metrics.widthPixels, metrics.heightPixels) * 160f / targetSmallestDp));
+        return new VirtualDisplayOverride.Result(
+                Math.max(1, Math.round(metrics.widthPixels * 160f / targetDensityDpi)),
+                Math.max(1, Math.round(metrics.heightPixels * 160f / targetDensityDpi)),
+                targetSmallestDp, targetDensityDpi,
+                metrics.widthPixels, metrics.heightPixels);
     }
 
     private static VirtualDisplayOverride.Result resolvePackageScopedOverride(String packageName,
