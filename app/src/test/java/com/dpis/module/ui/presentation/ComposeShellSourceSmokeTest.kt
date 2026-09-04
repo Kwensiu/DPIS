@@ -141,7 +141,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(workspace.contains("val draftRevision = editorDraft.observe()"))
         assertTrue(workspace.contains("draftRevision = draftRevision"))
         assertTrue(editor.contains("draftRevision: Int"))
-        assertTrue(editor.contains("remember(draftRevision) { Unit }"))
+        assertFalse(editor.contains("remember(draftRevision) { Unit }"))
         assertFalse(editor.contains("AppConfigEditorOverlay("))
         assertFalse(editor.contains("SheetVisualChrome("))
         assertTrue(editor.contains("destination = destination"))

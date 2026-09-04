@@ -154,7 +154,6 @@ fun TemplateEditorContent(
 ) {
     // The revision is intentionally part of the parameter list. The form is a mutable Java draft
     // and its stable object identity must not allow Compose to skip the updated editor subtree.
-    remember(draftRevision) { Unit }
     // Invalid values retain their field outline and save-disabled state, but never insert a
     // transient validation row. Changing the form's measured height while the sheet is moving
     // makes its partial anchor unstable.
