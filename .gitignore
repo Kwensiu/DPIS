@@ -18,6 +18,8 @@ Thumbs.db
 /.codegraph/
 /.tmp/
 /tmp/
+/.kotlin/
+/.rtk/
 /.worktree/
 /.worktrees/
 /.keystore/
