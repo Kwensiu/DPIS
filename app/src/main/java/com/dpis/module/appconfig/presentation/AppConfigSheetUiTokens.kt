@@ -74,5 +74,13 @@ internal object AppConfigSheetUiTokens {
 
     val ActionHeight = 48.dp
     val ActionShape = FieldAndActionShape
-    val SecondaryControlWidth = 132.dp
+    // Secondary editor controls track the available row width until this cap. This keeps mode,
+    // typeface, and hook affordances balanced on tablets without taking disproportionate space
+    // away from the value that users are actively editing.
+    val SecondaryControlMaxWidth = 180.dp
+    const val PortraitSecondaryControlWidthFraction = 0.4f
+    // Landscape editors have enough horizontal room to make values readable, so reserve a
+    // smaller proportional share for their secondary control before applying the same cap.
+    const val LandscapeSecondaryControlWidthFraction = 0.32f
+    const val EditorRowWidthAnimationDurationMillis = 180
 }

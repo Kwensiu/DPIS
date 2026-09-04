@@ -339,16 +339,17 @@ public final class AppListItem {
                 scopeKnown,
                 viewportTargetSpec.isAbsoluteDp()
                         ? Integer.valueOf(viewportTargetSpec.absoluteWidthDp())
-                        : viewportWidthDp,
+                        : normalized.viewportWidthDpDraft,
                 viewportTargetSpec.isRelativeScale()
                         ? Integer.valueOf(viewportTargetSpec.scaleMilliPercent())
-                        : viewportScaleMilliPercent,
+                        : normalized.viewportScaleMilliPercentDraft,
                 normalized.viewportApplyMode,
                 normalized.viewportTargetType,
                 viewportTargetSpec,
                 normalized.fontScalePercent,
                 normalized.fontApplyMode,
                 normalized.typefaceId,
+                // A global prefill is an editor baseline, never a persisted per-app configuration.
                 appSpecificConfigActive,
                 wechatDpi,
                 dpisEnabled,

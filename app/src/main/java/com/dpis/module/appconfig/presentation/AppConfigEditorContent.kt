@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -39,16 +38,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
@@ -77,6 +73,7 @@ import com.dpis.module.viewport.ViewportTargetType
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackOutlinedButton
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun AppConfigEditorContent(
     state: EditorPresentation.State,
@@ -88,12 +85,8 @@ fun AppConfigEditorContent(
     val draft = state.draft
     val appIcon = rememberInstalledAppIcon(state.item.packageName, state.item.icon)
     val focusManager = LocalFocusManager.current
-    val inputFocusBoundary = rememberTextInputFocusBoundary()
+    val inputFocusBoundary = LocalTextInputFocusBoundary.current ?: rememberTextInputFocusBoundary()
     val density = LocalDensity.current
-    val coroutineScope = rememberCoroutineScope()
-    val viewportBringIntoView = remember { BringIntoViewRequester() }
-    val fontBringIntoView = remember { BringIntoViewRequester() }
-    val wechatBringIntoView = remember { BringIntoViewRequester() }
     val completeInput = { focusManager.clearFocus(force = true) }
     val viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
         draft.viewportInputFor(draft.viewportMode),
@@ -160,8 +153,6 @@ fun AppConfigEditorContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clearTextInputFocusOutside(focusManager, inputFocusBoundary)
-            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(contentPadding)
             .padding(top = extraTopPadding)
@@ -229,9 +220,14 @@ fun AppConfigEditorContent(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (showInlineUnsavedBadge && state.dirty) {
+                        if (showInlineUnsavedBadge) {
+                            // Keep the badge in the measurement tree while it is hidden. The
+                            // first edit then changes only alpha, so the sheet anchor and window
+                            // pan do not jump when dirty transitions from false to true.
                             Surface(
-                                modifier = Modifier.padding(start = 8.dp),
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .alpha(if (state.dirty) 1f else 0f),
                                 shape = AppConfigSheetUiTokens.UnsavedBadgeShape,
                                 color = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -249,13 +245,11 @@ fun AppConfigEditorContent(
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.HeaderToFirstInputGap))
         EditorValueModeRow(
-            input = {
-                DpisCompactEditorTextField(
+            input = { modifier, onFocusChanged ->
+                CompactEditorTextField(
                     value = draft.viewportInputFor(draft.viewportMode),
                     onValueChange = state.actions::updateViewportInput,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .bringIntoViewRequester(viewportBringIntoView)
+                    modifier = modifier
                         .reportTextInputFocusBounds(inputFocusBoundary, "viewport"),
                     isError = !state.viewportInputValid,
                     label = stringResource(
@@ -266,9 +260,9 @@ fun AppConfigEditorContent(
                         }
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    onFocused = { coroutineScope.launch { viewportBringIntoView.bringIntoView() } },
+                    onFocusChanged = onFocusChanged,
                     trailingIcon = if (draft.viewportInputFor(draft.viewportMode).isNotEmpty()) {
-                        { DpisEditorClearButton { state.actions.updateViewportInput("") } }
+                        { EditorClearButton { state.actions.updateViewportInput("") } }
                     } else null
                 )
             },
@@ -282,27 +276,23 @@ fun AppConfigEditorContent(
             onSecond = {
                 completeInput()
                 state.actions.changeViewportMode(ViewportTargetType.ABSOLUTE_DP)
-            }
+            },
+            labelStyle = MaterialTheme.typography.labelSmall,
         )
-        if (!state.viewportInputValid) {
-            EditorInputError()
-        }
         Spacer(Modifier.height(AppConfigSheetUiTokens.InputRowLayoutGap))
         EditorValueModeRow(
-            input = {
-                DpisCompactEditorTextField(
+            input = { modifier, onFocusChanged ->
+                CompactEditorTextField(
                     value = draft.fontInput,
                     onValueChange = state.actions::updateFontInput,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .bringIntoViewRequester(fontBringIntoView)
+                    modifier = modifier
                         .reportTextInputFocusBounds(inputFocusBoundary, "font"),
                     isError = !state.fontInputValid,
                     label = stringResource(R.string.dialog_font_scale_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    onFocused = { coroutineScope.launch { fontBringIntoView.bringIntoView() } },
+                    onFocusChanged = onFocusChanged,
                     trailingIcon = if (draft.fontInput.isNotEmpty()) {
-                        { DpisEditorClearButton { state.actions.updateFontInput("") } }
+                        { EditorClearButton { state.actions.updateFontInput("") } }
                     } else null
                 )
             },
@@ -316,11 +306,9 @@ fun AppConfigEditorContent(
             onSecond = {
                 completeInput()
                 state.actions.changeFontMode(FontApplyMode.FIELD_REWRITE)
-            }
+            },
+            labelStyle = MaterialTheme.typography.labelSmall,
         )
-        if (!state.fontInputValid) {
-            EditorInputError()
-        }
         if (state.showsWechatDpi()) {
             DisposableEffect(inputFocusBoundary) {
                 onDispose { inputFocusBoundary.removeInput("wechat") }
@@ -336,19 +324,17 @@ fun AppConfigEditorContent(
                 // so the visible gaps above and below this row remain consistent.
                 verticalAlignment = Alignment.Bottom
             ) {
-                DpisCompactEditorTextField(
+                CompactEditorTextField(
                     value = draft.wechatDpiInput,
                     onValueChange = state.actions::updateWechatDpiInput,
                     modifier = Modifier
                         .weight(1f)
-                        .bringIntoViewRequester(wechatBringIntoView)
                         .reportTextInputFocusBounds(inputFocusBoundary, "wechat"),
                     isError = !state.wechatDpiInputValid,
                     label = stringResource(R.string.dialog_wechat_dpi_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    onFocused = { coroutineScope.launch { wechatBringIntoView.bringIntoView() } },
                     trailingIcon = if (!draft.wechatDpiInput.isNullOrEmpty()) {
-                        { DpisEditorClearButton { state.actions.updateWechatDpiInput("") } }
+                        { EditorClearButton { state.actions.updateWechatDpiInput("") } }
                     } else null
                 )
                 Box(
@@ -371,47 +357,53 @@ fun AppConfigEditorContent(
                     )
                 }
             }
-            if (!state.wechatDpiInputValid) {
-                EditorInputError()
-            }
         }
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
-        DpisEditorTypefaceHookRow(
-            primary = {
+        EditorTypefaceHookRow(
+            primary = { modifier ->
                 FeedbackOutlinedButton(
                     onClick = {
                         completeInput()
                         state.actions.navigate(ConfigEditorDestination.TYPEFACE)
                     },
-                    modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
+                    modifier = modifier.height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                    contentPadding = PaddingValues(horizontal = LocalSpacing.current.none, vertical = LocalSpacing.current.none)
                 ) {
-                    Text(
-                        state.typefaceSelectorText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                    AppIdentityMarqueeText(
+                        text = state.typefaceSelectorText,
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelLarge,
+                        centerWhenStatic = true,
+                        textHorizontalInset = LocalSpacing.current.lg,
+                        edgeFadeColor = MaterialTheme.colorScheme.surfaceContainer,
                     )
                 }
             },
-            secondary = {
+            secondary = { modifier ->
                 FeedbackOutlinedButton(
                     onClick = {
                         completeInput()
                         state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
                     },
-                    modifier = Modifier.width(AppConfigSheetUiTokens.SecondaryControlWidth)
-                        .height(rememberEditorControlHeight()),
+                    modifier = modifier.height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    contentPadding = PaddingValues(horizontal = LocalSpacing.current.none, vertical = LocalSpacing.current.none)
                 ) {
-                    Text(state.hookChainText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    AppIdentityMarqueeText(
+                        text = state.hookChainText,
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelLarge,
+                        centerWhenStatic = true,
+                        textHorizontalInset = LocalSpacing.current.md,
+                        edgeFadeColor = MaterialTheme.colorScheme.surfaceContainer,
+                    )
                 }
             }
         )
@@ -567,54 +559,10 @@ fun AppConfigEditorContent(
             },
             modifier = Modifier.fillMaxWidth().height(rememberEditorControlHeight()),
             shape = AppConfigSheetUiTokens.ActionShape,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            contentPadding = PaddingValues(horizontal = LocalSpacing.current.lg, vertical = LocalSpacing.current.none)
         ) {
             Text(stringResource(R.string.dialog_disable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.height(4.dp))
-    }
-}
-
-@Composable
-private fun EditorInputError() {
-    Text(
-        stringResource(R.string.status_save_invalid),
-        modifier = Modifier.padding(start = 16.dp, top = 2.dp),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.error
-    )
-}
-
-@Composable
-private fun EditorValueModeRow(
-    input: @Composable () -> Unit,
-    first: String,
-    second: String,
-    firstSelected: Boolean,
-    onFirst: () -> Unit,
-    onSecond: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Bottom
-    ) {
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .padding(top = AppConfigSheetUiTokens.FieldTopInset)
-        ) {
-            input()
-        }
-        DpisModeSelector(
-            selectedFirst = firstSelected,
-            firstLabel = first,
-            secondLabel = second,
-            onFirstSelected = onFirst,
-            onSecondSelected = onSecond,
-            labelStyle = MaterialTheme.typography.labelSmall
-        )
     }
 }

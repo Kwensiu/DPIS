@@ -10,7 +10,7 @@ import com.dpis.module.viewport.ViewportTargetType
  * View-independent draft for the two template editors.
  *
  * It intentionally retains both viewport drafts through a target-type change. The active input
- * is presentation state; both saved drafts survive a sheet/detail handoff and later save.
+ * is presentation state; both saved drafts survive an editor/detail handoff and later save.
  */
 class TemplateEditorForm private constructor(
     @JvmField val quickTemplate: Boolean,

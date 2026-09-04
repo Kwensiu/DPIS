@@ -145,7 +145,8 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         fun runOnUiThread(runnable: Runnable)
     }
 
-    private val actions = object : TemplateWorkspacePresentation.Actions {
+    private val actions: TemplateWorkspacePresentation.Actions =
+        object : TemplateWorkspacePresentation.Actions {
         override fun editGlobalPrefill() = openGlobalPrefill()
 
         override fun createTemplate() = openQuickTemplate(null)
@@ -165,6 +166,9 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         override fun reorderTemplates(orderedIds: List<String>): Boolean {
             val reordered = QuickTemplateStore(activity).reorder(orderedIds)
             if (reordered) {
+                // Rebuild the presentation snapshot before invalidating Compose so the list and
+                // the next sort dialog both observe the persisted order immediately.
+                refresh(presentation.state().query)
                 publish()
             } else {
                 host.showToast(R.string.quick_template_sort_failed)
@@ -200,7 +204,10 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 ),
             )
             host.showToast(result.messageResId)
-            if (result.success) publish()
+            if (result.success) {
+                refresh(presentation.state().query)
+                publish()
+            }
             return TemplateWorkspacePresentation.EditorResult(result.success, result.messageResId, null)
         }
 
@@ -222,7 +229,10 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 ),
             )
             host.showToast(result.messageResId)
-            if (result.success) publish()
+            if (result.success) {
+                refresh(presentation.state().query)
+                publish()
+            }
             return TemplateWorkspacePresentation.EditorResult(result.success, result.messageResId, result.templateId)
         }
 
@@ -342,6 +352,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
             override fun updateEditorDestination(destination: ConfigEditorDestination) {
                 routeState.updateEditorDestination(destination)
+                refresh(presentation.state().query)
                 publish()
             }
 

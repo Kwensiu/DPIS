@@ -70,8 +70,8 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(composeContent.contains("onValueChange = rememberClickValueAction(onSelected)"));
         assertTrue(composeContent.contains("AndroidView("));
         assertFalse(composeContent.contains("onIconVisible(app.packageName)"));
-        assertTrue(composeContent.contains("rememberBottomSheetState("));
-        assertTrue(composeContent.contains("enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)"));
+        assertTrue(composeContent.contains("AlertDialog("));
+        assertFalse(composeContent.contains("ModalBottomSheet"));
         assertTrue(composeContent.contains("navigationBarsPadding()"));
         assertTrue(composeContent.contains("SecondaryPageTopBar("));
         assertFalse(composeContent.contains("TopAppBar("));

@@ -2,6 +2,7 @@ package com.dpis.module
 
 import android.content.Context
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import com.dpis.module.settings.AppLocaleManager
@@ -32,6 +33,11 @@ abstract class LocalizedActivity : ComponentActivity() {
         // Keep every user-visible Activity on the same edge-to-edge window contract.
         // Individual content surfaces remain responsible for their own safe-area insets.
         enableEdgeToEdge()
+        // Keep the edge-to-edge root at a stable size while the IME animates. The Compose shell
+        // owns the single whole-screen pan, so adjustResize must not resize the root underneath
+        // it and snap the content back before the close animation can finish.
+        @Suppress("DEPRECATION")
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }

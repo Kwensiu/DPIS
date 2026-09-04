@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,11 +28,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -48,48 +54,42 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.AppIdentityMarqueeText
+import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
-import com.dpis.module.ui.compose.DpisEditorBottomSheet
-import com.dpis.module.ui.compose.DpisCompactEditorTextField
-import com.dpis.module.ui.compose.DpisEditorClearButton
-import com.dpis.module.ui.compose.DpisEditorTypefaceHookRow
-import com.dpis.module.ui.compose.DpisModeSelector
-import com.dpis.module.ui.compose.DpisSheetVisualChrome
+import com.dpis.module.ui.compose.CompactEditorTextField
+import com.dpis.module.ui.compose.EditorClearButton
+import com.dpis.module.ui.compose.EditorTypefaceHookRow
+import com.dpis.module.ui.compose.EditorValueModeRow
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackOutlinedButton
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberEditorControlHeight
+import com.dpis.module.ui.compose.clearTextInputFocusOutside
+import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
+import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
+import com.dpis.module.ui.compose.reportTextInputFocusBounds
 import com.dpis.module.viewport.ViewportTargetType
 
-enum class TemplateEditorSurfaceKind {
-    PORTRAIT_SHEET,
-    LANDSCAPE_DETAIL
-}
-
-/**
- * Shared editor surface for the portrait sheet and landscape detail pane.
- *
- * The field body and callbacks are identical. Only the outer presentation contract differs:
- * portrait owns a bottom sheet chrome/inset, while landscape reserves the status-bar gap inline.
- */
+/** Template editor content for the landscape detail pane. */
 @Composable
 fun TemplateEditorSurface(
     form: TemplateEditorForm,
-    surface: TemplateEditorSurfaceKind,
     draftRevision: Int = 0,
     topSafePadding: Dp = 0.dp,
     bottomSafePadding: Dp = 0.dp,
-    sheetVisible: Boolean = true,
-    onSheetHidden: () -> Unit = {},
     onFormChanged: () -> Unit,
     onSelectTypeface: () -> Unit,
     onEditHookDomains: () -> Unit,
     onReset: () -> Unit,
-    onDismissRequest: () -> Unit = {},
     onDelete: (() -> Unit)?,
     onSave: () -> Unit,
+    onContentBottomMeasured: ((Dp) -> Unit)? = null,
+    showInlineUnsavedBadge: Boolean = true,
+    animateDestinationSize: Boolean = true,
+    clipDestinationContent: Boolean = true,
     destination: ConfigEditorDestination = ConfigEditorDestination.MAIN,
     hookContent: (@Composable () -> Unit)? = null,
     typefaceContent: (@Composable () -> Unit)? = null
@@ -104,17 +104,10 @@ fun TemplateEditorSurface(
             onReset = onReset,
             onDelete = onDelete,
             onSave = onSave,
-            showSheetBadge = surface == TemplateEditorSurfaceKind.PORTRAIT_SHEET,
-            extraTopPadding = if (surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL) {
-                topSafePadding
-            } else {
-                0.dp
-            },
-            extraBottomPadding = if (surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL) {
-                bottomSafePadding
-            } else {
-                0.dp
-            }
+            onContentBottomMeasured = onContentBottomMeasured,
+            showInlineUnsavedBadge = showInlineUnsavedBadge,
+            extraTopPadding = topSafePadding,
+            extraBottomPadding = bottomSafePadding,
         )
     }
     val editor: @Composable () -> Unit = {
@@ -123,8 +116,8 @@ fun TemplateEditorSurface(
         } else {
             ConfigEditorAnimatedContent(
                 destination = destination,
-                clipContentToAnimatedBounds =
-                    surface == TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
+                animateSize = animateDestinationSize,
+                clipContentToAnimatedBounds = clipDestinationContent,
                 mainContent = mainEditor,
                 hookContent = hookContent ?: mainEditor,
                 typefaceContent = typefaceContent
@@ -132,32 +125,16 @@ fun TemplateEditorSurface(
         }
     }
 
-    if (surface == TemplateEditorSurfaceKind.PORTRAIT_SHEET) {
-        DpisEditorBottomSheet(
-            visible = sheetVisible,
-            onDismissRequest = onDismissRequest,
-            onHidden = onSheetHidden,
-            topChrome = {
-                DpisSheetVisualChrome(
-                    showUnsaved = form.isDirty
-                )
-            },
-            // The editor body owns the shared bottom reserve. Do not add a second navigation inset.
-            contentWindowInsets = { WindowInsets(0, 0, 0, 0) }
-        ) {
-            editor()
-        }
-    } else {
-        editor()
-    }
+    editor()
 }
 
 /**
- * Shared editor body for the portrait sheet and the landscape detail pane.
+ * Shared editor body for template editing.
  *
  * The caller owns [form]'s cross-surface lifetime. Every text mutation is written through to the
  * same draft before requesting recomposition, so a form never depends on View widget state.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 @Suppress("UNUSED_PARAMETER")
 fun TemplateEditorContent(
@@ -170,25 +147,30 @@ fun TemplateEditorContent(
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
     draftRevision: Int = 0,
-    showSheetBadge: Boolean = true,
+    onContentBottomMeasured: ((Dp) -> Unit)? = null,
+    showInlineUnsavedBadge: Boolean = true,
     extraTopPadding: Dp = 0.dp,
     extraBottomPadding: Dp = 0.dp
 ) {
     // The revision is intentionally part of the parameter list. The form is a mutable Java draft
     // and its stable object identity must not allow Compose to skip the updated editor subtree.
-    val inputErrorMessage = stringResource(R.string.status_save_invalid)
-    val nameErrorMessage = stringResource(R.string.quick_template_name_required)
-    val nameError = if (form.isNameValid()) null else nameErrorMessage
-    val viewportError = if (form.isViewportInputValid()) null else inputErrorMessage
-    val fontError = if (form.isFontInputValid()) null else inputErrorMessage
+    remember(draftRevision) { Unit }
+    // Invalid values retain their field outline and save-disabled state, but never insert a
+    // transient validation row. Changing the form's measured height while the sheet is moving
+    // makes its partial anchor unstable.
+    val nameHasError = !form.isNameValid()
+    val viewportHasError = !form.isViewportInputValid()
+    val fontHasError = !form.isFontInputValid()
     val context = LocalContext.current
+    val density = LocalDensity.current
+    val focusManager = LocalFocusManager.current
+    val inputFocusBoundary = LocalTextInputFocusBoundary.current ?: rememberTextInputFocusBoundary()
     val hookDomainsButtonText = FontHookDomainPresentation
         .forAutomaticDomainsRaw(form.fontHookDomainsRaw)
         .buttonText(context)
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(AppConfigSheetUiTokens.ContentPadding)
             .padding(top = extraTopPadding)
@@ -197,11 +179,11 @@ fun TemplateEditorContent(
             )
             )
     ) {
-        TemplateEditorSheetHeader(
+        TemplateEditorHeader(
             form = form,
-            showInlineBadge = !showSheetBadge,
             onReset = onReset,
-            onDelete = onDelete
+            onDelete = onDelete,
+            showInlineUnsavedBadge = showInlineUnsavedBadge,
         )
 
         if (form.quickTemplate) {
@@ -209,12 +191,14 @@ fun TemplateEditorContent(
                 Modifier.height(
                     AppConfigSheetUiTokens.HeaderToFirstInputGap))
             Column(Modifier.fillMaxWidth()) {
-                DpisCompactEditorTextField(
+                CompactEditorTextField(
                     value = form.nameInput,
                     onValueChange = { form.nameInput = it; onFormChanged() },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .reportTextInputFocusBounds(inputFocusBoundary, "template-name"),
                     label = stringResource(R.string.quick_template_name_hint),
-                    isError = nameError != null,
+                    isError = nameHasError,
                     trailingIcon = if (form.nameInput.isNotEmpty()) {
                         {
                             IconButton(onClick = rememberClickAction {
@@ -229,7 +213,6 @@ fun TemplateEditorContent(
                         }
                     } else null,
                 )
-                nameError?.let { TemplateEditorErrorMessage(it) }
             }
         }
 
@@ -242,21 +225,9 @@ fun TemplateEditorContent(
                 }
             )
         )
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(
-                    min = AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()
-                ),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = AppConfigSheetUiTokens.FieldTopInset)
-            ) {
-                DpisCompactEditorTextField(
+        EditorValueModeRow(
+            input = { modifier, onFocusChanged ->
+                CompactEditorTextField(
                     value = form.viewportInput,
                     onValueChange = {
                         form.viewportInput = it
@@ -265,7 +236,8 @@ fun TemplateEditorContent(
                     },
                     // The mode track is the row's 48dp alignment anchor. DecorationBox's label
                     // can extend outside that outline, so move only the input surface down.
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = modifier
+                        .reportTextInputFocusBounds(inputFocusBoundary, "template-viewport"),
                     label = stringResource(
                         if (ViewportTargetType.ABSOLUTE_DP == form.viewportMode) {
                             R.string.dialog_viewport_hint_absolute
@@ -274,10 +246,11 @@ fun TemplateEditorContent(
                         }
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = viewportError != null,
+                    isError = viewportHasError,
+                    onFocusChanged = onFocusChanged,
                     trailingIcon = if (form.viewportInput.isNotEmpty()) {
                         {
-                            DpisEditorClearButton {
+                            EditorClearButton {
                                 form.viewportInput = ""
                                 form.updateActiveViewportDraft()
                                 onFormChanged()
@@ -285,106 +258,88 @@ fun TemplateEditorContent(
                         }
                     } else null,
                 )
-                viewportError?.let { TemplateEditorErrorMessage(it) }
-            }
-            DpisModeSelector(
-                selectedFirst = form.viewportMode == ViewportTargetType.RELATIVE_SCALE,
-                firstLabel = stringResource(R.string.dialog_viewport_mode_system),
-                secondLabel = stringResource(R.string.dialog_viewport_mode_compat),
-                onFirstSelected = { form.switchViewportMode(ViewportTargetType.RELATIVE_SCALE); onFormChanged() },
-                onSecondSelected = { form.switchViewportMode(ViewportTargetType.ABSOLUTE_DP); onFormChanged() },
-                modifier = Modifier.padding(top = AppConfigSheetUiTokens.FieldTopInset),
-                labelStyle = MaterialTheme.typography.labelSmall
-            )
-        }
+            },
+            first = stringResource(R.string.dialog_viewport_mode_system),
+            second = stringResource(R.string.dialog_viewport_mode_compat),
+            firstSelected = form.viewportMode == ViewportTargetType.RELATIVE_SCALE,
+            onFirst = { form.switchViewportMode(ViewportTargetType.RELATIVE_SCALE); onFormChanged() },
+            onSecond = { form.switchViewportMode(ViewportTargetType.ABSOLUTE_DP); onFormChanged() },
+            labelStyle = MaterialTheme.typography.labelSmall,
+        )
 
         Spacer(Modifier.height(AppConfigSheetUiTokens.InputRowLayoutGap))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(
-                    min = AppConfigSheetUiTokens.FieldTopInset + rememberEditorControlHeight()
-                ),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(top = AppConfigSheetUiTokens.FieldTopInset)
-            ) {
-                DpisCompactEditorTextField(
+        EditorValueModeRow(
+            input = { modifier, onFocusChanged ->
+                CompactEditorTextField(
                     value = form.fontInput,
                     onValueChange = { form.fontInput = it; onFormChanged() },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = modifier
+                        .reportTextInputFocusBounds(inputFocusBoundary, "template-font"),
                     label = stringResource(R.string.dialog_font_scale_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    isError = fontError != null,
+                    isError = fontHasError,
+                    onFocusChanged = onFocusChanged,
                     trailingIcon = if (form.fontInput.isNotEmpty()) {
                         {
-                            DpisEditorClearButton {
+                            EditorClearButton {
                                 form.fontInput = ""
                                 onFormChanged()
                             }
                         }
                     } else null,
                 )
-                fontError?.let { TemplateEditorErrorMessage(it) }
-            }
-            DpisModeSelector(
-                selectedFirst = form.fontMode == FontApplyMode.SYSTEM_EMULATION,
-                firstLabel = stringResource(R.string.dialog_font_mode_system),
-                secondLabel = stringResource(R.string.dialog_font_mode_compat),
-                onFirstSelected = {
-                    form.fontMode = FontApplyMode.SYSTEM_EMULATION; onFormChanged()
-                },
-                onSecondSelected = { form.fontMode = FontApplyMode.FIELD_REWRITE; onFormChanged() },
-                modifier = Modifier.padding(top = AppConfigSheetUiTokens.FieldTopInset),
-                labelStyle = MaterialTheme.typography.labelMedium
-            )
-        }
+            },
+            first = stringResource(R.string.dialog_font_mode_system),
+            second = stringResource(R.string.dialog_font_mode_compat),
+            firstSelected = form.fontMode == FontApplyMode.SYSTEM_EMULATION,
+            onFirst = { form.fontMode = FontApplyMode.SYSTEM_EMULATION; onFormChanged() },
+            onSecond = { form.fontMode = FontApplyMode.FIELD_REWRITE; onFormChanged() },
+            labelStyle = MaterialTheme.typography.labelMedium,
+        )
 
         Spacer(Modifier.height(AppConfigSheetUiTokens.ControlGroupGap))
-        DpisEditorTypefaceHookRow(
-            primary = {
+        EditorTypefaceHookRow(
+            primary = { modifier ->
                 FeedbackOutlinedButton(
                     onClick = onSelectTypeface,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(rememberEditorControlHeight()),
+                    modifier = modifier.height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                    contentPadding = PaddingValues(horizontal = LocalSpacing.current.none, vertical = LocalSpacing.current.none)
                 ) {
-                    Text(
-                        stringResource(
+                    AppIdentityMarqueeText(
+                        text = stringResource(
                             R.string.dialog_typeface_selector_value,
                             form.selectedTypefaceId
                                 ?: stringResource(R.string.dialog_typeface_default)
                         ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelLarge,
+                        centerWhenStatic = true,
+                        textHorizontalInset = LocalSpacing.current.lg,
+                        edgeFadeColor = MaterialTheme.colorScheme.surfaceContainer,
                     )
                 }
             },
-            secondary = {
+            secondary = { modifier ->
                 FeedbackOutlinedButton(
                     onClick = onEditHookDomains,
-                    modifier = Modifier
-                        .width(AppConfigSheetUiTokens.SecondaryControlWidth)
-                        .height(rememberEditorControlHeight()),
+                    modifier = modifier.height(rememberEditorControlHeight()),
                     shape = AppConfigSheetUiTokens.FieldAndActionShape,
                     colors = ButtonDefaults.outlinedButtonColors(
                         contentColor = MaterialTheme.colorScheme.primary
                     ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    contentPadding = PaddingValues(horizontal = LocalSpacing.current.none, vertical = LocalSpacing.current.none)
                 ) {
-                    Text(
-                        hookDomainsButtonText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                    AppIdentityMarqueeText(
+                        text = hookDomainsButtonText,
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelLarge,
+                        centerWhenStatic = true,
+                        textHorizontalInset = LocalSpacing.current.md,
+                        edgeFadeColor = MaterialTheme.colorScheme.surfaceContainer,
                     )
                 }
             }
@@ -396,32 +351,26 @@ fun TemplateEditorContent(
             enabled = form.isValid,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(rememberEditorControlHeight()),
+                .height(rememberEditorControlHeight())
+                .onGloballyPositioned { coordinates ->
+                    onContentBottomMeasured?.invoke(with(density) {
+                        (coordinates.positionInParent().y + coordinates.size.height).toDp()
+                    })
+                },
             shape = AppConfigSheetUiTokens.ActionShape,
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+            contentPadding = PaddingValues(horizontal = LocalSpacing.current.lg, vertical = LocalSpacing.current.none)
         ) {
             Text(stringResource(R.string.status_save_button))
         }
     }
 }
 
-/** Error text sits outside the fixed outline so it can wrap without clipping the input. */
 @Composable
-private fun TemplateEditorErrorMessage(message: String) {
-    Text(
-        text = message,
-        modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 8.dp),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.error
-    )
-}
-
-@Composable
-private fun TemplateEditorSheetHeader(
+private fun TemplateEditorHeader(
     form: TemplateEditorForm,
-    showInlineBadge: Boolean,
     onReset: () -> Unit,
-    onDelete: (() -> Unit)?
+    onDelete: (() -> Unit)?,
+    showInlineUnsavedBadge: Boolean,
 ) {
     val resetAction = rememberClickAction(onReset)
     val deleteAction = onDelete?.let {
@@ -444,7 +393,7 @@ private fun TemplateEditorSheetHeader(
         modifier = Modifier
             .fillMaxWidth()
             // Long localized titles/subtitles must be allowed to wrap. The old fixed row
-            // height clipped the second and later lines inside the portrait sheet.
+            // Keep localized titles readable when they wrap to multiple lines.
             .heightIn(min = AppConfigSheetUiTokens.FieldRowHeight),
         horizontalArrangement = Arrangement.spacedBy(TemplateUiTokens.HeaderActionSpacing),
         verticalAlignment = Alignment.CenterVertically
@@ -456,9 +405,9 @@ private fun TemplateEditorSheetHeader(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                if (showInlineBadge && form.isDirty) {
+                if (showInlineUnsavedBadge) {
                     Spacer(Modifier.width(8.dp))
-                    UnsavedBadge()
+                    UnsavedBadge(visible = form.isDirty)
                 }
             }
             Text(
@@ -518,11 +467,12 @@ private fun EditorHeaderIconButton(
 }
 
 @Composable
-private fun UnsavedBadge() {
+private fun UnsavedBadge(visible: Boolean) {
     Surface(
         modifier = Modifier
             .heightIn(min = TemplateUiTokens.UnsavedBadgeMinHeight)
-            .offset(y = (-2).dp),
+            .offset(y = (-2).dp)
+            .alpha(if (visible) 1f else 0f),
         shape = TemplateUiTokens.UnsavedBadgeShape,
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,

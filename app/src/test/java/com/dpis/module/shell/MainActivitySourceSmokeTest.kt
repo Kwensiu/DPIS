@@ -1293,6 +1293,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/templates/presentation/TemplateEditorContent.kt")
         val editorSheet = read(
             "src/main/java/com/dpis/module/ui/presentation/DpisEditorBottomSheet.kt")
+        val shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
 
         val templateSource = read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentationSource.kt")
         val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
@@ -1315,19 +1316,17 @@ class MainActivitySourceSmokeTest {
         assertTrue(workspace.contains(
                 "val createdNewTemplate = editorDraft.form.quickTemplate && editorDraft.form.newTemplate"))
         assertTrue(workspace.contains("if (createdNewTemplate)"))
-        assertTrue(workspace.contains("var editorSheetVisible"))
-        assertTrue(workspace.contains("var editorSheetClosing"))
+        assertFalse(workspace.contains("editorSheetVisible"))
+        assertFalse(workspace.contains("editorSheetClosing"))
         assertTrue(workspace.contains("fun finishEditorClose()"))
-        assertTrue(workspace.contains("sheetVisible = editorSheetVisible"))
-        assertTrue(workspace.contains(
-                "onSheetHidden = { if (editorSheetClosing) finishEditorClose() }"))
-        assertTrue(editorSurface.contains("sheetVisible: Boolean = true"))
-        assertTrue(editorSurface.contains("onSheetHidden: () -> Unit = {}"))
-        assertTrue(editorSurface.contains("visible = sheetVisible"))
-        assertTrue(editorSurface.contains("onHidden = onSheetHidden"))
-        assertTrue(editorSheet.contains("if (visible)"))
-        assertTrue(editorSheet.contains("sheetState.hide()"))
-        assertTrue(editorSheet.contains("onHidden()"))
+        assertFalse(shellHost.contains("RenderTemplateEditorOverlay(state.workspaceMode)"))
+        assertFalse(coordinator.contains("TemplateEditorOverlay("))
+        assertFalse(editorSurface.contains("sheetVisible"))
+        assertFalse(editorSurface.contains("onSheetHidden"))
+        assertFalse(editorSurface.contains("AppConfigEditorOverlay("))
+        val editorHost = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt")
+        assertTrue(editorHost.contains("BottomSheetScaffold("))
         val workspaceCloseStart = workspace.indexOf("fun closeEditor()")
         val workspaceCloseEnd = workspace.indexOf("fun saveEditor()", workspaceCloseStart)
         val workspaceClose = workspace.substring(workspaceCloseStart, workspaceCloseEnd)

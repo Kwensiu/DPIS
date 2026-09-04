@@ -51,6 +51,8 @@ class TemplateWorkspaceLayoutSmokeTest {
         read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt").assertContainsAll("val sortItems: List<QuickTemplateSortItem>", "fun reorderTemplates(orderedIds: List<String>): Boolean")
         read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt").assertContainsAll(
             "class TemplateWorkspaceCoordinator", "private val presentation = TemplateWorkspacePresentationController",
+            "refresh(presentation.state().query)",
+            "QuickTemplateStore(activity).reorder(orderedIds)",
             "override fun reorderTemplates", "override fun saveGlobalPrefill", "override fun saveQuickTemplate",
             "override fun deleteQuickTemplate", "override fun selectTypeface", "override fun editHookDomains",
             "host.refreshTemplateWorkspace()",

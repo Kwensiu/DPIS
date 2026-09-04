@@ -129,13 +129,24 @@ class EditorDraft(
     companion object {
         @JvmStatic
         fun fromItem(item: AppListItem): EditorDraft {
-            val targetType = AppConfigInputValidation.initialViewportTargetType(item.viewportTargetSpec)
-            val viewportInput = AppConfigInputValidation.formatViewportInput(item.viewportTargetSpec)
+            // A global prefill can retain a value for the inactive viewport mode. Its declared
+            // target type is the editor selection; the resolved runtime spec alone is insufficient.
+            val preferredTargetType = ViewportTargetType.normalize(item.viewportTargetType)
+            val targetType = if (preferredTargetType != ViewportTargetType.OFF) {
+                preferredTargetType
+            } else {
+                AppConfigInputValidation.initialViewportTargetType(item.viewportTargetSpec)
+            }
             val scaleInput = item.viewportScaleMilliPercent?.let {
                 AppConfigInputValidation.formatScaleMilliPercentInput(it)
-            } ?: if (item.viewportTargetSpec.isRelativeScale) viewportInput else ""
+            } ?: ""
             val absoluteInput = item.viewportWidthDp?.toString()
-                ?: if (item.viewportTargetSpec.isAbsoluteDp) viewportInput else ""
+                ?: ""
+            val viewportInput = if (targetType == ViewportTargetType.ABSOLUTE_DP) {
+                absoluteInput
+            } else {
+                scaleInput
+            }
             return EditorDraft(item.packageName, viewportInput, scaleInput, absoluteInput, targetType,
                 item.fontScalePercent?.toString() ?: "", AppConfigInputValidation.initialFontMode(item.fontMode),
                 item.typefaceId, item.effectiveFontHookDomainsRaw(), item.viewportMode, false, false,

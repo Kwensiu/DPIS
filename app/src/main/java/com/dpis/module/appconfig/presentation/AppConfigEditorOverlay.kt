@@ -11,14 +11,15 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -27,6 +28,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.snap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,9 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
@@ -67,6 +69,8 @@ fun AppConfigEditorOverlay(
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = bottomSheetState)
     val scrimInteractionSource = remember { MutableInteractionSource() }
     val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
+    val inputFocusBoundary = LocalTextInputFocusBoundary.current ?: rememberTextInputFocusBoundary()
     var advancedAnchor by remember { mutableStateOf<Dp?>(null) }
     var hasOpened by remember { mutableStateOf(false) }
     var hasExpandedOnce by remember { mutableStateOf(false) }
@@ -175,103 +179,43 @@ fun AppConfigEditorOverlay(
         val sheetMotionInProgress = measuredPeekHeight != targetPeekHeight ||
             returnToMainPending
 
-        Box(Modifier.fillMaxSize()) {
-            Box(
-                Modifier.fillMaxSize()
-                    .background(Color.Black.copy(alpha = scrimAlpha))
-                    .testTag(AppConfigSheetScrimTestTag)
-                    // A modal scrim is a dismissal surface, not a button; preserve its click
-                    // semantics without showing a ripple over the dimmed background.
-                    .clickable(
-                        interactionSource = scrimInteractionSource,
-                        indication = null,
-                        onClick = ::dismissWithAnimation
-                    )
-            )
-            BottomSheetScaffold(
-                // The wizard hint intentionally overflows above the sheet surface. Elevate the
-                // complete scaffold so its chrome and overflow are composited above workspace
-                // content, matching the legacy dialog's overlay elevation.
-                modifier = Modifier.fillMaxSize().zIndex(1f),
-                scaffoldState = scaffoldState,
-                containerColor = Color.Transparent,
-                sheetSwipeEnabled = !sheetMotionInProgress,
-                // Keep one shared peek anchor for MAIN, Hook, and Typeface pages. Child pages
-                // report their content height through the same callback as the Hook editor.
-                sheetPeekHeight = measuredPeekHeight,
-                sheetContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                sheetContentColor = MaterialTheme.colorScheme.onSurface,
-                sheetTonalElevation = 0.dp,
-                // Material assigns the "drag handle" accessibility role to this slot. The
-                // app's short line is visual-only, so render it in regular sheet content.
-                sheetDragHandle = null,
-                sheetContent = {
-                    // Cap the expanded sheet without forcing short editor content to occupy the
-                    // whole window. The editor owns scrolling when its content exceeds this cap.
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .heightIn(max = sheetViewportHeight)
-                    ) {
-                        Column {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    // Keep the chrome slot's measured height stable. Only move its
-                                    // visual content around the cutout; padding here would remeasure
-                                    // the sheet and make the body jump during collapse.
-                                    .offset(y = chromeSafeOffset)
-                            ) {
-                                topChrome()
-                            }
-                            content({ measuredAnchor ->
-                                // Before the user opens advanced actions, layout changes (for
-                                // example, validation text or a window resize) keep the collapsed
-                                // edge aligned. An expanded sheet remains under the user's control
-                                // until dismissal.
-                                if (measuredAnchor > 0.dp &&
-                                    (
-                                        (!returnToMainPending && destination.isChildPage()) ||
-                                        (!destination.isChildPage() &&
-                                            (!returnToMainPending && !hasExpandedOnce ||
-                                                mainCollapsedAnchor == null))
-                                    )
-                                ) {
-                                    advancedAnchor = measuredAnchor
-                                    if (!destination.isChildPage()) {
-                                        mainCollapsedAnchor = measuredAnchor
-                                    }
-                                }
-                            }, bottomSheetState.currentValue == SheetValue.Expanded &&
-                                bottomSheetState.targetValue == SheetValue.Expanded &&
-                                !returnToMainPending, ::returnToMainCollapsed)
-                        }
-                        // Draw after the editor content while keeping the overlay out of the
-                        // measured column height, so it remains anchored to the sheet chrome.
-                        overlayContent()
-                        if (sheetMotionInProgress) {
-                            // BottomSheetScaffold keeps its drag layer above sheet content while
-                            // an anchor or settle animation is running. Consume the gesture here
-                            // as well, otherwise a tap can start a drag against a moving layout
-                            // and leave the visible page detached from its hit-test coordinates.
-                            Box(
-                                Modifier
-                                    .fillMaxSize()
-                                    .zIndex(2f)
-                                    .pointerInput(Unit) {
-                                        awaitPointerEventScope {
-                                            while (true) {
-                                                awaitPointerEvent(PointerEventPass.Initial)
-                                                    .changes
-                                                    .forEach { it.consume() }
-                                            }
-                                        }
-                                    }
-                            )
-                        }
+        CompositionLocalProvider(LocalTextInputFocusBoundary provides inputFocusBoundary) {
+            AppConfigSheetScaffold(
+            scaffoldState = scaffoldState,
+            bottomSheetState = bottomSheetState,
+            scrimInteractionSource = scrimInteractionSource,
+            scrimAlpha = scrimAlpha,
+            measuredPeekHeight = measuredPeekHeight,
+            sheetViewportHeight = sheetViewportHeight,
+            sheetMotionInProgress = sheetMotionInProgress,
+            destination = destination,
+            returnToMainPending = returnToMainPending,
+            focusManager = focusManager,
+            inputFocusBoundary = inputFocusBoundary,
+            topChrome = topChrome,
+            content = content,
+            overlayContent = overlayContent,
+            onDismiss = ::dismissWithAnimation,
+            onReturnToMainCollapsed = ::returnToMainCollapsed,
+            onAdvancedAnchorMeasured = { measuredAnchor ->
+                // Before the user opens advanced actions, layout changes (for example, validation
+                // text or a window resize) keep the collapsed edge aligned. An expanded sheet
+                // remains under the user's control until dismissal.
+                if (measuredAnchor > 0.dp &&
+                    (
+                        (!returnToMainPending && destination.isChildPage()) ||
+                            (!destination.isChildPage() &&
+                                (!returnToMainPending && !hasExpandedOnce ||
+                                    mainCollapsedAnchor == null))
+                        )
+                ) {
+                    advancedAnchor = measuredAnchor
+                    if (!destination.isChildPage()) {
+                        mainCollapsedAnchor = measuredAnchor
                     }
                 }
-            ) { }
+            }
+            )
         }
 
         LaunchedEffect(
@@ -312,4 +256,50 @@ fun AppConfigEditorOverlay(
             bottomSheetState.partialExpand()
         }
     }
+}
+
+/**
+ * Renders the stable app-editor sheet shell. State transitions stay in [AppConfigEditorOverlay];
+ * this boundary only owns the visual stacking order and content measurement contract.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppConfigSheetScaffold(
+    scaffoldState: BottomSheetScaffoldState,
+    bottomSheetState: SheetState,
+    scrimInteractionSource: MutableInteractionSource,
+    scrimAlpha: Float,
+    measuredPeekHeight: Dp,
+    sheetViewportHeight: Dp,
+    sheetMotionInProgress: Boolean,
+    destination: ConfigEditorDestination,
+    returnToMainPending: Boolean,
+    focusManager: FocusManager,
+    inputFocusBoundary: TextInputFocusBoundary,
+    topChrome: @Composable () -> Unit,
+    content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit,
+    overlayContent: @Composable BoxScope.() -> Unit,
+    onDismiss: () -> Unit,
+    onReturnToMainCollapsed: () -> Unit,
+    onAdvancedAnchorMeasured: (Dp) -> Unit,
+) {
+    EditorSheetScaffoldFrame(
+        scaffoldState = scaffoldState,
+        bottomSheetState = bottomSheetState,
+        scrimInteractionSource = scrimInteractionSource,
+        scrimAlpha = scrimAlpha,
+        sheetPeekHeight = measuredPeekHeight,
+        sheetViewportHeight = sheetViewportHeight,
+        sheetSwipeEnabled = !sheetMotionInProgress,
+        focusManager = focusManager,
+        inputFocusBoundary = inputFocusBoundary,
+        topChrome = topChrome,
+        content = { measureAnchor, expanded, returnFromChild ->
+            content(measureAnchor, expanded && !returnToMainPending, returnFromChild)
+        },
+        overlayContent = overlayContent,
+        onDismiss = onDismiss,
+        onContentBottomMeasured = onAdvancedAnchorMeasured,
+        onReturnToMain = onReturnToMainCollapsed,
+    )
 }

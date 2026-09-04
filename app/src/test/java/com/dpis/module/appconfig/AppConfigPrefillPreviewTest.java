@@ -97,8 +97,40 @@ public class AppConfigPrefillPreviewTest {
         assertEquals(FontApplyMode.FIELD_REWRITE, result.fontMode);
         assertEquals("serif", result.typefaceId);
         assertEquals("resources_font", result.previewFontHookDomainsRaw);
+        EditorDraft draft = EditorDraft.fromItem(result);
+        assertEquals("87.5", draft.viewportScaleInput);
+        assertEquals("125", draft.fontInput);
+        assertEquals("serif", draft.selectedTypefaceId);
+        assertEquals("resources_font", draft.draftFontHookDomainsRaw);
         assertFalse(store.hasRealPackageConfig(item.packageName));
         assertFalse(store.getConfiguredPackages().contains(item.packageName));
+    }
+
+    @Test
+    public void widthOnlyPrefillRestoresWidthModeAndValueInEditorDraft() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        AppListItem item = app("com.example.app");
+        TemplateConfigValue prefill = new TemplateConfigValue(
+                ViewportTargetType.ABSOLUTE_DP,
+                null,
+                null,
+                null,
+                Integer.valueOf(411),
+                ViewportApplyMode.OFF,
+                null,
+                FontApplyMode.OFF,
+                null,
+                null);
+
+        AppListItem result = AppConfigPrefillPreview.applyIfEligible(item, store, prefill);
+        EditorDraft draft = EditorDraft.fromItem(result);
+
+        assertTrue(result.previewFromGlobalPrefill);
+        assertEquals(ViewportTargetSpec.off(), result.viewportTargetSpec);
+        assertEquals(Integer.valueOf(411), result.viewportWidthDp);
+        assertEquals(ViewportTargetType.ABSOLUTE_DP, draft.viewportMode);
+        assertEquals("411", draft.viewportInput);
+        assertEquals("411", draft.viewportAbsoluteInput);
     }
 
     @Test

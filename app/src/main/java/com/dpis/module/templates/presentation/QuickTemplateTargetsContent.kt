@@ -46,13 +46,11 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -107,7 +105,7 @@ fun QuickTemplateTargetsContent(
     val focusManager = LocalFocusManager.current
     val inputFocusBoundary = rememberTextInputFocusBoundary()
     var searchVisible by rememberSaveable { mutableStateOf(false) }
-    var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
+    var filterDialogVisible by rememberSaveable { mutableStateOf(false) }
     var discardDialogVisible by rememberSaveable { mutableStateOf(false) }
     val searchOffset by animateDpAsState(
         targetValue = if (searchVisible) 76.dp else 0.dp,
@@ -199,7 +197,7 @@ fun QuickTemplateTargetsContent(
                         FeedbackIconButton(
                             onClick = {
                                 focusManager.clearFocus()
-                                filterSheetVisible = true
+                                filterDialogVisible = true
                             }
                         ) {
                             Icon(
@@ -311,20 +309,15 @@ fun QuickTemplateTargetsContent(
         }
     }
 
-    if (filterSheetVisible) {
-        ModalBottomSheet(
-            onDismissRequest = { filterSheetVisible = false },
-            sheetState = rememberBottomSheetState(
-                initialValue = SheetValue.Hidden,
-                enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
-            ),
-            dragHandle = null
-        ) {
+    if (filterDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { filterDialogVisible = false },
+            confirmButton = {},
+            text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 20.dp)
-                    .navigationBarsPadding()
+                    .padding(vertical = 4.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -332,7 +325,7 @@ fun QuickTemplateTargetsContent(
                     horizontalArrangement = Arrangement.Start
                 ) {
                     FeedbackIconButton(
-                        onClick = { filterSheetVisible = false },
+                        onClick = { filterDialogVisible = false },
                         modifier = Modifier
                             .size(40.dp)
                             .offset(x = (-8).dp)
@@ -533,6 +526,7 @@ fun QuickTemplateTargetsContent(
                 Spacer(Modifier.height(16.dp))
             }
         }
+        )
     }
 
     if (discardDialogVisible) {

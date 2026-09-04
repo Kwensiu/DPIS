@@ -78,16 +78,23 @@ internal class ComposeAppEditorController(
 
     fun open(item: AppListItem?) {
         item ?: return
-        session.editingPackageName = item.packageName
+        // Resolve the item before consulting the closed-session cache. A global prefill is a new
+        // editor baseline, so an older clean draft for the same package must not replace it.
+        val editorItem = host.resolveEditorItem(item.packageName) ?: item
+        session.editingPackageName = editorItem.packageName
         session.editingDestination = ConfigEditorDestination.MAIN
         val currentDraft = session.editingDraft
-        if (currentDraft == null || currentDraft.packageName != item.packageName) {
-            val lastClosed = host.restoreClosedDraft(
-                item,
-                session.getLastClosedEditingDraft(item.packageName),
-            )
-            session.editingDraft = lastClosed
-            session.savedEditingDraft = lastClosed
+        if (currentDraft == null || currentDraft.packageName != editorItem.packageName) {
+            val initialDraft = if (editorItem.previewFromGlobalPrefill) {
+                EditorDraft.fromItem(editorItem)
+            } else {
+                host.restoreClosedDraft(
+                    editorItem,
+                    session.getLastClosedEditingDraft(editorItem.packageName),
+                )
+            }
+            session.editingDraft = initialDraft
+            session.savedEditingDraft = initialDraft
         }
         host.refreshEditor()
     }

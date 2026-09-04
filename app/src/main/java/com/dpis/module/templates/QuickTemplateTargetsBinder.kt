@@ -14,9 +14,8 @@ import com.dpis.module.DpisLog
 import com.dpis.module.R
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.config.PackageConfigRepository
-import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.TouchFeedbackBinder
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textview.MaterialTextView
 import java.util.LinkedHashSet
@@ -114,7 +113,7 @@ class QuickTemplateTargetsBinder(
         }
         rootView.findViewById<ImageButton>(R.id.quick_template_targets_filter_button)?.let { filterButton ->
             TouchFeedbackBinder.bindPressHaptic(filterButton)
-            filterButton.setOnClickListener { showFilterSheet() }
+            filterButton.setOnClickListener { showFilterDialog() }
         }
     }
 
@@ -176,14 +175,15 @@ class QuickTemplateTargetsBinder(
         }
     }
 
-    private fun showFilterSheet() {
+    private fun showFilterDialog() {
         var root = rootView.findViewById<ViewGroup>(android.R.id.content)
         if (root == null) root = activity.findViewById(android.R.id.content)
         val dialogView = LayoutInflater.from(activity).inflate(
             R.layout.dialog_quick_template_target_filters, root, false
         )
-        val dialog = BottomSheetDialog(activity)
-        dialog.setContentView(dialogView)
+        val dialog = MaterialAlertDialogBuilder(activity)
+            .setView(dialogView)
+            .create()
         val showSystemSwitch = dialogView.findViewById<MaterialSwitch>(
             R.id.quick_template_targets_filter_show_system_switch
         )
@@ -199,7 +199,6 @@ class QuickTemplateTargetsBinder(
         showSystemSwitch.setOnCheckedChangeListener(listener)
         hideConfiguredSwitch.setOnCheckedChangeListener(listener)
         dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
     }
 
     private fun createInstalledAppCatalogHost() = object : InstalledAppCatalogCoordinator.Host {

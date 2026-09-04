@@ -53,6 +53,7 @@ import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.presentation.TemplateWorkspaceContent
+import com.dpis.module.templates.presentation.TemplateEditorOverlayHost
 import com.dpis.module.ui.compose.AppConfigEditorContent
 import com.dpis.module.ui.compose.AppConfigEditorOverlay
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
@@ -103,6 +104,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
     private var toolsExpanded by mutableStateOf(false)
     private var settingsRevision by mutableIntStateOf(0)
     private var templateRevision by mutableIntStateOf(0)
+    private val templateEditorOverlayHost = TemplateEditorOverlayHost()
     @Composable fun render(mode: MainUiState.WorkspaceMode, padding: PaddingValues): Boolean {
         val pageScrollPositions = rememberSaveable(saver = PageScrollPositionStore.Saver) {
             PageScrollPositionStore()
@@ -207,6 +209,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                         onEditorChanged = content.templateWorkspace()::updateEditor,
                         onEditorDestinationChanged = content.templateWorkspace()::updateEditorDestination,
                         onEditorClosed = content.templateWorkspace()::closeEditor,
+                        editorOverlayHost = templateEditorOverlayHost,
                         scrollStore = pageScrollPositions,
                     )
                 }
@@ -307,7 +310,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             .fillMaxWidth()
                             .height(AppConfigSheetUiTokens.TopChromeHeight)
                     ) {
-                        if (editorState.dirty) {
+                        if (editorState.dirty || editorState.item.previewFromGlobalPrefill) {
                             Surface(
                                 modifier = androidx.compose.ui.Modifier.align(Alignment.Center),
                                 shape = AppConfigSheetUiTokens.UnsavedBadgeShape,
@@ -480,6 +483,11 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             }
             )
         }
+    }
+    @Composable fun RenderTemplateEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false) {
+        templateRevision
+        if (mode != MainUiState.WorkspaceMode.TEMPLATE || wear) return
+        templateEditorOverlayHost.content.value?.invoke()
     }
 }
 

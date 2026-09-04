@@ -13,7 +13,7 @@ import com.dpis.module.templates.TemplateEditorForm
  * Saveable Compose owner for a [TemplateEditorForm].
  *
  * The Java form keeps template-domain rules in one place; this holder supplies the Compose
- * invalidation and saved-instance serialization needed when a sheet becomes a landscape detail.
+ * invalidation and saved-instance serialization needed when an editor becomes a landscape detail.
  */
 @Stable
 class TemplateEditorDraftState internal constructor(val form: TemplateEditorForm) {

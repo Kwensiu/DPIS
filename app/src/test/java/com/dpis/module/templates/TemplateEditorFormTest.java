@@ -13,7 +13,7 @@ import com.dpis.module.viewport.ViewportTargetType;
 
 import org.junit.Test;
 
-/** Locks the draft rules shared by the portrait sheet and landscape detail editor. */
+/** Locks the draft rules shared by template editor presentations. */
 public final class TemplateEditorFormTest {
     @Test
     public void switchingViewportTargetRetainsBothDraftInputs() {

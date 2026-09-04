@@ -16,12 +16,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
-import com.dpis.module.ui.compose.DpisTheme
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsAnimationCompat
+import androidx.core.view.WindowInsetsCompat
+import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationContent
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
 import com.dpis.module.ui.dialog.StartupDisclaimerDialog
 import com.dpis.module.ui.dialog.StartupDisclaimerGate
-import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.resolveDarkTheme
+import com.dpis.module.ui.compose.imeWindowPan
+import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
+import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
 import java.util.function.BooleanSupplier
 
 /** Installs the Compose shell; domain state and actions remain Activity-owned. */
@@ -38,6 +44,7 @@ internal class MainComposeShellHost(
 
     init {
         composeView.setContent {
+            val inputFocusBoundary = rememberTextInputFocusBoundary()
             val disclaimerPresenter = remember {
                 StartupDisclaimerGate.Presenter {
                         markAccepted,
@@ -50,8 +57,51 @@ internal class MainComposeShellHost(
                 StartupDisclaimerGate.bind(disclaimerPresenter)
                 onDispose { StartupDisclaimerGate.clear(disclaimerPresenter) }
             }
-            DpisTheme(darkTheme = dpisDarkTheme()) {
-                Box(Modifier.fillMaxSize()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
+                androidx.compose.runtime.DisposableEffect(composeView, inputFocusBoundary) {
+                    ViewCompat.setWindowInsetsAnimationCallback(
+                        composeView,
+                        object : WindowInsetsAnimationCompat.Callback(
+                            WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE,
+                        ) {
+                            override fun onProgress(
+                                insets: WindowInsetsCompat,
+                                runningAnimations: MutableList<WindowInsetsAnimationCompat>,
+                            ): WindowInsetsCompat {
+                                inputFocusBoundary.updateAnimatedImeBottom(
+                                    insets.getInsets(WindowInsetsCompat.Type.ime()).bottom,
+                                )
+                                return insets
+                            }
+
+                            override fun onStart(
+                                animation: WindowInsetsAnimationCompat,
+                                bounds: WindowInsetsAnimationCompat.BoundsCompat,
+                            ): WindowInsetsAnimationCompat.BoundsCompat {
+                                if ((animation.typeMask and WindowInsetsCompat.Type.ime()) != 0) {
+                                    inputFocusBoundary.beginImeAnimation(bounds.upperBound.bottom)
+                                }
+                                return bounds
+                            }
+
+                            override fun onEnd(animation: WindowInsetsAnimationCompat) {
+                                // Keep the final animation frame as the stable value. Clearing it
+                                // here makes Compose switch from the frame-driven path back to the
+                                // settled-inset path during the same frame, which causes a visible
+                                // snap. The next IME animation replaces this value on its first
+                                // progress callback.
+                                if ((animation.typeMask and WindowInsetsCompat.Type.ime()) != 0) {
+                                    inputFocusBoundary.finishImeAnimation()
+                                }
+                            }
+                        },
+                    )
+                    onDispose { ViewCompat.setWindowInsetsAnimationCallback(composeView, null) }
+                }
+                androidx.compose.runtime.CompositionLocalProvider(
+                    LocalTextInputFocusBoundary provides inputFocusBoundary,
+                ) {
+                Box(Modifier.fillMaxSize().imeWindowPan(inputFocusBoundary)) {
                     val preparation = diagnosticPreparation
                     BackHandler(enabled = preparation != null) {
                         preparation?.back()
@@ -85,6 +135,7 @@ internal class MainComposeShellHost(
                                 }
                             }
                             workspacePresentation.RenderAppEditorOverlay(state.workspaceMode, isCompactUi)
+                            workspacePresentation.RenderTemplateEditorOverlay(state.workspaceMode, isCompactUi)
                         }
                     }
                     startupDisclaimer?.let { request ->
@@ -93,6 +144,7 @@ internal class MainComposeShellHost(
                             onBack = request.onBack,
                         )
                     }
+                }
                 }
             }
         }

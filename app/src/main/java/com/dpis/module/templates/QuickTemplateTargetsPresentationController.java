@@ -230,7 +230,7 @@ public final class QuickTemplateTargetsPresentationController {
                 }
                 loaded = next;
             } catch (Throwable throwable) {
-                // Loading failure is a presentation state, not a reason to strand the sheet in
+                // Loading failure is a presentation state, not a reason to strand the page in
                 // its progress state. Keep the last complete list and converge loading below.
                 DpisLog.e("quick template target presentation load failed", throwable);
             }

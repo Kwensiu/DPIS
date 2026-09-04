@@ -35,7 +35,7 @@ fun DpisEditorBottomSheet(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     onHidden: () -> Unit = {},
-    skipPartiallyExpanded: Boolean = true,
+    openPartiallyExpanded: Boolean = false,
     topChrome: @Composable () -> Unit = { DpisSheetVisualChrome() },
     contentWindowInsets: @Composable () -> WindowInsets = {
         androidx.compose.material3.BottomSheetDefaults.modalWindowInsets
@@ -44,16 +44,20 @@ fun DpisEditorBottomSheet(
 ) {
     val sheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
-        enabledValues = if (skipPartiallyExpanded) {
-            setOf(SheetValue.Hidden, SheetValue.Expanded)
-        } else {
+        enabledValues = if (openPartiallyExpanded) {
             setOf(SheetValue.Hidden, SheetValue.PartiallyExpanded, SheetValue.Expanded)
+        } else {
+            setOf(SheetValue.Hidden, SheetValue.Expanded)
         }
     )
     androidx.compose.runtime.LaunchedEffect(visible) {
         if (visible) {
             if (sheetState.currentValue == SheetValue.Hidden) {
-                sheetState.expand()
+                if (openPartiallyExpanded) {
+                    sheetState.partialExpand()
+                } else {
+                    sheetState.expand()
+                }
             }
         } else {
             if (sheetState.currentValue != SheetValue.Hidden) {

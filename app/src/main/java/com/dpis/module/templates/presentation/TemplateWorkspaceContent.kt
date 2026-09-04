@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -59,14 +61,14 @@ import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.WorkspaceTwoPaneMinWidth
 import com.dpis.module.ui.compose.AppTypefacePickerPage
-import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.HookChainEditorPage
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.dialog.ModalDialog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun TemplateWorkspaceContent(
+internal fun TemplateWorkspaceContent(
     state: TemplateWorkspacePresentation.State,
     padding: PaddingValues,
     onQueryChanged: (String) -> Unit,
@@ -74,6 +76,7 @@ fun TemplateWorkspaceContent(
     onEditorChanged: (TemplateEditorForm) -> Unit = {},
     onEditorDestinationChanged: (ConfigEditorDestination) -> Unit = {},
     onEditorClosed: () -> Unit = {},
+    editorOverlayHost: TemplateEditorOverlayHost? = null,
     scrollStore: PageScrollPositionStore,
 ) {
     var editorKind by rememberSaveable {
@@ -93,8 +96,6 @@ fun TemplateWorkspaceContent(
     var targetSaveRequest by rememberSaveable { mutableIntStateOf(0) }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     var sortDialogVisible by rememberSaveable { mutableStateOf(false) }
-    var editorSheetVisible by rememberSaveable { mutableStateOf(false) }
-    var editorSheetClosing by remember { mutableStateOf(false) }
     val editorDestination = state.editorDestination
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val configuration = LocalConfiguration.current
@@ -129,8 +130,6 @@ fun TemplateWorkspaceContent(
         editorKind = kind
         editorTemplateId = templateId
         targetsTemplateId = null
-        editorSheetVisible = true
-        editorSheetClosing = false
         onEditorDestinationChanged(ConfigEditorDestination.MAIN)
         onEditorOpened(kind == EDITOR_QUICK, templateId)
     }
@@ -171,19 +170,11 @@ fun TemplateWorkspaceContent(
         editorKind = null
         editorTemplateId = null
         deleteConfirmationVisible = false
-        editorSheetVisible = false
-        editorSheetClosing = false
         onEditorClosed()
     }
 
     fun closeEditor() {
         if (editorKind == null) return
-        if (!isLandscape && editorSheetClosing) return
-        if (!isLandscape && editorSheetVisible) {
-            editorSheetClosing = true
-            editorSheetVisible = false
-            return
-        }
         finishEditorClose()
     }
 
@@ -212,7 +203,8 @@ fun TemplateWorkspaceContent(
     @Composable
     fun hookChainPage(
         bottomPadding: Dp,
-        modifier: Modifier = Modifier
+        modifier: Modifier = Modifier,
+        onBack: (() -> Unit)? = null,
     ) {
         HookChainEditorPage(
             destination = editorDestination,
@@ -228,21 +220,24 @@ fun TemplateWorkspaceContent(
                 notifyEditorChanged()
             },
             onDestinationChanged = onEditorDestinationChanged,
-            onBack = { onEditorDestinationChanged(editorDestination.backDestination()) },
+            onBack = onBack ?: { onEditorDestinationChanged(editorDestination.backDestination()) },
             modifier = modifier,
             bottomPadding = bottomPadding
         )
     }
 
     @Composable
-    fun typefacePage(modifier: Modifier = Modifier) {
+    fun typefacePage(
+        modifier: Modifier = Modifier,
+        onBack: (() -> Unit)? = null,
+    ) {
         AppTypefacePickerPage(
             selectedTypefaceId = editorDraft.form.selectedTypefaceId,
             onTypefaceSelected = {
                 editorDraft.form.selectedTypefaceId = it
                 notifyEditorChanged()
             },
-            onBack = {
+            onBack = onBack ?: {
                 onEditorDestinationChanged(editorDestination.backDestination())
             },
             modifier = modifier
@@ -252,11 +247,9 @@ fun TemplateWorkspaceContent(
     val editorBody: @Composable () -> Unit = {
         TemplateEditorSurface(
             form = editorDraft.form,
-            surface = TemplateEditorSurfaceKind.LANDSCAPE_DETAIL,
             draftRevision = draftRevision,
             topSafePadding = topSafePadding,
             bottomSafePadding = padding.calculateBottomPadding(),
-            sheetVisible = false,
             onFormChanged = ::notifyEditorChanged,
             onSelectTypeface = {
                 onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
@@ -265,7 +258,6 @@ fun TemplateWorkspaceContent(
                 onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
             },
             onReset = { editorDraft.form.reset(); notifyEditorChanged() },
-            onDismissRequest = ::closeEditor,
             onDelete = if (editorDraft.form.quickTemplate && !editorDraft.form.newTemplate) {
                 { deleteConfirmationVisible = true }
             } else null,
@@ -280,6 +272,42 @@ fun TemplateWorkspaceContent(
             typefaceContent = {
                 typefacePage(Modifier.padding(top = topSafePadding))
             }
+        )
+    }
+    val editorSheetBody: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit = {
+            onContentBottomMeasured, _, onReturnFromChild ->
+        TemplateEditorSurface(
+            form = editorDraft.form,
+            draftRevision = draftRevision,
+            onFormChanged = ::notifyEditorChanged,
+            onSelectTypeface = {
+                onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
+            },
+            onEditHookDomains = {
+                onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
+            },
+            onReset = { editorDraft.form.reset(); notifyEditorChanged() },
+            onDelete = if (editorDraft.form.quickTemplate && !editorDraft.form.newTemplate) {
+                { deleteConfirmationVisible = true }
+            } else null,
+            onSave = ::saveEditor,
+            onContentBottomMeasured = onContentBottomMeasured,
+            // Portrait already exposes this state in the fixed sheet chrome. Keeping a second
+            // badge in the wrapped title changes its measured width and can destabilize the
+            // collapsed editor layout for long localized titles.
+            showInlineUnsavedBadge = false,
+            animateDestinationSize = false,
+            clipDestinationContent = false,
+            destination = editorDestination,
+            hookContent = {
+                hookChainPage(
+                    padding.calculateBottomPadding(),
+                    onBack = onReturnFromChild,
+                )
+            },
+            typefaceContent = {
+                typefacePage(onBack = onReturnFromChild)
+            },
         )
     }
 
@@ -367,33 +395,39 @@ fun TemplateWorkspaceContent(
                 scrollStore = scrollStore,
                 modifier = Modifier
             )
-            if (editorKind != null) {
-                TemplateEditorSurface(
-                    form = editorDraft.form,
-                    surface = TemplateEditorSurfaceKind.PORTRAIT_SHEET,
-                    draftRevision = draftRevision,
-                    sheetVisible = editorSheetVisible,
-                    onSheetHidden = { if (editorSheetClosing) finishEditorClose() },
-                    onFormChanged = ::notifyEditorChanged,
-                    onSelectTypeface = {
-                        onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
-                    },
-                    onEditHookDomains = {
-                        onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
-                    },
-                    onReset = { editorDraft.form.reset(); notifyEditorChanged() },
-                    onDismissRequest = ::closeEditor,
-                    onDelete = if (
-                        editorDraft.form.quickTemplate && !editorDraft.form.newTemplate
-                    ) {
-                        { deleteConfirmationVisible = true }
-                    } else null,
-                    onSave = ::saveEditor,
+        }
+    }
+    val templateOverlayContent: TemplateEditorOverlay? = remember(
+        editorKind,
+        editorTemplateId,
+        editorDestination,
+        draftRevision,
+        isLandscape,
+    ) {
+        if (!isLandscape && editorKind != null) {
+            {
+                TemplateEditorSheet(
                     destination = editorDestination,
-                    hookContent = { hookChainPage(padding.calculateBottomPadding()) },
-                    typefaceContent = { typefacePage() }
+                    onDismissRequest = ::closeEditor,
+                    onReturnToMain = {
+                        onEditorDestinationChanged(editorDestination.backDestination())
+                    },
+                    topChrome = {
+                        TemplateEditorSheetChrome(showUnsaved = editorDraft.form.isDirty)
+                    },
+                    content = editorSheetBody,
                 )
             }
+        } else {
+            null
+        }
+    }
+    SideEffect {
+        editorOverlayHost?.content?.value = templateOverlayContent
+    }
+    DisposableEffect(editorOverlayHost) {
+        onDispose {
+            editorOverlayHost?.clear(templateOverlayContent)
         }
     }
     if (sortDialogVisible) {
@@ -566,7 +600,7 @@ private fun TemplateDetailEmptyState(modifier: Modifier = Modifier) {
 @Preview(showBackground = true, widthDp = 360, heightDp = 640)
 @Composable
 private fun TemplateDetailEmptyStatePreview() {
-    DpisTheme(
+    ComposeDesignSystem(
         darkTheme = false,
         dynamicColor = false
     ) {
