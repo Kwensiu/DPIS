@@ -336,8 +336,6 @@ dependencies {
     implementation(libs.dexkit)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.recyclerview)
-    implementation(libs.androidx.viewpager2)
-    implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.material)
     implementation(libs.markwon.core)
     implementation(platform(libs.compose.bom))

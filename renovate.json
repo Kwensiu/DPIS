@@ -17,8 +17,6 @@
       "matchPackageNames": [
         "androidx.appcompat:appcompat",
         "androidx.recyclerview:recyclerview",
-        "androidx.viewpager2:viewpager2",
-        "androidx.swiperefreshlayout:swiperefreshlayout",
         "com.google.android.material:material",
         "io.noties.markwon:core",
         "androidx.annotation:annotation",
@@ -36,11 +34,7 @@
         "io.github.libxposed:api",
         "io.github.libxposed:service",
         "de.robv.android.xposed:api",
-        "org.luckypray:dexkit",
-        "com.highcapable.yukihookapi:api",
-        "com.highcapable.yukihookapi:ksp-xposed",
-        "com.highcapable.kavaref:kavaref-core",
-        "com.highcapable.kavaref:kavaref-extension"
+        "org.luckypray:dexkit"
       ],
       "groupName": "runtime hook dependencies",
       "groupSlug": "runtime-hook-dependencies"
