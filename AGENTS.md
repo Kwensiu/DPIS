@@ -15,6 +15,34 @@
 
 ## Agent skills
 
+### Project-level compliance
+
+- `AGENTS.md`, `CONTEXT.md`, active documents under `docs/`, and any task-specific
+  project playbook are binding implementation and review constraints. Before
+  editing, identify the applicable rules; after editing, audit the complete
+  diff against them. Do not knowingly leave a violation for a later cleanup.
+- This applies to all rules, not only testing: package/file ownership, Compose
+  and Kotlin conventions, Java interoperability boundaries, state ownership,
+  runtime-route semantics, inset ownership, naming, comments, and validation
+  requirements must be corrected in the same change when the touched scope
+  exposes a violation.
+- When an existing Java class is materially changed and its responsibility is
+  inside the Kotlin/Compose ownership boundary, migrate it to Kotlin in the
+  same change. If migration is not safe because of reflection, JNI, flavor
+  entrypoints, or an externally observed JVM signature, record that reason in
+  the change and preserve the boundary deliberately.
+- Keep physical directories aligned with responsibility. Do not leave new
+  presentation code in a catch-all package when an existing feature/design,
+  editor, workspace, dialog, interop, or Wear boundary applies. Keep Kotlin
+  packages stable during a pure physical reorganization unless package changes
+  are required and all callers/tests are updated.
+- Do not hide a known violation behind compatibility aliases, duplicated
+  implementations, or stale tests. Remove obsolete names and implementation
+  anchors when the owning code is renamed or refactored.
+- Names must describe the responsibility and semantic role of the value or
+  function. Avoid vague helpers, duplicated type/feature prefixes, and names
+  that confuse layout, content inset, clipping, or interaction ownership.
+
 ### Issue tracker
 
 Issues are tracked in GitHub Issues for `Kwensiu/DPIS`. See `docs/agents/issue-tracker.md`.
@@ -163,6 +191,8 @@ Chinese unless the user explicitly requests that locale's content.
   `android studio analyze-file --project=<project> <path>` for touched Java or
   Kotlin files; for Compose UI changes, use
   `android studio render-compose-preview` when a suitable `@Preview` exists.
+  Run these Android CLI commands strictly sequentially, one invocation at a
+  time; parallel CLI requests can block the Studio bridge and are prohibited.
   Treat the reported inspections, warnings, and preview findings as
   optimization leads only: they supplement, and never replace, Gradle, Lint,
   unit-test, device, or runtime validation. If the CLI or an active Studio
@@ -171,6 +201,13 @@ Chinese unless the user explicitly requests that locale's content.
 - `android studio analyze-file` expects the project name reported by
   `android studio check` (for example, `--project=DPIS`), not the project path.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
+- During every review or implementation pass, audit all touched files against
+  the full project-level rules above. Fix newly exposed violations in the same
+  pass, including non-test style, structure, language, ownership, and
+  documentation violations.
+- Tests must pin user-visible behavior, domain invariants, or stable module contracts. Do not add tests that merely repeat a source line, method name, literal value, file path, or implementation detail unless that detail is itself an intentional compatibility contract.
+- Keep source smoke tests focused and sparse: one semantic assertion may cover a coherent wiring rule, but do not create large collections of string-presence assertions that all restate the same implementation. When refactoring, update or remove stale implementation anchors instead of preserving them for their own sake.
+- Prefer tests that would still pass after a reasonable internal refactor and would fail when the promised behavior regresses. If a behavior cannot be exercised directly, document why a narrow source-level anchor is the least fragile available check.
 - When changing UI structure, resource ids, shared binders/helpers, navigation,
   or layout ownership, explicitly check and update source/layout smoke tests.
   In this project the frequent touch points are
