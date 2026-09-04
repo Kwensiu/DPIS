@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
-import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
 
 @Composable
 internal fun StartupDisclaimerDialog(
@@ -145,7 +145,7 @@ private fun StartupDisclaimerActions(
 @Preview(showBackground = true)
 @Composable
 private fun StartupDisclaimerContentPreview() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         StartupDisclaimerDialog(onAccept = {}, onBack = {})
     }
 }

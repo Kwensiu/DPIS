@@ -134,7 +134,7 @@ object SettingsComposeDialogs {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) { content { dialog.dismiss() } }
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) { content { dialog.dismiss() } }
         }
         dialog.setCanceledOnTouchOutside(true)
         dialog.show()

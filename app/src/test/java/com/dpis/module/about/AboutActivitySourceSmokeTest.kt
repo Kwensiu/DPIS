@@ -23,7 +23,7 @@ class AboutActivitySourceSmokeTest {
     fun aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
         val dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt")
-        val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/AndroidTextInterop.kt")
+        val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/interop/AndroidTextInterop.kt")
         val manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java")
 
         source.assertContainsAll(

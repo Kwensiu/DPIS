@@ -11,6 +11,7 @@ import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryEntry
 import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.ui.TouchFeedbackBinder
+import com.dpis.module.templates.presentation.TemplateUiTokens
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textview.MaterialTextView
 import java.util.Locale
@@ -95,7 +96,7 @@ class TemplateWorkspaceBinder(
         workspaceView.findViewById<View>(R.id.quick_template_sort_button)?.let { sortButton ->
             val enabled = templates.isNotEmpty()
             sortButton.isEnabled = enabled
-            sortButton.alpha = if (enabled) 1f else DISABLED_ACTION_ALPHA
+            sortButton.alpha = if (enabled) 1f else TemplateUiTokens.DISABLED_ACTION_ALPHA
             TouchFeedbackBinder.bindPressHaptic(sortButton)
             sortButton.setOnClickListener {
                 quickTemplateActions?.sort(QuickTemplateStore(context).readAll())
@@ -138,7 +139,4 @@ class TemplateWorkspaceBinder(
         override fun modeCompat() = context.getString(R.string.template_workspace_mode_compat)
     }
 
-    private companion object {
-        const val DISABLED_ACTION_ALPHA = 0.45f
-    }
 }

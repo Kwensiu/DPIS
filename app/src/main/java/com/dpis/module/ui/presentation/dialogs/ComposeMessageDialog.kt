@@ -66,7 +66,7 @@ object ComposeMessageDialog {
         val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
         val handle = Handle(dialog, message.toComposeAnnotatedString())
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 MessageDialogContent(
                     title = title.toString(),
                     message = handle.message,
@@ -145,7 +145,7 @@ internal fun MessageDialogContent(
 @Preview(showBackground = true)
 @Composable
 private fun MessageDialogContentPreview() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         MessageDialogContent(
             title = "Release notes",
             message = AnnotatedString("Changes in this version."),

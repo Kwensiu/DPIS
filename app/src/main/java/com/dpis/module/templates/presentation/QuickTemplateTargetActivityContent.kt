@@ -9,8 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.dpis.module.R
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
-import com.dpis.module.ui.compose.DpisTheme
-import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.resolveDarkTheme
 
 /** Compose host for the manifest-owned portrait target-selection Activity contract. */
 object QuickTemplateTargetActivityContent {
@@ -35,7 +35,7 @@ object QuickTemplateTargetActivityContent {
             }
         }
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 QuickTemplateTargetsContent(
                     state = state,
                     onBack = onBack::run,

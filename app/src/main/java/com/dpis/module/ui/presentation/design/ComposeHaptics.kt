@@ -66,7 +66,7 @@ fun rememberClickAction(
 @Composable
 fun rememberClickFeedback(hapticFeedbackEnabled: Boolean = true): () -> Unit {
     val hapticFeedback = LocalHapticFeedback.current
-    val policyEnabled = LocalDpisClickHapticsEnabled.current
+    val policyEnabled = LocalClickHapticsEnabled.current
     return remember(hapticFeedback, hapticFeedbackEnabled, policyEnabled) {
         {
             if (policyEnabled && hapticFeedbackEnabled) {
@@ -99,7 +99,7 @@ fun rememberLongPressAction(action: () -> Unit): () -> Unit {
 @Composable
 fun rememberLongPressFeedback(hapticFeedbackEnabled: Boolean = true): () -> Unit {
     val hapticFeedback = LocalHapticFeedback.current
-    val policyEnabled = LocalDpisClickHapticsEnabled.current
+    val policyEnabled = LocalClickHapticsEnabled.current
     return remember(hapticFeedback, hapticFeedbackEnabled, policyEnabled) {
         {
             if (policyEnabled && hapticFeedbackEnabled) {

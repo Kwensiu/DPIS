@@ -15,6 +15,7 @@ class RuntimeReloadNoticeSourceSmokeTest {
 
         assertTrue(advisor.contains(".commit()"))
         assertTrue(coordinator.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceShown(host)"))
+        assertTrue(coordinator.contains("if (!host.isChangingConfigurations)"))
         assertTrue(dialog.contains("dialog.setOnDismissListener { onDismissed.run() }"))
         assertTrue(dialog.contains("dialog.setCancelable(true)"))
         assertTrue(dialog.contains("dialog.setCanceledOnTouchOutside(true)"))

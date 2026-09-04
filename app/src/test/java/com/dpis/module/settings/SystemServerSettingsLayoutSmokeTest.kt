@@ -76,7 +76,7 @@ class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    fun rowLayoutsAndFontDebugSurfaceKeepExpectedTokens() {
+    fun rowLayoutsAndFontDebugSurfaceKeepExpectedSpacing() {
         read("src/main/res/layout/item_settings_switch.xml").assertContainsAll("android:saveEnabled=\"false\"", "@dimen/settings_row_min_height", "@dimen/settings_row_padding_horizontal", "@dimen/settings_row_switch_spacing_start")
         read("src/main/res/layout/item_settings_entry.xml").assertContainsAll("@dimen/settings_row_min_height", "@dimen/settings_row_padding_horizontal", "@dimen/settings_row_chevron_size")
         read("src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt").assertContainsAll("R.dimen.font_debug_dialog_surface_padding_horizontal", "MaterialTheme.colorScheme.surfaceContainer", "MaterialTheme.colorScheme.errorContainer")

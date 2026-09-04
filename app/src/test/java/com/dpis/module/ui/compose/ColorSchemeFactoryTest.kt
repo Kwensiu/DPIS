@@ -6,12 +6,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
-class DpisColorSchemeFactoryTest {
+class ColorSchemeFactoryTest {
     @Test
     fun expressiveSupports2025Specification() {
         assertEquals(
             ColorSpec.SpecVersion.SPEC_2025,
-            DpisColorSchemeFactory.resolveSpecification(
+            ColorSchemeFactory.resolveSpecification(
                 ThemeModeStore.STYLE_EXPRESSIVE,
                 ThemeModeStore.SPEC_2025,
             ),
@@ -22,7 +22,7 @@ class DpisColorSchemeFactoryTest {
     fun unsupportedStyleFallsBackTo2021Specification() {
         assertEquals(
             ColorSpec.SpecVersion.SPEC_2021,
-            DpisColorSchemeFactory.resolveSpecification(
+            ColorSchemeFactory.resolveSpecification(
                 ThemeModeStore.STYLE_FIDELITY,
                 ThemeModeStore.SPEC_2025,
             ),
@@ -31,14 +31,14 @@ class DpisColorSchemeFactoryTest {
 
     @Test
     fun differentSeedsGenerateDifferentCompleteSchemes() {
-        val purple = DpisColorSchemeFactory.create(
-            seedColor = DpisColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
+        val purple = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
             darkTheme = false,
             paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
             requestedSpecification = ThemeModeStore.SPEC_2025,
         )
-        val green = DpisColorSchemeFactory.create(
-            seedColor = DpisColorSchemeFactory.seedColor(ThemeModeStore.COLOR_GREEN),
+        val green = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_GREEN),
             darkTheme = false,
             paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
             requestedSpecification = ThemeModeStore.SPEC_2025,
@@ -54,8 +54,8 @@ class DpisColorSchemeFactoryTest {
     @Test
     fun defaultStaticThemeColorUsesPurpleSeed() {
         assertEquals(
-            DpisColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
-            DpisColorSchemeFactory.seedColor(ThemeModeStore.DEFAULT_STATIC_THEME_COLOR),
+            ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
+            ColorSchemeFactory.seedColor(ThemeModeStore.DEFAULT_STATIC_THEME_COLOR),
         )
     }
 }

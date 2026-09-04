@@ -63,7 +63,7 @@ fun ToolsWorkspaceContent(
                 start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = pagePadding.calculateBottomPadding() + LocalDpisTokens.current.spaceLg,
+                bottom = pagePadding.calculateBottomPadding() + LocalSpacing.current.xl,
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

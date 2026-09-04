@@ -21,11 +21,11 @@ import androidx.compose.ui.res.colorResource
 import androidx.core.view.WindowCompat
 import com.dpis.module.settings.ThemeModeStore
 
-internal val LocalDpisClickHapticsEnabled = staticCompositionLocalOf { true }
+internal val LocalClickHapticsEnabled = staticCompositionLocalOf { true }
 
 /** Resolves the stored preference at every Compose root without duplicating mode policy. */
 @Composable
-fun dpisDarkTheme(): Boolean {
+fun resolveDarkTheme(): Boolean {
     val context = LocalContext.current
     return ThemeModeStore.isDarkTheme(
         context,
@@ -41,7 +41,7 @@ fun dpisDarkTheme(): Boolean {
  */
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-fun DpisTheme(
+fun ComposeDesignSystem(
     darkTheme: Boolean,
     dynamicColor: Boolean? = null,
     themeColor: String? = null,
@@ -60,17 +60,17 @@ fun DpisTheme(
     val seedColor = if (resolvedDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         colorResource(android.R.color.system_accent1_500)
     } else {
-        DpisColorSchemeFactory.seedColor(resolvedThemeColor)
+        ColorSchemeFactory.seedColor(resolvedThemeColor)
     }
     val targetColors = remember(seedColor, darkTheme, resolvedPaletteStyle, resolvedColorSpecification) {
-        DpisColorSchemeFactory.create(
+        ColorSchemeFactory.create(
             seedColor = seedColor,
             darkTheme = darkTheme,
             paletteStyle = resolvedPaletteStyle,
             requestedSpecification = resolvedColorSpecification,
         )
     }
-    val colors = targetColors.animateDpisAsState()
+    val colors = targetColors.animateColorSchemeAsState()
 
     SideEffect {
         val activity = context.findActivity()
@@ -104,14 +104,14 @@ fun DpisTheme(
     }
 
     CompositionLocalProvider(
-        LocalDpisTokens provides DpisTokens(),
-        LocalDpisClickHapticsEnabled provides clickHapticsEnabled
+        LocalSpacing provides Spacing(),
+        LocalClickHapticsEnabled provides clickHapticsEnabled
     ) {
         MaterialExpressiveTheme(
             colorScheme = colors,
             motionScheme = MotionScheme.expressive(),
-            typography = DpisTypography,
-            shapes = DpisShapes,
+            typography = AppTypography,
+            shapes = AppShapes,
             content = content
         )
     }

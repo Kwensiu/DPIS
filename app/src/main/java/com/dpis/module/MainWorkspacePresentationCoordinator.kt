@@ -57,6 +57,7 @@ import com.dpis.module.templates.presentation.TemplateEditorOverlayHost
 import com.dpis.module.ui.compose.AppConfigEditorContent
 import com.dpis.module.ui.compose.AppConfigEditorOverlay
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.ComposeMotionTokens
 import com.dpis.module.ui.compose.AppHookChainEditorPage
 import com.dpis.module.ui.compose.AppTypefacePickerPage
 import com.dpis.module.ui.compose.AppWorkspaceContent
@@ -118,8 +119,8 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 targetState = mode,
                 transitionSpec = {
                     ContentTransform(
-                        targetContentEnter = fadeIn(animationSpec = tween(180)),
-                        initialContentExit = fadeOut(animationSpec = tween(120)),
+                        targetContentEnter = fadeIn(animationSpec = tween(ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)),
+                        initialContentExit = fadeOut(animationSpec = tween(ComposeMotionTokens.PAGE_EXIT_DURATION_MILLIS)),
                         sizeTransform = null,
                     )
                 },

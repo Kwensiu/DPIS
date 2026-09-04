@@ -37,7 +37,7 @@ class QuickConfigSourceSmokeTest {
         Assert.assertTrue(activity.contains("EXTRA_PACKAGE_NAME"))
         Assert.assertTrue(activity.contains("SupportActivityContent.installQuickConfig(this, presentation!!"))
         Assert.assertTrue(activity.contains("import com.dpis.module.appconfig.EditorPresentationFactory.create"))
-        Assert.assertTrue(content.contains("DpisSheetVisualChrome()"))
+        Assert.assertTrue(content.contains("SheetVisualChrome()"))
         Assert.assertFalse(content.contains("extraTopPadding = 12.dp"))
         Assert.assertTrue(content.contains("AppHookChainEditorPage(state = state)"))
         Assert.assertFalse(content.contains("startFeedbackDiagnostic"))
@@ -113,7 +113,7 @@ class QuickConfigSourceSmokeTest {
     fun quickConfigKeepsItsTranslucentActivityBackdropTransparent() {
         val content: String =
             read("src/main/java/com/dpis/module/about/presentation/SupportActivityContent.kt")
-        val theme: String = read("src/main/java/com/dpis/module/ui/presentation/DpisTheme.kt")
+        val theme: String = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeDesignSystem.kt")
 
         Assert.assertTrue(content.contains("transparentWindowBackground = true"))
         Assert.assertTrue(theme.contains("transparentWindowBackground: Boolean = false"))

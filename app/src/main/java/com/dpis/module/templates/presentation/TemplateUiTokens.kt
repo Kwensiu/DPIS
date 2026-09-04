@@ -66,5 +66,10 @@ internal object TemplateUiTokens {
     val UnsavedBadgeMinHeight = 22.dp
     val UnsavedBadgeShape = RoundedCornerShape(14.dp)
 
-    const val MODE_ANIMATION_DURATION_MILLIS = 200
+}
+
+/** Stable route keys shared by the template list and its editor surface. */
+internal object TemplateEditorKinds {
+    const val GLOBAL = "global"
+    const val QUICK = "quick"
 }

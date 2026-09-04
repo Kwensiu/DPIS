@@ -45,7 +45,7 @@ class DpisWorkspaceNavigationPolicyTest {
     }
 
     @Test
-    fun landscapeWindowKeepsRailWhenDensityShrinksWidthInDp() {
+    fun narrowLandscapeWindowKeepsNavigationRail() {
         assertEquals(
             WorkspaceNavigationLayout.NAVIGATION_RAIL,
             resolveWorkspaceNavigationLayout(500.dp, 300.dp, false)

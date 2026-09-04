@@ -44,8 +44,8 @@ import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
-import com.dpis.module.ui.compose.DpisTheme
-import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.ReorderableDragFeedback
@@ -75,7 +75,7 @@ object QuickTemplateSortDialog {
             .setView(composeView)
             .create()
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 QuickTemplateSortContent(
                     initialItems = templates.map { QuickTemplateSortItem(it.id, it.name) },
                     onOrderChanged = { orderedIds ->
@@ -198,7 +198,7 @@ private fun QuickTemplateSortRow(
 @Preview(showBackground = true)
 @Composable
 private fun QuickTemplateSortContentPreview() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         QuickTemplateSortContent(
             initialItems = listOf(
                 QuickTemplateSortItem("one", "Reading"),
@@ -213,7 +213,7 @@ private fun QuickTemplateSortContentPreview() {
 @Preview(showBackground = true, backgroundColor = 0xFF121212)
 @Composable
 private fun QuickTemplateSortContentDarkPreview() {
-    DpisTheme(darkTheme = true, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
         QuickTemplateSortContent(
             initialItems = listOf(
                 QuickTemplateSortItem("one", "Reading"),

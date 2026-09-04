@@ -37,11 +37,11 @@ internal fun AnimatedConditionalItem(
 }
 
 private fun conditionalItemEnterTransition(): EnterTransition =
-    fadeIn(tween(180)) +
-        slideInVertically(tween(180)) { -it / 5 } +
-        expandVertically(tween(180), expandFrom = Alignment.Top)
+    fadeIn(tween(ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)) +
+        slideInVertically(tween(ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)) { -it / 5 } +
+        expandVertically(tween(ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS), expandFrom = Alignment.Top)
 
 private fun conditionalItemExitTransition(): ExitTransition =
-    fadeOut(tween(140)) +
-        slideOutVertically(tween(140)) { -it / 5 } +
-        shrinkVertically(tween(140), shrinkTowards = Alignment.Top)
+    fadeOut(tween(ComposeMotionTokens.CONTENT_EXIT_DURATION_MILLIS)) +
+        slideOutVertically(tween(ComposeMotionTokens.CONTENT_EXIT_DURATION_MILLIS)) { -it / 5 } +
+        shrinkVertically(tween(ComposeMotionTokens.CONTENT_EXIT_DURATION_MILLIS), shrinkTowards = Alignment.Top)

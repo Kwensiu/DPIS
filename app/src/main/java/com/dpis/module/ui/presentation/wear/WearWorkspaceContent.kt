@@ -1338,7 +1338,7 @@ private fun WearAppIcon(
 internal fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() -> Unit) {
     val state = rememberTransformingLazyColumnState()
     val transformationSpec = rememberTransformationSpec()
-    WearDpisMaterialTheme {
+    WearMaterialTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -1364,7 +1364,7 @@ internal fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() 
 }
 
 @Composable
-internal fun WearDpisMaterialTheme(content: @Composable () -> Unit) {
+internal fun WearMaterialTheme(content: @Composable () -> Unit) {
     val phoneColors = androidx.compose.material3.MaterialTheme.colorScheme
     val wearColors = MaterialTheme.colorScheme.copy(
         primary = phoneColors.primary,

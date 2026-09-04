@@ -31,12 +31,12 @@ import com.dpis.module.R
 /** Shared portrait editor frame. Editor-specific fields and actions stay with each workflow. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DpisEditorBottomSheet(
+fun EditorBottomSheet(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     onHidden: () -> Unit = {},
     openPartiallyExpanded: Boolean = false,
-    topChrome: @Composable () -> Unit = { DpisSheetVisualChrome() },
+    topChrome: @Composable () -> Unit = { SheetVisualChrome() },
     contentWindowInsets: @Composable () -> WindowInsets = {
         androidx.compose.material3.BottomSheetDefaults.modalWindowInsets
     },
@@ -103,14 +103,21 @@ internal fun EditorSheetChildPageHeader(
                 contentDescription = stringResource(R.string.system_settings_back),
             )
         }
-        Text(
+        AppIdentityMarqueeText(
             text = title,
+            modifier = Modifier
+                .fillMaxWidth()
+                // Keep the title clear of the back affordance. The trailing edge remains the
+                // actual title viewport boundary so the marquee can reveal the final character.
+                .padding(start = AppConfigSheetUiTokens.FeedbackActionSize + 8.dp),
             style = MaterialTheme.typography.titleLarge,
+            centerWhenStatic = true,
+            edgeFadeEnabled = false,
         )
     }
 }
 @Composable
-fun DpisSheetVisualChrome(showUnsaved: Boolean = false) {
+fun SheetVisualChrome(showUnsaved: Boolean = false) {
     Box(
         modifier = Modifier
             .fillMaxWidth()

@@ -115,7 +115,7 @@ internal fun CollapsingPageTopBar(
                     LocalTextStyle provides if (expanded) {
                     // Keep the expanded title larger than the compact app-bar title;
                     // the size lives in the typography token rather than this scaffold.
-                    MaterialTheme.typography.dpisExpandedPageTitle
+                    MaterialTheme.typography.expandedPageTitle
                     } else {
                         MaterialTheme.typography.titleLarge
                     }

@@ -84,7 +84,7 @@ private fun LicenseEntry(
 @Preview(showBackground = true)
 @Composable
 private fun OpenSourceLicenseContentPreview() {
-    DpisTheme(darkTheme = false) {
+    ComposeDesignSystem(darkTheme = false) {
         OpenSourceLicenseContent(
             items = listOf(
                 OpenSourceLicenseActivity.LicenseItem(

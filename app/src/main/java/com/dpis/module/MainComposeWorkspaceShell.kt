@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.dpis.module.ui.compose.DpisWorkspaceShell
+import com.dpis.module.ui.compose.WorkspaceShell
 import com.dpis.module.settings.PageSettingsStore
-import com.dpis.module.ui.compose.DpisWorkspaceDestination
+import com.dpis.module.ui.compose.WorkspaceDestination
 
 /**
  * Main-state-aware Compose entry point. The Activity supplies dispatch so
@@ -24,9 +24,9 @@ internal fun MainComposeWorkspaceShell(
     val context = LocalContext.current
     val hidden = PageSettingsStore.getHiddenWorkspaces(context)
     val destinations = PageSettingsStore.getWorkspaceOrder(context).mapNotNull { name ->
-        DpisWorkspaceDestination.entries.firstOrNull { it.name == name }
+        WorkspaceDestination.entries.firstOrNull { it.name == name }
     }.filterNot { it.name in hidden }
-    DpisWorkspaceShell(
+    WorkspaceShell(
         selectedDestination = MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode),
         onDestinationSelected = { destination ->
             dispatch(

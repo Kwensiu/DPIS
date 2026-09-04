@@ -33,8 +33,8 @@ import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
-import com.dpis.module.ui.compose.DpisTheme
-import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.resolveDarkTheme
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -62,7 +62,7 @@ class ResultSheet(
         }
         val dialog = BottomSheetDialog(activity)
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 FeedbackDiagnosticResultContent(
                     title = activity.getString(
                         R.string.feedback_diagnostic_result_title,
@@ -217,7 +217,7 @@ object PackagingDialog {
             .setCancelable(false)
             .create()
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 FeedbackDiagnosticPackagingContent()
             }
         }
@@ -258,7 +258,7 @@ internal fun FeedbackDiagnosticPackagingContent() {
 @Preview(showBackground = true)
 @Composable
 private fun FeedbackDiagnosticResultContentPreview() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         FeedbackDiagnosticResultContent(
             title = "Diagnostic package ready: Demo",
             packageLine = "Package: example.app",
@@ -276,7 +276,7 @@ private fun FeedbackDiagnosticResultContentPreview() {
 @Preview(showBackground = true, backgroundColor = 0xFF121212)
 @Composable
 private fun FeedbackDiagnosticPackagingContentDarkPreview() {
-    DpisTheme(darkTheme = true, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
         FeedbackDiagnosticPackagingContent()
     }
 }

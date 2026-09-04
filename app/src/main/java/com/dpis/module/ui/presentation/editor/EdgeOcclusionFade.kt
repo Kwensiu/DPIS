@@ -87,7 +87,7 @@ internal object EdgeOcclusionFadeTokens {
 internal fun Modifier.dialogListContentFade(
     state: LazyListState,
     edgeColor: Color,
-    edgeHeight: Dp = 20.dp,
+    edgeHeight: Dp = EdgeFadeTokens.Width,
 ): Modifier = drawWithContent {
     drawContent()
     val edgePx = edgeHeight.toPx()

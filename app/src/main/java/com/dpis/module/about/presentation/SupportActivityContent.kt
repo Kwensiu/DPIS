@@ -38,7 +38,7 @@ object SupportActivityContent {
             }
             var showHomeEditButton by remember { mutableStateOf(PageSettingsStore.isHomeEditButtonVisible(activity)) }
             var defaultStartupPage by remember { mutableStateOf(PageSettingsStore.getDefaultStartupPage(activity)) }
-            DpisTheme(
+            ComposeDesignSystem(
                 // Appearance state is intentionally read at this root so every saved choice
                 // recolors the same composition instead of recreating the Activity.
                 darkTheme = ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme()),
@@ -151,8 +151,8 @@ object SupportActivityContent {
         presentation: QuickConfigPresentation
     ) {
         activity.setContent {
-            DpisTheme(
-                darkTheme = dpisDarkTheme(),
+            ComposeDesignSystem(
+                darkTheme = resolveDarkTheme(),
                 transparentWindowBackground = true,
             ) {
                 QuickConfigContent(presentation = presentation, onDismiss = activity::finish)
@@ -163,7 +163,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installDonate(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 DonateSupportPage(onBack = activity::finish)
             }
         }
@@ -172,7 +172,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installModeHelp(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 ModeHelpPage(
                     onBack = activity::finish,
                     onOpenModeGuide = {
@@ -186,7 +186,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installModeGuide(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 ModeGuidePage(onBack = activity::finish)
             }
         }
@@ -195,7 +195,7 @@ object SupportActivityContent {
     @JvmStatic
     fun installExperimentalSettings(activity: ComponentActivity) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearExperimentalSettingsContent()
                 } else {
@@ -217,7 +217,7 @@ object SupportActivityContent {
         onOpenLicenses: Runnable
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearAboutContent(
                         versionText = versionText,
@@ -251,7 +251,7 @@ object SupportActivityContent {
         onItemSelected: Consumer<OpenSourceLicenseActivity.LicenseItem>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearOpenSourceLicenseContent(
                         items = items,
@@ -278,7 +278,7 @@ object SupportActivityContent {
         onFontSelected: Consumer<String>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearFontLibraryContent(
                         presentation = presentation,
@@ -311,7 +311,7 @@ object SupportActivityContent {
         onRemoveReference: Consumer<String>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 FontDetailContent(
                     presentation = presentation,
                     onBack = activity::finish,
@@ -338,7 +338,7 @@ object SupportActivityContent {
         onCopyEntry: Consumer<String>
     ) {
         activity.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 LogContent(
                     presentation = presentation,
                     onBack = activity::finish,

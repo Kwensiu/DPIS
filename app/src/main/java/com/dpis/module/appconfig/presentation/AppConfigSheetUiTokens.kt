@@ -79,8 +79,8 @@ internal object AppConfigSheetUiTokens {
     // away from the value that users are actively editing.
     val SecondaryControlMaxWidth = 180.dp
     const val PortraitSecondaryControlWidthFraction = 0.4f
-    // Landscape editors have enough horizontal room to make values readable, so reserve a
-    // smaller proportional share for their secondary control before applying the same cap.
-    const val LandscapeSecondaryControlWidthFraction = 0.32f
+    // Landscape rows split the available editor width evenly before the cap. This keeps the
+    // selector readable in a narrow right pane while the input retains the other half.
+    const val LandscapeSecondaryControlWidthFraction = 0.5f
     const val EditorRowWidthAnimationDurationMillis = 180
 }

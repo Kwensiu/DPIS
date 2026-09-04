@@ -120,7 +120,7 @@ fun DonateSupportPage(onBack: () -> Unit) {
             containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ) {
             Column(Modifier.fillMaxWidth()) {
-                DpisSheetVisualChrome()
+                SheetVisualChrome()
                 SupportersSheet()
             }
         }

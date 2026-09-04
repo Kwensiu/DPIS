@@ -3,7 +3,6 @@ package com.dpis.module.ui.compose
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -117,9 +115,8 @@ fun resolveWorkspaceNavigationLayout(
 ): WorkspaceNavigationLayout = when {
     // WatchUiMode owns classification. Its compact decision must win over width.
     isCompactUi -> WorkspaceNavigationLayout.COMPACT_RADIAL
-    // Window-size Dp values shrink when the user increases the app density. Preserve the
-    // physical landscape contract before applying width breakpoints so navigation cannot
-    // unexpectedly move from the side to the bottom on a wide, short screen.
+    // Landscape keeps navigation on the side even when scaled density makes the reported width
+    // look narrow. App/Template use the physical orientation to keep their detail pane visible.
     maxWidth > maxHeight && maxWidth < WorkspaceRailMinWindowWidth ->
         WorkspaceNavigationLayout.NAVIGATION_RAIL
     maxWidth < WorkspaceRailMinWindowWidth -> WorkspaceNavigationLayout.BOTTOM_BAR
@@ -407,16 +404,16 @@ private fun CompactWearWorkspaceNavigation(
 private fun safeDrawingInsets(): WindowInsets = WindowInsets.systemBars
     .union(WindowInsets.displayCutout)
 
-/** The start-side rail owns only its own horizontal cutout and vertical bars. */
+/** The start-side rail owns only its own horizontal cutout and top status inset. */
 @Composable
 private fun navigationSurfaceInsets(): WindowInsets = safeDrawingInsets().only(
-    WindowInsetsSides.Start + WindowInsetsSides.Vertical
+    WindowInsetsSides.Start + WindowInsetsSides.Top
 )
 
-/** Rail content keeps vertical bars but receives the camera cutout from its outer surface. */
+/** Rail content keeps the top status inset but may render its final item under the gesture area. */
 @Composable
 private fun verticalNavigationSurfaceInsets(): WindowInsets = safeDrawingInsets().only(
-    WindowInsetsSides.Vertical
+    WindowInsetsSides.Top
 )
 
 /** Bottom navigation owns both the gesture boundary and horizontal camera cutouts. */

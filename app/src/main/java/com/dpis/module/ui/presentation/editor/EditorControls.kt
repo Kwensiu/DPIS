@@ -329,9 +329,9 @@ internal fun Modifier.imeWindowPan(boundary: TextInputFocusBoundary): Modifier =
         if (imeAnimationActive && !boundary.isImeAnimationOpening) {
             // Start closing exactly once from the current visible offset. Do not key this effect
             // by the changing inset value, otherwise every frame cancels and restarts the tween.
-            panOffset.animateTo(0f, animationSpec = tween(durationMillis = 220))
+            panOffset.animateTo(0f, animationSpec = tween(durationMillis = ComposeMotionTokens.FOCUS_PAN_DURATION_MILLIS))
         } else if (!imeAnimationActive) {
-            panOffset.animateTo(targetOffset, animationSpec = tween(durationMillis = 220))
+            panOffset.animateTo(targetOffset, animationSpec = tween(durationMillis = ComposeMotionTokens.FOCUS_PAN_DURATION_MILLIS))
         }
     }
     val animatedOffset = panOffset.value
@@ -657,7 +657,7 @@ internal fun ModeSelector(
     // This keeps the selected half stable while the entire selector slides out of view.
     val thumbPosition by animateFloatAsState(
         targetValue = if (selectedFirst) 0f else 1f,
-        animationSpec = tween(TemplateUiTokens.MODE_ANIMATION_DURATION_MILLIS),
+        animationSpec = tween(ComposeMotionTokens.MODE_TRANSITION_DURATION_MILLIS),
         label = "dpis-mode-thumb"
     )
     val targetThumbPosition = if (selectedFirst) 0f else 1f

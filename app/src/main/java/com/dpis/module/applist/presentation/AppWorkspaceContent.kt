@@ -9,7 +9,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -150,8 +149,10 @@ fun AppWorkspaceContent(
                 }
             }
     }
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val twoPane = compactVerticalChrome && maxWidth >= WorkspaceTwoPaneMinWidth
+    Box(Modifier.fillMaxSize()) {
+        // Orientation is the stable split-pane contract; scaled app density can make maxWidth Dp
+        // smaller without reducing the physical landscape space available to the detail pane.
+        val twoPane = compactVerticalChrome
         // Both panes share the workspace surface, including the camera-side
         // safe-area padding. Child content may still reserve that inset without
         // exposing the window's darker fallback background.
@@ -660,7 +661,7 @@ private fun AppWorkspacePreview() {
         override fun openApp(item: AppListItem) = Unit
         override fun updateScrollPosition(page: AppListPage, index: Int, scrollOffset: Int) = Unit
     }
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         AppWorkspaceContent(
             state = AppWorkspacePresentation.State(
                 "", AppListPage.ALL_APPS, emptyList(), emptyList(), false, false,

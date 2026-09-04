@@ -1,7 +1,7 @@
 package com.dpis.module.ui.dialog
 
-import com.dpis.module.ui.compose.DpisTheme
-import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.rememberClickAction
 
 import android.app.Activity
@@ -80,7 +80,7 @@ object ConfirmDialog {
         var actionHandled = false
 
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 ConfirmDialogContent(
                     title = title.toString(),
                     message = message.toString(),
@@ -212,7 +212,7 @@ internal fun ConfirmAlertDialog(
 @Preview(showBackground = true)
 @Composable
 private fun ConfirmDialogContentPreview() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         Surface(color = Color.White) {
             ConfirmDialogContent(
                 title = "Confirm action",
@@ -227,7 +227,7 @@ private fun ConfirmDialogContentPreview() {
 @Preview(showBackground = true, backgroundColor = 0xFF121212)
 @Composable
 private fun ConfirmDialogContentDarkPreview() {
-    DpisTheme(darkTheme = true, dynamicColor = false) {
+    ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
         Surface(color = MaterialTheme.colorScheme.surface) {
             ConfirmDialogContent(
                 title = "Confirm action",

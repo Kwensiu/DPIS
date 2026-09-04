@@ -215,7 +215,7 @@ fun ThemeSettingsContent(
         ThemeChoiceDialog(
             title = stringResource(R.string.settings_theme_color_spec_label),
             selected = colorSpecification,
-            options = if (DpisColorSchemeFactory.supports2025Specification(paletteStyle)) {
+            options = if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
                 colorSpecificationOptions
             } else {
                 colorSpecificationOptions.take(1)
@@ -476,7 +476,7 @@ private fun ThemeColorRow(
                     .height(68.dp)
                     .padding(top = 8.dp),
             ) {
-                DpisHorizontalScrollWithEdgeFade(
+                HorizontalScrollWithEdgeFade(
                     edgeColor = MaterialTheme.colorScheme.surfaceBright,
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -505,9 +505,9 @@ private fun GeneratedThemeSwatch(
     onClick: () -> Unit,
 ) {
     val swatchDividerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-    val seedColor = DpisColorSchemeFactory.seedColor(option.id)
+    val seedColor = ColorSchemeFactory.seedColor(option.id)
     val scheme = remember(option, paletteStyle, colorSpecification) {
-        DpisColorSchemeFactory.create(
+        ColorSchemeFactory.create(
             seedColor = seedColor,
             darkTheme = false,
             paletteStyle = paletteStyle,
@@ -587,7 +587,7 @@ private fun paletteStyleLabel(value: String): String = stringResource(
 @Composable
 private fun colorSpecificationLabel(paletteStyle: String, value: String): String = stringResource(
     colorSpecificationOptions.firstOrNull {
-        it.first == if (DpisColorSchemeFactory.supports2025Specification(paletteStyle)) {
+        it.first == if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
             value
         } else {
             ThemeModeStore.SPEC_2021
@@ -770,7 +770,7 @@ private fun ThemeSettingsEntry(
 }
 
 /**
- * Theme changes already animate at the DpisTheme boundary. This row consumes those animated
+ * Theme changes already animate at the ComposeDesignSystem boundary. This row consumes those animated
  * colors directly so Material list-item transitions do not delay some cards a second time.
  */
 @Composable

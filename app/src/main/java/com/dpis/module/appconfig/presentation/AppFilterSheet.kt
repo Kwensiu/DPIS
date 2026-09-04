@@ -78,8 +78,8 @@ internal fun AppFilterSheet(
 @Composable private fun ChipRow(content: @Composable FlowRowScope.() -> Unit) = FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
 @Composable
 private fun ConfigurationChipRow(content: @Composable RowScope.() -> Unit) =
-    DpisHorizontalScrollWithEdgeFade(
-        edgeWidth = 20.dp,
+    HorizontalScrollWithEdgeFade(
+        edgeWidth = EdgeFadeTokens.Width,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         content = content,
     )

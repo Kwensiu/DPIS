@@ -38,8 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.DpisTheme
-import com.dpis.module.ui.compose.dpisDarkTheme
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.toComposeAnnotatedString
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -64,7 +64,7 @@ object UpdateAvailableDialog {
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         val handle = DialogHandle(dialog)
         view.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 UpdateDialogContent(title.toString(), message.toString(), handle.state,
                     { handle.primaryAction.run() }, { handle.cancelAction.run() })
             }

@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -51,6 +50,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.ui.compose.ComposeMotionTokens
 import com.dpis.module.ui.compose.EditorSheetScaffoldFrame
 import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
 import com.dpis.module.ui.compose.TextInputFocusBoundary
@@ -97,7 +97,7 @@ internal fun TemplateEditorSheet(
     var returnToMainPending by remember { mutableStateOf(false) }
     val scrimAlpha by animateFloatAsState(
         targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
-        animationSpec = tween(durationMillis = 220),
+        animationSpec = tween(durationMillis = ComposeMotionTokens.SHEET_SETTLE_DURATION_MILLIS),
         label = "template-editor-sheet-scrim",
     )
 
@@ -157,9 +157,9 @@ internal fun TemplateEditorSheet(
             targetValue = targetPeekHeight,
             animationSpec = when {
                 !hasOpened -> snap()
-                returnToMainPending -> tween(durationMillis = 180)
+                returnToMainPending -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
                 childPageTransitionActive -> snap()
-                else -> tween(durationMillis = 180)
+                else -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
             },
             label = "template-editor-sheet-peek-height",
         )

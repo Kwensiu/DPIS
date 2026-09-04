@@ -1292,7 +1292,7 @@ class MainActivitySourceSmokeTest {
         val editorSurface = read(
             "src/main/java/com/dpis/module/templates/presentation/TemplateEditorContent.kt")
         val editorSheet = read(
-            "src/main/java/com/dpis/module/ui/presentation/DpisEditorBottomSheet.kt")
+            "src/main/java/com/dpis/module/ui/presentation/editor/EditorBottomSheet.kt")
         val shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
 
         val templateSource = read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentationSource.kt")
@@ -1319,14 +1319,14 @@ class MainActivitySourceSmokeTest {
         assertFalse(workspace.contains("editorSheetVisible"))
         assertFalse(workspace.contains("editorSheetClosing"))
         assertTrue(workspace.contains("fun finishEditorClose()"))
-        assertFalse(shellHost.contains("RenderTemplateEditorOverlay(state.workspaceMode)"))
-        assertFalse(coordinator.contains("TemplateEditorOverlay("))
+        assertTrue(shellHost.contains("RenderTemplateEditorOverlay(state.workspaceMode, isCompactUi)"))
+        assertTrue(coordinator.contains("TemplateEditorOverlayHost"))
         assertFalse(editorSurface.contains("sheetVisible"))
         assertFalse(editorSurface.contains("onSheetHidden"))
         assertFalse(editorSurface.contains("AppConfigEditorOverlay("))
         val editorHost = read(
             "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt")
-        assertTrue(editorHost.contains("BottomSheetScaffold("))
+        assertTrue(editorHost.contains("EditorSheetScaffoldFrame("))
         val workspaceCloseStart = workspace.indexOf("fun closeEditor()")
         val workspaceCloseEnd = workspace.indexOf("fun saveEditor()", workspaceCloseStart)
         val workspaceClose = workspace.substring(workspaceCloseStart, workspaceCloseEnd)

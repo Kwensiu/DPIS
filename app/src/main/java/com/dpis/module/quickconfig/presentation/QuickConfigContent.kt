@@ -64,7 +64,7 @@ fun QuickConfigContent(
         ) {
             Column {
                 // Keep the same visual-only sheet indicator and header spacing as the main editor.
-                DpisSheetVisualChrome()
+                SheetVisualChrome()
                 if (state.destination == ConfigEditorDestination.MAIN) {
                     AppConfigEditorContent(state = state)
                 } else {
@@ -78,7 +78,7 @@ fun QuickConfigContent(
 @Preview(showBackground = true, backgroundColor = 0x66000000)
 @Composable
 private fun QuickConfigContentPreview() {
-    DpisTheme(darkTheme = false) {
+    ComposeDesignSystem(darkTheme = false) {
         Surface(Modifier.fillMaxSize(), color = Color.Transparent) {}
     }
 }

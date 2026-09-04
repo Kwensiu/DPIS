@@ -64,7 +64,7 @@ object FontDebugComposeSheet {
         val dialog = BottomSheetDialog(activity)
         val handle = Handle(dialog)
         view.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 FontDebugSheetContent(handle.state, onMode::run, onWindow::run,
                     onOverlay::run, onClear::run) { dialog.dismiss() }
             }

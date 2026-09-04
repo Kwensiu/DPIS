@@ -4,14 +4,14 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 
-import com.dpis.module.ui.compose.DpisWorkspaceDestination;
+import com.dpis.module.ui.compose.WorkspaceDestination;
 import org.junit.Test;
 
 public final class MainComposeWorkspaceAdapterTest {
     @Test
     public void mapsEveryExistingWorkspaceModeWithoutChangingItsMeaning() {
         for (MainUiState.WorkspaceMode mode : MainUiState.WorkspaceMode.values()) {
-            DpisWorkspaceDestination destination =
+            WorkspaceDestination destination =
                     MainComposeWorkspaceAdapter.destinationFor(mode);
             assertEquals(mode.name(), destination.name());
             assertEquals(mode, MainComposeWorkspaceAdapter.workspaceModeFor(destination));
@@ -22,20 +22,20 @@ public final class MainComposeWorkspaceAdapterTest {
     public void keepsTheEstablishedWorkspaceNavigationOrder() {
         assertEquals(
                 Arrays.asList(
-                        DpisWorkspaceDestination.APP,
-                        DpisWorkspaceDestination.TEMPLATE,
-                        DpisWorkspaceDestination.HOME,
-                        DpisWorkspaceDestination.TOOLS,
-                        DpisWorkspaceDestination.SETTINGS
+                        WorkspaceDestination.APP,
+                        WorkspaceDestination.TEMPLATE,
+                        WorkspaceDestination.HOME,
+                        WorkspaceDestination.TOOLS,
+                        WorkspaceDestination.SETTINGS
                 ),
-                Arrays.asList(DpisWorkspaceDestination.values())
+                Arrays.asList(WorkspaceDestination.values())
         );
     }
 
     @Test
     public void nullBoundaryValuesUseTheExistingAppFallback() {
         assertEquals(
-                DpisWorkspaceDestination.APP,
+                WorkspaceDestination.APP,
                 MainComposeWorkspaceAdapter.destinationFor(null)
         );
         assertEquals(

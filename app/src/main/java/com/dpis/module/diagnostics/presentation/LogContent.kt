@@ -349,7 +349,7 @@ private fun LogContentPreview() {
             )
         }
     }
-    DpisTheme(darkTheme = false) {
+    ComposeDesignSystem(darkTheme = false) {
         LogContent(presentation, {}, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }

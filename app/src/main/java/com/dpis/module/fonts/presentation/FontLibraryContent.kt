@@ -433,7 +433,7 @@ private fun FontLibraryContentPreview() {
             show(listOf(FontLibraryUiItem("font", "Noto Sans SC", "NotoSansSC.ttf", true, null)))
         }
     }
-    DpisTheme(darkTheme = false) {
+    ComposeDesignSystem(darkTheme = false) {
         FontLibraryContent(presentation, {}, {}, {}, {}, {})
     }
 }
@@ -456,7 +456,7 @@ private fun FontDetailContentPreview() {
             )
         }
     }
-    DpisTheme(darkTheme = false) {
+    ComposeDesignSystem(darkTheme = false) {
         FontDetailContent(presentation, {}, {}, {}, {}, {})
     }
 }

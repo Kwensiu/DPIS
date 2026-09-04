@@ -22,7 +22,7 @@ import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseActivity
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
-import com.dpis.module.ui.presentation.WearDpisMaterialTheme
+import com.dpis.module.ui.presentation.WearMaterialTheme
 import com.dpis.module.ui.presentation.WearWorkspaceList
 
 @Composable
@@ -44,7 +44,7 @@ internal fun WearThemeSettingsContent(
     var pendingScale by remember(interfaceScalePercent) {
         mutableFloatStateOf(interfaceScalePercent.toFloat())
     }
-    val supports2025 = DpisColorSchemeFactory.supports2025Specification(paletteStyle)
+    val supports2025 = ColorSchemeFactory.supports2025Specification(paletteStyle)
     val modeLabel = stringResource(R.string.settings_theme_mode_label)
     val modeValue = stringResource(themeModeLabel(mode))
     val themeColorLabel = stringResource(R.string.settings_theme_color_label)
@@ -255,7 +255,7 @@ internal fun WearOpenSourceLicenseContent(
 
 @Composable
 internal fun WearExperimentalSettingsContent() {
-    WearDpisMaterialTheme {
+    WearMaterialTheme {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -334,7 +334,7 @@ private fun nextColorSpecification(current: String): String =
 
 @StringRes
 private fun colorSpecificationLabel(paletteStyle: String, value: String): Int {
-    val effectiveValue = if (DpisColorSchemeFactory.supports2025Specification(paletteStyle)) {
+    val effectiveValue = if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
         value
     } else {
         ThemeModeStore.SPEC_2021

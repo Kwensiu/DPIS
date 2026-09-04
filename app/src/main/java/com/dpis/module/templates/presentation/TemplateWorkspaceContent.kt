@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -311,11 +310,13 @@ internal fun TemplateWorkspaceContent(
         )
     }
 
-    BoxWithConstraints(
+    Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        val twoPane = isLandscape && maxWidth >= WorkspaceTwoPaneMinWidth
+        // Keep the landscape list/detail contract independent of user interface scaling. The
+        // reported Dp width shrinks with density, but the physical landscape window remains split.
+        val twoPane = isLandscape
         val openTargets: (String) -> Unit = { templateId ->
             if (twoPane) {
                 if (targetsTemplateId != null && targetsTemplateId != templateId && targetSessionDirty) {
@@ -504,8 +505,8 @@ private fun editorKindFor(kind: TemplateWorkspacePresentation.DetailKind): Strin
     else -> null
 }
 
-private const val EDITOR_GLOBAL = "global"
-private const val EDITOR_QUICK = "quick"
+private const val EDITOR_GLOBAL = TemplateEditorKinds.GLOBAL
+private const val EDITOR_QUICK = TemplateEditorKinds.QUICK
 
 @Composable
 private fun EmbeddedQuickTemplateTargets(

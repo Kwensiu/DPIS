@@ -12,10 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-private fun DpisWorkspaceShellPreviewContent() {
-    DpisTheme(darkTheme = false, dynamicColor = false) {
-        DpisWorkspaceShell(
-            selectedDestination = DpisWorkspaceDestination.HOME,
+private fun WorkspaceShellPreviewContent() {
+    ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
+        WorkspaceShell(
+            selectedDestination = WorkspaceDestination.HOME,
             onDestinationSelected = {},
             isCompactUi = false
         ) { padding ->
@@ -34,18 +34,18 @@ private fun DpisWorkspaceShellPreviewContent() {
 
 @Preview(name = "Phone", widthDp = 411, heightDp = 891, showBackground = true)
 @Composable
-private fun DpisWorkspaceShellPhonePreview() {
-    DpisWorkspaceShellPreviewContent()
+private fun WorkspaceShellPhonePreview() {
+    WorkspaceShellPreviewContent()
 }
 
 @Preview(name = "Tablet", widthDp = 800, heightDp = 1280, showBackground = true)
 @Composable
-private fun DpisWorkspaceShellTabletPreview() {
-    DpisWorkspaceShellPreviewContent()
+private fun WorkspaceShellTabletPreview() {
+    WorkspaceShellPreviewContent()
 }
 
 @Preview(name = "Desktop", widthDp = 1280, heightDp = 900, showBackground = true)
 @Composable
-private fun DpisWorkspaceShellDesktopPreview() {
-    DpisWorkspaceShellPreviewContent()
+private fun WorkspaceShellDesktopPreview() {
+    WorkspaceShellPreviewContent()
 }

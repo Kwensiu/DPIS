@@ -156,7 +156,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(templateSheet.contains(
                 "destination.isChildPage() && !sheetMotionInProgress"))
         assertFalse(workspace.substringAfter("val editorSheetBody")
-                .substringBefore("BoxWithConstraints")
+                .substringBefore("Box(\n        modifier = Modifier")
                 .contains("topSafePadding"))
         assertFalse(templateSheet.contains("AppConfigEditorOverlay("))
         assertFalse(templateSheet.contains("EditorBottomSheet("))

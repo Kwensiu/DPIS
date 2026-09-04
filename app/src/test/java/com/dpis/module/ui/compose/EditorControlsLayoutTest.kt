@@ -17,4 +17,10 @@ class EditorControlsLayoutTest {
         val modeWidth = editorSecondaryControlWidth(250.dp, 8.dp, false)
         assertTrue(modeWidth <= (250.dp - 8.dp) / 2)
     }
+
+    @Test
+    fun landscapeSecondaryControlUsesAnEvenSplitBeforeTheCap() {
+        assertEquals(146.dp, editorSecondaryControlWidth(300.dp, 8.dp, true))
+        assertEquals(180.dp, editorSecondaryControlWidth(500.dp, 8.dp, true))
+    }
 }

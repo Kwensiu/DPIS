@@ -83,7 +83,7 @@ fun AppConfigEditorOverlay(
     // standard show/hide animation begins, so use it as the shared visibility timeline.
     val scrimAlpha by animateFloatAsState(
         targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
-        animationSpec = tween(durationMillis = 220),
+        animationSpec = tween(durationMillis = ComposeMotionTokens.SHEET_SETTLE_DURATION_MILLIS),
         label = "app-config-sheet-scrim"
     )
 
@@ -170,9 +170,9 @@ fun AppConfigEditorOverlay(
             // The first measured anchor must be ready before opening; later changes animate.
             animationSpec = when {
                 !hasOpened -> snap()
-                returnToMainPending -> tween(durationMillis = 180)
+                returnToMainPending -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
                 childPageTransitionActive -> snap()
-                else -> tween(durationMillis = 180)
+                else -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
             },
             label = "app-config-sheet-peek-height"
         )

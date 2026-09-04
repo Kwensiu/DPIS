@@ -71,7 +71,7 @@ object ComposeTextInputDialog {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
         composeView.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 TextInputDialogContent(title.toString(), hint.toString(), initialValue,
                     { dialog.dismiss() },
                     { if (onSubmit.test(it)) dialog.dismiss() })

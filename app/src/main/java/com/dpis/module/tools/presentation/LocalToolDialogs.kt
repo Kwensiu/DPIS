@@ -53,7 +53,7 @@ object AppFilterComposeSheet {
         }
         val dialog = BottomSheetDialog(activity)
         view.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 AppFilterContent(showSystem, injectedOnly, widthOnly, fontOnly, listener::onChanged)
             }
         }
@@ -112,7 +112,7 @@ object ModuleRuntimeReloadComposeDialog {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         view.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 RuntimeReloadNoticeContent(dialog::dismiss)
             }
         }

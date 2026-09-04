@@ -16,7 +16,7 @@ import com.materialkolor.dynamiccolor.ColorSpec
  * A seed, palette style, and specification always produce a complete Material
  * color scheme. Theme rendering and swatch previews must both use this factory.
  */
-internal object DpisColorSchemeFactory {
+internal object ColorSchemeFactory {
     fun create(
         seedColor: Color,
         darkTheme: Boolean,
@@ -74,7 +74,7 @@ internal object DpisColorSchemeFactory {
 }
 
 @Composable
-internal fun ColorScheme.animateDpisAsState(): ColorScheme {
+internal fun ColorScheme.animateColorSchemeAsState(): ColorScheme {
     @Composable
     fun animate(target: Color, label: String): Color = animateColorAsState(
         targetValue = target,

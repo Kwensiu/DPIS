@@ -174,7 +174,7 @@ private fun AboutEntry(
 @Preview(showBackground = true)
 @Composable
 private fun AboutContentPreview() {
-    DpisTheme(darkTheme = false) {
+    ComposeDesignSystem(darkTheme = false) {
         AboutContent(
             versionText = "Version: 1.15.0 (11500)",
             showDebugUpdateEntry = true,

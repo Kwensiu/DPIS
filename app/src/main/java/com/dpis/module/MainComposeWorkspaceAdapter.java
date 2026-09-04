@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.ui.compose.DpisWorkspaceDestination;
+import com.dpis.module.ui.compose.WorkspaceDestination;
 
 /**
  * Maps the existing main state contract to the stateless Compose shell.
@@ -12,26 +12,26 @@ final class MainComposeWorkspaceAdapter {
     private MainComposeWorkspaceAdapter() {
     }
 
-    static DpisWorkspaceDestination destinationFor(MainUiState.WorkspaceMode mode) {
+    static WorkspaceDestination destinationFor(MainUiState.WorkspaceMode mode) {
         if (mode == null) {
-            return DpisWorkspaceDestination.APP;
+            return WorkspaceDestination.APP;
         }
         switch (mode) {
             case HOME:
-                return DpisWorkspaceDestination.HOME;
+                return WorkspaceDestination.HOME;
             case TEMPLATE:
-                return DpisWorkspaceDestination.TEMPLATE;
+                return WorkspaceDestination.TEMPLATE;
             case TOOLS:
-                return DpisWorkspaceDestination.TOOLS;
+                return WorkspaceDestination.TOOLS;
             case SETTINGS:
-                return DpisWorkspaceDestination.SETTINGS;
+                return WorkspaceDestination.SETTINGS;
             case APP:
             default:
-                return DpisWorkspaceDestination.APP;
+                return WorkspaceDestination.APP;
         }
     }
 
-    static MainUiState.WorkspaceMode workspaceModeFor(DpisWorkspaceDestination destination) {
+    static MainUiState.WorkspaceMode workspaceModeFor(WorkspaceDestination destination) {
         if (destination == null) {
             return MainUiState.WorkspaceMode.APP;
         }

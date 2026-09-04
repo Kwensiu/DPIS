@@ -60,7 +60,7 @@ import com.dpis.module.R
 import com.dpis.module.home.HomeWorkspaceLayout
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.root.RootAccessProbe
-import com.dpis.module.ui.compose.LocalDpisTokens
+import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.compose.PageBarBehavior
 import com.dpis.module.ui.compose.PageScaffold
 import com.dpis.module.ui.compose.SecondaryPageContentTokens
@@ -170,7 +170,7 @@ fun HomeWorkspaceContent(
                 start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = pagePadding.calculateBottomPadding() + LocalDpisTokens.current.spaceLg,
+                bottom = pagePadding.calculateBottomPadding() + LocalSpacing.current.xl,
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize().padding(padding)

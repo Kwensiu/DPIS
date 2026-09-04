@@ -26,6 +26,6 @@ internal fun workspaceContentPadding(base: androidx.compose.foundation.layout.Pa
         start = base.calculateStartPadding(direction),
         top = base.calculateTopPadding(),
         end = base.calculateEndPadding(direction),
-        bottom = base.calculateBottomPadding() + LocalDpisTokens.current.spaceLg
+        bottom = base.calculateBottomPadding() + LocalSpacing.current.xl
     )
 }

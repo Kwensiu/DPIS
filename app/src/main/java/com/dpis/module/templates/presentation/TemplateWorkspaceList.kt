@@ -65,8 +65,8 @@ import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberRestorableLazyListState
 
-private const val EDITOR_GLOBAL = "global"
-private const val EDITOR_QUICK = "quick"
+private const val EDITOR_GLOBAL = TemplateEditorKinds.GLOBAL
+private const val EDITOR_QUICK = TemplateEditorKinds.QUICK
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

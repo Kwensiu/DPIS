@@ -38,7 +38,7 @@ object LicenseDetailDialog {
         }
         val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
         view.setContent {
-            DpisTheme(darkTheme = dpisDarkTheme()) {
+            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 LicenseDetailContent(title, detail, hasWebsite, { onWebsite.run() }, { dialog.dismiss() })
             }
         }

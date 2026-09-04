@@ -62,11 +62,11 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt"
         )
         val edgeFade = read(
-            "src/main/java/com/dpis/module/ui/presentation/HorizontalScrollEdgeFade.kt"
+            "src/main/java/com/dpis/module/ui/presentation/editor/HorizontalScrollEdgeFade.kt"
         )
         val shell = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
         val segmentedPolicy = read(
-            "src/main/java/com/dpis/module/ui/presentation/SegmentedListItemPolicy.kt"
+            "src/main/java/com/dpis/module/ui/presentation/workspace/SegmentedListItemPolicy.kt"
         )
         val hookChain = read(
             "src/main/java/com/dpis/module/fonts/presentation/HookChainEditorPage.kt"
@@ -139,11 +139,11 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(preparation.contains("AnimatedConditionalItem(visible = state.durationEnabled)"))
         assertTrue(preparation.contains("DurationChipSelector("))
         assertTrue(edgeFade.contains("horizontalScroll(scrollState)"))
-        assertTrue(preparation.contains("DpisHorizontalScrollWithEdgeFade("))
+        assertTrue(preparation.contains("HorizontalScrollWithEdgeFade("))
         assertTrue(preparation.contains("R.drawable.ic_view_kanban_24"))
         assertTrue(preparation.contains("R.drawable.ic_healing_24"))
         assertTrue(preparation.contains("R.drawable.ic_hourglass_check_24"))
-        assertTrue(theme.contains("DpisHorizontalScrollWithEdgeFade("))
+        assertTrue(theme.contains("HorizontalScrollWithEdgeFade("))
         assertTrue(edgeFade.contains("scrollState.value > 0"))
         assertTrue(edgeFade.contains("scrollState.value < scrollState.maxValue"))
         assertTrue(preparation.contains("CustomDurationDialog("))
