@@ -157,9 +157,9 @@ internal fun TemplateEditorSheet(
             targetValue = targetPeekHeight,
             animationSpec = when {
                 !hasOpened -> snap()
-                returnToMainPending -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
+                returnToMainPending -> ComposeMotionTokens.EDITOR_SHEET_RESIZE_SPEC
                 childPageTransitionActive -> snap()
-                else -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
+                else -> ComposeMotionTokens.EDITOR_SHEET_RESIZE_SPEC
             },
             label = "template-editor-sheet-peek-height",
         )

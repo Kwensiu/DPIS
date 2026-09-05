@@ -25,8 +25,8 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -170,9 +170,9 @@ fun AppConfigEditorOverlay(
             // The first measured anchor must be ready before opening; later changes animate.
             animationSpec = when {
                 !hasOpened -> snap()
-                returnToMainPending -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
+                returnToMainPending -> ComposeMotionTokens.EDITOR_SHEET_RESIZE_SPEC
                 childPageTransitionActive -> snap()
-                else -> tween(durationMillis = ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)
+                else -> ComposeMotionTokens.EDITOR_SHEET_RESIZE_SPEC
             },
             label = "app-config-sheet-peek-height"
         )
