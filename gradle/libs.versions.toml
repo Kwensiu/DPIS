@@ -2,7 +2,7 @@
 agp = "9.2.1"
 kotlin = "2.3.20"
 composeBom = "2026.06.01"
-composeMaterial3 = "1.5.0-alpha23"
+composeMaterial3 = "1.5.0-alpha27"
 wearComposeMaterial3 = "1.6.2"
 activity = "1.13.0"
 xposed-api = "102.0.0"
