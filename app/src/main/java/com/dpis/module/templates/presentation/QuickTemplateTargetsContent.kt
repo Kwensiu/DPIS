@@ -46,7 +46,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -76,6 +75,9 @@ import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackFilterChip
 import com.dpis.module.ui.compose.FeedbackIconButton
 import com.dpis.module.ui.compose.FeedbackTextButton
+import com.dpis.module.ui.compose.FilterSheetResetButton
+import com.dpis.module.ui.compose.FilterSheetScaffold
+import com.dpis.module.ui.compose.FilterSheetUiTokens
 import com.dpis.module.ui.compose.SecondaryPageTopBar
 import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
 import com.dpis.module.ui.compose.dialogListContentFade
@@ -105,7 +107,7 @@ fun QuickTemplateTargetsContent(
     val focusManager = LocalFocusManager.current
     val inputFocusBoundary = rememberTextInputFocusBoundary()
     var searchVisible by rememberSaveable { mutableStateOf(false) }
-    var filterDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var filterSheetVisible by rememberSaveable { mutableStateOf(false) }
     var discardDialogVisible by rememberSaveable { mutableStateOf(false) }
     val searchOffset by animateDpAsState(
         targetValue = if (searchVisible) 76.dp else 0.dp,
@@ -183,9 +185,8 @@ fun QuickTemplateTargetsContent(
                     actions = {
                         FeedbackIconButton(
                             onClick = {
-                                // The search field owns IME focus. Once it is visible, a
-                                // repeated toolbar tap must not recreate it or re-open the IME.
-                                if (!searchVisible) searchVisible = true
+                                searchVisible = !searchVisible
+                                if (!searchVisible) focusManager.clearFocus()
                             }
                         ) {
                             Icon(
@@ -197,7 +198,7 @@ fun QuickTemplateTargetsContent(
                         FeedbackIconButton(
                             onClick = {
                                 focusManager.clearFocus()
-                                filterDialogVisible = true
+                                filterSheetVisible = true
                             }
                         ) {
                             Icon(
@@ -309,76 +310,41 @@ fun QuickTemplateTargetsContent(
         }
     }
 
-    if (filterDialogVisible) {
-        AlertDialog(
-            onDismissRequest = { filterDialogVisible = false },
-            confirmButton = {},
-            text = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    FeedbackIconButton(
-                        onClick = { filterDialogVisible = false },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .offset(x = (-8).dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_close_24),
-                            contentDescription = stringResource(R.string.dialog_close),
+    if (filterSheetVisible) {
+        FilterSheetScaffold(
+            onDismissRequest = { filterSheetVisible = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.quick_template_targets_filter_list_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.offset(x = FilterSheetUiTokens.HeaderTitleOffset),
+                )
+            },
+            trailingContent = {
+                FeedbackFilterChip(
+                    shape = FilterSheetUiTokens.PillShape,
+                    selected = current.reverseOrder,
+                    onClick = {
+                        onFiltersChanged(
+                            current.showAllApps, current.showSystemApps, current.showUserApps,
+                            current.showConfiguredApps, current.sortMode, !current.reverseOrder
                         )
-                    }
-                    Text(
-                        text = stringResource(R.string.quick_template_targets_filter_list_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.offset(x = (-4).dp)
-                    )
-                    Spacer(Modifier.weight(1f))
-                    FeedbackFilterChip(
-                        shape = RoundedCornerShape(50),
-                        selected = current.reverseOrder,
-                        onClick = {
-                            onFiltersChanged(
-                                current.showAllApps, current.showSystemApps, current.showUserApps,
-                                current.showConfiguredApps, current.sortMode, !current.reverseOrder
-                            )
-                        },
-                        label = { Text(stringResource(R.string.quick_template_targets_filter_reverse)) }
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                            .border(
-                                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                                RoundedCornerShape(50)
-                            )
-                            .dpisClickable(role = Role.Button, onClick = {
-                                onFiltersChanged(
-                                    true, false, false, true,
-                                    QuickTemplateTargetsPresentationController.SORT_NAME, false
-                                )
-                            }),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_reset_settings_24),
-                            contentDescription = stringResource(R.string.quick_template_targets_filter_reset),
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    label = { Text(stringResource(R.string.quick_template_targets_filter_reverse)) }
+                )
+                Spacer(Modifier.width(FilterSheetUiTokens.HeaderActionSpacing))
+                FilterSheetResetButton(
+                    onClick = {
+                        onFiltersChanged(
+                            true, false, false, true,
+                            QuickTemplateTargetsPresentationController.SORT_NAME, false
                         )
-                    }
-                }
+                    },
+                    contentDescription = stringResource(R.string.quick_template_targets_filter_reset),
+                )
+            },
+        ) {
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.quick_template_targets_filter_type),
@@ -524,9 +490,7 @@ fun QuickTemplateTargetsContent(
                     )
                 }
                 Spacer(Modifier.height(16.dp))
-            }
         }
-        )
     }
 
     if (discardDialogVisible) {

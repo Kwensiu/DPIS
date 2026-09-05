@@ -1,16 +1,12 @@
 package com.dpis.module.ui.compose
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -27,27 +23,21 @@ internal fun AppFilterSheet(
     onFilterChanged: (AppListFilterState) -> Unit,
     onDismissRequest: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismissRequest, dragHandle = null, containerColor = MaterialTheme.colorScheme.surfaceContainer) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                IconButton(onClick = rememberClickAction(onDismissRequest), modifier = Modifier.size(40.dp).offset(x = (-8).dp)) { Icon(painterResource(R.drawable.ic_close_24), stringResource(R.string.dialog_close)) }
-                Text(stringResource(R.string.app_filter_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.offset(x = (-4).dp))
-                Spacer(Modifier.weight(1f))
-                FeedbackFilterChip(shape = RoundedCornerShape(50), selected = filterState.reverseOrder(), onClick = { onFilterChanged(filterState.withReverseOrder(!filterState.reverseOrder())) }, label = { Text(stringResource(R.string.app_filter_reverse)) })
-                Spacer(Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), RoundedCornerShape(50))
-                        .dpisClickable(onClick = { onFilterChanged(AppListFilterState.defaultState()) }),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(painterResource(R.drawable.ic_reset_settings_24), stringResource(R.string.app_filter_reset), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            AppFilterLabel(R.string.app_filter_type)
+    FilterSheetScaffold(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(stringResource(R.string.app_filter_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.offset(x = FilterSheetUiTokens.HeaderTitleOffset))
+        },
+        trailingContent = {
+            FeedbackFilterChip(shape = FilterSheetUiTokens.PillShape, selected = filterState.reverseOrder(), onClick = { onFilterChanged(filterState.withReverseOrder(!filterState.reverseOrder())) }, label = { Text(stringResource(R.string.app_filter_reverse)) })
+            Spacer(Modifier.width(FilterSheetUiTokens.HeaderActionSpacing))
+            FilterSheetResetButton(
+                onClick = { onFilterChanged(AppListFilterState.defaultState()) },
+                contentDescription = stringResource(R.string.app_filter_reset),
+            )
+        },
+    ) {
+        AppFilterLabel(R.string.app_filter_type)
             ChipRow {
                 FeedbackFilterChip(selected = filterState.allAppsSelected(), onClick = { onFilterChanged(filterState.withAllApps()) }, label = { Text(stringResource(R.string.app_filter_all)) })
                 FeedbackFilterChip(selected = !filterState.allAppsSelected() && filterState.systemAppsSelected(), onClick = { onFilterChanged(filterState.withAppTypes(filterState.userAppsSelected(), !filterState.systemAppsSelected())) }, label = { Text(stringResource(R.string.app_filter_system)) }, leadingIcon = if (!filterState.allAppsSelected() && filterState.systemAppsSelected()) { { SelectedChipIcon() } } else null)
@@ -69,8 +59,7 @@ internal fun AppFilterSheet(
                 SortChip(filterState, AppListFilterState.SortOrder.UPDATED, R.string.app_filter_sort_updated, onFilterChanged)
                 SortChip(filterState, AppListFilterState.SortOrder.INSTALLED, R.string.app_filter_sort_installed, onFilterChanged)
             }
-            Spacer(Modifier.height(8.dp))
-        }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
