@@ -504,6 +504,9 @@ private fun HookDomainOptionRow(
         onClick = { updateChecked(!checked) },
         enabled = enabled,
         modifier = Modifier
+            // The disabled veil is drawn after the item. Clip it here so it cannot square off
+            // the outer corners owned by the segmented-list shape policy.
+            .clip(shapes.shape)
             .drawWithContent {
                 drawContent()
                 if (!enabled) drawRect(disabledScrim)

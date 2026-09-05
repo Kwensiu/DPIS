@@ -1,12 +1,13 @@
 package com.dpis.module.ui.compose
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -128,11 +129,26 @@ fun Modifier.dpisClickable(
     enabled: Boolean = true,
     role: Role? = null,
     hapticFeedbackEnabled: Boolean = true,
-): Modifier = clickable(
-    enabled = enabled,
-    role = role,
-    onClick = rememberClickAction(hapticFeedbackEnabled, onClick),
-)
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
+): Modifier {
+    val action = rememberClickAction(hapticFeedbackEnabled, onClick)
+    return if (interactionSource == null) {
+        clickable(
+            enabled = enabled,
+            role = role,
+            onClick = action,
+        )
+    } else {
+        clickable(
+            interactionSource = interactionSource,
+            indication = indication,
+            enabled = enabled,
+            role = role,
+            onClick = action,
+        )
+    }
+}
 
 /**
  * Project-standard click and long-press surface. Long-press feedback is kept separate from

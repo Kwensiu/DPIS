@@ -3,11 +3,11 @@ package com.dpis.module.ui.compose
 import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogDoneButton
-import com.dpis.module.ui.dialog.DialogTitle
 
 import android.widget.Toast
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.background
@@ -31,18 +33,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuPopup
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorPosition
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.ripple
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -61,10 +69,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
@@ -72,8 +80,6 @@ import com.dpis.module.settings.PageSettingsStore
 import kotlin.math.roundToInt
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import com.dpis.module.ui.compose.ReorderableDragFeedback
-import com.dpis.module.ui.compose.dpisLongPress
 
 /** The first focused page in Theme settings; further appearance controls can join this list. */
 @Composable
@@ -120,15 +126,26 @@ fun ThemeSettingsContent(
         ) {
             item {
             ThemeSettingsSection(R.string.settings_theme_section_appearance) {
-                    ThemeSettingsEntry(
-                        icon = R.drawable.ic_routine_24,
-                        title = R.string.settings_theme_mode_label,
-                        summary = R.string.settings_theme_mode_hint,
-                        value = themeModeLabel(mode),
-                        index = 0,
-                        total = if (dynamicColorEnabled) 5 else 6,
-                        onClick = { showModeDialog = true },
-                    )
+                    ThemeChoiceMenuAnchor(
+                        expanded = showModeDialog,
+                        options = themeModeOptions,
+                        selected = mode,
+                        onDismiss = { showModeDialog = false },
+                        onSelected = {
+                            onModeSelected(it)
+                            showModeDialog = false
+                        },
+                    ) {
+                        ThemeSettingsEntry(
+                            icon = R.drawable.ic_routine_24,
+                            title = R.string.settings_theme_mode_label,
+                            summary = R.string.settings_theme_mode_hint,
+                            value = themeModeLabel(mode),
+                            index = 0,
+                            total = if (dynamicColorEnabled) 5 else 6,
+                            onClick = { showModeDialog = true },
+                        )
+                    }
                     ThemeDynamicColorRow(
                         checked = dynamicColorEnabled,
                         onCheckedChange = onDynamicColorChanged,
@@ -145,22 +162,48 @@ fun ThemeSettingsContent(
                             total = 6,
                         )
                     }
-                    ThemeStaticOptionRow(
-                        icon = R.drawable.ic_style_24,
-                        title = R.string.settings_theme_palette_style_label,
-                        value = paletteStyleLabel(paletteStyle),
-                        index = if (dynamicColorEnabled) 2 else 3,
-                        total = if (dynamicColorEnabled) 5 else 6,
-                        onClick = { showPaletteDialog = true },
-                    )
-                    ThemeStaticOptionRow(
-                        icon = R.drawable.ic_design_services_24,
-                        title = R.string.settings_theme_color_spec_label,
-                        value = colorSpecificationLabel(paletteStyle, colorSpecification),
-                        index = if (dynamicColorEnabled) 3 else 4,
-                        total = if (dynamicColorEnabled) 5 else 6,
-                        onClick = { showSpecificationDialog = true },
-                    )
+                    ThemeChoiceMenuAnchor(
+                        expanded = showPaletteDialog,
+                        options = paletteStyleOptions,
+                        selected = paletteStyle,
+                        onDismiss = { showPaletteDialog = false },
+                        onSelected = {
+                            onPaletteStyleSelected(it)
+                            showPaletteDialog = false
+                        },
+                    ) {
+                        ThemeStaticOptionRow(
+                            icon = R.drawable.ic_style_24,
+                            title = R.string.settings_theme_palette_style_label,
+                            value = paletteStyleLabel(paletteStyle),
+                            index = if (dynamicColorEnabled) 2 else 3,
+                            total = if (dynamicColorEnabled) 5 else 6,
+                            onClick = { showPaletteDialog = true },
+                        )
+                    }
+                    ThemeChoiceMenuAnchor(
+                        expanded = showSpecificationDialog,
+                        options = if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
+                            colorSpecificationOptions
+                        } else {
+                            colorSpecificationOptions.take(1)
+                        },
+                        selected = colorSpecification,
+                        onDismiss = { showSpecificationDialog = false },
+                        onSelected = {
+                            onColorSpecificationSelected(it)
+                            showSpecificationDialog = false
+                        },
+                    ) {
+                        ThemeStaticOptionRow(
+                            icon = R.drawable.ic_design_services_24,
+                            title = R.string.settings_theme_color_spec_label,
+                            value = colorSpecificationLabel(paletteStyle, colorSpecification),
+                            index = if (dynamicColorEnabled) 3 else 4,
+                            total = if (dynamicColorEnabled) 5 else 6,
+                            onClick = { showSpecificationDialog = true },
+                        )
+                    }
                         ThemeInterfaceScaleRow(
                             pendingScale = pendingScale,
                             onPendingScaleChanged = { pendingScale = it },
@@ -179,7 +222,6 @@ fun ThemeSettingsContent(
                         leadingContent = { Icon(painterResource(R.drawable.ic_edit_24), null) },
                         content = { Text(stringResource(R.string.settings_page_home_edit_button), style = MaterialTheme.typography.titleMedium) },
                         trailingContent = { Switch(checked = showHomeEditButton, onCheckedChange = onShowHomeEditButtonChanged) },
-                        compact = true,
                     )
                     ThemeSegmentedSurfaceRow(
                         onClick = { showStartupPageDialog = true },
@@ -193,43 +235,21 @@ fun ThemeSettingsContent(
             }
         }
     }
-    if (showModeDialog) {
-        ThemeModeDialog(
-            selectedMode = mode,
-            onSelected = {
-                onModeSelected(it)
-            },
-            onDismiss = { showModeDialog = false },
-        )
-    }
-    if (showPaletteDialog) {
-        ThemeChoiceDialog(
-            title = stringResource(R.string.settings_theme_palette_style_label),
-            selected = paletteStyle,
-            options = paletteStyleOptions,
-            onSelected = onPaletteStyleSelected,
-            onDismiss = { showPaletteDialog = false },
-        )
-    }
-    if (showSpecificationDialog) {
-        ThemeChoiceDialog(
-            title = stringResource(R.string.settings_theme_color_spec_label),
-            selected = colorSpecification,
-            options = if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
-                colorSpecificationOptions
-            } else {
-                colorSpecificationOptions.take(1)
-            },
-            onSelected = onColorSpecificationSelected,
-            onDismiss = { showSpecificationDialog = false },
-        )
-    }
     if (showScaleDialog) {
-        ModalDialog(onDismissRequest = { showScaleDialog = false }) {
+        val scaleInputBoundary = rememberTextInputFocusBoundary()
+        ModalDialog(
+            onDismissRequest = { showScaleDialog = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
+            imeFocusBoundary = scaleInputBoundary,
+        ) {
             InterfaceScaleDialogContent(
                 initialPercent = pendingScale.roundToInt(),
                 minimumPercent = AppUiScaleManager.MIN_SCALE_PERCENT,
                 maximumPercent = AppUiScaleManager.MAX_SCALE_PERCENT,
+                inputFocusBoundary = scaleInputBoundary,
                 onCancel = { showScaleDialog = false },
                 onSave = {
                     showScaleDialog = false
@@ -596,109 +616,88 @@ private fun colorSpecificationLabel(paletteStyle: String, value: String): String
 )
 
 @Composable
-private fun ThemeChoiceDialog(
-    title: String,
-    selected: String,
+private fun ThemeChoiceMenuAnchor(
+    expanded: Boolean,
     options: List<Pair<String, Int>>,
-    onSelected: (String) -> Unit,
+    selected: String,
     onDismiss: () -> Unit,
+    onSelected: (String) -> Unit,
+    anchor: @Composable () -> Unit,
 ) {
-    ModalDialog(onDismissRequest = onDismiss) {
-        DialogColumn(
-            title = { DialogTitle(title) },
-            actions = {
-                DialogDoneButton(onClick = onDismiss)
-            }
-        ) {
-            val listState = rememberLazyListState()
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp)
-                    .dialogListContentFade(
-                        state = listState,
-                        // The list is inside ModalDialog's surfaceContainerHigh, not its option rows.
-                        // Fade into the owning dialog surface so the scroll cue does not darken it.
-                        edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+    val selectOption = rememberClickValueAction(onSelected)
+    Box(Modifier.fillMaxWidth()) {
+        anchor()
+        // Anchor below the setting's trailing edge. Starting at the row's top edge lets the
+        // opening tap land on the first item after the popup is composed.
+        Box(Modifier.align(Alignment.BottomEnd)) {
+            DropdownMenuPopup(
+                expanded = expanded,
+                onDismissRequest = onDismiss,
+                popupPositionProvider = MenuDefaults.rememberDropdownMenuPopupPositionProvider(
+                    MenuAnchorPosition.Below,
+                ),
+                modifier = Modifier
+                    // Let the widest option define the menu. A fixed minimum made short
+                    // choices look detached from their setting on compact displays.
+                    .widthIn(max = 360.dp)
+                    .heightIn(max = 360.dp),
             ) {
-                items(options) { option ->
-                    ThemeChoiceRow(
-                        label = stringResource(option.second),
-                        selected = selected == option.first,
-                        onClick = { onSelected(option.first) },
-                    )
+                Surface(
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
+                        .heightIn(max = 360.dp),
+                    shape = MaterialTheme.shapes.large,
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = MenuDefaults.TonalElevation,
+                    shadowElevation = MenuDefaults.ShadowElevation,
+                ) {
+                    // Keep the vertical inset inside the scroll container. The stock menu
+                    // applies it outside the scroller, producing an extra dark band and a
+                    // second clipping edge before items reach the rounded menu boundary.
+                    Column(
+                        modifier = Modifier
+                            .width(IntrinsicSize.Max)
+                            .verticalScroll(rememberScrollState())
+                            .padding(vertical = 4.dp),
+                    ) {
+                        options.forEach { (value, labelRes) ->
+                            val isSelected = selected == value
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(labelRes),
+                                        color = if (isSelected) {
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
+                                    )
+                                },
+                                onClick = { selectOption(value) },
+                                modifier = Modifier
+                                    .padding(horizontal = 4.dp)
+                                    .clip(MaterialTheme.shapes.large)
+                                    .background(
+                                        if (isSelected) {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        } else {
+                                            androidx.compose.ui.graphics.Color.Transparent
+                                        },
+                                    ),
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-private fun ThemeModeDialog(
-    selectedMode: String,
-    onSelected: (String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val options = listOf(
-        ThemeModeStore.LIGHT to R.string.settings_theme_mode_light,
-        ThemeModeStore.DARK to R.string.settings_theme_mode_dark,
-        ThemeModeStore.FOLLOW_SYSTEM to
-            R.string.settings_theme_mode_follow_system,
-    )
-    ModalDialog(onDismissRequest = onDismiss) {
-        DialogColumn(
-            title = { DialogTitle(stringResource(R.string.settings_theme_mode_label)) },
-            actions = {
-                DialogDoneButton(onClick = onDismiss)
-            }
-        ) {
-            val listState = rememberLazyListState()
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth().weight(1f, fill = false).heightIn(max = 300.dp)
-                    .dialogListContentFade(
-                        state = listState,
-                        edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ),
-                state = listState,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                items(options) { (value, label) ->
-                    ThemeChoiceRow(
-                        label = stringResource(label),
-                        selected = selectedMode == value,
-                        onClick = { onSelected(value) },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ThemeChoiceRow(label: String, selected: Boolean, onClick: () -> Unit) {
-    val shape = RoundedCornerShape(10.dp)
-    Surface(
-        modifier = Modifier.fillMaxWidth().clip(shape).dpisClickable(onClick = onClick),
-        shape = shape,
-        color = if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceVariant
-        },
-        contentColor = if (selected) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        },
-    ) {
-        Text(
-            label,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
-            style = MaterialTheme.typography.bodyLarge,
-        )
-    }
-}
+private val themeModeOptions = listOf(
+    ThemeModeStore.LIGHT to R.string.settings_theme_mode_light,
+    ThemeModeStore.DARK to R.string.settings_theme_mode_dark,
+    ThemeModeStore.FOLLOW_SYSTEM to R.string.settings_theme_mode_follow_system,
+)
 
 @Composable
 private fun themeModeLabel(mode: String): String = stringResource(
@@ -769,11 +768,9 @@ private fun ThemeSettingsEntry(
     )
 }
 
-/**
- * Theme changes already animate at the ComposeDesignSystem boundary. This row consumes those animated
- * colors directly so Material list-item transitions do not delay some cards a second time.
- */
+/** Theme rows use Material's segmented item so edge shapes animate with press interactions. */
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun ThemeSegmentedSurfaceRow(
     onClick: () -> Unit,
     index: Int,
@@ -782,37 +779,24 @@ private fun ThemeSegmentedSurfaceRow(
     content: @Composable () -> Unit,
     supportingContent: (@Composable () -> Unit)? = null,
     trailingContent: (@Composable () -> Unit)? = null,
-    compact: Boolean = false,
 ) {
-    val shape = dpisSegmentedShapes(index, total).shape
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .dpisClickable(onClick = onClick, role = Role.Button),
-        shape = shape,
-        color = MaterialTheme.colorScheme.surfaceBright,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = if (compact) 8.dp else 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            leadingContent()
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                content()
-                supportingContent?.let { supporting ->
-                    Spacer(Modifier.height(2.dp))
-                    supporting()
-                }
-            }
-            trailingContent?.let { trailing ->
-                Spacer(Modifier.width(12.dp))
-                trailing()
-            }
-        }
-    }
+    SegmentedListItem(
+        modifier = Modifier.fillMaxWidth(),
+        onClick = rememberClickAction(onClick),
+        shapes = dpisSegmentedShapes(index, total),
+        colors = ListItemDefaults.segmentedColors(
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            trailingContentColor = MaterialTheme.colorScheme.primary,
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+        leadingContent = leadingContent,
+        content = content,
+        supportingContent = supportingContent,
+        trailingContent = trailingContent,
+    )
 }
 
 @Composable
@@ -825,15 +809,31 @@ private fun ThemeInterfaceScaleRow(
     index: Int,
     total: Int,
 ) {
-    val shape = dpisSegmentedShapes(index, total).shape
+    val cardInteractionSource = remember { MutableInteractionSource() }
+    val shape = rememberSegmentedPressedShape(
+        shapes = dpisSegmentedShapes(index, total),
+        interactionSource = cardInteractionSource,
+    )
     Surface(
-        modifier = Modifier.fillMaxWidth().clip(shape).dpisClickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .indication(cardInteractionSource, ripple()),
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceBright,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // The slider owns its drag/tap feedback. Keeping the dialog action on the header
+            // avoids a slider gesture also invoking the card's confirmation click.
+            Row(
+                modifier = Modifier.fillMaxWidth().dpisClickable(
+                    onClick = onClick,
+                    interactionSource = cardInteractionSource,
+                    indication = null,
+                ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Icon(
                     painterResource(R.drawable.ic_fit_width_24),
                     contentDescription = null,

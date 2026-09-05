@@ -232,26 +232,31 @@ private fun pageTopBarColors() = TopAppBarDefaults.topAppBarColors(
 private fun PageNavigationIcon(onBack: (() -> Unit)?) {
     if (onBack != null) {
         Row {
-            IconButton(
-                onClick = onBack,
+            Box(
                 modifier = Modifier.size(48.dp),
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = androidx.compose.ui.graphics.Color.Transparent
-                )
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.size(40.dp),
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    ),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_arrow_back_24),
-                        contentDescription = stringResource(R.string.system_settings_back),
-                        modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_arrow_back_24),
+                            contentDescription = stringResource(R.string.system_settings_back),
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
             Spacer(Modifier.size(12.dp))

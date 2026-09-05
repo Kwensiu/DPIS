@@ -47,7 +47,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
@@ -62,9 +61,11 @@ import java.util.function.IntConsumer
 data class LanguageDialogOption(val tag: String, val label: String)
 internal const val LanguageDialogOptionsTestTag = "language-dialog-options"
 
-/** Compose-owned phone/tablet settings dialogs; persistence remains controller-owned. */
+/**
+ * Compose content hosted by the remaining legacy View settings page. Compose-native settings
+ * pages own dialog state locally and must not route through this Activity-backed adapter.
+ */
 object SettingsComposeDialogs {
-    // TODO: Retire this adapter after remaining Java settings callers own Compose dialog state.
     @JvmStatic
     fun showInterfaceScale(
         activity: Activity,
@@ -149,6 +150,7 @@ internal fun InterfaceScaleDialogContent(
     initialPercent: Int,
     minimumPercent: Int,
     maximumPercent: Int,
+    inputFocusBoundary: TextInputFocusBoundary = rememberTextInputFocusBoundary(),
     onCancel: () -> Unit,
     onSave: (Int) -> Unit
 ) {
@@ -174,7 +176,7 @@ internal fun InterfaceScaleDialogContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
-                .inputFocusFeedback(),
+                .reportTextInputFocusBounds(inputFocusBoundary, "interface-scale"),
             label = { Text(stringResource(R.string.settings_interface_scale_input_hint)) },
             isError = invalid,
             supportingText = if (invalid) {
@@ -338,7 +340,12 @@ private fun BackupActionTile(
                 modifier = Modifier.height(28.dp)
             )
             Spacer(Modifier.height(10.dp))
-            Text(text = label, style = MaterialTheme.typography.titleSmall)
+            Text(
+                text = label,
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.titleSmall,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

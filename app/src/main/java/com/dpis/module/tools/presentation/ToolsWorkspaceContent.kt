@@ -22,6 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -47,15 +50,19 @@ fun ToolsWorkspaceContent(
     onRequestPermission: () -> Unit,
     scrollStore: PageScrollPositionStore,
 ) {
+    val listState = rememberRestorableLazyListState("tools", scrollStore)
+    val contentCanScroll by remember {
+        derivedStateOf { listState.canScrollForward || listState.canScrollBackward }
+    }
     PageScaffold(
         pageBar = PageBarBehavior.Collapsing,
         onBack = null,
         titleRes = R.string.workspace_tools,
         scrollStore = scrollStore,
         scrollKey = "tools",
+        contentCanScroll = contentCanScroll,
     ) { pagePadding ->
         val layoutDirection = LocalLayoutDirection.current
-        val listState = rememberRestorableLazyListState("tools", scrollStore)
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize().padding(padding),

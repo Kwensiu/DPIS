@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -158,27 +159,47 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
                 color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
         Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_primary_button_spacing_top)))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Keep the action row full-width while giving longer labels more room.
-            val cancelWeight = state.cancelLabel.length.toFloat() + 2f
-            val primaryWeight = state.primaryLabel.length.toFloat() + 2f
-            OutlinedButton(
-                onClick = onCancel,
-                modifier = Modifier.weight(cancelWeight),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-            ) { Text(state.cancelLabel) }
-            Button(
-                onClick = onPrimary,
-                enabled = state.primaryEnabled,
-                modifier = Modifier.weight(primaryWeight),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
-            ) { Text(state.primaryLabel) }
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            // Keep both actions usable across locales and font scales. Stack the actions when
+            // two comfortable touch targets cannot fit; this avoids language-specific sizing.
+            val compactActionRow = maxWidth < 420.dp
+            if (compactActionRow) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onCancel,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                    ) { Text(state.cancelLabel) }
+                    Button(
+                        onClick = onPrimary,
+                        enabled = state.primaryEnabled,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                    ) { Text(state.primaryLabel) }
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = onCancel,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                    ) { Text(state.cancelLabel) }
+                    Button(
+                        onClick = onPrimary,
+                        enabled = state.primaryEnabled,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
+                    ) { Text(state.primaryLabel) }
+                }
+            }
         }
     }
 }
