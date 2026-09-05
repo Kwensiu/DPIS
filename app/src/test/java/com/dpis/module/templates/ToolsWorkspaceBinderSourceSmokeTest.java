@@ -13,19 +13,20 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
     @Test
     public void mainActivityWiresToolsWorkspaceBinderLifecycle() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String workspace = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt");
 
-        assertTrue(source.contains("private ToolsWorkspaceBinder toolsWorkspaceBinder;"));
-        assertTrue(source.contains(
-                "toolsWorkspaceBinder = new ToolsWorkspaceBinder(new ToolsWorkspaceBinder.Host()"));
-        assertTrue(source.contains(
-                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
-        assertTrue(source.contains("TouchFeedbackBinder.bindPressHaptic(view);"));
-        assertTrue(source.contains("LogGate.ensureEnabled("));
+        assertTrue(source.contains("private ToolsWorkspace toolsWorkspace;"));
+        assertTrue(source.contains("toolsWorkspace = new ToolsWorkspace("));
+        assertTrue(workspace.contains("private val binder = ToolsWorkspaceBinder("));
+        assertTrue(workspace.contains(
+                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false)"));
+        assertTrue(workspace.contains("TouchFeedbackBinder.bindPressHaptic(view)"));
+        assertTrue(workspace.contains("LogGate.ensureEnabled("));
         assertTrue(source.contains("bindToolsWorkspace();"));
-        assertTrue(source.contains("toolsWorkspaceBinder.onStart();"));
-        assertTrue(source.contains("toolsWorkspaceBinder.onResume();"));
-        assertTrue(source.contains("toolsWorkspaceBinder.onStop();"));
-        assertTrue(source.contains("toolsWorkspaceBinder.onActivityResult(requestCode, resultCode, data);"));
+        assertTrue(source.contains("toolsWorkspace.onStart();"));
+        assertTrue(source.contains("toolsWorkspace.onResume();"));
+        assertTrue(source.contains("toolsWorkspace.onStop();"));
+        assertTrue(source.contains("toolsWorkspace.onActivityResult(requestCode, resultCode, data);"));
     }
 
     @Test

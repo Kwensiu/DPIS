@@ -54,20 +54,20 @@ public class SystemFontScaleToolLayoutSmokeTest {
     @Test
     public void toolsWorkspaceToolbarUsesSafeDrawingInsetsLikeSettingsPage()
             throws IOException {
-        String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
-        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String binder = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt");
         String settingsController = read(
                 "src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
 
-        assertTrue(source.contains(
+        assertTrue(binder.contains(
                 "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));
-        assertTrue(source.contains("WatchUiMode.shouldUseCompactUi(host.activity())"));
-        assertTrue(source.contains("((LinearLayout) toolsToolbar).setGravity(Gravity.CENTER);"));
-        assertTrue(source.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
-        assertTrue(mainActivity.contains(
-                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
-        assertTrue(mainActivity.contains("LogGate.ensureEnabled("));
-        assertTrue(mainActivity.contains("new Intent(MainActivity.this, LogActivity.class)"));
+        assertTrue(binder.contains("WatchUiMode.shouldUseCompactUi(host.activity())"));
+        assertTrue(binder.contains("((LinearLayout) toolsToolbar).setGravity(Gravity.CENTER);"));
+        assertTrue(binder.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
+        assertTrue(source.contains(
+                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false)"));
+        assertTrue(source.contains("LogGate.ensureEnabled("));
+        assertTrue(source.contains("Intent(activity, LogActivity::class.java)"));
         assertTrue(settingsController.contains("val toolbar = findViewById<View?>(R.id.settings_toolbar)"));
         assertTrue(settingsController.contains("baseTopPadding + safeDrawing.top"));
     }

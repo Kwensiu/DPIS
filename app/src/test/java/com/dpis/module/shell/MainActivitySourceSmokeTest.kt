@@ -168,6 +168,22 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
+    fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
+        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val appWorkspace = read("src/main/java/com/dpis/module/AppWorkspace.java")
+        val toolsWorkspace = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt")
+
+        assertTrue(source.contains("private AppWorkspace appWorkspace"))
+        assertTrue(source.contains("appWorkspace = new AppWorkspace("))
+        assertTrue(source.contains("appWorkspace.actions()"))
+        assertFalse(source.contains("createComposeAppWorkspaceActions()"))
+        assertTrue(appWorkspace.contains("interface Host"))
+        assertTrue(appWorkspace.contains("AppWorkspacePresentation.Actions actions()"))
+        assertTrue(toolsWorkspace.contains("class ToolsWorkspace("))
+        assertTrue(toolsWorkspace.contains("private val binder = ToolsWorkspaceBinder("))
+    }
+
+    @Test
     fun restoreSnapshot_isNotBlockedBySavedStateBranch() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
