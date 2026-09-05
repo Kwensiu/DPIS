@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.view.View
 import com.dpis.module.LocalizedActivity
+import com.dpis.module.SettingsUiState
 import com.dpis.module.SystemServerSettingsPageController
 
 /**
@@ -14,12 +15,21 @@ import com.dpis.module.SystemServerSettingsPageController
 class SettingsWorkspaceSession(
     private val activity: LocalizedActivity,
     private val onComposeStateChanged: Runnable,
-) {
+    private val onOpenLogs: Runnable,
+) : SettingsActions {
     companion object {
         /** Stable Java entry point that avoids exposing Kotlin function types or internal classes. */
         @JvmStatic
-        fun create(activity: Activity, onComposeStateChanged: Runnable): SettingsWorkspaceSession {
-            return SettingsWorkspaceSession(activity as LocalizedActivity, onComposeStateChanged)
+        fun create(
+            activity: Activity,
+            onComposeStateChanged: Runnable,
+            onOpenLogs: Runnable,
+        ): SettingsWorkspaceSession {
+            return SettingsWorkspaceSession(
+                activity as LocalizedActivity,
+                onComposeStateChanged,
+                onOpenLogs,
+            )
         }
     }
 
@@ -40,6 +50,68 @@ class SettingsWorkspaceSession(
             composePresentationStarted = true
         }
         return current
+    }
+
+    override fun state(): SettingsUiState = ensureComposeController().presentationState()
+
+    override fun setHooks(enabled: Boolean) {
+        ensureComposeController().setHooksEnabledFromPresentation(enabled)
+    }
+
+    override fun setSafeMode(enabled: Boolean) {
+        ensureComposeController().setSafeModeFromPresentation(enabled)
+    }
+
+    override fun setGlobalLog(enabled: Boolean) {
+        ensureComposeController().setGlobalLogFromPresentation(enabled)
+    }
+
+    override fun openLogs() {
+        onOpenLogs.run()
+    }
+
+    override fun setLauncherHidden(hidden: Boolean) {
+        ensureComposeController().setLauncherHiddenFromPresentation(hidden)
+    }
+
+    override fun openFontDebug() {
+        ensureComposeController().showFontDebugFromPresentation()
+    }
+
+    override fun openFontLibrary() {
+        ensureComposeController().showFontLibraryFromPresentation()
+    }
+
+    override fun openExperimental() {
+        ensureComposeController().showExperimentalSettingsFromPresentation()
+    }
+
+    override fun openTheme() {
+        ensureComposeController().showThemeSettingsFromPresentation()
+    }
+
+    override fun setLanguage(tag: String) {
+        ensureComposeController().setLanguageFromPresentation(tag)
+    }
+
+    override fun openLanguage() {
+        ensureComposeController().showLanguageFromPresentation()
+    }
+
+    override fun openBackup() {
+        ensureComposeController().showConfigBackupFromPresentation()
+    }
+
+    override fun clearCache() {
+        ensureComposeController().clearCacheFromPresentation()
+    }
+
+    override fun openAbout() {
+        ensureComposeController().showAboutFromPresentation()
+    }
+
+    override fun openDonate() {
+        ensureComposeController().showDonateFromPresentation()
     }
 
     fun onStart() {

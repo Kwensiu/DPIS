@@ -386,7 +386,8 @@ public final class MainActivity
                     if (composeShellHost != null) {
                         composeShellHost.refreshSettings();
                     }
-                }
+                },
+                () -> startActivity(new Intent(MainActivity.this, LogActivity.class))
         );
         WatchWorkspaceChromeBinder.applyIfSupported(
                 this,
@@ -1002,83 +1003,8 @@ public final class MainActivity
                     }
 
                     @Override
-                    public SettingsUiState settingsState() {
-                        return ensureComposeSettingsController().presentationState();
-                    }
-
-                    @Override
-                    public void setSettingsHooks(boolean enabled) {
-                        ensureComposeSettingsController().setHooksEnabledFromPresentation(enabled);
-                    }
-
-                    @Override
-                    public void setSettingsSafeMode(boolean enabled) {
-                        ensureComposeSettingsController().setSafeModeFromPresentation(enabled);
-                    }
-
-                    @Override
-                    public void setSettingsGlobalLog(boolean enabled) {
-                        ensureComposeSettingsController().setGlobalLogFromPresentation(enabled);
-                    }
-
-                    @Override
-                    public void openSettingsLogs() {
-                        startActivity(new Intent(MainActivity.this, LogActivity.class));
-                    }
-
-                    @Override
-                    public void setSettingsLauncherHidden(boolean hidden) {
-                        ensureComposeSettingsController().setLauncherHiddenFromPresentation(hidden);
-                    }
-
-                    @Override
-                    public void openSettingsFontDebug() {
-                        ensureComposeSettingsController().showFontDebugFromPresentation();
-                    }
-
-                    @Override
-                    public void openSettingsFontLibrary() {
-                        ensureComposeSettingsController().showFontLibraryFromPresentation();
-                    }
-
-                    @Override
-                    public void openSettingsExperimental() {
-                        ensureComposeSettingsController().showExperimentalSettingsFromPresentation();
-                    }
-
-                    @Override
-                    public void openThemeSettings() {
-                        ensureComposeSettingsController().showThemeSettingsFromPresentation();
-                    }
-
-                    @Override
-                    public void setSettingsLanguage(@NonNull String tag) {
-                        ensureComposeSettingsController().setLanguageFromPresentation(tag);
-                    }
-
-                    @Override
-                    public void openSettingsLanguage() {
-                        ensureComposeSettingsController().showLanguageFromPresentation();
-                    }
-
-                    @Override
-                    public void openSettingsBackup() {
-                        ensureComposeSettingsController().showConfigBackupFromPresentation();
-                    }
-
-                    @Override
-                    public void clearSettingsCache() {
-                        ensureComposeSettingsController().clearCacheFromPresentation();
-                    }
-
-                    @Override
-                    public void openSettingsAbout() {
-                        ensureComposeSettingsController().showAboutFromPresentation();
-                    }
-
-                    @Override
-                    public void openSettingsDonate() {
-                        ensureComposeSettingsController().showDonateFromPresentation();
+                    public com.dpis.module.settings.SettingsActions settings() {
+                        return settingsWorkspaceSession;
                     }
 
                     @NonNull
@@ -1242,17 +1168,13 @@ public final class MainActivity
 
     private void bindSettingsWorkspace() {
         if (composeShellHost != null) {
-            ensureComposeSettingsController();
+            settingsWorkspaceSession.ensureComposeController();
             return;
         }
         if (settingsWorkspaceContainer == null || settingsWorkspaceSession == null) {
             return;
         }
         settingsWorkspaceSession.bindLegacy(settingsWorkspaceContainer);
-    }
-
-    private SystemServerSettingsPageController ensureComposeSettingsController() {
-        return settingsWorkspaceSession.ensureComposeController();
     }
 
     private AppWorkspacePresentation.Actions createComposeAppWorkspaceActions() {

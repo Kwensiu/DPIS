@@ -50,6 +50,7 @@ import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.settings.SettingsActions
 import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.presentation.TemplateWorkspaceContent
@@ -87,14 +88,7 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun applyTools()
         fun restoreTools()
         fun requestToolsPermission()
-        fun settingsState(): SettingsUiState?
-        fun setSettingsHooks(enabled: Boolean)
-        fun setSettingsSafeMode(enabled: Boolean)
-        fun setSettingsGlobalLog(enabled: Boolean)
-        fun openSettingsLogs()
-        fun setSettingsLauncherHidden(hidden: Boolean)
-        fun openSettingsFontDebug(); fun openSettingsFontLibrary(); fun openSettingsExperimental(); fun openThemeSettings()
-        fun setSettingsLanguage(tag: String); fun openSettingsLanguage(); fun openSettingsBackup(); fun clearSettingsCache(); fun openSettingsAbout(); fun openSettingsDonate()
+        fun settings(): SettingsActions
         fun templateWorkspace(): TemplateWorkspacePresentationSource
     }
     private var appRevision by mutableIntStateOf(0)
@@ -173,24 +167,25 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
             }
             MainUiState.WorkspaceMode.SETTINGS -> {
                 settingsRevision
+                val settings = content.settings()
                 ComposeWorkspaceSurface {
                     SettingsWorkspaceContent(
-                        content.settingsState(),
+                        settings.state(),
                         padding,
-                        content::setSettingsHooks,
-                        content::setSettingsSafeMode,
-                        content::setSettingsGlobalLog,
-                        content::openSettingsLogs,
-                        content::setSettingsLauncherHidden,
-                        content::openSettingsFontDebug,
-                        content::openSettingsFontLibrary,
-                        content::openSettingsExperimental,
-                        content::openThemeSettings,
-                        content::setSettingsLanguage,
-                        content::openSettingsBackup,
-                        content::clearSettingsCache,
-                        content::openSettingsAbout,
-                        content::openSettingsDonate,
+                        settings::setHooks,
+                        settings::setSafeMode,
+                        settings::setGlobalLog,
+                        settings::openLogs,
+                        settings::setLauncherHidden,
+                        settings::openFontDebug,
+                        settings::openFontLibrary,
+                        settings::openExperimental,
+                        settings::openTheme,
+                        settings::setLanguage,
+                        settings::openBackup,
+                        settings::clearCache,
+                        settings::openAbout,
+                        settings::openDonate,
                         pageScrollPositions,
                     )
                 }
@@ -230,20 +225,21 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         }
         MainUiState.WorkspaceMode.SETTINGS -> {
             settingsRevision
+            val settings = content.settings()
             WearSettingsWorkspaceContent(
-                content.settingsState(),
-                content::setSettingsHooks,
-                content::setSettingsSafeMode,
-                content::setSettingsGlobalLog,
-                content::openSettingsLogs,
-                content::setSettingsLauncherHidden,
-                content::openSettingsFontLibrary,
-                content::openSettingsExperimental,
-                content::openThemeSettings,
-                content::openSettingsLanguage,
-                content::openSettingsBackup,
-                content::clearSettingsCache,
-                content::openSettingsAbout
+                settings.state(),
+                settings::setHooks,
+                settings::setSafeMode,
+                settings::setGlobalLog,
+                settings::openLogs,
+                settings::setLauncherHidden,
+                settings::openFontLibrary,
+                settings::openExperimental,
+                settings::openTheme,
+                settings::openLanguage,
+                settings::openBackup,
+                settings::clearCache,
+                settings::openAbout
             )
             true
         }

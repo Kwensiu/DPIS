@@ -152,6 +152,22 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
+    fun settingsPresentationUsesOneWorkspaceCapability() {
+        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val coordinator = read(
+            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt"
+        )
+        val actions = read("src/main/java/com/dpis/module/settings/SettingsActions.kt")
+
+        assertTrue(source.contains("public com.dpis.module.settings.SettingsActions settings()"))
+        assertFalse(source.contains("public SettingsUiState settingsState()"))
+        assertFalse(source.contains("public void setSettingsHooks(boolean enabled)"))
+        assertFalse(source.contains("public void openSettingsBackup()"))
+        assertTrue(coordinator.contains("fun settings(): SettingsActions"))
+        assertTrue(actions.contains("interface SettingsActions"))
+    }
+
+    @Test
     fun restoreSnapshot_isNotBlockedBySavedStateBranch() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
