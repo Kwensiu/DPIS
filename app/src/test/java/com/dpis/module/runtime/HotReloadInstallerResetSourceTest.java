@@ -49,9 +49,9 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ChromiumViewportProbeHookInstaller.java",
                 "public static void resetForHotReload()",
                 "installedPid = -1;");
-        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.java",
-                "static void resetForHotReload()",
-                "installedPid = -1;");
+        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.kt",
+                "fun resetForHotReload()",
+                "installedPid = -1");
         assertSourceContains("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java",
                 "static void resetForHotReload()",
                 "installedPid = -1;");
@@ -107,15 +107,15 @@ public class HotReloadInstallerResetSourceTest {
 
     @Test
     public void sharedHookInstallersClearInstalledFlagsForHotReload() throws IOException {
-        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.java",
-                "static void resetForHotReload()",
-                "hookInstalled = false;");
+        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.kt",
+                "fun resetForHotReload()",
+                "hookInstalled = false");
         assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.java",
                 "static void resetForHotReload()",
                 "hookInstalled = false;");
-        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java",
-                "static void resetForHotReload()",
-                "hookInstalled = false;");
+        assertSourceContains("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.kt",
+                "fun resetForHotReload()",
+                "hookInstalled = false");
     }
 
     private static void assertSourceContains(String relativePath, String... expected) throws IOException {

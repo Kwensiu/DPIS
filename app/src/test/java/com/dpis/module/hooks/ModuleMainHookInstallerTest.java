@@ -290,8 +290,8 @@ public class ModuleMainHookInstallerTest {
     @Test
     public void modernUsesApi101BaselineWithApi102HotReloadAndHookIds() throws IOException {
         String moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java");
-        String resourcesRead = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java");
-        String resourcesImpl = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.java");
+        String resourcesRead = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.kt");
+        String resourcesImpl = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.kt");
         String resourcesManager = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.java");
         String capabilities = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilities.java");
         String api101 = read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi101Capabilities.java");
@@ -320,8 +320,8 @@ public class ModuleMainHookInstallerTest {
         assertTrue(resolver.contains("keeps API 101 as the loading baseline and targets API 102"));
         assertTrue(resolver.contains("API 102 hosts may exercise hot reload and stable hook ids"));
         assertTrue(resolver.contains("API 101 keeps"));
-        assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId("));
-        assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId("));
+        assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId"));
+        assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId"));
         assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId("));
         assertTrue(read("src/main/java/com/dpis/module/runtime/font/ActivityThreadFontHookInstaller.java")
                 .contains("HOOK_ID_HANDLE_BIND_APPLICATION"));
@@ -344,7 +344,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(appProcessInstaller.contains("ForceTextSizeHookInstaller.install("));
         assertTrue(appProcessInstaller.contains("plan.fontDomainPlan,"));
         assertTrue(appProcessInstaller.contains("apiCapabilities);"));
-        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.kt")
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
         assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.java")
                 .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS"));

@@ -196,10 +196,10 @@ public class LegacyModuleHookSourceTest {
                 < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
         assertTrue(!rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
 
-        String resourcesReadSource = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.java");
+        String resourcesReadSource = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.kt");
         assertTrue(resourcesReadSource.contains("DPIS_VIEWPORT legacy auto fallback success: package="));
         assertTrue(resourcesReadSource.contains("sourceTag.startsWith(\"LegacyResourcesRead(\")"));
-        assertTrue(resourcesReadSource.contains("ViewportApplyMode.AUTO.equals("));
+        assertTrue(resourcesReadSource.contains("ViewportApplyMode.AUTO !="));
     }
 
     @Test

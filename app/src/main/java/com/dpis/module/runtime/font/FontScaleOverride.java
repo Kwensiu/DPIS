@@ -74,7 +74,7 @@ public final class FontScaleOverride {
     }
 
     public static boolean applyToConfiguration(Configuration config, Result result) {
-        if (config == null || result == null || !result.changed) {
+        if (config == null || result == null || !result.changed || result.effective <= 0f) {
             return false;
         }
         config.fontScale = result.effective;

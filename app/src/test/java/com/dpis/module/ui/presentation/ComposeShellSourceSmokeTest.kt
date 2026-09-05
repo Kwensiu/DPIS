@@ -155,9 +155,9 @@ class ComposeShellSourceSmokeTest {
         assertTrue(templateSheet.contains("bottomSheetState.partialExpand()"))
         assertTrue(templateSheet.contains(
                 "destination.isChildPage() && !sheetMotionInProgress"))
-        assertFalse(workspace.substringAfter("val editorSheetBody")
-                .substringBefore("Box(\n        modifier = Modifier")
-                .contains("topSafePadding"))
+        val editorSheetBody = workspace.substringAfter("val editorSheetBody")
+                .substringBefore("\n    Box(")
+        assertFalse(editorSheetBody.contains("topSafePadding"))
         assertFalse(templateSheet.contains("AppConfigEditorOverlay("))
         assertFalse(templateSheet.contains("EditorBottomSheet("))
     }

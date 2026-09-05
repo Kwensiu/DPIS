@@ -27,7 +27,7 @@ public class CallerTraceTest {
     public void skipsModuleAndFrameworkFrames() {
         String caller = CallerTrace.findRelevantCaller(List.of(
                 new StackTraceElement("com.dpis.module.DisplayHookInstaller", "applyDisplayMetrics",
-                        "DisplayHookInstaller.java", 10),
+                        "DisplayHookInstaller.kt", 10),
                 new StackTraceElement("android.view.Display", "getMetrics", "Display.java", 1),
                 new StackTraceElement("java.lang.reflect.Method", "invoke", "Method.java", 2)
         ), "com.max.xiaoheihe");
