@@ -35,7 +35,7 @@ class StringResourceParityTest {
     @Test
     fun settingsScreenWiresLanguageSelector() {
         val layout = read("src/main/res/layout/view_system_server_settings_content.xml")
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java")
+        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
         val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
@@ -44,20 +44,20 @@ class StringResourceParityTest {
         assertTrue(dialogs.indexOf("dismiss()", dialogs.indexOf("onSelected = {")) >= 0)
         assertTrue(dialogs.indexOf("onSelected.accept(selectedTag)") > dialogs.indexOf("dismiss()", dialogs.indexOf("onSelected = {")))
         dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", "R.dimen.dialog_action_spacing_top")
-        source.assertContainsAll("R.id.row_language", "bindLanguageRow()", "showLanguageDialog", "AppLocaleManager.supportedLanguages()", "new LanguageDialogOption(", "AppLocaleManager.setLanguageTag", "SettingsComposeDialogs.showLanguage", "updateLanguageEntrySubtitle()", "AppLocaleManager.selectedLabelResId(activity)")
+        source.assertContainsAll("R.id.row_language", "bindLanguageRow()", "showLanguageDialog", "AppLocaleManager.supportedLanguages()", "LanguageDialogOption(option.tag", "AppLocaleManager.setLanguageTag", "SettingsComposeDialogs.showLanguage", "updateLanguageEntrySubtitle()", "AppLocaleManager.selectedLabelResId(activity)")
         source.assertNotContainsAll("settings_language_hint")
         localeManager.assertContainsAll("SUPPORTED_LANGUAGES = List.of(", "TAG_JAPANESE", "R.string.settings_language_japanese", "TAG_RUSSIAN", "R.string.settings_language_russian", "static List<LanguageOption> supportedLanguages()")
     }
 
     @Test
     fun languageSwitchDoesNotUseSavedInstanceStateForPersistedSwitches() {
-        read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java").assertNotContainsAll("STATE_HOOKS_SWITCH_CHECKED", "protected void onSaveInstanceState(Bundle outState)", "restoreSwitchStates(savedInstanceState)")
+        read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt").assertNotContainsAll("STATE_HOOKS_SWITCH_CHECKED", "onSaveInstanceState", "restoreSwitchStates")
         read("src/main/java/com/dpis/module/settings/AppLocaleManager.java").assertContainsAll("boolean setLanguageTag", ".commit()")
     }
 
     @Test
     fun localeSwitchUsesWrappedBaseContextAndExplicitRecreate() {
-        val settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java")
+        val settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
         val localized = read("src/main/java/com/dpis/module/LocalizedActivity.kt")
         val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
         val main = read("src/main/java/com/dpis/module/MainActivity.java")
@@ -66,12 +66,12 @@ class StringResourceParityTest {
         val manifest = read("src/main/AndroidManifest.xml")
         localized.assertContainsAll(": ComponentActivity()", "attachBaseContext(", "override fun onResume()", "AppLocaleManager.getLanguageTag(this)", "recreate()", "ThemeModeStore.getAppearance(this)")
         localeManager.assertContainsAll("Context wrap(Context context)", "createConfigurationContext(configuration)", "Context.MODE_PRIVATE")
-        main.assertContainsAll("extends LocalizedActivity", "new SystemServerSettingsPageController(")
+        main.assertContainsAll("extends LocalizedActivity", "SettingsWorkspaceSession.create(")
         about.assertContainsAll(": LocalizedActivity()")
         license.assertContainsAll("extends LocalizedActivity")
         manifest.assertContainsAll("android:supportsRtl=\"false\"")
         manifest.assertNotContainsAll("AppLocalesMetadataHolderService")
-        settings.assertContainsAll("SystemServerSettingsPageController(LocalizedActivity activity")
+        settings.assertContainsAll("class SystemServerSettingsPageController(", "private val activity: LocalizedActivity")
     }
 
     private fun assertLocalizedStringNames(defaultNames: Set<String>, defaultsNonTranslatable: Set<String>, localizedPath: String) {

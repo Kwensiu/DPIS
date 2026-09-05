@@ -75,7 +75,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
     @Test
     public void settingsExposeSafeCacheCleanup() throws IOException {
         String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
 
         assertTrue(layout.contains("android:id=\"@+id/row_clear_cache\""));
         assertTrue(layout.indexOf("android:id=\"@+id/row_language\"")

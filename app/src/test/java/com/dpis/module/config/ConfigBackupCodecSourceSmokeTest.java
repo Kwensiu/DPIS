@@ -35,7 +35,7 @@ public class ConfigBackupCodecSourceSmokeTest {
         String codec = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.kt");
         String packageRegistry = read("src/main/java/com/dpis/module/config/PackageConfigRegistry.kt");
         String backupPolicy = read("src/main/java/com/dpis/module/backup/BackupKeyPolicy.kt");
-        String settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
 
         assertTrue(packageRegistry.contains("font.$packageName.typeface_id"));
         assertTrue(settings.contains("ConfigBackupCoordinator"));

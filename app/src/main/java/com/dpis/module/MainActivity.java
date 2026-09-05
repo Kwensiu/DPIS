@@ -67,6 +67,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.settings.StartupDisclaimerStore;
 import com.dpis.module.settings.SystemFontScaleToolPresenter;
+import com.dpis.module.settings.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.settings.ToolsWorkspaceBinder;
 import com.dpis.module.templates.TemplateWorkspaceActivitySession;
@@ -223,7 +224,7 @@ public final class MainActivity
     private TemplateWorkspaceActivitySession workspaceSession;
     private ToolsWorkspaceBinder toolsWorkspaceBinder;
     private SystemFontScaleToolPresenter composeToolsPresenter;
-    private SystemServerSettingsPageController settingsPageController;
+    private SettingsWorkspaceSession settingsWorkspaceSession;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
     private boolean installedAppsPermissionRequestInFlight;
@@ -379,6 +380,14 @@ public final class MainActivity
         topContainer = findViewById(R.id.top_container);
         toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
         settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
+        settingsWorkspaceSession = SettingsWorkspaceSession.create(
+                this,
+                () -> {
+                    if (composeShellHost != null) {
+                        composeShellHost.refreshSettings();
+                    }
+                }
+        );
         WatchWorkspaceChromeBinder.applyIfSupported(
                 this,
                 settingsWorkspaceContainer
@@ -489,8 +498,8 @@ public final class MainActivity
         } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStart();
         }
-        if (settingsPageController != null) {
-            settingsPageController.onStart();
+        if (settingsWorkspaceSession != null) {
+            settingsWorkspaceSession.onStart();
         }
         DpisApplication.addServiceStateListener(this, true);
     }
@@ -504,8 +513,8 @@ public final class MainActivity
         } else if (toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onResume();
         }
-        if (settingsPageController != null) {
-            settingsPageController.onResume();
+        if (settingsWorkspaceSession != null) {
+            settingsWorkspaceSession.onResume();
         }
     }
 
@@ -514,8 +523,8 @@ public final class MainActivity
         if (composeShellHost == null && toolsWorkspaceBinder != null) {
             toolsWorkspaceBinder.onStop();
         }
-        if (settingsPageController != null) {
-            settingsPageController.onStop();
+        if (settingsWorkspaceSession != null) {
+            settingsWorkspaceSession.onStop();
         }
         DpisApplication.removeServiceStateListener(this);
         super.onStop();
@@ -536,6 +545,9 @@ public final class MainActivity
             updateDownloadCoordinator.shutdown();
         }
         ensureWorkspaceSession().onDestroy();
+        if (settingsWorkspaceSession != null) {
+            settingsWorkspaceSession.onDestroy();
+        }
         installedAppCatalogCoordinator.shutdown();
         super.onDestroy();
     }
@@ -547,8 +559,8 @@ public final class MainActivity
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                 bindHomeWorkspace();
             }
-            if (settingsPageController != null) {
-                settingsPageController.onServiceStateChanged();
+            if (settingsWorkspaceSession != null) {
+                settingsWorkspaceSession.onServiceStateChanged();
             }
             if (skipNextImmediateServiceReload) {
                 skipNextImmediateServiceReload = false;
@@ -562,8 +574,8 @@ public final class MainActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (settingsPageController != null) {
-            settingsPageController.onActivityResult(requestCode, resultCode, data);
+        if (settingsWorkspaceSession != null) {
+            settingsWorkspaceSession.onActivityResult(requestCode, resultCode, data);
         }
         if (composeShellHost != null && composeToolsPresenter != null) {
             composeToolsPresenter.refresh();
@@ -1001,12 +1013,12 @@ public final class MainActivity
 
                     @Override
                     public void setSettingsSafeMode(boolean enabled) {
-                        ensureComposeSettingsController().presentationController().setSafeModeEnabled(enabled);
+                        ensureComposeSettingsController().setSafeModeFromPresentation(enabled);
                     }
 
                     @Override
                     public void setSettingsGlobalLog(boolean enabled) {
-                        ensureComposeSettingsController().presentationController().setGlobalLogEnabled(enabled);
+                        ensureComposeSettingsController().setGlobalLogFromPresentation(enabled);
                     }
 
                     @Override
@@ -1016,17 +1028,7 @@ public final class MainActivity
 
                     @Override
                     public void setSettingsLauncherHidden(boolean hidden) {
-                        ensureComposeSettingsController().presentationController().setLauncherIconHidden(hidden);
-                    }
-
-                    @Override
-                    public void setSettingsScale(int percent) {
-                        ensureComposeSettingsController().saveInterfaceScaleFromPresentation(percent);
-                    }
-
-                    @Override
-                    public void openSettingsScaleDetails() {
-                        ensureComposeSettingsController().showInterfaceScaleFromPresentation();
+                        ensureComposeSettingsController().setLauncherHiddenFromPresentation(hidden);
                     }
 
                     @Override
@@ -1243,26 +1245,14 @@ public final class MainActivity
             ensureComposeSettingsController();
             return;
         }
-        if (settingsWorkspaceContainer == null || settingsPageController != null) {
+        if (settingsWorkspaceContainer == null || settingsWorkspaceSession == null) {
             return;
         }
-        settingsPageController = new SystemServerSettingsPageController(
-                this,
-                settingsWorkspaceContainer);
-        settingsPageController.bind();
+        settingsWorkspaceSession.bindLegacy(settingsWorkspaceContainer);
     }
 
     private SystemServerSettingsPageController ensureComposeSettingsController() {
-        if (settingsPageController == null) {
-            settingsPageController = new SystemServerSettingsPageController(this, null);
-            settingsPageController.initializeComposePresentation();
-            settingsPageController.addPresentationListener(state -> {
-                if (composeShellHost != null) {
-                    composeShellHost.refreshSettings();
-                }
-            });
-        }
-        return settingsPageController;
+        return settingsWorkspaceSession.ensureComposeController();
     }
 
     private AppWorkspacePresentation.Actions createComposeAppWorkspaceActions() {

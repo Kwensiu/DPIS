@@ -57,7 +57,7 @@ public class SystemFontScaleToolLayoutSmokeTest {
         String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
         String settingsController = read(
-                "src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+                "src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
 
         assertTrue(source.contains(
                 "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));
@@ -68,7 +68,7 @@ public class SystemFontScaleToolLayoutSmokeTest {
                 "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false);"));
         assertTrue(mainActivity.contains("LogGate.ensureEnabled("));
         assertTrue(mainActivity.contains("new Intent(MainActivity.this, LogActivity.class)"));
-        assertTrue(settingsController.contains("View toolbar = findViewById(R.id.settings_toolbar);"));
+        assertTrue(settingsController.contains("val toolbar = findViewById<View?>(R.id.settings_toolbar)"));
         assertTrue(settingsController.contains("baseTopPadding + safeDrawing.top"));
     }
 

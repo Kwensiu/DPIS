@@ -13,13 +13,13 @@ import org.junit.Test;
 public class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     public void settingsActivityWiresFontLibraryEntryToDedicatedPage() throws IOException {
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java");
+        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
         String manifest = read("src/main/AndroidManifest.xml");
         String factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java");
         String store = read("src/main/java/com/dpis/module/fonts/FontLibraryStore.java");
 
         assertTrue(source.contains("row_font_library"));
-        assertTrue(source.contains("new Intent(activity, FontLibraryActivity.class)"));
+        assertTrue(source.contains("Intent(activity, FontLibraryActivity::class.java)"));
         assertFalse(source.contains("showFontLibraryDialog"));
         assertFalse(source.contains("REQUEST_IMPORT_FONT"));
         assertTrue(manifest.contains("android:name=\".fonts.FontLibraryActivity\""));

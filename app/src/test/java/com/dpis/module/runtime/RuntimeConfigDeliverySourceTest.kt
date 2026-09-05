@@ -16,7 +16,7 @@ class RuntimeConfigDeliverySourceTest {
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
-        val systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java")
+        val systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
 
         assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"))
         assertTrue(delivery.contains("public static void publishLocalSnapshotAfterSave()"))
@@ -43,7 +43,7 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
         assertTrue(occurrences(fontDetail, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
         assertTrue(systemHooks.contains("RuntimeConfigDelivery::publishLocalSnapshotAfterSave"))
-        assertTrue(systemSettings.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"))
+        assertTrue(systemSettings.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
     }
 
     @Test

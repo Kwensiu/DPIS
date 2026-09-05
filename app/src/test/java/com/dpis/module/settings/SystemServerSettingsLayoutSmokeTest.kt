@@ -38,25 +38,25 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun settingsControllerOwnsSemanticRowsAndDebugGates() {
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java")
+        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
         source.assertContainsAll(
-            "R.id.row_experimental_settings", "ExperimentalSettingsActivity.class", "R.drawable.ic_experiment_24",
+            "R.id.row_experimental_settings", "ExperimentalSettingsActivity::class.java", "R.drawable.ic_experiment_24",
             "R.drawable.ic_volunteer_24", "DonateActivity.createIntent(activity)", "R.drawable.ic_upload_file_24",
             "R.drawable.ic_language_24", "R.drawable.ic_hide_image_24", "applySystemHooksRowVisibility()",
-            "row.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);", "if (!BuildConfig.DEBUG) {",
-            "private void onHooksEnabledChanged(CompoundButton buttonView, boolean isChecked)",
+            "row.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE", "if (!BuildConfig.DEBUG) {",
+            "private fun onHooksEnabledChanged(",
             "showDisableSafeModeConfirmationDialog()", "R.string.system_safe_mode_disable_confirm_title",
-            "R.string.system_safe_mode_disable_confirm_message", "if (!store.setSystemServerSafeModeEnabled(false))",
-            "setCheckedSilently(safeModeSwitch, true", "ConfirmDialog.show(",
-            "implements DpisApplication.ServiceStateListener", "DpisApplication.addServiceStateListener(this, true);",
-            "DpisApplication.removeServiceStateListener(this);", "public void onServiceStateChanged()",
-            "store = DpisApplication.getConfigStore();", "applyRestoredStoreState();", "refreshStoreState(true);",
-            "private void applyLauncherIconVisibilityFromStore()", "boolean actualHidden = resolveLauncherIconHiddenState(",
-            "new LauncherIconVisibilityStore(activity)", "launcherIconVisibilityStore.setHidden(", "new ComponentName(",
-            "MainActivity.class.getName() + \"Launcher\"", "private void showHideLauncherIconConfirmationDialog()",
+            "R.string.system_safe_mode_disable_confirm_message", "if (!store!!.setSystemServerSafeModeEnabled(false))",
+            "setCheckedSilently(", "show(",
+            ": DpisApplication.ServiceStateListener", "DpisApplication.addServiceStateListener(this, true)",
+            "DpisApplication.removeServiceStateListener(this)", "override fun onServiceStateChanged()",
+            "store = DpisApplication.getConfigStore()", "applyRestoredStoreState()", "refreshStoreState(true)",
+            "private fun applyLauncherIconVisibilityFromStore()", "val actualHidden = resolveLauncherIconHiddenState(",
+            "LauncherIconVisibilityStore(activity)", "launcherIconVisibilityStore.isHidden =", "ComponentName(",
+            "MainActivity::class.java.name + \"Launcher\"", "private fun showHideLauncherIconConfirmationDialog()",
             "R.string.settings_hide_launcher_icon_confirm_title", "R.string.settings_hide_launcher_icon_confirm_message",
-            "if (!persistLauncherIconState(true))", "setCheckedSilently(hideLauncherIconSwitch, false",
-            "RuntimeDebugPropertySyncer.publishAsync(", "isChecked,", "store.isFontDebugOverlayEnabled()", "requestedEnabled", "FontDebugComposeSheet.show(activity", "handle.update(",
+            "if (!persistLauncherIconState(true))", "hideLauncherIconSwitch,",
+            "RuntimeDebugPropertySyncer.publishAsync(", "isChecked,", "store!!.isFontDebugOverlayEnabled", "requestedEnabled", "show(", "handle.update(",
         )
         source.assertNotContainsAll("if (!setLauncherAliasHidden(requestedHidden))", "getPackageName() + \".MainActivityLauncher\"", "R.layout.dialog_process_action_confirm", "new AlertDialog.Builder(this)")
         read("src/main/java/com/dpis/module/config/GlobalConfigStore.kt").assertContainsAll("!BuildConfig.DEBUG", "SYSTEM_SERVER_HOOKS_ENABLED, true")
@@ -65,10 +65,10 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun backupDialogsAndImportFlowUseSharedComposeAndRuntimePaths() {
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java")
+        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
-        source.assertContainsAll("SettingsComposeDialogs.showBackupActions(", "SettingsComposeDialogs.showInterfaceScale(", "SettingsComposeDialogs.showLanguage(", "this::launchImportBackupPicker", "private void showImportBackupConfirmDialog(Uri uri)", "showImportBackupConfirmDialog(uri);", "importConfigBackup(uri);", "relaunchDpisTask();", "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();", "new Intent(activity, MainActivity.class)", "Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK", "finishAffinity();")
+        source.assertContainsAll("showBackupActions(", "showInterfaceScale(", "SettingsComposeDialogs.showLanguage(", "launchImportBackupPicker()", "private fun showImportBackupConfirmDialog(uri: Uri?)", "showImportBackupConfirmDialog(uri)", "importConfigBackup(uri)", "relaunchDpisTask()", "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()", "Intent(activity, MainActivity::class.java)", "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK", "finishAffinity()")
         source.assertNotContainsAll("android.os.Process.killProcess(android.os.Process.myPid())", "RootCommandRunner.run(\"reboot\")")
         dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "DialogWindowSizer.applyLargeWidth(dialog, activity)")
         dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", ".weight(1f, fill = false)", "R.dimen.dialog_footer_spacing_top")

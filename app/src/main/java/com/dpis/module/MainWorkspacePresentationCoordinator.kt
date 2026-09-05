@@ -93,8 +93,6 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
         fun setSettingsGlobalLog(enabled: Boolean)
         fun openSettingsLogs()
         fun setSettingsLauncherHidden(hidden: Boolean)
-        fun setSettingsScale(percent: Int)
-        fun openSettingsScaleDetails()
         fun openSettingsFontDebug(); fun openSettingsFontLibrary(); fun openSettingsExperimental(); fun openThemeSettings()
         fun setSettingsLanguage(tag: String); fun openSettingsLanguage(); fun openSettingsBackup(); fun clearSettingsCache(); fun openSettingsAbout(); fun openSettingsDonate()
         fun templateWorkspace(): TemplateWorkspacePresentationSource

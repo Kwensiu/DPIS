@@ -19,7 +19,7 @@ class DonateActivitySourceSmokeTest {
         val manifest = read("src/main/AndroidManifest.xml")
         val homeState = read("src/main/java/com/dpis/module/home/HomeWorkspaceState.kt")
         val settingsController =
-            read("src/main/java/com/dpis/module/SystemServerSettingsPageController.java")
+            read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
 
         assertTrue(source.contains("static Intent createIntent(Context context)"))
