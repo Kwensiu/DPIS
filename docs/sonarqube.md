@@ -18,9 +18,15 @@ SonarQube Server) and add these repository settings:
 - Repository variable `SONAR_HOST_URL` when using a server other than the
   default `https://sonarcloud.io`
 
+Because this integration uses CI-based analysis for Gradle test coverage,
+disable SonarQube Cloud Automatic Analysis in the project's
+`Administration -> Analysis Method` settings. SonarQube Cloud does not allow
+Automatic Analysis and CI-based analysis to run together.
+
 The job is intentionally disabled until `SONAR_ENABLED` is set. This keeps a
 fresh checkout's existing build, test, and lint checks independent from the
-external SonarQube project setup.
+external SonarQube project setup. Pull requests from `release-please--`
+branches are also skipped because release-please has its own CI flow.
 
 ## Local analysis
 

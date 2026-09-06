@@ -21,7 +21,10 @@ concurrency:
 
 jobs:
   analyze:
-    if: vars.SONAR_ENABLED == 'true'
+    if: >-
+      vars.SONAR_ENABLED == 'true' &&
+      (github.event_name != 'pull_request' ||
+      !startsWith(github.head_ref, 'release-please--'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
