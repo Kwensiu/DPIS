@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 
 public final class ReleaseNotesCacheStore {
     public static final String PREFS_NAME = "dpis.release_notes_cache";
@@ -25,7 +26,9 @@ public final class ReleaseNotesCacheStore {
         if (context == null) {
             throw new IllegalArgumentException("context == null");
         }
-        this.prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        this.prefs = Objects.requireNonNull(
+                context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
+                "context shared preferences");
         this.ttlMs = Math.max(0L, ttlMs);
     }
 
@@ -33,7 +36,7 @@ public final class ReleaseNotesCacheStore {
         if (prefs == null) {
             throw new IllegalArgumentException("prefs == null");
         }
-        this.prefs = prefs;
+        this.prefs = Objects.requireNonNull(prefs, "prefs");
         this.ttlMs = Math.max(0L, ttlMs);
     }
 

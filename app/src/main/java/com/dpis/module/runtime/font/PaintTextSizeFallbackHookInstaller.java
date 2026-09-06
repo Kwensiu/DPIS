@@ -127,7 +127,7 @@ public final class PaintTextSizeFallbackHookInstaller {
                             paint.setTextSize(adjusted);
                             PaintProvenanceTracker.recordApplied(paint, adjusted, factor);
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
                         }
                         RuntimeHotPathEvents.applied(
                                 packageName,

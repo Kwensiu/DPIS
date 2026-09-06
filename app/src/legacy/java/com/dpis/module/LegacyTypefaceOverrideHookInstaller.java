@@ -217,7 +217,7 @@ final class LegacyTypefaceOverrideHookInstaller {
             }
             textView.setTypeface(replacement);
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 
@@ -226,7 +226,7 @@ final class LegacyTypefaceOverrideHookInstaller {
         try {
             paint.setTypeface(replacement);
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 

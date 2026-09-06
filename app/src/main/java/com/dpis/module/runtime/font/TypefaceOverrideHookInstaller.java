@@ -284,7 +284,7 @@ public final class TypefaceOverrideHookInstaller {
             }
             textView.setTypeface(replacement);
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 
@@ -293,7 +293,7 @@ public final class TypefaceOverrideHookInstaller {
         try {
             paint.setTypeface(replacement);
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 

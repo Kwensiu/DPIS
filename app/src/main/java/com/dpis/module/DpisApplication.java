@@ -54,8 +54,14 @@ public final class DpisApplication extends Application implements XposedServiceH
         TypefaceCatalogCache.preload(this);
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this);
         migrateLocalConfigStore(configStore);
-        DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
-        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore);
+        DpisConfigStore initializedStore = configStore;
+        if (initializedStore == null) {
+            DpisLog.e("app config store initialization returned null",
+                    new IllegalStateException("config store unavailable"));
+        } else {
+            DpisLog.setLoggingEnabled(initializedStore.isGlobalLogEnabled());
+            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(initializedStore);
+        }
         XposedServiceHelper.registerListener(this);
         UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS);
     }

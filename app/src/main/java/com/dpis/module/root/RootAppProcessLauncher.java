@@ -6,8 +6,11 @@ import android.content.Intent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.regex.Pattern;
 
 public final class RootAppProcessLauncher {
+    private static final Pattern SAFE_PACKAGE_PATTERN =
+            Pattern.compile("[A-Za-z0-9_]++(?:\\.[A-Za-z0-9_]++)++");
     private final Context context;
 
     public RootAppProcessLauncher(Context context) {
@@ -50,7 +53,7 @@ public final class RootAppProcessLauncher {
     }
 
     private static boolean isSafePackageName(String packageName) {
-        return packageName != null && packageName.matches("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+");
+        return packageName != null && SAFE_PACKAGE_PATTERN.matcher(packageName).matches();
     }
 
     static String shellQuoteForTest(String value) {
@@ -64,7 +67,7 @@ public final class RootAppProcessLauncher {
     private ShellResult runSuCommand(String command) {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
+            process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-c", command);
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()));

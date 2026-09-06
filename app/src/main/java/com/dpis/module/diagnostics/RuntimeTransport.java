@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+@SuppressWarnings("java:S1845")
 public final class RuntimeTransport {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final String MARKER_FILE = DIRECTORY + "/active-session";
@@ -308,12 +309,12 @@ public final class RuntimeTransport {
         lastMarkerCheckMillis = now;
         String markerEventPath = readMarkerEventPath();
         if (!markerEventPath.isBlank()) {
-            remoteSession = RemoteSession.available(markerEventPath);
+            remoteSession = RemoteSession.connected(markerEventPath);
             return remoteSession;
         }
         String sessionId = readSystemProperty(SESSION_PROPERTY);
         if (!sessionId.isBlank() && sessionId.matches("[0-9a-fA-F-]{36}")) {
-            remoteSession = RemoteSession.available(
+            remoteSession = RemoteSession.connected(
                     DIRECTORY + "/" + sessionId + "-" + EVENT_FILE_NAME
             );
             return remoteSession;
@@ -537,7 +538,7 @@ public final class RuntimeTransport {
     private static RootAppProcessLauncher.ShellResult runSuCommand(String command) {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
+            process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-c", command);
             StringBuilder output = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
@@ -706,7 +707,7 @@ public final class RuntimeTransport {
             this.eventPath = eventPath != null ? eventPath : "";
         }
 
-        static RemoteSession available(String eventPath) {
+        static RemoteSession connected(String eventPath) {
             return new RemoteSession(true, eventPath);
         }
 

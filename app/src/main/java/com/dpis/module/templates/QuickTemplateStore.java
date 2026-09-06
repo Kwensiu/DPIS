@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.Map;
 
+@SuppressWarnings("java:S1845")
 public final class QuickTemplateStore {
     public static final String KEY_TEMPLATE_IDS = "template.ids";
     public static final String KEY_TEMPLATE_ORDER = "template.order";

@@ -6,6 +6,7 @@ import com.dpis.module.R;
 
 import java.io.File;
 import java.net.HttpURLConnection;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -95,8 +96,9 @@ public final class UpdateDownloadCoordinator {
     }
 
     public void cancelActiveDownload() {
-        UpdateCoordinator.State nextState = updateCoordinator.requestDownloadCancel(
-                host.buildUpdateCoordinatorState());
+        UpdateCoordinator.State nextState = Objects.requireNonNull(
+                updateCoordinator.requestDownloadCancel(host.buildUpdateCoordinatorState()),
+                "download cancel state");
         applyDownloadState(nextState);
         if (!nextState.downloadInProgress) {
             return;

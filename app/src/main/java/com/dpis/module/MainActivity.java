@@ -3609,6 +3609,58 @@ public final class MainActivity
                 this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;
                 this.pendingUpdatePrompt = pendingUpdatePrompt;
             }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) {
+                    return true;
+                }
+                if (!(object instanceof RetainedState other)) {
+                    return false;
+                }
+                return currentPage == other.currentPage
+                        && java.util.Objects.equals(appsSnapshot, other.appsSnapshot)
+                        && java.util.Objects.equals(query, other.query)
+                        && java.util.Objects.equals(templateQuery, other.templateQuery)
+                        && java.util.Objects.equals(filterState, other.filterState)
+                        && workspaceMode == other.workspaceMode
+                        && java.util.Arrays.equals(appListScrollPositions, other.appListScrollPositions)
+                        && java.util.Arrays.equals(refreshingPagePositions, other.refreshingPagePositions)
+                        && java.util.Objects.equals(editingPackageName, other.editingPackageName)
+                        && java.util.Objects.equals(editingDraft, other.editingDraft)
+                        && java.util.Objects.equals(savedEditingDraft, other.savedEditingDraft)
+                        && editingDestination == other.editingDestination
+                        && java.util.Objects.equals(workspaceSessionState, other.workspaceSessionState)
+                        && java.util.Objects.equals(feedbackDiagnosticSession, other.feedbackDiagnosticSession)
+                        && java.util.Objects.equals(feedbackDiagnosticPageRequest,
+                        other.feedbackDiagnosticPageRequest)
+                        && java.util.Objects.equals(feedbackDiagnosticPresentationState,
+                        other.feedbackDiagnosticPresentationState)
+                        && java.util.Objects.equals(pendingUpdatePrompt, other.pendingUpdatePrompt);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = java.util.Objects.hash(
+                        appsSnapshot, query, templateQuery, filterState, workspaceMode, currentPage,
+                        editingPackageName, editingDraft, savedEditingDraft, editingDestination,
+                        workspaceSessionState, feedbackDiagnosticSession, feedbackDiagnosticPageRequest,
+                        feedbackDiagnosticPresentationState, pendingUpdatePrompt);
+                result = 31 * result + java.util.Arrays.hashCode(appListScrollPositions);
+                return 31 * result + java.util.Arrays.hashCode(refreshingPagePositions);
+            }
+
+            @Override
+            public String toString() {
+                return "RetainedState[appsSnapshot=" + appsSnapshot
+                        + ", query=" + query
+                        + ", templateQuery=" + templateQuery
+                        + ", currentPage=" + currentPage
+                        + ", appListScrollPositions="
+                        + java.util.Arrays.toString(appListScrollPositions)
+                        + ", refreshingPagePositions="
+                        + java.util.Arrays.toString(refreshingPagePositions) + "]";
+            }
         }
 
     /** Inputs needed to rebuild the diagnostic page after a configuration change. */

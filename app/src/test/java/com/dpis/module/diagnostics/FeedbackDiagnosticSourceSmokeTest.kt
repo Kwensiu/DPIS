@@ -295,7 +295,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/ForegroundAppReader.java"
         )
 
-        assertTrue(reader.contains("new ProcessBuilder(\"su\", \"-c\", COMMAND)"))
+        assertTrue(reader.contains("SecureProcessLauncher.startMerged(\"su\", \"-c\", COMMAND)"))
         assertTrue(reader.contains("dumpsys activity activities"))
         assertTrue(reader.contains("dumpsys window"))
         assertTrue(reader.contains("parsePackage("))

@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
 
+@SuppressWarnings("java:S1872")
 public final class ResourcesManagerHookInstaller {
     private static final String HOOK_ID_APPLY_CONFIGURATION =
             "resources_manager_apply_configuration_to_resources";

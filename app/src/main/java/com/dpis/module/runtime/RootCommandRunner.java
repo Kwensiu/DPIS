@@ -12,9 +12,7 @@ public final class RootCommandRunner {
     public static void run(String command) {
         Process process = null;
         try {
-            process = new ProcessBuilder("su", "-c", command)
-                    .redirectErrorStream(true)
-                    .start();
+            process = SecureProcessLauncher.startMerged("su", "-c", command);
             drain(process.getInputStream());
             int exitCode = process.waitFor();
             if (exitCode == 0) {

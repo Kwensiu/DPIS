@@ -117,9 +117,7 @@ public final class HyperOsNativeProxyBindMounter {
         Process process = null;
         StringBuilder output = new StringBuilder();
         try {
-            process = new ProcessBuilder("su", "-c", command)
-                    .redirectErrorStream(true)
-                    .start();
+            process = com.dpis.module.runtime.SecureProcessLauncher.startMerged("su", "-c", command);
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()))) {
                 String line;

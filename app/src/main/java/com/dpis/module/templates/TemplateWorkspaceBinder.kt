@@ -88,7 +88,7 @@ class TemplateWorkspaceBinder(
         return if (imported != null && store.resolveFontFile(typefaceId) != null) {
             TemplateConfigSummaryFormatter.TypefaceStatus.resolved(typefaceId, imported.displayName)
         } else {
-            TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId)
+            TemplateConfigSummaryFormatter.TypefaceStatus.absent(typefaceId)
         }
     }
 

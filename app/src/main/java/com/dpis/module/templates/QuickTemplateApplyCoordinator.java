@@ -13,6 +13,7 @@ import java.util.Set;
  * live in the template package without knowing root-owned package config,
  * runtime publishing, or app-list models.</p>
  */
+@SuppressWarnings("java:S1845")
 public final class QuickTemplateApplyCoordinator<T> {
     public interface Template<T> {
         Set<String> selectedPackages();
@@ -74,7 +75,7 @@ public final class QuickTemplateApplyCoordinator<T> {
         LinkedHashSet<String> targets = sanitizePackages(template.selectedPackages());
         targets = filterPackages(targets, targetPackageFilter);
         if (targets.isEmpty()) {
-            return Result.emptySelection();
+            return Result.noSelection();
         }
         ArrayList<String> successfulPackages = new ArrayList<>();
         ArrayList<String> failedPackages = new ArrayList<>();
@@ -150,7 +151,7 @@ public final class QuickTemplateApplyCoordinator<T> {
                     failedPackages != null ? failedPackages : Collections.emptyList()));
         }
 
-        public static Result emptySelection() {
+        public static Result noSelection() {
             return new Result(true, Collections.emptyList(), Collections.emptyList());
         }
 

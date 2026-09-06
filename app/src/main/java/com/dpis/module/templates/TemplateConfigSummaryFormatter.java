@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("java:S1845")
 public final class TemplateConfigSummaryFormatter {
     public interface Text {
         String emptySummary();
@@ -111,10 +112,10 @@ public final class TemplateConfigSummaryFormatter {
             return TypefaceStatus.none();
         }
         if (typefaceResolver == null) {
-            return TypefaceStatus.missing(typefaceId);
+            return TypefaceStatus.absent(typefaceId);
         }
         TypefaceStatus status = typefaceResolver.resolve(typefaceId);
-        return status != null ? status : TypefaceStatus.missing(typefaceId);
+        return status != null ? status : TypefaceStatus.absent(typefaceId);
     }
 
     private String viewportTargetTypeLabel(String targetType) {
@@ -186,8 +187,13 @@ public final class TemplateConfigSummaryFormatter {
             return new TypefaceStatus(typefaceId, displayName, false);
         }
 
-        public static TypefaceStatus missing(String typefaceId) {
+        public static TypefaceStatus absent(String typefaceId) {
             return new TypefaceStatus(typefaceId, null, true);
+        }
+
+        @SuppressWarnings("java:S1845")
+        public static TypefaceStatus missing(String typefaceId) {
+            return absent(typefaceId);
         }
 
         public boolean resolved() {

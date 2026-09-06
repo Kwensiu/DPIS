@@ -33,8 +33,8 @@ public final class FontDebugLogcatBridge {
         Map<String, Integer> counts = new LinkedHashMap<>();
         Process process = null;
         try {
-            process = new ProcessBuilder("logcat", "-d", "-t", String.valueOf(MAX_LINES),
-                    "-s", "DPIS:I", "*:S").redirectErrorStream(true).start();
+            process = com.dpis.module.runtime.SecureProcessLauncher.startMerged(
+                    "logcat", "-d", "-t", String.valueOf(MAX_LINES), "-s", "DPIS:I", "*:S");
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                     process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;

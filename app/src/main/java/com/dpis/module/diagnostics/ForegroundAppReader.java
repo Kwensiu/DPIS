@@ -25,9 +25,7 @@ final class ForegroundAppReader {
     public static String readForegroundPackage() {
         Process process = null;
         try {
-            process = new ProcessBuilder("su", "-c", COMMAND)
-                    .redirectErrorStream(true)
-                    .start();
+            process = com.dpis.module.runtime.SecureProcessLauncher.startMerged("su", "-c", COMMAND);
             if (!process.waitFor(READ_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly();
                 return "";

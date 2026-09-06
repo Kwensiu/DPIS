@@ -15,6 +15,7 @@ import java.util.UUID;
  * by the target app process. Runtime evidence remains target-process-owned;
  * Perfetto provides the system-wide timeline used for later correlation.</p>
  */
+@SuppressWarnings("java:S1845")
 final class PerfettoTrace {
     private static final String DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic";
     private static final long TRACE_DURATION_MS = 60_000L;
@@ -79,7 +80,7 @@ final class PerfettoTrace {
                     "Perfetto trace did not stay running: " + compact(readiness.output()));
         }
         trace.started = true;
-        return StartResult.available(trace);
+        return StartResult.ready(trace);
     }
 
     StopResult stop() {
@@ -114,7 +115,7 @@ final class PerfettoTrace {
         try {
             long size = Long.parseLong(sizeText.trim());
             boolean truncated = output.contains("truncated=true");
-            return StopResult.available(size, truncated,
+            return StopResult.ready(size, truncated,
                     truncated ? "trace exceeded device-side size limit"
                             : "trace ready for diagnostic export");
         } catch (NumberFormatException exception) {
@@ -147,7 +148,7 @@ final class PerfettoTrace {
         }
         if (stoppedTrace.truncated) {
             discardCompletedTrace();
-            return StopResult.available(stoppedTrace.sizeBytes, true, new byte[0],
+            return StopResult.ready(stoppedTrace.sizeBytes, true, new byte[0],
                     "trace exceeded device-side size limit and was not exported");
         }
         RootAppProcessLauncher.ShellResult result = shellRunner.run(
@@ -164,7 +165,7 @@ final class PerfettoTrace {
             if (bytes.length != stoppedTrace.sizeBytes) {
                 return StopResult.unavailable("Perfetto trace export size mismatch");
             }
-            return StopResult.available(bytes.length, false, bytes,
+            return StopResult.ready(bytes.length, false, bytes,
                     "trace exported with diagnostic package");
         } catch (IllegalArgumentException exception) {
             return StopResult.unavailable("Perfetto trace export was invalid");
@@ -202,7 +203,7 @@ final class PerfettoTrace {
 
     private static RootAppProcessLauncher.ShellResult runSuCommand(String command) {
         try {
-            Process process = Runtime.getRuntime().exec(new String[] {"su", "-c", command});
+            Process process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-c", command);
             InputStream input = process.getInputStream();
             ByteArrayOutputStream outputBytes = new ByteArrayOutputStream();
             byte[] buffer = new byte[4096];
@@ -212,6 +213,9 @@ final class PerfettoTrace {
             }
             String output = outputBytes.toString(StandardCharsets.UTF_8.name());
             return new RootAppProcessLauncher.ShellResult(process.waitFor(), output);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            return new RootAppProcessLauncher.ShellResult(-1, exception.getMessage());
         } catch (Exception exception) {
             return new RootAppProcessLauncher.ShellResult(-1, exception.getMessage());
         }
@@ -240,7 +244,7 @@ final class PerfettoTrace {
             this.trace = trace;
         }
 
-        static StartResult available(PerfettoTrace trace) {
+        static StartResult ready(PerfettoTrace trace) {
             return new StartResult(true, "", trace);
         }
 
@@ -270,11 +274,11 @@ final class PerfettoTrace {
             this.note = note != null ? note : "";
         }
 
-        static StopResult available(long sizeBytes, boolean truncated, String note) {
-            return available(sizeBytes, truncated, new byte[0], note);
+        static StopResult ready(long sizeBytes, boolean truncated, String note) {
+            return ready(sizeBytes, truncated, new byte[0], note);
         }
 
-        static StopResult available(
+        static StopResult ready(
                 long sizeBytes,
                 boolean truncated,
                 byte[] traceBytes,

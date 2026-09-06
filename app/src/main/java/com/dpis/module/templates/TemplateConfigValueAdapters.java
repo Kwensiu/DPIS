@@ -88,6 +88,9 @@ public final class TemplateConfigValueAdapters {
 
     public static ViewportTargetSpec toViewportTargetSpec(TemplateConfigValue value) {
         TemplateConfigValue normalized = value != null ? value : TemplateConfigValue.EMPTY;
+        if (normalized == null) {
+            return ViewportTargetSpec.off();
+        }
         if (normalized.isRelativeScaleViewport()) {
             return ViewportTargetSpec.relativeScale(normalized.viewportScaleMilliPercent);
         }

@@ -1118,7 +1118,7 @@ public final class FontLibraryStore {
     private static boolean runRootCommand(String command) {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
+            process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-c", command);
             return process.waitFor() == 0;
         } catch (IOException ignored) {
             return false;

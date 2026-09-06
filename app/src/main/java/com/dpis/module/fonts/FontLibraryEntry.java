@@ -15,6 +15,11 @@ public final class FontLibraryEntry {
     public final String collectionDisplayName;
     public final FontPublicationStatus publicationStatus;
 
+    private static String collectionIdFromLegacyId(String id) {
+        FontFace face = FontFace.fromLegacyId(id);
+        return face != null ? face.collectionId : "";
+    }
+
     FontLibraryEntry(String id,
                      String displayName,
                      String sourceFileName,
@@ -34,7 +39,7 @@ public final class FontLibraryEntry {
                      long importedAtEpochMs,
                      int ttcIndex) {
         this(id, displayName, sourceFileName, storedFileName, storedPath, sha256, importedAtEpochMs,
-                ttcIndex, FontFace.fromLegacyId(id).collectionId, displayName,
+                ttcIndex, collectionIdFromLegacyId(id), displayName,
                 FontPublicationStatus.PRIVATE);
     }
 
@@ -71,9 +76,10 @@ public final class FontLibraryEntry {
         this.sha256 = sha256;
         this.importedAtEpochMs = importedAtEpochMs;
         this.ttcIndex = Math.max(0, ttcIndex);
+        FontFace face = FontFace.fromLegacyId(id);
         this.collectionId = collectionId != null && !collectionId.isBlank()
                 ? collectionId
-                : FontFace.fromLegacyId(id).collectionId;
+                : face != null ? face.collectionId : "";
         this.collectionDisplayName = collectionDisplayName != null && !collectionDisplayName.isBlank()
                 ? collectionDisplayName
                 : displayName;

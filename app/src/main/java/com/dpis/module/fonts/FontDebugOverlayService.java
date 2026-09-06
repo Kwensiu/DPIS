@@ -38,7 +38,7 @@ public final class FontDebugOverlayService extends Service {
     private static final Pattern UNIT_LINE_PATTERN =
             Pattern.compile("^\\s*(\\d+)\\s+text-size-unit-(\\d)\\b.*$");
     private static final Pattern VIEWPORT_PACKAGE_PATTERN =
-            Pattern.compile("^视口\\s+([^|\\s]+).*");
+            Pattern.compile("^视口\\s++([^|\\s]++).*+");
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private HandlerThread bridgeThread;

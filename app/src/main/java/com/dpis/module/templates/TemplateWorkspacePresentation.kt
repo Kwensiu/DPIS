@@ -87,7 +87,7 @@ object TemplateWorkspacePresentation {
             if (entry != null && store.resolveFontFile(typefaceId) != null) {
                 TemplateConfigSummaryFormatter.TypefaceStatus.resolved(typefaceId, entry.displayName)
             } else {
-                TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId)
+                TemplateConfigSummaryFormatter.TypefaceStatus.absent(typefaceId)
             }
         }
         val preferences = context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)

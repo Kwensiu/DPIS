@@ -51,7 +51,7 @@ import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "java:S1872"})
 public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static final AtomicBoolean RESOURCES_IMPL_HOOKED = new AtomicBoolean(false);
     private static final AtomicBoolean RESOURCES_MANAGER_HOOKED = new AtomicBoolean(false);
@@ -408,7 +408,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                         String activePackage = resolveActivePackageName(packageName);
                         ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, activePackage);
                     } finally {
-                        RESOURCES_READ_INTERNAL_UPDATE.set(Boolean.FALSE);
+                        RESOURCES_READ_INTERNAL_UPDATE.remove();
                     }
                 }
             });
@@ -432,7 +432,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
                         ResourcesReadHookInstaller.applyMetricsOverride(
                                 resources.getDisplayMetrics(), config, activePackage);
                     } finally {
-                        RESOURCES_READ_INTERNAL_UPDATE.set(Boolean.FALSE);
+                        RESOURCES_READ_INTERNAL_UPDATE.remove();
                     }
                 }
             });
@@ -566,7 +566,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    FONT_TEXTVIEW_UPDATE.set(Boolean.FALSE);
+                    FONT_TEXTVIEW_UPDATE.remove();
                 }
             });
             Method setTextSizeSp = textViewClass.getDeclaredMethod("setTextSize", float.class);
@@ -585,7 +585,7 @@ public final class LegacyModuleHook implements IXposedHookLoadPackage, IXposedHo
 
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    FONT_TEXTVIEW_UPDATE.set(Boolean.FALSE);
+                    FONT_TEXTVIEW_UPDATE.remove();
                 }
             });
             Method paintSetTextSize = Paint.class.getDeclaredMethod("setTextSize", float.class);

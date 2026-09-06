@@ -15,10 +15,10 @@ public final class DpisLogParser {
     private static final String DPIS_MODULE_PACKAGE = "io.github.kwensiu.dpis";
     private static final String LSPOSED_HOT_RELOAD_PREFIX = "Auto hot reload ";
     private static final Pattern LSPOSED_TIMESTAMP_PATTERN = Pattern.compile(
-            "^\\[\\s*\\d{4}-(\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d+)?\\s+.*"
+            "^\\[\\s*+\\d{4}-(\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})(\\.\\d+)?\\s+[^\\r\\n]*"
     );
     private static final Pattern GENERIC_LSPOSED_PATTERN = Pattern.compile(
-            "^\\[\\s*\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?\\s+.*\\s([VDIWEF])/([^\\]\\s]+)\\s*]\\s*(.*)$"
+            "^\\[\\s*+\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?\\s+[^\\r\\n]*\\s([VDIWEF])/([^\\]\\s]++)\\s*+]\\s*(.*)$"
     );
 
     private DpisLogParser() {

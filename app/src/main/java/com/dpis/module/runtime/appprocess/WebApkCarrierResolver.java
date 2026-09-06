@@ -25,10 +25,7 @@ public final class WebApkCarrierResolver {
     }
 
     public static String ownerPackageFromText(String text) {
-        for (String owner : collectOwnerPackagesFromText(text, 1)) {
-            return owner;
-        }
-        return null;
+        return collectOwnerPackagesFromText(text, 1).stream().findFirst().orElse(null);
     }
 
     private static void collectFromWebAppUri(String text, Set<String> output, int maxCount) {

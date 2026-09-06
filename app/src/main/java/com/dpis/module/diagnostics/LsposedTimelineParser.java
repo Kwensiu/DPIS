@@ -160,6 +160,9 @@ final class LsposedTimelineParser {
             DpisLogEntry entry,
             Input input
     ) {
+        if (entry == null) {
+            return null;
+        }
         String message = entry != null ? entry.message : "";
         String performanceMessage = performanceMessage(message);
         if (performanceMessage == null) {
@@ -181,6 +184,9 @@ final class LsposedTimelineParser {
             DpisLogEntry entry,
             Input input
     ) {
+        if (entry == null) {
+            return null;
+        }
         String message = entry != null ? entry.message : "";
         String sessionMessage = sessionMessage(message);
         if (sessionMessage == null) {
@@ -283,6 +289,9 @@ final class LsposedTimelineParser {
             DpisLogEntry entry,
             Input input
     ) {
+        if (entry == null || input == null) {
+            return null;
+        }
         String message = entry != null ? entry.message : "";
         int prefix = message.indexOf(WECHAT_DPI_HISTORY_PREFIX);
         if (prefix < 0) {

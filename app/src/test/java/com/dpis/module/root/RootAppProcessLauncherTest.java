@@ -31,7 +31,7 @@ public final class RootAppProcessLauncherTest {
         assertTrue(source.contains("-c android.intent.category.LAUNCHER"));
         assertTrue(source.contains("flattenToShortString()"));
         assertTrue(source.contains("isSafePackageName(packageName)"));
-        assertTrue(source.contains("Runtime.getRuntime().exec(new String[] { \"su\", \"-c\", command })"));
+        assertTrue(source.contains("SecureProcessLauncher.start(\"su\", \"-c\", command)"));
     }
 
     private static String readSource(String relativePath) throws IOException {

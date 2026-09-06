@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 public final class ReleaseNotesMarkdownLite {
     private static final Pattern VERSION_HEADING_PATTERN = Pattern.compile(
-            "^##\\s*\\[.+?]\\(https?://[^)]+\\)\\s*\\(\\d{4}-\\d{2}-\\d{2}\\)\\s*$");
+            "^##\\s*+\\[[^]]++]\\(https?://[^)]++\\)\\s*+\\(\\d{4}-\\d{2}-\\d{2}\\)\\s*$");
     private static final Pattern GENERATED_SECTION_PATTERN = Pattern.compile(
             "^##\\s+(?:new contributors|contributors)\\s*$",
             Pattern.CASE_INSENSITIVE);

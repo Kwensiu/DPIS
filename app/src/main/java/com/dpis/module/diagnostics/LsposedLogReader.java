@@ -109,7 +109,7 @@ public final class LsposedLogReader {
     private static LogReadResult runSu(String sourceLabel, String command) {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-c", command });
+            process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-c", command);
             StringBuilder output = new StringBuilder();
             StringBuilder error = new StringBuilder();
             AtomicReference<IOException> errorReadException = new AtomicReference<>();

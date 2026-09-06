@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -1377,10 +1380,15 @@ public final class FlutterSettingsFontHookInstaller {
                 return;
             }
             File overlay = null;
+            Path privateOverlayDirectory = null;
             try {
                 cleanupStaleTypefaceOverlays();
+                Path tempDirectory = Paths.get(System.getProperty("java.io.tmpdir", "."));
+                privateOverlayDirectory = Files.createTempDirectory(
+                        tempDirectory,
+                        TYPEFACE_OVERLAY_PREFIX + Process.myPid() + "_");
                 overlay = File.createTempFile(
-                        TYPEFACE_OVERLAY_PREFIX + Process.myPid() + "_", ".zip");
+                        "overlay_", ".zip", privateOverlayDirectory.toFile());
                 try (ZipOutputStream zip = new ZipOutputStream(
                         new java.io.BufferedOutputStream(
                                 new java.io.FileOutputStream(overlay)))) {
@@ -1418,6 +1426,9 @@ public final class FlutterSettingsFontHookInstaller {
             } catch (Throwable throwable) {
                 if (overlay != null && overlay.exists()) {
                     overlay.delete();
+                }
+                if (privateOverlayDirectory != null) {
+                    privateOverlayDirectory.toFile().delete();
                 }
                 DpisLog.e("DPIS_FONT Flutter typeface default-family overlay failed: package="
                         + packageName, throwable);
@@ -1469,17 +1480,32 @@ public final class FlutterSettingsFontHookInstaller {
     private static void cleanupStaleTypefaceOverlays() {
         File tempDirectory = new File(System.getProperty("java.io.tmpdir", "."));
         File[] candidates = tempDirectory.listFiles((directory, name) ->
-                name.startsWith(TYPEFACE_OVERLAY_PREFIX) && name.endsWith(".zip"));
+                name.startsWith(TYPEFACE_OVERLAY_PREFIX));
         if (candidates == null) {
             return;
         }
         long cutoff = System.currentTimeMillis() - STALE_TYPEFACE_OVERLAY_AGE_MS;
         for (File candidate : candidates) {
-            if (candidate.lastModified() < cutoff && !candidate.delete()) {
+            if (candidate.lastModified() < cutoff && !deleteOverlayPath(candidate)) {
                 DpisLog.i("DPIS_FONT Flutter typeface stale overlay cleanup skipped: path="
                         + candidate.getAbsolutePath());
             }
         }
+    }
+
+    private static boolean deleteOverlayPath(File path) {
+        if (path.isDirectory()) {
+            File[] children = path.listFiles();
+            if (children == null) {
+                return false;
+            }
+            for (File child : children) {
+                if (!deleteOverlayPath(child)) {
+                    return false;
+                }
+            }
+        }
+        return path.delete();
     }
 
     private static void writeZipEntry(ZipOutputStream zip, String path, byte[] content)

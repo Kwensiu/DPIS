@@ -39,7 +39,7 @@ public final class TemplateTypefaceResolver implements TemplateConfigSummaryForm
                 return TemplateConfigSummaryFormatter.TypefaceStatus.resolved(
                         typefaceId, systemTypefaceProvider.displayName(typefaceId));
             }
-            return TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId);
+            return TemplateConfigSummaryFormatter.TypefaceStatus.absent(typefaceId);
         }
         if (importedTypefaceProvider != null) {
             TemplateConfigSummaryFormatter.TypefaceStatus imported =
@@ -48,7 +48,7 @@ public final class TemplateTypefaceResolver implements TemplateConfigSummaryForm
                 return imported;
             }
         }
-        return TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId);
+        return TemplateConfigSummaryFormatter.TypefaceStatus.absent(typefaceId);
     }
 
     private static final class AndroidSystemTypefaceProvider implements SystemTypefaceProvider {

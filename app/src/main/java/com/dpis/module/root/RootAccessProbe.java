@@ -83,9 +83,7 @@ public final class RootAccessProbe {
     public static Result probe() {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(
-                    new String[] { "su", "-c", PROBE_COMMAND }
-            );
+            process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-c", PROBE_COMMAND);
             boolean finished = process.waitFor(PROBE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (!finished) {
                 process.destroyForcibly();
@@ -180,7 +178,7 @@ public final class RootAccessProbe {
     private static String readSuVersion() {
         Process process = null;
         try {
-            process = Runtime.getRuntime().exec(new String[] { "su", "-v" });
+            process = com.dpis.module.runtime.SecureProcessLauncher.start("su", "-v");
             if (!process.waitFor(PROBE_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly();
                 return "";

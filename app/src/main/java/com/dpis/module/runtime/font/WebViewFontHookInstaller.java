@@ -100,7 +100,7 @@ public final class WebViewFontHookInstaller {
                                     detail
                             );
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
                             RuntimeHotPathEvents.end(
                                     packageName,
                                     "webview_text_zoom",
@@ -178,7 +178,7 @@ public final class WebViewFontHookInstaller {
                                     detail
                             );
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+                            INTERNAL_UPDATE.remove();
                             RuntimeHotPathEvents.end(
                                     packageName,
                                     "webview_text_zoom",
@@ -245,7 +245,7 @@ public final class WebViewFontHookInstaller {
                                     detail
                             );
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+                            INTERNAL_UPDATE.remove();
                             RuntimeHotPathEvents.end(
                                     packageName,
                                     "x5_webview_text_zoom",
@@ -296,7 +296,7 @@ public final class WebViewFontHookInstaller {
                                     detail
                             );
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+                            INTERNAL_UPDATE.remove();
                             RuntimeHotPathEvents.end(
                                     packageName,
                                     "x5_webview_text_zoom",

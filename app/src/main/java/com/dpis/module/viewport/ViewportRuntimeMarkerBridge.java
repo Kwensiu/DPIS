@@ -14,6 +14,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("java:S1845")
 public final class ViewportRuntimeMarkerBridge {
     // Android system property values are capped at 91 bytes including the
     // terminating NUL in native storage, so keep encoded marker payloads within
@@ -204,7 +205,7 @@ public final class ViewportRuntimeMarkerBridge {
                 resultDensityDpi,
                 provenance,
                 elapsedRealtimeMillis);
-        return ParseResult.hit(record, ageMillis);
+        return ParseResult.matched(record, ageMillis);
     }
 
     public static String targetFingerprintForAbsoluteDp(int targetSmallestWidthDp) {
@@ -542,8 +543,13 @@ public final class ViewportRuntimeMarkerBridge {
             this.ageMillis = ageMillis;
         }
 
-        public static ParseResult hit(MarkerRecord record, long ageMillis) {
+        public static ParseResult matched(MarkerRecord record, long ageMillis) {
             return new ParseResult(true, record, "hit", ageMillis);
+        }
+
+        @SuppressWarnings("java:S1845")
+        public static ParseResult hit(MarkerRecord record, long ageMillis) {
+            return matched(record, ageMillis);
         }
 
         public static ParseResult miss(String reason) {
