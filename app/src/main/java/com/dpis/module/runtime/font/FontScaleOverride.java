@@ -26,7 +26,9 @@ public final class FontScaleOverride {
     public static Result resolve(DpisConfigStore store, String packageName, float currentFontScale) {
         float original = currentFontScale > 0f ? currentFontScale : 1.0f;
         Integer targetPercent = store != null ? store.getTargetFontScalePercent(packageName) : null;
-        String mode = store.getTargetFontApplyMode(packageName);
+        String mode = store != null
+                ? store.getTargetFontApplyMode(packageName)
+                : FontApplyMode.OFF;
         boolean systemHookEnabled = store == null || store.isSystemServerHooksEnabled();
         String effectiveMode = EffectiveModeResolver.resolveFontMode(mode, systemHookEnabled);
         boolean fontEnabled = FontApplyMode.isEnabled(effectiveMode);

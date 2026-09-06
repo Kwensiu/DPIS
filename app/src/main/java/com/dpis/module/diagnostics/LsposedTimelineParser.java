@@ -163,7 +163,7 @@ final class LsposedTimelineParser {
         if (entry == null) {
             return null;
         }
-        String message = entry != null ? entry.message : "";
+        String message = entry.message;
         String performanceMessage = performanceMessage(message);
         if (performanceMessage == null) {
             return null;
@@ -187,7 +187,7 @@ final class LsposedTimelineParser {
         if (entry == null) {
             return null;
         }
-        String message = entry != null ? entry.message : "";
+        String message = entry.message;
         String sessionMessage = sessionMessage(message);
         if (sessionMessage == null) {
             return null;
@@ -277,7 +277,7 @@ final class LsposedTimelineParser {
         if (timestampMillis <= 0L || window == null || input == null || !input.wechatDpiEnabled) {
             return false;
         }
-        String message = entry != null ? entry.message : "";
+        String message = entry.message;
         return message.contains(WECHAT_DPI_HISTORY_PREFIX)
                 && matchesTarget(entry, input)
                 && timestampMillis >= window.endMillis() - WECHAT_DPI_HISTORY_LOOKBACK_MS
@@ -292,7 +292,7 @@ final class LsposedTimelineParser {
         if (entry == null || input == null) {
             return null;
         }
-        String message = entry != null ? entry.message : "";
+        String message = entry.message;
         int prefix = message.indexOf(WECHAT_DPI_HISTORY_PREFIX);
         if (prefix < 0) {
             return null;
