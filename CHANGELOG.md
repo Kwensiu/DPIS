@@ -1,5 +1,47 @@
 # Changelog
 
+## [2.1.0](https://github.com/Kwensiu/DPIS/compare/v2.0.0...v2.1.0) (2026-09-06)
+
+
+### Features
+
+* **home:** customize workspace layout ([ad06893](https://github.com/Kwensiu/DPIS/commit/ad06893c366f03a76a76bc237e7f0f6b1e70b79b))
+* **settings:** customize workspace navigation ([c7ac4e6](https://github.com/Kwensiu/DPIS/commit/c7ac4e61a7a134d372be10c6432772690ee5591f))
+
+
+### Bug Fixes
+
+* **ci:** skip release please Sonar analysis ([26f4ad1](https://github.com/Kwensiu/DPIS/commit/26f4ad181f893c408573336f709fa8fb8a6b7366))
+* **ci:** use available Android 37 SDK package ([d039506](https://github.com/Kwensiu/DPIS/commit/d039506969743cb34be6c0d1a597310ee8f1d392))
+* **deps:** update activity to v1.13.0 ([#119](https://github.com/Kwensiu/DPIS/issues/119)) ([f886c7b](https://github.com/Kwensiu/DPIS/commit/f886c7b04cbdecfbdeecfed20c43724c25052c59))
+* **deps:** update dependency androidx.compose.material3:material3 to v1.5.0-alpha27 ([#118](https://github.com/Kwensiu/DPIS/issues/118)) ([8a5d5ec](https://github.com/Kwensiu/DPIS/commit/8a5d5ec22dea202f75ba0cc8bb5c45bc8d6f8061))
+* **deps:** update dependency com.materialkolor:material-kolor to v5.0.1 ([#109](https://github.com/Kwensiu/DPIS/issues/109)) ([58d8366](https://github.com/Kwensiu/DPIS/commit/58d836666d211bdd799b2119889ae1e443203fb3))
+* **deps:** update routine non-major dependencies ([#111](https://github.com/Kwensiu/DPIS/issues/111)) ([947b1a6](https://github.com/Kwensiu/DPIS/commit/947b1a67b6c6bffdfe51911c1730605aaa2bee8c))
+* normalize WeChat bottom tab icons ([cd97137](https://github.com/Kwensiu/DPIS/commit/cd971371e1fe447870153a5ec9b08006036a365e))
+* preserve quick config sheet behavior ([1acedec](https://github.com/Kwensiu/DPIS/commit/1acedecff6567f3aaacd6f6418fa1805c3aa64e1))
+* prevent startup stalls from invalid viewport config ([4b3a006](https://github.com/Kwensiu/DPIS/commit/4b3a00690c951608806e05908a42a2b753f47951))
+* resolve compose lint error [skip preview] ([e5aa411](https://github.com/Kwensiu/DPIS/commit/e5aa411b0ceb3e11d27861efe036bceb237fdcec))
+* serialize LSPosed scope requests ([9757f1e](https://github.com/Kwensiu/DPIS/commit/9757f1edd1f20ce67237c67875b21beec6bca3ed))
+* soften editor sheet resize motion ([2530b4c](https://github.com/Kwensiu/DPIS/commit/2530b4c41ee99a5afd19be95062bf39f82d3a18e))
+* stabilize dialogs across appearance changes and rotation ([c2021eb](https://github.com/Kwensiu/DPIS/commit/c2021eb89b03f0ad360d6e3194bb79eaafcba5f7))
+* unify adaptive Compose surfaces and interaction feedback ([cba0d70](https://github.com/Kwensiu/DPIS/commit/cba0d70add87a5fc24411ac0565f11c260903eb6))
+* unify template filter sheet presentation ([277abfe](https://github.com/Kwensiu/DPIS/commit/277abfe4b5fbd10902d3d82fadb615e3f24aa3e5))
+
+
+### Refactoring
+
+* consolidate settings workspace ownership ([ebfdea4](https://github.com/Kwensiu/DPIS/commit/ebfdea4ccee42f9e44cb5a5cbb0908b455876414))
+* **dialog:** unify Compose dialog ownership ([1674cf8](https://github.com/Kwensiu/DPIS/commit/1674cf89180b4870f2250bafbb2e3cfcb7445986))
+* extract app and tools workspace ownership ([1982eed](https://github.com/Kwensiu/DPIS/commit/1982eed32af075f3c921095b8ed54851e4fc6f0c))
+* **home:** remove legacy workspace implementation ([c7cc818](https://github.com/Kwensiu/DPIS/commit/c7cc818b791a660aec92bb3408d17d543a0091ed))
+* isolate classic preferences in legacy flavor ([f3f5042](https://github.com/Kwensiu/DPIS/commit/f3f5042d2d188ff6e9f9df2747351c810bf45d5e))
+* **layout:** organize presentation code and tests ([0552622](https://github.com/Kwensiu/DPIS/commit/05526223184a41f7315173d23afd9187af3cc791))
+* migrate settings controller to Kotlin session ownership ([20113c9](https://github.com/Kwensiu/DPIS/commit/20113c94fa13c11ed1c8da5b72071fe755559c5f))
+* organize compose presentation modules ([c3e4d92](https://github.com/Kwensiu/DPIS/commit/c3e4d9233f881d0b3b4fe83675dc827f3a2b6cbe))
+* polish template Compose migration ([#108](https://github.com/Kwensiu/DPIS/issues/108)) ([e64c1a4](https://github.com/Kwensiu/DPIS/commit/e64c1a4913f3113a97e92425fddac5619edb8045))
+* unify compose editor presentation ([c6d7a04](https://github.com/Kwensiu/DPIS/commit/c6d7a0489d16262eabbc49e39484c21d00f29388))
+* unify compose interaction feedback ([f352cf6](https://github.com/Kwensiu/DPIS/commit/f352cf6b32afba0d391e0c1700ac4cf5c0e4789e))
+
 ## [2.0.0](https://github.com/Kwensiu/DPIS/compare/v1.15.0...v2.0.0) (2026-08-30)
 
 
