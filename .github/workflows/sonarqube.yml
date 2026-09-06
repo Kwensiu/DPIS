@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           (yes || true) | sdkmanager --licenses > /dev/null
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.1.0"
+          sdkmanager "platform-tools" "platforms;android-37.0" "build-tools;36.1.0"
 
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
