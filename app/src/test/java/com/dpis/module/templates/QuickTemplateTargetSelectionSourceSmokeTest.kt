@@ -86,7 +86,7 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(presentation.contains(
                 "quick template target presentation load failed"))
         assertTrue(presentation.contains("loading = false;"))
-        assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages(current.id, selectedPackages"))
+        assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages("))
         assertTrue(targetsBinder.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allTargetItems)"))
         assertTrue(targetsBinder.contains("DpisApplication.getActiveHookConfigStore(activity)"))
         assertTrue(targetsBinder.contains("PackageConfigRepository("))

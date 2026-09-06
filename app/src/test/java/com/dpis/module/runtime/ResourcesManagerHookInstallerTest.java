@@ -452,6 +452,10 @@ public class ResourcesManagerHookInstallerTest {
         public Configuration configuration() {
                 return configuration;
             }
+
+        public Configuration getConfiguration() {
+            return configuration;
+        }
         }
 
     private static final class FakeResourcesKey {
