@@ -17,19 +17,11 @@ import com.dpis.module.viewport.VirtualDisplayState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
-import java.lang.Float
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.Any
-import kotlin.Boolean
-import kotlin.Int
-import kotlin.String
-import kotlin.Throwable
-import kotlin.Throws
 import kotlin.concurrent.Volatile
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.synchronized
 
 object DisplayHookInstaller {
     @Volatile
@@ -217,7 +209,7 @@ object DisplayHookInstaller {
         val originalHeightPixels = metrics.heightPixels
         if (override.densityDpi > 0 && override.widthPx > 0 && override.heightPx > 0) {
             val targetSpec = effectiveStore.getTargetViewportSpec(effectivePackageName!!)
-            if (targetSpec.isEnabled()) {
+            if (targetSpec.isEnabled) {
                 RUNTIME_FALLBACK_OVERRIDES.put(
                     effectivePackageName,
                     RuntimeFallbackOverride(targetSpec, override)
@@ -234,13 +226,10 @@ object DisplayHookInstaller {
         metrics.scaledDensity = metrics.density * fontScale
         metrics.widthPixels = override.widthPx
         metrics.heightPixels = override.heightPx
-        val changed = originalDensityDpi != metrics.densityDpi || Float.compare(
-            originalDensity,
-            metrics.density
-        ) != 0 || Float.compare(
-            originalScaledDensity,
-            metrics.scaledDensity
-        ) != 0 || originalWidthPixels != metrics.widthPixels || originalHeightPixels != metrics.heightPixels
+        val changed = originalDensityDpi != metrics.densityDpi ||
+                originalDensity != metrics.density ||
+                originalScaledDensity != metrics.scaledDensity ||
+                originalWidthPixels != metrics.widthPixels || originalHeightPixels != metrics.heightPixels
         if (!changed) {
             recordViewportSkipAtMostEvery(
                 routeName,
@@ -449,10 +438,10 @@ object DisplayHookInstaller {
             return null
         }
         var targetSpec = ViewportPropertyBridge.readTargetSpec(packageName)
-        if (!targetSpec.isEnabled()) {
+        if (!targetSpec.isEnabled) {
             targetSpec = store.getTargetViewportSpec(packageName)
         }
-        if (targetSpec == null || !targetSpec.isEnabled()) {
+        if (targetSpec == null || !targetSpec.isEnabled) {
             return null
         }
         val sourceSmallestDp = max(
@@ -462,7 +451,7 @@ object DisplayHookInstaller {
                 ) * 160f / metrics.densityDpi
             )
         )
-        val targetSmallestDp = if (targetSpec.isAbsoluteDp())
+        val targetSmallestDp = if (targetSpec.isAbsoluteDp)
             targetSpec.absoluteWidthDp()
         else max(
             1, Math.round(
@@ -491,7 +480,7 @@ object DisplayHookInstaller {
             return null
         }
         val targetSpec = store.getTargetViewportSpec(packageName)
-        if (!targetSpec.isEnabled()) {
+        if (!targetSpec.isEnabled) {
             return null
         }
         val record =
@@ -511,7 +500,7 @@ object DisplayHookInstaller {
         }
         val targetSpec = store.getTargetViewportSpec(packageName)
         val cached = RUNTIME_FALLBACK_OVERRIDES.get(packageName)
-        if (!targetSpec.isEnabled() || cached == null || targetSpec != cached.targetSpec) {
+        if (!targetSpec.isEnabled || cached == null || targetSpec != cached.targetSpec) {
             RUNTIME_FALLBACK_OVERRIDES.remove(packageName)
             return null
         }
@@ -521,7 +510,7 @@ object DisplayHookInstaller {
     private fun writeIntField(target: Any, fieldName: String, value: Int): Boolean {
         try {
             val field = target.javaClass.getDeclaredField(fieldName)
-            field.setAccessible(true)
+            field.isAccessible = true
             val current = field.getInt(target)
             if (current == value) {
                 return false

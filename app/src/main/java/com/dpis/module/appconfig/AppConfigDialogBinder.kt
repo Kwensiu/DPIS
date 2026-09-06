@@ -796,7 +796,7 @@ class AppConfigDialogBinder @JvmOverloads constructor(
 
     private fun createFontLibraryStore(): FontLibraryStore {
         return ConfigStoreFactory.createLocalUiFontLibraryStore(
-            activity, DpisApplication.getXposedService()
+            activity, DpisApplication.xposedService
         )
     }
 

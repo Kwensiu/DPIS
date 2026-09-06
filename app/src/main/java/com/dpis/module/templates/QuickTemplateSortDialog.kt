@@ -2,13 +2,10 @@ package com.dpis.module.templates
 
 import android.app.Activity
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,10 +18,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,20 +31,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.dialog.DialogColumn
-import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
-import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.ReorderableDragFeedback
+import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.compose.resolveDarkTheme
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 /** Legacy platform-dialog bridge for View and Wear callers; Compose pages use the content below. */
 object QuickTemplateSortDialog {
@@ -77,7 +71,12 @@ object QuickTemplateSortDialog {
         composeView.setContent {
             ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 QuickTemplateSortContent(
-                    initialItems = templates.map { QuickTemplateSortItem(it.id, it.name) },
+                    initialItems = templates.map {
+                        QuickTemplateSortItem(
+                            it.id,
+                            it.name.orEmpty()
+                        )
+                    },
                     onOrderChanged = { orderedIds ->
                         val currentHost = host
                         if (currentHost == null) {
@@ -144,7 +143,9 @@ internal fun QuickTemplateSortContent(
             }
         }
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().heightIn(max = 320.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 320.dp),
             state = lazyListState,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -174,7 +175,9 @@ private fun QuickTemplateSortRow(
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -185,7 +188,9 @@ private fun QuickTemplateSortRow(
             )
             Text(
                 text = item.name,
-                modifier = Modifier.weight(1f).padding(start = 8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,

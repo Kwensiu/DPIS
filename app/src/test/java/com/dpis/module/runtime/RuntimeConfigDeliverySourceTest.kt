@@ -21,8 +21,9 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"))
         assertTrue(delivery.contains("public static void publishLocalSnapshotAfterSave()"))
         assertTrue(delivery.contains("localSnapshotReloader.run();"))
-        assertTrue(read("src/main/java/com/dpis/module/DpisApplication.java").contains(
-            "RuntimeConfigDelivery.setLocalSnapshotReloader(DpisApplication::reloadConfigStore);",
+        assertTrue(
+            read("src/main/java/com/dpis/module/DpisApplication.kt").contains(
+                "RuntimeConfigDelivery.setLocalSnapshotReloader(Runnable { reloadConfigStore() })",
         ))
         assertTrue(mainActivity.contains("public void onRuntimeConfigSaved()"))
         assertTrue(mainActivity.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"))

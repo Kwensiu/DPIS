@@ -1,44 +1,35 @@
 package com.dpis.module;
 
-import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.diagnostics.RuntimeHotPathEvents;
-
-import com.dpis.module.diagnostics.RuntimeEvents;
-
-import com.dpis.module.diagnostics.Coordinator;
-
-import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
-
-import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
-
-import com.dpis.module.runtime.font.ResourcesFontScheduler;
-
-import com.dpis.module.viewport.VirtualDisplayOverride;
-import com.dpis.module.viewport.VirtualDisplayState;
-
-import com.dpis.module.viewport.TargetViewportWidthResolver;
-import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
-import com.dpis.module.viewport.ViewportRuntimeRecord;
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportConfigurationScope;
-import com.dpis.module.viewport.ViewportOverride;
-import com.dpis.module.viewport.ViewportSourceSnapshot;
-import com.dpis.module.viewport.ViewportTargetSpec;
-import com.dpis.module.viewport.ViewportTargetType;
-
-import com.dpis.module.runtime.DebugPackageOverride;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
 
-import org.junit.Before;
+import com.dpis.module.diagnostics.Coordinator;
+import com.dpis.module.diagnostics.RuntimeEvents;
+import com.dpis.module.diagnostics.RuntimeHotPathEvents;
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller;
+import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+import com.dpis.module.runtime.font.ResourcesFontScheduler;
+import com.dpis.module.viewport.TargetViewportWidthResolver;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportConfigurationScope;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
+import com.dpis.module.viewport.VirtualDisplayOverride;
+import com.dpis.module.viewport.VirtualDisplayState;
+
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ResourcesManagerHookInstallerTest {
     private static final String PACKAGE_NAME = "com.example.target";
@@ -384,7 +375,7 @@ public class ResourcesManagerHookInstallerTest {
 
     @Test
     public void debugResourcesManagerKeyDisablePropertyIsPackageScoped() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.kt");
 
         assertTrue(source.contains(
                 "debug.dpis.viewport.disable_resources_manager_key_package"));
@@ -410,7 +401,7 @@ public class ResourcesManagerHookInstallerTest {
         assertEquals(970, config.screenHeightDp);
         assertEquals(411, config.smallestScreenWidthDp);
         assertEquals(420, config.densityDpi);
-        assertEquals(null, VirtualDisplayState.get());
+        assertNull(VirtualDisplayState.get());
     }
 
     @Test
@@ -432,7 +423,7 @@ public class ResourcesManagerHookInstallerTest {
         assertEquals(736, config.screenHeightDp);
         assertEquals(360, config.smallestScreenWidthDp);
         assertEquals(0, config.densityDpi);
-        assertEquals(null, VirtualDisplayState.get());
+        assertNull(VirtualDisplayState.get());
     }
 
     @Test
@@ -451,21 +442,17 @@ public class ResourcesManagerHookInstallerTest {
                 "ResourcesManager");
 
         assertEquals(500, config.smallestScreenWidthDp);
-        assertEquals(null, VirtualDisplayState.get());
+        assertNull(VirtualDisplayState.get());
     }
 
-    private static final class FakeResourcesManager {
-        private final Configuration configuration;
+    private record FakeResourcesManager(Configuration configuration) {
 
-        private FakeResourcesManager(Configuration configuration) {
-            this.configuration = configuration;
-        }
-
+        @Override
         @SuppressWarnings("unused")
-        private Configuration getConfiguration() {
-            return configuration;
+        public Configuration configuration() {
+                return configuration;
+            }
         }
-    }
 
     private static final class FakeResourcesKey {
         @SuppressWarnings("unused")

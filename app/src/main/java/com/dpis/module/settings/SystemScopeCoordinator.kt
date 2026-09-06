@@ -25,7 +25,7 @@ class SystemScopeCoordinator(
         onTurnedInScope: Runnable?,
         onTurnedOutScope: Runnable?,
     ) {
-        val service = DpisApplication.getXposedService() ?: return
+        val service = DpisApplication.xposedService ?: return
         if (currentlyInScope) {
             try {
                 service.removeScope(listOf(packageName))
@@ -48,7 +48,7 @@ class SystemScopeCoordinator(
         onRequestFinished: Runnable?,
         showNotice: Boolean = true,
     ): Boolean {
-        val service = DpisApplication.getXposedService() ?: return false
+        val service = DpisApplication.xposedService ?: return false
         val request = ScopeRequestGate.shared().tryStart("single-app", listOf(packageName))
             ?: run {
                 host.showToast(R.string.scope_request_pending)
@@ -91,7 +91,7 @@ class SystemScopeCoordinator(
         fun resolveSystemHookEffectiveEnabled(store: DpisConfigStore?): Boolean {
             store ?: return false
             val desiredEnabled = store.isSystemServerHooksEnabled()
-            val service = DpisApplication.getXposedService()
+            val service = DpisApplication.xposedService
             val scopeSelected = service?.let {
                 try {
                     SystemFrameworkScope.containsSystemScope(it.scope)

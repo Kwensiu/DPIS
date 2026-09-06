@@ -1,41 +1,22 @@
 package com.dpis.module;
 
-import com.dpis.module.fonts.HyperOsNativeProxyRefreshCoordinator;
-
-import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
-
-import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
-
-import com.dpis.module.config.RuntimePropertyConfigPreferences;
-
-import com.dpis.module.config.PerAppDisplayConfigSource;
-
-import com.dpis.module.config.PackageConfigSnapshot;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.dpis.module.config.ConfigSnapshot;
-
-
-
+import com.dpis.module.config.PackageConfigSnapshot;
+import com.dpis.module.config.PerAppDisplayConfigSource;
 import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
-
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
-
-import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge;
-
-
-import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
-
-import com.dpis.module.viewport.ViewportPropertyBridge;
-import com.dpis.module.viewport.ViewportApplyMode;
-
 import com.dpis.module.hooks.HookDomainOverride;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
+import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
+import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportPropertyBridge;
 
 import org.junit.Test;
 
@@ -89,7 +70,7 @@ public class HyperOsFlutterFontHookConfigTest {
         String factory = readSource(
                 "src/legacy/java/com/dpis/module/LegacyConfigStoreFactory.kt");
         String prefs = readSource("src/main/java/com/dpis/module/config/RuntimePropertyConfigPreferences.kt");
-        String app = readSource("src/main/java/com/dpis/module/DpisApplication.java");
+        String app = readSource("src/main/java/com/dpis/module/DpisApplication.kt");
 
         assertTrue(factory.contains("fun create(packageName: String?): DpisConfigStore"));
         assertTrue(factory.contains("RuntimePropertyConfigPreferences(packageName, route)"));
@@ -103,10 +84,10 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(prefs.contains("FontHookDomainPropertyBridge.readOverride(packageName)"));
         assertTrue(prefs.contains("HyperOsFlutterFontBridge.readTypefaceId(packageName)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
-        assertTrue(app.contains("DpisConfigStore localStore = ConfigStoreFactory.createLocalModuleConfigStore(this);"));
-        assertTrue(app.contains("static DpisConfigStore getActiveHookConfigStore(Context context)"));
+        assertTrue(app.contains("val localStore = ConfigStoreFactory.createLocalModuleConfigStore(this)"));
+        assertTrue(app.contains("fun getActiveHookConfigStore(context: Context?): DpisConfigStore?"));
         assertTrue(app.contains("if (context == null)"));
-        assertTrue(app.contains("return null;"));
+        assertTrue(app.contains("return null"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
     }
 
@@ -121,8 +102,8 @@ public class HyperOsFlutterFontHookConfigTest {
     public void viewportBridgeParsesPositiveOverrideAndExplicitClear() {
         assertEquals(Integer.valueOf(300), ViewportPropertyBridge.parseOverrideValueForTest("300"));
         assertEquals(Integer.valueOf(0), ViewportPropertyBridge.parseOverrideValueForTest("0"));
-        assertEquals(null, ViewportPropertyBridge.parseOverrideValueForTest(""));
-        assertEquals(null, ViewportPropertyBridge.parseOverrideValueForTest("abc"));
+        assertNull(ViewportPropertyBridge.parseOverrideValueForTest(""));
+        assertNull(ViewportPropertyBridge.parseOverrideValueForTest("abc"));
     }
 
     @Test
@@ -142,7 +123,7 @@ public class HyperOsFlutterFontHookConfigTest {
         String proxyPath = HyperOsRustProcessHookInstaller.resolveProxyLibraryPathForTest(
                 "/missing/MIUIGallery/lib/arm64/libapp_gallery.so");
 
-        assertEquals(null, proxyPath);
+        assertNull(proxyPath);
     }
 
     @Test
@@ -203,7 +184,7 @@ public class HyperOsFlutterFontHookConfigTest {
                         "/data/app/MIUIGallery/lib/arm64/libapp_gallery.so",
                         ""));
 
-        assertEquals(null, result);
+        assertNull(result);
     }
 
     @Test
@@ -491,7 +472,7 @@ public class HyperOsFlutterFontHookConfigTest {
         String summary = HyperOsRustProcessHookInstaller.buildArgumentProbeSummaryForTest(
                 Arrays.asList("com.example.app", "/data/app/example/libfoo.so"));
 
-        assertEquals(null, summary);
+        assertNull(summary);
     }
 
     @Test
@@ -505,7 +486,7 @@ public class HyperOsFlutterFontHookConfigTest {
         String proxyPath = HyperOsRustProcessHookInstaller.resolveProxyLibraryPathForTest(
                 original.getAbsolutePath());
 
-        assertEquals(null, proxyPath);
+        assertNull(proxyPath);
     }
 
     private static String readSource(String relativePath) throws Exception {

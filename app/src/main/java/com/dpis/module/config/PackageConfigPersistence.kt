@@ -1,24 +1,8 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
-import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.WechatDpiConfig
-import com.dpis.module.backup.BackupKeyPolicy.isImportable
-import com.dpis.module.backup.BackupKeyPolicy.isLocalOnly
-import com.dpis.module.backup.BackupReplaceResult
-import com.dpis.module.backup.BackupReplaceResult.Companion.failed
-import com.dpis.module.backup.BackupReplaceResult.Companion.success
-import com.dpis.module.backup.BackupReplaceStage
-import com.dpis.module.config.ConfigPreferenceValueCodec
-import com.dpis.module.config.LegacySharedPreferencesBridge
-import com.dpis.module.config.ConfigPreferenceKeys
-import com.dpis.module.config.ConfigSnapshotStore
-import com.dpis.module.config.ConfigSnapshotRepository
-import com.dpis.module.config.GlobalConfigStore
-import com.dpis.module.config.PackageConfigValue
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.fonts.FontDebugStatsStore
-import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.templates.TemplateConfigValueAdapters
 import com.dpis.module.viewport.ViewportApplyMode
@@ -26,6 +10,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
 import java.io.File
 import java.io.IOException
+
 /** Shared key metadata, value normalization, and XML-compatible config helpers. */
 open class PackageConfigPersistence {
 val MIN_VIEWPORT_WIDTH_DP = 1
@@ -245,7 +230,7 @@ fun normalizeLegacyPackageConfigValue(key: String?, value: Any?): Any? {
         return if (value is String) normalizeNonEmptyString(value) else null
     }
     if (key.startsWith("target.") && key.endsWith(".dpis_enabled")) {
-        return if (java.lang.Boolean.FALSE == value) java.lang.Boolean.FALSE else null
+        return if (false == value) false else null
     }
     if (key.startsWith("wechat.") && key.endsWith(".dpi")) {
         return if (value is Int) WechatDpiConfig.normalize(value) else null

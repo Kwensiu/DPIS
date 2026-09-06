@@ -4,7 +4,6 @@ import com.dpis.module.BuildConfig
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.util.Collections
 
 object ConfigBackupCodec {
     private const val SCHEMA_VERSION = 3
@@ -45,6 +44,7 @@ object ConfigBackupCodec {
     )
 
     @Throws(JSONException::class)
+    @JvmStatic
     fun decodeDocument(rawJson: String): BackupDocument {
         val root = JSONObject(rawJson)
         val schema = root.optInt(KEY_SCHEMA_VERSION, -1)
@@ -60,6 +60,7 @@ object ConfigBackupCodec {
     }
 
     @Throws(JSONException::class)
+    @JvmStatic
     fun encode(entries: Map<String, Any?>): String {
         val root = JSONObject()
         root.put(KEY_SCHEMA_VERSION, SCHEMA_VERSION)
@@ -120,6 +121,7 @@ object ConfigBackupCodec {
     }
 
     @Throws(JSONException::class)
+    @JvmStatic
     fun decode(rawJson: String): MutableMap<String?, Any?> {
         require(rawJson.length <= MAX_JSON_CHARS) { "Backup exceeds size limit" }
         val root = JSONObject(rawJson)
@@ -493,7 +495,7 @@ object ConfigBackupCodec {
         }
         throw JSONException(
             "Unsupported backup value type: "
-                    + (if (value == null) "null" else value.javaClass.getName())
+                    + (if (value == null) "null" else value.javaClass.name)
         )
     }
 
@@ -507,8 +509,7 @@ object ConfigBackupCodec {
 
     @Throws(JSONException::class)
     private fun decodeEntryValue(encoded: JSONObject): Any {
-        val type = encoded.optString(KEY_TYPE, "")
-        return when (type) {
+        return when (val type = encoded.optString(KEY_TYPE, "")) {
             "string" -> encoded.optString(KEY_VALUE, "")
             "int" -> encoded.getInt(KEY_VALUE)
             "long" -> encoded.getLong(KEY_VALUE)

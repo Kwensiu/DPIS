@@ -1,8 +1,8 @@
 package com.dpis.module.templates
 
 import android.content.Context
-import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
@@ -81,7 +81,7 @@ object TemplateWorkspacePresentation {
         val formatter = TemplateConfigSummaryFormatter(Text(context)) { typefaceId ->
             val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
                 context,
-                DpisApplication.getXposedService()
+                DpisApplication.xposedService
             )
             val entry = store.findById(typefaceId)
             if (entry != null && store.resolveFontFile(typefaceId) != null) {
@@ -95,20 +95,28 @@ object TemplateWorkspacePresentation {
         val allTemplates = QuickTemplateStore(context).readAll()
         val templates = allTemplates
             .asSequence()
-            .filter { normalizedQuery.isEmpty() || it.name.lowercase().contains(normalizedQuery) }
+            .filter {
+                normalizedQuery.isEmpty() || it.name.orEmpty().lowercase().contains(normalizedQuery)
+            }
             .map {
                 val result = formatter.format(it.configValue)
-                Template(it.id, it.name, it.configValue, result.summaryParts, result.typefaceStatus)
+                Template(
+                    it.id,
+                    it.name.orEmpty(),
+                    it.configValue,
+                    result.summaryParts.filterNotNull(),
+                    result.typefaceStatus
+                )
             }
             .toList()
         val globalPrefill = GlobalPrefillStore(preferences).read()
         val globalResult = formatter.format(globalPrefill)
         return State(
             globalPrefill,
-            globalResult.summaryParts,
+            globalResult.summaryParts.filterNotNull(),
             globalResult.typefaceStatus,
             templates,
-            allTemplates.map { QuickTemplateSortItem(it.id, it.name) },
+            allTemplates.map { QuickTemplateSortItem(it.id, it.name.orEmpty()) },
             query.orEmpty(),
             normalizedQuery.isNotEmpty(),
             detailKind,
@@ -122,12 +130,15 @@ object TemplateWorkspacePresentation {
 
     private class Text(private val context: Context) : TemplateConfigSummaryFormatter.Text {
         override fun emptySummary() = context.getString(R.string.template_workspace_summary_empty)
-        override fun viewportSummary(detail: String) = context.getString(R.string.template_workspace_summary_viewport, detail)
+        override fun viewportSummary(detail: String?) =
+            context.getString(R.string.template_workspace_summary_viewport, detail.orEmpty())
         override fun viewportTargetTypeScale() = context.getString(R.string.dialog_viewport_mode_system)
         override fun viewportTargetTypeWidth() = context.getString(R.string.dialog_viewport_mode_compat)
-        override fun fontSummary(detail: String) = context.getString(R.string.template_workspace_summary_font, detail)
+        override fun fontSummary(detail: String?) =
+            context.getString(R.string.template_workspace_summary_font, detail.orEmpty())
         override fun noValue() = context.getString(R.string.app_status_no_value)
-        override fun typeface(displayName: String) = context.getString(R.string.template_workspace_summary_typeface, displayName)
+        override fun typeface(displayName: String?) =
+            context.getString(R.string.template_workspace_summary_typeface, displayName.orEmpty())
         override fun hookDomains() = context.getString(R.string.template_workspace_summary_hook_domains)
         override fun modeAuto() = context.getString(R.string.template_workspace_mode_auto)
         override fun modeSystem() = context.getString(R.string.template_workspace_mode_system)

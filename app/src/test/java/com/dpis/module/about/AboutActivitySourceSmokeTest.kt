@@ -60,7 +60,8 @@ class AboutActivitySourceSmokeTest {
     @Test
     fun aboutActivityDoesNotApplyLocalApkSignatureGate() {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
-        val coordinatorSource = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.java")
+        val coordinatorSource =
+            read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.kt")
         val packageHandlerSource = read("src/main/java/com/dpis/module/updates/StartupUpdatePackageHandler.java")
 
         source.assertNotContainsAll("extractSigningFingerprints", "about_update_download_untrusted")

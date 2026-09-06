@@ -10,8 +10,8 @@ import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryEntry
 import com.dpis.module.fonts.FontLibraryStore
-import com.dpis.module.ui.TouchFeedbackBinder
 import com.dpis.module.templates.presentation.TemplateUiTokens
+import com.dpis.module.ui.TouchFeedbackBinder
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textview.MaterialTextView
 import java.util.Locale
@@ -80,9 +80,10 @@ class TemplateWorkspaceBinder(
         editButton.setOnClickListener { globalPrefillActions?.edit() }
     }
 
-    private fun resolveImportedTypeface(typefaceId: String): TemplateConfigSummaryFormatter.TypefaceStatus {
+    private fun resolveImportedTypeface(typefaceId: String?): TemplateConfigSummaryFormatter.TypefaceStatus {
+        if (typefaceId == null) return TemplateConfigSummaryFormatter.TypefaceStatus.none()
         val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
-            context, DpisApplication.getXposedService()
+            context, DpisApplication.xposedService
         )
         val imported: FontLibraryEntry? = store.findById(typefaceId)
         return if (imported != null && store.resolveFontFile(typefaceId) != null) {
@@ -116,7 +117,7 @@ class TemplateWorkspaceBinder(
         templates: List<QuickTemplateStore.QuickTemplate>,
         normalizedQuery: String
     ): List<QuickTemplateStore.QuickTemplate> = templates.filter {
-        it.name.lowercase(Locale.ROOT).contains(normalizedQuery)
+        it.name.orEmpty().lowercase(Locale.ROOT).contains(normalizedQuery)
     }
 
     private fun normalizeQuery(query: String?) = query?.trim()?.lowercase(Locale.ROOT).orEmpty()
@@ -127,12 +128,15 @@ class TemplateWorkspaceBinder(
 
     private class ResourceSummaryText(private val context: Context) : TemplateConfigSummaryFormatter.Text {
         override fun emptySummary() = context.getString(R.string.template_workspace_summary_empty)
-        override fun viewportSummary(detail: String) = context.getString(R.string.template_workspace_summary_viewport, detail)
+        override fun viewportSummary(detail: String?) =
+            context.getString(R.string.template_workspace_summary_viewport, detail.orEmpty())
         override fun viewportTargetTypeScale() = context.getString(R.string.dialog_viewport_mode_system)
         override fun viewportTargetTypeWidth() = context.getString(R.string.dialog_viewport_mode_compat)
-        override fun fontSummary(detail: String) = context.getString(R.string.template_workspace_summary_font, detail)
+        override fun fontSummary(detail: String?) =
+            context.getString(R.string.template_workspace_summary_font, detail.orEmpty())
         override fun noValue() = context.getString(R.string.app_status_no_value)
-        override fun typeface(displayName: String) = context.getString(R.string.template_workspace_summary_typeface, displayName)
+        override fun typeface(displayName: String?) =
+            context.getString(R.string.template_workspace_summary_typeface, displayName.orEmpty())
         override fun hookDomains() = context.getString(R.string.template_workspace_summary_hook_domains)
         override fun modeAuto() = context.getString(R.string.template_workspace_mode_auto)
         override fun modeSystem() = context.getString(R.string.template_workspace_mode_system)

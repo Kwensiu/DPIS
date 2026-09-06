@@ -1,16 +1,16 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.DpisLogEntry;
-import com.dpis.module.diagnostics.DpisLogParser;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-import java.util.List;
+import com.dpis.module.diagnostics.DpisLogEntry;
+import com.dpis.module.diagnostics.DpisLogParser;
 
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.List;
 
 public final class DpisLogParserTest {
     @Test
@@ -109,21 +109,21 @@ public final class DpisLogParserTest {
     @Test
     public void lsposedReaderUsesDirectCurrentLogFiles() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/diagnostics/LsposedLogReader.java");
+                "src/main/java/com/dpis/module/diagnostics/LsposedLogReader.kt");
 
         assertTrue(source.contains("for file in /data/adb/lspd/log/modules_*.log"));
         assertTrue(source.contains("for file in /data/adb/lspd/log/verbose_*.log"));
         assertTrue(source.contains("grep -a -E -h "));
         assertTrue(source.contains("[(][^)]*)\\\\[io\\\\.github\\\\.kwensiu\\\\.dpis,|"));
         assertTrue(source.contains("Auto hot reload .*io\\\\.github\\\\.kwensiu\\\\.dpis"));
-        assertTrue(source.contains("Thread outputReaderThread = new Thread"));
-        assertTrue(source.contains("Thread errorReaderThread = new Thread"));
-        assertTrue(source.contains("outputReaderThread.start();"));
-        assertTrue(source.contains("errorReaderThread.start();"));
+        assertTrue(source.contains("val outputReaderThread = Thread("));
+        assertTrue(source.contains("val errorReaderThread = Thread("));
+        assertTrue(source.contains("outputReaderThread.start()"));
+        assertTrue(source.contains("errorReaderThread.start()"));
         assertTrue(source.contains("waitFor(ROOT_READ_TIMEOUT_MS, TimeUnit.MILLISECONDS)"));
         assertTrue(source.contains("root access timed out"));
-        assertTrue(source.contains("outputReaderThread.join();"));
-        assertTrue(source.contains("errorReaderThread.join();"));
+        assertTrue(source.contains("outputReaderThread.join()"));
+        assertTrue(source.contains("errorReaderThread.join()"));
         assertTrue(source.contains("isRootAccessError(combinedError)"));
         assertFalse(source.contains("cat /data/adb/lspd/log/modules_*.log"));
         assertFalse(source.contains("cat /data/adb/lspd/log/verbose_*.log"));
