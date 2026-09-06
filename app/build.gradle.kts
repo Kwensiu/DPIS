@@ -8,12 +8,14 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.testing.Test
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.aboutlibraries)
     alias(libs.plugins.androidx.baselineprofile)
+    jacoco
 }
 
 private val appVersionName = "2.0.0" // x-release-please-version
@@ -310,6 +312,49 @@ tasks.register<Test>("testDebugUnitTest") {
 
 tasks.register("testAllDebugUnitTests") {
     dependsOn("testModernDebugUnitTest", "testLegacyDebugUnitTest")
+}
+
+val jacocoModernDebugUnitTestReport = tasks.register<JacocoReport>(
+    "jacocoModernDebugUnitTestReport"
+) {
+    dependsOn("testModernDebugUnitTest")
+    description = "Generates the XML coverage report used by SonarQube for Modern Debug."
+    group = "verification"
+
+    val modernDebugClassDirectories = files(
+        layout.buildDirectory.dir(
+            "intermediates/javac/modernDebug/compileModernDebugJavaWithJavac/classes"
+        ),
+        layout.buildDirectory.dir(
+            "intermediates/built_in_kotlinc/modernDebug/compileModernDebugKotlin/classes"
+        )
+    )
+    classDirectories.setFrom(
+        modernDebugClassDirectories.asFileTree.matching {
+            exclude(
+                "**/R.class",
+                "**/R$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "**/*_Factory.class",
+                "**/*_MembersInjector.class"
+            )
+        }
+    )
+    sourceDirectories.setFrom(
+        files(
+            "src/main/java",
+            "src/modern/java"
+        )
+    )
+    executionData.setFrom(
+        layout.buildDirectory.file("jacoco/testModernDebugUnitTest.exec")
+    )
+    reports {
+        xml.required.set(true)
+        html.required.set(false)
+        csv.required.set(false)
+    }
 }
 
 tasks.configureEach {
