@@ -131,6 +131,15 @@ class QuickTemplateStoreBehaviorTest {
     }
 
     @Test
+    fun restoreBackupRejectsNullEntriesAfterClearingCatalog() {
+        val store = QuickTemplateStore(FakePrefs())
+        assertTrue(store.save(template("daily", "Daily", 1L)))
+
+        assertFalse(store.restoreBackup(mutableListOf(null)))
+        assertTrue(store.readAll().isEmpty())
+    }
+
+    @Test
     fun backupHelpersIgnoreMissingEntriesAndGenerateUniqueIds() {
         val store = QuickTemplateStore(FakePrefs())
         val backup = linkedMapOf<String, Any?>()
