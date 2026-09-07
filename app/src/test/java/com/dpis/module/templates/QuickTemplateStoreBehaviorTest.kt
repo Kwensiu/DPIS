@@ -68,6 +68,29 @@ class QuickTemplateStoreBehaviorTest {
         assertTrue(store.readAll().isEmpty())
     }
 
+    @Test
+    fun duplicateNamesRespectTheExcludedTemplate() {
+        val store = QuickTemplateStore(FakePrefs())
+        assertTrue(store.save(template("alpha", "  Shared name  ", 1L)))
+        assertTrue(store.save(template("beta", "Other", 2L)))
+
+        assertTrue(store.hasDuplicateName("shared name", null))
+        assertFalse(store.hasDuplicateName("shared name", "alpha"))
+        assertFalse(store.hasDuplicateName("missing", null))
+    }
+
+    @Test
+    fun selectedPackagesAndDeleteUpdatePersistedTemplateState() {
+        val store = QuickTemplateStore(FakePrefs())
+        assertTrue(store.save(template("alpha", "Alpha", 1L)))
+
+        assertTrue(store.setSelectedPackages("alpha", linkedSetOf("com.example.app")))
+        assertEquals(setOf("com.example.app"), store.read("alpha")!!.selectedPackages)
+        assertTrue(store.delete("alpha"))
+        assertNull(store.read("alpha"))
+        assertTrue(store.readAll().isEmpty())
+    }
+
     private fun template(
         id: String,
         name: String,
