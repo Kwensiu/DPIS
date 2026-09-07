@@ -13,7 +13,7 @@ class BatchScopeRequestCoordinator internal constructor(
 ) {
     constructor(host: Host?) : this(
         host,
-        fromService(DpisApplication.getXposedService()),
+        fromService(DpisApplication.xposedService),
         BuildConfig.FLAVOR == "modern",
     )
     interface Host {
@@ -131,7 +131,7 @@ class BatchScopeRequestCoordinator internal constructor(
     companion object {
         private fun fromService(service: XposedService?): ScopeRequester? = service?.let { target ->
             object : ScopeRequester {
-                override fun getScope(): List<String>? = target.scope
+                override fun getScope(): List<String> = target.scope
 
                 override fun requestScope(
                     packages: List<String>,

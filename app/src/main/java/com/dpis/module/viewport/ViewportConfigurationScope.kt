@@ -38,6 +38,7 @@ object ViewportConfigurationScope {
     @Volatile
     private var cachedGetMaxBoundsMethod: Method? = null
 
+    @JvmStatic
     fun isValidDisplayConfiguration(config: Configuration?): Boolean {
         return config != null && config.screenWidthDp > 0 && config.screenHeightDp > 0 && config.smallestScreenWidthDp > 0 && config.densityDpi > 0 && config.fontScale > 0f
     }
@@ -59,8 +60,9 @@ object ViewportConfigurationScope {
                 || isWindowScopedBounds(appBounds, maxBounds)
     }
 
+    @JvmStatic
     fun isWindowScopedBounds(bounds: Rect?, maxBounds: Rect?): Boolean {
-        if (bounds == null || maxBounds == null || bounds.isEmpty() || maxBounds.isEmpty()) {
+        if (bounds == null || maxBounds == null || bounds.isEmpty || maxBounds.isEmpty) {
             return false
         }
         return isWindowScopedBounds(
@@ -99,7 +101,7 @@ object ViewportConfigurationScope {
         if (field == null) {
             try {
                 field = Configuration::class.java.getDeclaredField("windowConfiguration")
-                field.setAccessible(true)
+                field.isAccessible = true
                 cachedWindowConfigurationField = field
             } catch (ignored: ReflectiveOperationException) {
                 return null
@@ -157,7 +159,7 @@ object ViewportConfigurationScope {
         }
         try {
             val method = clazz.getDeclaredMethod(methodName)
-            method.setAccessible(true)
+            method.isAccessible = true
             cachedWindowConfigurationClass = clazz
             cacheMethodFor(methodName, method)
             return method

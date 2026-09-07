@@ -408,7 +408,7 @@ class QuickConfigActivity : LocalizedActivity() {
             return InstalledAppCatalogCoordinator.createAppListItem(
                 this.hookConfigStore,
                 loadScopePackages(),
-                DpisApplication.getXposedService() != null,
+                DpisApplication.xposedService != null,
                 label,
                 packageName,
                 systemApp,
@@ -424,7 +424,7 @@ class QuickConfigActivity : LocalizedActivity() {
     }
 
     private fun loadScopePackages(): Set<String> {
-        val service = DpisApplication.getXposedService() ?: return emptySet()
+        val service = DpisApplication.xposedService ?: return emptySet()
         return try {
             HashSet(service.scope)
         } catch (exception: RuntimeException) {
@@ -600,7 +600,7 @@ class QuickConfigActivity : LocalizedActivity() {
                 return packageName
             }
 
-            override fun rootAccess(): RootAccessProbe.Result? {
+            override fun rootAccess(): RootAccessProbe.Result {
                 return RootAccessProbe.cachedResult()
             }
 

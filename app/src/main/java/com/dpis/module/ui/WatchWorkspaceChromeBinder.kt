@@ -24,6 +24,7 @@ object WatchWorkspaceChromeBinder {
     }
 
     /** Keeps the shared app/template search toolbar inside a compact round display's safe area.  */
+    @JvmStatic
     fun applyTopContainerInsets(topContainer: View?) {
         val compactWatch = topContainer != null
                 && WatchUiMode.shouldUseCompactUi(topContainer.context)

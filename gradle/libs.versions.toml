@@ -22,6 +22,7 @@ baselineProfile = "1.5.0-alpha07"
 uiautomator = "2.3.0"
 materialKolor = "5.0.1"
 reorderable = "3.1.0"
+coreKtx = "1.19.0"
 
 [plugins]
 agp-app = { id = "com.android.application", version.ref = "agp" }
@@ -60,3 +61,4 @@ androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchm
 androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
 material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

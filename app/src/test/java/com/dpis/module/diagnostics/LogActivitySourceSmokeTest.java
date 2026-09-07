@@ -1,13 +1,11 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.LogGate;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
 import org.junit.Test;
+
+import java.io.IOException;
 
 public final class LogActivitySourceSmokeTest {
     @Test
@@ -55,9 +53,9 @@ public final class LogActivitySourceSmokeTest {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/LogActivity.java");
         String application = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/DpisApplication.java");
+                "src/main/java/com/dpis/module/DpisApplication.kt");
 
-        assertTrue(application.contains("RootAccessProbe.warmUpAsync();"));
+        assertTrue(application.contains("RootAccessProbe.warmUpAsync()"));
         assertTrue(source.contains("RootAccessProbe.cachedResult()"));
         assertTrue(source.contains("RootAccessProbe.probe()"));
         assertTrue(source.contains("loadLogs(false, refreshLsposed, refreshLsposed);"));

@@ -55,6 +55,7 @@ object TypefaceCatalogCache {
         }
     }
 
+    @JvmStatic
     fun cached(): Catalog? = cached
 
     suspend fun get(context: Context): Catalog {
@@ -95,11 +96,12 @@ object TypefaceCatalogCache {
             }
             val importedEntries = async {
                 val store = ConfigStoreFactory.createLocalUiFontLibraryStore(context, null)
-                store.listFonts().map { entry ->
+                store.listFonts().mapNotNull { entry ->
+                    val id = entry.id ?: return@mapNotNull null
                     Entry(
-                        id = entry.id,
-                        displayName = entry.displayName,
-                        preview = store.resolveFontFile(entry.id)?.let { file ->
+                        id = id,
+                        displayName = entry.displayName ?: id,
+                        preview = store.resolveFontFile(id)?.let { file ->
                             FontTypefaceLoader.load(file, entry.ttcIndex)
                         }
                     )

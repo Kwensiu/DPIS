@@ -3,8 +3,8 @@ package com.dpis.module.backup
 import org.json.JSONException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class ConfigBackupCodecTest {
@@ -47,6 +47,17 @@ class ConfigBackupCodecTest {
     }
 
     @Test
+    fun encodeFiltersNonStringSetMembers() {
+        val decoded = ConfigBackupCodec.decode(
+            ConfigBackupCodec.encode(
+                mapOf("font.hook_domains" to linkedSetOf<Any?>("activity", 42, null)),
+            ),
+        )
+
+        assertEquals(setOf("activity"), decoded["font.hook_domains"])
+    }
+
+    @Test
     fun backupPolicy_rejectsUnknownFieldsInsideKnownDomains() {
         assertTrue(BackupKeyPolicy.isImportable("package_config.com.example.viewport.width_dp"))
         assertTrue(BackupKeyPolicy.isImportable("wechat.com.example.dpi"))
@@ -54,5 +65,32 @@ class ConfigBackupCodecTest {
         assertFalse(BackupKeyPolicy.isImportable("ui.temporary_preview"))
         assertFalse(BackupKeyPolicy.isImportable("global.debug_override"))
         assertFalse(BackupKeyPolicy.isImportable("template.compact.temporary_state"))
+    }
+
+    @Test
+    fun decodeRejectsMissingMetadataAndUnknownSchema() {
+        val encoded = ConfigBackupCodec.encode(mapOf("ui.interface_scale_percent" to 110))
+        val missingMetadata = encoded.replace(Regex(",\\n  \"appVersionName\": \"[^\"]*\""), "")
+        assertThrows(IllegalArgumentException::class.java) {
+            ConfigBackupCodec.decode(missingMetadata)
+        }
+
+        val unknownSchema = encoded.replace("\"schemaVersion\": 3", "\"schemaVersion\": 99")
+        assertThrows(IllegalArgumentException::class.java) {
+            ConfigBackupCodec.decode(unknownSchema)
+        }
+    }
+
+    @Test
+    fun decodeSupportsLegacySchemasAndRejectsMalformedSections() {
+        val legacyV1 = "{\"schemaVersion\":1,\"entries\":{\"ui.interface_scale_percent\":{\"type\":\"int\",\"value\":110}}}"
+        assertEquals(110, ConfigBackupCodec.decode(legacyV1)["ui.interface_scale_percent"])
+
+        val legacyV2 = "{\"schemaVersion\":2,\"entries\":{\"ui.interface_scale_percent\":{\"type\":\"int\",\"value\":110}}}"
+        assertEquals(110, ConfigBackupCodec.decode(legacyV2)["ui.interface_scale_percent"])
+
+        assertThrows(IllegalArgumentException::class.java) {
+            ConfigBackupCodec.decode("{\"schemaVersion\":3,\"packageName\":\"${com.dpis.module.BuildConfig.APPLICATION_ID}\",\"createdAtEpochMs\":1,\"appVersionCode\":1,\"appVersionName\":\"x\",\"packageConfigs\":{\"pkg\":null}}")
+        }
     }
 }

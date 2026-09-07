@@ -303,7 +303,12 @@ private fun WearTypefacePickerPage(
             wearButton("system:${font.id()}", font.displayName(), font.id(), if (selectedTypefaceId == font.id()) R.drawable.ic_check_24 else R.drawable.ic_adjust_24, onClick = { onTypefaceSelected(font.id()) })
         }
         importedFonts.forEach { font ->
-            wearButton("imported:${font.id}", font.displayName, font.id, if (selectedTypefaceId == font.id) R.drawable.ic_check_24 else R.drawable.ic_upload_file_24, onClick = { onTypefaceSelected(font.id) })
+            wearButton(
+                "imported:${font.id}",
+                font.displayName.orEmpty(),
+                font.id ?: "",
+                if (selectedTypefaceId == font.id) R.drawable.ic_check_24 else R.drawable.ic_upload_file_24,
+                onClick = { onTypefaceSelected(font.id) })
         }
         wearButton("manage", context.getString(R.string.dialog_typeface_manage_action), icon = R.drawable.ic_settings_24, onClick = {
             context.startActivity(Intent(context, FontLibraryActivity::class.java))
@@ -681,7 +686,8 @@ internal class WearListScope(
     fun wearSectionHeader(@StringRes title: Int) = with(scope) {
         item(key = "section:$title") {
             ListHeader(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
                 transformation = SurfaceTransformation(transformationSpec)
             ) {
@@ -694,7 +700,8 @@ internal class WearListScope(
         item(key = key) {
             var focused by remember { mutableStateOf(false) }
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
                 contentPadding = CardDefaults.ContentPadding,
                 transformation = SurfaceTransformation(transformationSpec)
@@ -709,7 +716,8 @@ internal class WearListScope(
                     cursorBrush = SolidColor(
                         MaterialTheme.colorScheme.primary
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .onFocusChanged { focused = it.isFocused }
                         .inputFocusFeedback(),
                     decorationBox = { inner ->
@@ -740,7 +748,8 @@ internal class WearListScope(
         item(key = key) {
             var focused by remember { mutableStateOf(false) }
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -760,7 +769,8 @@ internal class WearListScope(
                         cursorBrush = SolidColor(
                             MaterialTheme.colorScheme.primary
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                             .onFocusChanged { focused = it.isFocused }
                             .inputFocusFeedback(),
                         decorationBox = { inner ->
@@ -796,7 +806,8 @@ internal class WearListScope(
     fun wearTextField(key: Any, value: String, label: String, onValueChanged: (String) -> Unit) = with(scope) {
         item(key = key) {
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
                 contentPadding = CardDefaults.ContentPadding,
                 transformation = SurfaceTransformation(transformationSpec)
@@ -840,7 +851,8 @@ internal class WearListScope(
     ) = with(scope) {
         item(key = key) {
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
                 contentPadding = CardDefaults.ContentPadding,
                 transformation = SurfaceTransformation(transformationSpec)
@@ -867,7 +879,9 @@ internal class WearListScope(
                             .inputFocusFeedback()
                     )
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         wearModeChoiceButton(
@@ -929,7 +943,9 @@ internal class WearListScope(
                     { Text(value, maxLines = 2, overflow = TextOverflow.Ellipsis) }
                 },
                 icon = { Icon(painterResource(icon), contentDescription = null) },
-                modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .transformedHeight(this, transformationSpec)
                     .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding),
                 transformation = SurfaceTransformation(transformationSpec)
             )
@@ -1049,7 +1065,8 @@ internal class WearListScope(
             val allLabel = stringResource(R.string.tab_all_apps)
             val configuredLabel = stringResource(R.string.tab_configured_apps)
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .height(52.dp)
                     .transformedHeight(this, transformationSpec),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -1105,7 +1122,8 @@ internal class WearListScope(
     ) = with(scope) {
         item(key = key) {
             Row(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1169,7 +1187,8 @@ internal class WearListScope(
                         contentDescription = null
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .transformedHeight(this, transformationSpec)
                     .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding),
                 transformation = SurfaceTransformation(transformationSpec)
@@ -1187,7 +1206,8 @@ internal class WearListScope(
     ) = with(scope) {
         item(key = "process_actions") {
             Card(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .height(52.dp)
                     .transformedHeight(this, transformationSpec),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -1284,7 +1304,9 @@ internal class WearListScope(
                 checked = checked,
                 enabled = enabled,
                 onCheckedChange = onChanged,
-                modifier = Modifier.fillMaxWidth().transformedHeight(this, transformationSpec)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .transformedHeight(this, transformationSpec)
                     .minimumVerticalContentPadding(ButtonDefaults.minimumVerticalListContentPadding),
                 transformation = SurfaceTransformation(transformationSpec)
             )

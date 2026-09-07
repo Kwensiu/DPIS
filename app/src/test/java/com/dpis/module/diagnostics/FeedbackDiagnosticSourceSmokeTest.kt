@@ -270,7 +270,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/AppLauncher.java"
         )
         val rootLauncher =
-            read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java")
+            read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt")
 
         assertTrue(main.contains("new AppLauncher(this)"))
         assertTrue(main.contains("restartTargetAppForDiagnostic("))
@@ -292,10 +292,10 @@ class FeedbackDiagnosticSourceSmokeTest {
     @Test
     fun feedbackDiagnosticForegroundObserverUsesRootTopAppSnapshot() {
         val reader = read(
-            "src/main/java/com/dpis/module/diagnostics/ForegroundAppReader.java"
+            "src/main/java/com/dpis/module/diagnostics/ForegroundAppReader.kt"
         )
 
-        assertTrue(reader.contains("new ProcessBuilder(\"su\", \"-c\", COMMAND)"))
+        assertTrue(reader.contains("SecureProcessLauncher.startMerged(\"su\", \"-c\", COMMAND)"))
         assertTrue(reader.contains("dumpsys activity activities"))
         assertTrue(reader.contains("dumpsys window"))
         assertTrue(reader.contains("parsePackage("))
@@ -317,10 +317,10 @@ class FeedbackDiagnosticSourceSmokeTest {
         val forceTextSize =
             read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
         val paintFallback = read(
-            "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.java"
+            "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.kt"
         )
         val webViewFont =
-            read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.kt")
         val modernWechat = read(
             "src/modern/java/com/dpis/module/wechat/WechatDpiModernHookInstaller.java"
         )

@@ -1,15 +1,3 @@
-import org.gradle.api.DefaultTask
-import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.ConfigurableFileTree
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.testing.Test
-import org.gradle.testing.jacoco.tasks.JacocoReport
-
 plugins {
     alias(libs.plugins.agp.app)
     alias(libs.plugins.kotlin.compose)
@@ -374,6 +362,7 @@ if (releaseTasksRequested && !hasReleaseSigningConfig) {
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
     baselineProfile(project(":baselineprofile"))
     compileOnly(libs.libxposed.api)
     compileOnly(libs.legacy.xposed.api)

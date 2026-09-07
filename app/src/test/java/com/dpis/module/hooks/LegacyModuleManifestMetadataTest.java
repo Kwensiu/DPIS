@@ -1,14 +1,11 @@
 package com.dpis.module;
 
-import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller;
-
-import com.dpis.module.viewport.DensityOverride;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import org.junit.Test;
+
+import java.io.IOException;
 
 public final class LegacyModuleManifestMetadataTest {
 
@@ -102,9 +99,9 @@ public final class LegacyModuleManifestMetadataTest {
     @Test
     public void legacyLegacyHookUsesClassicXposedHookSurface() throws IOException {
         String source = readProjectFile(
-                "src/legacy/java/com/dpis/module/LegacyModuleHook.java");
+                "src/legacy/java/com/dpis/module/LegacyModuleHook.kt");
 
-        assertTrue(source.contains("implements IXposedHookLoadPackage"));
+        assertTrue(source.contains(": IXposedHookLoadPackage"));
         assertTrue(source.contains("LegacyConfigStoreFactory.create(packageName)"));
         assertTrue(source.contains("shouldInstallLegacyHooks()"));
         assertFalse(source.contains("shouldInstallEarlyViewportHooks("));
@@ -203,7 +200,7 @@ public final class LegacyModuleManifestMetadataTest {
     @Test
     public void manifestSyncsCompatPropertiesAfterBoot() throws IOException {
         String manifest = readProjectFile("src/main/AndroidManifest.xml");
-        String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.java");
+        String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.kt");
         String receiver = readProjectFile(
                 "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java");
 

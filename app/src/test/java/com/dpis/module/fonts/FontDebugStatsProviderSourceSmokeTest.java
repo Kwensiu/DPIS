@@ -1,12 +1,11 @@
 package com.dpis.module;
 
-import com.dpis.module.viewport.ViewportDebugReporter;
-
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class FontDebugStatsProviderSourceSmokeTest {
     @Test
@@ -30,8 +29,8 @@ public class FontDebugStatsProviderSourceSmokeTest {
 
         assertTrue(fontReporter.contains("FontDebugStatsTransport.sendUpdate(context, extras)"));
         assertTrue(viewportReporter.contains("FontDebugStatsTransport.sendUpdate(context, extras)"));
-        assertTrue(!fontReporter.contains("context.sendBroadcast(intent)"));
-        assertTrue(!viewportReporter.contains("context.sendBroadcast(intent)"));
+        assertFalse(fontReporter.contains("context.sendBroadcast(intent)"));
+        assertFalse(viewportReporter.contains("context.sendBroadcast(intent)"));
     }
 
     @Test
@@ -58,13 +57,13 @@ public class FontDebugStatsProviderSourceSmokeTest {
         assertTrue(transport.contains("context.startService(intent)"));
         assertTrue(transport.contains("context.startActivity(intent)"));
         assertTrue(transport.contains("FontDebugStatsFileBridge.write(context, extras)"));
-        assertTrue(!transport.contains("return;\n        } catch (Throwable throwable)"));
+        assertFalse(transport.contains("return;\n        } catch (Throwable throwable)"));
         assertTrue(moduleMain.contains("FontDebugStatsTransport.initialize(this)"));
     }
 
     @Test
     public void overlayImportsFileBridgeBeforeRendering() throws IOException {
-        String overlay = read("src/main/java/com/dpis/module/fonts/FontDebugOverlayService.java");
+        String overlay = read("src/main/java/com/dpis/module/fonts/FontDebugOverlayService.kt");
 
         assertTrue(overlay.contains("HandlerThread"));
         assertTrue(overlay.contains("scheduleBridgeImportIfNeeded()"));
@@ -90,7 +89,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
     public void manifestDoesNotRequestReadLogsForLogcatFallback() throws IOException {
         String manifest = read("src/main/AndroidManifest.xml");
 
-        assertTrue(!manifest.contains("android.permission.READ_LOGS"));
+        assertFalse(manifest.contains("android.permission.READ_LOGS"));
     }
 
     private static void assertComponentExportedFalse(String manifest, String componentName) {

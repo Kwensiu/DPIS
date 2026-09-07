@@ -52,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
@@ -143,7 +144,10 @@ internal fun CompactEditorTextField(
                 // decorator rather than only the label content.
                 MaterialTheme(motionScheme = EditorTextFieldMotionScheme) {
                     OutlinedTextFieldDefaults.DecorationBox(
-                    value = value,
+                    // Keep label placement tied to the same text rendered by BasicTextField. The
+                    // local value can lead the parent draft by one frame while IME composition
+                    // settles; using the parent string here makes the label overlap that text.
+                    value = textFieldValue.text,
                     innerTextField = innerTextField,
                     enabled = true,
                     singleLine = true,
@@ -179,8 +183,15 @@ internal fun CompactEditorTextField(
 }
 
 @Composable
-internal fun EditorClearButton(onClear: () -> Unit) {
-    IconButton(onClick = rememberClickAction(onClear)) {
+internal fun EditorClearButton(
+    visible: Boolean = true,
+    onClear: () -> Unit,
+) {
+    IconButton(
+        onClick = rememberClickAction(onClear),
+        enabled = visible,
+        modifier = Modifier.alpha(if (visible) 1f else 0f),
+    ) {
         Icon(painterResource(R.drawable.ic_close_24), stringResource(R.string.search_clear))
     }
 }

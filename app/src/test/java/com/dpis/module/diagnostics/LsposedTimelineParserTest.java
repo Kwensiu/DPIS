@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -524,6 +525,68 @@ public final class LsposedTimelineParserTest {
         assertTrue(events.get(0).contains("source=lsposed-history"));
         assertTrue(events.get(0).contains("stage=reapplied"));
         assertTrue(events.get(0).contains("targetDpi=368"));
+    }
+
+    @Test
+    public void windowRawLogReportsFilteredAndUnparsedEntries() {
+        String raw = String.join("\n",
+                "[ 2023-11-15T06:13:20.000     1000:  1234:  5678 I/LSPosedFramework ] "
+                        + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                        + "inside package=com.example.app",
+                "[ 2023-11-15T06:20:00.000     1000:  1234:  5678 I/LSPosedFramework ] "
+                        + "(com.example.app)[io.github.kwensiu.dpis,DPIS,id,0,1] "
+                        + "outside package=com.example.app",
+                "Auto hot reload failed for io.github.kwensiu.dpis",
+                "[ 2023-11-15T06:13:20.000     1000:  1234:  5678 I/LSPosedFramework ] "
+                        + "(system)[com.other.module,Other,id,0,1] unrelated");
+
+        LsposedTimelineParser.WindowedRawLog result = LsposedTimelineParser.windowRawLog(
+                new LogReadResult(0, "LSPosed", raw, ""),
+                SessionWindow.around(WINDOW_START_MILLIS, WINDOW_END_MILLIS),
+                request(true, true, true)
+        );
+
+        assertEquals(3, result.totalParsed());
+        assertEquals(2, result.droppedOutsideWindow());
+        assertEquals(0, result.droppedUnparsed());
+        assertEquals(1, result.droppedNonDpis());
+        assertTrue(result.output().contains("inside"));
+    }
+
+    @Test
+    public void windowRawLogHandlesEmptyResultAndMissingWindow() {
+        assertEquals("", LsposedTimelineParser.windowRawLog(null, null, null).output());
+        LogReadResult result = new LogReadResult(0, "LSPosed", "raw output", "");
+        LsposedTimelineParser.WindowedRawLog windowless =
+                LsposedTimelineParser.windowRawLog(result, null, null);
+        assertEquals("raw output", windowless.output());
+        assertEquals(0, windowless.totalParsed());
+    }
+
+    @Test
+    public void resolvesTimestampVariantsAndSortsStageRanks() {
+        assertEquals(-1L, LsposedTimelineParser.resolveTimestampMillis(null, WINDOW_START_MILLIS));
+        assertEquals(-1L, LsposedTimelineParser.resolveTimestampMillis(" ", WINDOW_START_MILLIS));
+        assertEquals(WINDOW_START_MILLIS,
+                LsposedTimelineParser.resolveTimestampMillis("11-15 06:13:19.000", WINDOW_START_MILLIS));
+        assertEquals(WINDOW_START_MILLIS,
+                LsposedTimelineParser.resolveTimestampMillis("11-15 06:13:19", WINDOW_START_MILLIS));
+        assertEquals(-1L,
+                LsposedTimelineParser.resolveTimestampMillis("not-a-time", WINDOW_START_MILLIS));
+
+        List<String> events = new ArrayList<>();
+        events.add("2023-11-15 06:13:20.000 stage=end");
+        events.add("2023-11-15 06:13:20.000 stage=probe");
+        events.add("short");
+        events.add(null);
+        events.add("2023-11-15 06:13:20.000 stage=repeated_write");
+        LsposedTimelineParser.sortTimelineEvents(events);
+
+        int probe = events.indexOf("2023-11-15 06:13:20.000 stage=probe");
+        int end = events.indexOf("2023-11-15 06:13:20.000 stage=end");
+        int repeated = events.indexOf("2023-11-15 06:13:20.000 stage=repeated_write");
+        assertTrue(probe >= 0 && probe < end);
+        assertTrue(end < repeated);
     }
 
     private static LsposedTimelineParser.Input request(

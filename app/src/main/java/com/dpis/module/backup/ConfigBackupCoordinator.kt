@@ -7,7 +7,6 @@ import com.dpis.module.templates.QuickTemplateStore
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.LinkedHashMap
 
 /** Coordinates portable backup I/O and cross-store restore semantics. */
 class ConfigBackupCoordinator(
@@ -32,7 +31,7 @@ class ConfigBackupCoordinator(
         if (uri == null) return Result.failure(Code.IO_ERROR)
         val entries = configStore.snapshotBackup().entries
             .mapNotNull { (key, value) -> key?.let { it to value } }
-            .toMap(LinkedHashMap())
+            .toMap(LinkedHashMap<String, Any?>())
             .also { templateStore.copyToBackup(it) }
         return try {
             resolver.openOutputStream(uri)?.use { output ->
@@ -55,7 +54,7 @@ class ConfigBackupCoordinator(
         val incoming = try {
             ConfigBackupCodec.decode(payload).entries
                 .mapNotNull { (key, value) -> key?.let { it to value } }
-                .toMap(LinkedHashMap())
+                .toMap(LinkedHashMap<String, Any?>())
         } catch (error: Exception) {
             return Result.failure(Code.INVALID_FILE, error)
         }
@@ -65,7 +64,7 @@ class ConfigBackupCoordinator(
         normalizeLegacyTargetPackages(incoming)
         val snapshot = configStore.snapshotBackup().entries
             .mapNotNull { (key, value) -> key?.let { it to value } }
-            .toMap(LinkedHashMap())
+            .toMap(LinkedHashMap<String, Any?>())
             .also { templateStore.copyToBackup(it) }
         val configEntries = incoming.filterKeys { !it.startsWith("template.") }.toMutableMap()
         if (!configStore.replaceBackup(configEntries)) return Result.failure(Code.RESTORE_ERROR)

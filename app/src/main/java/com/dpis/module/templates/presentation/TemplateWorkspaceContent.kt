@@ -178,6 +178,10 @@ internal fun TemplateWorkspaceContent(
     }
 
     fun saveEditor() {
+        // The active viewport field is presentation state; copy it into its target-specific draft
+        // before validation and persistence so keyboard-dismiss/recomposition cannot save a stale
+        // scale or absolute-width value.
+        editorDraft.form.updateActiveViewportDraft()
         val createdNewTemplate = editorDraft.form.quickTemplate && editorDraft.form.newTemplate
         val result = if (editorDraft.form.quickTemplate) {
             state.actions.saveQuickTemplate(editorDraft.form)

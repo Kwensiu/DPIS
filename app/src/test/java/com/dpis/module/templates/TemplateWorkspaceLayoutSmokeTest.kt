@@ -65,7 +65,10 @@ class TemplateWorkspaceLayoutSmokeTest {
         val binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt")
         val adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateListAdapter.java")
         binder.assertContainsAll("GlobalPrefillStore(preferences).read()", "QuickTemplateStore(context).readAll()", "ConfigStoreFactory.createLocalUiFontLibraryStore", "TemplateTypefaceResolver(", "store.resolveFontFile(typefaceId) != null", "R.id.global_prefill_summary_chips", "bindHeaderActions(workspaceView, templates)", "sortButton.isEnabled = enabled", "sortButton.alpha = if (enabled) 1f else TemplateUiTokens.DISABLED_ACTION_ALPHA")
-        read("src/main/java/com/dpis/module/templates/TemplateTypefaceResolver.java").assertContainsAll("importedTypefaceProvider.resolve(typefaceId)", "SystemFontRegistry.loadTypeface(typefaceId) != null")
+        read("src/main/java/com/dpis/module/templates/TemplateTypefaceResolver.kt").assertContainsAll(
+            "importedTypefaceProvider.resolve(typefaceId)",
+            "SystemFontRegistry.loadTypeface(typefaceId) != null"
+        )
         read("src/main/java/com/dpis/module/templates/TemplateSummaryChipBinder.java").assertContainsAll("colorSurfaceContainerHighest", "chip.setChipStrokeWidth(0);")
         adapter.assertContainsAll("R.id.quick_template_summary_chips", "TemplateSummaryChipBinder", "R.id.quick_template_apply_button", "R.id.quick_template_edit_button", "R.id.quick_template_select_button")
         adapter.assertNotContainsAll("quick_template_updated")

@@ -1,18 +1,10 @@
 package com.dpis.module;
 
-import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
-
-import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-
-import com.dpis.module.viewport.ViewportPropertySyncer;
-
-import com.dpis.module.quirks.WechatDpiPropertySyncer;
-
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
 import org.junit.Test;
+
+import java.io.IOException;
 
 public final class RuntimePropertyRecoveryCoordinatorSourceTest {
 
@@ -20,7 +12,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
     public void coordinatorCentralizesRuntimeMirrorResync() throws IOException {
         String source = readProjectFile(
                 "src/main/java/com/dpis/module/runtime/RuntimePropertyRecoveryCoordinator.java");
-        String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.java");
+        String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.kt");
         String receiver = readProjectFile(
                 "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java");
 

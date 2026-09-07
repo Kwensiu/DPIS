@@ -24,7 +24,7 @@ internal class ComposeAppEditorActivityGateway(
     override fun resolveEditorItem(packageName: String): AppListItem? {
         var item = EditorSessionResolver.findItem(activity.requireUiState().appsSnapshot(), packageName)
             ?: return null
-        val store = activity.getHookConfigStore()
+        val store = activity.hookConfigStore
         if (store != null) item = item.withDpisEnabled(store.isTargetDpisEnabled(packageName))
         return AppConfigPrefillPreview.resolveForEditor(activity, item, store)
     }
@@ -42,12 +42,12 @@ internal class ComposeAppEditorActivityGateway(
     override fun hookChainText(item: AppListItem, state: AppConfigDialogBinder.AppConfigDialogState): String =
         activity.getFontHookDomainsButtonText(item, state)
 
-    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore()
+    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
     override fun automaticFontHookDomains(): Set<String> =
         FontHookDomainRegistry.automaticCustomizableDomains()
 
     override fun restoreClosedDraft(item: AppListItem, draft: EditorDraft?): EditorDraft? {
-        val store = activity.getHookConfigStore()
+        val store = activity.hookConfigStore
         return if (draft != null && store != null) {
             draft.withDpisEnabled(store.isTargetDpisEnabled(item.packageName))
         } else draft
@@ -110,7 +110,7 @@ internal class ComposeAppEditorActivityGateway(
         packageName: String,
         dpisEnabled: Boolean,
     ): AppConfigSaveHandler.Result = activity.finalizeAppConfigSaveWithRuntimeSync(
-        result, wechatDpiInput, packageName, dpisEnabled, activity.getHookConfigStore(),
+        result, wechatDpiInput, packageName, dpisEnabled, activity.hookConfigStore,
     )
 
     override fun showMessage(messageResId: Int) = activity.showToast(messageResId)

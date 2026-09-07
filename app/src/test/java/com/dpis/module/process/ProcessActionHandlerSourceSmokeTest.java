@@ -3,9 +3,9 @@ package com.dpis.module;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class ProcessActionHandlerSourceSmokeTest {
     private static final String PROCESS_ACTION_HANDLER_SOURCE =
@@ -14,7 +14,7 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void processActionsDoNotUseMonkeyToLaunchApps() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
-        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
+        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt");
 
         assertFalse(source.contains("monkey -p"));
         assertTrue(source.contains("new RootAppProcessLauncher(activity)"));
@@ -31,7 +31,7 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void sharedRootLauncherDoesNotProbeOrCacheRootBeforeFallback() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
-        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.java");
+        String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt");
 
         assertFalse(source.contains("rootAccessCache"));
         assertTrue(source.contains("rootLauncher.start(packageName)"));
