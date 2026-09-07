@@ -1,11 +1,21 @@
 package com.dpis.module.runtime
 
 import android.content.Context
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
 
 /** Clears per-package DPIS runtime mirrors once after a fresh app installation. */
 object RuntimePropertyInstallCleanup {
     private const val PREFERENCES = "runtime_property_install_state"
     private const val INITIALIZED = "per_package_properties_initialized"
+
+    private val CLEANUP_EXECUTOR = Executors.newSingleThreadExecutor(
+        ThreadFactory { runnable ->
+            Thread(runnable, "DPIS-runtime-property-install-cleanup").apply {
+                isDaemon = true
+            }
+        }
+    )
 
     private val PER_PACKAGE_PREFIXES = listOf(
         "debug.dpis.vp.",
@@ -35,12 +45,29 @@ object RuntimePropertyInstallCleanup {
     )
 
     @JvmStatic
-    fun initialize(context: Context?) {
-        if (context == null) return
-        val preferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
-        if (preferences.getBoolean(INITIALIZED, false)) return
-        if (RootCommandRunner.run(buildCleanupCommand())) {
-            preferences.edit().putBoolean(INITIALIZED, true).apply()
+    fun initializeAsync(context: Context?, onComplete: Runnable? = null) {
+        if (context == null) {
+            onComplete?.run()
+            return
+        }
+        val applicationContext = context.applicationContext ?: context
+        CLEANUP_EXECUTOR.execute {
+            try {
+                val preferences = applicationContext.getSharedPreferences(
+                    PREFERENCES,
+                    Context.MODE_PRIVATE
+                )
+                if (!preferences.getBoolean(INITIALIZED, false)) {
+                    // This is install migration work, not an application-start prerequisite.
+                    // Keep root authorization and the property pipeline outside the caller's
+                    // lifecycle thread.
+                    if (RootCommandRunner.run(buildCleanupCommand())) {
+                        preferences.edit().putBoolean(INITIALIZED, true).apply()
+                    }
+                }
+            } finally {
+                onComplete?.run()
+            }
         }
     }
 

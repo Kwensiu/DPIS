@@ -54,16 +54,18 @@ class DpisApplication : Application(), OnServiceListener {
         // A reinstall creates a fresh preference namespace but does not remove system properties
         // left by the previous installation. Clear only those per-package mirrors once, before
         // the current store is replayed by the normal recovery coordinator.
-        RuntimePropertyInstallCleanup.initialize(this)
         val initializedStore: DpisConfigStore? = configStore
         if (initializedStore == null) {
             DpisLog.e(
                 "app config store initialization returned null",
                 IllegalStateException("config store unavailable")
             )
+            RuntimePropertyInstallCleanup.initializeAsync(this)
         } else {
             DpisLog.setLoggingEnabled(initializedStore.isGlobalLogEnabled())
-            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(initializedStore)
+            RuntimePropertyInstallCleanup.initializeAsync(this, Runnable {
+                RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(initializedStore)
+            })
         }
         XposedServiceHelper.registerListener(this)
         UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS)
