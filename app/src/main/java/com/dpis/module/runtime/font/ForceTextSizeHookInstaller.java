@@ -104,6 +104,14 @@ public final class ForceTextSizeHookInstaller {
 
     public static void resetForHotReload() {
         installedPid = -1;
+        clearThreadLocalState();
+    }
+
+    /** Clears hook-local state before a hot reload can reuse this process thread. */
+    private static void clearThreadLocalState() {
+        INTERNAL_UPDATE.remove();
+        INTERNAL_TEXT_UPDATE.remove();
+        TEXT_VIEW_SET_TEXT_SIZE_DEPTH.remove();
     }
 
     public static void install(XposedInterface xposed, String packageName, DpisConfigStore store)

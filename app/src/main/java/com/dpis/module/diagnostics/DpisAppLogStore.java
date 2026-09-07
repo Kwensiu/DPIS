@@ -26,10 +26,10 @@ public final class DpisAppLogStore {
     private static final String DPIS_LOG_SOURCE = "DPIS";
     private static final String DPIS_MODULE_PACKAGE = "io.github.kwensiu.dpis";
     private static final Pattern JSON_STRING_FIELD_PATTERN = Pattern.compile(
-            "\"%s\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\""
+            "\"%s\"\\s*+:\\s*+\"((?:\\\\.|[^\"\\\\])*+)\""
     );
     private static final Pattern JSON_LONG_FIELD_PATTERN = Pattern.compile(
-            "\"%s\"\\s*:\\s*(-?\\d+)"
+            "\"%s\"\\s*+:\\s*+(-?+\\d++)"
     );
     private final Context appContext;
     private final File logFile;

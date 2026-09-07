@@ -15,7 +15,7 @@ public final class FlutterFontManifestTransformer {
     private static final String DEFAULT_FAMILY = "Roboto";
     private static final String PLACEHOLDER_ASSET = "dpis/typeface.ttf";
     private static final Pattern FAMILY_PATTERN = Pattern.compile(
-            "\"family\"\\s*:\\s*\"((?:\\\\.|[^\"\\\\])*)\"");
+            "\"family\"\\s*+:\\s*+\"((?:\\\\.|[^\"\\\\])*+)\"");
 
     private FlutterFontManifestTransformer() {
     }
