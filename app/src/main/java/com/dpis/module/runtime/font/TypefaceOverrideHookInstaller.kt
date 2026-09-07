@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.Log
-import android.view.View
 import android.widget.TextView
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisConfigStore
@@ -306,18 +305,9 @@ object TypefaceOverrideHookInstaller {
         textView: TextView,
         replacement: Typeface?,
         explicitStyle: Int?
-    ) {
-        INTERNAL_UPDATE.set(true)
-        try {
-            if (explicitStyle != null) {
-                textView.setTypeface(replacement, explicitStyle)
-                return
-            }
-            textView.setTypeface(replacement)
-        } finally {
-            INTERNAL_UPDATE.remove()
-        }
-    }
+    ) = TypefaceOverridePolicy.applyTextViewTypeface(
+        textView, replacement, explicitStyle, INTERNAL_UPDATE
+    )
 
     private fun applyPaintTypeface(paint: Paint, replacement: Typeface?) {
         INTERNAL_UPDATE.set(true)
@@ -352,25 +342,10 @@ object TypefaceOverrideHookInstaller {
         baseTypeface: Typeface?,
         original: Typeface?,
         explicitStyle: Int?
-    ): Typeface? {
-        if (baseTypeface == null) {
-            return original
-        }
-        val originalStyle = if (original != null) original.style else null
-        val style = resolveStyle(originalStyle, explicitStyle)
-        try {
-            val styled = Typeface.create(baseTypeface, style)
-            return if (styled != null) styled else baseTypeface
-        } catch (ignored: Throwable) {
-            return baseTypeface
-        }
-    }
+    ) = TypefaceOverridePolicy.resolveReplacement(baseTypeface, original, explicitStyle)
 
     private fun resolveStyle(originalStyle: Int?, explicitStyle: Int?): Int {
-        if (explicitStyle != null) {
-            return explicitStyle
-        }
-        return if (originalStyle != null) originalStyle else Typeface.NORMAL
+        return TypefaceOverridePolicy.resolveStyle(originalStyle, explicitStyle)
     }
 
     private fun parseTtcIndexFromId(typefaceId: String): Int {
@@ -533,11 +508,7 @@ object TypefaceOverrideHookInstaller {
 
     @Throws(NoSuchMethodException::class)
     private fun findOnAttachedToWindowMethod(textViewClass: Class<*>): Method {
-        try {
-            return textViewClass.getDeclaredMethod("onAttachedToWindow")
-        } catch (ignored: NoSuchMethodException) {
-            return View::class.java.getDeclaredMethod("onAttachedToWindow")
-        }
+        return TypefaceOverridePolicy.findOnAttachedToWindowMethod(textViewClass)
     }
 
     private fun logReplacementHit(packageName: String?, source: String?) {

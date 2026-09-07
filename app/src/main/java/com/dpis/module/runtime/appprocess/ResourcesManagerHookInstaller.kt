@@ -155,36 +155,24 @@ object ResourcesManagerHookInstaller {
         policy: HookRuntimePolicy?,
         apiCapabilities: ModernApiCapabilities
     ): Int {
-        var hookedCount = 0
-        val hookedMethods: MutableSet<Method?> = HashSet<Method?>()
-        for (method in resourcesManagerClass.declaredMethods) {
+        return hookMatchingMethods(
+            xposed,
+            resourcesManagerClass.declaredMethods,
+            apiCapabilities,
+            HOOK_ID_RESOURCE_CREATION_PREFIX,
+            { method ->
+                findConfigurationArgIndex(method).takeIf {
+                    it >= 0 && isResourceCreationMethod(method.name)
+                }
+            },
+        ) { method, chain ->
             val configArgIndex = findConfigurationArgIndex(method)
-            if (configArgIndex < 0) {
-                continue
-            }
-            val methodName = method.name
-            if (!isResourceCreationMethod(methodName)) {
-                continue
-            }
-            if (!hookedMethods.add(method)) {
-                continue
-            }
-            apiCapabilities.applyStableHookId<HookBuilder?>(
-                xposed.hook(method)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
-                HOOK_ID_RESOURCE_CREATION_PREFIX + "#" + method.toGenericString()
+            val config = chain.getArg(configArgIndex) as Configuration?
+            applyResourceOverrides(
+                config, store, packageName,
+                "ResourcesManagerCreate(" + method.name + ")", policy
             )
-                .intercept(Hooker { chain: XposedInterface.Chain? ->
-                    val config = chain!!.getArg(configArgIndex) as Configuration?
-                    applyResourceOverrides(
-                        config, store, packageName,
-                        "ResourcesManagerCreate(" + methodName + ")", policy
-                    )
-                    chain.proceed()
-                })
-            hookedCount++
         }
-        return hookedCount
     }
 
     private fun installResourcesKeyHooks(
@@ -195,29 +183,45 @@ object ResourcesManagerHookInstaller {
         policy: HookRuntimePolicy?,
         apiCapabilities: ModernApiCapabilities
     ): Int {
+        return hookMatchingMethods(
+            xposed,
+            resourcesManagerClass.declaredMethods,
+            apiCapabilities,
+            HOOK_ID_RESOURCES_KEY_PREFIX,
+            { method ->
+                if (method.name == "createResourcesImpl" && hasResourcesKeyFirstArg(method)) {
+                    0
+                } else {
+                    null
+                }
+            },
+        ) { method, chain ->
+            maybeApplyKeyOverride(
+                chain.thisObject, chain.getArg(0), store, packageName, method.name, policy
+            )
+        }
+    }
+
+    private fun hookMatchingMethods(
+        xposed: XposedInterface,
+        methods: Array<Method>,
+        apiCapabilities: ModernApiCapabilities,
+        hookIdPrefix: String,
+        argumentIndex: (Method) -> Int?,
+        beforeProceed: (Method, XposedInterface.Chain) -> Unit,
+    ): Int {
+        val hookedMethods = HashSet<Method>()
         var hookedCount = 0
-        val hookedMethods: MutableSet<Method?> = HashSet<Method?>()
-        for (method in resourcesManagerClass.declaredMethods) {
-            val methodName = method.name
-            if (("createResourcesImpl" != methodName) || !hasResourcesKeyFirstArg(method) || !hookedMethods.add(
-                    method
-                )
-            ) {
-                continue
-            }
+        for (method in methods) {
+            if (argumentIndex(method) == null || !hookedMethods.add(method)) continue
             apiCapabilities.applyStableHookId<HookBuilder?>(
                 xposed.hook(method)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
-                HOOK_ID_RESOURCES_KEY_PREFIX + "#" + method.toGenericString()
-            )
-                .intercept(Hooker { chain: XposedInterface.Chain? ->
-                    val key = chain!!.getArg(0)
-                    maybeApplyKeyOverride(
-                        chain.thisObject, key, store, packageName, methodName,
-                        policy
-                    )
-                    chain.proceed()
-                })
+                hookIdPrefix + "#" + method.toGenericString(),
+            ).intercept(Hooker { chain: XposedInterface.Chain? ->
+                beforeProceed(method, chain!!)
+                chain.proceed()
+            })
             hookedCount++
         }
         return hookedCount

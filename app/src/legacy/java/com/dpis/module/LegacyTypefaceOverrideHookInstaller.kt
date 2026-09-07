@@ -4,7 +4,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Process
-import android.view.View
 import android.widget.TextView
 import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.fonts.FontFace
@@ -14,6 +13,7 @@ import com.dpis.module.fonts.FontProviderTypefaceLoader
 import com.dpis.module.fonts.FontTypefaceLoader
 import com.dpis.module.fonts.PublishedFontFileResolver
 import com.dpis.module.fonts.SystemFontRegistry
+import com.dpis.module.runtime.font.TypefaceOverridePolicy
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import java.io.File
@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal object LegacyTypefaceOverrideHookInstaller {
     private val LOG_PREFIX = "DPIS_FONT_STYLE "
     private val LAST_MESSAGES: MutableMap<String?, String?> = ConcurrentHashMap()
-    private val INTERNAL_UPDATE: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+    private val INTERNAL_UPDATE: ThreadLocal<Boolean?> = ThreadLocal.withInitial { false }
 
     @kotlin.concurrent.Volatile
     private var hookInstalled = false
@@ -270,18 +270,9 @@ internal object LegacyTypefaceOverrideHookInstaller {
         textView: TextView,
         replacement: Typeface?,
         explicitStyle: Int?
-    ) {
-        INTERNAL_UPDATE.set(true)
-        try {
-            if (explicitStyle != null) {
-                textView.setTypeface(replacement, explicitStyle)
-                return
-            }
-            textView.setTypeface(replacement)
-        } finally {
-            INTERNAL_UPDATE.remove()
-        }
-    }
+    ) = TypefaceOverridePolicy.applyTextViewTypeface(
+        textView, replacement, explicitStyle, INTERNAL_UPDATE
+    )
 
     private fun applyPaintTypeface(paint: Paint, replacement: Typeface?) {
         INTERNAL_UPDATE.set(true)
@@ -296,28 +287,7 @@ internal object LegacyTypefaceOverrideHookInstaller {
         baseTypeface: Typeface?,
         original: Typeface?,
         explicitStyle: Int?
-    ): Typeface? {
-        if (baseTypeface == null) {
-            return original
-        }
-        val style: Int = resolveStyle(
-            if (original != null) original.style else null,
-            explicitStyle
-        )
-        try {
-            val styled: Typeface? = Typeface.create(baseTypeface, style)
-            return if (styled != null) styled else baseTypeface
-        } catch (ignored: Throwable) {
-            return baseTypeface
-        }
-    }
-
-    private fun resolveStyle(originalStyle: Int?, explicitStyle: Int?): Int {
-        if (explicitStyle != null) {
-            return explicitStyle
-        }
-        return if (originalStyle != null) originalStyle else Typeface.NORMAL
-    }
+    ) = TypefaceOverridePolicy.resolveReplacement(baseTypeface, original, explicitStyle)
 
     private fun logIfChanged(key: String?, message: String): Boolean {
         val previous: String? =
@@ -444,11 +414,7 @@ internal object LegacyTypefaceOverrideHookInstaller {
 
     @Throws(NoSuchMethodException::class)
     private fun findOnAttachedToWindowMethod(textViewClass: Class<*>): Method {
-        try {
-            return textViewClass.getDeclaredMethod("onAttachedToWindow")
-        } catch (ignored: NoSuchMethodException) {
-            return View::class.java.getDeclaredMethod("onAttachedToWindow")
-        }
+        return TypefaceOverridePolicy.findOnAttachedToWindowMethod(textViewClass)
     }
 
     private fun logReplacementHit(packageName: String?, source: String?) {

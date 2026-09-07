@@ -134,8 +134,10 @@ public final class TypefaceOverrideHookInstallerTest {
         String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("installTextViewAttachHook("));
-        assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
-        assertTrue(source.contains("return View::class.java.getDeclaredMethod(\"onAttachedToWindow\")"));
+        String policy = SourceSmokeTestPaths.read(
+                "src/main/java/com/dpis/module/runtime/font/TypefaceOverridePolicy.kt");
+        assertTrue(policy.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(policy.contains("View::class.java.getDeclaredMethod(\"onAttachedToWindow\")"));
         assertTrue(source.contains("TextView.onAttachedToWindow"));
         assertTrue(source.contains("TextView attach hook ready"));
     }
