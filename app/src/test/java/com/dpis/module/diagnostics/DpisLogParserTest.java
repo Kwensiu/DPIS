@@ -107,6 +107,30 @@ public final class DpisLogParserTest {
     }
 
     @Test
+    public void parsesFallbackTimestampFormatsAndFallbackTags() {
+        String raw = String.join("\n",
+                "06-24 04:44:47.000 DPIS: Auto hot reload failed for io.github.kwensiu.dpis",
+                "06-24 04:44:48 DPIS Auto hot reload failed for io.github.kwensiu.dpis",
+                "2026-06-24 04:44:49.000 "
+                        + "a-very-long-fallback-prefix-that-is-definitely-more-than-forty-eight-chars"
+                        + ": Auto hot reload failed for io.github.kwensiu.dpis",
+                "2026-06-24 04:44:50 DPIS Auto hot reload failed for io.github.kwensiu.dpis",
+                "Auto hot reload failed for io.github.kwensiu.dpis");
+
+        List<DpisLogEntry> entries = DpisLogParser.parseLsposedDpis(raw);
+
+        assertEquals(4, entries.size());
+        assertTrue(entries.stream().allMatch(entry ->
+                entry.message.contains("io.github.kwensiu.dpis")));
+    }
+
+    @Test
+    public void ignoresNullAndBlankLogInputs() {
+        assertTrue(DpisLogParser.parseLsposedDpis(null).isEmpty());
+        assertTrue(DpisLogParser.parseLsposedDpis(" \n\t").isEmpty());
+    }
+
+    @Test
     public void lsposedReaderUsesDirectCurrentLogFiles() throws IOException {
         String source = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/diagnostics/LsposedLogReader.kt");

@@ -130,6 +130,61 @@ class QuickTemplateStoreBehaviorTest {
         assertEquals("Daily", store.read("daily")!!.name)
     }
 
+    @Test
+    fun backupHelpersIgnoreMissingEntriesAndGenerateUniqueIds() {
+        val store = QuickTemplateStore(FakePrefs())
+        val backup = linkedMapOf<String, Any?>()
+
+        store.copyToBackup(null)
+        store.copyToBackup(backup)
+
+        assertTrue(backup.isEmpty())
+        assertFalse(store.restoreFromBackup(null))
+        assertFalse(store.restoreFromBackup(linkedMapOf("font.mode" to "off")))
+        assertTrue(QuickTemplateStore.containsTemplateEntries(null).not())
+        assertTrue(QuickTemplateStore.containsTemplateEntries(linkedMapOf("font.mode" to "off")).not())
+        assertTrue(store.newTemplateId().isNotBlank())
+    }
+
+    @Test
+    fun malformedPreferenceTypesUseSafeDefaultsAndInvalidOperationsAreRejected() {
+        val prefs = FakePrefs()
+        prefs.edit()
+            .putStringSet(QuickTemplateStore.KEY_TEMPLATE_IDS, linkedSetOf("safe"))
+            .putInt("template.safe.name", 7)
+            .putString("template.safe.updated_at", "not-a-long")
+            .putInt("template.safe.selected_packages", 7)
+            .commit()
+        val store = QuickTemplateStore(prefs)
+
+        assertNull(store.read("safe"))
+        assertFalse(store.save(null))
+        assertFalse(store.setSelectedPackages(null, linkedSetOf("pkg")))
+        assertFalse(store.setSelectedPackages("missing", linkedSetOf("pkg")))
+        assertFalse(store.delete(null))
+        assertTrue(store.reorder(null))
+    }
+
+    @Test
+    fun saveNormalizesSelectedPackagesAndOrderMetadata() {
+        val prefs = FakePrefs()
+        val store = QuickTemplateStore(prefs)
+        assertTrue(
+            store.save(
+                template(
+                    "normalized",
+                    "Name",
+                    1L,
+                    linkedSetOf(null, " ", " pkg ", "pkg"),
+                ),
+            ),
+        )
+        prefs.edit().putString(QuickTemplateStore.KEY_TEMPLATE_ORDER, "bad.id\n\nnormalized").commit()
+
+        assertEquals(setOf("pkg"), store.read("normalized")!!.selectedPackages)
+        assertEquals(listOf("normalized"), store.readAll().map { it.id })
+    }
+
     private fun template(
         id: String,
         name: String,
