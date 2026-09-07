@@ -1,19 +1,18 @@
 package com.dpis.module.config
+
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.FakePrefs
-
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.QuickTemplateStore
-import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.templates.TemplateConfigValueAdapters
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -64,7 +63,7 @@ class BackupTest {
                     "template_a",
                     "Compact",
                     1000L,
-                    setOf("com.example.app"),
+                    mutableSetOf<String?>("com.example.app"),
                     TemplateConfigValueAdapters.fromViewportTargetSpec(
                         ViewportTargetSpec.relativeScale(110000),
                         ViewportApplyMode.COMPAT,

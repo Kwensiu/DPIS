@@ -1,17 +1,13 @@
 package com.dpis.module;
 
-import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
-
-import com.dpis.module.fonts.PublishedFontFileResolver;
-
-import com.dpis.module.fonts.FontTypefaceLoader;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.graphics.Typeface;
 
-import org.junit.Test;
+import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
 public final class TypefaceOverrideHookInstallerTest {
     @Test
@@ -62,7 +58,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerFallsBackToPublishedFontFile() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("PublishedFontFileResolver.resolve(typefaceId)"));
         assertTrue(source.contains("SystemFontRegistry.loadTypeface(typefaceId)"));
@@ -73,10 +69,10 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerAcceptsResolvedPlanTypefaceId() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
-        assertTrue(source.contains("String targetTypefaceId"));
-        assertTrue(source.contains("String typefaceId = targetTypefaceId"));
+        assertTrue(source.contains("targetTypefaceId: String?"));
+        assertTrue(source.contains("var typefaceId = targetTypefaceId"));
         assertTrue(source.contains("store.getTargetTypefaceId(packageName)"));
         assertTrue(source.contains("target typeface loaded"));
         assertTrue(source.contains("system typeface unavailable"));
@@ -84,7 +80,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerGuardIsScopedToCurrentProcess() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("installedPid"));
         assertTrue(source.contains("ProcessScopedInstallGate.isInstalledForCurrentProcess"));
@@ -93,7 +89,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerLogsFirstReplacementHits() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("replacement hit: package="));
         assertTrue(source.contains("TextView.setTypeface(Typeface)"));
@@ -103,7 +99,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerRecordsStableTypefaceDiagnosticStages() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("RuntimeEvents.recordTypeface("));
         assertTrue(source.contains("\"source_provider_loaded\""));
@@ -115,7 +111,7 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerRecordsLoadSourceAndTtcIndex() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("\"load_source\""));
         assertTrue(source.contains("source=\" + source"));
@@ -135,21 +131,21 @@ public final class TypefaceOverrideHookInstallerTest {
 
     @Test
     public void modernInstallerAppliesTypefaceWhenTextViewAttaches() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("installTextViewAttachHook("));
         assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
-        assertTrue(source.contains("return View.class.getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(source.contains("return View::class.java.getDeclaredMethod(\"onAttachedToWindow\")"));
         assertTrue(source.contains("TextView.onAttachedToWindow"));
         assertTrue(source.contains("TextView attach hook ready"));
     }
 
     @Test
     public void modernInstallerAppliesTypefaceWhenTextViewDraws() throws Exception {
-        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.java");
+        String source = SourceSmokeTestPaths.read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
 
         assertTrue(source.contains("installTextViewDrawHook("));
-        assertTrue(source.contains("getDeclaredMethod(\"onDraw\", Canvas.class)"));
+        assertTrue(source.contains("getDeclaredMethod(\"onDraw\", Canvas::class.java)"));
         assertTrue(source.contains("TextView.onDraw"));
         assertTrue(source.contains("TextView draw hook ready"));
     }

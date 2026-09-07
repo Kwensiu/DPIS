@@ -75,6 +75,37 @@ Prefer CodeGraph when:
 - historical docs or archived code make `rg` results noisy and you need to
   anchor conclusions to the active runtime source.
 
+### Tooling and analysis workflow
+
+- For semantic code discovery, use the `semble` MCP search first. Describe the
+  behavior, class, or responsibility being located; navigate directly to the
+  returned file and line instead of repeating the same search with `rg`.
+- Use `semble find_related` after a confirmed location when you need sibling
+  implementations, interface relationships, or similar tests. Use `rg` when
+  every literal occurrence must be enumerated, such as a rename or removed
+  resource id audit.
+- Use CodeGraph for cross-module impact analysis: callers/callees, interface
+  implementations, and state or store dependency paths. Treat active runtime
+  source under `app/src/**` as authoritative when archived documentation or
+  generated indexes disagree.
+- When context-mode MCP tools are available, use `ctx_batch_execute` for
+  multiple related read-only commands and `ctx_execute` or `ctx_execute_file`
+  to filter, count, parse, or summarize large outputs. Keep raw logs and large
+  reports out of the conversation; print only the derived evidence needed for
+  the decision. Use native file editing tools for persistent changes.
+- For Sonar validation, reproduce the CI inputs locally first:
+  `:app:testAllDebugUnitTests` and
+  `:app:jacocoModernDebugUnitTestReport`. These produce the same JVM test and
+  JaCoCo inputs used by CI, but they do not reproduce SonarCloud's new-code
+  baseline, quality profile, or server-side gate without a configured scanner,
+  project credentials, and PR metadata. Treat SonarCloud as authoritative and
+  never commit tokens or local scanner state.
+- Interpret coverage exclusions as a test-boundary contract, not as a way to
+  raise a percentage. Keep portable stores, parsers, codecs, and policy logic
+  measurable; exclude only framework-bound UI, lifecycle, Xposed, root, or
+  hooked-process code that the active test harness cannot execute. Prefer
+  instrumentation coverage or runtime evidence for those boundaries.
+
 ### Sub-agent usage
 
 When delegating to sub-agents, prefer reusing the existing sub-agent for the
@@ -248,24 +279,7 @@ Chinese unless the user explicitly requests that locale's content.
   related source/layout smoke tests so they assert the current diagnostic
   semantics.
 
-## Runtime Debug Automation
-- Autofish may be used as an auxiliary Android automation channel for real-device
-  DPIS validation. It is for launching apps, coordinate taps/swipes, screenshots,
-  top-activity checks, and repeatable visual comparisons.
-- Do not treat Autofish accessibility trees as authoritative for apps with limited
-  accessibility exposure. These apps may expose only system/status/sidebar nodes,
-  so missing in-app text or tab labels in Autofish output does not prove the UI is
-  absent or unmodified.
-- For DPIS behavior claims, pair Autofish evidence with DPIS/LSPosed logs,
-  `dumpsys activity`, or app-process resource metrics. Autofish can confirm what
-  is visible and where to tap; it cannot confirm `Configuration`, `ResourcesImpl`,
-  `DisplayMetrics`, or system_server mutation state by itself.
-- Keep Autofish connection data local. Use `af config set remote.url ...` and
-  `af config set remote.token ...` on the agent machine, but do not commit tokens,
-  `af.db`, generated screenshots, or `.debug-*` evidence directories.
-- Current useful pattern for issue-style validation:
-  configure DPIS through the debug-only config entrypoint, use Autofish to launch
-  and navigate the target app, then collect screenshots plus adb/LSPosed logs.
+## Android Runtime Validation
 - Do not use `monkey` to launch target applications, either from ADB automation or
   DPIS runtime logic. On some systems it can unexpectedly enable automatic
   rotation. Prefer an explicit launcher intent or resolved launcher component;

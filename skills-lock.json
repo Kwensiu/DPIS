@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "kotlin-tooling-java-to-kotlin": {
+      "source": "kotlin/kotlin-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/kotlin-tooling-java-to-kotlin/SKILL.md",
+      "computedHash": "732538daa557cc92224ea4f1ebd088e55b09fa1117859f326c877a3083a74cc9"
+    }
+  }
+}

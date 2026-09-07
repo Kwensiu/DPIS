@@ -1158,7 +1158,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun applicationSyncsHyperOsNativeFontTargetsOnStartup() {
         val source = read(
-            "src/main/java/com/dpis/module/DpisApplication.java"
+            "src/main/java/com/dpis/module/DpisApplication.kt"
         )
 
         assertTrue(

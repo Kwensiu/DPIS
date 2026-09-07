@@ -3,9 +3,9 @@ package com.dpis.module.templates
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
-import android.os.Bundle
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
@@ -14,8 +14,8 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.ui.dialog.ConfirmDialog
+import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.button.MaterialButton
 
 /**
@@ -486,9 +486,9 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             return
         }
         val coordinator = QuickTemplateApplyAdapters.from(host.hookConfigStore())
-        val installedOnly = QuickTemplateApplyCoordinator.TargetPackageFilter(
-            host::isInstalledTemplateTargetPackage,
-        )
+        val installedOnly = QuickTemplateApplyCoordinator.TargetPackageFilter { packageName ->
+            packageName != null && host.isInstalledTemplateTargetPackage(packageName)
+        }
         val plan = coordinator.plan(template, installedOnly)
         if (plan.targetCount <= 0) {
             host.showToast(R.string.quick_template_apply_empty_selection)
@@ -564,7 +564,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             override fun requestAppsLoad() = host.requestAppsLoad()
 
             override fun runOnUiThread(runnable: Runnable) = host.runOnUiThread(runnable)
-        }).requestMissingScope(result.successfulPackages)
+        }).requestMissingScope(result.successfulPackages.filterNotNull())
         publish()
     }
 

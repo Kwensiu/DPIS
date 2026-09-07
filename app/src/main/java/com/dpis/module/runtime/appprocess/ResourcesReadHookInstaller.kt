@@ -31,15 +31,8 @@ import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.Any
-import kotlin.Float
-import kotlin.Int
-import kotlin.String
-import kotlin.Throws
 import kotlin.concurrent.Volatile
 import kotlin.math.abs
-import kotlin.plus
-import kotlin.synchronized
 
 object ResourcesReadHookInstaller {
     @Volatile
@@ -63,11 +56,12 @@ object ResourcesReadHookInstaller {
     }
 
     @Throws(ReflectiveOperationException::class)
+    @JvmStatic
     fun install(
         xposed: XposedInterface,
         packageName: String?,
         store: DpisConfigStore,
-        viewportHandlingEnabled: kotlin.Boolean
+        viewportHandlingEnabled: Boolean
     ) {
         install(
             xposed, packageName, store, ResourcesReadHookPolicy(
@@ -79,12 +73,13 @@ object ResourcesReadHookInstaller {
     }
 
     @Throws(ReflectiveOperationException::class)
+    @JvmStatic
     fun install(
         xposed: XposedInterface,
         packageName: String?,
         store: DpisConfigStore,
-        viewportHandlingEnabled: kotlin.Boolean = true,
-        fontConfigurationOverrideEnabled: kotlin.Boolean = false
+        viewportHandlingEnabled: Boolean = true,
+        fontConfigurationOverrideEnabled: Boolean = false
     ) {
         install(
             xposed, packageName, store, ResourcesReadHookPolicy(
@@ -96,6 +91,7 @@ object ResourcesReadHookInstaller {
     }
 
     @Throws(ReflectiveOperationException::class)
+    @JvmStatic
     fun install(
         xposed: XposedInterface,
         packageName: String?,
@@ -160,7 +156,7 @@ object ResourcesReadHookInstaller {
                     if (true == INTERNAL_UPDATE.get()) {
                         return@Hooker result
                     }
-                    val thisObject = chain.getThisObject()
+                    val thisObject = chain.thisObject
                     applyConfigurationOverride(
                         if (thisObject is Resources) thisObject else null,
                         result, packageName, store,
@@ -186,13 +182,13 @@ object ResourcesReadHookInstaller {
                     if (true == INTERNAL_UPDATE.get()) {
                         return@Hooker result
                     }
-                    val thisObject = chain.getThisObject()
+                    val thisObject = chain.thisObject
                     if (thisObject !is Resources) {
                         return@Hooker result
                     }
                     INTERNAL_UPDATE.set(true)
                     try {
-                        val config = thisObject.getConfiguration()
+                        val config = thisObject.configuration
                         applyMetricsOverride(
                             thisObject,
                             result,
@@ -228,7 +224,7 @@ object ResourcesReadHookInstaller {
                         INTERNAL_UPDATE.set(true)
                     }
                     try {
-                        val config = result.getConfiguration()
+                        val config = result.configuration
                         applyConfigurationOverride(
                             result, config, packageName, store,
                             "ResourcesRead(getSystem)",
@@ -237,7 +233,7 @@ object ResourcesReadHookInstaller {
                             configurationFontOverrideEnabled,
                             runtimePolicy
                         )
-                        val metrics = result.getDisplayMetrics()
+                        val metrics = result.displayMetrics
                         applyMetricsOverride(
                             result,
                             metrics,
@@ -303,7 +299,7 @@ object ResourcesReadHookInstaller {
         packageName: String?,
         store: DpisConfigStore,
         sourceTag: String,
-        windowScoped: kotlin.Boolean
+        windowScoped: Boolean
     ) {
         applyConfigurationOverride(
             resourceScope,
@@ -326,9 +322,9 @@ object ResourcesReadHookInstaller {
         packageName: String?,
         store: DpisConfigStore?,
         sourceTag: String,
-        windowScoped: kotlin.Boolean,
-        viewportHandlingEnabled: kotlin.Boolean,
-        fontConfigurationOverrideEnabled: kotlin.Boolean = true,
+        windowScoped: Boolean,
+        viewportHandlingEnabled: Boolean,
+        fontConfigurationOverrideEnabled: Boolean = true,
         policy: HookRuntimePolicy? = HookRuntimePolicy.fromStore(store)
     ) {
         applyConfigurationOverride(
@@ -350,9 +346,9 @@ object ResourcesReadHookInstaller {
         packageName: String?,
         store: DpisConfigStore?,
         sourceTag: String,
-        windowScopedOverride: kotlin.Boolean?,
-        viewportHandlingEnabled: kotlin.Boolean = true,
-        fontConfigurationOverrideEnabled: kotlin.Boolean = true,
+        windowScopedOverride: Boolean?,
+        viewportHandlingEnabled: Boolean = true,
+        fontConfigurationOverrideEnabled: Boolean = true,
         policy: HookRuntimePolicy? = HookRuntimePolicy.fromStore(store)
     ) {
         var packageName = packageName
@@ -406,7 +402,7 @@ object ResourcesReadHookInstaller {
             resolution.effectiveSmallestWidthDp
         else
             null
-        if (targetViewportWidth != null && resolution.spec.isEnabled()) {
+        if (targetViewportWidth != null && resolution.spec.isEnabled) {
             ViewportRuntimeMarkerProbe.observeAppProcessProbe(
                 packageName, resolution.spec, sourceTag
             )
@@ -415,7 +411,7 @@ object ResourcesReadHookInstaller {
             windowScopedOverride
         else
             ViewportConfigurationScope.isWindowScoped(config)
-        if (windowScoped && resolution.isAppProcessBorrowTarget()) {
+        if (windowScoped && resolution.isAppProcessBorrowTarget) {
             if (fontScaleApplied) {
                 logIfChanged(
                     packageName + ":" + sourceTag + ":window-borrow-font-only",
@@ -471,8 +467,8 @@ object ResourcesReadHookInstaller {
             0,
             result.smallestWidthDp
         )
-        if (!windowScoped && !resolution.isAppProcessBorrowTarget()) {
-            if (resolution.spec.isEnabled()) {
+        if (!windowScoped && !resolution.isAppProcessBorrowTarget) {
+            if (resolution.spec.isEnabled) {
                 VirtualDisplayState.publish(
                     packageName,
                     resolution.spec,
@@ -633,8 +629,8 @@ object ResourcesReadHookInstaller {
         config: Configuration?,
         packageName: String?,
         store: DpisConfigStore?,
-        viewportHandlingEnabled: kotlin.Boolean,
-        metricsTargetFontOverrideEnabled: kotlin.Boolean
+        viewportHandlingEnabled: Boolean,
+        metricsTargetFontOverrideEnabled: Boolean
     ) {
         applyMetricsOverride(
             resourceScope, metrics, config, packageName,
@@ -649,7 +645,7 @@ object ResourcesReadHookInstaller {
         metrics: DisplayMetrics?,
         config: Configuration?,
         packageName: String?,
-        windowScoped: kotlin.Boolean
+        windowScoped: Boolean
     ) {
         applyMetricsOverride(resourceScope, metrics, config, packageName, windowScoped)
     }
@@ -660,7 +656,7 @@ object ResourcesReadHookInstaller {
         metrics: DisplayMetrics?,
         config: Configuration?,
         packageName: String?,
-        windowScoped: kotlin.Boolean,
+        windowScoped: Boolean,
         store: DpisConfigStore?
     ) {
         applyMetricsOverride(
@@ -681,9 +677,9 @@ object ResourcesReadHookInstaller {
         metrics: DisplayMetrics?,
         config: Configuration?,
         packageName: String?,
-        windowScoped: kotlin.Boolean,
+        windowScoped: Boolean,
         store: DpisConfigStore?,
-        viewportHandlingEnabled: kotlin.Boolean
+        viewportHandlingEnabled: Boolean
     ) {
         applyMetricsOverride(
             resourceScope,
@@ -703,10 +699,10 @@ object ResourcesReadHookInstaller {
         metrics: DisplayMetrics?,
         config: Configuration?,
         packageName: String?,
-        windowScoped: kotlin.Boolean,
+        windowScoped: Boolean,
         store: DpisConfigStore?,
-        viewportHandlingEnabled: kotlin.Boolean,
-        metricsTargetFontOverrideEnabled: kotlin.Boolean
+        viewportHandlingEnabled: Boolean,
+        metricsTargetFontOverrideEnabled: Boolean
     ) {
         applyMetricsOverride(
             resourceScope,
@@ -725,10 +721,10 @@ object ResourcesReadHookInstaller {
         metrics: DisplayMetrics?,
         config: Configuration?,
         packageName: String?,
-        windowScoped: kotlin.Boolean,
+        windowScoped: Boolean,
         store: DpisConfigStore? = null,
-        viewportHandlingEnabled: kotlin.Boolean = true,
-        metricsTargetFontOverrideEnabled: kotlin.Boolean = false
+        viewportHandlingEnabled: Boolean = true,
+        metricsTargetFontOverrideEnabled: Boolean = false
     ) {
         var packageName = packageName
         var store = store
@@ -861,7 +857,7 @@ object ResourcesReadHookInstaller {
         packageName: String?,
         observedFontScale: Float,
         targetFontFactor: Float,
-        metricsTargetFontOverrideEnabled: kotlin.Boolean
+        metricsTargetFontOverrideEnabled: Boolean
     ): Float {
         if (metricsTargetFontOverrideEnabled && targetFontFactor > 0f) {
             return targetFontFactor
@@ -875,7 +871,7 @@ object ResourcesReadHookInstaller {
     }
 
     private fun logMetricsIfChanged(
-        metricsChanged: kotlin.Boolean,
+        metricsChanged: Boolean,
         packageName: String?,
         densitySource: String?,
         config: Configuration?,
@@ -945,7 +941,7 @@ object ResourcesReadHookInstaller {
     }
 
     private fun logFontMetricsIfChanged(
-        metricsChanged: kotlin.Boolean,
+        metricsChanged: Boolean,
         packageName: String?,
         densitySource: String?,
         config: Configuration?,
@@ -976,7 +972,7 @@ object ResourcesReadHookInstaller {
 
     private fun matchingVirtualDisplayState(
         config: Configuration,
-        windowScoped: kotlin.Boolean
+        windowScoped: Boolean
     ): VirtualDisplayOverride.Result? {
         val current = VirtualDisplayState.get()
         if (windowScoped) {
@@ -994,7 +990,7 @@ object ResourcesReadHookInstaller {
         config: Configuration?,
         packageName: String?,
         store: DpisConfigStore?,
-        windowScoped: kotlin.Boolean
+        windowScoped: Boolean
     ): LocalMetricsViewportResult? {
         if (store == null || config == null) {
             return null
@@ -1004,7 +1000,7 @@ object ResourcesReadHookInstaller {
         )
         val resolution =
             TargetViewportWidthResolver.resolve(store, packageName, source)
-        if (resolution == null || !resolution.isAppProcessBorrowTarget()) {
+        if (resolution == null || !resolution.isAppProcessBorrowTarget) {
             return null
         }
         val stableTarget =
@@ -1032,7 +1028,7 @@ object ResourcesReadHookInstaller {
         return if (result != null) LocalMetricsViewportResult(resolution, result) else null
     }
 
-    private fun logIfChanged(key: String?, message: String): kotlin.Boolean {
+    private fun logIfChanged(key: String?, message: String): Boolean {
         if (key == null) {
             DpisLog.i(message)
             return true

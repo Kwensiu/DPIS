@@ -72,7 +72,11 @@ class SystemServerSettingsLayoutSmokeTest {
         source.assertNotContainsAll("android.os.Process.killProcess(android.os.Process.myPid())", "RootCommandRunner.run(\"reboot\")")
         dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "DialogWindowSizer.applyLargeWidth(dialog, activity)")
         dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", ".weight(1f, fill = false)", "R.dimen.dialog_footer_spacing_top")
-        read("src/main/java/com/dpis/module/DpisApplication.java").assertContainsAll("static void reloadConfigStore()", "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)", "notifyServiceStateChanged();")
+        read("src/main/java/com/dpis/module/DpisApplication.kt").assertContainsAll(
+            "fun reloadConfigStore()",
+            "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)",
+            "notifyServiceStateChanged()"
+        )
     }
 
     @Test

@@ -7,17 +7,16 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.content.res.Resources
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.dpis.module.about.AboutActivity
@@ -57,7 +56,6 @@ import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.function.Consumer
-import java.util.function.IntConsumer
 import kotlin.concurrent.Volatile
 
 /** Java-facing settings workflow controller shared by the legacy and Compose presentations. */
@@ -1492,13 +1490,13 @@ class SystemServerSettingsPageController(
         }
     }
 
-    private inner class ActivitySystemScopeGateway : ScopeGateway {
+    private class ActivitySystemScopeGateway : ScopeGateway {
         override fun isServiceAvailable(): Boolean {
-            return DpisApplication.getXposedService() != null
+            return DpisApplication.xposedService != null
         }
 
         override fun hasSystemScopeSelected(): Boolean {
-            val service = DpisApplication.getXposedService() ?: return false
+            val service = DpisApplication.xposedService ?: return false
             try {
                 val scope = service.scope
                 return SystemFrameworkScope.containsSystemScope(scope)

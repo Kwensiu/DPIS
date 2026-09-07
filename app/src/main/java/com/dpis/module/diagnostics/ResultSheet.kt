@@ -30,11 +30,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
+import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -52,7 +52,6 @@ class ResultSheet(
             diagnosticPackage: ExportBuilder.DiagnosticPackage
         )
     }
-
     fun show(diagnosticPackage: ExportBuilder.DiagnosticPackage?) {
         val activity = activity ?: return
         val host = host ?: return
@@ -207,7 +206,6 @@ internal fun FeedbackDiagnosticResultContent(
 /** Shared Compose progress dialog used while the diagnostic ZIP is being built. */
 object PackagingDialog {
     // TODO: Migrate after packaging progress no longer requires an externally mutable AlertDialog.
-    @JvmStatic
     fun show(activity: Activity): AlertDialog {
         val composeView = ComposeView(activity).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)

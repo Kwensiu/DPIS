@@ -145,11 +145,14 @@ class AboutActivity : LocalizedActivity() {
     }
 
     private fun createUpdateDownloadHost() = object : UpdateDownloadCoordinator.Host {
-        override fun isActivityAlive() = !isFinishing && !isDestroyed
+        override val isActivityAlive: Boolean
+            get() = !isFinishing && !isDestroyed
 
-        override fun getContext(): Context = this@AboutActivity
+        override val context: Context
+            get() = this@AboutActivity
 
-        override fun runOnUiThread(runnable: Runnable) {
+        override fun runOnUiThread(runnable: Runnable?) {
+            if (runnable == null) return
             this@AboutActivity.runOnUiThread(runnable)
         }
 
@@ -157,7 +160,8 @@ class AboutActivity : LocalizedActivity() {
             this@AboutActivity.showToast(messageResId)
         }
 
-        override fun onDownloadSuccess(targetFile: File) {
+        override fun onDownloadSuccess(targetFile: File?) {
+            if (targetFile == null) return
             packageHandler.launchPackageInstaller(targetFile)
         }
 

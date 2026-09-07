@@ -27,16 +27,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.DialogWindowEdgeToEdge
+import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -105,7 +105,6 @@ private fun FilterSwitch(label: Int, checked: Boolean, tag: String = "", onCheck
 }
 
 object ModuleRuntimeReloadComposeDialog {
-    @JvmStatic
     fun show(activity: Activity, onDismissed: Runnable): AlertDialog {
         val view = ComposeView(activity).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)

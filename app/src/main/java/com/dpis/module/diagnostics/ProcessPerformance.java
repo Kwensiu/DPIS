@@ -1,8 +1,8 @@
 package com.dpis.module.diagnostics;
 
-import java.util.LinkedHashMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +13,7 @@ import java.util.Map;
  * can therefore collect evidence in an injected target process and publish a
  * compact snapshot through the marker transport.</p>
  */
-final class ProcessPerformance {
+public final class ProcessPerformance {
     private static final long SNAPSHOT_INTERVAL_MS = 500L;
     private final Map<String, RouteStats> routes = new LinkedHashMap<>();
     private long lastSnapshotAt;
@@ -80,7 +80,7 @@ final class ProcessPerformance {
         return routes.computeIfAbsent(normalized, ignored -> new RouteStats());
     }
 
-    static final class RouteSnapshot {
+    public static final class RouteSnapshot {
         final long calls;
         final long applied;
         final long skipped;

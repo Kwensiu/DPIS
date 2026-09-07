@@ -1,10 +1,10 @@
 package com.dpis.module;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static org.junit.Assert.assertTrue;
 
 public class ConfigBackupCodecSourceSmokeTest {
     @Test
@@ -25,7 +25,7 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(source.contains("fieldKeyFromRemainder"));
         assertTrue(source.contains("KEY_TYPE"));
         assertTrue(source.contains("KEY_VALUE"));
-        assertTrue(source.contains("return when (type)"));
+        assertTrue(source.contains("return when (val type ="));
         assertTrue(source.contains("Unsupported backup schema version"));
         assertTrue(source.contains("Unsupported backup value type"));
     }

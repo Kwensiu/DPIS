@@ -10,7 +10,6 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dpis.module.DpisApplication
-import com.dpis.module.DpisLog
 import com.dpis.module.R
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.config.PackageConfigRepository
@@ -18,7 +17,6 @@ import com.dpis.module.ui.TouchFeedbackBinder
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textview.MaterialTextView
-import java.util.LinkedHashSet
 import java.util.Locale
 
 /** Binds the template target picker; persistence and catalog loading are delegated. */
@@ -75,7 +73,7 @@ class QuickTemplateTargetsBinder(
         }
         template = loadedTemplate
         selectedPackages.clear()
-        selectedPackages.addAll(loadedTemplate.selectedPackages)
+        selectedPackages.addAll(loadedTemplate.selectedPackages.filterNotNull())
         bindViews()
         bindList()
         targetCatalogLoader.load()
@@ -167,7 +165,11 @@ class QuickTemplateTargetsBinder(
 
     private fun saveSelection() {
         val current = template ?: return
-        if (quickTemplateStore.setSelectedPackages(current.id, selectedPackages)) {
+        if (quickTemplateStore.setSelectedPackages(
+                current.id,
+                selectedPackages as MutableSet<String?>
+            )
+        ) {
             host.showToast(R.string.quick_template_targets_save_success)
             host.onSaved()
         } else {

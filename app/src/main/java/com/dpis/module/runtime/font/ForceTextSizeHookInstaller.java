@@ -184,7 +184,11 @@ public final class ForceTextSizeHookInstaller {
                         try {
                             result = chain.proceed();
                         } finally {
-                            TEXT_VIEW_SET_TEXT_SIZE_DEPTH.set(depth);
+                            if (depth == 0) {
+                                TEXT_VIEW_SET_TEXT_SIZE_DEPTH.remove();
+                            } else {
+                                TEXT_VIEW_SET_TEXT_SIZE_DEPTH.set(depth);
+                            }
                         }
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return result;
@@ -287,7 +291,7 @@ public final class ForceTextSizeHookInstaller {
                                     HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT,
                                     "textview setTextSize(unit) override applied");
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+                            INTERNAL_UPDATE.remove();
                             RuntimeHotPathEvents.end(packageName, routeName, detail);
                         }
                         if (verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
@@ -356,7 +360,11 @@ public final class ForceTextSizeHookInstaller {
                         try {
                             result = chain.proceed();
                         } finally {
-                            TEXT_VIEW_SET_TEXT_SIZE_DEPTH.set(depth);
+                            if (depth == 0) {
+                                TEXT_VIEW_SET_TEXT_SIZE_DEPTH.remove();
+                            } else {
+                                TEXT_VIEW_SET_TEXT_SIZE_DEPTH.set(depth);
+                            }
                         }
                         if (Boolean.TRUE.equals(INTERNAL_UPDATE.get())) {
                             return result;
@@ -467,7 +475,7 @@ public final class ForceTextSizeHookInstaller {
                                     HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP,
                                     "textview setTextSize(default sp) override applied");
                         } finally {
-                            INTERNAL_UPDATE.set(Boolean.FALSE);
+                            INTERNAL_UPDATE.remove();
                             RuntimeHotPathEvents.end(
                                     packageName,
                                     "textview_sp_rewrite",
@@ -1048,7 +1056,7 @@ public final class ForceTextSizeHookInstaller {
                                 HOOK_ID_TEXTVIEW_SET_TEXT,
                                 "TextView span rewrite applied");
                     } finally {
-                        INTERNAL_TEXT_UPDATE.set(Boolean.FALSE);
+                        INTERNAL_TEXT_UPDATE.remove();
                         RuntimeHotPathEvents.end(
                                 packageName,
                                 "textview_span_rewrite",
@@ -1123,7 +1131,7 @@ public final class ForceTextSizeHookInstaller {
             markAppliedTargetSize(textView, desiredPx, factor);
             return true;
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 
@@ -1383,7 +1391,7 @@ public final class ForceTextSizeHookInstaller {
             textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, desiredPx);
             markAppliedTargetSize(textView, desiredPx, factor);
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 
@@ -1416,7 +1424,7 @@ public final class ForceTextSizeHookInstaller {
                     TextViewFontProvenanceTracker.UnitKind.UNKNOWN);
             return true;
         } finally {
-            INTERNAL_UPDATE.set(Boolean.FALSE);
+            INTERNAL_UPDATE.remove();
         }
     }
 

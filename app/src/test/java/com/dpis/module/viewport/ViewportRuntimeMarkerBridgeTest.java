@@ -179,6 +179,78 @@ public class ViewportRuntimeMarkerBridgeTest {
     }
 
     @Test
+    public void parseRejectsEmptyAndFutureMarkersButAllowsAnUnspecifiedTarget() {
+        ViewportRuntimeMarkerBridge.MarkerRecord record = marker("org.telegram.messenger", 1_000L);
+
+        assertEquals("empty", ViewportRuntimeMarkerBridge.parse(
+                "org.telegram.messenger", record.targetFingerprint, "  ", 1_500L).reason);
+        assertEquals("stale", ViewportRuntimeMarkerBridge.parse(
+                "org.telegram.messenger", record.targetFingerprint,
+                ViewportRuntimeMarkerBridge.encode(record), 999L).reason);
+        assertTrue(ViewportRuntimeMarkerBridge.parse(
+                "org.telegram.messenger", null,
+                ViewportRuntimeMarkerBridge.encode(record), 1_500L).hit);
+    }
+
+    @Test
+    public void parseRejectsInvalidCompleteMarkerResultAndEffectiveWidth() {
+        ViewportRuntimeMarkerBridge.MarkerRecord record = marker("org.telegram.messenger", 1_000L);
+        String[] invalidResult = ViewportRuntimeMarkerBridge.encode(record).split("\\|", -1);
+        invalidResult[6] = "not-a-result";
+        String[] invalidWidth = ViewportRuntimeMarkerBridge.encode(record).split("\\|", -1);
+        invalidWidth[4] = "0";
+
+        assertEquals("malformed", ViewportRuntimeMarkerBridge.parse(
+                "org.telegram.messenger", record.targetFingerprint,
+                String.join("|", invalidResult), 1_500L).reason);
+        assertEquals("malformed", ViewportRuntimeMarkerBridge.parse(
+                "org.telegram.messenger", record.targetFingerprint,
+                String.join("|", invalidWidth), 1_500L).reason);
+    }
+
+    @Test
+    public void runtimeRecordCreationRejectsMissingInputsAndNormalizesElapsedTime() {
+        ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                360, 792, 360, 480, 1080, 2376);
+        ViewportOverride.Result result = new ViewportOverride.Result(540, 1188, 540, 320);
+
+        assertEquals(null, ViewportRuntimeMarkerBridge.createRecord(
+                "com.example", spec, 540, null, result, "a", 1L));
+        assertEquals(null, ViewportRuntimeMarkerBridge.createRecord(
+                "com.example", spec, 540, source, null, "a", 1L));
+        ViewportRuntimeMarkerBridge.MarkerRecord record = ViewportRuntimeMarkerBridge.createRecord(
+                "com.example", spec, 540, source, result, "unexpected", -1L);
+        assertEquals("s", record.provenance);
+        assertEquals(0L, record.elapsedRealtimeMillis);
+    }
+
+    @Test
+    public void systemServerPublishingRejectsInvalidRuntimeInputs() {
+        ViewportTargetSpec enabled = ViewportTargetSpec.relativeScale(150000);
+        ViewportRuntimeMarkerBridge.ConfigurationLike configuration = configuration(360, 792, 360, 480);
+
+        assertFalse(ViewportRuntimeMarkerBridge.publishSystemServerRecord(
+                "", enabled, configuration, configuration, "display", 1_000L));
+        assertFalse(ViewportRuntimeMarkerBridge.publishSystemServerRecord(
+                "com.example", ViewportTargetSpec.off(), configuration, configuration, "display", 1_000L));
+        assertFalse(ViewportRuntimeMarkerBridge.publishSystemServerRecord(
+                "com.example", enabled, null, configuration, "display", 1_000L));
+        assertFalse(ViewportRuntimeMarkerBridge.publishSystemServerRecord(
+                "com.example", enabled, configuration, null, "display", 1_000L));
+    }
+
+    @Test
+    public void readingAndPublicationConfirmationRejectEmptyPackages() {
+        ViewportRuntimeMarkerBridge.MarkerRecord record = marker("org.telegram.messenger", 1_000L);
+
+        assertEquals("empty-package", ViewportRuntimeMarkerBridge.read(
+                " ", record.targetFingerprint, 1_500L).reason);
+        assertFalse(ViewportRuntimeMarkerBridge.isCurrentMarker(" ", record));
+        assertFalse(ViewportRuntimeMarkerBridge.isCurrentMarker("org.telegram.messenger", null));
+    }
+
+    @Test
     public void publishCanBeReadFromProcessLocalFallbackWhenSystemPropertyUnavailable() {
         ViewportTargetSpec spec = ViewportTargetSpec.relativeScale(150000);
         ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
@@ -223,6 +295,31 @@ public class ViewportRuntimeMarkerBridgeTest {
                 326,
                 "s",
                 elapsedRealtimeMillis);
+    }
+
+    private static ViewportRuntimeMarkerBridge.ConfigurationLike configuration(
+            int widthDp, int heightDp, int smallestWidthDp, int densityDpi) {
+        return new ViewportRuntimeMarkerBridge.ConfigurationLike() {
+            @Override
+            public int widthDp() {
+                return widthDp;
+            }
+
+            @Override
+            public int heightDp() {
+                return heightDp;
+            }
+
+            @Override
+            public int smallestWidthDp() {
+                return smallestWidthDp;
+            }
+
+            @Override
+            public int densityDpi() {
+                return densityDpi;
+            }
+        };
     }
 }
 

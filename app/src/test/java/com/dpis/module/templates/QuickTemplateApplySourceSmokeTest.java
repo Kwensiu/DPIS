@@ -1,16 +1,5 @@
 package com.dpis.module;
 
-import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
-
-import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-import com.dpis.module.viewport.ViewportPropertySyncer;
-
-import com.dpis.module.templates.QuickTemplateApplyAdapters;
-
-import com.dpis.module.templates.TemplateConfigValue;
-
-import com.dpis.module.templates.QuickTemplateApplyConfirmationMessage;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -25,7 +14,7 @@ public class QuickTemplateApplySourceSmokeTest {
         String workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
         String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
         String coordinator = read(
-                "src/main/java/com/dpis/module/templates/QuickTemplateApplyCoordinator.java");
+                "src/main/java/com/dpis/module/templates/QuickTemplateApplyCoordinator.kt");
         String adapters = read("src/main/java/com/dpis/module/templates/QuickTemplateApplyAdapters.java");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
@@ -44,14 +33,14 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(workspace.contains("QuickTemplateApplyAdapters.from(host.hookConfigStore())"));
         assertTrue(mainActivity.contains("getHookConfigStore()"));
         assertTrue(mainActivity.contains("return DpisApplication.getActiveHookConfigStore(this);"));
-        assertTrue(workspace.contains("host::isInstalledTemplateTargetPackage"));
+        assertTrue(workspace.contains("host.isInstalledTemplateTargetPackage"));
         String activityHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt");
         assertTrue(activityHost.contains("packageManager.getApplicationInfo("));
         assertTrue(workspace.contains("R.string.quick_template_apply_result_success"));
         assertTrue(workspace.contains("R.string.quick_template_apply_result_partial"));
-        assertTrue(coordinator.contains("public interface ConfigWriter<T>"));
-        assertTrue(coordinator.contains("public interface RuntimePublisher<T>"));
-        assertTrue(coordinator.contains("boolean writePackageTemplateConfigValue("));
+        assertTrue(coordinator.contains("interface ConfigWriter<T>"));
+        assertTrue(coordinator.contains("interface RuntimePublisher<T>"));
+        assertTrue(coordinator.contains("fun writePackageTemplateConfigValue("));
         assertFalse(coordinator.contains("DpisConfigStore"));
         assertFalse(coordinator.contains("PackageConfigRepository"));
         assertFalse(coordinator.contains("ViewportPropertySyncer"));

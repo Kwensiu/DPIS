@@ -71,6 +71,7 @@ import java.util.function.Predicate;
 
 import io.github.libxposed.api.XposedInterface;
 
+@SuppressWarnings("java:S1872")
 public final class SystemServerDisplayEnvironmentInstaller {
     private static final String PROP_DISABLE_SYSTEM_SERVER_FONT_PACKAGE =
             "debug.dpis.font.disable_system_server_package";
@@ -2621,10 +2622,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
         }
         Set<String> candidates = new LinkedHashSet<>();
         collectPackagesFromText(value, candidates, 1);
-        for (String candidate : candidates) {
-            return candidate;
-        }
-        return null;
+        return candidates.stream().findFirst().orElse(null);
     }
 
     private static void collectWebApkOwnerPackagesFromText(String value,
