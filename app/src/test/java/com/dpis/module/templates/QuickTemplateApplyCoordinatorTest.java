@@ -95,6 +95,36 @@ public class QuickTemplateApplyCoordinatorTest {
     }
 
     @Test
+    public void applyNormalizesPackageNamesBeforeWritingAndPublishing() {
+        FakeWriter writer = new FakeWriter();
+        RecordingPublisher publisher = new RecordingPublisher();
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(writer, publisher);
+
+        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
+                orderedSet("  com.example.target  ", "", "   "), templateValue()));
+
+        assertEquals(List.of("com.example.target"), writer.writes);
+        assertEquals(writer.writes, publisher.publishedPackages);
+        assertEquals(writer.writes, result.successfulPackages);
+    }
+
+    @Test
+    public void missingWriterReportsFailureWithoutPublishing() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        QuickTemplateApplyCoordinator<TemplateConfigValue> coordinator =
+                new QuickTemplateApplyCoordinator<>(null, publisher);
+
+        QuickTemplateApplyCoordinator.Result result = coordinator.apply(template(
+                orderedSet("com.example.target"), templateValue()));
+
+        assertFalse(result.emptySelection);
+        assertEquals(0, result.successCount());
+        assertEquals(0, result.failureCount());
+        assertTrue(publisher.publishedPackages.isEmpty());
+    }
+
+    @Test
     public void targetFilterSkipsStalePackagesBeforePlanningAndWriting() {
         FakeWriter writer = new FakeWriter();
         writer.configuredPackages.add("com.example.installed");
