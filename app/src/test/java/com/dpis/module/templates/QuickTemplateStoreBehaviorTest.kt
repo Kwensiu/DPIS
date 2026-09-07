@@ -91,6 +91,45 @@ class QuickTemplateStoreBehaviorTest {
         assertTrue(store.readAll().isEmpty())
     }
 
+    @Test
+    fun partialStoredOrderKeepsListedTemplatesFirstAndSortsRemainingTemplates() {
+        val prefs = FakePrefs()
+        val store = QuickTemplateStore(prefs)
+        assertTrue(store.save(template("alpha", "Alpha", 1L)))
+        assertTrue(store.save(template("beta", "Beta", 2L)))
+        assertTrue(store.save(template("gamma", "Gamma", 3L)))
+        prefs.edit().putString(QuickTemplateStore.KEY_TEMPLATE_ORDER, "beta").commit()
+
+        assertEquals(
+            listOf("beta", "gamma", "alpha"),
+            store.readAll().map { it.id },
+        )
+    }
+
+    @Test
+    fun invalidOrBlankStoredTemplateEntriesAreHiddenWithoutChangingOtherTemplates() {
+        val prefs = FakePrefs()
+        val store = QuickTemplateStore(prefs)
+        assertTrue(store.save(template("valid", "Valid", 1L)))
+        prefs.edit()
+            .putStringSet(QuickTemplateStore.KEY_TEMPLATE_IDS, linkedSetOf("valid", "blank"))
+            .putString("template.blank.name", "   ")
+            .putLong("template.blank.updated_at", 2L)
+            .commit()
+
+        assertNull(store.read("blank"))
+        assertEquals(listOf("valid"), store.readAll().map { it.id })
+    }
+
+    @Test
+    fun restoreBackupRejectsMissingCatalogWithoutErasingExistingTemplates() {
+        val store = QuickTemplateStore(FakePrefs())
+        assertTrue(store.save(template("daily", "Daily", 1L)))
+
+        assertFalse(store.restoreBackup(null))
+        assertEquals("Daily", store.read("daily")!!.name)
+    }
+
     private fun template(
         id: String,
         name: String,

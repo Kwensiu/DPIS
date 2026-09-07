@@ -68,4 +68,85 @@ public class PerfettoTraceTest {
         assertFalse(commands.get(2).contains("rm -f"));
         assertTrue(commands.stream().anyMatch(command -> command.startsWith("base64 ")));
     }
+
+    @Test
+    public void reportsUnavailableWhenPerfettoLaunchOrReadinessFails() {
+        PerfettoTrace.StartResult launchFailure = PerfettoTrace.start(
+                command -> new RootAppProcessLauncher.ShellResult(1, "permission denied"));
+        PerfettoTrace.StartResult readinessFailure = PerfettoTrace.start(
+                new PerfettoTrace.ShellRunner() {
+                    private int calls;
+
+                    @Override
+                    public RootAppProcessLauncher.ShellResult run(String command) {
+                        calls++;
+                        return new RootAppProcessLauncher.ShellResult(
+                                calls == 2 ? 2 : 0, calls == 2 ? "process exited" : "");
+                    }
+                });
+
+        assertFalse(launchFailure.available);
+        assertTrue(launchFailure.note.contains("permission denied"));
+        assertFalse(readinessFailure.available);
+        assertTrue(readinessFailure.note.contains("did not stay running"));
+    }
+
+    @Test
+    public void stopRejectsMissingOrInvalidTraceSize() {
+        PerfettoTrace.StartResult started = startedWith(command -> {
+            if (command.contains("available:size")) {
+                return new RootAppProcessLauncher.ShellResult(0, "available:size=not-a-number");
+            }
+            return new RootAppProcessLauncher.ShellResult(0, "");
+        });
+
+        PerfettoTrace.StopResult stopped = started.trace.stop();
+
+        assertFalse(stopped.available);
+        assertTrue(stopped.note.contains("size was invalid"));
+        assertFalse(started.trace.stop().available);
+    }
+
+    @Test
+    public void truncatedTraceIsDiscardedWithoutExportingBytes() {
+        List<String> commands = new ArrayList<>();
+        PerfettoTrace.StartResult started = startedWith(command -> {
+            commands.add(command);
+            if (command.contains("available:size")) {
+                return new RootAppProcessLauncher.ShellResult(0, "available:size=16777216,truncated=true");
+            }
+            return new RootAppProcessLauncher.ShellResult(0, "");
+        });
+
+        PerfettoTrace.StopResult exported = started.trace.consumeStoppedTrace(started.trace.stop());
+
+        assertTrue(exported.available);
+        assertTrue(exported.truncated);
+        assertEquals(0, exported.traceBytes.length);
+        assertTrue(exported.note.contains("not exported"));
+        assertFalse(commands.stream().anyMatch(command -> command.startsWith("base64 ")));
+    }
+
+    @Test
+    public void exportRejectsInvalidOrMismatchedBase64Payloads() {
+        PerfettoTrace.StartResult invalid = startedWith(command -> {
+            if (command.contains("available:size")) return new RootAppProcessLauncher.ShellResult(0, "available:size=3");
+            if (command.startsWith("base64 ")) return new RootAppProcessLauncher.ShellResult(0, "not base64");
+            return new RootAppProcessLauncher.ShellResult(0, "");
+        });
+        PerfettoTrace.StartResult mismatch = startedWith(command -> {
+            if (command.contains("available:size")) return new RootAppProcessLauncher.ShellResult(0, "available:size=4");
+            if (command.startsWith("base64 ")) return new RootAppProcessLauncher.ShellResult(0, "YWJj");
+            return new RootAppProcessLauncher.ShellResult(0, "");
+        });
+
+        assertTrue(invalid.trace.consumeStoppedTrace(invalid.trace.stop()).note.contains("invalid"));
+        assertTrue(mismatch.trace.consumeStoppedTrace(mismatch.trace.stop()).note.contains("size mismatch"));
+    }
+
+    private static PerfettoTrace.StartResult startedWith(PerfettoTrace.ShellRunner runner) {
+        PerfettoTrace.StartResult started = PerfettoTrace.start(runner);
+        assertTrue(started.available);
+        return started;
+    }
 }
