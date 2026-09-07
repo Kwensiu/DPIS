@@ -347,7 +347,13 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             }
 
             override fun updateEditor(form: TemplateEditorForm) {
-                if (!routeState.updateDraft(form)) publish()
+                // The editor form is a mutable draft object, so Compose cannot observe the
+                // field mutation through object identity. Publish every edit to invalidate the
+                // root-level overlay; otherwise validation-dependent controls keep their stale
+                // state until an unrelated lifecycle recomposition (for example, returning from
+                // the background).
+                routeState.updateDraft(form)
+                publish()
             }
 
             override fun updateEditorDestination(destination: ConfigEditorDestination) {
