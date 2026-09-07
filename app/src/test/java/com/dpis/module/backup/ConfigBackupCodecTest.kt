@@ -47,6 +47,17 @@ class ConfigBackupCodecTest {
     }
 
     @Test
+    fun encodeFiltersNonStringSetMembers() {
+        val decoded = ConfigBackupCodec.decode(
+            ConfigBackupCodec.encode(
+                mapOf("font.hook_domains" to linkedSetOf<Any?>("activity", 42, null)),
+            ),
+        )
+
+        assertEquals(setOf("activity"), decoded["font.hook_domains"])
+    }
+
+    @Test
     fun backupPolicy_rejectsUnknownFieldsInsideKnownDomains() {
         assertTrue(BackupKeyPolicy.isImportable("package_config.com.example.viewport.width_dp"))
         assertTrue(BackupKeyPolicy.isImportable("wechat.com.example.dpi"))
