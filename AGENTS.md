@@ -77,34 +77,14 @@ Prefer CodeGraph when:
 
 ### Tooling and analysis workflow
 
-- For semantic code discovery, use the `semble` MCP search first. Describe the
-  behavior, class, or responsibility being located; navigate directly to the
-  returned file and line instead of repeating the same search with `rg`.
-- Use `semble find_related` after a confirmed location when you need sibling
-  implementations, interface relationships, or similar tests. Use `rg` when
-  every literal occurrence must be enumerated, such as a rename or removed
-  resource id audit.
-- Use CodeGraph for cross-module impact analysis: callers/callees, interface
-  implementations, and state or store dependency paths. Treat active runtime
-  source under `app/src/**` as authoritative when archived documentation or
-  generated indexes disagree.
-- When context-mode MCP tools are available, use `ctx_batch_execute` for
-  multiple related read-only commands and `ctx_execute` or `ctx_execute_file`
-  to filter, count, parse, or summarize large outputs. Keep raw logs and large
-  reports out of the conversation; print only the derived evidence needed for
-  the decision. Use native file editing tools for persistent changes.
-- For Sonar validation, reproduce the CI inputs locally first:
-  `:app:testAllDebugUnitTests` and
-  `:app:jacocoModernDebugUnitTestReport`. These produce the same JVM test and
-  JaCoCo inputs used by CI, but they do not reproduce SonarCloud's new-code
-  baseline, quality profile, or server-side gate without a configured scanner,
-  project credentials, and PR metadata. Treat SonarCloud as authoritative and
-  never commit tokens or local scanner state.
-- Interpret coverage exclusions as a test-boundary contract, not as a way to
-  raise a percentage. Keep portable stores, parsers, codecs, and policy logic
-  measurable; exclude only framework-bound UI, lifecycle, Xposed, root, or
-  hooked-process code that the active test harness cannot execute. Prefer
-  instrumentation coverage or runtime evidence for those boundaries.
+Before committing or opening a PR, use the project skill
+`.agents/skills/dpis-precommit-review/SKILL.md`. It contains the review order,
+tool usage, Sonar boundary audit, validation commands, and Git handoff.
+
+- For ordinary development, follow the discovery and validation details in
+  `.agents/skills/dpis-precommit-review/SKILL.md`; use CodeGraph when a change
+  crosses shared state or interface boundaries. Active runtime source under
+  `app/src/**` is authoritative over archived documentation.
 
 ### Sub-agent usage
 
@@ -142,23 +122,16 @@ Do not add translation text for locales other than English and Simplified
 Chinese unless the user explicitly requests that locale's content.
 
 ## Build, Test, and Development Commands
-- Build debug APKs (both flavors):
-  - `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`
-- Build release APKs (produces `DPIS_{version}.apk` and `DPIS_{version}_legacy.apk`):
-  - `./gradlew :app:assembleRelease`
-- Run unit tests:
-  - `./gradlew :app:testAllDebugUnitTests`
-  - For filtered tests, use a real flavor test task such as `./gradlew :app:testModernDebugUnitTest --tests com.dpis.module.ModulePackagePlanTest`.
-- Build then install (PowerShell):
-  - `./gradlew :app:assembleModernDebug; if ($LASTEXITCODE -eq 0) { adb install -r "app/build/outputs/apk/modern/debug/app-modern-debug.apk" }`
-- Install debug APKs through Gradle when validating LSPosed module updates:
-  - `./gradlew :app:installModernDebug`
-  - `./gradlew :app:installLegacyDebug`
-  - If installing from Android Studio, disable deployment optimization. LSPosed
-    may fail to update the module when optimized deployment is used, leaving
-    stale module paths or optimized code active after reinstall/reboot.
-- Clean root build directory:
-  - `./gradlew Delete`
+Use `.agents/skills/dpis-precommit-review/SKILL.md` for the complete
+pre-commit validation sequence. The main quick commands are:
+
+- `./gradlew :app:testAllDebugUnitTests`
+- `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`
+- `./gradlew :app:assembleRelease`
+
+For device/module installation, use the corresponding Gradle install task and
+disable Android Studio deployment optimization so LSPosed does not retain stale
+module paths or optimized code.
 
 ## Coding Style & Naming Conventions
 - Create new code and test files in Kotlin by default. Java 17 remains the
@@ -211,26 +184,9 @@ Chinese unless the user explicitly requests that locale's content.
 - Test class names end in `Test` and method names describe behavior (e.g.,
   `usesObservedDefaultDensityWhenNoUserValueExists`). Use the matching `.kt`
   or `.java` extension for the implementation language.
-- Run targeted tests during iteration with a flavor test task, then run full `:app:testAllDebugUnitTests` before submitting.
-- Before creating a real commit, run the full CI-aligned unit test suite:
-  `./gradlew :app:testAllDebugUnitTests`. Do not rely only on targeted tests
-  unless the user explicitly agrees to skip full verification; if skipped,
-  state that clearly in the final response.
-- Before declaring work complete, and whenever a code review is about to begin,
-  use the Android CLI as an additional optimization pass when Android Studio is
-  available. Run `android studio check` first, then use
-  `android studio analyze-file --project=<project> <path>` for touched Java or
-  Kotlin files; for Compose UI changes, use
-  `android studio render-compose-preview` when a suitable `@Preview` exists.
-  Run these Android CLI commands strictly sequentially, one invocation at a
-  time; parallel CLI requests can block the Studio bridge and are prohibited.
-  Treat the reported inspections, warnings, and preview findings as
-  optimization leads only: they supplement, and never replace, Gradle, Lint,
-  unit-test, device, or runtime validation. If the CLI or an active Studio
-  project is unavailable, record that the supplemental pass was skipped and
-  why.
-- `android studio analyze-file` expects the project name reported by
-  `android studio check` (for example, `--project=DPIS`), not the project path.
+- Use `.agents/skills/dpis-precommit-review/SKILL.md` for the required full
+  suite, Android CLI order, flavor builds, Sonar inputs, and final validation
+  record.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
 - During every review or implementation pass, audit all touched files against
   the full project-level rules above. Fix newly exposed violations in the same
