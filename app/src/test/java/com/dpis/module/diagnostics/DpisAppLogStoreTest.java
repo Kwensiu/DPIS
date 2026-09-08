@@ -97,4 +97,40 @@ public final class DpisAppLogStoreTest {
         assertEquals("final", entries.get(entries.size() - 1).message);
         assertTrue(Files.size(logFile.toPath()) <= 320L);
     }
+
+    @Test
+    public void ignoresBlankRecordsAndSupportsEmptyOrOversizedWindows() throws Exception {
+        File logFile = new File(temporaryFolder.getRoot(), "app_log.jsonl");
+        DpisAppLogStore store = new DpisAppLogStore(logFile, 0, 0L);
+
+        store.record("I", "   ");
+        store.record(null, null);
+        store.record("I", "kept");
+
+        assertEquals(1, store.readRecentEntries(0).size());
+        assertEquals(1, store.readRecentEntries(-1).size());
+        assertEquals("kept", store.readRecentEntries(10).get(0).message);
+    }
+
+    @Test
+    public void skipsMalformedLinesAndUsesFallbackForInvalidTimestamp() throws Exception {
+        File logFile = new File(temporaryFolder.getRoot(), "app_log.jsonl");
+        Files.write(
+                logFile.toPath(),
+                java.util.Arrays.asList(
+                        "",
+                        "not-json",
+                        "{\"message\":\"valid\",\"timestampMillis\":not-a-number}",
+                        "{\"message\":\"\"}"
+                ),
+                StandardCharsets.UTF_8
+        );
+
+        List<DpisLogEntry> entries = new DpisAppLogStore(logFile, 10, 4096L).readRecentEntries();
+
+        assertEquals(1, entries.size());
+        assertEquals("valid", entries.get(0).message);
+        assertEquals(0L, entries.get(0).timestampMillis);
+        assertEquals("", entries.get(0).timestamp);
+    }
 }

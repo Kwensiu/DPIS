@@ -271,11 +271,11 @@ public class ModuleMainHookInstallerTest {
                 .contains("HOOK_ID_WEBVIEW_GET_SETTINGS"));
         assertTrue(read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.kt")
                 .contains("HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM"));
-        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt")
                 .contains("HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT"));
-        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt")
                 .contains("HOOK_ID_PAINT_SET_TEXT_SIZE"));
-        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt")
                 .contains("bridgeMutationAppliedIfChanged("));
         String typefaceInstaller = read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
         assertTrue(typefaceInstaller.contains("HOOK_ID_TEXTVIEW_SET_TYPEFACE"));
