@@ -196,6 +196,59 @@ class AppConfigEditorSessionTest {
     }
 
     @Test
+    fun persistableIdentityIgnoresResetFlagsAndRejectsFieldMismatches() {
+        val baseline = AppConfigEditorSession.open(app(), false, SCALE_ONLY_PREFILL).draft
+        val resetOnly = baseline.withAdvancedConfig(
+            baseline.selectedTypefaceId,
+            baseline.draftFontHookDomainsRaw,
+            baseline.viewportApplyMode,
+            true,
+            true,
+        )
+        assertTrue(baseline.hasSamePersistedConfig(resetOnly))
+        assertFalse(baseline.hasSameSavedConfig(resetOnly))
+        assertFalse(baseline.hasSamePersistedConfig(null))
+        assertFalse(baseline.hasSamePersistedConfig(baseline.withWechatDpiInput("480")))
+        assertFalse(baseline.hasSamePersistedConfig(baseline.withFontMode(FontApplyMode.FIELD_REWRITE)))
+        assertFalse(
+            baseline.hasSamePersistedConfig(
+                EditorDraft(
+                    "com.other.app",
+                    baseline.viewportInput,
+                    baseline.viewportScaleInput,
+                    baseline.viewportAbsoluteInput,
+                    baseline.viewportMode,
+                    baseline.fontInput,
+                    baseline.fontMode,
+                    baseline.selectedTypefaceId,
+                    baseline.draftFontHookDomainsRaw,
+                    baseline.viewportApplyMode,
+                    baseline.fontHookDomainsResetRequested,
+                    baseline.viewportApplyModeResetRequested,
+                    baseline.wechatDpiInput,
+                    baseline.scopeSelected,
+                    baseline.dpisEnabled,
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun scopeSelectionKeepsPrefillSnapshotAligned() {
+        val opened = AppConfigEditorSession.open(app(), false, PREFILL)
+        val selected = opened.withScopeSelected(true)
+
+        assertTrue(selected.draft.scopeSelected)
+        assertTrue(selected.prefillSnapshot!!.scopeSelected)
+        assertTrue(selected.persistedBaseline.scopeSelected)
+        assertEquals(AppConfigEditorChip.PREFILL, selected.chip)
+
+        val saved = AppConfigEditorSession.open(app(), true, PREFILL).withScopeSelected(true)
+        assertNull(saved.prefillSnapshot)
+        assertTrue(saved.draft.scopeSelected)
+    }
+
+    @Test
     fun restoringScaleOnlyPrefillValueAfterClearDoesNotShowPrefill() {
         val opened = AppConfigEditorSession.open(app(), false, SCALE_ONLY_PREFILL)
         val restored = opened

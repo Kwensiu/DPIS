@@ -69,11 +69,13 @@ public final class AppConfigEditorPresentationControllerTest {
         actions.restartProcess();
         actions.startFeedbackDiagnostic();
         actions.save();
+        actions.reset();
         actions.close();
 
         assertEquals(AppConfigDialogBinder.ProcessAction.RESTART, host.processAction);
         assertSame(draft, host.diagnosticDraft);
         assertSame(draft, host.savedDraft);
+        assertTrue(host.resetCalled);
         assertTrue(host.closed);
     }
 
@@ -105,12 +107,14 @@ public final class AppConfigEditorPresentationControllerTest {
         AppListItem savedItem;
         EditorDraft savedDraft;
         boolean closed;
+        boolean resetCalled;
 
         @Override public void updateDraft(EditorDraft draft) {
             updatedDraft = draft;
         }
 
         @Override public void resetDraft() {
+            resetCalled = true;
             updatedDraft = draft(false).cleared();
         }
 
