@@ -4,6 +4,8 @@ import android.text.Spanned
 import com.dpis.module.updates.ReleaseNotesListMarker
 import com.dpis.module.updates.ReleaseNotesMarkerEdit
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer
+import com.dpis.module.updates.ReleaseNotesPlainLink
+import com.dpis.module.updates.parseReleaseNoteMarkdownLinks
 import com.dpis.module.updates.headingScale
 import com.dpis.module.updates.insertMarkerText
 import com.dpis.module.updates.insertVisibleListMarkers
@@ -143,6 +145,13 @@ class ReleaseNotesMarkdownRendererTest {
         assertTrue(isAllowedReleaseNotesUrl("https://github.com/Kwensiu/DPIS"))
         assertFalse(isAllowedReleaseNotesUrl("http://example.com"))
         assertFalse(isAllowedReleaseNotesUrl("javascript:alert(1)"))
+        assertFalse(isAllowedReleaseNotesUrl("https://user:pass@example.com/path"))
+        assertEquals(
+            listOf(ReleaseNotesPlainLink("safe", "https://github.com/Kwensiu/DPIS")),
+            parseReleaseNoteMarkdownLinks(
+                "See [safe](https://github.com/Kwensiu/DPIS) and [skip](javascript:alert(1)) and [broken](not-a-url",
+            ),
+        )
 
         val rendered = ReleaseNotesMarkdownRenderer.render(
             null,

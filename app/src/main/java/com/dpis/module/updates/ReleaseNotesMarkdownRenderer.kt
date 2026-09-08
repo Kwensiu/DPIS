@@ -1,20 +1,11 @@
 package com.dpis.module.updates
 
 import android.content.Context
-import android.graphics.Typeface
 import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
 import android.text.style.URLSpan
-import io.noties.markwon.AbstractMarkwonPlugin
-import io.noties.markwon.Markwon
-import io.noties.markwon.MarkwonSpansFactory
-import io.noties.markwon.MarkwonVisitor
-import io.noties.markwon.core.CoreProps
-import org.commonmark.node.Heading
-import org.commonmark.node.ListItem
-import org.commonmark.node.SoftLineBreak
+import java.net.URI
+import java.net.URISyntaxException
 import java.util.Locale
 
 object ReleaseNotesMarkdownRenderer {
@@ -35,7 +26,7 @@ object ReleaseNotesMarkdownRenderer {
         }
         return try {
             renderer.render(context, filtered)
-        } catch (_: Throwable) {
+        } catch (_: RuntimeException) {
             // Release notes come from GitHub text controlled outside the app. Keep the UI
             // alive even if a Markdown extension or malformed input trips the renderer.
             fallbackPlainText(filtered)
@@ -53,11 +44,7 @@ object ReleaseNotesMarkdownRenderer {
         if (context == null) {
             return fallbackPlainText(markdown)
         }
-        val rendered = Markwon.builder(context)
-            .usePlugin(ReleaseNotesComposeCompatiblePlugin())
-            .build()
-            .toMarkdown(markdown)
-        return insertVisibleListMarkers(rendered)
+        return renderReleaseNotesWithMarkwon(context, markdown)
     }
 
     private fun fallbackPlainText(markdown: String): CharSequence {
@@ -118,39 +105,27 @@ object ReleaseNotesMarkdownRenderer {
     }
 
     private fun applyPlainLinkSpans(plainText: String, markdown: String): CharSequence {
+        val links = parseReleaseNoteMarkdownLinks(markdown)
+        if (links.isEmpty()) {
+            return plainText
+        }
         return try {
             val out = SpannableStringBuilder(plainText)
-            val markdownText = safe(markdown)
-            var searchStart = 0
             var plainSearchStart = 0
             var appliedLink = false
-            while (searchStart < markdownText.length) {
-                val labelStart = markdownText.indexOf('[', searchStart)
-                if (labelStart < 0) {
-                    break
+            for (link in links) {
+                val spanStart = plainText.indexOf(link.label, plainSearchStart)
+                if (spanStart >= 0) {
+                    val spanEnd = spanStart + link.label.length
+                    out.setSpan(
+                        URLSpan(link.url),
+                        spanStart,
+                        spanEnd,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                    )
+                    appliedLink = true
+                    plainSearchStart = spanEnd
                 }
-                val labelEnd = markdownText.indexOf("](", labelStart)
-                val urlEnd = if (labelEnd >= 0) markdownText.indexOf(')', labelEnd + 2) else -1
-                if (labelEnd < 0 || urlEnd < 0) {
-                    break
-                }
-                val url = markdownText.substring(labelEnd + 2, urlEnd)
-                val label = markdownText.substring(labelStart + 1, labelEnd)
-                if (isAllowedReleaseNotesUrl(url)) {
-                    val spanStart = plainText.indexOf(label, plainSearchStart)
-                    if (spanStart >= 0) {
-                        val spanEnd = spanStart + label.length
-                        out.setSpan(
-                            URLSpan(url),
-                            spanStart,
-                            spanEnd,
-                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-                        )
-                        appliedLink = true
-                        plainSearchStart = spanEnd
-                    }
-                }
-                searchStart = urlEnd + 1
             }
             if (appliedLink) out else plainText
         } catch (_: RuntimeException) {
@@ -161,24 +136,6 @@ object ReleaseNotesMarkdownRenderer {
     private fun safe(value: String?): String = value ?: ""
 }
 
-private class ReleaseNotesComposeCompatiblePlugin : AbstractMarkwonPlugin() {
-    override fun configureSpansFactory(builder: MarkwonSpansFactory.Builder) {
-        builder.setFactory(Heading::class.java) { _, props ->
-            val level = CoreProps.HEADING_LEVEL.require(props)
-            arrayOf<Any>(StyleSpan(Typeface.BOLD), RelativeSizeSpan(headingScale(level)))
-        }
-        builder.setFactory(ListItem::class.java) { _, props ->
-            ReleaseNotesListMarker(listMarkerText(props))
-        }
-    }
-
-    override fun configureVisitor(builder: MarkwonVisitor.Builder) {
-        builder.on(SoftLineBreak::class.java) { visitor, _ ->
-            visitor.builder().append('\n')
-        }
-    }
-}
-
 internal fun headingScale(level: Int): Float = when (level) {
     1 -> 1.35f
     2 -> 1.22f
@@ -186,18 +143,46 @@ internal fun headingScale(level: Int): Float = when (level) {
     else -> 1.05f
 }
 
-internal fun listMarkerText(props: io.noties.markwon.RenderProps): String {
-    return if (CoreProps.LIST_ITEM_TYPE.get(props) == CoreProps.ListItemType.ORDERED) {
-        val number = CoreProps.ORDERED_LIST_ITEM_NUMBER.get(props) ?: 1
-        "$number. "
-    } else {
-        "• "
+internal data class ReleaseNotesListMarker(val marker: String)
+
+internal data class ReleaseNotesPlainLink(val label: String, val url: String)
+
+internal fun isAllowedReleaseNotesUrl(url: String): Boolean {
+    return try {
+        val uri = URI(url)
+        val host = uri.host
+        uri.scheme.equals("https", ignoreCase = true) &&
+            !host.isNullOrBlank() &&
+            uri.userInfo == null
+    } catch (_: URISyntaxException) {
+        false
+    } catch (_: IllegalArgumentException) {
+        false
     }
 }
 
-internal data class ReleaseNotesListMarker(val marker: String)
-
-internal fun isAllowedReleaseNotesUrl(url: String): Boolean = url.startsWith("https://")
+internal fun parseReleaseNoteMarkdownLinks(markdown: String): List<ReleaseNotesPlainLink> {
+    val links = ArrayList<ReleaseNotesPlainLink>()
+    var searchStart = 0
+    while (searchStart < markdown.length) {
+        val labelStart = markdown.indexOf('[', searchStart)
+        if (labelStart < 0) {
+            break
+        }
+        val labelEnd = markdown.indexOf("](", labelStart)
+        val urlEnd = if (labelEnd >= 0) markdown.indexOf(')', labelEnd + 2) else -1
+        if (labelEnd < 0 || urlEnd < 0) {
+            break
+        }
+        val url = markdown.substring(labelEnd + 2, urlEnd)
+        val label = markdown.substring(labelStart + 1, labelEnd)
+        if (isAllowedReleaseNotesUrl(url)) {
+            links.add(ReleaseNotesPlainLink(label, url))
+        }
+        searchStart = urlEnd + 1
+    }
+    return links
+}
 
 internal data class ReleaseNotesMarkerEdit(val start: Int, val end: Int, val marker: String)
 
