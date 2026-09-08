@@ -1,12 +1,10 @@
 # SonarQube
 
 DPIS uses the SonarQube Gradle plugin (`org.sonarqube`) for an optional
-static-analysis job. The GitHub job compiles Modern Debug sources so the
-scanner has bytecode, then uploads analysis. It does not run unit tests or
-generate JaCoCo; `CI Check` remains the test owner. Coverage on SonarQube
-Cloud is therefore only as fresh as a local scan that includes a report.
-The analysis is advisory for now: it does not wait for or enforce a
-SonarQube quality gate, and it does not change GitHub branch protection.
+static-analysis job. Gradle remains responsible for compilation, unit tests,
+and JaCoCo coverage generation. The analysis is advisory for now: it does not
+wait for or enforce a SonarQube quality gate, and it does not change GitHub
+branch protection.
 
 The CI job passes `sonar.branch.name` on `push` / `workflow_dispatch`, and
 pull-request keys on `pull_request`. Do not run a branch scan without a branch
@@ -24,7 +22,8 @@ SonarQube Server) and add these repository settings:
 - Repository variable `SONAR_HOST_URL` when using a server other than the
   default `https://sonarcloud.io`
 
-Disable SonarQube Cloud Automatic Analysis in the project's
+Because this integration uses CI-based analysis for Gradle test coverage,
+disable SonarQube Cloud Automatic Analysis in the project's
 `Administration -> Analysis Method` settings. SonarQube Cloud does not allow
 Automatic Analysis and CI-based analysis to run together.
 
@@ -35,12 +34,9 @@ branches are also skipped because release-please has its own CI flow.
 
 ## Local analysis
 
-Compile is enough for issue analysis. Generate coverage first only when you
-want JaCoCo uploaded with the scan:
+From the repository root, run the tests and coverage report first:
 
 ```bash
-./gradlew :app:compileModernDebugUnitTestKotlin :app:compileModernDebugUnitTestJavaWithJavac
-# optional:
 ./gradlew :app:testAllDebugUnitTests :app:jacocoModernDebugUnitTestReport
 ```
 
@@ -62,8 +58,9 @@ by the Gradle plugin because `org.sonarqube` 6.3.1 still looks up AGP's removed
 instead of Android variant metadata.
 
 The report analyzes Kotlin and Java sources. Native C++ sources and generated
-resources are excluded for this first integration. Modern Debug compile output
-is the primary bytecode input.
+resources are excluded for this first integration. Modern Debug is the primary
+coverage input; Legacy unit tests still run as a separate Gradle prerequisite
+in CI.
 
 ## Inspect results
 
