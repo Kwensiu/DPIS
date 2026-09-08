@@ -30,6 +30,7 @@ class TemplateWorkspaceLayoutSmokeTest {
         val strings = read("src/main/res/values/strings.xml")
         workspace.assertContainsAll(
             "android:id=\"@+id/quick_template_list_container\"", "android:id=\"@+id/quick_template_empty_state\"",
+            "android:layout_weight=\"1\"", "android:gravity=\"center\"",
             "android:id=\"@+id/quick_template_section_header\"", "android:textAppearance=\"@style/TextAppearance.Material3.TitleLarge\"",
             "android:id=\"@+id/quick_template_sort_button\"", "android:id=\"@+id/quick_template_create_button\"",
             "@drawable/bg_round_button_surface", "@drawable/bg_template_workspace_add_button", "@drawable/ic_add_24", "@drawable/ic_sort_24",

@@ -663,7 +663,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun appConfigInputErrorsAreRenderedBySharedValidation() {
         val binder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.kt")
-        val landBinder = read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java")
+        val landBinder = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
         assertTrue(binder.contains(
                 "ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid)"))
         assertTrue(binder.contains(
@@ -697,15 +697,19 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun landscapeDetailReassertsModeToggleSizeWhenRebound() {
         val landBinder = read(
-                "src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java"
+                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt"
+        )
+        val adaptiveLayout = read(
+                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailAdaptiveLayout.kt"
         )
 
-        assertTrue(landBinder.contains("stabilizeModeToggleLayout(toggle.container)"))
-        assertTrue(landBinder.contains("R.dimen.dialog_mode_toggle_width"))
-        assertTrue(landBinder.contains("R.dimen.dialog_mode_toggle_row_height"))
-        assertTrue(landBinder.contains("root.getViewTreeObserver().addOnGlobalLayoutListener("))
-        assertTrue(landBinder.contains("primaryRow.getWidth() < threeButtonRequiredWidth"))
-        assertTrue(landBinder.contains("container.post(() ->"))
+        assertTrue(landBinder.contains("LandAppDetailAdaptiveLayout.stabilizeModeToggleLayout("))
+        assertTrue(adaptiveLayout.contains("fun stabilizeModeToggleLayout("))
+        assertTrue(adaptiveLayout.contains("R.dimen.dialog_mode_toggle_width"))
+        assertTrue(adaptiveLayout.contains("R.dimen.dialog_mode_toggle_row_height"))
+        assertTrue(adaptiveLayout.contains("root.viewTreeObserver.addOnGlobalLayoutListener"))
+        assertTrue(adaptiveLayout.contains("primaryRow.width < threeButtonRequiredWidth"))
+        assertTrue(adaptiveLayout.contains("container.post"))
     }
 
     private fun read(relativePath: String): String {

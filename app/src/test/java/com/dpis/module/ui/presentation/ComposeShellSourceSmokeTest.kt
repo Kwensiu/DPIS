@@ -193,6 +193,8 @@ class ComposeShellSourceSmokeTest {
     fun templateWorkspaceKeepsTheLegacySearchAndHeaderActionSemantics() {
         val template = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceList.kt")
+        val emptyCopy = read(
+                "src/main/java/com/dpis/module/templates/presentation/TemplateListEmptyCopy.kt")
         val tokens = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateUiTokens.kt")
         val search = read(
@@ -214,6 +216,11 @@ class ComposeShellSourceSmokeTest {
         assertTrue(template.contains("TemplateActionButtonStyle.Plain"))
         assertTrue(template.contains("TemplateActionButtonStyle.Primary"))
         assertFalse(template.contains("SearchCardBorderWidth"))
+        assertTrue(template.contains("TemplateListEmptyCopy(searching = state.searching)"))
+        assertTrue(emptyCopy.contains("R.string.quick_template_search_empty"))
+        assertTrue(emptyCopy.contains("contentAlignment = Alignment.Center"))
+        assertTrue(emptyCopy.contains("Modifier.fillParentMaxSize()"))
+        assertFalse(emptyCopy.contains("Alignment.CenterStart"))
         assertTrue(tokens.contains("val WorkspaceTopPadding = 14.dp"))
         assertTrue(tokens.contains("val SectionTitleInset = 12.dp"))
         assertTrue(tokens.contains("val SectionActionInset = 12.dp"))

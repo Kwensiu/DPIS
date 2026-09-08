@@ -28,8 +28,6 @@ internal object TemplateUiTokens {
     val SectionTitleInset = 12.dp
     val SectionActionInset = 12.dp
     val ListGap = 12.dp
-    val EmptyStateTopGap = 8.dp
-    val EmptyStatePadding = 20.dp
     const val EMPTY_STATE_VIEWPORT_FRACTION = 0.5f
     val EmptyStateBottomBias = 32.dp
 

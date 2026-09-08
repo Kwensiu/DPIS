@@ -154,33 +154,7 @@ internal fun TemplateWorkspaceListPane(
                 }
                 if (state.templates.isEmpty()) {
                     item {
-                        val searching = state.searching
-                        Box(
-                            modifier = if (searching) {
-                                Modifier.fillMaxWidth()
-                            } else {
-                                Modifier
-                                    .fillParentMaxWidth()
-                                    .fillParentMaxHeight(TemplateUiTokens.EMPTY_STATE_VIEWPORT_FRACTION)
-                                    .padding(bottom = TemplateUiTokens.EmptyStateBottomBias)
-                            },
-                            contentAlignment = if (searching) Alignment.CenterStart else Alignment.Center
-                        ) {
-                            Text(
-                                stringResource(
-                                    if (searching) R.string.quick_template_search_empty
-                                    else R.string.template_workspace_quick_templates_empty
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = if (searching) {
-                                    Modifier.padding(
-                                        top = TemplateUiTokens.EmptyStateTopGap,
-                                        bottom = TemplateUiTokens.EmptyStatePadding,
-                                        end = TemplateUiTokens.EmptyStatePadding
-                                    )
-                                } else Modifier
-                            )
-                        }
+                        TemplateListEmptyCopy(searching = state.searching)
                     }
                 } else {
                     items(state.templates.size, key = { state.templates[it].id }) { index ->
