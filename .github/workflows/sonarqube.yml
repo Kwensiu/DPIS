@@ -57,11 +57,13 @@ jobs:
       - name: Ensure gradlew is executable
         run: chmod +x gradlew
 
-      - name: Run tests and coverage
+      - name: Compile sources for analysis
         shell: bash
         run: |
-          ./gradlew :app:testAllDebugUnitTests \
-            :app:jacocoModernDebugUnitTestReport \
+          ./gradlew :app:compileModernDebugKotlin \
+            :app:compileModernDebugJavaWithJavac \
+            :app:compileModernDebugUnitTestKotlin \
+            :app:compileModernDebugUnitTestJavaWithJavac \
             --no-daemon --no-configuration-cache --stacktrace
 
       - name: Run SonarQube analysis

@@ -56,10 +56,10 @@ scope applies.
      `./gradlew :app:testAllDebugUnitTests`.
    - For Sonar/coverage changes, also run:
      `./gradlew :app:jacocoModernDebugUnitTestReport`.
-     That is only the local coverage XML CI uploads. After PR Check has
-     published an analysis, read the Cloud result through the SonarQube MCP
-     (see below). Do not curl Sonar REST or scrape GitHub check logs for the
-     same facts.
+     That XML is optional local coverage; the Sonar GitHub job compiles
+     sources and does not run tests. After a scan has published, read the
+     Cloud result through the SonarQube MCP (see below). Do not curl Sonar
+     REST or scrape GitHub check logs for the same facts.
    - Build both debug flavors for shared, flavor, dependency, R8, or hook
      changes:
      `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`.
