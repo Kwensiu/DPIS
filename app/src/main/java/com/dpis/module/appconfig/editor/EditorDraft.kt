@@ -96,7 +96,17 @@ class EditorDraft(
     fun fontHookDomainsEditable(): Boolean =
         FontApplyMode.FIELD_REWRITE == FontApplyMode.normalize(fontMode)
 
-    fun hasSameSavedConfig(other: EditorDraft?): Boolean = other != null
+    fun hasSameSavedConfig(other: EditorDraft?): Boolean {
+        if (other == null || !hasSamePersistedConfig(other)) return false
+        return fontHookDomainsResetRequested == other.fontHookDomainsResetRequested
+            && viewportApplyModeResetRequested == other.viewportApplyModeResetRequested
+    }
+
+    /**
+     * Package-config identity for editor chips. Reset-request flags are save commands, not
+     * persisted configuration, so they must not make an emptied prefill look Unsaved.
+     */
+    fun hasSamePersistedConfig(other: EditorDraft?): Boolean = other != null
         && packageName == other.packageName
         && viewportScaleInput == other.viewportScaleInput
         && viewportAbsoluteInput == other.viewportAbsoluteInput
@@ -105,10 +115,20 @@ class EditorDraft(
         && fontMode == other.fontMode
         && selectedTypefaceId == other.selectedTypefaceId
         && draftFontHookDomainsRaw == other.draftFontHookDomainsRaw
-        && viewportApplyMode == other.viewportApplyMode
-        && fontHookDomainsResetRequested == other.fontHookDomainsResetRequested
-        && viewportApplyModeResetRequested == other.viewportApplyModeResetRequested
+        && persistedViewportApplyMode() == other.persistedViewportApplyMode()
         && wechatDpiInput == other.wechatDpiInput
+
+    /**
+     * Saving an empty viewport stores apply mode OFF. Leftover AUTO from a scale-only prefill
+     * must not make that empty draft look Unsaved.
+     */
+    private fun persistedViewportApplyMode(): String {
+        val spec = AppConfigInputValidation.parseViewportTargetSpec(
+            viewportInputFor(viewportMode),
+            viewportMode,
+        )
+        return if (spec.isEnabled) viewportApplyMode else ViewportApplyMode.OFF
+    }
 
     fun afterSuccessfulSave(): EditorDraft = copy(viewportScaleInput, viewportAbsoluteInput,
         viewportMode, fontInput, fontMode, selectedTypefaceId, draftFontHookDomainsRaw,

@@ -95,6 +95,7 @@ internal fun TemplateWorkspaceContent(
     var targetSaveRequest by rememberSaveable { mutableIntStateOf(0) }
     var deleteConfirmationVisible by rememberSaveable { mutableStateOf(false) }
     var sortDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var editorDismissRequest by rememberSaveable { mutableIntStateOf(0) }
     val editorDestination = state.editorDestination
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val configuration = LocalConfiguration.current
@@ -126,6 +127,9 @@ internal fun TemplateWorkspaceContent(
     // Compose owns the visible editor on both portrait and landscape. Activity callbacks retain
     // only the route contract used by saved-instance and portrait target-Activity migration.
     fun openEditor(kind: String, templateId: String?) {
+        // A completed save increments the dismiss token. Reset it before creating the next
+        // overlay so a newly opened editor is not immediately hidden by the previous request.
+        editorDismissRequest = 0
         editorKind = kind
         editorTemplateId = templateId
         targetsTemplateId = null
@@ -193,7 +197,7 @@ internal fun TemplateWorkspaceContent(
             editorTemplateId = editorDraft.form.templateId
             notifyEditorChanged()
             if (createdNewTemplate) {
-                closeEditor()
+                editorDismissRequest++
                 return
             }
             if (editorDraft.form.quickTemplate) {
@@ -407,6 +411,7 @@ internal fun TemplateWorkspaceContent(
         editorTemplateId,
         editorDestination,
         draftRevision,
+        editorDismissRequest,
         isLandscape,
     ) {
         if (!isLandscape && editorKind != null) {
@@ -421,6 +426,7 @@ internal fun TemplateWorkspaceContent(
                         TemplateEditorSheetChrome(showUnsaved = editorDraft.form.isDirty)
                     },
                     content = editorSheetBody,
+                    dismissRequest = editorDismissRequest,
                 )
             }
         } else {

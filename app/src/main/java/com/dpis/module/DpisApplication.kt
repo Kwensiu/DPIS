@@ -9,6 +9,7 @@ import com.dpis.module.fonts.TypefaceCatalogCache.preload
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator
+import com.dpis.module.runtime.RuntimePropertyInstallCleanup
 import com.dpis.module.updates.UpdatePackageInstaller
 import com.google.android.material.color.DynamicColors
 import io.github.libxposed.service.XposedService
@@ -50,15 +51,21 @@ class DpisApplication : Application(), OnServiceListener {
         preload(this)
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this)
         migrateLocalConfigStore(configStore)
+        // A reinstall creates a fresh preference namespace but does not remove system properties
+        // left by the previous installation. Clear only those per-package mirrors once, before
+        // the current store is replayed by the normal recovery coordinator.
         val initializedStore: DpisConfigStore? = configStore
         if (initializedStore == null) {
             DpisLog.e(
                 "app config store initialization returned null",
                 IllegalStateException("config store unavailable")
             )
+            RuntimePropertyInstallCleanup.initializeAsync(this)
         } else {
             DpisLog.setLoggingEnabled(initializedStore.isGlobalLogEnabled())
-            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(initializedStore)
+            RuntimePropertyInstallCleanup.initializeAsync(this, Runnable {
+                RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(initializedStore)
+            })
         }
         XposedServiceHelper.registerListener(this)
         UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS)

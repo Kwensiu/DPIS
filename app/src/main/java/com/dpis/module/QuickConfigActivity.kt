@@ -26,12 +26,15 @@ import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.AppConfigSaveHandler.Result.Companion.failure
+import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorActions
 import com.dpis.module.appconfig.EditorActions.create
 import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.appconfig.EditorPresentationFactory.create
+import com.dpis.module.config.PackageConfigRepository
+import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.ForegroundPackageResolver
@@ -96,6 +99,7 @@ class QuickConfigActivity : LocalizedActivity() {
     private var activePackagingDialog: AlertDialog? = null
     private var presentation: QuickConfigPresentation? = null
     private var editingItem: AppListItem? = null
+    private var editorSession: AppConfigEditorSession? = null
     private var editingDraft: EditorDraft? = null
     private var savedEditingDraft: EditorDraft? = null
     private var editingDestination: ConfigEditorDestination? = ConfigEditorDestination.MAIN
@@ -113,6 +117,7 @@ class QuickConfigActivity : LocalizedActivity() {
         val retainedSession = lastCustomNonConfigurationInstance as QuickConfigEditorSession?
         if (retainedSession != null) {
             editingItem = retainedSession.item
+            editorSession = retainedSession.editorSession
             editingDraft = retainedSession.draft
             savedEditingDraft = retainedSession.savedDraft
             editingDestination = retainedSession.destination
@@ -145,20 +150,31 @@ class QuickConfigActivity : LocalizedActivity() {
             item,
             this.hookConfigStore
         )
-        editingDraft = EditorDraft.fromItem(editingItem!!)
-        savedEditingDraft = editingDraft
+        val store = this.hookConfigStore
+        val hasSaved = PackageConfigRepository(store).hasRealPackageConfig(item.packageName)
+        val prefill = if (hasSaved) {
+            null
+        } else {
+            GlobalPrefillStore(getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)).read()
+        }
+        editorSession = AppConfigEditorSession.open(editingItem!!, hasSaved, prefill)
+        editingDraft = editorSession!!.draft
+        savedEditingDraft = editorSession!!.persistedBaseline
         refreshComposeEditor()
     }
 
     override fun onRetainCustomNonConfigurationInstance(): Any? {
-        if (editingItem == null || editingDraft == null) {
+        val item = editingItem
+        val draft = editingDraft
+        if (item == null || draft == null) {
             return null
         }
         return QuickConfigEditorSession(
-            editingItem,
-            editingDraft,
+            item,
+            draft,
             savedEditingDraft,
-            editingDestination
+            editingDestination,
+            editorSession,
         )
     }
 
@@ -202,7 +218,8 @@ class QuickConfigActivity : LocalizedActivity() {
                 this.isSystemHookEnabled,
                 automaticCustomizableDomains(),
                 editingDestination,
-                createComposeActions(item, draft)
+                createComposeActions(item, draft),
+                editorSession,
             )
         )
     }
@@ -215,6 +232,10 @@ class QuickConfigActivity : LocalizedActivity() {
             object : EditorActions.Host {
                 override fun updateDraft(nextDraft: EditorDraft) {
                     this@QuickConfigActivity.updateDraft(nextDraft)
+                }
+
+                override fun resetDraft() {
+                    this@QuickConfigActivity.resetDraft()
                 }
 
                 override fun showWechatDpiHelp() {
@@ -279,7 +300,15 @@ class QuickConfigActivity : LocalizedActivity() {
     }
 
     private fun updateDraft(draft: EditorDraft) {
-        editingDraft = draft
+        editorSession = editorSession?.withDraft(draft) ?: AppConfigEditorSession(draft, null, draft, false)
+        editingDraft = editorSession!!.draft
+        refreshComposeEditor()
+    }
+
+    private fun resetDraft() {
+        val current = editorSession ?: return
+        editorSession = current.reset()
+        editingDraft = editorSession!!.draft
         refreshComposeEditor()
     }
 
@@ -320,8 +349,10 @@ class QuickConfigActivity : LocalizedActivity() {
             return false
         }
         publishAfterSave(item.packageName)
-        savedEditingDraft = draft.afterSuccessfulSave()
-        editingDraft = savedEditingDraft
+        editorSession = (editorSession?.withDraft(draft) ?: AppConfigEditorSession(draft, null, draft, false))
+            .afterSave()
+        savedEditingDraft = editorSession!!.persistedBaseline
+        editingDraft = editorSession!!.draft
         editingSaveFeedback = true
         requestScopeAfterSuccessfulComposeSave(item)
         refreshComposeEditor()
@@ -360,11 +391,11 @@ class QuickConfigActivity : LocalizedActivity() {
     }
 
     private fun onComposeScopeApproved(packageName: String) {
-        if (editingDraft != null && packageName == editingDraft!!.packageName) {
-            editingDraft = editingDraft!!.withScopeSelected(true)
-        }
-        if (savedEditingDraft != null && packageName == savedEditingDraft!!.packageName) {
-            savedEditingDraft = savedEditingDraft!!.withScopeSelected(true)
+        val current = editorSession
+        if (current != null && packageName == current.draft.packageName) {
+            editorSession = current.withScopeSelected(true)
+            editingDraft = editorSession!!.draft
+            savedEditingDraft = editorSession!!.persistedBaseline
         }
         refreshComposeEditor()
     }

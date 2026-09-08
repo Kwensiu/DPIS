@@ -15,7 +15,7 @@
     <LinearLayout
         android:id="@+id/template_workspace_content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical">
 
         <com.google.android.material.card.MaterialCardView
@@ -157,8 +157,8 @@
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/quick_template_empty_state"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/template_workspace_empty_spacing_top"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:gravity="center"
             android:padding="@dimen/template_workspace_empty_padding"
             android:text="@string/template_workspace_quick_templates_empty"

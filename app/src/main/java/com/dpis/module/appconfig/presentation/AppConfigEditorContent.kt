@@ -4,6 +4,7 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.widget.ImageView
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -62,6 +63,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
@@ -221,23 +223,11 @@ fun AppConfigEditorContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1, overflow = TextOverflow.Ellipsis)
                         if (showInlineUnsavedBadge) {
-                            // Keep the badge in the measurement tree while it is hidden. The
-                            // first edit then changes only alpha, so the sheet anchor and window
-                            // pan do not jump when dirty transitions from false to true.
-                            Surface(
-                                modifier = Modifier
-                                    .padding(start = 8.dp)
-                                    .alpha(if (state.dirty) 1f else 0f),
-                                shape = AppConfigSheetUiTokens.UnsavedBadgeShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ) {
-                                Text(
-                                    stringResource(R.string.sheet_unsaved_badge),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
+                            AppConfigEditorSessionChip(
+                                chip = state.chip,
+                                compact = true,
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
                         }
                     }
                 }
@@ -564,5 +554,56 @@ fun AppConfigEditorContent(
             Text(stringResource(R.string.dialog_disable_button), maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         Spacer(Modifier.height(4.dp))
+    }
+}
+
+@Composable
+fun AppConfigEditorSessionChip(
+    chip: AppConfigEditorChip,
+    compact: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val visibleChip = if (chip == AppConfigEditorChip.NONE) {
+        AppConfigEditorChip.UNSAVED
+    } else {
+        chip
+    }
+    val prefill = visibleChip == AppConfigEditorChip.PREFILL
+    val container = if (prefill) {
+        colorResource(R.color.dpis_info_container)
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val content = if (prefill) {
+        colorResource(R.color.dpis_on_info_container)
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+    val outline = if (prefill) {
+        colorResource(R.color.dpis_info)
+    } else {
+        MaterialTheme.colorScheme.primary
+    }
+    Surface(
+        modifier = modifier.alpha(if (chip == AppConfigEditorChip.NONE) 0f else 1f),
+        shape = AppConfigSheetUiTokens.UnsavedBadgeShape,
+        color = container,
+        contentColor = content,
+        border = BorderStroke(1.dp, outline),
+    ) {
+        Text(
+            stringResource(
+                if (prefill) R.string.sheet_prefill_badge else R.string.sheet_unsaved_badge,
+            ),
+            modifier = Modifier.padding(
+                horizontal = if (compact) 8.dp else 12.dp,
+                vertical = if (compact) 2.dp else 4.dp,
+            ),
+            style = if (compact) {
+                MaterialTheme.typography.labelSmall
+            } else {
+                MaterialTheme.typography.labelMedium
+            },
+        )
     }
 }

@@ -468,7 +468,9 @@ public final class MainActivity
                     retainedState.editingPackageName,
                     retainedState.editingDraft,
                     retainedState.savedEditingDraft,
-                    retainedState.editingDestination
+                    retainedState.editingDestination,
+                    retainedState.prefillSnapshot,
+                    retainedState.prefillInvalidated
             );
             restoreAppEditorForCurrentWorkspace();
         }
@@ -687,6 +689,11 @@ public final class MainActivity
                         : null,
                 draft,
                 mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
+                mainViewModel != null && mainViewModel.getEditorSession() != null
+                        ? mainViewModel.getEditorSession().prefillSnapshot
+                        : null,
+                mainViewModel != null && mainViewModel.getEditorSession() != null
+                        && mainViewModel.getEditorSession().prefillInvalidated,
                 mainViewModel != null
                         ? mainViewModel.getEditingDestination()
                         : ConfigEditorDestination.MAIN,
@@ -1836,126 +1843,7 @@ public final class MainActivity
         applyLandDetailContentInsets(dialogView);
         new LandAppDetailPaneBinder(
                 this,
-                new LandAppDetailPaneBinder.Actions() {
-            @Override
-            public void saveDraft(
-                    AppListItem editorItem,
-                    AppConfigDialogBinder.AppConfigDialogState state,
-                    Integer viewportValue,
-                    String viewportTargetType,
-                    Integer fontPercent,
-                    String fontMode,
-                    String selectedTypefaceId,
-                    String draftFontHookDomainsRaw,
-                    String viewportApplyMode,
-                    boolean viewportApplyModeResetRequested,
-                    boolean fontHookDomainsResetRequested,
-                    String viewportScaleInput,
-                    String viewportAbsoluteInput,
-                    boolean dpisEnabled,
-                    View root,
-                    MaterialButton saveButton
-            ) {
-                saveAppConfigDraft(
-                        editorItem,
-                        state,
-                        viewportValue,
-                        viewportTargetType,
-                        fontPercent,
-                        fontMode,
-                        selectedTypefaceId,
-                        draftFontHookDomainsRaw,
-                        viewportApplyMode,
-                        viewportApplyModeResetRequested,
-                        fontHookDomainsResetRequested,
-                        viewportScaleInput,
-                        viewportAbsoluteInput,
-                        dpisEnabled,
-                        root,
-                        saveButton
-                );
-            }
-
-            @Override
-            public void showTypefaceSelector(
-                    AppListItem editorItem,
-                    AppConfigDialogBinder.AppConfigDialogState state,
-                    Runnable onChanged
-            ) {
-                showLandDetailTypefaceSelector(
-                        editorItem,
-                        state,
-                        onChanged
-                );
-            }
-
-            @Override
-            public void showHookDomains(
-                    AppListItem editorItem,
-                    AppConfigDialogBinder.AppConfigDialogState state,
-                    Runnable onChanged
-            ) {
-                showLandDetailHookDomains(editorItem, state, onChanged);
-            }
-
-            @Override
-            public void toggleScope(
-                    AppListItem editorItem,
-                    boolean currentlyInScope,
-                    Runnable onTurnedInScope,
-                    Runnable onTurnedOutScope
-            ) {
-                toggleLandDetailScope(
-                        editorItem,
-                        currentlyInScope,
-                        onTurnedInScope,
-                        onTurnedOutScope
-                );
-            }
-
-            @Override
-            public boolean setDpisEnabled(
-                    String packageName,
-                    boolean enabled
-            ) {
-                boolean saved = MainActivity.this.setDpisEnabled(
-                        packageName,
-                        enabled
-                );
-                if (saved) {
-                    WechatDpiSheetBinder.publishForDpisState(
-                            packageName,
-                            enabled
-                    );
-                    requestAppsLoad();
-                }
-                return saved;
-            }
-
-            @Override
-            public void executeProcessAction(
-                    AppListItem processItem,
-                    AppConfigDialogBinder.ProcessAction action
-            ) {
-                executeDialogProcessAction(processItem, action);
-            }
-
-            @Override
-            public void startFeedbackDiagnostic(
-                    AppListItem editorItem,
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                MainActivity.this.startFeedbackDiagnostic(editorItem, state);
-            }
-
-            @Override
-            public void onDraftStateChanged(
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                updateEditingDraft(state);
-            }
-
-        }
+                new LandAppDetailActivityActions(this)
         ).bind(dialogView, sheetItem, systemHooksEnabled);
         landDetailContent.removeAllViews();
         landDetailContent.addView(
@@ -2106,7 +1994,7 @@ public final class MainActivity
         }));
     }
 
-    private void saveAppConfigDraft(
+    void saveAppConfigDraft(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Integer viewportValue,
@@ -2431,7 +2319,7 @@ public final class MainActivity
         );
     }
 
-    private void showLandDetailTypefaceSelector(
+    void showLandDetailTypefaceSelector(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Runnable onChanged
@@ -2448,7 +2336,7 @@ public final class MainActivity
         ).showTypefaceSelector(selectorAnchor, state, onChanged);
     }
 
-    private void showLandDetailHookDomains(
+    void showLandDetailHookDomains(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Runnable onChanged
@@ -2704,7 +2592,7 @@ public final class MainActivity
         };
     }
 
-    private void startFeedbackDiagnostic(
+    void startFeedbackDiagnostic(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
@@ -3388,7 +3276,7 @@ public final class MainActivity
         );
     }
 
-    private void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
+    void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
         if (mainViewModel == null || state == null) {
             return;
         }
@@ -3552,6 +3440,8 @@ public final class MainActivity
                                  int[] appListScrollPositions, int[] refreshingPagePositions,
                                  String editingPackageName, EditorDraft editingDraft,
                                  EditorDraft savedEditingDraft,
+                                 EditorDraft prefillSnapshot,
+                                 boolean prefillInvalidated,
                                  ConfigEditorDestination editingDestination,
                                  TemplateWorkspaceActivitySession.State workspaceSessionState,
                                  Session feedbackDiagnosticSession,
@@ -3572,6 +3462,8 @@ public final class MainActivity
                     String editingPackageName,
                     EditorDraft editingDraft,
                     EditorDraft savedEditingDraft,
+                    EditorDraft prefillSnapshot,
+                    boolean prefillInvalidated,
                     ConfigEditorDestination editingDestination,
                     TemplateWorkspaceActivitySession.State workspaceSessionState,
                     Session feedbackDiagnosticSession,
@@ -3600,6 +3492,8 @@ public final class MainActivity
                 this.editingPackageName = editingPackageName;
                 this.editingDraft = editingDraft;
                 this.savedEditingDraft = savedEditingDraft;
+                this.prefillSnapshot = prefillSnapshot;
+                this.prefillInvalidated = prefillInvalidated;
                 this.editingDestination = editingDestination != null
                         ? editingDestination
                         : ConfigEditorDestination.MAIN;
@@ -3629,6 +3523,8 @@ public final class MainActivity
                         && java.util.Objects.equals(editingPackageName, other.editingPackageName)
                         && java.util.Objects.equals(editingDraft, other.editingDraft)
                         && java.util.Objects.equals(savedEditingDraft, other.savedEditingDraft)
+                        && java.util.Objects.equals(prefillSnapshot, other.prefillSnapshot)
+                        && prefillInvalidated == other.prefillInvalidated
                         && editingDestination == other.editingDestination
                         && java.util.Objects.equals(workspaceSessionState, other.workspaceSessionState)
                         && java.util.Objects.equals(feedbackDiagnosticSession, other.feedbackDiagnosticSession)
@@ -3643,7 +3539,8 @@ public final class MainActivity
             public int hashCode() {
                 int result = java.util.Objects.hash(
                         appsSnapshot, query, templateQuery, filterState, workspaceMode, currentPage,
-                        editingPackageName, editingDraft, savedEditingDraft, editingDestination,
+                        editingPackageName, editingDraft, savedEditingDraft, prefillSnapshot,
+                        prefillInvalidated, editingDestination,
                         workspaceSessionState, feedbackDiagnosticSession, feedbackDiagnosticPageRequest,
                         feedbackDiagnosticPresentationState, pendingUpdatePrompt);
                 result = 31 * result + java.util.Arrays.hashCode(appListScrollPositions);

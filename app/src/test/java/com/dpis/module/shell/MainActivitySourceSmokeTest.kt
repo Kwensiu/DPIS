@@ -78,10 +78,10 @@ class MainActivitySourceSmokeTest {
     @Test
     fun landDetailSaveRequestsScopeAfterSuccessfulSave() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val binder = read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java")
+        val binder = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
 
-        assertTrue(binder.contains("void saveDraft("))
-        assertTrue(binder.contains("AppConfigDialogBinder.AppConfigDialogState state,"))
+        assertTrue(binder.contains("fun saveDraft("))
+        assertTrue(binder.contains("state: AppConfigDialogState?"))
         assertTrue(source.contains("requestLandDetailScopeAfterSuccessfulSave(item, state)"))
         assertTrue(source.contains("!state.scopeKnown"))
         assertTrue(source.contains("state.scopeSelected"))
@@ -731,19 +731,16 @@ class MainActivitySourceSmokeTest {
                 "saveAppConfigDraft("
             )
         )
-        assertTrue(source.contains("editorItem"))
+        assertTrue(source.contains("void saveAppConfigDraft("))
         assertTrue(source.contains("state,"))
         assertTrue(
             source.contains("showLandDetailTypefaceSelector(")
         )
+        val landActions = read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
         assertTrue(
-            source.contains("showLandDetailHookDomains(editorItem, state, onChanged)")
+            landActions.contains("activity.showLandDetailHookDomains(item, state, onChanged)")
         )
-        assertTrue(
-            compact(source).contains(
-                "toggleLandDetailScope( editorItem, currentlyInScope, onTurnedInScope, onTurnedOutScope )"
-            )
-        )
+        assertTrue(landActions.contains("activity.toggleLandDetailScope("))
         assertTrue(
             source.contains(
                 "public boolean setDpisEnabled(String packageName, boolean enabled)"
@@ -752,14 +749,18 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("resetLandDetailConfig(editorItem)"))
         assertTrue(source.contains("appConfigSaveHandler.saveResolved("))
         assertTrue(source.contains("updateEditingDraft(state)"))
-        assertTrue(source.contains("void onDraftStateChanged("))
+        assertTrue(
+            read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+                .contains("fun onDraftStateChanged(")
+        )
         assertTrue(source.contains("if (draft == null && mainViewModel != null)"))
         assertTrue(
-            read("src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java")
-                .contains("AppConfigDialogBinder.AppConfigDialogState.fromItem(item)")
+            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
+                .contains("AppConfigDialogState.fromItem(item)")
         )
         assertTrue(
-            source.contains("executeDialogProcessAction(processItem, action)")
+            read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+                .contains("activity.executeDialogProcessAction(item, action)")
         )
         assertTrue(compact(source).contains("landDetailContent.addView( dialogView"))
         assertTrue(source.contains("ViewGroup.LayoutParams.MATCH_PARENT"))
@@ -813,7 +814,7 @@ class MainActivitySourceSmokeTest {
     fun landscapeAppDetailUsesDedicatedOverviewRows() {
         val layout = read("src/main/res/layout/view_land_app_detail.xml")
         val binder = read(
-            "src/main/java/com/dpis/module/appconfig/LandAppDetailPaneBinder.java"
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt"
         )
         val dimens = read("src/main/res/values/dimens.xml")
         val strings = read("src/main/res/values/strings.xml")
@@ -875,6 +876,10 @@ class MainActivitySourceSmokeTest {
         assertTrue(landStatusBlock.contains("android:layout_width=\"0dp\""))
         assertTrue(landStatusBlock.contains("android:layout_weight=\"1\""))
         assertTrue(layout.contains("android:id=\"@+id/land_detail_unsaved_badge\""))
+        assertTrue(binder.contains("LandAppDetailEditorSession.attach(root, LandAppDetailEditorSession.open(activity, item))"))
+        assertTrue(binder.contains("LandAppDetailEditorSession.syncFromViews(root)"))
+        assertTrue(binder.contains("LandAppDetailEditorSession.reset(root)"))
+        assertTrue(binder.contains("LandAppDetailEditorSession.markSaved(root)"))
         val unsavedBadgeStart = layout.indexOf("android:id=\"@+id/land_detail_unsaved_badge\"")
         val unsavedBadgeEnd = layout.indexOf("/>", unsavedBadgeStart)
         val unsavedBadgeBlock = layout.substring(unsavedBadgeStart, unsavedBadgeEnd)
@@ -900,16 +905,14 @@ class MainActivitySourceSmokeTest {
                 "android:id=\"@+id/land_detail_process_action_group\""))
         assertTrue(layout.contains(
                 "app:cardBackgroundColor=\"?attr/colorSurfaceContainer\""))
-        val clearanceStart = binder.indexOf("private void updateScrollContentClearance(")
-        val clearanceEnd = binder.indexOf(
-                "private static boolean updateSaveButtonState(",
-                clearanceStart
+        val adaptiveLayout = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailAdaptiveLayout.kt",
         )
-        val clearanceBlock = binder.substring(clearanceStart, clearanceEnd)
-        assertTrue(clearanceBlock.contains("R.id.land_detail_scroll_content"))
-        assertTrue(clearanceBlock.contains("content.setPaddingRelative("))
-        assertFalse(clearanceBlock.contains("MarginLayoutParams"))
-        assertFalse(clearanceBlock.contains("bottomMargin"))
+        assertTrue(binder.contains("LandAppDetailAdaptiveLayout.bindActionDock("))
+        assertTrue(adaptiveLayout.contains("fun updateScrollContentClearance("))
+        assertTrue(adaptiveLayout.contains("R.id.land_detail_scroll_content"))
+        assertTrue(adaptiveLayout.contains("content.setPaddingRelative("))
+        assertFalse(adaptiveLayout.contains("MarginLayoutParams"))
         assertTrue(layout.contains("android:id=\"@+id/land_detail_save_button\""))
         assertTrue(layout.contains("android:id=\"@+id/land_detail_scope_row\""))
         assertTrue(
@@ -996,10 +999,10 @@ class MainActivitySourceSmokeTest {
         )
         assertFalse(layout.contains("dialog_viewport_input_layout"))
         assertTrue(binder.contains("interface Actions"))
-        assertTrue(binder.contains("getPackageManager()"))
+        assertTrue(binder.contains("packageManager"))
         assertTrue(binder.contains("getPackageInfo(item.packageName, 0)"))
-        assertTrue(binder.contains("void saveDraft("))
-        assertTrue(binder.contains("AppListItem item,"))
+        assertTrue(binder.contains("fun saveDraft("))
+        assertTrue(binder.contains("item: AppListItem?,"))
         assertTrue(binder.contains("actions.saveDraft("))
         assertTrue(
             binder.contains("AppConfigDialogBinder.bindViewportModeToggle(")
@@ -1021,7 +1024,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(binder.contains("WechatDpiSheetBinder.clearDraft(root)"))
         assertTrue(
             binder.contains(
-                "AppConfigDialogBinder.AppConfigDialogState.fromItem(item)"
+                "AppConfigDialogState.fromItem(item)"
             )
         )
         assertTrue(
@@ -1031,13 +1034,12 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(
             compact(binder).contains(
-                "root.getTag(R.id.land_detail_hook_chain_row)"
+                "root?.getTag(R.id.land_detail_hook_chain_row)"
             )
         )
         assertTrue(
-            compact(binder).contains(
-                "root.setTag( R.id.land_detail_save_button, signature != null ? signature : \"\" )"
-            )
+            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailDraftSignature.kt")
+                .contains("root?.setTag(R.id.land_detail_save_button, signature.orEmpty())")
         )
         assertTrue(binder.contains("actions.showTypefaceSelector(item"))
         assertTrue(binder.contains("actions.showHookDomains(item, state"))

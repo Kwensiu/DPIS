@@ -77,6 +77,91 @@ class MainViewModelTest {
     }
 
     @Test
+    fun assigningDraftWithoutSessionCreatesAPersistedBaseline() {
+        val viewModel = MainViewModel(emptyState())
+        val draft = editorDraft("com.example.app", "125")
+
+        viewModel.editingDraft = draft
+
+        assertSame(draft, viewModel.editingDraft)
+        assertSame(draft, viewModel.savedEditingDraft)
+        assertNull(viewModel.editorSession!!.prefillSnapshot)
+    }
+
+    @Test
+    fun savedDraftSetterKeepsCurrentDraftAndPrefillLatch() {
+        val viewModel = MainViewModel(emptyState())
+        val draft = editorDraft("com.example.app", "125")
+        val saved = editorDraft("com.example.app", "110")
+        val prefill = editorDraft("com.example.app", "87.5")
+        viewModel.restoreEditingSession(
+            draft.packageName,
+            draft,
+            saved,
+            ConfigEditorDestination.MAIN,
+            prefill,
+            true,
+        )
+
+        viewModel.savedEditingDraft = editorDraft("com.example.app", "100")
+        assertEquals("100", viewModel.savedEditingDraft!!.viewportInput)
+        assertEquals("125", viewModel.editingDraft!!.viewportInput)
+        assertTrue(viewModel.editorSession!!.prefillInvalidated)
+
+        viewModel.savedEditingDraft = null
+        assertEquals("125", viewModel.savedEditingDraft!!.viewportInput)
+        assertEquals("125", viewModel.editingDraft!!.viewportInput)
+    }
+
+    @Test
+    fun savedDraftSetterNoOpsWhenThereIsNoSessionOrValue() {
+        val viewModel = MainViewModel(emptyState())
+
+        viewModel.savedEditingDraft = null
+        assertNull(viewModel.editorSession)
+
+        viewModel.savedEditingDraft = editorDraft("com.example.app", "125")
+        assertEquals("125", viewModel.savedEditingDraft!!.viewportInput)
+        assertEquals("125", viewModel.editingDraft!!.viewportInput)
+        assertNull(viewModel.editorSession!!.prefillSnapshot)
+    }
+
+    @Test
+    fun restoreEditingSessionClearsWhenDraftIsMissing() {
+        val viewModel = MainViewModel(emptyState())
+        viewModel.restoreEditingSession(
+            "com.example.app",
+            editorDraft("com.example.app", "125"),
+            null,
+            ConfigEditorDestination.TYPEFACE,
+        )
+
+        viewModel.restoreEditingSession("com.example.app", null, null, null)
+
+        assertEquals("com.example.app", viewModel.editingPackageName)
+        assertNull(viewModel.editorSession)
+        assertEquals(ConfigEditorDestination.MAIN, viewModel.editingDestination)
+    }
+
+    @Test
+    fun closingAPrefillSessionDoesNotRememberAClosedDraft() {
+        val viewModel = MainViewModel(emptyState())
+        val draft = editorDraft("com.example.app", "125")
+        viewModel.restoreEditingSession(
+            draft.packageName,
+            draft,
+            editorDraft("com.example.app", ""),
+            ConfigEditorDestination.MAIN,
+            draft,
+            false,
+        )
+
+        viewModel.clearEditingDraft()
+
+        assertNull(viewModel.getLastClosedEditingDraft(draft.packageName))
+    }
+
+    @Test
     fun approvedScopeUpdatesOnlyTheMatchingEditorSession() {
         val viewModel = MainViewModel(emptyState())
         val current = editorDraft("com.example.app", "125").withScopeSelected(false)

@@ -35,6 +35,7 @@ class EditorPresentation private constructor() {
         typefaceSelectorText: String?,
         hookChainText: String?,
         @JvmField val dirty: Boolean,
+        @JvmField val chip: AppConfigEditorChip,
         @JvmField val saveFeedbackVisible: Boolean,
         @JvmField val systemHooksEnabled: Boolean,
         automaticFontHookDomains: Set<String>,

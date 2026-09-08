@@ -76,6 +76,7 @@ internal fun TemplateEditorSheet(
     topChrome: @Composable () -> Unit,
     content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit,
     overlayContent: @Composable BoxScope.() -> Unit = {},
+    dismissRequest: Int = 0,
 ) {
     @Suppress("DEPRECATION")
     val bottomSheetState = rememberStandardBottomSheetState(
@@ -111,6 +112,10 @@ internal fun TemplateEditorSheet(
                 onDismissRequest()
             }
         }
+    }
+
+    LaunchedEffect(dismissRequest) {
+        if (dismissRequest > 0) dismissWithAnimation()
     }
 
     fun returnToMainCollapsed() {

@@ -6,14 +6,16 @@ import java.io.InputStream
 
 object RootCommandRunner {
     @JvmStatic
-    fun run(command: String?) {
+    fun run(command: String?): Boolean {
         var process: Process? = null
         try {
+            if (command.isNullOrBlank()) return false
             process = SecureProcessLauncher.startMerged("su", "-c", command)
             drain(process.inputStream)
             val exitCode = process.waitFor()
             if (exitCode == 0) {
                 RootAccessProbe.recordSuccessfulRootCommand()
+                return true
             }
         } catch (ignored: IOException) {
         } catch (ignored: InterruptedException) {
@@ -23,6 +25,7 @@ object RootCommandRunner {
                 process.destroy()
             }
         }
+        return false
     }
 
     @Throws(IOException::class)

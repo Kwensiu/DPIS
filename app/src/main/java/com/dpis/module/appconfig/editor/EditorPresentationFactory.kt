@@ -6,6 +6,7 @@ import com.dpis.module.applist.AppListItem
 /** Pure projection boundary for the Compose app editor. */
 object EditorPresentationFactory {
     @JvmStatic
+    @JvmOverloads
     fun create(
         item: AppListItem,
         versionName: String?,
@@ -18,17 +19,26 @@ object EditorPresentationFactory {
         automaticFontHookDomains: Set<String>,
         destination: ConfigEditorDestination?,
         actions: EditorPresentation.Actions,
-    ): EditorPresentation.State = EditorPresentation.State(
-        item,
-        versionName,
-        draft,
-        typefaceSelectorText,
-        hookChainText,
-        !draft.hasSameSavedConfig(savedDraft),
-        saveFeedbackVisible,
-        systemHooksEnabled,
-        automaticFontHookDomains,
-        destination,
-        actions,
-    )
+        editorSession: AppConfigEditorSession? = null,
+    ): EditorPresentation.State {
+        val chip = editorSession?.chip ?: if (!draft.hasSamePersistedConfig(savedDraft)) {
+            AppConfigEditorChip.UNSAVED
+        } else {
+            AppConfigEditorChip.NONE
+        }
+        return EditorPresentation.State(
+            item,
+            versionName,
+            draft,
+            typefaceSelectorText,
+            hookChainText,
+            chip == AppConfigEditorChip.UNSAVED,
+            chip,
+            saveFeedbackVisible,
+            systemHooksEnabled,
+            automaticFontHookDomains,
+            destination,
+            actions,
+        )
+    }
 }
