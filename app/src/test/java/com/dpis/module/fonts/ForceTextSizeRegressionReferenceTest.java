@@ -153,17 +153,11 @@ public class ForceTextSizeRegressionReferenceTest {
     @Test
     public void paintFallbackUsesArgumentReplacementInsteadOfPostWrite() throws Exception {
         String source = read("src/main/java/com/dpis/module/runtime/font/PaintTextSizeHookInstaller.kt");
-        String paintHook = source.substring(
-                source.indexOf("val paintSetTextSize"),
-                source.indexOf("val textPaintSetTextSize"));
-        String textPaintHook = source.substring(
-                source.indexOf("val textPaintSetTextSize"),
-                source.length());
 
-        assertTrue(paintHook.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
-        assertTrue(textPaintHook.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
-        assertFalse(paintHook.contains("paint.setTextSize(adjusted)"));
-        assertFalse(textPaintHook.contains("textPaint.setTextSize(adjusted)"));
+        assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
+        assertTrue(source.contains("installPaintTextSizeHook("));
+        assertFalse(source.contains("paint.setTextSize(adjusted)"));
+        assertFalse(source.contains("textPaint.setTextSize(adjusted)"));
     }
 
     @Test

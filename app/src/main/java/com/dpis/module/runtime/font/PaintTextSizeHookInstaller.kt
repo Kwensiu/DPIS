@@ -10,6 +10,7 @@ import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
+import java.lang.reflect.Method
 
 internal object PaintTextSizeHookInstaller {
     private const val HOT_LOG_INTERVAL = 32
@@ -24,132 +25,51 @@ internal object PaintTextSizeHookInstaller {
         packageName: String?,
         apiCapabilities: ModernApiCapabilities
     ) {
-val paintSetTextSize =
-            Paint::class.java.getDeclaredMethod("setTextSize", Float::class.javaPrimitiveType)
-        apiCapabilities.applyStableHookId<HookBuilder?>(
-            xposed.hook(paintSetTextSize)
-                .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
-            HOOK_ID_PAINT_SET_TEXT_SIZE
+        val paintSetTextSize = Paint::class.java.getDeclaredMethod(
+            "setTextSize", Float::class.javaPrimitiveType
         )
-            .intercept(Hooker { chain: XposedInterface.Chain? ->
-                if (true == ForceTextSizeHookRuntime.INTERNAL_UPDATE.get()) {
-                    return@Hooker chain!!.proceed()
-                }
-                if (!TextSizePolicy.isTargetPercentActive(targetPercent)) {
-                    return@Hooker chain!!.proceed()
-                }
-                val thisObject = chain!!.getThisObject()
-                if (thisObject !is Paint) {
-                    return@Hooker chain.proceed()
-                }
-                val incoming = chain.getArg(0) as Float
-                val currentPx = thisObject.getTextSize()
-                var context = PaintFallbackResolver.provisional(ForceTextSizeHookRuntime.isInsideTextViewSetTextSize)
-                var decision = PaintFallbackResolver.resolve(
-                    thisObject,
-                    incoming,
-                    currentPx,
-                    factor,
-                    context.strongerDomainOwns
-                )
-                if (decision.action == PaintFallbackAction.WRITE) {
-                    // Defer the stack snapshot to the write gate: most
-                    // Paint.setTextSize calls resolve to a non-WRITE decision
-                    // (already-applied, no-op delta, etc.) for reasons unrelated
-                    // to text-layout ownership, so they never need
-                    // Thread.currentThread().getStackTrace(). Only when we are
-                    // about to write do we re-check whether a stronger domain
-                    // (span processing inside a text layout) already owns this
-                    // paint size, which may flip the decision back to skip.
-                    context = PaintFallbackResolver.capture(
-                        thisObject, incoming, ForceTextSizeHookRuntime.isInsideTextViewSetTextSize,
-                        ForceTextSizeHookRuntime::isPaintSizeOwnedByTextLayout, ForceTextSizeHookRuntime::summarizePaintFallbackStack
-                    )
-                    decision = PaintFallbackResolver.resolve(
-                        thisObject,
-                        incoming,
-                        currentPx,
-                        factor,
-                        context.strongerDomainOwns
-                    )
-                }
-                if (decision.action != PaintFallbackAction.WRITE) {
-                    if (decision.action == PaintFallbackAction.KEEP) {
-                        RuntimeHotPathEvents.kept(
-                            packageName,
-                            "paint_text_size_fallback",
-                            ("reason=current_target, paint="
-                                    + thisObject.javaClass.getName()
-                                    + ", factor=" + factor
-                                    + ", percent=" + targetPercent)
-                        )
-                        return@Hooker null
-                    }
-                    return@Hooker chain.proceed()
-                }
-                val detail = ("paint=" + thisObject.javaClass.getName()
-                        + ", in=" + incoming
-                        + ", out=" + decision.adjustedPx
-                        + ", factor=" + factor
-                        + ", percent=" + targetPercent
-                        + context.detailSuffix())
-                RuntimeHotPathEvents.begin(
-                    packageName,
-                    "paint_text_size_fallback",
-                    detail
-                )
-                var result: Any?
-                try {
-                    result = chain.proceed(arrayOf<Any>(decision.adjustedPx))
-                    PaintProvenanceTracker.recordApplied(thisObject, decision.adjustedPx, factor)
-                    RuntimeHotPathEvents.applied(
-                        packageName,
-                        "paint_text_size_fallback",
-                        detail
-                    )
-                    ForceTextSizeHookRuntime.bridgeMutationAppliedIfChanged(
-                        xposed,
-                        packageName,
-                        HOOK_ID_PAINT_SET_TEXT_SIZE,
-                        "Paint.setTextSize fallback applied"
-                    )
-                } finally {
-                    RuntimeHotPathEvents.end(
-                        packageName,
-                        "paint_text_size_fallback",
-                        detail
-                    )
-                }
-                if (ForceTextSizeHookRuntime.verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
-                    ForceTextSizeHookRuntime.logSampled(
-                        ForceTextSizeHookRuntime.buildHotFontLogKey(packageName, "paint-size"),
-                        ("DPIS_FONT Paint.setTextSize override: in=" + incoming
-                                + ", out=" + decision.adjustedPx
-                                + ", factor=" + factor
-                                + ", percent=" + targetPercent),
-                        HOT_LOG_INTERVAL
-                    )
-                    ForceTextSizeHookRuntime.logCallerSample(packageName, "paint-size")
-                }
-                FontDebugStatsReporter.record(
-                    "paint-size",
-                    thisObject.javaClass.getName(),
-                    null
-                )
-                result
-            })
+        installPaintTextSizeHook(
+            xposed, paintSetTextSize, HOOK_ID_PAINT_SET_TEXT_SIZE, "paint_text_size_fallback",
+            "paint-size", "Paint.setTextSize fallback applied", "Paint.setTextSize override",
+            factor, targetPercent, packageName, apiCapabilities
+        )
         try {
             val textPaintSetTextSize =
                 TextPaint::class.java.getMethod("setTextSize", Float::class.javaPrimitiveType)
             if (textPaintSetTextSize == paintSetTextSize) {
                 return
             }
-            apiCapabilities.applyStableHookId<HookBuilder?>(
-                xposed.hook(textPaintSetTextSize)
-                    .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
-                HOOK_ID_TEXTPAINT_SET_TEXT_SIZE
+            installPaintTextSizeHook(
+                xposed, textPaintSetTextSize, HOOK_ID_TEXTPAINT_SET_TEXT_SIZE,
+                "textpaint_text_size_fallback", "textpaint-size",
+                "TextPaint.setTextSize fallback applied", "TextPaint.setTextSize override",
+                factor, targetPercent, packageName, apiCapabilities
             )
-                .intercept(Hooker { chain: XposedInterface.Chain? ->
+        } catch (t: Throwable) {
+            ForceTextSizeHookRuntime.logIfChanged(
+                ForceTextSizeHookRuntime.buildFontLogKey(packageName, "textpaint-hook-skip"),
+                "DPIS_FONT TextPaint.setTextSize hook skipped: "
+                        + t.javaClass.getSimpleName()
+            )
+        }
+    }
+
+    private fun installPaintTextSizeHook(
+        xposed: XposedInterface,
+        method: Method,
+        hookId: String,
+        eventName: String,
+        sampleName: String,
+        appliedMessage: String,
+        overrideLabel: String,
+        factor: Float,
+        targetPercent: Int?,
+        packageName: String?,
+        apiCapabilities: ModernApiCapabilities
+    ) {
+        apiCapabilities.applyStableHookId<HookBuilder?>(
+            xposed.hook(method).setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE), hookId
+        ).intercept(Hooker { chain: XposedInterface.Chain? ->
                     if (true == ForceTextSizeHookRuntime.INTERNAL_UPDATE.get()) {
                         return@Hooker chain!!.proceed()
                     }
@@ -157,7 +77,7 @@ val paintSetTextSize =
                         return@Hooker chain!!.proceed()
                     }
                     val thisObject = chain!!.getThisObject()
-                    if (thisObject !is TextPaint) {
+                    if (thisObject !is Paint) {
                         return@Hooker chain.proceed()
                     }
                     val incoming = chain.getArg(0) as Float
@@ -189,7 +109,7 @@ val paintSetTextSize =
                         if (decision.action == PaintFallbackAction.KEEP) {
                             RuntimeHotPathEvents.kept(
                                 packageName,
-                                "textpaint_text_size_fallback",
+                                eventName,
                                 ("reason=current_target, paint="
                                         + thisObject.javaClass.getName()
                                         + ", factor=" + factor
@@ -207,7 +127,7 @@ val paintSetTextSize =
                             + context.detailSuffix())
                     RuntimeHotPathEvents.begin(
                         packageName,
-                        "textpaint_text_size_fallback",
+                        eventName,
                         detail
                     )
                     var result: Any?
@@ -220,47 +140,40 @@ val paintSetTextSize =
                         )
                         RuntimeHotPathEvents.applied(
                             packageName,
-                            "textpaint_text_size_fallback",
+                            eventName,
                             detail
                         )
                         ForceTextSizeHookRuntime.bridgeMutationAppliedIfChanged(
                             xposed,
                             packageName,
-                            HOOK_ID_TEXTPAINT_SET_TEXT_SIZE,
-                            "TextPaint.setTextSize fallback applied"
+                            hookId,
+                            appliedMessage
                         )
                     } finally {
                         RuntimeHotPathEvents.end(
                             packageName,
-                            "textpaint_text_size_fallback",
+                            eventName,
                             detail
                         )
                     }
                     if (ForceTextSizeHookRuntime.verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                         ForceTextSizeHookRuntime.logSampled(
-                            ForceTextSizeHookRuntime.buildHotFontLogKey(packageName, "textpaint-size"),
-                            ("DPIS_FONT TextPaint.setTextSize override: in=" + incoming
+                            ForceTextSizeHookRuntime.buildHotFontLogKey(packageName, sampleName),
+                            ("DPIS_FONT " + overrideLabel + ": in=" + incoming
                                     + ", out=" + decision.adjustedPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent),
                             HOT_LOG_INTERVAL
                         )
-                        ForceTextSizeHookRuntime.logCallerSample(packageName, "textpaint-size")
+                        ForceTextSizeHookRuntime.logCallerSample(packageName, sampleName)
                     }
                     FontDebugStatsReporter.record(
-                        "textpaint-size",
+                        sampleName,
                         thisObject.javaClass.getName(),
                         null
                     )
                     result
                 })
-        } catch (t: Throwable) {
-            ForceTextSizeHookRuntime.logIfChanged(
-                ForceTextSizeHookRuntime.buildFontLogKey(packageName, "textpaint-hook-skip"),
-                "DPIS_FONT TextPaint.setTextSize hook skipped: "
-                        + t.javaClass.getSimpleName()
-            )
-        }
     }
 
     @JvmStatic
