@@ -12,9 +12,8 @@ import io.noties.markwon.Markwon
 import io.noties.markwon.MarkwonSpansFactory
 import io.noties.markwon.MarkwonVisitor
 import io.noties.markwon.core.CoreProps
-import io.noties.markwon.core.spans.BulletListItemSpan
-import io.noties.markwon.core.spans.OrderedListItemSpan
 import org.commonmark.node.Heading
+import org.commonmark.node.ListItem
 import org.commonmark.node.SoftLineBreak
 import java.util.Locale
 
@@ -74,7 +73,7 @@ object ReleaseNotesMarkdownRenderer {
         return applyPlainLinkSpans(plain.toString(), markdown)
     }
 
-    private fun stripMarkdownLine(line: String?): String {
+    internal fun stripMarkdownLine(line: String?): String {
         if (line == null) {
             return ""
         }
@@ -106,7 +105,7 @@ object ReleaseNotesMarkdownRenderer {
                 return out.toString()
             }
             val url = line.substring(labelEnd + 2, urlEnd)
-            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            if (!isAllowedReleaseNotesUrl(url)) {
                 out.append(line, index, urlEnd + 1)
                 index = urlEnd + 1
                 continue
@@ -137,7 +136,7 @@ object ReleaseNotesMarkdownRenderer {
                 }
                 val url = markdownText.substring(labelEnd + 2, urlEnd)
                 val label = markdownText.substring(labelStart + 1, labelEnd)
-                if (url.startsWith("http://") || url.startsWith("https://")) {
+                if (isAllowedReleaseNotesUrl(url)) {
                     val spanStart = plainText.indexOf(label, plainSearchStart)
                     if (spanStart >= 0) {
                         val spanEnd = spanStart + label.length
@@ -168,6 +167,9 @@ private class ReleaseNotesComposeCompatiblePlugin : AbstractMarkwonPlugin() {
             val level = CoreProps.HEADING_LEVEL.require(props)
             arrayOf<Any>(StyleSpan(Typeface.BOLD), RelativeSizeSpan(headingScale(level)))
         }
+        builder.setFactory(ListItem::class.java) { _, props ->
+            ReleaseNotesListMarker(listMarkerText(props))
+        }
     }
 
     override fun configureVisitor(builder: MarkwonVisitor.Builder) {
@@ -175,59 +177,75 @@ private class ReleaseNotesComposeCompatiblePlugin : AbstractMarkwonPlugin() {
             visitor.builder().append('\n')
         }
     }
+}
 
-    private fun headingScale(level: Int): Float = when (level) {
-        1 -> 1.35f
-        2 -> 1.22f
-        3 -> 1.12f
-        else -> 1.05f
+internal fun headingScale(level: Int): Float = when (level) {
+    1 -> 1.35f
+    2 -> 1.22f
+    3 -> 1.12f
+    else -> 1.05f
+}
+
+internal fun listMarkerText(props: io.noties.markwon.RenderProps): String {
+    return if (CoreProps.LIST_ITEM_TYPE.get(props) == CoreProps.ListItemType.ORDERED) {
+        val number = CoreProps.ORDERED_LIST_ITEM_NUMBER.get(props) ?: 1
+        "$number. "
+    } else {
+        "• "
     }
 }
+
+internal data class ReleaseNotesListMarker(val marker: String)
+
+internal fun isAllowedReleaseNotesUrl(url: String): Boolean = url.startsWith("https://")
+
+internal data class ReleaseNotesMarkerEdit(val start: Int, val end: Int, val marker: String)
 
 internal fun insertVisibleListMarkers(rendered: CharSequence): CharSequence {
     if (rendered !is Spanned) {
         return rendered
     }
-    val builder = try {
-        SpannableStringBuilder(rendered)
-    } catch (_: RuntimeException) {
+    val edits = rendered.getSpans(0, rendered.length, ReleaseNotesListMarker::class.java)
+        .map { ReleaseNotesMarkerEdit(rendered.getSpanStart(it), rendered.getSpanEnd(it), it.marker) }
+        .sortedByDescending { it.start }
+    if (edits.isEmpty()) {
         return rendered
     }
-    return try {
-        insertMarkers(builder, BulletListItemSpan::class.java) { "• " }
-        insertMarkers(builder, OrderedListItemSpan::class.java, ::orderedListMarker)
-        builder
-    } catch (_: RuntimeException) {
-        rendered
-    }
-}
-
-private fun <T : Any> insertMarkers(
-    builder: SpannableStringBuilder,
-    type: Class<T>,
-    markerFor: (T) -> String,
-) {
-    builder.getSpans(0, builder.length, type)
-        .sortedByDescending { builder.getSpanStart(it) }
-        .forEach { span ->
-            val start = builder.getSpanStart(span)
-            val index = firstContentIndex(builder, start, builder.getSpanEnd(span))
-            val marker = markerFor(span)
-            if (!hasPrefix(builder, index, marker)) {
-                builder.insert(index, marker)
-            }
-            builder.removeSpan(span)
+    val builder = try {
+        SpannableStringBuilder(rendered).also { built ->
+            built.getSpans(0, built.length, ReleaseNotesListMarker::class.java)
+                .forEach { built.removeSpan(it) }
         }
+    } catch (_: RuntimeException) {
+        null
+    }
+    var text: CharSequence = builder ?: rendered.toString()
+    for (edit in edits) {
+        text = insertMarkerText(text, edit)
+    }
+    return text
 }
 
-private fun orderedListMarker(span: OrderedListItemSpan): String {
-    return try {
-        val field = OrderedListItemSpan::class.java.getDeclaredField("number")
-        field.isAccessible = true
-        (field.get(span) as? String)?.takeIf { it.isNotEmpty() } ?: "1. "
-    } catch (_: Exception) {
-        "1. "
+internal fun insertMarkerText(text: CharSequence, edit: ReleaseNotesMarkerEdit): CharSequence {
+    val index = firstContentIndex(text, edit.start, edit.end)
+    if (hasPrefix(text, index, edit.marker)) {
+        return text
     }
+    return if (text is SpannableStringBuilder) {
+        try {
+            text.insert(index, edit.marker)
+            text
+        } catch (_: RuntimeException) {
+            insertMarkerIntoString(text.toString(), index, edit.marker)
+        }
+    } else {
+        insertMarkerIntoString(text.toString(), index, edit.marker)
+    }
+}
+
+private fun insertMarkerIntoString(text: String, index: Int, marker: String): String {
+    val safeIndex = index.coerceIn(0, text.length)
+    return text.substring(0, safeIndex) + marker + text.substring(safeIndex)
 }
 
 internal fun hasPrefix(text: CharSequence, index: Int, prefix: String): Boolean {

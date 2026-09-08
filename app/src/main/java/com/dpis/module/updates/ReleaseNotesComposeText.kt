@@ -70,7 +70,7 @@ private fun AnnotatedString.Builder.applyReleaseNotesSpan(
     when (span) {
         is URLSpan -> {
             val url = span.url.orEmpty()
-            if (url.startsWith("http://") || url.startsWith("https://")) {
+            if (isAllowedReleaseNotesUrl(url)) {
                 addLink(LinkAnnotation.Url(url), start, end)
                 addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
             }

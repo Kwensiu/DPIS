@@ -2,8 +2,14 @@ package com.dpis.module.updates
 
 import android.text.Spanned
 import android.text.style.LeadingMarginSpan
+import android.text.style.StrikethroughSpan
+import android.text.style.UnderlineSpan
+import android.text.style.URLSpan
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import io.noties.markwon.core.spans.EmphasisSpan
 import io.noties.markwon.core.spans.StrongEmphasisSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -78,6 +84,52 @@ class ReleaseNotesComposeTextTest {
         val annotated = text.toReleaseNotesAnnotatedString()
         assertEquals(text, annotated.text)
         assertTrue(annotated.spanStyles.isEmpty())
+    }
+
+    @Test
+    fun mapsHttpsLinksEmphasisAndDecorations() {
+        val text = "Crash warning"
+        val spanned = TestSpanned(
+            text,
+            listOf(
+                TestSpan(TestUrlSpan("https://github.com/Kwensiu/DPIS"), 0, 5),
+                TestSpan(TestUrlSpan("javascript:alert(1)"), 6, 13),
+                TestSpan(EmphasisSpan(), 0, 5),
+                TestSpan(StrikethroughSpan(), 6, 13),
+                TestSpan(UnderlineSpan(), 0, 5),
+            ),
+        )
+
+        val annotated = spanned.toReleaseNotesAnnotatedString()
+        assertEquals(text, annotated.text)
+        assertTrue(
+            annotated.getLinkAnnotations(0, 5).any { range ->
+                val link = range.item as? LinkAnnotation.Url
+                link?.url == "https://github.com/Kwensiu/DPIS"
+            },
+        )
+        assertTrue(annotated.getLinkAnnotations(6, 13).isEmpty())
+        assertTrue(annotated.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
+        assertTrue(annotated.spanStyles.any { it.item.textDecoration == TextDecoration.LineThrough })
+        assertTrue(annotated.spanStyles.any { it.item.textDecoration == TextDecoration.Underline })
+    }
+
+    @Test
+    fun indentsEachLineOfAQuotedBlock() {
+        val text = "务必导出配置备份后更新\n全新界面和自适应体验"
+        val spanned = TestSpanned(
+            text,
+            listOf(TestSpan(LeadingMarginSpan.Standard(24), 0, text.length)),
+        )
+        val annotated = spanned.toReleaseNotesAnnotatedString()
+        assertEquals(2, annotated.paragraphStyles.size)
+        assertFalse(
+            annotated.getStringAnnotations(RELEASE_NOTES_QUOTE_TAG, 0, text.length).isEmpty(),
+        )
+    }
+
+    private class TestUrlSpan(private val href: String) : URLSpan(href) {
+        override fun getURL(): String = href
     }
 
     private data class TestSpan(val span: Any, val start: Int, val end: Int)
