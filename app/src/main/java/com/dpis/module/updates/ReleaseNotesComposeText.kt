@@ -69,8 +69,8 @@ private fun AnnotatedString.Builder.applyReleaseNotesSpan(
 ) {
     when (span) {
         is URLSpan -> {
-            val url = span.url.orEmpty()
-            if (isAllowedReleaseNotesUrl(url)) {
+            val url = sanitizedReleaseNotesUrl(span.url.orEmpty())
+            if (url != null) {
                 addLink(LinkAnnotation.Url(url), start, end)
                 addStyle(SpanStyle(textDecoration = TextDecoration.Underline), start, end)
             }

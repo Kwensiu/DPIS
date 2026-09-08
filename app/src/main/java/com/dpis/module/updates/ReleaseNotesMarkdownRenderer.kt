@@ -147,17 +147,23 @@ internal data class ReleaseNotesListMarker(val marker: String)
 
 internal data class ReleaseNotesPlainLink(val label: String, val url: String)
 
-internal fun isAllowedReleaseNotesUrl(url: String): Boolean {
+internal fun isAllowedReleaseNotesUrl(url: String): Boolean = sanitizedReleaseNotesUrl(url) != null
+
+internal fun sanitizedReleaseNotesUrl(url: String): String? {
     return try {
         val uri = URI(url)
         val host = uri.host
-        uri.scheme.equals("https", ignoreCase = true) &&
-            !host.isNullOrBlank() &&
-            uri.userInfo == null
+        if (!uri.scheme.equals("https", ignoreCase = true) ||
+            host.isNullOrBlank() ||
+            uri.userInfo != null
+        ) {
+            return null
+        }
+        URI("https", null, host, uri.port, uri.path, uri.query, uri.fragment).toASCIIString()
     } catch (_: URISyntaxException) {
-        false
+        null
     } catch (_: IllegalArgumentException) {
-        false
+        null
     }
 }
 
@@ -176,8 +182,9 @@ internal fun parseReleaseNoteMarkdownLinks(markdown: String): List<ReleaseNotesP
         }
         val url = markdown.substring(labelEnd + 2, urlEnd)
         val label = markdown.substring(labelStart + 1, labelEnd)
-        if (isAllowedReleaseNotesUrl(url)) {
-            links.add(ReleaseNotesPlainLink(label, url))
+        val sanitized = sanitizedReleaseNotesUrl(url)
+        if (sanitized != null) {
+            links.add(ReleaseNotesPlainLink(label, sanitized))
         }
         searchStart = urlEnd + 1
     }

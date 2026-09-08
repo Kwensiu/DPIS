@@ -1,11 +1,15 @@
 package com.dpis.module.updates
 
 import android.text.Spanned
+import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
 import android.text.style.LeadingMarginSpan
 import android.text.style.StrikethroughSpan
+import android.text.style.TypefaceSpan
 import android.text.style.UnderlineSpan
 import android.text.style.URLSpan
 import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -97,6 +101,9 @@ class ReleaseNotesComposeTextTest {
                 TestSpan(EmphasisSpan(), 0, 5),
                 TestSpan(StrikethroughSpan(), 6, 13),
                 TestSpan(UnderlineSpan(), 0, 5),
+                TestSpan(TestMonoSpan(), 6, 13),
+                TestSpan(TestForegroundSpan(), 0, 5),
+                TestSpan(TestBackgroundSpan(), 6, 13),
             ),
         )
 
@@ -112,6 +119,7 @@ class ReleaseNotesComposeTextTest {
         assertTrue(annotated.spanStyles.any { it.item.fontStyle == FontStyle.Italic })
         assertTrue(annotated.spanStyles.any { it.item.textDecoration == TextDecoration.LineThrough })
         assertTrue(annotated.spanStyles.any { it.item.textDecoration == TextDecoration.Underline })
+        assertTrue(annotated.spanStyles.any { it.item.fontFamily == FontFamily.Monospace })
     }
 
     @Test
@@ -130,6 +138,18 @@ class ReleaseNotesComposeTextTest {
 
     private class TestUrlSpan(private val href: String) : URLSpan(href) {
         override fun getURL(): String = href
+    }
+
+    private class TestMonoSpan : TypefaceSpan("monospace") {
+        override fun getFamily(): String = "monospace"
+    }
+
+    private class TestForegroundSpan : ForegroundColorSpan(0xFF0000) {
+        override fun getForegroundColor(): Int = 0xFF0000
+    }
+
+    private class TestBackgroundSpan : BackgroundColorSpan(0x33808080) {
+        override fun getBackgroundColor(): Int = 0x33808080
     }
 
     private data class TestSpan(val span: Any, val start: Int, val end: Int)
