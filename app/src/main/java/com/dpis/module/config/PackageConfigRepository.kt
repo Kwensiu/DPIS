@@ -7,6 +7,9 @@ class PackageConfigRepository(private val store: DpisConfigStore?) {
     fun hasRealPackageConfig(packageName: String?): Boolean =
         store?.hasRealPackageConfig(packageName) == true
 
+    fun hasConfiguredPackage(packageName: String?): Boolean =
+        packageName != null && store?.getConfiguredPackages()?.contains(packageName) == true
+
     fun writePackageTemplateConfigValue(
         packageName: String?,
         value: TemplateConfigValue?,

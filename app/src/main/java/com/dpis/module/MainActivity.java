@@ -468,7 +468,9 @@ public final class MainActivity
                     retainedState.editingPackageName,
                     retainedState.editingDraft,
                     retainedState.savedEditingDraft,
-                    retainedState.editingDestination
+                    retainedState.editingDestination,
+                    retainedState.prefillSnapshot,
+                    retainedState.prefillInvalidated
             );
             restoreAppEditorForCurrentWorkspace();
         }
@@ -687,6 +689,11 @@ public final class MainActivity
                         : null,
                 draft,
                 mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
+                mainViewModel != null && mainViewModel.getEditorSession() != null
+                        ? mainViewModel.getEditorSession().prefillSnapshot
+                        : null,
+                mainViewModel != null && mainViewModel.getEditorSession() != null
+                        && mainViewModel.getEditorSession().prefillInvalidated,
                 mainViewModel != null
                         ? mainViewModel.getEditingDestination()
                         : ConfigEditorDestination.MAIN,
@@ -3552,6 +3559,8 @@ public final class MainActivity
                                  int[] appListScrollPositions, int[] refreshingPagePositions,
                                  String editingPackageName, EditorDraft editingDraft,
                                  EditorDraft savedEditingDraft,
+                                 EditorDraft prefillSnapshot,
+                                 boolean prefillInvalidated,
                                  ConfigEditorDestination editingDestination,
                                  TemplateWorkspaceActivitySession.State workspaceSessionState,
                                  Session feedbackDiagnosticSession,
@@ -3572,6 +3581,8 @@ public final class MainActivity
                     String editingPackageName,
                     EditorDraft editingDraft,
                     EditorDraft savedEditingDraft,
+                    EditorDraft prefillSnapshot,
+                    boolean prefillInvalidated,
                     ConfigEditorDestination editingDestination,
                     TemplateWorkspaceActivitySession.State workspaceSessionState,
                     Session feedbackDiagnosticSession,
@@ -3600,6 +3611,8 @@ public final class MainActivity
                 this.editingPackageName = editingPackageName;
                 this.editingDraft = editingDraft;
                 this.savedEditingDraft = savedEditingDraft;
+                this.prefillSnapshot = prefillSnapshot;
+                this.prefillInvalidated = prefillInvalidated;
                 this.editingDestination = editingDestination != null
                         ? editingDestination
                         : ConfigEditorDestination.MAIN;
@@ -3629,6 +3642,8 @@ public final class MainActivity
                         && java.util.Objects.equals(editingPackageName, other.editingPackageName)
                         && java.util.Objects.equals(editingDraft, other.editingDraft)
                         && java.util.Objects.equals(savedEditingDraft, other.savedEditingDraft)
+                        && java.util.Objects.equals(prefillSnapshot, other.prefillSnapshot)
+                        && prefillInvalidated == other.prefillInvalidated
                         && editingDestination == other.editingDestination
                         && java.util.Objects.equals(workspaceSessionState, other.workspaceSessionState)
                         && java.util.Objects.equals(feedbackDiagnosticSession, other.feedbackDiagnosticSession)
@@ -3643,7 +3658,8 @@ public final class MainActivity
             public int hashCode() {
                 int result = java.util.Objects.hash(
                         appsSnapshot, query, templateQuery, filterState, workspaceMode, currentPage,
-                        editingPackageName, editingDraft, savedEditingDraft, editingDestination,
+                        editingPackageName, editingDraft, savedEditingDraft, prefillSnapshot,
+                        prefillInvalidated, editingDestination,
                         workspaceSessionState, feedbackDiagnosticSession, feedbackDiagnosticPageRequest,
                         feedbackDiagnosticPresentationState, pendingUpdatePrompt);
                 result = 31 * result + java.util.Arrays.hashCode(appListScrollPositions);

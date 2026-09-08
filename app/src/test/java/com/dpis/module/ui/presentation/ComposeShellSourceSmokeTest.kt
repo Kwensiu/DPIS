@@ -177,16 +177,16 @@ class ComposeShellSourceSmokeTest {
     }
 
     @Test
-    fun appEditorTreatsGlobalPrefillAsAnUnsavedConfigurationDraft() {
+    fun appEditorDerivesPrefillChipFromEditorSession() {
         val shell = read("src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
         val item = read("src/main/java/com/dpis/module/applist/AppListItem.java")
         val editor = read("src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorController.kt")
 
-        assertTrue(shell.contains("editorState.dirty || editorState.item.previewFromGlobalPrefill"))
+        assertTrue(shell.contains("editorState.chip != AppConfigEditorChip.NONE"))
         assertTrue(item.contains("appSpecificConfigActive,"))
         assertTrue(editor.contains("val editorItem = host.resolveEditorItem(item.packageName) ?: item"))
-        assertTrue(editor.contains("if (editorItem.previewFromGlobalPrefill)"))
-        assertTrue(editor.contains("EditorDraft.fromItem(editorItem)"))
+        assertTrue(editor.contains("session.editorSession = openSession(editorItem)"))
+        assertTrue(editor.contains("AppConfigEditorSession.open(editorItem, hasSaved, prefill)"))
     }
 
     @Test
@@ -310,9 +310,12 @@ class ComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains("R.string.dialog_advanced_wizard_hint"))
         assertTrue(coordinator.contains("R.string.feedback_diagnostic_action"))
         assertTrue(coordinator.contains("AppConfigSheetUiTokens.TopChromeIndicatorWidth"))
-        assertTrue(coordinator.contains(
-                "editorState.dirty || editorState.item.previewFromGlobalPrefill"))
-        assertTrue(coordinator.contains("R.string.sheet_unsaved_badge"))
+        assertTrue(coordinator.contains("editorState.chip != AppConfigEditorChip.NONE"))
+        assertTrue(coordinator.contains("AppConfigEditorSessionChip("))
+        val chip = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorContent.kt")
+        assertTrue(chip.contains("colorResource(R.color.dpis_info_container)"))
+        assertTrue(chip.contains("colorResource(R.color.dpis_on_info_container)"))
+        assertTrue(chip.contains("colorResource(R.color.dpis_info)"))
         assertTrue(coordinator.contains("showInlineUnsavedBadge = false"))
         assertTrue(appEditor.contains("showInlineUnsavedBadge: Boolean = true"))
         assertTrue(appEditor.contains("coordinates.positionInParent().y.toDp()"))

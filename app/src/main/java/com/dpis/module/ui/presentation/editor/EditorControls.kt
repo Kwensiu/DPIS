@@ -1,7 +1,7 @@
 package com.dpis.module.ui.compose
 
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -144,10 +144,10 @@ internal fun CompactEditorTextField(
                 // decorator rather than only the label content.
                 MaterialTheme(motionScheme = EditorTextFieldMotionScheme) {
                     OutlinedTextFieldDefaults.DecorationBox(
-                    // Keep label placement tied to the same text rendered by BasicTextField. The
-                    // local value can lead the parent draft by one frame while IME composition
-                    // settles; using the parent string here makes the label overlap that text.
-                    value = textFieldValue.text,
+                    // The decoration follows the owner-provided draft value. This keeps the
+                    // empty/unfocused label in Material's normal resting position even while the
+                    // local cursor state is being synchronized with the mutable draft.
+                    value = value,
                     innerTextField = innerTextField,
                     enabled = true,
                     singleLine = true,
@@ -402,10 +402,8 @@ internal fun Modifier.clearTextInputFocusOutside(
         val dismissOutsideGesture = boundary.hasFocusedInput &&
             boundary.isOutsideInput(down.position)
         if (dismissOutsideGesture) {
-            // While an editor input owns the IME, outside gestures belong to keyboard dismissal.
-            // Consume the complete gesture so sheet dragging, scrolling, and button clicks do
-            // not race the IME/inset transition and leave stale hit-test coordinates behind.
-            down.consume()
+            // Clear focus immediately, but leave the pointer stream available to the child
+            // control so mode selectors, buttons, and sheet gestures still receive the tap.
             focusManager.clearFocus(force = true)
         }
         while (true) {
@@ -413,7 +411,6 @@ internal fun Modifier.clearTextInputFocusOutside(
                 .changes
                 .firstOrNull { it.id == down.id }
                 ?: break
-            if (dismissOutsideGesture) change.consume()
             if (!change.pressed) {
                 break
             }
@@ -560,9 +557,8 @@ private object EditorTextFieldMotionScheme : MotionScheme {
 }
 
 /**
- * Value plus mode selector row. The mode selector consumes a proportional share at rest, then
- * yields its space while a sufficiently wide value field has focus. Only horizontal constraints
- * animate, keeping sheet height and its partial anchor stable.
+ * Value plus mode selector row. Both controls keep a stable hit target while the editor is open;
+ * changing focus must not remove the mode control or move the adjacent input under the pointer.
  */
 @Composable
 internal fun EditorValueModeRow(
@@ -585,11 +581,7 @@ internal fun EditorValueModeRow(
         // The available width is already expressed in the user's scaled density. A fixed dp
         // threshold therefore rejects expansion at larger interface scales despite unchanged
         // physical width. The mode track itself is the only meaningful minimum constraint.
-        val targetReservedWidth = if (inputFocused && maxWidth > 0.dp) {
-            0.dp
-        } else {
-            restingModeWidth + 8.dp
-        }
+        val targetReservedWidth = if (inputFocused && maxWidth > 0.dp) 0.dp else restingModeWidth + 8.dp
         val reservedWidth by animateDpAsState(
             targetValue = targetReservedWidth,
             animationSpec = tween(
@@ -615,15 +607,15 @@ internal fun EditorValueModeRow(
                         .padding(start = 8.dp, top = AppConfigSheetUiTokens.FieldTopInset)
                         .clipToBounds(),
                 ) {
-                    ModeSelector(
-                        selectedFirst = firstSelected,
-                        firstLabel = first,
-                        secondLabel = second,
-                        onFirstSelected = onFirst,
-                        onSecondSelected = onSecond,
-                        labelStyle = labelStyle,
-                        width = modeWidth,
-                    )
+                ModeSelector(
+                    selectedFirst = firstSelected,
+                    firstLabel = first,
+                    secondLabel = second,
+                    onFirstSelected = onFirst,
+                    onSecondSelected = onSecond,
+                    labelStyle = labelStyle,
+                    width = modeWidth,
+                )
                 }
             }
         }

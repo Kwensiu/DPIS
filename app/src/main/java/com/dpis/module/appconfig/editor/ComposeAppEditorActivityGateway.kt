@@ -1,5 +1,6 @@
 package com.dpis.module
 
+import android.content.Context
 import com.dpis.module.appconfig.AppConfigDialogBinder
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigSaveHandler
@@ -7,6 +8,9 @@ import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.config.PackageConfigRepository
+import com.dpis.module.templates.GlobalPrefillStore
+import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.quirks.WechatDpiSheetBinder
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -28,6 +32,16 @@ internal class ComposeAppEditorActivityGateway(
         if (store != null) item = item.withDpisEnabled(store.isTargetDpisEnabled(packageName))
         return AppConfigPrefillPreview.resolveForEditor(activity, item, store)
     }
+
+    override fun hasSavedPackageConfig(packageName: String): Boolean {
+        val repository = PackageConfigRepository(activity.hookConfigStore)
+        return repository.hasRealPackageConfig(packageName) ||
+            repository.hasConfiguredPackage(packageName)
+    }
+
+    override fun resolveGlobalPrefill(): TemplateConfigValue? = GlobalPrefillStore(
+        activity.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE),
+    ).read()
 
     override fun resolvePackageVersionName(packageName: String): String =
         activity.resolvePackageVersionName(packageName)

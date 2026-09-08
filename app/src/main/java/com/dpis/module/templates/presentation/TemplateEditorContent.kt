@@ -247,13 +247,15 @@ fun TemplateEditorContent(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = viewportHasError,
                     onFocusChanged = onFocusChanged,
-                    trailingIcon = {
+                    trailingIcon = if (form.viewportInput.isNotEmpty()) {
+                        {
                         EditorClearButton(visible = form.viewportInput.isNotEmpty(), onClear = {
                             form.viewportInput = ""
                             form.updateActiveViewportDraft()
                             onFormChanged()
                         })
-                    },
+                        }
+                    } else null,
                 )
             },
             first = stringResource(R.string.dialog_viewport_mode_system),
@@ -276,12 +278,14 @@ fun TemplateEditorContent(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = fontHasError,
                     onFocusChanged = onFocusChanged,
-                    trailingIcon = {
+                    trailingIcon = if (form.fontInput.isNotEmpty()) {
+                        {
                         EditorClearButton(visible = form.fontInput.isNotEmpty(), onClear = {
                             form.fontInput = ""
                             onFormChanged()
                         })
-                    },
+                        }
+                    } else null,
                 )
             },
             first = stringResource(R.string.dialog_font_mode_system),

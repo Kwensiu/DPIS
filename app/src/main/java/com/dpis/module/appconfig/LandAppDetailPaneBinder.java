@@ -122,9 +122,6 @@ public final class LandAppDetailPaneBinder {
         MaterialTextView statusView = root.findViewById(
                 R.id.land_detail_status
         );
-        MaterialTextView unsavedBadge = root.findViewById(
-                R.id.land_detail_unsaved_badge
-        );
         MaterialButton saveButton = root.findViewById(
                 R.id.land_detail_save_button
         );
@@ -139,12 +136,10 @@ public final class LandAppDetailPaneBinder {
         titleView.setText(item.label);
         packageView.setText(item.packageName);
         statusView.setText(formatStatus(item, systemHooksEnabled));
-        unsavedBadge.setVisibility(
-                item.previewFromGlobalPrefill ? View.VISIBLE : View.INVISIBLE
-        );
         AppConfigDialogBinder.AppConfigDialogState state
                 = AppConfigDialogBinder.AppConfigDialogState.fromItem(item);
         root.setTag(R.id.land_detail_hook_chain_row, state);
+        LandAppDetailEditorSession.attach(root, LandAppDetailEditorSession.open(activity, item));
 
         bindViewportEditor(root, item, state);
         bindFontEditor(root, item);
@@ -188,7 +183,7 @@ public final class LandAppDetailPaneBinder {
                 dpisToggleButton
         );
         refreshScopeButton(scopeButton, state, scopeStyle);
-        refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
+        refreshDpisToggleButton(root, dpisToggleButton, state, dpisStyle);
         bindAdvancedButton(root, R.id.land_detail_scope_row, () -> {
             clearLandDetailInputFocus(root);
             actions.toggleScope(
@@ -206,13 +201,13 @@ public final class LandAppDetailPaneBinder {
         });
         bindAdvancedButton(root, R.id.land_detail_dpis_toggle_row, () -> {
             clearLandDetailInputFocus(root);
-            if (state.previewFromGlobalPrefill) {
+            if (LandAppDetailEditorSession.isPrefillChip(root)) {
                 return;
             }
             boolean nextEnabled = !state.dpisEnabled;
             if (actions.setDpisEnabled(item.packageName, nextEnabled)) {
                 state.dpisEnabled = nextEnabled;
-                refreshDpisToggleButton(dpisToggleButton, state, dpisStyle);
+                refreshDpisToggleButton(root, dpisToggleButton, state, dpisStyle);
                 statusView.setText(formatStatus(item, systemHooksEnabled));
             }
         });
@@ -629,6 +624,7 @@ public final class LandAppDetailPaneBinder {
     }
 
     private void refreshDpisToggleButton(
+            View root,
             MaterialButton dpisToggleButton,
             AppConfigDialogBinder.AppConfigDialogState state,
             ActionButtonStyle style
@@ -661,8 +657,9 @@ public final class LandAppDetailPaneBinder {
                 enabledActive ? style.defaultStrokeWidth : 0
         );
         dpisToggleButton.setContentDescription(buttonText);
-        dpisToggleButton.setEnabled(!state.previewFromGlobalPrefill);
-        dpisToggleButton.setAlpha(state.previewFromGlobalPrefill ? 0.6f : 1f);
+        boolean prefillChip = LandAppDetailEditorSession.isPrefillChip(root);
+        dpisToggleButton.setEnabled(!prefillChip);
+        dpisToggleButton.setAlpha(prefillChip ? 0.6f : 1f);
     }
 
     private void clearLandDetailInputFocus(View root) {
@@ -1060,6 +1057,7 @@ public final class LandAppDetailPaneBinder {
         if (saveButton != null) {
             saveButton.setEnabled(false);
         }
+        LandAppDetailEditorSession.markSaved(root);
         updateUnsavedBadge(root);
     }
 
@@ -1143,14 +1141,7 @@ public final class LandAppDetailPaneBinder {
     }
 
     private static void updateUnsavedBadge(View root) {
-        MaterialTextView badge = root.findViewById(
-                R.id.land_detail_unsaved_badge
-        );
-        if (badge != null) {
-            badge.setVisibility(
-                    hasUnsavedChanges(root) ? View.VISIBLE : View.INVISIBLE
-            );
-        }
+        LandAppDetailEditorSession.syncFromViews(root);
     }
 
     private static void setCleanStateSignature(View root, String signature) {
@@ -1272,6 +1263,7 @@ public final class LandAppDetailPaneBinder {
                 FontApplyMode.SYSTEM_EMULATION,
                 true
         );
+        LandAppDetailEditorSession.reset(root);
         updateSaveButtonState(root, saveButton);
     }
 

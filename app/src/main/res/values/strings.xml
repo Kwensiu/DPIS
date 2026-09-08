@@ -279,6 +279,7 @@ Mini Programs are not supported yet.</string>
     <string name="template_workspace_summary_typeface">Font style: %1$s</string>
     <string name="template_workspace_summary_hook_domains">Custom hook chain</string>
     <string name="sheet_unsaved_badge">Unsaved</string>
+    <string name="sheet_prefill_badge">Prefill</string>
     <string name="template_workspace_mode_auto">Auto</string>
     <string name="template_workspace_mode_system">System</string>
     <string name="template_workspace_mode_compat">Compat</string>

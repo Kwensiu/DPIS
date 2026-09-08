@@ -7,7 +7,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.dpis.module.appconfig.AppConfigEditorChip;
+import com.dpis.module.appconfig.AppConfigEditorSession;
 import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
 import com.dpis.module.appconfig.EditorDialogStateFactory;
 import com.dpis.module.appconfig.EditorPresentationFactory;
 import com.dpis.module.applist.AppListItem;
@@ -28,6 +31,7 @@ public final class AppConfigEditorPresentationFactoryTest {
                 draft, draft, actions);
 
         assertFalse(state.dirty);
+        assertEquals(AppConfigEditorChip.NONE, state.chip);
         assertSame(actions, state.actions);
         assertTrue(state.saveEnabled);
     }
@@ -41,6 +45,39 @@ public final class AppConfigEditorPresentationFactoryTest {
                 draft, saved, actions());
 
         assertTrue(state.dirty);
+        assertEquals(AppConfigEditorChip.UNSAVED, state.chip);
+    }
+
+    @Test
+    public void mapsPrefillSessionToPrefillChipInsteadOfUnsaved() {
+        AppListItem item = app("Example", "com.example.app");
+        AppConfigEditorSession session = AppConfigEditorSession.open(
+                item,
+                false,
+                TemplateConfigValueAdapters.fromViewportTargetSpec(
+                        ViewportTargetSpec.relativeScale(87500),
+                        ViewportApplyMode.AUTO,
+                        125,
+                        FontApplyMode.FIELD_REWRITE,
+                        "serif",
+                        "resources_font"));
+
+        EditorPresentation.State state = EditorPresentationFactory.create(
+                item,
+                "1.2.3",
+                session.draft,
+                "默认",
+                "Hook",
+                session.persistedBaseline,
+                false,
+                true,
+                Set.of("android.widget.TextView"),
+                ConfigEditorDestination.MAIN,
+                actions(),
+                session);
+
+        assertEquals(AppConfigEditorChip.PREFILL, state.chip);
+        assertFalse(state.dirty);
     }
 
     @Test

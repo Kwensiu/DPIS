@@ -1,12 +1,13 @@
 package com.dpis.module
 
 import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorActions
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.appconfig.EditorPresentationFactory
-import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.templates.TemplateConfigValue
 
 /**
  * Session and action owner for the primary-workspace Compose app editor.
@@ -21,6 +22,8 @@ internal class ComposeAppEditorController(
 ) {
     interface Host {
         fun resolveEditorItem(packageName: String): AppListItem?
+        fun hasSavedPackageConfig(packageName: String): Boolean
+        fun resolveGlobalPrefill(): TemplateConfigValue?
         fun resolvePackageVersionName(packageName: String): String
         fun createDialogState(item: AppListItem, draft: EditorDraft): AppConfigDialogBinder.AppConfigDialogState
         fun typefaceSelectorText(typefaceId: String?): String
@@ -50,16 +53,9 @@ internal class ComposeAppEditorController(
     fun createState(): EditorPresentation.State? {
         val packageName = session.editingPackageName ?: return null
         val item = host.resolveEditorItem(packageName) ?: return null
-        val resolved = EditorSessionResolver.resolve(
-            item,
-            session.editingDraft,
-            session.savedEditingDraft,
-        ) ?: return null
-        if (resolved.initialized) {
-            session.editingDraft = resolved.draft
-            session.savedEditingDraft = resolved.savedDraft
-        }
-        val draft = resolved.draft
+        val editorSession = session.editorSession ?: return null
+        if (editorSession.draft.packageName != item.packageName) return null
+        val draft = editorSession.draft
         val dialogState = host.createDialogState(item, draft)
         return EditorPresentationFactory.create(
             item,
@@ -67,41 +63,38 @@ internal class ComposeAppEditorController(
             draft,
             host.typefaceSelectorText(draft.selectedTypefaceId),
             host.hookChainText(item, dialogState),
-            resolved.savedDraft,
+            editorSession.persistedBaseline,
             session.isEditingSaveFeedback,
             host.systemHooksEnabled(),
             host.automaticFontHookDomains(),
             session.editingDestination,
             createActions(item, draft),
+            editorSession,
         )
     }
 
     fun open(item: AppListItem?) {
         item ?: return
-        // Resolve the item before consulting the closed-session cache. A global prefill is a new
-        // editor baseline, so an older clean draft for the same package must not replace it.
         val editorItem = host.resolveEditorItem(item.packageName) ?: item
         session.editingPackageName = editorItem.packageName
         session.editingDestination = ConfigEditorDestination.MAIN
-        val currentDraft = session.editingDraft
-        if (currentDraft == null || currentDraft.packageName != editorItem.packageName) {
-            val initialDraft = if (editorItem.previewFromGlobalPrefill) {
-                EditorDraft.fromItem(editorItem)
-            } else {
-                host.restoreClosedDraft(
-                    editorItem,
-                    session.getLastClosedEditingDraft(editorItem.packageName),
-                )
-            }
-            session.editingDraft = initialDraft
-            session.savedEditingDraft = initialDraft
+        val current = session.editorSession
+        if (current == null || current.draft.packageName != editorItem.packageName) {
+            session.editorSession = openSession(editorItem)
         }
         host.refreshEditor()
     }
 
     fun updateDraft(draft: EditorDraft?) {
         draft ?: return
-        session.editingDraft = draft
+        val current = session.editorSession ?: return
+        session.editorSession = current.withDraft(draft)
+        host.refreshEditor()
+    }
+
+    fun resetDraft() {
+        val current = session.editorSession ?: return
+        session.editorSession = current.reset()
         host.refreshEditor()
     }
 
@@ -131,9 +124,8 @@ internal class ComposeAppEditorController(
 
     fun markSaved(draft: EditorDraft?) {
         draft ?: return
-        val savedDraft = draft.afterSuccessfulSave()
-        session.editingDraft = savedDraft
-        session.savedEditingDraft = savedDraft
+        val current = session.editorSession?.withDraft(draft) ?: return
+        session.editorSession = current.afterSave()
         session.isEditingSaveFeedback = true
         host.refreshEditor()
         host.postDelayed(1500L, Runnable {
@@ -148,6 +140,9 @@ internal class ComposeAppEditorController(
         EditorActions.create(object : EditorActions.Host {
             override fun updateDraft(draft: EditorDraft) {
                 this@ComposeAppEditorController.updateDraft(draft)
+            }
+            override fun resetDraft() {
+                this@ComposeAppEditorController.resetDraft()
             }
             override fun showWechatDpiHelp() = host.showWechatDpiHelp()
             override fun navigate(destination: ConfigEditorDestination) {
@@ -169,4 +164,16 @@ internal class ComposeAppEditorController(
                 this@ComposeAppEditorController.close()
             }
         }, item, draft)
+
+    private fun openSession(editorItem: AppListItem): AppConfigEditorSession {
+        val hasSaved = host.hasSavedPackageConfig(editorItem.packageName)
+        val prefill = if (hasSaved) null else host.resolveGlobalPrefill()
+        val opened = AppConfigEditorSession.open(editorItem, hasSaved, prefill)
+        if (!hasSaved) return opened
+        val restored = host.restoreClosedDraft(
+            editorItem,
+            session.getLastClosedEditingDraft(editorItem.packageName),
+        ) ?: return opened
+        return AppConfigEditorSession(restored, null, restored, false)
+    }
 }

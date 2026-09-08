@@ -8,7 +8,6 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.templates.TemplateConfigValueAdapters
 import com.dpis.module.viewport.EffectiveModeResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -85,23 +84,6 @@ class AppConfigSaveHandler {
         }
         try {
             val originalPackageConfig = store.readPackageConfig(item.packageName)
-            if (isUnchangedGlobalPrefillPreview(
-                    item,
-                    viewportTargetSpec,
-                    currentViewportApplyMode,
-                    fontScalePercent,
-                    fontMode,
-                    selectedTypefaceId,
-                    draftFontHookDomainsRaw,
-                    fontHookDomainsResetRequested
-                )
-            ) {
-                val cleared = store.clearTargetPackageConfig(item.packageName)
-                if (cleared && onChanged != null) {
-                    onChanged.run()
-                }
-                return Result.Companion.success(0)
-            }
             val viewportApplyMode: String? = resolveViewportApplyModeForSave(
                 store, item.packageName, currentViewportApplyMode,
                 viewportApplyModeResetRequested, viewportTargetSpec
@@ -166,13 +148,19 @@ class AppConfigSaveHandler {
                 saved = store.setTargetTypefaceId(item.packageName, selectedTypefaceId) && saved
             }
             publishFontHookDomainsAfterSave(item.packageName, store)
-            if (isDefaultPackageState(item, store)) {
+            val convertingPrefillPreview = item.previewFromGlobalPrefill
+            if (isDefaultPackageState(item, store) && !convertingPrefillPreview) {
                 // A disabled target type or mode can be left behind by older saves. These
                 // values have no runtime effect, but they must not keep the app in the
                 // configured-app list after the user resets every visible field.
                 saved = store.clearTargetPackageConfig(item.packageName) && saved
-            } else {
+            } else if (!convertingPrefillPreview) {
                 saved = store.prunePackageIfOnlyDefaultConfigRemains(item.packageName) && saved
+            } else if (isDefaultPackageState(item, store)) {
+                saved = store.setTargetViewportTypeDraft(
+                    item.packageName,
+                    ConfigDraftSaveSemantics.viewportTargetTypeForSave(viewportTargetType),
+                ) && saved
             }
             if (!saved) {
                 return Result.Companion.failure(R.string.system_settings_save_failed)
@@ -258,71 +246,6 @@ class AppConfigSaveHandler {
                 return HookDomainOverrideStore(store).restoreRecommended(item.packageName)
             }
             return store.setPackageFontHookDomainsRaw(item.packageName, normalizedRaw)
-        }
-
-        fun isUnchangedGlobalPrefillPreview(
-            item: AppListItem?,
-            viewportTargetSpec: ViewportTargetSpec?,
-            viewportApplyMode: String?,
-            fontScalePercent: Int?,
-            fontMode: String?,
-            selectedTypefaceId: String?,
-            draftFontHookDomainsRaw: String?,
-            fontHookDomainsResetRequested: Boolean
-        ): Boolean {
-            if (item == null || !item.previewFromGlobalPrefill) {
-                return false
-            }
-            if (isResetPreviewDraft(
-                    viewportTargetSpec, fontScalePercent,
-                    selectedTypefaceId, draftFontHookDomainsRaw, fontHookDomainsResetRequested
-                )
-            ) {
-                return true
-            }
-            val normalizedSpec = if (viewportTargetSpec != null)
-                viewportTargetSpec
-            else
-                ViewportTargetSpec.off()
-            val current = TemplateConfigValueAdapters.fromViewportTargetSpec(
-                normalizedSpec,
-                ViewportTargetType.normalize(item.viewportTargetType),
-                if (normalizedSpec.isEnabled())
-                    ViewportApplyMode.normalize(viewportApplyMode)
-                else
-                    ViewportApplyMode.OFF,
-                fontScalePercent,
-                ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode),
-                selectedTypefaceId,
-                draftFontHookDomainsRaw
-            )
-            val preview = TemplateConfigValueAdapters.fromViewportTargetSpec(
-                item.viewportTargetSpec,
-                item.viewportTargetType,
-                if (item.viewportTargetSpec.isEnabled())
-                    item.viewportMode
-                else
-                    ViewportApplyMode.OFF,
-                item.fontScalePercent,
-                item.fontMode,
-                item.typefaceId,
-                item.effectiveFontHookDomainsRaw()
-            )
-            return current == preview
-        }
-
-        private fun isResetPreviewDraft(
-            viewportTargetSpec: ViewportTargetSpec?,
-            fontScalePercent: Int?,
-            selectedTypefaceId: String?,
-            draftFontHookDomainsRaw: String?,
-            fontHookDomainsResetRequested: Boolean
-        ): Boolean {
-            return fontHookDomainsResetRequested
-                    && (viewportTargetSpec == null || !viewportTargetSpec.isEnabled())
-                    && fontScalePercent == null && normalizeNullableString(selectedTypefaceId) == null && normalizeNullableString(
-                draftFontHookDomainsRaw
-            ) == null
         }
 
         private fun expectedPackageConfigAfterSave(
@@ -588,14 +511,6 @@ class AppConfigSaveHandler {
                 throw NumberFormatException("invalid font scale")
             }
             return value
-        }
-
-        private fun normalizeNullableString(value: String?): String? {
-            if (value == null) {
-                return null
-            }
-            val trimmed = value.trim { it <= ' ' }
-            return if (trimmed.isEmpty()) null else trimmed
         }
     }
 }

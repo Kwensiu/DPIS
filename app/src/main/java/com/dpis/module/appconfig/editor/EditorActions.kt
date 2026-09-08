@@ -7,6 +7,7 @@ import com.dpis.module.applist.AppListItem
 object EditorActions {
     interface Host {
         fun updateDraft(draft: EditorDraft)
+        fun resetDraft()
         fun showWechatDpiHelp()
         fun navigate(destination: ConfigEditorDestination)
         fun toggleScope(currentlySelected: Boolean, onSelected: Runnable, onDeselected: Runnable)
@@ -48,7 +49,7 @@ object EditorActions {
             ))
 
             override fun navigate(destination: ConfigEditorDestination) = host.navigate(destination)
-            override fun reset() = host.updateDraft(draft.cleared())
+            override fun reset() = host.resetDraft()
             override fun toggleScope() = host.toggleScope(
                 draft.scopeSelected,
                 Runnable { host.updateDraft(draft.withScopeSelected(true)) },

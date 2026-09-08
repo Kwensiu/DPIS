@@ -3,6 +3,7 @@ package com.dpis.module;
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
@@ -470,7 +471,7 @@ public class AppConfigSaveHandlerTest {
     }
 
     @Test
-    public void unchangedGlobalPrefillPreviewSaveDoesNotCreatePackageConfig() {
+    public void savingUnchangedPrefillCreatesRealPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
@@ -498,12 +499,14 @@ public class AppConfigSaveHandlerTest {
                 null);
 
         assertTrue(result.success);
-        assertFalse(store.hasRealPackageConfig(item.packageName));
-        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+        assertTrue(store.hasRealPackageConfig(item.packageName));
+        assertTrue(store.getConfiguredPackages().contains(item.packageName));
+        assertEquals(ViewportTargetSpec.relativeScale(87500), store.getTargetViewportSpec(item.packageName));
+        assertEquals(Integer.valueOf(125), store.getTargetFontScalePercent(item.packageName));
     }
 
     @Test
-    public void resetGlobalPrefillPreviewThenSaveDoesNotCreatePackageConfig() {
+    public void resetThenSaveFromPrefillCreatesRealPackageConfig() {
         DpisConfigStore store = new DpisConfigStore(new FakePrefs());
         AppListItem item = app("com.example.app").withGlobalPrefillPreview(TemplateConfigValueAdapters.fromViewportTargetSpec(
                 ViewportTargetSpec.relativeScale(87500),
@@ -531,8 +534,15 @@ public class AppConfigSaveHandlerTest {
                 null);
 
         assertTrue(result.success);
-        assertFalse(store.hasRealPackageConfig(item.packageName));
-        assertFalse(store.getConfiguredPackages().contains(item.packageName));
+        assertTrue(store.getConfiguredPackages().contains(item.packageName));
+        assertFalse(AppConfigPrefillPreview.applyIfEligible(
+                app("com.example.app"), store, TemplateConfigValueAdapters.fromViewportTargetSpec(
+                        ViewportTargetSpec.relativeScale(87500),
+                        ViewportApplyMode.AUTO,
+                        125,
+                        FontApplyMode.FIELD_REWRITE,
+                        "serif",
+                        "resources_font")).previewFromGlobalPrefill);
     }
 
     @Test

@@ -39,7 +39,12 @@ object AppConfigPrefillPreview {
         if (item == null || packageConfigRepository == null || globalPrefill?.hasAnyValue() != true) {
             return item
         }
-        return if (packageConfigRepository.hasRealPackageConfig(item.packageName)) item
-        else item.withGlobalPrefillPreview(globalPrefill)
+        return if (packageConfigRepository.hasRealPackageConfig(item.packageName)
+            || packageConfigRepository.hasConfiguredPackage(item.packageName)
+        ) {
+            item
+        } else {
+            item.withGlobalPrefillPreview(globalPrefill)
+        }
     }
 }

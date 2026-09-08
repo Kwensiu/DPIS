@@ -244,7 +244,16 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 R.string.quick_template_delete_failed
             }
             host.showToast(messageResId)
-            if (deleted) publish()
+            if (deleted) {
+                // Do not publish an editor route whose backing template was just removed.
+                // Otherwise Compose receives a transient "edit missing template" state and
+                // correctly constructs an empty draft, which looks like a new-template sheet.
+                if (routeState.selection().templateId == id) {
+                    routeState.clear()
+                }
+                refresh(presentation.state().query)
+                publish()
+            }
             return TemplateWorkspacePresentation.EditorResult(deleted, messageResId, id)
         }
 

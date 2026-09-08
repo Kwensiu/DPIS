@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.home.HomeWorkspaceState
@@ -56,6 +57,7 @@ import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.presentation.TemplateWorkspaceContent
 import com.dpis.module.templates.presentation.TemplateEditorOverlayHost
 import com.dpis.module.ui.compose.AppConfigEditorContent
+import com.dpis.module.ui.compose.AppConfigEditorSessionChip
 import com.dpis.module.ui.compose.AppConfigEditorOverlay
 import com.dpis.module.ui.compose.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.ComposeMotionTokens
@@ -305,22 +307,12 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                             .fillMaxWidth()
                             .height(AppConfigSheetUiTokens.TopChromeHeight)
                     ) {
-                        if (editorState.dirty || editorState.item.previewFromGlobalPrefill) {
-                            Surface(
+                        if (editorState.chip != AppConfigEditorChip.NONE) {
+                            AppConfigEditorSessionChip(
+                                chip = editorState.chip,
+                                compact = false,
                                 modifier = androidx.compose.ui.Modifier.align(Alignment.Center),
-                                shape = AppConfigSheetUiTokens.UnsavedBadgeShape,
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            ) {
-                                Text(
-                                    stringResource(R.string.sheet_unsaved_badge),
-                                    modifier = androidx.compose.ui.Modifier.padding(
-                                        horizontal = 12.dp,
-                                        vertical = 4.dp
-                                    ),
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
+                            )
                         } else {
                             Box(
                                 modifier = androidx.compose.ui.Modifier

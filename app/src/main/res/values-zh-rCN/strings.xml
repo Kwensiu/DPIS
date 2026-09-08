@@ -266,6 +266,7 @@
     <string name="template_workspace_summary_typeface">字体样式：%1$s</string>
     <string name="template_workspace_summary_hook_domains">自定义 Hook 链路</string>
     <string name="sheet_unsaved_badge">未保存</string>
+    <string name="sheet_prefill_badge">预填</string>
     <string name="template_workspace_mode_auto">自动</string>
     <string name="template_workspace_mode_system">系统</string>
     <string name="template_workspace_mode_compat">兼容</string>

@@ -2,4 +2,5 @@
 <resources>
     <!-- Stores the single layout listener shared by each mode toggle view instance. -->
     <item name="mode_toggle_layout_listener" type="id" />
+    <item name="land_detail_editor_session" type="id" />
 </resources>

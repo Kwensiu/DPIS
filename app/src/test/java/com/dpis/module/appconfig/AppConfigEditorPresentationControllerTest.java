@@ -110,6 +110,10 @@ public final class AppConfigEditorPresentationControllerTest {
             updatedDraft = draft;
         }
 
+        @Override public void resetDraft() {
+            updatedDraft = draft(false).cleared();
+        }
+
         @Override public void showWechatDpiHelp() {}
         @Override public void navigate(ConfigEditorDestination destination) {}
 

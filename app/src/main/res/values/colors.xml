@@ -6,6 +6,9 @@
     <color name="dpis_on_warn_container">#4A3400</color>
     <color name="dpis_success_container">#D5EFCF</color>
     <color name="dpis_on_success_container">#16351A</color>
+    <color name="dpis_info">#335BBC</color>
+    <color name="dpis_info_container">#DCEBFF</color>
+    <color name="dpis_on_info_container">#10345F</color>
     <color name="home_status_disabled_container">#F3E2E0</color>
     <color name="home_status_disabled_content">#5A3A38</color>
     <color name="home_status_enabled_container">#DCEBFF</color>

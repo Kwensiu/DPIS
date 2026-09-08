@@ -1,5 +1,6 @@
 package com.dpis.module
 
+import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
@@ -31,8 +32,29 @@ internal class MainViewModel(initialState: MainUiState?) {
         private set
 
     var editingPackageName: String? = null
-    var editingDraft: EditorDraft? = null
-    var savedEditingDraft: EditorDraft? = null
+    var editorSession: AppConfigEditorSession? = null
+    var editingDraft: EditorDraft?
+        get() = editorSession?.draft
+        set(value) {
+            val current = editorSession
+            editorSession = when {
+                value == null -> null
+                current != null -> current.withDraft(value)
+                else -> AppConfigEditorSession(value, null, value, false)
+            }
+        }
+    var savedEditingDraft: EditorDraft?
+        get() = editorSession?.persistedBaseline
+        set(value) {
+            val current = editorSession
+            val draft = current?.draft ?: value ?: return
+            editorSession = AppConfigEditorSession(
+                value ?: draft,
+                current?.prefillSnapshot,
+                draft,
+                current?.prefillInvalidated == true,
+            )
+        }
 
     // Keep the last committed editor snapshot while catalog refresh is asynchronous. Reopening the
     // same package restores the committed mode, while clearEditingDraft() still discards edits.
@@ -52,29 +74,27 @@ internal class MainViewModel(initialState: MainUiState?) {
 
     /** Applies scope approval to the active Compose editor without replacing its unsaved fields. */
     fun markEditingScopeSelected(packageName: String?): Boolean {
-        val draft = editingDraft
+        val current = editorSession
+        val draft = current?.draft
         if (packageName == null
+            || current == null
             || draft == null
             || packageName != draft.packageName
             || draft.scopeSelected
         ) {
             return false
         }
-        editingDraft = draft.withScopeSelected(true)
-        val savedDraft = savedEditingDraft
-        if (savedDraft != null && packageName == savedDraft.packageName) {
-            savedEditingDraft = savedDraft.withScopeSelected(true)
-        }
+        editorSession = current.withScopeSelected(true)
         return true
     }
 
     fun clearEditingDraft() {
-        if (editingPackageName != null && savedEditingDraft != null) {
+        val current = editorSession
+        if (editingPackageName != null && current != null && current.prefillSnapshot == null) {
             lastClosedEditingPackageName = editingPackageName
-            lastClosedEditingDraft = savedEditingDraft
+            lastClosedEditingDraft = current.persistedBaseline
         }
-        editingDraft = null
-        savedEditingDraft = null
+        editorSession = null
         editingDestination = ConfigEditorDestination.MAIN
         isEditingSaveFeedback = false
     }
@@ -86,15 +106,26 @@ internal class MainViewModel(initialState: MainUiState?) {
             null
         }
 
+    @JvmOverloads
     fun restoreEditingSession(
         packageName: String?,
         draft: EditorDraft?,
         savedDraft: EditorDraft?,
         destination: ConfigEditorDestination?,
+        prefillSnapshot: EditorDraft? = null,
+        prefillInvalidated: Boolean = false,
     ) {
         editingPackageName = packageName
-        editingDraft = draft
-        savedEditingDraft = savedDraft ?: draft
+        editorSession = if (draft == null) {
+            null
+        } else {
+            AppConfigEditorSession(
+                savedDraft ?: draft,
+                prefillSnapshot,
+                draft,
+                prefillInvalidated,
+            )
+        }
         editingDestination = destination ?: ConfigEditorDestination.MAIN
         isEditingSaveFeedback = false
     }
