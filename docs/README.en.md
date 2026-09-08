@@ -3,6 +3,7 @@
 
 ![GitHub Release](https://img.shields.io/github/v/release/Kwensiu/DPIS)
 ![License](https://img.shields.io/github/license/Kwensiu/DPIS)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Kwensiu/DPIS)
 [![Telegram Group](https://img.shields.io/badge/Group-DPIS_Chat-26A5E4?logo=telegram&logoColor=white)](https://t.me/dpis_chat)
 
 [中文说明](../README.md) | English
@@ -15,6 +16,7 @@ DPIS is an LSPosed/Xposed-based Android module for per-app interface scale, smal
 - Per-app smallest width, for targeting a fixed `dp` width class
 - Per-app font scale, from `50-300%`
 - App search, configured-app filtering, and a landscape / large-screen detail panel
+- Customizable home workspace layout and settings navigation
 - Global Prefill and Quick Templates for reusing common settings
 - Modern and Legacy builds for different LSPosed/Xposed environments
 
@@ -41,8 +43,7 @@ Most users can keep the default strategy and only adjust interface scale or font
 - To change only text size, adjust `Font size`.
 - If you are unsure which strategy to choose, keep `Auto`.
 - If the default path does not work or the app displays incorrectly, try `Compat`.
-- In system mode, a few apps may show slight lag when scrolling or switching pages after the font is enlarged. This is a deliberate trade-off system mode makes to avoid UI relaunches (see [font routing notes](font-routing.md)); if this lag bothers you, switch that app to `Compat` mode.
-In system mode, some apps may lag after scailing the font. You can switch these apps to `Compat` mode, and if needed, try turning off the "Resources font" in custom hook chain.
+- In system mode, some apps may lag after the font is scaled. Switch those apps to `Compat` mode, and if needed turn off `Resources font` in the custom hook chain. See [font routing notes](font-routing.md).
 - If you use system-layer behavior, also select the `system` scope in LSPosed.
 
 When entering a small window, resizing it, or rotating the screen, DPIS tries to keep the app's scaling stable. Different apps handle window changes differently, so if the display looks wrong, restart the target app first.

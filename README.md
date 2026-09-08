@@ -3,6 +3,7 @@
 
 ![GitHub Release](https://img.shields.io/github/v/release/Kwensiu/DPIS)
 ![License](https://img.shields.io/github/license/Kwensiu/DPIS)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Kwensiu/DPIS)
 [![QQ Group](https://img.shields.io/badge/交流群-1081784676-12B7F5?logo=qq&logoColor=white)](https://qun.qq.com/universal-share/share?ac=1&authKey=IMGMoVIeXPmgs81WgvJEgurLGCeuV%2FWKh8wSxZIXIqtvAA6U%2BJLMtwzG0lrZj7CG&busi_data=eyJncm91cENvZGUiOiIxMDgxNzg0Njc2IiwidG9rZW4iOiI4RkllZjhUVnhGYlVXcEhHZDhyWHdzcDRkRDlGKzlBL0NId1lkMTN2WFJ4SStHa2Y1bmJMM1dlemY5eEFxdmg4IiwidWluIjoiMTA3MDU3NTUyMSJ9&data=8HydkH9NGrhzp1pPhpOFSYT4Qp1aeQZZDN-Y1nk8cp-RBsmsBnRwQ_vN2qXfmhqtTc_LXfOpR6Gv9UCswKRjKg&svctype=4&tempid=h5_group_info)
 [![Telegram Group](https://img.shields.io/badge/交流群-DPIS_Chat-26A5E4?logo=telegram&logoColor=white)](https://t.me/dpis_chat)
 
@@ -16,6 +17,7 @@ DPIS 是一个基于 LSPosed/Xposed 的 Android 模块，用来按应用单独�
 - 按应用设置最小宽度，适合固定到某个 `dp` 宽度档位
 - 按应用调整字体大小，范围 `50-300%`
 - 支持应用搜索、已配置应用筛选和横屏 / 大屏详情面板
+- 可自定义主界面工作区布局和设置页导航
 - 支持全局预填和快捷模板，方便重复套用常用配置
 - 提供 Modern 和 Legacy 两类 APK，覆盖不同 LSPosed/Xposed 环境
 
