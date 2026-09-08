@@ -47,7 +47,7 @@ class AboutActivitySourceSmokeTest {
         manifestFetcherSource.assertContainsAll("final class UpdateManifestFetcher")
         dialogSource.assertContainsAll(
             "class DialogHandle",
-            "toComposeAnnotatedString()",
+            "toReleaseNotesAnnotatedString()",
             "AnimatedVisibility(expanded)",
             "verticalScroll(rememberScrollState())",
             "R.dimen.dialog_surface_padding_horizontal",
