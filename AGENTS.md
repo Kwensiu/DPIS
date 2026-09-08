@@ -79,7 +79,8 @@ Prefer CodeGraph when:
 
 Before committing or opening a PR, use the project skill
 `.agents/skills/dpis-precommit-review/SKILL.md`. It contains the review order,
-tool usage, Sonar boundary audit, validation commands, and Git handoff.
+tool usage, SonarQube MCP lookup, boundary audit, validation commands, and
+Git handoff.
 
 - For ordinary development, follow the discovery and validation details in
   `.agents/skills/dpis-precommit-review/SKILL.md`; use CodeGraph when a change
@@ -185,8 +186,8 @@ module paths or optimized code.
   `usesObservedDefaultDensityWhenNoUserValueExists`). Use the matching `.kt`
   or `.java` extension for the implementation language.
 - Use `.agents/skills/dpis-precommit-review/SKILL.md` for the required full
-  suite, Android CLI order, flavor builds, Sonar inputs, and final validation
-  record.
+  suite, Android CLI order, flavor builds, SonarQube MCP checks, and final
+  validation record.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
 - During every review or implementation pass, audit all touched files against
   the full project-level rules above. Fix newly exposed violations in the same

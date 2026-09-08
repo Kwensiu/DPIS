@@ -45,3 +45,10 @@ The report analyzes Kotlin and Java sources. Native C++ sources and generated
 resources are excluded for this first integration. Modern Debug is the primary
 coverage input; Legacy unit tests still run as a separate Gradle prerequisite
 in CI.
+
+## Inspect results
+
+Agents read uploaded Cloud analysis through the SonarQube MCP (`Kwensiu_DPIS`).
+Use `list_pull_requests` or `list_branches`, then quality gate, measures, and
+issues tools. Do not curl Sonar REST or scrape GitHub check logs for the same
+facts. MCP does not replace Gradle tests, JaCoCo, or the scanner job.

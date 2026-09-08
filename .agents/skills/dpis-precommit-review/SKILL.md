@@ -1,6 +1,6 @@
 ---
 name: dpis-precommit-review
-description: Review DPIS changes before committing or opening a pull request, including scope, domain-rule compliance, tests, Android validation, Sonar inputs, and Git hygiene.
+description: Review DPIS changes before committing or opening a pull request, including scope, domain-rule compliance, tests, Android validation, SonarQube MCP checks, and Git hygiene.
 ---
 
 # DPIS Pre-Commit Review
@@ -28,6 +28,22 @@ scope applies.
    - Check package/file ownership, Kotlin/Java boundaries, Compose state
      ownership, naming, comments, UTF-8 without BOM, and stale source-smoke
      anchors.
+   - Java-to-Kotlin on the touched set: if the diff materially changes an
+     existing Java class whose responsibility sits in the Kotlin/Compose
+     ownership boundary, migrate that class to Kotlin in the same change.
+     Skip only files that are unsafe or too complex to convert here:
+     reflection, JNI, flavor Xposed entrypoints, externally observed JVM
+     signatures, or a conversion that would expand far beyond the current
+     ownership boundary. Record that reason in the change; do not leave a
+     convertible Java file for a later cleanup when this review already
+     touched it.
+   - `MainActivity.java` slim-down: if `MainActivity.java` is in the diff,
+     audit any newly touched or newly exposed workspace/feature logic nested
+     in it (editor sessions, dialogs, coordinators, exporters, diagnostics,
+     or other feature state machines). Extract that work into focused
+     classes under `app/src/main/java/com/dpis/module/` in the same change.
+     Keep `MainActivity` limited to app-shell startup and event wiring. Do
+     not grow nested workspace workflows there, even as a temporary host.
    - For runtime hooks, prove or preserve the route in order: entry, guard,
      dependency, install, callback, package resolution, mutation, visible
      effect. Do not infer a later stage from an earlier log.
@@ -40,8 +56,10 @@ scope applies.
      `./gradlew :app:testAllDebugUnitTests`.
    - For Sonar/coverage changes, also run:
      `./gradlew :app:jacocoModernDebugUnitTestReport`.
-     These reproduce CI inputs, not SonarCloud's server-side new-code
-     baseline or quality gate.
+     That is only the local coverage XML CI uploads. After PR Check has
+     published an analysis, read the Cloud result through the SonarQube MCP
+     (see below). Do not curl Sonar REST or scrape GitHub check logs for the
+     same facts.
    - Build both debug flavors for shared, flavor, dependency, R8, or hook
      changes:
      `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`.
@@ -54,7 +72,16 @@ scope applies.
      replacement for Gradle, tests, lint, or runtime evidence. Record when the
      bridge/project is unavailable.
 
-4. Audit Sonar boundaries instead of gaming metrics.
+4. Read Sonar through MCP; audit boundaries instead of gaming metrics.
+   - Project key: `Kwensiu_DPIS`. MCP talks to the already-uploaded Cloud
+     analysis. It does not run the scanner.
+   - On a PR: `list_pull_requests`, then pass that Sonar PR key to
+     `get_project_quality_gate_status`, `get_component_measures` (`new_coverage`,
+     `new_violations`), `search_sonar_issues_in_projects` (`inNewCodePeriod`),
+     and `search_files_by_coverage` / `get_file_coverage_details`. Never pass a
+     git branch name as `pullRequest`. Do not set both `branch` and
+     `pullRequest`.
+   - Off a PR: `list_branches` (`LONG` for main) and use `branch`.
    - `sonar.exclusions` removes files from analysis; `sonar.coverage.exclusions`
      removes only coverage accounting. Do not confuse the two.
    - Keep portable stores, parsers, codecs, policy, and other deterministic
@@ -65,9 +92,10 @@ scope applies.
      item. New pure policy code under an excluded directory should be audited
      for extraction or a narrower rule; do not widen exclusions to make the
      percentage pass.
-   - After a merged PR changes the baseline, wait for the main-branch Sonar
-     run to complete before opening a boundary-audit PR. Keep that audit
-     separate from feature or migration changes.
+   - After a merged PR changes the baseline, wait for the main-branch analysis
+     (MCP `list_branches` / quality gate on `main`) before opening a
+     boundary-audit PR. Keep that audit separate from feature or migration
+     changes.
 
 5. Finish Git safely.
    - Re-read the final diff after all fixes. Stage named files only; never use
@@ -90,8 +118,8 @@ scope applies.
 - Keep raw logs, reports, credentials, scanner state, APKs, Frida artifacts,
   and temporary probes out of the repository unless intentionally promoted.
 - When a check reports only a percentage or a generic failure, inspect the
-  actual source/test/coverage report and GitHub/Sonar check details before
-  proposing exclusions or small blind patches.
+  local test/coverage report and the SonarQube MCP result before proposing
+  exclusions or small blind patches.
 
 ## Completion report
 
@@ -99,6 +127,6 @@ End with a concise record of:
 
 - files and behavior changed;
 - tests/builds/Android CLI/device checks run and their result;
-- Sonar exclusions or baseline assumptions;
+- SonarQube MCP quality-gate / new-code measures, plus any exclusion changes;
 - commit hash and push/PR/check status, if those actions were requested;
 - anything not run and why.
