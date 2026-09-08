@@ -121,24 +121,27 @@ public class ForceTextSizeRegressionReferenceTest {
 
     @Test
     public void replacementHookKeepsCurrentPxFallbackBehindDomainPlan() throws Exception {
-        String source = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt")
+                + read("src/main/java/com/dpis/module/runtime/font/TextViewAttachHookInstaller.kt")
+                + read("src/main/java/com/dpis/module/runtime/font/PaintTextSizeHookInstaller.kt")
+                + read("src/main/java/com/dpis/module/runtime/font/TextViewTextSizeHookInstaller.kt");
 
         assertTrue(source.contains("installTextViewAttachHook("));
         assertTrue(source.contains("getDeclaredMethod(\"onAttachedToWindow\")"));
-        assertTrue(source.contains("return View.class.getDeclaredMethod(\"onAttachedToWindow\")"));
+        assertTrue(source.contains("View::class.java.getDeclaredMethod(\"onAttachedToWindow\")"));
         assertTrue(source.contains("DPIS_FONT TextView attach override"));
-        assertTrue(source.contains("domainPlan.textViewCurrentPxFallbackEnabled"));
+        assertTrue(source.contains("TextSizePolicy.shouldInstallCurrentPxTextViewFallbacks(domainPlan)"));
         assertTrue(source.contains("domainPlan.paintFallbackEnabled"));
         assertTrue(source.contains("DPIS_FONT Paint/TextPaint fallback suppressed"));
-        assertTrue(source.contains("isSpTextHandledByResources(textView, factor, domainPlan)"));
-        assertTrue(source.contains("recordResourcesHandledTextSize(textView, originalPx, factor)"));
+        assertTrue(source.contains("isSpTextHandledByResources(thisObject, factor, domainPlan)"));
+        assertTrue(source.contains("recordResourcesHandledTextSize(thisObject, originalPx, factor)"));
         assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"));
         assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"));
         assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"));
-        assertTrue(source.contains("resolvePaintFallbackDecision("));
-        assertTrue(source.contains("chain.proceed(new Object[] {decision.adjustedPx})"));
+        assertTrue(source.contains("PaintFallbackResolver.resolve("));
+        assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
         assertTrue(source.contains("summarizePaintFallbackStack("));
-        assertTrue(source.contains("\", caller=\" + callerSummary"));
+        assertTrue(source.contains("detailSuffix()"));
         assertFalse(source.contains("paint.setTextSize(adjusted)"));
         assertFalse(source.contains("textPaint.setTextSize(adjusted)"));
         assertFalse(source.contains("isPxTextHandledByResources"));
@@ -149,16 +152,16 @@ public class ForceTextSizeRegressionReferenceTest {
 
     @Test
     public void paintFallbackUsesArgumentReplacementInsteadOfPostWrite() throws Exception {
-        String source = read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java");
+        String source = read("src/main/java/com/dpis/module/runtime/font/PaintTextSizeHookInstaller.kt");
         String paintHook = source.substring(
-                source.indexOf("Method paintSetTextSize"),
-                source.indexOf("try {", source.indexOf("Method textPaintSetTextSize")));
+                source.indexOf("val paintSetTextSize"),
+                source.indexOf("val textPaintSetTextSize"));
         String textPaintHook = source.substring(
-                source.indexOf("Method textPaintSetTextSize"),
-                source.indexOf("} catch (Throwable t)", source.indexOf("Method textPaintSetTextSize")));
+                source.indexOf("val textPaintSetTextSize"),
+                source.length());
 
-        assertTrue(paintHook.contains("chain.proceed(new Object[] {decision.adjustedPx})"));
-        assertTrue(textPaintHook.contains("chain.proceed(new Object[] {decision.adjustedPx})"));
+        assertTrue(paintHook.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
+        assertTrue(textPaintHook.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
         assertFalse(paintHook.contains("paint.setTextSize(adjusted)"));
         assertFalse(textPaintHook.contains("textPaint.setTextSize(adjusted)"));
     }

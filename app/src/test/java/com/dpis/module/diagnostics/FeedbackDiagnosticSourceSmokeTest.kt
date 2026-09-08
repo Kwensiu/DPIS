@@ -315,7 +315,13 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/ResultSheet.kt"
         )
         val forceTextSize =
-            read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt")
+        val paintTextSize =
+            read("src/main/java/com/dpis/module/runtime/font/PaintTextSizeHookInstaller.kt")
+        val textViewAppearance =
+            read("src/main/java/com/dpis/module/runtime/font/TextViewAppearanceHookInstaller.kt")
+        val textViewSetText =
+            read("src/main/java/com/dpis/module/runtime/font/TextViewSetTextHookInstaller.kt")
         val paintFallback = read(
             "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.kt"
         )
@@ -368,13 +374,13 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(forceTextSize.contains("RuntimeHotPathEvents.begin("))
         assertTrue(moduleMain.contains("RuntimeHotPathEvents.probe("))
         assertTrue(moduleMain.contains("\"process_entry\""))
-        assertTrue(forceTextSize.contains("\"text_appearance\""))
+        assertTrue(textViewAppearance.contains("\"text_appearance\""))
         assertTrue(forceTextSize.contains("\"textview_sp_rewrite\""))
         assertTrue(forceTextSize.contains("\"textview_absolute_rewrite\""))
         assertTrue(forceTextSize.contains("\"textview_current_px_fallback\""))
-        assertTrue(forceTextSize.contains("\"textview_span_rewrite\""))
-        assertTrue(forceTextSize.contains("\"paint_text_size_fallback\""))
-        assertTrue(forceTextSize.contains("\"textpaint_text_size_fallback\""))
+        assertTrue(textViewSetText.contains("\"textview_span_rewrite\""))
+        assertTrue(paintTextSize.contains("\"paint_text_size_fallback\""))
+        assertTrue(paintTextSize.contains("\"textpaint_text_size_fallback\""))
         assertTrue(paintFallback.contains("\"paint_fallback\""))
         assertTrue(webViewFont.contains("\"webview_text_zoom\""))
         assertTrue(webViewFont.contains("\"x5_webview_text_zoom\""))
