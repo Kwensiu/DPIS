@@ -1,5 +1,9 @@
 # Compose Presentation Cleanup Implementation Plan
 
+> Archived 2026-09-08. The Compose presentation reclassification this plan
+> tracked is on `main`. Keep the file for history; do not treat it as an
+> open execution queue.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Complete the pending Compose presentation reclassification with one consistent token and naming model, then validate and commit the coherent migration.

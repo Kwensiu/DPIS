@@ -10,7 +10,7 @@
 ## 开发者
 
 - [AGENTS.md](../AGENTS.md)：项目结构、构建测试命令和协作约定。
-- [project-visual-map-2026-04-19.md](./project-visual-map-2026-04-19.md)：项目结构和主要修改落点速览。
+- [project-visual-map-2026-04-19.md](./archive/plans/project-visual-map-2026-04-19.md)：项目结构和主要修改落点速览（已归档）。
 
 ## 开发与排障
 
@@ -21,14 +21,15 @@
 - [java-toolchain-policy.md](./java-toolchain-policy.md)：JDK、Java 兼容级别和 Android API 使用边界。
 - [ui-guidelines.md](./ui-guidelines.md)：DPIS UI 修改约定。
 - [agents/](./agents/)：Agent 协作配置、issue tracker 信息和运行时排查流程。
+- [sonarqube.md](./sonarqube.md)：CI 扫描配置，以及用 SonarQube MCP 读质量门和覆盖率。
 
 ## 计划与历史记录
 
-- [font-hook-execution-plan-refactor.md](./font-hook-execution-plan-refactor.md)
-- [custom-per-app-font-hook-domain-plan.md](./custom-per-app-font-hook-domain-plan.md)
-- [font-domain-arbitration-provenance-plan.md](./font-domain-arbitration-provenance-plan.md)
-- [compose-resources-font-scheduling-slice.md](./compose-resources-font-scheduling-slice.md)
-- [final-validation-checklist-2026-04-17.md](./final-validation-checklist-2026-04-17.md)
+已完成的执行计划和设计在 [archive/](./archive/)。近期归档：
+
+- [2026-09-08-app-config-prefill-session.md](./archive/plans/2026-09-08-app-config-prefill-session.md)
+- [2026-09-08-app-config-prefill-session-design.md](./archive/specs/2026-09-08-app-config-prefill-session-design.md)
+- [2026-09-05-compose-presentation-cleanup.md](./archive/plans/2026-09-05-compose-presentation-cleanup.md)
 
 ## 归档
 

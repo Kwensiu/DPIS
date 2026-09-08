@@ -62,3 +62,13 @@
 - superpowers 设计迁移到 `archive/superpowers/specs/`：
   - `docs/superpowers/specs/2026-04-23-help-tutorial-dialog-card-design.md`
   - `docs/superpowers/specs/2026-04-25-i18n-english-default-language-switch-design.md`
+
+## 2026-09-08 归档
+
+Prefill 会话与 Compose 展示清理已合入 `main`。把执行计划和对应设计移出活文档区，避免把已完成工作当成待办。
+
+- 计划迁移到 `archive/plans/`：
+  - `docs/superpowers/plans/2026-09-05-compose-presentation-cleanup.md`
+  - `docs/superpowers/plans/2026-09-08-app-config-prefill-session.md`
+- 设计迁移到 `archive/specs/`：
+  - `docs/superpowers/specs/2026-09-08-app-config-prefill-session-design.md`
