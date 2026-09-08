@@ -52,7 +52,10 @@ and token configured in your environment:
 ```
 
 The checked in `sonar-project.properties` supplies the source, binary, test, and
-coverage paths shared by local and CI analysis.
+coverage paths shared by local and CI analysis. Android subprojects are skipped
+by the Gradle plugin because `org.sonarqube` 6.3.1 still looks up AGP's removed
+`AppExtension` / `BaseExtension` types; root analysis reads those explicit paths
+instead of Android variant metadata.
 
 The report analyzes Kotlin and Java sources. Native C++ sources and generated
 resources are excluded for this first integration. Modern Debug is the primary

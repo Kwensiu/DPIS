@@ -1,5 +1,18 @@
 plugins {
+    alias(libs.plugins.agp.app) apply false
+    alias(libs.plugins.agp.test) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.sonarqube)
+}
+
+// org.sonarqube 6.3.1 still resolves AGP AppExtension/BaseExtension on Android
+// modules. AGP 9 replaced those types, so skip subprojects and analyze from
+// sonar-project.properties at the root instead.
+subprojects {
+    sonar {
+        isSkipProject = true
+    }
 }
 
 sonar {

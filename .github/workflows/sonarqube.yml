@@ -81,6 +81,7 @@ jobs:
           fi
           ./gradlew sonar \
             --no-daemon --no-configuration-cache --stacktrace \
+            -Dsonar.gradle.skipCompile=true \
             -Dsonar.host.url="${SONAR_HOST_URL}" \
             -Dsonar.token="${SONAR_TOKEN}" \
             -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
