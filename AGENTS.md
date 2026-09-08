@@ -122,6 +122,13 @@ bundle and does not modify global agent skills.
 Do not add translation text for locales other than English and Simplified
 Chinese unless the user explicitly requests that locale's content.
 
+### DPIS HyperOS smoke
+
+When a task needs HyperOS Gallery/Weather (or similar native/Rust/Flutter)
+device evidence for dp/font emulation, use
+`.agents/skills/dpis-hyperos-smoke/SKILL.md`. This is a project-local skill
+bundle and does not modify global agent skills.
+
 ## Build, Test, and Development Commands
 Use `.agents/skills/dpis-precommit-review/SKILL.md` for the complete
 pre-commit validation sequence. The main quick commands are:

@@ -1,0 +1,4 @@
+interface:
+  display_name: "DPIS HyperOS Smoke"
+  short_description: "Run automated DPIS HyperOS device smoke tests."
+  default_prompt: "Run a DPIS HyperOS smoke test for a target package and summarize the failing layer."
