@@ -1,10 +1,14 @@
 # SonarQube
 
-DPIS uses the official SonarScanner GitHub Action for an optional
+DPIS uses the SonarQube Gradle plugin (`org.sonarqube`) for an optional
 static-analysis job. Gradle remains responsible for compilation, unit tests,
 and JaCoCo coverage generation. The analysis is advisory for now: it does not
 wait for or enforce a SonarQube quality gate, and it does not change GitHub
 branch protection.
+
+The CI job passes `sonar.branch.name` on `push` / `workflow_dispatch`, and
+pull-request keys on `pull_request`. Do not run a branch scan without a branch
+or PR parameter; that publishes onto `main`.
 
 ## Enable the GitHub job
 
@@ -36,10 +40,19 @@ From the repository root, run the tests and coverage report first:
 ./gradlew :app:testAllDebugUnitTests :app:jacocoModernDebugUnitTestReport
 ```
 
-Then install the official `sonar-scanner` CLI and run it with the project key,
-organization, host URL, and token configured in your environment. The checked
-in `sonar-project.properties` supplies the source, binary, test, and coverage
-paths shared by local and CI analysis.
+Then run the Gradle `sonar` task with the project key, organization, host URL,
+and token configured in your environment:
+
+```bash
+./gradlew sonar -Dsonar.host.url=https://sonarcloud.io \
+  -Dsonar.token="$SONAR_TOKEN" \
+  -Dsonar.projectKey=Kwensiu_DPIS \
+  -Dsonar.organization=kwensiu \
+  -Dsonar.branch.name="$(git branch --show-current)"
+```
+
+The checked in `sonar-project.properties` supplies the source, binary, test, and
+coverage paths shared by local and CI analysis.
 
 The report analyzes Kotlin and Java sources. Native C++ sources and generated
 resources are excluded for this first integration. Modern Debug is the primary

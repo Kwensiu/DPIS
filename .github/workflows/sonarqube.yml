@@ -65,8 +65,24 @@ jobs:
             --no-daemon --no-configuration-cache --stacktrace
 
       - name: Run SonarQube analysis
-        uses: SonarSource/sonarqube-scan-action@v7
-        with:
-          args: >-
-            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+        shell: bash
+        run: |
+          extra_args=()
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            extra_args+=(
+              "-Dsonar.pullrequest.key=${{ github.event.pull_request.number }}"
+              "-Dsonar.pullrequest.branch=${{ github.head_ref }}"
+              "-Dsonar.pullrequest.base=${{ github.base_ref }}"
+            )
+          else
+            extra_args+=(
+              "-Dsonar.branch.name=${{ github.ref_name }}"
+            )
+          fi
+          ./gradlew sonar \
+            --no-daemon --no-configuration-cache --stacktrace \
+            -Dsonar.host.url="${SONAR_HOST_URL}" \
+            -Dsonar.token="${SONAR_TOKEN}" \
+            -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
+            -Dsonar.organization="${SONAR_ORGANIZATION}" \
+            "${extra_args[@]}"

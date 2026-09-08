@@ -2,6 +2,7 @@ package com.dpis.module
 
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,6 +12,16 @@ class ReleaseNotesMarkdownRendererTest {
     @After
     fun tearDown() {
         ReleaseNotesMarkdownRenderer.setRendererForTesting(null)
+    }
+
+    @Test
+    fun emptyMarkdownRendersEmpty() {
+        val rendered = ReleaseNotesMarkdownRenderer.render(
+            null,
+            "   ",
+            Locale.ENGLISH,
+        )
+        assertEquals("", rendered.toString())
     }
 
     @Test

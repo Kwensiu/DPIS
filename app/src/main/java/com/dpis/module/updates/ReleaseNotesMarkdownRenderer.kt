@@ -230,7 +230,7 @@ private fun orderedListMarker(span: OrderedListItemSpan): String {
     }
 }
 
-private fun hasPrefix(text: CharSequence, index: Int, prefix: String): Boolean {
+internal fun hasPrefix(text: CharSequence, index: Int, prefix: String): Boolean {
     if (index < 0 || index + prefix.length > text.length) {
         return false
     }

@@ -2,6 +2,7 @@ package com.dpis.module.updates
 
 import android.text.Spanned
 import android.text.style.LeadingMarginSpan
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import io.noties.markwon.core.spans.StrongEmphasisSpan
 import org.junit.Assert.assertEquals
@@ -17,12 +18,18 @@ class ReleaseNotesComposeTextTest {
 
         assertEquals(text, annotated.text)
         assertEquals(FontWeight.Bold, typefaceStyleToSpanStyle(1)?.fontWeight)
+        assertEquals(FontStyle.Italic, typefaceStyleToSpanStyle(2)?.fontStyle)
+        assertEquals(FontWeight.Bold, typefaceStyleToSpanStyle(3)?.fontWeight)
+        assertEquals(null, typefaceStyleToSpanStyle(0))
     }
 
     @Test
     fun listMarkerStaysOnSameLineAsLooseListItemBody() {
         assertEquals(1, firstContentIndex("\n全新 Compose 界面", 0, 10))
         assertEquals(0, firstContentIndex("全新 Compose 界面", 0, 4))
+        assertTrue(hasPrefix("• 全新", 0, "• "))
+        assertFalse(hasPrefix("全新", 0, "• "))
+        assertFalse(hasPrefix("•", 0, "• "))
     }
 
     @Test
