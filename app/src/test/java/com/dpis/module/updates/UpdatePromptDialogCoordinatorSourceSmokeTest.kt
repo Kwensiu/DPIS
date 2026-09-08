@@ -10,6 +10,8 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
     fun coordinatorUsesRootOwnedDisclaimerAndSharedUpdatePrompt() {
         val source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.kt")
         val dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt")
+        val rendererSource = read("src/main/java/com/dpis/module/updates/ReleaseNotesMarkdownRenderer.kt")
+        val markwonPluginSource = read("src/main/java/com/dpis/module/updates/ReleaseNotesMarkwonPlugin.kt")
         val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/interop/AndroidTextInterop.kt")
         val disclaimerSource = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
         val modalSource = read("src/main/java/com/dpis/module/ui/dialog/ModalDialog.kt")
@@ -68,6 +70,9 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("dialogHandle.isShowing()"))
         assertTrue(source.contains("R.string.about_update_release_notes_loading"))
         assertTrue(source.contains("ReleaseNotesMarkdownRenderer.render("))
+        assertTrue(markwonPluginSource.contains("ReleaseNotesComposeCompatiblePlugin"))
+        assertTrue(rendererSource.contains("insertVisibleListMarkers("))
+        assertTrue(markwonPluginSource.contains("SoftLineBreak"))
         assertTrue(dialogSource.contains("AnimatedVisibility(expanded)"))
         assertTrue(dialogSource.contains("BoxWithConstraints(Modifier.fillMaxWidth())"))
         assertTrue(dialogSource.contains("val compactActionRow = maxWidth < 420.dp"))
@@ -77,7 +82,11 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertFalse(dialogSource.contains("painterResource"))
         assertTrue(source.contains("request.versionName"))
         assertTrue(source.contains("request.versionCode"))
-        assertTrue(dialogSource.contains("toComposeAnnotatedString()"))
+        assertTrue(dialogSource.contains("toReleaseNotesAnnotatedString()"))
+        assertFalse(dialogSource.contains("toComposeAnnotatedString()"))
+        assertTrue(dialogSource.contains("clickable { expanded = !expanded }"))
+        assertTrue(dialogSource.contains(".padding(horizontal = 12.dp, vertical = 10.dp)"))
+        assertTrue(dialogSource.contains("drawReleaseNotesQuoteBars("))
         assertTrue(textInteropSource.contains("addLink(LinkAnnotation.Url(span.url)"))
     }
 
