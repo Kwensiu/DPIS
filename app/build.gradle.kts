@@ -183,7 +183,11 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles("proguard-rules.pro")
+            // Android reflection baseline: Parcelable CREATOR, View inflation, enums.
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             signingConfig = if (hasReleaseSigningConfig) {
                 signingConfigs["release"]
             } else {

@@ -138,6 +138,15 @@ public final class LegacyModuleManifestMetadataTest {
     }
 
     @Test
+    public void releaseMinifyIncludesAndroidDefaultProguardFile() throws IOException {
+        String buildScript = readProjectFile("build.gradle.kts");
+
+        assertTrue(buildScript.contains("isMinifyEnabled = true"));
+        assertTrue(buildScript.contains(
+                "getDefaultProguardFile(\"proguard-android-optimize.txt\")"));
+    }
+
+    @Test
     public void buildKeepsFilteredCompatibilityTestTaskAndFlavorAggregate()
             throws IOException {
         String buildScript = readProjectFile("build.gradle.kts");
