@@ -11,7 +11,7 @@ import androidx.compose.runtime.setValue
 import com.dpis.module.LocalizedActivity
 import com.dpis.module.LogActivity
 import com.dpis.module.QuickConfigActivity
-import com.dpis.module.about.OpenSourceLicenseActivity
+import com.dpis.module.about.OpenSourceLicenseItem
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.home.ModeGuideActivity
@@ -247,21 +247,21 @@ object SupportActivityContent {
     @JvmStatic
     fun installOpenSourceLicenses(
         activity: ComponentActivity,
-        items: List<OpenSourceLicenseActivity.LicenseItem>,
-        onItemSelected: Consumer<OpenSourceLicenseActivity.LicenseItem>
+        items: List<OpenSourceLicenseItem>,
+        onOpenUrl: (String) -> Unit,
     ) {
         activity.setContent {
             ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearOpenSourceLicenseContent(
                         items = items,
-                        onItemSelected = onItemSelected::accept,
+                        onOpenUrl = onOpenUrl,
                     )
                 } else {
                     OpenSourceLicenseContent(
                         items = items,
                         onBack = activity::finish,
-                        onItemSelected = onItemSelected::accept
+                        onOpenUrl = onOpenUrl,
                     )
                 }
             }

@@ -13,20 +13,32 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.about.OpenSourceLicenseActivity
+import com.dpis.module.about.OpenSourceLicenseItem
 
 @Composable
 fun OpenSourceLicenseContent(
-    items: List<OpenSourceLicenseActivity.LicenseItem>,
+    items: List<OpenSourceLicenseItem>,
     onBack: () -> Unit,
-    onItemSelected: (OpenSourceLicenseActivity.LicenseItem) -> Unit,
+    onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selectedItem by remember { mutableStateOf<OpenSourceLicenseItem?>(null) }
+    selectedItem?.let { item ->
+        LicenseDetailDialog(
+            item = item,
+            onOpenUrl = onOpenUrl,
+            onDismiss = { selectedItem = null },
+        )
+    }
     SecondaryPageScaffold(
         modifier = modifier.fillMaxSize(),
         titleRes = R.string.open_source_license,
@@ -48,7 +60,7 @@ fun OpenSourceLicenseContent(
                 key = { index -> "${items[index].name}\u0000${items[index].website}" }
             ) { index ->
                 val item = items[index]
-                val select = rememberClickAction { onItemSelected(item) }
+                val select = rememberClickAction { selectedItem = item }
                 LicenseEntry(
                     item = item,
                     index = index,
@@ -63,7 +75,7 @@ fun OpenSourceLicenseContent(
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun LicenseEntry(
-    item: OpenSourceLicenseActivity.LicenseItem,
+    item: OpenSourceLicenseItem,
     index: Int,
     total: Int,
     onClick: () -> Unit
@@ -87,7 +99,7 @@ private fun OpenSourceLicenseContentPreview() {
     ComposeDesignSystem(darkTheme = false) {
         OpenSourceLicenseContent(
             items = listOf(
-                OpenSourceLicenseActivity.LicenseItem(
+                OpenSourceLicenseItem(
                     "DPIS",
                     "GPL-3.0-or-later",
                     "License detail",
@@ -95,7 +107,7 @@ private fun OpenSourceLicenseContentPreview() {
                 )
             ),
             onBack = {},
-            onItemSelected = {}
+            onOpenUrl = {}
         )
     }
 }

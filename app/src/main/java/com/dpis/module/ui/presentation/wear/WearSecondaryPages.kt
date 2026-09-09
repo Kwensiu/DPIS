@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.dpis.module.R
-import com.dpis.module.about.OpenSourceLicenseActivity
+import com.dpis.module.about.OpenSourceLicenseItem
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.ui.presentation.WearMaterialTheme
@@ -237,9 +237,17 @@ internal fun WearFontLibraryContent(
 
 @Composable
 internal fun WearOpenSourceLicenseContent(
-    items: List<OpenSourceLicenseActivity.LicenseItem>,
-    onItemSelected: (OpenSourceLicenseActivity.LicenseItem) -> Unit,
+    items: List<OpenSourceLicenseItem>,
+    onOpenUrl: (String) -> Unit,
 ) {
+    var selectedItem by remember { mutableStateOf<OpenSourceLicenseItem?>(null) }
+    selectedItem?.let { item ->
+        LicenseDetailDialog(
+            item = item,
+            onOpenUrl = onOpenUrl,
+            onDismiss = { selectedItem = null },
+        )
+    }
     WearWorkspaceList(title = R.string.open_source_license) {
         items.forEach { item ->
             wearButton(
@@ -247,7 +255,7 @@ internal fun WearOpenSourceLicenseContent(
                 label = item.name,
                 secondaryLabel = item.summary,
                 icon = R.drawable.ic_license_24,
-                onClick = { onItemSelected(item) },
+                onClick = { selectedItem = item },
             )
         }
     }
