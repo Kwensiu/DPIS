@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +79,7 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.templates.QuickTemplateSortDialog
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentation
@@ -443,6 +445,7 @@ internal fun WearTemplateWorkspaceContent(
         return
     }
     val context = LocalContext.current
+    var sortDialogVisible by rememberSaveable { mutableStateOf(false) }
     WearWorkspaceList(title = R.string.workspace_template) {
         wearButton(
             key = "global",
@@ -457,7 +460,13 @@ internal fun WearTemplateWorkspaceContent(
             icon = R.drawable.ic_add_24,
             onClick = state.actions::createTemplate
         )
-        wearButton("sort", context.getString(R.string.quick_template_sort_title), icon = R.drawable.ic_sort_24, onClick = state.actions::sortTemplates)
+        wearButton(
+            "sort",
+            context.getString(R.string.quick_template_sort_title),
+            icon = R.drawable.ic_sort_24,
+            enabled = state.sortItems.isNotEmpty(),
+            onClick = { sortDialogVisible = true },
+        )
         state.templates.forEach { template ->
             wearButton(
                 key = template.id,
@@ -469,6 +478,13 @@ internal fun WearTemplateWorkspaceContent(
             wearButton("apply:${template.id}", context.getString(R.string.template_workspace_action_apply), template.name, R.drawable.ic_check_24, onClick = { state.actions.applyTemplate(template.id) })
             wearButton("targets:${template.id}", context.getString(R.string.template_workspace_action_select_apps), template.name, R.drawable.ic_apps_24, onClick = { state.actions.selectTargets(template.id) })
         }
+    }
+    if (sortDialogVisible && state.sortItems.isNotEmpty()) {
+        QuickTemplateSortDialog(
+            items = state.sortItems,
+            onOrderChanged = state.actions::reorderTemplates,
+            onDismiss = { sortDialogVisible = false },
+        )
     }
 }
 

@@ -1,7 +1,5 @@
 package com.dpis.module.templates
 
-import android.app.Activity
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,77 +22,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.ReorderableDragFeedback
 import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.dialog.ModalDialog
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-/** Legacy platform-dialog bridge for View and Wear callers; Compose pages use the content below. */
-object QuickTemplateSortDialog {
-    // TODO: Migrate after Java callers stop retaining the AlertDialog for imperative dismissal.
-    interface Host {
-        /** Persists the current order. Returning false leaves the dialog at the previous order. */
-        fun onOrderChanged(orderedIds: List<String>): Boolean
-        fun showToast(@StringRes messageResId: Int)
-    }
-
-    @JvmStatic
-    fun show(
-        activity: Activity?,
-        templates: List<QuickTemplateStore.QuickTemplate>?,
-        host: Host?
-    ) {
-        if (activity == null || templates.isNullOrEmpty()) return
-
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity)
-            .setView(composeView)
-            .create()
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                QuickTemplateSortContent(
-                    initialItems = templates.map {
-                        QuickTemplateSortItem(
-                            it.id,
-                            it.name.orEmpty()
-                        )
-                    },
-                    onOrderChanged = { orderedIds ->
-                        val currentHost = host
-                        if (currentHost == null) {
-                            true
-                        } else {
-                            currentHost.onOrderChanged(orderedIds).also { saved ->
-                                if (!saved) currentHost.showToast(R.string.quick_template_sort_failed)
-                            }
-                        }
-                    },
-                    onDone = dialog::dismiss
-                )
-            }
-        }
-        dialog.setCanceledOnTouchOutside(true)
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        DialogWindowSizer.applyLargeWidth(dialog, activity)
+/** Compose-owned sort dialog for phone, tablet, and Wear template workspaces. */
+@Composable
+internal fun QuickTemplateSortDialog(
+    items: List<QuickTemplateSortItem>,
+    onOrderChanged: (List<String>) -> Boolean,
+    onDismiss: () -> Unit,
+) {
+    ModalDialog(onDismissRequest = onDismiss) {
+        QuickTemplateSortContent(
+            initialItems = items,
+            onOrderChanged = onOrderChanged,
+            onDone = onDismiss,
+        )
     }
 }
 

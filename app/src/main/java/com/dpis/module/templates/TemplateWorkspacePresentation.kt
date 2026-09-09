@@ -51,9 +51,7 @@ object TemplateWorkspacePresentation {
     interface Actions {
         fun editGlobalPrefill()
         fun createTemplate()
-        /** Legacy View and Wear entry point while those surfaces retain platform dialog ownership. */
-        fun sortTemplates()
-        /** Persists the full template order; the Compose page owns dialog visibility. */
+        /** Persists the full template order; Compose owns dialog visibility. */
         fun reorderTemplates(orderedIds: List<String>): Boolean
         fun applyTemplate(id: String)
         fun editTemplate(id: String)

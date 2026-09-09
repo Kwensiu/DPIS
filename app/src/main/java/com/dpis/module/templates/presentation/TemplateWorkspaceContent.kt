@@ -51,7 +51,7 @@ import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.templates.QuickTemplateSortContent
+import com.dpis.module.templates.QuickTemplateSortDialog
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.templates.TemplateEditorForm
@@ -442,13 +442,11 @@ internal fun TemplateWorkspaceContent(
         }
     }
     if (sortDialogVisible) {
-        ModalDialog(onDismissRequest = { sortDialogVisible = false }) {
-            QuickTemplateSortContent(
-                initialItems = state.sortItems,
-                onOrderChanged = state.actions::reorderTemplates,
-                onDone = { sortDialogVisible = false },
-            )
-        }
+        QuickTemplateSortDialog(
+            items = state.sortItems,
+            onOrderChanged = state.actions::reorderTemplates,
+            onDismiss = { sortDialogVisible = false },
+        )
     }
     if (deleteConfirmationVisible) {
         ConfirmAlertDialog(

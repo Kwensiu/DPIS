@@ -48,7 +48,7 @@ class TemplateWorkspaceLayoutSmokeTest {
         card.assertNotContainsAll("android:id=\"@+id/quick_template_updated\"", "android:id=\"@+id/quick_template_missing_font\"")
         assertDashedEmptySummaryState(elementWithId(card, "quick_template_empty_summary"))
         read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt").assertContainsAll("QuickTemplateSortContent(", "ReorderableItem", "longPressDraggableHandle", "R.drawable.ic_drag_indicator_24")
-        read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt").assertContainsAll("var sortDialogVisible by rememberSaveable", "ModalDialog(onDismissRequest", "initialItems = state.sortItems", "onOrderChanged = state.actions::reorderTemplates")
+        read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt").assertContainsAll("var sortDialogVisible by rememberSaveable", "QuickTemplateSortDialog(", "items = state.sortItems", "onOrderChanged = state.actions::reorderTemplates")
         read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt").assertContainsAll("val sortItems: List<QuickTemplateSortItem>", "fun reorderTemplates(orderedIds: List<String>): Boolean")
         read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt").assertContainsAll(
             "class TemplateWorkspaceCoordinator", "private val presentation = TemplateWorkspacePresentationController",
@@ -74,7 +74,8 @@ class TemplateWorkspaceLayoutSmokeTest {
         adapter.assertContainsAll("R.id.quick_template_summary_chips", "TemplateSummaryChipBinder", "R.id.quick_template_apply_button", "R.id.quick_template_edit_button", "R.id.quick_template_select_button")
         adapter.assertNotContainsAll("quick_template_updated")
         read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt").assertContainsAll("quick_template_sort_button")
-        read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt").assertContainsAll("DialogWindowSizer.applyLargeWidth(dialog, activity)")
+        read("src/main/java/com/dpis/module/templates/QuickTemplateSortDialog.kt").assertContainsAll("ModalDialog(onDismissRequest = onDismiss)", "fun QuickTemplateSortDialog(")
+        read("src/main/java/com/dpis/module/ui/presentation/wear/WearWorkspaceContent.kt").assertContainsAll("var sortDialogVisible by rememberSaveable", "QuickTemplateSortDialog(", "enabled = state.sortItems.isNotEmpty()")
         read("src/main/java/com/dpis/module/MainActivity.java").apply {
             assertContainsAll("private TemplateWorkspaceActivitySession workspaceSession;", "ensureWorkspaceSession()")
             assertContainsAll("TemplateWorkspaceActivitySession.State", "attachLegacyViews(")
