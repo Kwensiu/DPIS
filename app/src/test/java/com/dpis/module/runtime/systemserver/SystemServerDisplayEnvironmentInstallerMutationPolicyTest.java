@@ -496,12 +496,12 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     }
 
     @Test
-    public void systemServerMutationSchedulerTodoDocumentsFieldSemantics()
+    public void applyEnvironmentDefersFieldBaselineToMutationPolicy()
             throws IOException {
         String installer = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java");
         String policy = read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerMutationPolicy.java");
 
-        assertTrue(installer.contains("TODO(system-mutation-scheduler)"));
+        assertTrue(installer.contains("SystemServerMutationPolicy.shouldApplyMutationField"));
         assertTrue(installer.contains("SystemServerMutationField.VIEWPORT"));
         assertTrue(installer.contains("SystemServerMutationField.FONT_SCALE"));
         assertTrue(installer.contains("VIEWPORT uses a marker-gated"));
