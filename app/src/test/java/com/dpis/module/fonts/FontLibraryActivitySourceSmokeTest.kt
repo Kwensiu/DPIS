@@ -114,6 +114,7 @@ class FontLibraryActivitySourceSmokeTest {
             "state.publicationFailed",
             "font_library_private_badge",
             "font_library_public_badge",
+            "font_library_used_badge",
         )
         source.assertNotContainsAll("resolveFontSubtitle(entry)")
     }
@@ -173,17 +174,20 @@ class FontLibraryActivitySourceSmokeTest {
             "runtime state was not restored",
         )
         content.assertContainsAll(
+            "FontDetailCard(",
             "FontReferenceSection(",
-            "font_library_active_apps_title",
-            "font_library_remove_app_action",
+            "font_library_used_by_title",
+            "SegmentedListItem(",
             "dpisSegmentedShapes",
             "FontFamily(typeface)",
-            "ic_build_24",
-            "ic_edit_24",
-            "ic_delete_24",
+            "ic_more_vert_24",
+            "font_library_detail_menu_action",
+            "font_library_rename_action",
+            "font_library_delete_action",
             "FontLibraryContentPreview",
             "FontDetailContentPreview",
         )
+        content.assertNotContainsAll("AssistChip(", "ic_edit_24", "FontDetailHeader(")
         manifest.assertContainsAll("android:name=\".fonts.FontDetailActivity\"")
         detail.assertNotContainsAll("createCompatibilitySection", "createManagementSection")
     }

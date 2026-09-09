@@ -526,6 +526,7 @@
     <string name="font_library_archive_import_success">已导入 %1$d 个字体集合</string>
     <string name="font_library_archive_import_failed">导入字体库失败</string>
     <string name="font_library_archive_menu_action">字体库备份与恢复</string>
+    <string name="font_library_detail_menu_action">字体操作</string>
     <string name="font_library_detail_page_title">字体详情</string>
     <string name="font_library_preview_title">预览</string>
     <string name="font_library_active_apps_title">使用中的应用</string>

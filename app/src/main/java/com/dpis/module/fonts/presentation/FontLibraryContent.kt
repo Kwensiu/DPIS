@@ -17,17 +17,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -286,6 +286,7 @@ fun FontDetailContent(
     onRestoreConfirm: () -> Unit,
 ) {
     val state = presentation.state ?: return
+    var menuExpanded by remember { mutableStateOf(false) }
     FontDetailDialogHost(
         presentation = presentation,
         onRenameSubmit = onRenameSubmit,
@@ -297,26 +298,42 @@ fun FontDetailContent(
         onBack = onBack,
         titleRes = R.string.font_library_detail_page_title,
         actions = {
-            if (state.publicationFailed) {
+            Box(modifier = Modifier.padding(end = 16.dp)) {
                 DpisToolbarIconButton(
-                    R.drawable.ic_build_24,
-                    R.string.font_library_publication_retry_action,
-                    onRetryPublication
+                    iconRes = R.drawable.ic_more_vert_24,
+                    descriptionRes = R.string.font_library_detail_menu_action,
+                    onClick = { menuExpanded = true },
                 )
-                Spacer(Modifier.width(8.dp))
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                ) {
+                    if (state.publicationFailed) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.font_library_publication_retry_action)) },
+                            onClick = rememberClickAction {
+                                menuExpanded = false
+                                onRetryPublication()
+                            },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.font_library_rename_action)) },
+                        onClick = rememberClickAction {
+                            menuExpanded = false
+                            onRename()
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.font_library_delete_action)) },
+                        onClick = rememberClickAction {
+                            menuExpanded = false
+                            onDelete()
+                        },
+                    )
+                }
             }
-            DpisToolbarIconButton(
-                R.drawable.ic_edit_24,
-                R.string.font_library_rename_action,
-                onRename
-            )
-            Spacer(Modifier.width(8.dp))
-            DpisToolbarIconButton(
-                R.drawable.ic_delete_24,
-                R.string.font_library_delete_action,
-                onDelete
-            )
-        }
+        },
     ) { padding ->
         val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
@@ -325,71 +342,71 @@ fun FontDetailContent(
                 start = padding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp)
+                bottom = edgeToEdgeContentBottomPadding(24.dp),
             ),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            item { FontDetailHeader(state) }
-            state.previewTypeface?.let { typeface ->
-                item { FontPreviewSection(typeface) }
-            }
-            item {
-                FontReferenceSection(state.references, onRemoveReference)
-            }
+            item { FontDetailCard(state) }
+            item { FontReferenceSection(state.references, onRemoveReference) }
         }
     }
 }
 
 @Composable
-private fun FontDetailHeader(state: FontDetailUiState) {
-    Column {
-        Text(state.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(
-            state.sourceFileName,
-            modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (state.inUse) {
-                DpisStatusBadge(stringResource(R.string.font_library_used_badge), primary = true)
-            }
-            DpisStatusBadge(
-                if (state.isPublished) stringResource(R.string.font_library_public_badge)
-                else stringResource(R.string.font_library_private_badge),
-                primary = state.isPublished
+private fun FontDetailCard(state: FontDetailUiState) {
+    val publication = stringResource(
+        if (state.isPublished) R.string.font_library_public_badge
+        else R.string.font_library_private_badge,
+    )
+    val status = if (state.inUse) {
+        stringResource(R.string.font_library_used_badge) + " · " + publication
+    } else {
+        publication
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceBright,
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Text(
+                state.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-        }
-    }
-}
-
-@Composable
-private fun FontPreviewSection(typeface: Typeface) {
-    Column {
-        FontSectionTitle(R.string.font_library_preview_title)
-        Surface(
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surfaceContainer
-        ) {
-            Column(Modifier.padding(16.dp)) {
+            Text(
+                state.sourceFileName,
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                status,
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            state.previewTypeface?.let { typeface ->
+                Spacer(Modifier.height(12.dp))
                 Text(
                     "AaBbCc 你好世界 123",
                     fontFamily = FontFamily(typeface),
                     fontSize = 26.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     "The quick brown fox jumps over the lazy dog",
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 6.dp),
                     fontFamily = FontFamily(typeface),
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -397,52 +414,40 @@ private fun FontPreviewSection(typeface: Typeface) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun FontReferenceSection(
     references: List<FontReferenceUiItem>,
-    onRemoveReference: (String) -> Unit
+    onRemoveReference: (String) -> Unit,
 ) {
     Column {
-        FontSectionTitle(R.string.font_library_active_apps_title)
+        FontSectionTitle(R.string.font_library_used_by_title)
         if (references.isEmpty()) {
             Text(
                 stringResource(R.string.font_library_unused),
                 modifier = Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             Column(
                 Modifier.padding(top = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
             ) {
                 references.forEachIndexed { index, reference ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = dpisSegmentedShapes(index, references.size).shape,
-                        color = MaterialTheme.colorScheme.surfaceBright
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(reference.label, fontWeight = FontWeight.Bold)
-                                Text(
-                                    reference.packageName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            AssistChip(
-                                onClick = rememberClickAction {
-                                    onRemoveReference(reference.packageName)
-                                },
-                                label = { Text(stringResource(R.string.font_library_remove_app_action)) }
-                            )
-                        }
+                    val restore = rememberClickAction {
+                        onRemoveReference(reference.packageName)
                     }
+                    SegmentedListItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = restore,
+                        shapes = dpisSegmentedShapes(index, references.size),
+                        colors = ListItemDefaults.segmentedColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceBright,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        supportingContent = { Text(reference.packageName) },
+                        content = { Text(reference.label) },
+                    )
                 }
             }
         }

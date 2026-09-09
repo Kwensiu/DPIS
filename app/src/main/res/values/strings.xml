@@ -565,6 +565,7 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_archive_import_success">Imported %1$d font collections</string>
     <string name="font_library_archive_import_failed">Failed to import font library</string>
     <string name="font_library_archive_menu_action">Font library backup and restore</string>
+    <string name="font_library_detail_menu_action">Font actions</string>
     <string name="font_library_detail_page_title">Font details</string>
     <string name="font_library_preview_title">Preview</string>
     <string name="font_library_active_apps_title">Active apps</string>
