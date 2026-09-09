@@ -16,14 +16,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.about.OpenSourceLicenseActivity
+import com.dpis.module.about.OpenSourceLicenseItem
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.dialog.ModalDialog
 
 @Composable
 internal fun LicenseDetailDialog(
-    item: OpenSourceLicenseActivity.LicenseItem,
+    item: OpenSourceLicenseItem,
     onOpenUrl: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {

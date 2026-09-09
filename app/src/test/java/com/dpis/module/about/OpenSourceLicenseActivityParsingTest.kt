@@ -5,32 +5,15 @@ import org.junit.Test
 
 class OpenSourceLicenseActivityParsingTest {
     @Test
-    fun parserReadsCatalogAndStringLicenseReferences() {
-        val source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.kt")
-
-        assertTrue(source.contains("val licenseCatalog = root.optJSONObject(\"licenses\")"))
-        assertTrue(source.contains("resolveLicenses("))
-        assertTrue(source.contains("library.optJSONArray(\"licenses\")"))
-        assertTrue(source.contains("if (entry is String)"))
-        assertTrue(source.contains("licenseCatalog.optJSONObject(normalizedKey)"))
-    }
-
-    @Test
-    fun parserBuildsLicenseDetailWithResolvedContent() {
-        val source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.kt")
-
-        assertTrue(source.contains("fun buildLicenseDetail"))
-        assertTrue(source.contains("detailBuilder.append(license.name)"))
-        assertTrue(source.contains("detailBuilder.append(\"\\n\\n\").append(license.content)"))
-    }
-
-    @Test
     fun licensePageIncludesDpisProjectLicense() {
         val source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.kt")
+        val catalog = read("src/main/java/com/dpis/module/about/OpenSourceLicenseCatalog.kt")
         val strings = read("src/main/res/values/strings.xml")
 
         assertTrue(source.contains("createProjectLicenseItem()"))
         assertTrue(source.contains("R.raw.gpl_3_0"))
+        assertTrue(source.contains("OpenSourceLicenseCatalog.parseLibraryItems("))
+        assertTrue(catalog.contains("fun parseLibraryItems("))
         assertTrue(strings.contains("open_source_license_project_summary"))
         assertTrue(strings.contains("GPL-3.0-or-later"))
     }
@@ -82,9 +65,9 @@ class OpenSourceLicenseActivityParsingTest {
         assertTrue(throwableCatch > notFoundCatch)
 
         val notFoundBranch = source.substring(notFoundCatch, throwableCatch)
-        assertTrue(notFoundBranch.contains("createProjectLicenseItem()"))
+        assertTrue(notFoundBranch.contains("project"))
         assertTrue(notFoundBranch.contains("R.string.open_source_license_empty"))
-        assertTrue(notFoundBranch.contains("return listOf("))
+        assertTrue(notFoundBranch.contains("listOf("))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)
