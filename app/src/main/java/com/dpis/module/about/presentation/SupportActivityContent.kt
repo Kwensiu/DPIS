@@ -248,20 +248,20 @@ object SupportActivityContent {
     fun installOpenSourceLicenses(
         activity: ComponentActivity,
         items: List<OpenSourceLicenseActivity.LicenseItem>,
-        onItemSelected: Consumer<OpenSourceLicenseActivity.LicenseItem>
+        onOpenUrl: (String) -> Unit,
     ) {
         activity.setContent {
             ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
                 if (WatchUiMode.shouldUseCompactUi(activity)) {
                     WearOpenSourceLicenseContent(
                         items = items,
-                        onItemSelected = onItemSelected::accept,
+                        onOpenUrl = onOpenUrl,
                     )
                 } else {
                     OpenSourceLicenseContent(
                         items = items,
                         onBack = activity::finish,
-                        onItemSelected = onItemSelected::accept
+                        onOpenUrl = onOpenUrl,
                     )
                 }
             }

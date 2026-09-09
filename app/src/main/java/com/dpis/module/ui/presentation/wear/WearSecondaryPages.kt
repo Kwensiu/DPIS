@@ -238,8 +238,16 @@ internal fun WearFontLibraryContent(
 @Composable
 internal fun WearOpenSourceLicenseContent(
     items: List<OpenSourceLicenseActivity.LicenseItem>,
-    onItemSelected: (OpenSourceLicenseActivity.LicenseItem) -> Unit,
+    onOpenUrl: (String) -> Unit,
 ) {
+    var selectedItem by remember { mutableStateOf<OpenSourceLicenseActivity.LicenseItem?>(null) }
+    selectedItem?.let { item ->
+        LicenseDetailDialog(
+            item = item,
+            onOpenUrl = onOpenUrl,
+            onDismiss = { selectedItem = null },
+        )
+    }
     WearWorkspaceList(title = R.string.open_source_license) {
         items.forEach { item ->
             wearButton(
@@ -247,7 +255,7 @@ internal fun WearOpenSourceLicenseContent(
                 label = item.name,
                 secondaryLabel = item.summary,
                 icon = R.drawable.ic_license_24,
-                onClick = { onItemSelected(item) },
+                onClick = { selectedItem = item },
             )
         }
     }

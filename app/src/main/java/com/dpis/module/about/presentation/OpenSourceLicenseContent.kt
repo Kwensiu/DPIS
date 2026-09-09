@@ -13,6 +13,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,9 +28,17 @@ import com.dpis.module.about.OpenSourceLicenseActivity
 fun OpenSourceLicenseContent(
     items: List<OpenSourceLicenseActivity.LicenseItem>,
     onBack: () -> Unit,
-    onItemSelected: (OpenSourceLicenseActivity.LicenseItem) -> Unit,
+    onOpenUrl: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selectedItem by remember { mutableStateOf<OpenSourceLicenseActivity.LicenseItem?>(null) }
+    selectedItem?.let { item ->
+        LicenseDetailDialog(
+            item = item,
+            onOpenUrl = onOpenUrl,
+            onDismiss = { selectedItem = null },
+        )
+    }
     SecondaryPageScaffold(
         modifier = modifier.fillMaxSize(),
         titleRes = R.string.open_source_license,
@@ -48,7 +60,7 @@ fun OpenSourceLicenseContent(
                 key = { index -> "${items[index].name}\u0000${items[index].website}" }
             ) { index ->
                 val item = items[index]
-                val select = rememberClickAction { onItemSelected(item) }
+                val select = rememberClickAction { selectedItem = item }
                 LicenseEntry(
                     item = item,
                     index = index,
@@ -95,7 +107,7 @@ private fun OpenSourceLicenseContentPreview() {
                 )
             ),
             onBack = {},
-            onItemSelected = {}
+            onOpenUrl = {}
         )
     }
 }
