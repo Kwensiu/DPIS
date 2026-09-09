@@ -151,18 +151,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
         override fun createTemplate() = openQuickTemplate(null)
 
-        override fun sortTemplates() {
-            QuickTemplateSortDialog.show(
-                activity,
-                QuickTemplateStore(activity).readAll(),
-                object : QuickTemplateSortDialog.Host {
-                    override fun onOrderChanged(orderedIds: List<String>) = reorderTemplates(orderedIds)
-
-                    override fun showToast(messageResId: Int) = host.showToast(messageResId)
-                },
-            )
-        }
-
         override fun reorderTemplates(orderedIds: List<String>): Boolean {
             val reordered = QuickTemplateStore(activity).reorder(orderedIds)
             if (reordered) {
@@ -401,7 +389,11 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 override fun edit(templateId: String) = openQuickTemplate(templateId)
                 override fun select(templateId: String) = openQuickTemplateTargets(templateId)
                 override fun create() = openQuickTemplate(null)
-                override fun sort(templates: List<QuickTemplateStore.QuickTemplate>) = actions.sortTemplates()
+                override fun sort(templates: List<QuickTemplateStore.QuickTemplate>) {
+                    // Sort dialog visibility is owned by Compose phone/Wear. This View binder is
+                    // only used when the Compose shell is absent.
+                    if (templates.isEmpty()) return
+                }
             },
         )
     }
