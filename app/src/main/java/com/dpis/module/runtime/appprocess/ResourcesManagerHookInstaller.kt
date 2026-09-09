@@ -85,7 +85,7 @@ object ResourcesManagerHookInstaller {
             val applyConfigurationMethod = resourcesManagerClass.getDeclaredMethod(
                 "applyConfigurationToResources", Configuration::class.java, compatibilityInfoClass
             )
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(applyConfigurationMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_APPLY_CONFIGURATION
@@ -102,7 +102,7 @@ object ResourcesManagerHookInstaller {
             val updateResourcesForActivityMethod = resolveUpdateResourcesForActivityMethod(
                 resourcesManagerClass, bootClassLoader
             )
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(updateResourcesForActivityMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_UPDATE_RESOURCES_FOR_ACTIVITY
@@ -214,7 +214,7 @@ object ResourcesManagerHookInstaller {
         var hookedCount = 0
         for (method in methods) {
             if (argumentIndex(method) == null || !hookedMethods.add(method)) continue
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(method)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 hookIdPrefix + "#" + method.toGenericString(),

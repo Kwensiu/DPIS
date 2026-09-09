@@ -63,7 +63,7 @@ object WebViewFontHookInstaller {
             val bootClassLoader = ClassLoader.getSystemClassLoader()
             val webViewClass = Class.forName("android.webkit.WebView", false, bootClassLoader)
             val getSettingsMethod = webViewClass.getDeclaredMethod("getSettings")
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(getSettingsMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_WEBVIEW_GET_SETTINGS
@@ -154,7 +154,7 @@ object WebViewFontHookInstaller {
                 )
                 return
             }
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTextZoomMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_WEBSETTINGS_SET_TEXT_ZOOM
@@ -233,7 +233,7 @@ object WebViewFontHookInstaller {
         }
         try {
             val getSettingsMethod = x5WebViewClass.getDeclaredMethod("getSettings")
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(getSettingsMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_X5_WEBVIEW_GET_SETTINGS
@@ -288,7 +288,7 @@ object WebViewFontHookInstaller {
         try {
             val setTextZoomMethod =
                 x5WebSettingsClass.getDeclaredMethod("setTextZoom", Int::class.javaPrimitiveType)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTextZoomMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_X5_WEBSETTINGS_SET_TEXT_ZOOM
