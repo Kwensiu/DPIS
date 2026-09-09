@@ -1,9 +1,8 @@
 package com.dpis.module.ui.compose
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.ModalDialog
 
-import android.app.Activity
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,63 +24,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import java.util.function.Predicate
 
-object ComposeTextInputDialog {
-    // TODO: Migrate after Java callers no longer require an imperative AlertDialog return value.
-    @JvmStatic
-    fun show(
-        activity: Activity,
-        title: CharSequence,
-        hint: CharSequence,
-        initialValue: String,
-        onSubmit: Predicate<String>
-    ): AlertDialog = showInternal(activity, title, hint, initialValue, false, onSubmit)
-
-    @JvmStatic
-    fun showLarge(
-        activity: Activity,
-        title: CharSequence,
-        hint: CharSequence,
-        initialValue: String,
-        onSubmit: Predicate<String>
-    ): AlertDialog = showInternal(activity, title, hint, initialValue, true, onSubmit)
-
-    private fun showInternal(
-        activity: Activity,
-        title: CharSequence,
-        hint: CharSequence,
-        initialValue: String,
-        large: Boolean,
-        onSubmit: Predicate<String>
-    ): AlertDialog {
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                TextInputDialogContent(title.toString(), hint.toString(), initialValue,
-                    { dialog.dismiss() },
-                    { if (onSubmit.test(it)) dialog.dismiss() })
-            }
-        }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        if (large) DialogWindowSizer.applyLargeWidth(dialog, activity)
-        else DialogWindowSizer.applyStandardWidth(dialog, activity)
-        return dialog
+@Composable
+internal fun TextInputDialog(
+    title: String,
+    hint: String,
+    initialValue: String,
+    onDismiss: () -> Unit,
+    onSubmit: (String) -> Unit,
+) {
+    val focusBoundary = rememberTextInputFocusBoundary()
+    ModalDialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+        ),
+        imeFocusBoundary = focusBoundary,
+    ) {
+        TextInputDialogContent(title, hint, initialValue, onDismiss, onSubmit)
     }
 }
 

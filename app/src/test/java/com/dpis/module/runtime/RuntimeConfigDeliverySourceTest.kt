@@ -13,8 +13,8 @@ class RuntimeConfigDeliverySourceTest {
         val templateHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt")
         val appConfigHost = hostBlock(mainActivity)
         val sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
-        val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.java")
-        val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.java")
+        val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+        val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
         val systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
 
@@ -41,8 +41,8 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
         assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
         assertTrue(templateHost.contains("activity.onRuntimeConfigSaved()"))
-        assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
-        assertTrue(occurrences(fontDetail, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave();") >= 3)
+        assertTrue(occurrences(fontLibrary, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()") >= 3)
+        assertTrue(occurrences(fontDetail, "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()") >= 3)
         assertTrue(systemHooks.contains("RuntimeConfigDelivery::publishLocalSnapshotAfterSave"))
         assertTrue(systemSettings.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
     }

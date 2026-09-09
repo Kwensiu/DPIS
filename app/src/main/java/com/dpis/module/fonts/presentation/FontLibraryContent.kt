@@ -1,8 +1,8 @@
 package com.dpis.module.ui.compose
 
 import android.graphics.Typeface
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +48,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
 
 class FontLibraryUiItem(
     val id: String,
@@ -57,12 +58,39 @@ class FontLibraryUiItem(
     val previewTypeface: Typeface?
 )
 
+sealed class FontLibraryDialog {
+    data class Name(
+        val uri: Uri,
+        val sourceName: String,
+        val mimeType: String?,
+        val initial: String,
+    ) : FontLibraryDialog()
+    data class Large(
+        val uri: Uri,
+        val sourceName: String,
+        val mimeType: String?,
+        val displayName: String,
+        val sizeMiB: Long,
+    ) : FontLibraryDialog()
+    data class Repair(val missingCount: Int) : FontLibraryDialog()
+}
+
 class FontLibraryPresentation {
     var items: List<FontLibraryUiItem> by mutableStateOf(emptyList())
+        private set
+    var dialog: FontLibraryDialog? by mutableStateOf(null)
         private set
 
     fun show(items: List<FontLibraryUiItem>) {
         this.items = items
+    }
+
+    fun show(dialog: FontLibraryDialog) {
+        this.dialog = dialog
+    }
+
+    fun dismiss() {
+        dialog = null
     }
 }
 
@@ -81,12 +109,29 @@ class FontDetailUiState(
     val references: List<FontReferenceUiItem>
 )
 
+sealed class FontDetailDialog {
+    data class Rename(val initial: String) : FontDetailDialog()
+    data object Fallback : FontDetailDialog()
+    data class Delete(val title: String, val message: String, val confirm: String) : FontDetailDialog()
+    data class Restore(val packageName: String, val label: String) : FontDetailDialog()
+}
+
 class FontDetailPresentation {
     var state: FontDetailUiState? by mutableStateOf(null)
+        private set
+    var dialog: FontDetailDialog? by mutableStateOf(null)
         private set
 
     fun show(state: FontDetailUiState) {
         this.state = state
+    }
+
+    fun show(dialog: FontDetailDialog) {
+        this.dialog = dialog
+    }
+
+    fun dismiss() {
+        dialog = null
     }
 }
 
@@ -97,9 +142,18 @@ fun FontLibraryContent(
     onImportFont: () -> Unit,
     onExportArchive: () -> Unit,
     onImportArchive: () -> Unit,
-    onFontSelected: (String) -> Unit
+    onFontSelected: (String) -> Unit,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: () -> Unit,
+    onRepairConfirm: () -> Unit,
 ) {
     var archiveMenuExpanded by remember { mutableStateOf(false) }
+    FontLibraryDialogHost(
+        presentation = presentation,
+        onNameSubmit = onNameSubmit,
+        onLargeConfirm = onLargeConfirm,
+        onRepairConfirm = onRepairConfirm,
+    )
     SecondaryPageScaffold(
         onBack = onBack,
         titleRes = R.string.font_library_page_title,
@@ -225,9 +279,20 @@ fun FontDetailContent(
     onRetryPublication: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
-    onRemoveReference: (String) -> Unit
+    onRemoveReference: (String) -> Unit,
+    onRenameSubmit: (String) -> Boolean,
+    onFallbackRetry: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onRestoreConfirm: () -> Unit,
 ) {
     val state = presentation.state ?: return
+    FontDetailDialogHost(
+        presentation = presentation,
+        onRenameSubmit = onRenameSubmit,
+        onFallbackRetry = onFallbackRetry,
+        onDeleteConfirm = onDeleteConfirm,
+        onRestoreConfirm = onRestoreConfirm,
+    )
     SecondaryPageScaffold(
         onBack = onBack,
         titleRes = R.string.font_library_detail_page_title,
@@ -434,7 +499,7 @@ private fun FontLibraryContentPreview() {
         }
     }
     ComposeDesignSystem(darkTheme = false) {
-        FontLibraryContent(presentation, {}, {}, {}, {}, {})
+        FontLibraryContent(presentation, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }
 
@@ -457,6 +522,90 @@ private fun FontDetailContentPreview() {
         }
     }
     ComposeDesignSystem(darkTheme = false) {
-        FontDetailContent(presentation, {}, {}, {}, {}, {})
+        FontDetailContent(presentation, {}, {}, {}, {}, {}, { true }, {}, {}, {})
+    }
+}
+
+@Composable
+internal fun FontLibraryDialogHost(
+    presentation: FontLibraryPresentation,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: () -> Unit,
+    onRepairConfirm: () -> Unit,
+) {
+    when (val dialog = presentation.dialog) {
+        is FontLibraryDialog.Name -> TextInputDialog(
+            title = stringResource(R.string.font_library_name_title),
+            hint = stringResource(R.string.font_library_name_hint),
+            initialValue = dialog.initial,
+            onDismiss = presentation::dismiss,
+            onSubmit = onNameSubmit,
+        )
+        is FontLibraryDialog.Large -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_large_import_title),
+            message = stringResource(R.string.font_library_large_import_message, dialog.sizeMiB),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.font_library_large_import_continue),
+            onConfirm = onLargeConfirm,
+        )
+        is FontLibraryDialog.Repair -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_publication_repair_title),
+            message = stringResource(
+                R.string.font_library_publication_repair_message,
+                dialog.missingCount,
+            ),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.font_library_publication_retry_action),
+            onConfirm = onRepairConfirm,
+        )
+        null -> Unit
+    }
+}
+
+@Composable
+internal fun FontDetailDialogHost(
+    presentation: FontDetailPresentation,
+    onRenameSubmit: (String) -> Boolean,
+    onFallbackRetry: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onRestoreConfirm: () -> Unit,
+) {
+    when (val dialog = presentation.dialog) {
+        is FontDetailDialog.Rename -> TextInputDialog(
+            title = stringResource(R.string.font_library_name_title),
+            hint = stringResource(R.string.font_library_name_hint),
+            initialValue = dialog.initial,
+            onDismiss = presentation::dismiss,
+            onSubmit = { name ->
+                if (onRenameSubmit(name)) presentation.dismiss()
+            },
+        )
+        FontDetailDialog.Fallback -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_fallback_dialog_title),
+            message = stringResource(R.string.font_library_fallback_dialog_message),
+            cancelLabel = stringResource(R.string.dialog_close_button),
+            confirmLabel = stringResource(R.string.font_library_publication_retry_action),
+            onConfirm = onFallbackRetry,
+        )
+        is FontDetailDialog.Delete -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = dialog.title,
+            message = dialog.message,
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = dialog.confirm,
+            onConfirm = onDeleteConfirm,
+        )
+        is FontDetailDialog.Restore -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_restore_app_font_title),
+            message = stringResource(R.string.font_library_restore_app_font_message, dialog.label),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.font_library_restore_default_action),
+            onConfirm = onRestoreConfirm,
+        )
+        null -> Unit
     }
 }
