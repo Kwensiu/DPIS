@@ -264,7 +264,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(resolver.contains("API 101 keeps"));
         assertTrue(resourcesRead.contains("apiCapabilities.applyStableHookId"));
         assertTrue(resourcesImpl.contains("apiCapabilities.applyStableHookId"));
-        assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId<HookBuilder?>("));
+        assertTrue(resourcesManager.contains("apiCapabilities.applyStableHookId<HookBuilder>("));
         assertTrue(read("src/main/java/com/dpis/module/runtime/font/ActivityThreadFontHookInstaller.java")
                 .contains("HOOK_ID_HANDLE_BIND_APPLICATION"));
         assertTrue(read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.kt")
@@ -280,7 +280,7 @@ public class ModuleMainHookInstallerTest {
         String typefaceInstaller = read("src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt");
         assertTrue(typefaceInstaller.contains("HOOK_ID_TEXTVIEW_SET_TYPEFACE"));
         assertTrue(typefaceInstaller.contains("HOOK_ID_PAINT_SET_TYPEFACE"));
-        assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId<HookBuilder?>("));
+        assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId<HookBuilder>("));
         assertTrue(typefaceInstaller.contains("bridgeOverrideAppliedIfChanged("));
         String appProcessInstaller = read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.java");
         assertTrue(appProcessInstaller.contains("ForceTextSizeHookInstaller.install("));

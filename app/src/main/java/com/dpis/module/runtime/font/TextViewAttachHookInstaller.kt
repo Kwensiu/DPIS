@@ -27,7 +27,7 @@ internal object TextViewAttachHookInstaller {
     ) {
 try {
             val onAttachedToWindowMethod = findOnAttachedToWindowMethod(textViewClass)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(onAttachedToWindowMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_ATTACH

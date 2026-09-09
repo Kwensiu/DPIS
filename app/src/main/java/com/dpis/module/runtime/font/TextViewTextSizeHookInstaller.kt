@@ -36,7 +36,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                 Int::class.javaPrimitiveType,
                 Float::class.javaPrimitiveType
             )
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTextSizeMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT
@@ -207,7 +207,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                 })
             val setTextSizeFloatMethod =
                 textViewClass.getDeclaredMethod("setTextSize", Float::class.javaPrimitiveType)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTextSizeFloatMethod)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP

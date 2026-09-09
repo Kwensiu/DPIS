@@ -83,7 +83,7 @@ object TypefaceOverrideHookInstaller {
             val bootClassLoader = ClassLoader.getSystemClassLoader()
             val textViewClass = Class.forName("android.widget.TextView", false, bootClassLoader)
             val setTypeface = textViewClass.getDeclaredMethod("setTypeface", Typeface::class.java)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTypeface)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_SET_TYPEFACE
@@ -115,7 +115,7 @@ object TypefaceOverrideHookInstaller {
                     Typeface::class.java,
                     Int::class.javaPrimitiveType
                 )
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTypefaceWithStyle)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_SET_TYPEFACE_WITH_STYLE
@@ -144,7 +144,7 @@ object TypefaceOverrideHookInstaller {
 
             val paintSetTypeface =
                 Paint::class.java.getDeclaredMethod("setTypeface", Typeface::class.java)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(paintSetTypeface)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_PAINT_SET_TYPEFACE
@@ -422,7 +422,7 @@ object TypefaceOverrideHookInstaller {
             val onAttachedToWindow = findOnAttachedToWindowMethod(textViewClass)
             // Stable id lets 102 replace the reinforcement hook without keeping
             // a stale attach-time typeface route after a module hot reload.
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(onAttachedToWindow)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_ON_ATTACHED_TO_WINDOW
@@ -470,7 +470,7 @@ object TypefaceOverrideHookInstaller {
     ) {
         try {
             val onDraw = textViewClass.getDeclaredMethod("onDraw", Canvas::class.java)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(onDraw)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_ON_DRAW

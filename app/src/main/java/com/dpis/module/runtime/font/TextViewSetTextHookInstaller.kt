@@ -29,7 +29,7 @@ internal object TextViewSetTextHookInstaller {
 val setTextMethod = textViewClass.getDeclaredMethod(
             "setText", CharSequence::class.java, BufferType::class.java
         )
-        apiCapabilities.applyStableHookId<HookBuilder?>(
+        apiCapabilities.applyStableHookId<HookBuilder>(
             xposed.hook(setTextMethod)
                 .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
             HOOK_ID_TEXTVIEW_SET_TEXT

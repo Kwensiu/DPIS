@@ -67,7 +67,7 @@ internal object PaintTextSizeHookInstaller {
         packageName: String?,
         apiCapabilities: ModernApiCapabilities
     ) {
-        apiCapabilities.applyStableHookId<HookBuilder?>(
+        apiCapabilities.applyStableHookId<HookBuilder>(
             xposed.hook(method).setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE), hookId
         ).intercept(Hooker { chain: XposedInterface.Chain? ->
                     if (true == ForceTextSizeHookRuntime.INTERNAL_UPDATE.get()) {

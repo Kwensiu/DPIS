@@ -27,7 +27,7 @@ try {
             val setTextAppearanceCtx = textViewClass.getDeclaredMethod(
                 "setTextAppearance", Context::class.java, Int::class.javaPrimitiveType
             )
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTextAppearanceCtx)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_CONTEXT
@@ -45,7 +45,7 @@ try {
         try {
             val setTextAppearanceRes =
                 textViewClass.getDeclaredMethod("setTextAppearance", Int::class.javaPrimitiveType)
-            apiCapabilities.applyStableHookId<HookBuilder?>(
+            apiCapabilities.applyStableHookId<HookBuilder>(
                 xposed.hook(setTextAppearanceRes)
                     .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                 HOOK_ID_TEXTVIEW_SET_TEXT_APPEARANCE_RES
