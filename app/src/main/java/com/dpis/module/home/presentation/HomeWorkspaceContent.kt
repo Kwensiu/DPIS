@@ -29,7 +29,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,6 +63,7 @@ import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.compose.PageBarBehavior
 import com.dpis.module.ui.compose.PageScaffold
 import com.dpis.module.ui.compose.SecondaryPageContentTokens
+import com.dpis.module.ui.compose.ToolbarIconButton
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.rememberRestorableLazyListState
@@ -127,17 +127,12 @@ fun HomeWorkspaceContent(
         contentCanScroll = contentCanScroll,
         actions = if (state.showEditButton) {
             {
-            IconButton(
+            ToolbarIconButton(
+                iconRes = if (editing) R.drawable.ic_save_24dp else R.drawable.ic_edit_24,
+                descriptionRes = if (editing) R.string.home_workspace_action_save
+                else R.string.home_workspace_action_edit,
                 onClick = toggleEditing,
-            ) {
-                Icon(
-                    painterResource(if (editing) R.drawable.ic_save_24dp else R.drawable.ic_edit_24),
-                    stringResource(
-                        if (editing) R.string.home_workspace_action_save
-                        else R.string.home_workspace_action_edit,
-                    ),
-                )
-            }
+            )
             }
         } else ({}),
         title = {

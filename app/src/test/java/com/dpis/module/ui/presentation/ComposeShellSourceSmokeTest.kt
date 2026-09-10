@@ -58,6 +58,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(home.contains("rememberClickAction"))
         assertTrue(home.contains(".clip(CircleShape)"))
         assertTrue(home.contains("PageBarBehavior.Collapsing"))
+        assertTrue(home.contains("ToolbarIconButton("))
         assertTrue(home.contains("collapsedTitle = {"))
         assertTrue(home.contains("stringResource(R.string.app_name)"))
         assertTrue(home.contains("contentPadding = PaddingValues("))
@@ -82,6 +83,7 @@ class ComposeShellSourceSmokeTest {
     fun standaloneSettingsPagesUseSharedSecondaryPageChrome() {
         val scaffold = read("src/main/java/com/dpis/module/ui/presentation/workspace/PageScaffold.kt")
         val topBar = read("src/main/java/com/dpis/module/ui/presentation/workspace/PageTopBar.kt")
+        val toolbar = read("src/main/java/com/dpis/module/ui/presentation/workspace/ToolbarActions.kt")
         val theme = read("src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt")
         val experimental = read(
                 "src/main/java/com/dpis/module/settings/presentation/ExperimentalSettingsContent.kt")
@@ -94,6 +96,9 @@ class ComposeShellSourceSmokeTest {
         assertTrue(topBar.contains("MaterialTheme.typography.expandedPageTitle"))
         assertFalse(topBar.contains("fontSize = 34.sp"))
         assertTrue(topBar.contains("internal fun InFlowPageHeader("))
+        assertTrue(toolbar.contains("internal fun ToolbarIconButton("))
+        assertTrue(toolbar.contains("internal fun ToolbarOverflowMenu("))
+        assertTrue(toolbar.contains("internal fun ToolbarOverflowMenuGroup("))
         assertTrue(theme.contains("SecondaryPageScaffold("))
         assertTrue(experimental.contains("SecondaryPageScaffold("))
         assertFalse(theme.contains("TopAppBar("))
