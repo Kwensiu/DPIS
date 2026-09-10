@@ -181,13 +181,23 @@ class FontLibraryActivitySourceSmokeTest {
             "dpisSegmentedShapes",
             "FontFamily(typeface)",
             "ic_more_vert_24",
+            "DropdownMenuPopup(",
+            "OverflowMenuGroup(",
+            "MenuDefaults.groupShape(index, count)",
+            "IconButton(",
             "font_library_detail_menu_action",
             "font_library_rename_action",
             "font_library_delete_action",
             "FontLibraryContentPreview",
             "FontDetailContentPreview",
         )
-        content.assertNotContainsAll("AssistChip(", "ic_edit_24", "FontDetailHeader(")
+        content.assertNotContainsAll(
+            "AssistChip(",
+            "ic_edit_24",
+            "FontDetailHeader(",
+            "BorderStroke",
+            "DropdownMenu(",
+        )
         manifest.assertContainsAll("android:name=\".fonts.FontDetailActivity\"")
         detail.assertNotContainsAll("createCompatibilitySection", "createManagementSection")
     }

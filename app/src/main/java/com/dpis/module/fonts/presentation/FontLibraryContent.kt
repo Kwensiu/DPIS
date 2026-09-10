@@ -2,10 +2,10 @@ package com.dpis.module.ui.compose
 
 import android.graphics.Typeface
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,20 +16,29 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenuPopup
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorPosition
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,7 +46,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -164,23 +172,23 @@ fun FontLibraryContent(
                     descriptionRes = R.string.font_library_archive_menu_action,
                     onClick = { archiveMenuExpanded = true }
                 )
-                DropdownMenu(
+                OverflowMenu(
                     expanded = archiveMenuExpanded,
-                    onDismissRequest = { archiveMenuExpanded = false }
+                    onDismiss = { archiveMenuExpanded = false },
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.font_library_export_archive_action)) },
-                        onClick = rememberClickAction {
+                    OverflowMenuItem(
+                        textRes = R.string.font_library_export_archive_action,
+                        onClick = {
                             archiveMenuExpanded = false
                             onExportArchive()
-                        }
+                        },
                     )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.font_library_import_archive_action)) },
-                        onClick = rememberClickAction {
+                    OverflowMenuItem(
+                        textRes = R.string.font_library_import_archive_action,
+                        onClick = {
                             archiveMenuExpanded = false
                             onImportArchive()
-                        }
+                        },
                     )
                 }
             }
@@ -304,29 +312,29 @@ fun FontDetailContent(
                     descriptionRes = R.string.font_library_detail_menu_action,
                     onClick = { menuExpanded = true },
                 )
-                DropdownMenu(
+                OverflowMenu(
                     expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
+                    onDismiss = { menuExpanded = false },
                 ) {
                     if (state.publicationFailed) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.font_library_publication_retry_action)) },
-                            onClick = rememberClickAction {
+                        OverflowMenuItem(
+                            textRes = R.string.font_library_publication_retry_action,
+                            onClick = {
                                 menuExpanded = false
                                 onRetryPublication()
                             },
                         )
                     }
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.font_library_rename_action)) },
-                        onClick = rememberClickAction {
+                    OverflowMenuItem(
+                        textRes = R.string.font_library_rename_action,
+                        onClick = {
                             menuExpanded = false
                             onRename()
                         },
                     )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.font_library_delete_action)) },
-                        onClick = rememberClickAction {
+                    OverflowMenuItem(
+                        textRes = R.string.font_library_delete_action,
+                        onClick = {
                             menuExpanded = false
                             onDelete()
                         },
@@ -477,22 +485,62 @@ private fun DpisStatusBadge(text: String, primary: Boolean) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun DpisToolbarIconButton(iconRes: Int, descriptionRes: Int, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.size(36.dp).clip(CircleShape),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        onClick = rememberClickAction(onClick)
+    val description = stringResource(descriptionRes)
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
+            TooltipAnchorPosition.Below,
+        ),
+        tooltip = { PlainTooltip { Text(description) } },
+        state = rememberTooltipState(),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painterResource(iconRes),
-                contentDescription = stringResource(descriptionRes),
-                modifier = Modifier.size(20.dp)
-            )
+        IconButton(onClick = rememberClickAction(onClick)) {
+            Icon(painterResource(iconRes), contentDescription = description)
         }
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun OverflowMenu(
+    expanded: Boolean,
+    onDismiss: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    DropdownMenuPopup(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        popupPositionProvider = MenuDefaults.rememberDropdownMenuPopupPositionProvider(
+            MenuAnchorPosition.Below,
+        ),
+    ) {
+        OverflowMenuGroup(content = content)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun OverflowMenuGroup(
+    index: Int = 0,
+    count: Int = 1,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    DropdownMenuGroup(
+        shapes = MenuDefaults.groupShape(index, count),
+        content = content,
+    )
+}
+
+@Composable
+private fun OverflowMenuItem(
+    textRes: Int,
+    onClick: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(stringResource(textRes)) },
+        onClick = rememberClickAction(onClick),
+    )
 }
 
 @Preview(showBackground = true)
