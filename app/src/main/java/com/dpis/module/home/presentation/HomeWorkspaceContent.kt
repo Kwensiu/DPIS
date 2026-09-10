@@ -128,7 +128,7 @@ fun HomeWorkspaceContent(
         actions = if (state.showEditButton) {
             {
             ToolbarIconButton(
-                iconRes = if (editing) R.drawable.ic_save_24dp else R.drawable.ic_edit_24,
+                iconRes = if (editing) R.drawable.ic_save_24 else R.drawable.ic_edit_24,
                 descriptionRes = if (editing) R.string.home_workspace_action_save
                 else R.string.home_workspace_action_edit,
                 onClick = toggleEditing,
@@ -516,7 +516,7 @@ private fun HomeVisibilityBadge(modifier: Modifier, pendingHidden: Boolean) {
     ) {
         Icon(
             painter = painterResource(
-                if (pendingHidden) R.drawable.ic_visibility_off_24dp else R.drawable.ic_close_24,
+                if (pendingHidden) R.drawable.ic_visibility_off_24 else R.drawable.ic_close_24,
             ),
             contentDescription = visibilityDescription,
             modifier = Modifier.size(14.dp),

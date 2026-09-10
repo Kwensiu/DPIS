@@ -122,7 +122,7 @@
                             android:contentDescription="@string/system_font_scale_apply"
                             android:padding="@dimen/template_workspace_icon_button_padding"
                             android:scaleType="centerInside"
-                            android:src="@drawable/ic_save_24dp"
+                            android:src="@drawable/ic_save_24"
                             app:tint="?attr/colorOnSurfaceVariant" />
                     </LinearLayout>
 

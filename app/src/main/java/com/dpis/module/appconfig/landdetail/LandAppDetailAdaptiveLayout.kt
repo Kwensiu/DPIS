@@ -206,7 +206,7 @@ internal object LandAppDetailAdaptiveLayout {
         saveButton.contentDescription = activity.getString(R.string.status_save_button)
         if (compact) {
             saveButton.text = null
-            saveButton.setIconResource(R.drawable.ic_save_24dp)
+            saveButton.setIconResource(R.drawable.ic_save_24)
             saveButton.iconGravity = MaterialButton.ICON_GRAVITY_TEXT_START
         } else {
             saveButton.icon = null

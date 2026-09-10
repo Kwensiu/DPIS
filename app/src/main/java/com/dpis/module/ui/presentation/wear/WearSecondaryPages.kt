@@ -221,7 +221,7 @@ internal fun WearFontLibraryContent(
         wearButton(
             key = "export-archive",
             label = exportArchiveLabel,
-            icon = R.drawable.ic_save_24dp,
+            icon = R.drawable.ic_save_24,
             onClick = onExportArchive,
         )
         if (presentation.items.isEmpty()) {
