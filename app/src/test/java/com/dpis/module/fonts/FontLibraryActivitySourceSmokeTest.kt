@@ -105,16 +105,16 @@ class FontLibraryActivitySourceSmokeTest {
             "retryPublishedFallbacks",
         )
         strings.assertContainsAll(
-            "font_library_private_badge",
-            "font_library_public_badge",
             "font_library_publication_retry_action",
             "font_library_fallback_dialog_message",
         )
         content.assertContainsAll(
             "state.publicationFailed",
+            "font_library_used_badge",
+        )
+        content.assertNotContainsAll(
             "font_library_private_badge",
             "font_library_public_badge",
-            "font_library_used_badge",
         )
         source.assertNotContainsAll("resolveFontSubtitle(entry)")
     }
@@ -137,7 +137,7 @@ class FontLibraryActivitySourceSmokeTest {
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
 
         content.assertContainsAll(
-            "ic_more_vert_24",
+            "ic_save_24",
             "font_library_export_archive_action",
             "font_library_import_archive_action",
         )
@@ -180,11 +180,9 @@ class FontLibraryActivitySourceSmokeTest {
             "SegmentedListItem(",
             "dpisSegmentedShapes",
             "FontFamily(typeface)",
-            "ic_more_vert_24",
             "ToolbarIconButton(",
-            "ToolbarOverflowMenu(",
-            "ToolbarOverflowMenuItem(",
-            "font_library_detail_menu_action",
+            "ic_edit_24",
+            "ic_delete_24",
             "font_library_rename_action",
             "font_library_delete_action",
             "FontLibraryContentPreview",
@@ -192,10 +190,10 @@ class FontLibraryActivitySourceSmokeTest {
         )
         content.assertNotContainsAll(
             "AssistChip(",
-            "ic_edit_24",
             "FontDetailHeader(",
             "BorderStroke",
             "DropdownMenu(",
+            "font_library_detail_menu_action",
         )
         manifest.assertContainsAll("android:name=\".fonts.FontDetailActivity\"")
         detail.assertNotContainsAll("createCompatibilitySection", "createManagementSection")

@@ -526,7 +526,6 @@
     <string name="font_library_archive_import_success">已导入 %1$d 个字体集合</string>
     <string name="font_library_archive_import_failed">导入字体库失败</string>
     <string name="font_library_archive_menu_action">字体库备份与恢复</string>
-    <string name="font_library_detail_menu_action">字体操作</string>
     <string name="font_library_detail_page_title">字体详情</string>
     <string name="font_library_preview_title">预览</string>
     <string name="font_library_active_apps_title">使用中的应用</string>
@@ -551,8 +550,6 @@
     <string name="font_library_delete_action">删除</string>
     <string name="font_library_rename_action">重命名</string>
     <string name="font_library_used_badge">使用中</string>
-    <string name="font_library_private_badge">私有</string>
-    <string name="font_library_public_badge">公有</string>
     <string name="font_library_used_by_title">使用此字体的应用</string>
     <string name="font_library_unused">暂无应用使用</string>
     <string name="font_library_name_title">字体显示名称</string>

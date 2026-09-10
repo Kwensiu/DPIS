@@ -565,7 +565,6 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_archive_import_success">Imported %1$d font collections</string>
     <string name="font_library_archive_import_failed">Failed to import font library</string>
     <string name="font_library_archive_menu_action">Font library backup and restore</string>
-    <string name="font_library_detail_menu_action">Font actions</string>
     <string name="font_library_detail_page_title">Font details</string>
     <string name="font_library_preview_title">Preview</string>
     <string name="font_library_active_apps_title">Active apps</string>
@@ -590,8 +589,6 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_delete_action">Delete</string>
     <string name="font_library_rename_action">Rename</string>
     <string name="font_library_used_badge">In use</string>
-    <string name="font_library_private_badge">Private</string>
-    <string name="font_library_public_badge">Public</string>
     <string name="font_library_used_by_title">Used by</string>
     <string name="font_library_unused">Not used by any app</string>
     <string name="font_library_name_title">Font display name</string>

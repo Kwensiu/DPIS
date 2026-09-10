@@ -98,7 +98,6 @@ class FontDetailUiState(
     val title: String,
     val sourceFileName: String,
     val inUse: Boolean,
-    val isPublished: Boolean,
     val publicationFailed: Boolean,
     val previewTypeface: Typeface?,
     val references: List<FontReferenceUiItem>
@@ -155,7 +154,7 @@ fun FontLibraryContent(
         actions = {
             Box(modifier = Modifier.padding(end = 16.dp)) {
                 ToolbarIconButton(
-                    iconRes = R.drawable.ic_more_vert_24,
+                    iconRes = R.drawable.ic_save_24,
                     descriptionRes = R.string.font_library_archive_menu_action,
                     onClick = { archiveMenuExpanded = true },
                 )
@@ -281,7 +280,6 @@ fun FontDetailContent(
     onRestoreConfirm: () -> Unit,
 ) {
     val state = presentation.state ?: return
-    var menuExpanded by remember { mutableStateOf(false) }
     FontDetailDialogHost(
         presentation = presentation,
         onRenameSubmit = onRenameSubmit,
@@ -293,41 +291,23 @@ fun FontDetailContent(
         onBack = onBack,
         titleRes = R.string.font_library_detail_page_title,
         actions = {
-            Box(modifier = Modifier.padding(end = 16.dp)) {
+            if (state.publicationFailed) {
                 ToolbarIconButton(
-                    iconRes = R.drawable.ic_more_vert_24,
-                    descriptionRes = R.string.font_library_detail_menu_action,
-                    onClick = { menuExpanded = true },
+                    iconRes = R.drawable.ic_build_24,
+                    descriptionRes = R.string.font_library_publication_retry_action,
+                    onClick = onRetryPublication,
                 )
-                ToolbarOverflowMenu(
-                    expanded = menuExpanded,
-                    onDismiss = { menuExpanded = false },
-                ) {
-                    if (state.publicationFailed) {
-                        ToolbarOverflowMenuItem(
-                            textRes = R.string.font_library_publication_retry_action,
-                            onClick = {
-                                menuExpanded = false
-                                onRetryPublication()
-                            },
-                        )
-                    }
-                    ToolbarOverflowMenuItem(
-                        textRes = R.string.font_library_rename_action,
-                        onClick = {
-                            menuExpanded = false
-                            onRename()
-                        },
-                    )
-                    ToolbarOverflowMenuItem(
-                        textRes = R.string.font_library_delete_action,
-                        onClick = {
-                            menuExpanded = false
-                            onDelete()
-                        },
-                    )
-                }
             }
+            ToolbarIconButton(
+                iconRes = R.drawable.ic_edit_24,
+                descriptionRes = R.string.font_library_rename_action,
+                onClick = onRename,
+            )
+            ToolbarIconButton(
+                iconRes = R.drawable.ic_delete_24,
+                descriptionRes = R.string.font_library_delete_action,
+                onClick = onDelete,
+            )
         },
     ) { padding ->
         val layoutDirection = LocalLayoutDirection.current
@@ -349,28 +329,28 @@ fun FontDetailContent(
 
 @Composable
 private fun FontDetailCard(state: FontDetailUiState) {
-    val publication = stringResource(
-        if (state.isPublished) R.string.font_library_public_badge
-        else R.string.font_library_private_badge,
-    )
-    val status = if (state.inUse) {
-        stringResource(R.string.font_library_used_badge) + " · " + publication
-    } else {
-        publication
-    }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceBright,
     ) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
-            Text(
-                state.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    state.title,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (state.inUse) {
+                    DpisStatusBadge(
+                        text = stringResource(R.string.font_library_used_badge),
+                        primary = true,
+                    )
+                }
+            }
             Text(
                 state.sourceFileName,
                 modifier = Modifier.padding(top = 4.dp),
@@ -378,12 +358,6 @@ private fun FontDetailCard(state: FontDetailUiState) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                status,
-                modifier = Modifier.padding(top = 4.dp),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             state.previewTypeface?.let { typeface ->
                 Spacer(Modifier.height(12.dp))
@@ -494,7 +468,6 @@ private fun FontDetailContentPreview() {
                     "Noto Sans SC",
                     "NotoSansSC.ttf",
                     true,
-                    false,
                     false,
                     null,
                     listOf(FontReferenceUiItem("com.example.app", "Example"))

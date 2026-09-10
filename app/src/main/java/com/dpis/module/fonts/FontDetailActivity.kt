@@ -74,7 +74,6 @@ class FontDetailActivity : LocalizedActivity() {
                 entry.collectionDisplayName.orEmpty(),
                 entry.sourceFileName.orEmpty(),
                 references.isNotEmpty(),
-                entry.publicationStatus == FontPublicationStatus.PUBLISHED,
                 entry.publicationStatus == FontPublicationStatus.PUBLISH_FAILED,
                 if (file != null) FontTypefaceLoader.load(file, entry.ttcIndex) else null,
                 references.map { FontReferenceUiItem(it.packageName, it.label) },
