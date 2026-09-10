@@ -25,9 +25,9 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(content.contains("presentation::updateAtLatestEdge"));
         assertTrue(content.contains("PageBarBehavior.Pinned"));
         assertTrue(content.contains("actions = {"));
-        assertTrue(content.contains("private fun LogTopBarAction("));
-        assertTrue(content.contains("IconButton(onClick"));
-        assertTrue(content.contains("TooltipBox("));
+        assertTrue(content.contains("ToolbarIconButton("));
+        assertTrue(content.contains("ToolbarOverflowMenu("));
+        assertTrue(content.contains("ToolbarOverflowMenuItem("));
         assertTrue(content.contains("selectedTabIndex = state.selectedPage"));
         assertTrue(content.contains("private fun LogLevelRail("));
         assertTrue(content.contains("HorizontalDivider("));

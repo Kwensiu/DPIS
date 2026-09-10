@@ -90,7 +90,7 @@ fun ToolsWorkspaceContent(
                             Text(stringResource(R.string.system_font_scale_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = rememberClickAction(onApply), enabled = state?.canApply() == true) {
-                            Icon(painterResource(R.drawable.ic_save_24dp), stringResource(R.string.system_font_scale_apply))
+                            Icon(painterResource(R.drawable.ic_save_24), stringResource(R.string.system_font_scale_apply))
                         }
                     }
                     if (expanded && state != null) {

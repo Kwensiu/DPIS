@@ -65,7 +65,7 @@
             android:contentDescription="@string/status_save_button"
             android:padding="@dimen/template_workspace_header_action_button_padding"
             android:scaleType="centerInside"
-            android:src="@drawable/ic_save_24dp"
+            android:src="@drawable/ic_save_24"
             app:tint="?attr/colorOnSurfaceVariant" />
     </LinearLayout>
 

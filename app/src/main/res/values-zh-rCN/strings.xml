@@ -518,8 +518,8 @@
     <string name="settings_interface_scale_input_error">请输入 60 到 120 之间的数字</string>
     <string name="font_library_page_title">字体库</string>
     <string name="font_library_import_action">导入字体</string>
-    <string name="font_library_import_archive_action">导入字体库</string>
-    <string name="font_library_export_archive_action">导出字体库</string>
+    <string name="font_library_import_archive_action">导入</string>
+    <string name="font_library_export_archive_action">导出</string>
     <string name="font_library_archive_file_name">dpis-font-library.zip</string>
     <string name="font_library_archive_export_success">字体库已导出</string>
     <string name="font_library_archive_export_failed">导出字体库失败</string>
@@ -550,8 +550,6 @@
     <string name="font_library_delete_action">删除</string>
     <string name="font_library_rename_action">重命名</string>
     <string name="font_library_used_badge">使用中</string>
-    <string name="font_library_private_badge">私有</string>
-    <string name="font_library_public_badge">公有</string>
     <string name="font_library_used_by_title">使用此字体的应用</string>
     <string name="font_library_unused">暂无应用使用</string>
     <string name="font_library_name_title">字体显示名称</string>

@@ -1,8 +1,7 @@
 package com.dpis.module.ui.compose
 
 import android.graphics.Typeface
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,18 +15,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -48,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
 
 class FontLibraryUiItem(
     val id: String,
@@ -57,12 +53,39 @@ class FontLibraryUiItem(
     val previewTypeface: Typeface?
 )
 
+sealed class FontLibraryDialog {
+    data class Name(
+        val uri: Uri,
+        val sourceName: String,
+        val mimeType: String?,
+        val initial: String,
+    ) : FontLibraryDialog()
+    data class Large(
+        val uri: Uri,
+        val sourceName: String,
+        val mimeType: String?,
+        val displayName: String,
+        val sizeMiB: Long,
+    ) : FontLibraryDialog()
+    data class Repair(val missingCount: Int) : FontLibraryDialog()
+}
+
 class FontLibraryPresentation {
     var items: List<FontLibraryUiItem> by mutableStateOf(emptyList())
+        private set
+    var dialog: FontLibraryDialog? by mutableStateOf(null)
         private set
 
     fun show(items: List<FontLibraryUiItem>) {
         this.items = items
+    }
+
+    fun show(dialog: FontLibraryDialog) {
+        this.dialog = dialog
+    }
+
+    fun dismiss() {
+        dialog = null
     }
 }
 
@@ -75,18 +98,34 @@ class FontDetailUiState(
     val title: String,
     val sourceFileName: String,
     val inUse: Boolean,
-    val isPublished: Boolean,
     val publicationFailed: Boolean,
     val previewTypeface: Typeface?,
     val references: List<FontReferenceUiItem>
 )
 
+sealed class FontDetailDialog {
+    data class Rename(val initial: String) : FontDetailDialog()
+    data object Fallback : FontDetailDialog()
+    data class Delete(val title: String, val message: String, val confirm: String) : FontDetailDialog()
+    data class Restore(val packageName: String, val label: String) : FontDetailDialog()
+}
+
 class FontDetailPresentation {
     var state: FontDetailUiState? by mutableStateOf(null)
+        private set
+    var dialog: FontDetailDialog? by mutableStateOf(null)
         private set
 
     fun show(state: FontDetailUiState) {
         this.state = state
+    }
+
+    fun show(dialog: FontDetailDialog) {
+        this.dialog = dialog
+    }
+
+    fun dismiss() {
+        dialog = null
     }
 }
 
@@ -97,36 +136,45 @@ fun FontLibraryContent(
     onImportFont: () -> Unit,
     onExportArchive: () -> Unit,
     onImportArchive: () -> Unit,
-    onFontSelected: (String) -> Unit
+    onFontSelected: (String) -> Unit,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: () -> Unit,
+    onRepairConfirm: () -> Unit,
 ) {
     var archiveMenuExpanded by remember { mutableStateOf(false) }
+    FontLibraryDialogHost(
+        presentation = presentation,
+        onNameSubmit = onNameSubmit,
+        onLargeConfirm = onLargeConfirm,
+        onRepairConfirm = onRepairConfirm,
+    )
     SecondaryPageScaffold(
         onBack = onBack,
         titleRes = R.string.font_library_page_title,
         actions = {
             Box(modifier = Modifier.padding(end = 16.dp)) {
-                DpisToolbarIconButton(
-                    iconRes = R.drawable.ic_more_vert_24,
+                ToolbarIconButton(
+                    iconRes = R.drawable.ic_save_24,
                     descriptionRes = R.string.font_library_archive_menu_action,
-                    onClick = { archiveMenuExpanded = true }
+                    onClick = { archiveMenuExpanded = true },
                 )
-                DropdownMenu(
+                ToolbarOverflowMenu(
                     expanded = archiveMenuExpanded,
-                    onDismissRequest = { archiveMenuExpanded = false }
+                    onDismiss = { archiveMenuExpanded = false },
                 ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.font_library_export_archive_action)) },
-                        onClick = rememberClickAction {
+                    ToolbarOverflowMenuItem(
+                        textRes = R.string.font_library_export_archive_action,
+                        onClick = {
                             archiveMenuExpanded = false
                             onExportArchive()
-                        }
+                        },
                     )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.font_library_import_archive_action)) },
-                        onClick = rememberClickAction {
+                    ToolbarOverflowMenuItem(
+                        textRes = R.string.font_library_import_archive_action,
+                        onClick = {
                             archiveMenuExpanded = false
                             onImportArchive()
-                        }
+                        },
                     )
                 }
             }
@@ -225,33 +273,42 @@ fun FontDetailContent(
     onRetryPublication: () -> Unit,
     onRename: () -> Unit,
     onDelete: () -> Unit,
-    onRemoveReference: (String) -> Unit
+    onRemoveReference: (String) -> Unit,
+    onRenameSubmit: (String) -> Boolean,
+    onFallbackRetry: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onRestoreConfirm: () -> Unit,
 ) {
     val state = presentation.state ?: return
+    FontDetailDialogHost(
+        presentation = presentation,
+        onRenameSubmit = onRenameSubmit,
+        onFallbackRetry = onFallbackRetry,
+        onDeleteConfirm = onDeleteConfirm,
+        onRestoreConfirm = onRestoreConfirm,
+    )
     SecondaryPageScaffold(
         onBack = onBack,
         titleRes = R.string.font_library_detail_page_title,
         actions = {
             if (state.publicationFailed) {
-                DpisToolbarIconButton(
-                    R.drawable.ic_build_24,
-                    R.string.font_library_publication_retry_action,
-                    onRetryPublication
+                ToolbarIconButton(
+                    iconRes = R.drawable.ic_build_24,
+                    descriptionRes = R.string.font_library_publication_retry_action,
+                    onClick = onRetryPublication,
                 )
-                Spacer(Modifier.width(8.dp))
             }
-            DpisToolbarIconButton(
-                R.drawable.ic_edit_24,
-                R.string.font_library_rename_action,
-                onRename
+            ToolbarIconButton(
+                iconRes = R.drawable.ic_edit_24,
+                descriptionRes = R.string.font_library_rename_action,
+                onClick = onRename,
             )
-            Spacer(Modifier.width(8.dp))
-            DpisToolbarIconButton(
-                R.drawable.ic_delete_24,
-                R.string.font_library_delete_action,
-                onDelete
+            ToolbarIconButton(
+                iconRes = R.drawable.ic_delete_24,
+                descriptionRes = R.string.font_library_delete_action,
+                onClick = onDelete,
             )
-        }
+        },
     ) { padding ->
         val layoutDirection = LocalLayoutDirection.current
         LazyColumn(
@@ -260,71 +317,65 @@ fun FontDetailContent(
                 start = padding.calculateStartPadding(layoutDirection) + 16.dp,
                 top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
                 end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp)
+                bottom = edgeToEdgeContentBottomPadding(24.dp),
             ),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            item { FontDetailHeader(state) }
-            state.previewTypeface?.let { typeface ->
-                item { FontPreviewSection(typeface) }
-            }
-            item {
-                FontReferenceSection(state.references, onRemoveReference)
-            }
+            item { FontDetailCard(state) }
+            item { FontReferenceSection(state.references, onRemoveReference) }
         }
     }
 }
 
 @Composable
-private fun FontDetailHeader(state: FontDetailUiState) {
-    Column {
-        Text(state.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(
-            state.sourceFileName,
-            modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (state.inUse) {
-                DpisStatusBadge(stringResource(R.string.font_library_used_badge), primary = true)
+private fun FontDetailCard(state: FontDetailUiState) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceBright,
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    state.title,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (state.inUse) {
+                    DpisStatusBadge(
+                        text = stringResource(R.string.font_library_used_badge),
+                        primary = true,
+                    )
+                }
             }
-            DpisStatusBadge(
-                if (state.isPublished) stringResource(R.string.font_library_public_badge)
-                else stringResource(R.string.font_library_private_badge),
-                primary = state.isPublished
+            Text(
+                state.sourceFileName,
+                modifier = Modifier.padding(top = 4.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-        }
-    }
-}
-
-@Composable
-private fun FontPreviewSection(typeface: Typeface) {
-    Column {
-        FontSectionTitle(R.string.font_library_preview_title)
-        Surface(
-            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surfaceContainer
-        ) {
-            Column(Modifier.padding(16.dp)) {
+            state.previewTypeface?.let { typeface ->
+                Spacer(Modifier.height(12.dp))
                 Text(
                     "AaBbCc 你好世界 123",
                     fontFamily = FontFamily(typeface),
                     fontSize = 26.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     "The quick brown fox jumps over the lazy dog",
-                    modifier = Modifier.padding(top = 8.dp),
+                    modifier = Modifier.padding(top = 6.dp),
                     fontFamily = FontFamily(typeface),
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -332,52 +383,40 @@ private fun FontPreviewSection(typeface: Typeface) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun FontReferenceSection(
     references: List<FontReferenceUiItem>,
-    onRemoveReference: (String) -> Unit
+    onRemoveReference: (String) -> Unit,
 ) {
     Column {
-        FontSectionTitle(R.string.font_library_active_apps_title)
+        FontSectionTitle(R.string.font_library_used_by_title)
         if (references.isEmpty()) {
             Text(
                 stringResource(R.string.font_library_unused),
                 modifier = Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
             Column(
                 Modifier.padding(top = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
             ) {
                 references.forEachIndexed { index, reference ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = dpisSegmentedShapes(index, references.size).shape,
-                        color = MaterialTheme.colorScheme.surfaceBright
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(reference.label, fontWeight = FontWeight.Bold)
-                                Text(
-                                    reference.packageName,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            AssistChip(
-                                onClick = rememberClickAction {
-                                    onRemoveReference(reference.packageName)
-                                },
-                                label = { Text(stringResource(R.string.font_library_remove_app_action)) }
-                            )
-                        }
+                    val restore = rememberClickAction {
+                        onRemoveReference(reference.packageName)
                     }
+                    SegmentedListItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = restore,
+                        shapes = dpisSegmentedShapes(index, references.size),
+                        colors = ListItemDefaults.segmentedColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceBright,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        supportingContent = { Text(reference.packageName) },
+                        content = { Text(reference.label) },
+                    )
                 }
             }
         }
@@ -406,25 +445,6 @@ private fun DpisStatusBadge(text: String, primary: Boolean) {
     }
 }
 
-@Composable
-private fun DpisToolbarIconButton(iconRes: Int, descriptionRes: Int, onClick: () -> Unit) {
-    Surface(
-        modifier = Modifier.size(36.dp).clip(CircleShape),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        onClick = rememberClickAction(onClick)
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                painterResource(iconRes),
-                contentDescription = stringResource(descriptionRes),
-                modifier = Modifier.size(20.dp)
-            )
-        }
-    }
-}
-
 @Preview(showBackground = true)
 @Composable
 private fun FontLibraryContentPreview() {
@@ -434,7 +454,7 @@ private fun FontLibraryContentPreview() {
         }
     }
     ComposeDesignSystem(darkTheme = false) {
-        FontLibraryContent(presentation, {}, {}, {}, {}, {})
+        FontLibraryContent(presentation, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }
 
@@ -449,7 +469,6 @@ private fun FontDetailContentPreview() {
                     "NotoSansSC.ttf",
                     true,
                     false,
-                    false,
                     null,
                     listOf(FontReferenceUiItem("com.example.app", "Example"))
                 )
@@ -457,6 +476,90 @@ private fun FontDetailContentPreview() {
         }
     }
     ComposeDesignSystem(darkTheme = false) {
-        FontDetailContent(presentation, {}, {}, {}, {}, {})
+        FontDetailContent(presentation, {}, {}, {}, {}, {}, { true }, {}, {}, {})
+    }
+}
+
+@Composable
+internal fun FontLibraryDialogHost(
+    presentation: FontLibraryPresentation,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: () -> Unit,
+    onRepairConfirm: () -> Unit,
+) {
+    when (val dialog = presentation.dialog) {
+        is FontLibraryDialog.Name -> TextInputDialog(
+            title = stringResource(R.string.font_library_name_title),
+            hint = stringResource(R.string.font_library_name_hint),
+            initialValue = dialog.initial,
+            onDismiss = presentation::dismiss,
+            onSubmit = onNameSubmit,
+        )
+        is FontLibraryDialog.Large -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_large_import_title),
+            message = stringResource(R.string.font_library_large_import_message, dialog.sizeMiB),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.font_library_large_import_continue),
+            onConfirm = onLargeConfirm,
+        )
+        is FontLibraryDialog.Repair -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_publication_repair_title),
+            message = stringResource(
+                R.string.font_library_publication_repair_message,
+                dialog.missingCount,
+            ),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.font_library_publication_retry_action),
+            onConfirm = onRepairConfirm,
+        )
+        null -> Unit
+    }
+}
+
+@Composable
+internal fun FontDetailDialogHost(
+    presentation: FontDetailPresentation,
+    onRenameSubmit: (String) -> Boolean,
+    onFallbackRetry: () -> Unit,
+    onDeleteConfirm: () -> Unit,
+    onRestoreConfirm: () -> Unit,
+) {
+    when (val dialog = presentation.dialog) {
+        is FontDetailDialog.Rename -> TextInputDialog(
+            title = stringResource(R.string.font_library_name_title),
+            hint = stringResource(R.string.font_library_name_hint),
+            initialValue = dialog.initial,
+            onDismiss = presentation::dismiss,
+            onSubmit = { name ->
+                if (onRenameSubmit(name)) presentation.dismiss()
+            },
+        )
+        FontDetailDialog.Fallback -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_fallback_dialog_title),
+            message = stringResource(R.string.font_library_fallback_dialog_message),
+            cancelLabel = stringResource(R.string.dialog_close_button),
+            confirmLabel = stringResource(R.string.font_library_publication_retry_action),
+            onConfirm = onFallbackRetry,
+        )
+        is FontDetailDialog.Delete -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = dialog.title,
+            message = dialog.message,
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = dialog.confirm,
+            onConfirm = onDeleteConfirm,
+        )
+        is FontDetailDialog.Restore -> ConfirmAlertDialog(
+            onDismissRequest = presentation::dismiss,
+            title = stringResource(R.string.font_library_restore_app_font_title),
+            message = stringResource(R.string.font_library_restore_app_font_message, dialog.label),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.font_library_restore_default_action),
+            onConfirm = onRestoreConfirm,
+        )
+        null -> Unit
     }
 }

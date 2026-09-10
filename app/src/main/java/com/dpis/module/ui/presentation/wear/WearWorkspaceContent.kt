@@ -281,7 +281,7 @@ internal fun WearAppConfigEditorContent(state: EditorPresentation.State) {
                 onStop = state.actions::stopProcess,
                 onRestart = state.actions::restartProcess
             )
-            wearButton("save", context.getString(R.string.status_save_button), icon = R.drawable.ic_save_24dp, enabled = state.saveEnabled, onClick = state.actions::save)
+            wearButton("save", context.getString(R.string.status_save_button), icon = R.drawable.ic_save_24, enabled = state.saveEnabled, onClick = state.actions::save)
             wearButton("diagnostic", context.getString(R.string.feedback_diagnostic_action), icon = R.drawable.ic_bug_report_24, onClick = state.actions::startFeedbackDiagnostic)
             wearButton("reset", context.getString(R.string.dialog_disable_button), icon = R.drawable.ic_refresh_24, onClick = state.actions::reset)
         }
@@ -615,7 +615,7 @@ private fun WearTemplateEditorContent(
             wearButton("typeface", context.getString(R.string.dialog_typeface_dialog_title), editorDraft.form.selectedTypefaceId, R.drawable.ic_adjust_24, onClick = { onDestinationChanged(ConfigEditorDestination.TYPEFACE) })
             wearButton("hooks", context.getString(R.string.dialog_font_hook_domains_title), icon = R.drawable.ic_checklist_rtl_24, onClick = { onDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE) })
             wearButton("reset", context.getString(R.string.template_workspace_action_reset), icon = R.drawable.ic_refresh_24, onClick = { editorDraft.form.reset(); changed() })
-            wearButton("save", context.getString(R.string.status_save_button), icon = R.drawable.ic_save_24dp, enabled = editorDraft.form.isValid, onClick = ::save)
+            wearButton("save", context.getString(R.string.status_save_button), icon = R.drawable.ic_save_24, enabled = editorDraft.form.isValid, onClick = ::save)
         }
     }
 }
@@ -650,7 +650,7 @@ internal fun WearToolsWorkspaceContent(
             if (!state.canWrite && !state.unavailable) {
                 wearButton("permission", context.getString(R.string.system_font_scale_permission_button), icon = R.drawable.ic_settings_24, onClick = onRequestPermission)
             } else {
-                wearButton("apply", context.getString(R.string.system_font_scale_apply), icon = R.drawable.ic_save_24dp, enabled = state.canApply(), onClick = onApply)
+                wearButton("apply", context.getString(R.string.system_font_scale_apply), icon = R.drawable.ic_save_24, enabled = state.canApply(), onClick = onApply)
                 wearButton("restore", context.getString(R.string.system_font_scale_restore_default), icon = R.drawable.ic_refresh_24, enabled = state.canRestore(), onClick = onRestore)
             }
         }

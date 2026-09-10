@@ -275,7 +275,10 @@ object SupportActivityContent {
         onImportFont: Runnable,
         onExportArchive: Runnable,
         onImportArchive: Runnable,
-        onFontSelected: Consumer<String>
+        onFontSelected: Consumer<String>,
+        onNameSubmit: (String) -> Unit,
+        onLargeConfirm: Runnable,
+        onRepairConfirm: Runnable,
     ) {
         activity.setContent {
             ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
@@ -286,6 +289,9 @@ object SupportActivityContent {
                         onExportArchive = onExportArchive::run,
                         onImportArchive = onImportArchive::run,
                         onFontSelected = onFontSelected::accept,
+                        onNameSubmit = onNameSubmit,
+                        onLargeConfirm = onLargeConfirm::run,
+                        onRepairConfirm = onRepairConfirm::run,
                     )
                 } else {
                     FontLibraryContent(
@@ -294,7 +300,10 @@ object SupportActivityContent {
                         onImportFont = onImportFont::run,
                         onExportArchive = onExportArchive::run,
                         onImportArchive = onImportArchive::run,
-                        onFontSelected = onFontSelected::accept
+                        onFontSelected = onFontSelected::accept,
+                        onNameSubmit = onNameSubmit,
+                        onLargeConfirm = onLargeConfirm::run,
+                        onRepairConfirm = onRepairConfirm::run,
                     )
                 }
             }
@@ -308,7 +317,11 @@ object SupportActivityContent {
         onRetryPublication: Runnable,
         onRename: Runnable,
         onDelete: Runnable,
-        onRemoveReference: Consumer<String>
+        onRemoveReference: Consumer<String>,
+        onRenameSubmit: (String) -> Boolean,
+        onFallbackRetry: Runnable,
+        onDeleteConfirm: Runnable,
+        onRestoreConfirm: Runnable,
     ) {
         activity.setContent {
             ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
@@ -318,7 +331,11 @@ object SupportActivityContent {
                     onRetryPublication = onRetryPublication::run,
                     onRename = onRename::run,
                     onDelete = onDelete::run,
-                    onRemoveReference = onRemoveReference::accept
+                    onRemoveReference = onRemoveReference::accept,
+                    onRenameSubmit = onRenameSubmit,
+                    onFallbackRetry = onFallbackRetry::run,
+                    onDeleteConfirm = onDeleteConfirm::run,
+                    onRestoreConfirm = onRestoreConfirm::run,
                 )
             }
         }

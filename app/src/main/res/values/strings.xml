@@ -557,8 +557,8 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="settings_interface_scale_input_error">Enter a number from 60 to 120.</string>
     <string name="font_library_page_title">Font library</string>
     <string name="font_library_import_action">Import font</string>
-    <string name="font_library_import_archive_action">Import font library</string>
-    <string name="font_library_export_archive_action">Export font library</string>
+    <string name="font_library_import_archive_action">Import</string>
+    <string name="font_library_export_archive_action">Export</string>
     <string name="font_library_archive_file_name">dpis-font-library.zip</string>
     <string name="font_library_archive_export_success">Font library exported</string>
     <string name="font_library_archive_export_failed">Failed to export font library</string>
@@ -589,8 +589,6 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="font_library_delete_action">Delete</string>
     <string name="font_library_rename_action">Rename</string>
     <string name="font_library_used_badge">In use</string>
-    <string name="font_library_private_badge">Private</string>
-    <string name="font_library_public_badge">Public</string>
     <string name="font_library_used_by_title">Used by</string>
     <string name="font_library_unused">Not used by any app</string>
     <string name="font_library_name_title">Font display name</string>

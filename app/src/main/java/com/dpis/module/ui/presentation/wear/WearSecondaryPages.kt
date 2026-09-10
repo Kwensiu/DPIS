@@ -191,7 +191,16 @@ internal fun WearFontLibraryContent(
     onExportArchive: () -> Unit,
     onImportArchive: () -> Unit,
     onFontSelected: (String) -> Unit,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: () -> Unit,
+    onRepairConfirm: () -> Unit,
 ) {
+    FontLibraryDialogHost(
+        presentation = presentation,
+        onNameSubmit = onNameSubmit,
+        onLargeConfirm = onLargeConfirm,
+        onRepairConfirm = onRepairConfirm,
+    )
     val importFontLabel = stringResource(R.string.font_library_import_action)
     val importArchiveLabel = stringResource(R.string.font_library_import_archive_action)
     val exportArchiveLabel = stringResource(R.string.font_library_export_archive_action)
@@ -212,7 +221,7 @@ internal fun WearFontLibraryContent(
         wearButton(
             key = "export-archive",
             label = exportArchiveLabel,
-            icon = R.drawable.ic_save_24dp,
+            icon = R.drawable.ic_save_24,
             onClick = onExportArchive,
         )
         if (presentation.items.isEmpty()) {
