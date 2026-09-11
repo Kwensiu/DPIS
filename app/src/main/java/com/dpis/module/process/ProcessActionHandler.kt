@@ -30,11 +30,11 @@ class ProcessActionHandler(
     private val rootLauncher = RootAppProcessLauncher(activity)
 
     fun execute(item: AppListItem, action: Action) {
-        if (requiresRoot(action) && !hasRootAccess()) {
-            showToast(rootRequiredMessageResId(action))
+        if (ProcessActionPolicy.requiresRoot(action) && !hasRootAccess()) {
+            showToast(ProcessActionPolicy.rootRequiredMessageResId(action))
             return
         }
-        if (item.systemApp && action != Action.START) {
+        if (ProcessActionPolicy.requiresSystemAppConfirmation(item.systemApp, action)) {
             showSystemAppActionConfirmation(item, action)
             return
         }
@@ -88,16 +88,6 @@ class ProcessActionHandler(
     private fun syncBeforeTargetLaunch(packageName: String) {
         beforeTargetLaunch?.run(packageName)
     }
-
-    private fun requiresRoot(action: Action): Boolean =
-        action == Action.RESTART || action == Action.STOP
-
-    private fun rootRequiredMessageResId(action: Action): Int =
-        if (action == Action.STOP) {
-            R.string.dialog_process_stop_requires_root
-        } else {
-            R.string.dialog_process_restart_requires_root
-        }
 
     private fun startPackage(packageName: String): RootAppProcessLauncher.ShellResult {
         val launchIntent = activity.packageManager.getLaunchIntentForPackage(packageName)

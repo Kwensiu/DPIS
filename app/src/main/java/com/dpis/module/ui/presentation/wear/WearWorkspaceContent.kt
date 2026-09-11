@@ -69,6 +69,7 @@ import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
+import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
@@ -724,42 +725,23 @@ internal fun WearSettingsWorkspaceContent(
         wearSectionHeader(R.string.settings_section_about)
         wearButton("about", context.getString(R.string.settings_about_label), icon = R.drawable.ic_info_24, onClick = onAbout)
     }
-    if (disableSafeModeVisible) {
-        ConfirmAlertDialog(
-            onDismissRequest = { disableSafeModeVisible = false },
-            title = stringResource(R.string.system_safe_mode_disable_confirm_title),
-            message = stringResource(R.string.system_safe_mode_disable_confirm_message),
-            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
-            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
-            onConfirm = {
-                disableSafeModeVisible = false
-                onSafeModeChanged(false)
-            },
-        )
-    }
-    if (hideLauncherVisible) {
-        ConfirmAlertDialog(
-            onDismissRequest = { hideLauncherVisible = false },
-            title = stringResource(R.string.settings_hide_launcher_icon_confirm_title),
-            message = stringResource(R.string.settings_hide_launcher_icon_confirm_message),
-            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
-            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
-            onConfirm = {
-                hideLauncherVisible = false
-                onLauncherHiddenChanged(true)
-            },
-        )
-    }
-    if (state?.pendingImportUri != null) {
-        ConfirmAlertDialog(
-            onDismissRequest = onDismissImport,
-            title = stringResource(R.string.config_backup_import_confirm_title),
-            message = stringResource(R.string.config_backup_import_confirm_message),
-            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
-            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
-            onConfirm = onConfirmImport,
-        )
-    }
+    SettingsWorkspaceConfirmDialogs(
+        disableSafeModeVisible = disableSafeModeVisible,
+        hideLauncherVisible = hideLauncherVisible,
+        pendingImport = state?.pendingImportUri != null,
+        onDismissSafeMode = { disableSafeModeVisible = false },
+        onConfirmDisableSafeMode = {
+            disableSafeModeVisible = false
+            onSafeModeChanged(false)
+        },
+        onDismissHideLauncher = { hideLauncherVisible = false },
+        onConfirmHideLauncher = {
+            hideLauncherVisible = false
+            onLauncherHiddenChanged(true)
+        },
+        onDismissImport = onDismissImport,
+        onConfirmImport = onConfirmImport,
+    )
 }
 
 internal class WearListScope(

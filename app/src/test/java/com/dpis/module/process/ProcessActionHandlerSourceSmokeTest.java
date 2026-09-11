@@ -44,9 +44,11 @@ public class ProcessActionHandlerSourceSmokeTest {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("requiresRoot(action) && !hasRootAccess()"));
-        assertTrue(source.contains("rootRequiredMessageResId(action)"));
-        assertTrue(source.contains("action == Action.RESTART || action == Action.STOP"));
+        assertTrue(source.contains("ProcessActionPolicy.requiresRoot(action) && !hasRootAccess()"));
+        assertTrue(source.contains("ProcessActionPolicy.rootRequiredMessageResId(action)"));
+        String policy = read("src/main/java/com/dpis/module/process/ProcessActionPolicy.kt");
+        assertTrue(policy.contains("action == ProcessActionHandler.Action.RESTART"));
+        assertTrue(policy.contains("action == ProcessActionHandler.Action.STOP"));
         assertTrue(source.contains("RootAccessProbe.probe()"));
         assertFalse(source.contains("rootAccessCache"));
         assertTrue(strings.contains("dialog_process_restart_requires_root"));
@@ -70,7 +72,7 @@ public class ProcessActionHandlerSourceSmokeTest {
     public void systemAppStartDoesNotShowRiskConfirmation() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
 
-        assertTrue(source.contains("item.systemApp && action != Action.START"));
+        assertTrue(source.contains("ProcessActionPolicy.requiresSystemAppConfirmation(item.systemApp, action)"));
         assertFalse(source.contains("new AlertDialog.Builder(activity)"));
     }
 
