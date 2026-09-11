@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class LogUiEntry(
@@ -64,12 +65,23 @@ class LogPresentation {
     )
         private set
 
+    var enableLogsVisible: Boolean by mutableStateOf(false)
+        private set
+
     @Volatile
     var atLatestEdge: Boolean = true
         private set
 
     fun show(state: LogUiState) {
         this.state = state
+    }
+
+    fun promptEnableLogs() {
+        enableLogsVisible = true
+    }
+
+    fun dismissEnableLogs() {
+        enableLogsVisible = false
     }
 
     fun updateAtLatestEdge(atLatestEdge: Boolean) {
@@ -89,7 +101,8 @@ fun LogContent(
     onShareLogs: () -> Unit,
     onRefresh: () -> Unit,
     onToggleExpanded: (String) -> Unit,
-    onCopyEntry: (String) -> Unit
+    onCopyEntry: (String) -> Unit,
+    onEnableLogs: () -> Unit = {},
 ) {
     val state = presentation.state
     var exportMenuExpanded by remember { mutableStateOf(false) }
@@ -189,6 +202,19 @@ fun LogContent(
                 }
             }
         }
+    }
+    if (presentation.enableLogsVisible) {
+        ConfirmAlertDialog(
+            onDismissRequest = {
+                presentation.dismissEnableLogs()
+                onBack()
+            },
+            title = stringResource(R.string.diagnostic_log_required_title),
+            message = stringResource(R.string.diagnostic_log_required_message),
+            cancelLabel = stringResource(android.R.string.cancel),
+            confirmLabel = stringResource(R.string.diagnostic_log_enable_action),
+            onConfirm = onEnableLogs,
+        )
     }
 }
 

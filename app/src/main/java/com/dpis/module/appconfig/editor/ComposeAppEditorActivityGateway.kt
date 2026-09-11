@@ -12,6 +12,7 @@ import com.dpis.module.config.PackageConfigRepository
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
+import com.dpis.module.quirks.WechatDpiHelp
 import com.dpis.module.quirks.WechatDpiSheetBinder
 import com.dpis.module.viewport.ViewportTargetSpec
 
@@ -19,6 +20,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 internal class ComposeAppEditorActivityGateway(
     private val activity: MainActivity,
     private val scopeCoordinator: ComposeEditorScopeRequestCoordinator,
+    private val wechatDpiHelp: WechatDpiHelp,
 ) : ComposeAppEditorController.Host, ComposeAppEditorSaveWorkflow.Host {
     private lateinit var saveWorkflow: ComposeAppEditorSaveWorkflow
 
@@ -70,7 +72,7 @@ internal class ComposeAppEditorActivityGateway(
     override fun refreshEditor() = activity.refreshComposeApps()
     override fun requestAppsLoad() = activity.requestAppsLoad()
 
-    override fun showWechatDpiHelp() = activity.showComposeWechatDpiHelp()
+    override fun showWechatDpiHelp() = wechatDpiHelp.show()
 
     override fun toggleScope(
         item: AppListItem,

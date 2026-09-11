@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ProcessActionHandlerSourceSmokeTest {
     private static final String PROCESS_ACTION_HANDLER_SOURCE =
-            "src/main/java/com/dpis/module/process/ProcessActionHandler.java";
+            "src/main/java/com/dpis/module/process/ProcessActionHandler.kt";
 
     @Test
     public void processActionsDoNotUseMonkeyToLaunchApps() throws IOException {
@@ -17,7 +17,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt");
 
         assertFalse(source.contains("monkey -p"));
-        assertTrue(source.contains("new RootAppProcessLauncher(activity)"));
+        assertTrue(source.contains("RootAppProcessLauncher(activity)"));
         assertTrue(source.contains("rootLauncher.start(packageName)"));
         assertTrue(rootLauncher.contains("am start --user current"));
         assertTrue(rootLauncher.contains("-a android.intent.action.MAIN"));
@@ -46,7 +46,7 @@ public class ProcessActionHandlerSourceSmokeTest {
 
         assertTrue(source.contains("requiresRoot(action) && !hasRootAccess()"));
         assertTrue(source.contains("rootRequiredMessageResId(action)"));
-        assertTrue(source.contains("return action == Action.RESTART || action == Action.STOP;"));
+        assertTrue(source.contains("action == Action.RESTART || action == Action.STOP"));
         assertTrue(source.contains("RootAccessProbe.probe()"));
         assertFalse(source.contains("rootAccessCache"));
         assertTrue(strings.contains("dialog_process_restart_requires_root"));
@@ -98,7 +98,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("actionLabel,"));
-        assertTrue(source.contains("item.label)"));
+        assertTrue(source.contains("item.label"));
         assertTrue(strings.contains("%2$s\\n"));
         assertFalse(strings.contains("%3$s\\n"));
     }

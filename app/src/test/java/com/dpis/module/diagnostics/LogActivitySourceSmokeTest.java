@@ -63,8 +63,9 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("readLsposedLogsWhenRootAvailable(boolean refreshRootAccess)"));
         assertTrue(source.contains("rootAccess.status != RootAccessProbe.Status.AVAILABLE"));
         assertTrue(source.contains("LsposedLogReader.readLsposedDpisCurrent()"));
-        assertTrue(source.contains("LogGate.ensureEnabled("));
-        assertTrue(source.contains("this::finish"));
+        assertTrue(source.contains("LogGate.isEnabled("));
+        assertTrue(source.contains("presentation.promptEnableLogs()"));
+        assertTrue(source.contains("enableDiagnosticLogsFromGate()"));
         assertTrue(source.contains("waitingForDiagnosticLogEnable"));
         assertTrue(source.contains("|| waitingForDiagnosticLogEnable"));
     }

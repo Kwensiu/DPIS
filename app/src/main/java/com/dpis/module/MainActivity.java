@@ -32,14 +32,7 @@ import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
-import com.dpis.module.diagnostics.AppLauncher;
-import com.dpis.module.diagnostics.Coordinator;
-import com.dpis.module.diagnostics.ExportBuilder;
-import com.dpis.module.diagnostics.LogGate;
-import com.dpis.module.diagnostics.PackageActions;
-import com.dpis.module.diagnostics.PageController;
-import com.dpis.module.diagnostics.ResultSheet;
-import com.dpis.module.diagnostics.Session;
+import com.dpis.module.diagnostics.FeedbackDiagnosticActivitySession;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
@@ -59,7 +52,9 @@ import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.home.ModeHelpActivity;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
+import com.dpis.module.process.ProcessActionConfirm;
 import com.dpis.module.process.ProcessActionHandler;
+import com.dpis.module.quirks.WechatDpiHelp;
 import com.dpis.module.quirks.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
@@ -77,8 +72,6 @@ import com.dpis.module.ui.WatchUiMode;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.ui.WindowInsetsBinder;
 import com.dpis.module.ui.compose.AppFilterComposeSheet;
-import com.dpis.module.ui.compose.ComposeMessageDialog;
-import com.dpis.module.ui.dialog.ConfirmDialog;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.dpis.module.updates.ReleaseNotesCacheStore;
 import com.dpis.module.updates.ReleaseNotesController;
@@ -157,7 +150,7 @@ public final class MainActivity
     private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
             = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
-    private static final int REQUEST_SAVE_FEEDBACK_DIAGNOSTIC = 10024;
+
 
     private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
     private final StartupUpdateDownloadExecutor startupUpdateDownloadExecutor
@@ -169,21 +162,16 @@ public final class MainActivity
             );
     private UpdateStateStore updateStateStore;
     private UpdateDownloadCoordinator updateDownloadCoordinator;
+    private final WechatDpiHelp wechatDpiHelp
+            = new WechatDpiHelp(this, this::composeShell);
     private final ProcessActionHandler processActionHandler
-            = new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch);
+            = new ProcessActionHandler(
+                    this,
+                    this::syncRuntimePropertiesForTargetLaunch,
+                    new ProcessActionConfirm(this, this::composeShell));
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
-    private Session feedbackDiagnosticSession;
-    private final AppLauncher feedbackDiagnosticAppLauncher
-            = new AppLauncher(this);
-    private final ExecutorService feedbackDiagnosticExportExecutor
-            = Executors.newSingleThreadExecutor();
-    private final PackageActions feedbackDiagnosticPackageActions
-            = new PackageActions(
-                    this,
-                    feedbackDiagnosticExportExecutor,
-                    REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
-            );
+    private FeedbackDiagnosticActivitySession feedbackDiagnostic;
     private final StartupUpdatePackageHandler startupUpdatePackageHandler
             = new StartupUpdatePackageHandler(this);
     private final ExecutorService startupUpdateExecutor
@@ -239,8 +227,6 @@ public final class MainActivity
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
-    private PageController feedbackDiagnosticPageController;
-    private FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
 
     @Override
@@ -269,14 +255,9 @@ public final class MainActivity
 
         RetainedState retainedState
                 = (RetainedState) getLastCustomNonConfigurationInstance();
-        feedbackDiagnosticSession = retainedState != null
-                && retainedState.feedbackDiagnosticSession != null
-                ? retainedState.feedbackDiagnosticSession
-                : new Session(getApplicationContext());
-        feedbackDiagnosticPageController = new PageController(
-                getApplicationContext(),
-                feedbackDiagnosticExportExecutor,
-                createDiagnosticPageControllerHost()
+        feedbackDiagnostic = new FeedbackDiagnosticActivitySession(
+                new FeedbackDiagnosticShell(this),
+                retainedState != null ? retainedState.feedbackDiagnostic : null
         );
         String initialQuery = "";
         String initialTemplateQuery = "";
@@ -295,7 +276,6 @@ public final class MainActivity
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
             initialWorkspaceSessionState = retainedState.workspaceSessionState;
-            feedbackDiagnosticPageRequest = retainedState.feedbackDiagnosticPageRequest;
             pendingUpdatePrompt = retainedState.pendingUpdatePrompt;
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
             initialRefreshingPages = decodeRefreshingPages(
@@ -365,7 +345,8 @@ public final class MainActivity
         );
         ComposeAppEditorActivityGateway composeAppEditorGateway = new ComposeAppEditorActivityGateway(
                 this,
-                composeEditorScopeRequestCoordinator
+                composeEditorScopeRequestCoordinator,
+                wechatDpiHelp
         );
         composeAppEditorSaveWorkflow = new ComposeAppEditorSaveWorkflow(
                 composeAppEditorGateway
@@ -458,8 +439,8 @@ public final class MainActivity
 
         renderMainUiState(requireUiState());
         installComposeWorkspaceShell();
-        restoreFeedbackDiagnosticPage(retainedState);
-        feedbackDiagnosticSession.attachHost(createFeedbackDiagnosticHost());
+        feedbackDiagnostic.restorePage();
+        feedbackDiagnostic.attachHost();
         // The service state callback is not guaranteed to fire on every Wear image.
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         requestAppsLoad();
@@ -535,14 +516,8 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
-        if (feedbackDiagnosticPageController != null) {
-            feedbackDiagnosticPageController.detachHost();
-        }
-        if (isChangingConfigurations()) {
-            feedbackDiagnosticSession.detachHost();
-        } else {
-            feedbackDiagnosticSession.shutdown();
-            feedbackDiagnosticExportExecutor.shutdownNow();
+        if (feedbackDiagnostic != null) {
+            feedbackDiagnostic.onDestroy(isChangingConfigurations());
         }
         if (updateDownloadCoordinator != null) {
             updateDownloadCoordinator.shutdown();
@@ -586,14 +561,9 @@ public final class MainActivity
         if (ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
             return;
         }
-        if (requestCode == REQUEST_SAVE_FEEDBACK_DIAGNOSTIC
-                && resultCode == RESULT_OK
-                && data != null
-                && data.getData() != null) {
-            feedbackDiagnosticPackageActions.saveFeedbackDiagnosticZip(
-                    data.getData(),
-                    feedbackDiagnosticSession.diagnosticPackage()
-            );
+        if (feedbackDiagnostic != null
+                && feedbackDiagnostic.handleActivityResult(requestCode, resultCode, data)) {
+            return;
         }
     }
 
@@ -698,11 +668,7 @@ public final class MainActivity
                         ? mainViewModel.getEditingDestination()
                         : ConfigEditorDestination.MAIN,
                 ensureWorkspaceSession().retainedState(),
-                feedbackDiagnosticSession,
-                feedbackDiagnosticPageRequest,
-                feedbackDiagnosticPageController.presentation() != null
-                        ? feedbackDiagnosticPageController.presentation().getState()
-                        : null,
+                feedbackDiagnostic.retainedState(),
                 pendingUpdatePrompt
         );
     }
@@ -1194,89 +1160,39 @@ public final class MainActivity
         }
     }
 
-    void showComposeWechatDpiHelp() {
-        ComposeMessageDialog.show(
-                this,
-                getString(R.string.dialog_wechat_dpi_help_title),
-                getString(R.string.dialog_wechat_dpi_help_message),
-                getString(R.string.dialog_close_button)
-        );
+    MainComposeShellHost composeShell() {
+        return composeShellHost;
     }
 
-    private AppConfigDialogBinder.AppConfigDialogState composeEditorDialogState(
+    boolean saveComposeEditorForDiagnostic(AppListItem item, EditorDraft draft) {
+        return composeAppEditorSaveWorkflow != null
+                && composeAppEditorSaveWorkflow.save(item, draft);
+    }
+
+    void markComposeEditorSaved(EditorDraft draft) {
+        if (composeAppEditorController != null) {
+            composeAppEditorController.markSaved(draft);
+        }
+    }
+
+    void dismissActiveEditorDialog() {
+        if (activeAppEditorDialog != null) {
+            activeAppEditorDialog.dismiss();
+        }
+    }
+
+    AppConfigDialogBinder.AppConfigDialogState composeEditorDialogState(
             AppListItem item,
             EditorDraft draft
     ) {
         return EditorDialogStateFactory.create(item, draft);
     }
 
-    private void restoreFeedbackDiagnosticPage(RetainedState retainedState) {
-        if (retainedState == null
-                || retainedState.feedbackDiagnosticPageRequest == null
-                || retainedState.feedbackDiagnosticPresentationState == null) {
-            return;
-        }
-        FeedbackDiagnosticPageRequest request = retainedState.feedbackDiagnosticPageRequest;
-        showComposeFeedbackDiagnosticPreparation(request.item, request.draft);
-        feedbackDiagnosticPageController.restoreState(
-                retainedState.feedbackDiagnosticPresentationState
-        );
-    }
-
     void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
             EditorDraft draft
     ) {
-        feedbackDiagnosticPageRequest = new FeedbackDiagnosticPageRequest(
-                item,
-                draft,
-                resolvePackageVersionName(item.packageName)
-        );
-        com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation shown
-                = feedbackDiagnosticPageController.show(
-                item,
-                draft,
-                feedbackDiagnosticPageRequest.versionName
-        );
-        if (shown == null) {
-            feedbackDiagnosticPageRequest = null;
-        }
-    }
-
-    private void showComposeFeedbackDiagnosticConfirmation(
-            AppListItem item,
-            EditorDraft draft
-    ) {
-        ConfirmDialog.showWithLabels(
-                this,
-                getString(R.string.feedback_diagnostic_action),
-                getString(R.string.feedback_diagnostic_confirm_message, item.label),
-                getString(android.R.string.cancel),
-                getString(R.string.feedback_diagnostic_save_and_start_button),
-                () -> {
-                    if (composeAppEditorSaveWorkflow == null
-                            || !composeAppEditorSaveWorkflow.save(item, draft)) {
-                        return;
-                    }
-                    if (composeAppEditorController != null) {
-                        composeAppEditorController.markSaved(draft);
-                    }
-                    boolean started = feedbackDiagnosticSession.start(
-                            Coordinator.Request.fromPersisted(
-                                    item,
-                                    composeEditorDialogState(item, draft),
-                                    resolvePackageVersionName(item.packageName),
-                                    getHookConfigStore()
-                            ),
-                            false,
-                            30
-                    );
-                    if (!started) {
-                        showToast(R.string.feedback_diagnostic_unavailable);
-                    }
-                },
-                () -> { }
-        );
+        feedbackDiagnostic.showPreparation(item, draft);
     }
 
     void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
@@ -2242,7 +2158,7 @@ public final class MainActivity
         syncThread.start();
     }
 
-    private void syncRuntimePropertiesForTargetLaunch(String packageName) {
+    void syncRuntimePropertiesForTargetLaunch(String packageName) {
         Integer generation;
         synchronized (pendingRuntimePropertyGenerations) {
             generation = pendingRuntimePropertyGenerations.get(packageName);
@@ -2527,125 +2443,14 @@ public final class MainActivity
         };
     }
 
-    private Session.Host createFeedbackDiagnosticHost() {
-        return new Session.Host() {
-            @Override
-            public boolean restartTargetAppForDiagnostic(@NonNull String packageName) {
-                syncRuntimePropertiesForTargetLaunch(packageName);
-                boolean launched = feedbackDiagnosticAppLauncher
-                        .restartForDiagnostic(packageName);
-                if (launched && activeAppEditorDialog != null) {
-                    activeAppEditorDialog.dismiss();
-                }
-                return launched;
-            }
-
-            @Override
-            public boolean systemHooksEnabled() {
-                return isSystemHookEnabledFromStore();
-            }
-
-            @Override
-            public void onRecordingStarted() {
-                if (feedbackDiagnosticPageController.presentation() != null) {
-                    feedbackDiagnosticPageController.presentation().markRecording();
-                }
-                showToast(R.string.feedback_diagnostic_started);
-            }
-
-            @Override
-            public void onStartUnavailable(boolean rootRequired) {
-                if (feedbackDiagnosticPageController.presentation() != null) {
-                    feedbackDiagnosticPageController.presentation().markStartFailed();
-                }
-                showToast(rootRequired
-                        ? R.string.feedback_diagnostic_root_required
-                        : R.string.feedback_diagnostic_unavailable);
-            }
-
-            @Override
-            public void onPackagingStarted() {
-                if (feedbackDiagnosticPageController.presentation() != null) {
-                    feedbackDiagnosticPageController.presentation().markPackaging();
-                }
-            }
-
-            @Override
-            public void onPackageReady(
-                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
-            ) {
-                showFeedbackDiagnosticReady(diagnosticPackage);
-            }
-
-            @Override
-            public void onPackagingFailed() {
-                if (feedbackDiagnosticPageController.presentation() != null) {
-                    feedbackDiagnosticPageController.presentation().showPackagingFailed();
-                }
-                showToast(R.string.feedback_diagnostic_save_failed);
-            }
-
-            @Override
-            public void onAutoFinished() {
-                showToast(R.string.feedback_diagnostic_auto_finished);
-            }
-        };
-    }
-
     void startFeedbackDiagnostic(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        if (item == null) {
-            return;
-        }
-        if (!LogGate.ensureEnabled(
-                this,
-                () -> showFeedbackDiagnosticConfirmation(item, state),
-                null
-        )) {
-            return;
-        }
-        showFeedbackDiagnosticConfirmation(item, state);
+        feedbackDiagnostic.startFromViewEditor(item, state);
     }
 
-    private void showFeedbackDiagnosticConfirmation(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state
-    ) {
-        ConfirmDialog.showWithLabels(
-                this,
-                getString(R.string.feedback_diagnostic_action),
-                getString(
-                        R.string.feedback_diagnostic_confirm_message,
-                        item.label
-                ),
-                getString(android.R.string.cancel),
-                getString(R.string.feedback_diagnostic_save_and_start_button),
-                () -> {
-                    AppListItem diagnosticItem = saveCurrentEditorConfigForDiagnostic(item, state);
-                    if (diagnosticItem == null) {
-                        return;
-                    }
-                    boolean started = feedbackDiagnosticSession.start(
-                            Coordinator.Request.fromPersisted(
-                                    diagnosticItem,
-                                    state,
-                                    resolvePackageVersionName(item.packageName),
-                                    getHookConfigStore()
-                            ),
-                            false,
-                            30
-                    );
-                    if (!started) {
-                        showToast(R.string.feedback_diagnostic_unavailable);
-                    }
-                },
-                () -> { }
-        );
-    }
-
-    private AppListItem saveCurrentEditorConfigForDiagnostic(
+    AppListItem saveCurrentEditorConfigForDiagnostic(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
@@ -2778,135 +2583,6 @@ public final class MainActivity
             return Integer.parseInt(raw);
         } catch (NumberFormatException ignored) {
             return null;
-        }
-    }
-
-    private void showFeedbackDiagnosticReady(
-            ExportBuilder.DiagnosticPackage diagnosticPackage
-    ) {
-        if (diagnosticPackage == null) {
-            return;
-        }
-        if (feedbackDiagnosticPageController.presentation() == null) {
-            showDiagnosticResultSheet(diagnosticPackage);
-            return;
-        }
-        feedbackDiagnosticPageController.presentation().showReady(
-                diagnosticPackage.fileName,
-                feedbackDiagnosticPackageActions.feedbackDiagnosticSharedCachePath(
-                        diagnosticPackage
-                ),
-                getString(
-                        R.string.feedback_diagnostic_package_metadata,
-                        formatFeedbackDiagnosticDuration(
-                                diagnosticPackage.result.durationMs
-                        ),
-                        android.text.format.Formatter.formatFileSize(
-                                this,
-                                diagnosticPackage.zipBytes.length
-                        )
-                ),
-                diagnosticPackage.entries.stream()
-                        .map(entry -> new com.dpis.module.ui.compose
-                                .FeedbackDiagnosticPreparationPresentation.OutputEntry(
-                                entry.name,
-                                entry.hasLineCount
-                                        ? getString(
-                                                R.string.feedback_diagnostic_result_entry_meta,
-                                                entry.lineCount,
-                                                android.text.format.Formatter.formatFileSize(
-                                                        this,
-                                                        entry.byteCount
-                                                )
-                                        )
-                                        : android.text.format.Formatter.formatFileSize(
-                                                this,
-                                                entry.byteCount
-                                        )
-                        ))
-                        .collect(java.util.stream.Collectors.toList())
-        );
-    }
-
-    private static String formatFeedbackDiagnosticDuration(long durationMs) {
-        long safeDurationMs = Math.max(0L, durationMs);
-        if (safeDurationMs < 1_000L) {
-            return safeDurationMs + " ms";
-        }
-        if (safeDurationMs < 60_000L) {
-            String value = String.format(
-                    java.util.Locale.US,
-                    "%.1f",
-                    safeDurationMs / 1_000.0d
-            );
-            if (value.endsWith(".0")) {
-                value = value.substring(0, value.length() - 2);
-            }
-            return value + " s";
-        }
-        long totalSeconds = safeDurationMs / 1_000L;
-        long minutes = totalSeconds / 60L;
-        long seconds = totalSeconds % 60L;
-        return seconds == 0L
-                ? minutes + " min"
-                : minutes + " min " + seconds + " s";
-    }
-
-    private void showDiagnosticResultSheet(
-            ExportBuilder.DiagnosticPackage diagnosticPackage
-    ) {
-        if (diagnosticPackage == null) {
-            return;
-        }
-        new ResultSheet(this, new ResultSheet.Host() {
-            @Override
-            public void shareFeedbackDiagnostic(
-                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
-            ) {
-                feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
-            }
-
-            @Override
-            public void saveFeedbackDiagnostic(
-                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
-            ) {
-                feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
-                        diagnosticPackage
-                );
-            }
-        }).show(diagnosticPackage);
-    }
-
-    private void handleFeedbackDiagnosticPageBack() {
-        if (!hasFeedbackDiagnosticStateToClear()) {
-            dismissFeedbackDiagnosticPage();
-            return;
-        }
-        ConfirmDialog.showWithLabels(
-                this,
-                getString(R.string.feedback_diagnostic_action),
-                getString(R.string.feedback_diagnostic_exit_confirm_message),
-                getString(android.R.string.cancel),
-                getString(R.string.feedback_diagnostic_exit_clear_action),
-                () -> {
-                    feedbackDiagnosticSession.cancel();
-                    dismissFeedbackDiagnosticPage();
-                },
-                () -> { }
-        );
-    }
-
-    private boolean hasFeedbackDiagnosticStateToClear() {
-        return feedbackDiagnosticSession.isRunning()
-                || feedbackDiagnosticSession.hasPageState()
-                || feedbackDiagnosticSession.diagnosticPackage() != null;
-    }
-
-    private void dismissFeedbackDiagnosticPage() {
-        feedbackDiagnosticPageController.clear();
-        feedbackDiagnosticPageRequest = null;
-        if (composeShellHost != null) {
-            composeShellHost.dismissDiagnosticPreparation();
         }
     }
 
@@ -3444,10 +3120,7 @@ public final class MainActivity
                                  boolean prefillInvalidated,
                                  ConfigEditorDestination editingDestination,
                                  TemplateWorkspaceActivitySession.State workspaceSessionState,
-                                 Session feedbackDiagnosticSession,
-                                 FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
-                                 com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
-                                         feedbackDiagnosticPresentationState,
+                                 FeedbackDiagnosticActivitySession.State feedbackDiagnostic,
                                  UpdatePromptRequest pendingUpdatePrompt) {
 
             private RetainedState(
@@ -3466,10 +3139,7 @@ public final class MainActivity
                     boolean prefillInvalidated,
                     ConfigEditorDestination editingDestination,
                     TemplateWorkspaceActivitySession.State workspaceSessionState,
-                    Session feedbackDiagnosticSession,
-                    FeedbackDiagnosticPageRequest feedbackDiagnosticPageRequest,
-                    com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation.State
-                            feedbackDiagnosticPresentationState,
+                    FeedbackDiagnosticActivitySession.State feedbackDiagnostic,
                     UpdatePromptRequest pendingUpdatePrompt
             ) {
                 this.appsSnapshot = appsSnapshot;
@@ -3498,9 +3168,7 @@ public final class MainActivity
                         ? editingDestination
                         : ConfigEditorDestination.MAIN;
                 this.workspaceSessionState = workspaceSessionState;
-                this.feedbackDiagnosticSession = feedbackDiagnosticSession;
-                this.feedbackDiagnosticPageRequest = feedbackDiagnosticPageRequest;
-                this.feedbackDiagnosticPresentationState = feedbackDiagnosticPresentationState;
+                this.feedbackDiagnostic = feedbackDiagnostic;
                 this.pendingUpdatePrompt = pendingUpdatePrompt;
             }
 
@@ -3527,11 +3195,7 @@ public final class MainActivity
                         && prefillInvalidated == other.prefillInvalidated
                         && editingDestination == other.editingDestination
                         && java.util.Objects.equals(workspaceSessionState, other.workspaceSessionState)
-                        && java.util.Objects.equals(feedbackDiagnosticSession, other.feedbackDiagnosticSession)
-                        && java.util.Objects.equals(feedbackDiagnosticPageRequest,
-                        other.feedbackDiagnosticPageRequest)
-                        && java.util.Objects.equals(feedbackDiagnosticPresentationState,
-                        other.feedbackDiagnosticPresentationState)
+                        && java.util.Objects.equals(feedbackDiagnostic, other.feedbackDiagnostic)
                         && java.util.Objects.equals(pendingUpdatePrompt, other.pendingUpdatePrompt);
             }
 
@@ -3541,8 +3205,7 @@ public final class MainActivity
                         appsSnapshot, query, templateQuery, filterState, workspaceMode, currentPage,
                         editingPackageName, editingDraft, savedEditingDraft, prefillSnapshot,
                         prefillInvalidated, editingDestination,
-                        workspaceSessionState, feedbackDiagnosticSession, feedbackDiagnosticPageRequest,
-                        feedbackDiagnosticPresentationState, pendingUpdatePrompt);
+                        workspaceSessionState, feedbackDiagnostic, pendingUpdatePrompt);
                 result = 31 * result + java.util.Arrays.hashCode(appListScrollPositions);
                 return 31 * result + java.util.Arrays.hashCode(refreshingPagePositions);
             }
@@ -3559,137 +3222,5 @@ public final class MainActivity
                         + java.util.Arrays.toString(refreshingPagePositions) + "]";
             }
         }
-
-    /** Inputs needed to rebuild the diagnostic page after a configuration change. */
-    private record FeedbackDiagnosticPageRequest(
-            AppListItem item,
-            EditorDraft draft,
-            String versionName
-    ) {
-        private FeedbackDiagnosticPageRequest(
-                AppListItem item,
-                EditorDraft draft,
-                String versionName
-        ) {
-            this.item = item;
-            this.draft = draft;
-            this.versionName = versionName != null ? versionName : "";
-        }
-    }
-
-    private PageController.Host createDiagnosticPageControllerHost() {
-        return new PageController.Host() {
-            @Override
-            public boolean canShowDiagnosticPage() {
-                return composeShellHost != null;
-            }
-
-            @Override
-            public void showDiagnosticPreparation(
-                    @NonNull com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation presentation
-            ) {
-                if (composeShellHost != null) {
-                    composeShellHost.showDiagnosticPreparation(presentation);
-                }
-            }
-
-            @Override
-            public void showFallbackConfirmation(
-                    @NonNull AppListItem item,
-                    @NonNull EditorDraft draft
-            ) {
-                showComposeFeedbackDiagnosticConfirmation(item, draft);
-            }
-
-            @Override
-            public void onBackRequested() {
-                handleFeedbackDiagnosticPageBack();
-            }
-
-            @Override
-            public boolean saveAppConfig(@NonNull AppListItem item, @NonNull EditorDraft draft) {
-                return composeAppEditorSaveWorkflow != null
-                        && composeAppEditorSaveWorkflow.save(item, draft);
-            }
-
-            @Override
-            public void markAppConfigSaved(@NonNull EditorDraft draft) {
-                if (composeAppEditorController != null) {
-                    composeAppEditorController.markSaved(draft);
-                }
-            }
-
-            @Override
-            public boolean startDiagnostic(
-                    @NonNull AppListItem item,
-                    @NonNull EditorDraft draft,
-                    @NonNull String versionName,
-                    boolean durationEnabled,
-                    int durationSeconds
-            ) {
-                return feedbackDiagnosticSession.start(
-                        Coordinator.Request.fromPersisted(
-                                item,
-                                composeEditorDialogState(item, draft),
-                                versionName,
-                                getHookConfigStore()
-                        ),
-                        durationEnabled,
-                        durationSeconds
-                );
-            }
-
-            @Override
-            public ExportBuilder.DiagnosticPackage diagnosticPackage() {
-                return feedbackDiagnosticSession.diagnosticPackage();
-            }
-
-            @Override
-            public void saveDiagnosticPackage(
-                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
-            ) {
-                feedbackDiagnosticPackageActions.launchSaveFeedbackDiagnosticPicker(
-                        diagnosticPackage
-                );
-            }
-
-            @Override
-            public void shareDiagnosticPackage(
-                    @NonNull ExportBuilder.DiagnosticPackage diagnosticPackage
-            ) {
-                feedbackDiagnosticPackageActions.shareFeedbackDiagnostic(diagnosticPackage);
-            }
-
-            @Override
-            public void discardDiagnostic() {
-                feedbackDiagnosticSession.cancel();
-            }
-
-            @Override
-            public void showLsposedExplanation(@NonNull String title, @NonNull String explanation) {
-                ComposeMessageDialog.show(
-                        MainActivity.this,
-                        title,
-                        explanation,
-                        getString(R.string.dialog_close_button)
-                );
-            }
-
-            @Override
-            public void copyDiagnosticPath(String path) {
-                feedbackDiagnosticPackageActions.copyFeedbackDiagnosticPath(path);
-            }
-
-            @Override
-            public void runOnUiThread(@NonNull Runnable action) {
-                MainActivity.this.runOnUiThread(action);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-        };
-    }
 
 }

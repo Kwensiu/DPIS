@@ -1,5 +1,6 @@
 package com.dpis.module.ui.compose
 
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.dialog.ModalDialog
 
 import android.view.HapticFeedbackConstants
@@ -79,6 +80,8 @@ fun SettingsWorkspaceContent(
     scrollStore: PageScrollPositionStore,
 ) {
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    var disableSafeModeVisible by rememberSaveable { mutableStateOf(false) }
+    var hideLauncherVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val systemContext = context.applicationContext
     val languageOptions = AppLocaleManager.supportedLanguages().map {
@@ -133,7 +136,9 @@ fun SettingsWorkspaceContent(
                     state?.safeModeEnabled == true,
                     state?.storeAvailable == true,
                     index = 1, total = generalItemCount,
-                    onSafeModeChanged
+                    { enabled ->
+                        if (enabled) onSafeModeChanged(true) else disableSafeModeVisible = true
+                    }
                 )
                 SettingsSwitchRow(
                     R.drawable.ic_view_kanban_24,
@@ -231,7 +236,9 @@ fun SettingsWorkspaceContent(
                     state?.launcherIconHidden == true,
                     state?.storeAvailable == true,
                     index = 2, total = 3,
-                    onLauncherHiddenChanged
+                    { hidden ->
+                        if (hidden) hideLauncherVisible = true else onLauncherHiddenChanged(false)
+                    }
                 )
             }
         }
@@ -256,6 +263,32 @@ fun SettingsWorkspaceContent(
             }
         }
     }
+    }
+    if (disableSafeModeVisible) {
+        ConfirmAlertDialog(
+            onDismissRequest = { disableSafeModeVisible = false },
+            title = stringResource(R.string.system_safe_mode_disable_confirm_title),
+            message = stringResource(R.string.system_safe_mode_disable_confirm_message),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
+            onConfirm = {
+                disableSafeModeVisible = false
+                onSafeModeChanged(false)
+            },
+        )
+    }
+    if (hideLauncherVisible) {
+        ConfirmAlertDialog(
+            onDismissRequest = { hideLauncherVisible = false },
+            title = stringResource(R.string.settings_hide_launcher_icon_confirm_title),
+            message = stringResource(R.string.settings_hide_launcher_icon_confirm_message),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
+            onConfirm = {
+                hideLauncherVisible = false
+                onLauncherHiddenChanged(true)
+            },
+        )
     }
     if (showLanguageDialog) {
         ModalDialog(onDismissRequest = { showLanguageDialog = false }) {

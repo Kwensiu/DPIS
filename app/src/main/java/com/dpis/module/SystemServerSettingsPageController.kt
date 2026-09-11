@@ -309,7 +309,7 @@ class SystemServerSettingsPageController(
     }
 
     fun setSafeModeFromPresentation(enabled: Boolean) {
-        if (enabled) onSafeModeChanged(null, true) else showDisableSafeModeConfirmationDialog()
+        persistSafeMode(enabled)
     }
 
     fun setGlobalLogFromPresentation(enabled: Boolean) {
@@ -317,8 +317,7 @@ class SystemServerSettingsPageController(
     }
 
     fun setLauncherHiddenFromPresentation(hidden: Boolean) {
-        if (hidden) showHideLauncherIconConfirmationDialog()
-        else onHideLauncherIconChanged(null, false)
+        persistLauncherHidden(hidden)
     }
 
     fun showFontDebugFromPresentation() {
@@ -1195,6 +1194,48 @@ class SystemServerSettingsPageController(
     private fun applySystemHooksRowVisibility() {
         val row = findViewById<View?>(R.id.row_system_hooks) ?: return
         row.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
+    }
+
+    private fun persistSafeMode(enabled: Boolean) {
+        if (store == null) {
+            return
+        }
+        if (!store!!.setSystemServerSafeModeEnabled(enabled)) {
+            setCheckedSilently(
+                safeModeSwitch,
+                !enabled
+            ) { buttonView: CompoundButton?, isChecked: Boolean ->
+                this.onSafeModeChanged(buttonView, isChecked)
+            }
+            showToast(R.string.system_settings_save_failed)
+            publishPresentationState()
+            return
+        }
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
+        publishPresentationState()
+    }
+
+    private fun persistLauncherHidden(hidden: Boolean) {
+        if (hidden) {
+            if (!persistLauncherIconState(true)) {
+                setCheckedSilently(
+                    hideLauncherIconSwitch, false
+                ) { buttonView: CompoundButton?, isChecked: Boolean ->
+                    this.onHideLauncherIconChanged(buttonView, isChecked)
+                }
+            }
+            publishPresentationState()
+            return
+        }
+        if (!persistLauncherIconState(false)) {
+            setCheckedSilently(
+                hideLauncherIconSwitch,
+                true
+            ) { buttonView: CompoundButton?, isChecked: Boolean ->
+                this.onHideLauncherIconChanged(buttonView, isChecked)
+            }
+        }
+        publishPresentationState()
     }
 
     private fun onSafeModeChanged(buttonView: CompoundButton?, isChecked: Boolean) {
