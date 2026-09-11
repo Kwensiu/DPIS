@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -94,6 +95,23 @@ object ComposeMessageDialog {
 
         fun isShowing(): Boolean = dialog.isShowing
         fun dismiss() = dialog.dismiss()
+    }
+}
+
+@Composable
+internal fun MessageAlertDialog(
+    onDismissRequest: () -> Unit,
+    title: String,
+    message: String,
+    closeLabel: String,
+) {
+    ModalDialog(onDismissRequest = onDismissRequest) {
+        MessageDialogContent(
+            title = title,
+            message = AnnotatedString(message),
+            closeLabel = closeLabel,
+            onClose = onDismissRequest,
+        )
     }
 }
 

@@ -185,6 +185,8 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                         settings::openTheme,
                         settings::setLanguage,
                         settings::openBackup,
+                        settings::confirmImport,
+                        settings::dismissImport,
                         settings::clearCache,
                         settings::openAbout,
                         settings::openDonate,
@@ -240,6 +242,8 @@ internal class MainWorkspacePresentationCoordinator(private val content: Content
                 settings::openTheme,
                 settings::openLanguage,
                 settings::openBackup,
+                settings::confirmImport,
+                settings::dismissImport,
                 settings::clearCache,
                 settings::openAbout
             )

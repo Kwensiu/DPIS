@@ -42,7 +42,7 @@ class FeedbackDiagnosticSourceSmokeTest {
     fun feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine() {
         val main = read("src/main/java/com/dpis/module/MainActivity.java")
         val pageController = read(
-            "src/main/java/com/dpis/module/diagnostics/PageController.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/PageController.kt"
         )
         val packageActions = read(
             "src/main/java/com/dpis/module/diagnostics/PackageActions.kt"
@@ -64,7 +64,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         val edgeFade = read(
             "src/main/java/com/dpis/module/ui/presentation/editor/HorizontalScrollEdgeFade.kt"
         )
-        val shell = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+        val shell = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
         val segmentedPolicy = read(
             "src/main/java/com/dpis/module/ui/presentation/workspace/SegmentedListItemPolicy.kt"
         )
@@ -82,38 +82,59 @@ class FeedbackDiagnosticSourceSmokeTest {
                     + "StructuredEvidenceExporter.java"
         )
         val logGate = read(
-            "src/main/java/com/dpis/module/diagnostics/LogGate.java"
+            "src/main/java/com/dpis/module/diagnostics/presentation/LogGate.kt"
         )
+        val confirm = read(
+            "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticConfirm.kt"
+        )
+        val sessionOwner = read(
+            "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt"
+        )
+        val duration = read(
+            "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticDuration.kt"
+        )
+        val diagnosticShell = read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticShell.kt")
 
-        assertTrue(main.contains("new Session(getApplicationContext())"))
-        assertTrue(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
-        assertTrue(main.contains("LogGate.ensureEnabled("))
-        assertTrue(main.contains("showFeedbackDiagnosticConfirmation(item, state)"))
-        assertTrue(main.contains("ConfirmDialog.showWithLabels("))
-        assertTrue(main.contains("resolvePackageVersionName(item.packageName)"))
-        assertTrue(main.contains("feedbackDiagnosticSession.start("))
+        assertTrue(main.contains("new FeedbackDiagnosticActivitySession("))
+        assertTrue(main.contains("new FeedbackDiagnosticShell(this)"))
+        assertTrue(main.contains("feedbackDiagnostic.startFromViewEditor("))
+        assertTrue(main.contains("feedbackDiagnostic.showPreparation("))
+        assertTrue(main.contains("feedbackDiagnostic.restorePage()"))
+        assertTrue(main.contains("feedbackDiagnostic.attachHost()"))
+        assertTrue(main.contains("feedbackDiagnostic.onDestroy(isChangingConfigurations())"))
+        assertFalse(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
+        assertFalse(main.contains("createDiagnosticPageControllerHost()"))
+        assertTrue(confirm.contains("LogGate.isEnabled("))
+        assertTrue(confirm.contains("host.showEnableLogsConfirm("))
+        assertTrue(logGate.contains("ConfirmDialog.showWithLabels("))
+        assertTrue(confirm.contains("whenLogsEnabled"))
+        assertTrue(confirm.contains("showStart(item.label)"))
+        assertTrue(sessionOwner.contains("persistComposeEditor("))
+        assertTrue(sessionOwner.contains("EditorDialogStateFactory.create("))
+        assertTrue(diagnosticShell.contains("persistComposeEditor("))
+        assertTrue(confirm.contains("ConfirmDialog.showWithLabels("))
+        assertTrue(diagnosticShell.contains("activity.resolvePackageVersionName(packageName)"))
+        assertTrue(confirm.contains("session.get().start("))
         assertTrue(pageController.contains("selectedDurationSeconds()"))
         assertTrue(pageController.contains("isDurationEnabled()"))
         assertTrue(pageController.contains("AppLocaleManager.wrap(context.applicationContext)"))
-        assertTrue(main.contains("feedbackDiagnosticSession.attachHost("))
-        assertTrue(main.contains("feedbackDiagnosticSession.detachHost()"))
-        assertTrue(main.contains("isChangingConfigurations()"))
-        assertTrue(main.contains("ComposeMessageDialog.show("))
+        assertTrue(sessionOwner.contains("session.attachHost(host)"))
+        assertTrue(sessionOwner.contains("session.detachHost()"))
+        assertTrue(confirm.contains("ComposeMessageDialog.show("))
         assertTrue(pageController.contains("current.lsposedStatus()"))
-        assertTrue(main.contains("feedbackDiagnosticPageController.presentation().markStartFailed()"))
-        assertTrue(main.contains("formatFeedbackDiagnosticDuration("))
-        assertTrue(main.contains("feedback_diagnostic_auto_finished"))
+        assertTrue(sessionOwner.contains("pageController.presentation()?.markStartFailed()"))
+        assertTrue(duration.contains("fun format(durationMs: Long)"))
+        assertTrue(sessionOwner.contains("feedback_diagnostic_auto_finished"))
         assertTrue(pageController.contains("target.updateEnvironment("))
         assertTrue(pageController.contains("refreshEnvironment(created, refreshLsposed = true)"))
         assertTrue(pageController.contains("current.lsposedAvailabilityCode()"))
         assertTrue(pageController.contains("refreshLsposedAvailability"))
         assertTrue(pageController.contains("discardDiagnostic()"))
-        assertTrue(main.contains("Coordinator.Request.fromPersisted("))
-        assertTrue(main.contains("restoreFeedbackDiagnosticPage(retainedState)"))
-        assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"))
-        assertTrue(main.contains("handleFeedbackDiagnosticPageBack()"))
-        assertTrue(main.contains("feedbackDiagnosticSession.cancel();"))
-        assertTrue(main.contains("feedback_diagnostic_exit_confirm_message"))
+        assertTrue(sessionOwner.contains("Coordinator.Request.fromPersisted("))
+        assertTrue(sessionOwner.contains("session.diagnosticPackage()"))
+        assertTrue(sessionOwner.contains("confirm.onPageBack("))
+        assertTrue(sessionOwner.contains("session.cancel()"))
+        assertTrue(confirm.contains("feedback_diagnostic_exit_confirm_message"))
         assertTrue(preparation.contains("SecondaryPageScaffold("))
         assertTrue(preparation.contains("feedback_diagnostic_target_section"))
         assertTrue(preparation.contains("rememberInstalledAppIcon(state.packageName, state.appIcon)"))
@@ -167,15 +188,24 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(segmentedPolicy.contains("safeCount == 1"))
         assertTrue(segmentedPolicy.contains("RoundedCornerShape(16.dp)"))
         assertTrue(segmentedPolicy.contains("} else {\n        shapes"))
-        assertTrue(main.contains("FeedbackDiagnosticPreparationPresentation.OutputEntry"))
-        assertTrue(main.contains("feedback_diagnostic_result_entry_meta"))
+        assertTrue(
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
+                .contains("FeedbackDiagnosticPreparationPresentation.OutputEntry")
+        )
+        assertTrue(
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
+                .contains("feedback_diagnostic_result_entry_meta")
+        )
         assertTrue(packageActions.contains("feedbackDiagnosticSharedCachePath("))
         assertTrue(packageActions.contains("copyFeedbackDiagnosticPath("))
         assertFalse(main.contains("private void saveFeedbackDiagnosticZip("))
         assertFalse(main.contains("private void shareFeedbackDiagnostic("))
         assertFalse(main.contains("private void copyFeedbackDiagnosticPath("))
         assertFalse(main.contains("private void writeSharedFeedbackDiagnosticZip("))
-        assertTrue(main.contains("Formatter.formatFileSize"))
+        assertTrue(
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
+                .contains("Formatter.formatFileSize")
+        )
         assertTrue(hookChain.contains("val shapes = dpisSegmentedShapes(index, total)"))
         assertFalse(hookChain.contains("SingleItemShape"))
         assertFalse(main.contains("postDelayed(() -> finish("))
@@ -265,17 +295,19 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticLaunchesTargetThroughRootRestartOnly() {
-        val main = read("src/main/java/com/dpis/module/MainActivity.java")
+        val sessionOwner = read(
+            "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt"
+        )
         val launcher = read(
             "src/main/java/com/dpis/module/diagnostics/AppLauncher.java"
         )
         val rootLauncher =
             read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt")
 
-        assertTrue(main.contains("new AppLauncher(this)"))
-        assertTrue(main.contains("restartTargetAppForDiagnostic("))
-        assertTrue(main.contains(".restartForDiagnostic(packageName)"))
-        assertFalse(main.contains("public boolean launchTargetApp(String packageName)"))
+        assertTrue(sessionOwner.contains("AppLauncher(activity)"))
+        assertTrue(sessionOwner.contains("restartTargetAppForDiagnostic("))
+        assertTrue(sessionOwner.contains("launcher.restartForDiagnostic(packageName)"))
+        assertFalse(sessionOwner.contains("public boolean launchTargetApp(String packageName)"))
 
         assertTrue(launcher.contains("new RootAppProcessLauncher(context)"))
         assertTrue(launcher.contains("rootLauncher.restart(packageName).code() == 0"))
@@ -340,12 +372,19 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java"
         )
 
-        assertTrue(main.contains("REQUEST_SAVE_FEEDBACK_DIAGNOSTIC"))
+        assertTrue(
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
+                .contains("const val SAVE_REQUEST = 10024")
+        )
+        assertTrue(main.contains("feedbackDiagnostic.handleActivityResult("))
         assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"))
         assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"))
         assertTrue(packageActions.contains("openOutputStream(uri)"))
         assertFalse(packageActions.contains("openOutputStream(uri, \"wt\")"))
-        assertTrue(main.contains("feedbackDiagnosticSession.diagnosticPackage()"))
+        assertTrue(
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
+                .contains("session.diagnosticPackage()")
+        )
         assertTrue(packageActions.contains("FileProvider.getUriForFile"))
         assertTrue(packageActions.contains("Intent.ACTION_SEND"))
         assertTrue(packageActions.contains("putExtra(Intent.EXTRA_STREAM, uri)"))

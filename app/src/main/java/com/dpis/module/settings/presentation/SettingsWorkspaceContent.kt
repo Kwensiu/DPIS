@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.SettingsUiState
 import com.dpis.module.settings.AppUiScaleManager
+import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
 import com.dpis.module.settings.AppLocaleManager
 import com.dpis.module.settings.TranslationContributorCatalog
 import kotlin.math.roundToInt
@@ -73,12 +74,16 @@ fun SettingsWorkspaceContent(
     onThemeSettings: () -> Unit,
     onLanguageSelected: (String) -> Unit,
     onBackup: () -> Unit,
+    onConfirmImport: () -> Unit,
+    onDismissImport: () -> Unit,
     onClearCache: () -> Unit,
     onAbout: () -> Unit,
     onDonate: () -> Unit,
     scrollStore: PageScrollPositionStore,
 ) {
     var showLanguageDialog by rememberSaveable { mutableStateOf(false) }
+    var disableSafeModeVisible by rememberSaveable { mutableStateOf(false) }
+    var hideLauncherVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val systemContext = context.applicationContext
     val languageOptions = AppLocaleManager.supportedLanguages().map {
@@ -133,7 +138,9 @@ fun SettingsWorkspaceContent(
                     state?.safeModeEnabled == true,
                     state?.storeAvailable == true,
                     index = 1, total = generalItemCount,
-                    onSafeModeChanged
+                    { enabled ->
+                        if (enabled) onSafeModeChanged(true) else disableSafeModeVisible = true
+                    }
                 )
                 SettingsSwitchRow(
                     R.drawable.ic_view_kanban_24,
@@ -231,7 +238,9 @@ fun SettingsWorkspaceContent(
                     state?.launcherIconHidden == true,
                     state?.storeAvailable == true,
                     index = 2, total = 3,
-                    onLauncherHiddenChanged
+                    { hidden ->
+                        if (hidden) hideLauncherVisible = true else onLauncherHiddenChanged(false)
+                    }
                 )
             }
         }
@@ -257,6 +266,23 @@ fun SettingsWorkspaceContent(
         }
     }
     }
+    SettingsWorkspaceConfirmDialogs(
+        disableSafeModeVisible = disableSafeModeVisible,
+        hideLauncherVisible = hideLauncherVisible,
+        pendingImport = state?.pendingImportUri != null,
+        onDismissSafeMode = { disableSafeModeVisible = false },
+        onConfirmDisableSafeMode = {
+            disableSafeModeVisible = false
+            onSafeModeChanged(false)
+        },
+        onDismissHideLauncher = { hideLauncherVisible = false },
+        onConfirmHideLauncher = {
+            hideLauncherVisible = false
+            onLauncherHiddenChanged(true)
+        },
+        onDismissImport = onDismissImport,
+        onConfirmImport = onConfirmImport,
+    )
     if (showLanguageDialog) {
         ModalDialog(onDismissRequest = { showLanguageDialog = false }) {
             LanguageDialogContent(

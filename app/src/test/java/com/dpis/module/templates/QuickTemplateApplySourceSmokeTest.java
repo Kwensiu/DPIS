@@ -28,7 +28,12 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(workspace.contains("QuickTemplateApplyConfirmationMessage.format("));
         assertTrue(workspace.contains("R.string.quick_template_apply_scope_note"));
         assertTrue(workspace.contains("finishQuickTemplateApply("));
-        assertTrue(workspace.contains("ConfirmDialog.showWithLabels("));
+        assertTrue(workspace.contains("TemplateWorkspacePresentation.ApplyConfirmation("));
+        assertTrue(workspace.contains("pendingApply"));
+        assertTrue(workspace.contains("confirmApply()"));
+        String content = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt");
+        assertTrue(content.contains("state.applyConfirmation"));
+        assertTrue(content.contains("ConfirmAlertDialog("));
         assertTrue(workspace.contains("QuickTemplateApplyCoordinator<TemplateConfigValue>"));
         assertTrue(workspace.contains("QuickTemplateApplyAdapters.from(host.hookConfigStore())"));
         assertTrue(mainActivity.contains("getHookConfigStore()"));

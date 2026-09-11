@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ProcessActionHandlerSourceSmokeTest {
     private static final String PROCESS_ACTION_HANDLER_SOURCE =
-            "src/main/java/com/dpis/module/process/ProcessActionHandler.java";
+            "src/main/java/com/dpis/module/process/presentation/ProcessActionHandler.kt";
 
     @Test
     public void processActionsDoNotUseMonkeyToLaunchApps() throws IOException {
@@ -17,7 +17,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         String rootLauncher = read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt");
 
         assertFalse(source.contains("monkey -p"));
-        assertTrue(source.contains("new RootAppProcessLauncher(activity)"));
+        assertTrue(source.contains("RootAppProcessLauncher(activity)"));
         assertTrue(source.contains("rootLauncher.start(packageName)"));
         assertTrue(rootLauncher.contains("am start --user current"));
         assertTrue(rootLauncher.contains("-a android.intent.action.MAIN"));
@@ -44,9 +44,11 @@ public class ProcessActionHandlerSourceSmokeTest {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("requiresRoot(action) && !hasRootAccess()"));
-        assertTrue(source.contains("rootRequiredMessageResId(action)"));
-        assertTrue(source.contains("return action == Action.RESTART || action == Action.STOP;"));
+        assertTrue(source.contains("ProcessActionPolicy.requiresRoot(action) && !hasRootAccess()"));
+        assertTrue(source.contains("ProcessActionPolicy.rootRequiredMessageResId(action)"));
+        String policy = read("src/main/java/com/dpis/module/process/ProcessActionPolicy.kt");
+        assertTrue(policy.contains("action == ProcessActionHandler.Action.RESTART"));
+        assertTrue(policy.contains("action == ProcessActionHandler.Action.STOP"));
         assertTrue(source.contains("RootAccessProbe.probe()"));
         assertFalse(source.contains("rootAccessCache"));
         assertTrue(strings.contains("dialog_process_restart_requires_root"));
@@ -70,18 +72,21 @@ public class ProcessActionHandlerSourceSmokeTest {
     public void systemAppStartDoesNotShowRiskConfirmation() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
 
-        assertTrue(source.contains("item.systemApp && action != Action.START"));
+        assertTrue(source.contains("ProcessActionPolicy.requiresSystemAppConfirmation(item.systemApp, action)"));
         assertFalse(source.contains("new AlertDialog.Builder(activity)"));
     }
 
     @Test
     public void processActionConfirmationUsesSharedComposeDialog() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
+        String confirm = read("src/main/java/com/dpis/module/process/presentation/ProcessActionConfirm.kt");
         String dialog = read("src/main/java/com/dpis/module/ui/dialog/ConfirmDialog.kt");
 
-        assertTrue(source.contains("ConfirmDialog.show("));
-        assertTrue(source.contains("R.string.dialog_process_action_confirm_title"));
-        assertTrue(source.contains("R.string.dialog_process_action_confirm_message"));
+        assertTrue(source.contains("confirmSystemApp.confirm("));
+        assertFalse(source.contains("ConfirmDialog.show("));
+        assertTrue(confirm.contains("ConfirmDialog.show("));
+        assertTrue(confirm.contains("R.string.dialog_process_action_confirm_title"));
+        assertTrue(confirm.contains("R.string.dialog_process_action_confirm_message"));
         assertFalse(source.contains("R.layout.dialog_process_action_confirm"));
         assertTrue(dialog.contains("fun ConfirmDialogContent("));
         assertTrue(dialog.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
@@ -98,7 +103,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("actionLabel,"));
-        assertTrue(source.contains("item.label)"));
+        assertTrue(source.contains("item.label"));
         assertTrue(strings.contains("%2$s\\n"));
         assertFalse(strings.contains("%3$s\\n"));
     }

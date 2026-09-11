@@ -14,6 +14,7 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
+
 import com.dpis.module.ui.dialog.ConfirmDialog
 import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.button.MaterialButton
@@ -165,6 +166,20 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         }
 
         override fun applyTemplate(id: String) = applyQuickTemplate(id)
+
+        override fun confirmApply() {
+            val pending = pendingApply ?: return
+            pendingApply = null
+            finishQuickTemplateApply(pending.coordinator, pending.template, pending.installedOnly)
+            refresh(presentation.state().query)
+            publish()
+        }
+
+        override fun dismissApply() {
+            pendingApply = null
+            refresh(presentation.state().query)
+            publish()
+        }
 
         override fun editTemplate(id: String) = openQuickTemplate(id)
 
@@ -318,6 +333,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
     private var legacyWorkspaceBinder: TemplateWorkspaceBinder? = null
     private var legacyDetailController: TemplateDetailPaneController? = null
     private var composePresentation = false
+    private var pendingApply: PendingApply? = null
 
     fun state() = presentation.state()
 
@@ -519,14 +535,30 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 override fun scopeNote() = activity.getString(R.string.quick_template_apply_scope_note)
             },
         )
+        pendingApply = PendingApply(
+            coordinator,
+            template,
+            installedOnly,
+            TemplateWorkspacePresentation.ApplyConfirmation(
+                activity.getString(R.string.quick_template_apply_confirm_title, template.name),
+                message,
+                activity.getString(R.string.template_workspace_action_apply),
+            ),
+        )
+        refresh(presentation.state().query)
+        if (composePresentation) {
+            publish()
+            return
+        }
+        val confirmation = pendingApply!!.confirmation
         ConfirmDialog.showWithLabels(
             activity,
-            activity.getString(R.string.quick_template_apply_confirm_title, template.name),
-            message,
+            confirmation.title,
+            confirmation.message,
             activity.getString(R.string.dialog_process_action_confirm_negative),
-            activity.getString(R.string.template_workspace_action_apply),
-            Runnable { finishQuickTemplateApply(coordinator, template, installedOnly) },
-            Runnable { },
+            confirmation.confirmLabel,
+            { actions.confirmApply() },
+            { actions.dismissApply() },
         )
     }
 
@@ -538,6 +570,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             routeState.editorDestination(),
             routeState.globalPrefillDraft(),
             routeState.quickTemplateDraft(),
+            pendingApply?.confirmation,
         )
     }
 
@@ -674,6 +707,13 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         override fun onMissingTemplate() = closeRoute()
         override fun showToast(messageResId: Int) = host.showToast(messageResId)
     }
+
+    private class PendingApply(
+        val coordinator: QuickTemplateApplyCoordinator<TemplateConfigValue>,
+        val template: QuickTemplateStore.QuickTemplate,
+        val installedOnly: QuickTemplateApplyCoordinator.TargetPackageFilter,
+        val confirmation: TemplateWorkspacePresentation.ApplyConfirmation,
+    )
 
     private companion object {
         const val REQUEST_TARGET_SELECTION = 10023

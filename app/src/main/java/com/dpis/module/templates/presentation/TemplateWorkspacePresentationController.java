@@ -37,7 +37,8 @@ public final class TemplateWorkspacePresentationController {
             String nextDetailTemplateId,
             com.dpis.module.ConfigEditorDestination editorDestination,
             TemplateEditorDraft globalPrefillDraft,
-            TemplateEditorDraft quickTemplateDraft
+            TemplateEditorDraft quickTemplateDraft,
+            TemplateWorkspacePresentation.ApplyConfirmation applyConfirmation
     ) {
         TemplateWorkspacePresentation.DetailKind detailKind = nextDetailKind != null
                 ? nextDetailKind
@@ -50,7 +51,8 @@ public final class TemplateWorkspacePresentationController {
                 nextDetailTemplateId,
                 editorDestination,
                 globalPrefillDraft,
-                quickTemplateDraft
+                quickTemplateDraft,
+                applyConfirmation
         );
         for (Listener listener : new LinkedHashSet<>(listeners)) {
             listener.onStateChanged(state);

@@ -15,7 +15,7 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
         val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/interop/AndroidTextInterop.kt")
         val disclaimerSource = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
         val modalSource = read("src/main/java/com/dpis/module/ui/dialog/ModalDialog.kt")
-        val shellHostSource = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+        val shellHostSource = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
 
         assertTrue(source.contains("class UpdatePromptDialogCoordinator"))
         assertTrue(source.contains("fun maybeShowStartupDisclaimerDialog("))

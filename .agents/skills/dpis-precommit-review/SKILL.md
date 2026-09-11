@@ -22,6 +22,28 @@ scope applies.
      literal occurrence must be audited. For large command output, use
      context-mode batch/filter tools and surface only derived evidence.
 
+1b. Slice large diffs before reviewing them as one blob.
+   - Do not feed an entire feature-migration or Activity-extraction branch into
+     one reviewer pass. A saturated context produces generic praise and misses
+     leftover call sites.
+   - Split the diff by ownership first: Compose dialog state, a feature
+     Activity session, process/quirk adapters, tests/smoke anchors, then any
+     remaining `MainActivity` wiring.
+   - For each slice, prove behavior, state ownership, and every old API call
+     site before looking at naming taste.
+   - When the user asks for sub-agent review, or when two or more slices are
+     independent, dispatch one read-only reviewer per slice in parallel. Reuse
+     the same reviewer for follow-ups on that slice. Do not spawn a new
+     reviewer for a one-line clarification.
+   - Report only merge-blocking issues as blockers: behavior regressions,
+     ownership violations, missed call sites, tests that pin stale
+     implementation. Optional structure notes stay non-blocking unless they
+     violate `AGENTS.md` (especially `MainActivity` slim-down and package
+     ownership).
+   - After the slices return, the parent agent merges findings, checks that
+     reviewers did not contradict each other on shared files, and does not
+     treat “could split further” as a required follow-up.
+
 2. Apply project and domain rules.
    - Read `AGENTS.md` and `CONTEXT.md`; read the relevant active document under
      `docs/` for runtime routes, diagnostics, or other named boundaries.
@@ -88,6 +110,14 @@ scope applies.
      domain logic measurable. Exclude only framework-bound UI, lifecycle,
      Xposed/hooked-process, root, or other code the active JVM harness cannot
      execute.
+   - Decide coverage ownership before writing the file. Untestable
+     Activity/Compose/dialog/session hosts go in `**/presentation/**` (or
+     `ui/**` / `runtime/**` / `root/**` / flavor trees). Measurable policy
+     stays outside those trees and ships with a behavior test. Do not add a
+     path to `sonar.coverage.exclusions` after the quality gate fails. Do not
+     add a one-off file exclusion; move the file into an excluded directory
+     or extract the policy. `runtime/**` remains a review item: new pure
+     policy there should be lifted out, not used as a dump.
    - Treat a broad glob such as `app/src/main/java/**/runtime/**` as a review
      item. New pure policy code under an excluded directory should be audited
      for extraction or a narrower rule; do not widen exclusions to make the

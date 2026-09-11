@@ -1078,7 +1078,9 @@ class MainActivitySourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
         assertTrue(source.contains(
-                "new ProcessActionHandler(this, this::syncRuntimePropertiesForTargetLaunch)"))
+                "new ProcessActionHandler("))
+        assertTrue(source.contains("this::syncRuntimePropertiesForTargetLaunch"))
+        assertTrue(source.contains("new ProcessActionConfirm(this, this::composeShell)"))
         assertTrue(source.contains("new AppConfigSaveHandler()"))
         assertTrue(
             source.contains("processActionHandler.execute(item, mappedAction)")
@@ -1327,7 +1329,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/templates/presentation/TemplateEditorContent.kt")
         val editorSheet = read(
             "src/main/java/com/dpis/module/ui/presentation/editor/EditorBottomSheet.kt")
-        val shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+        val shellHost = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
 
         val templateSource = read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentationSource.kt")
         val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")

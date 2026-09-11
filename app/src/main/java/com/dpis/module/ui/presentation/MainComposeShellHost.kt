@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
@@ -16,12 +17,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
+import com.dpis.module.R
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationContent
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
+import com.dpis.module.ui.compose.MessageAlertDialog
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.dialog.StartupDisclaimerDialog
 import com.dpis.module.ui.dialog.StartupDisclaimerGate
 import com.dpis.module.ui.compose.resolveDarkTheme
@@ -41,6 +46,7 @@ internal class MainComposeShellHost(
     private var state by mutableStateOf(initialState)
     private var diagnosticPreparation by mutableStateOf<FeedbackDiagnosticPreparationPresentation?>(null)
     private var startupDisclaimer by mutableStateOf<StartupDisclaimerRequest?>(null)
+    private var dialog by mutableStateOf<MainShellDialog?>(null)
 
     init {
         composeView.setContent {
@@ -144,6 +150,10 @@ internal class MainComposeShellHost(
                             onBack = request.onBack,
                         )
                     }
+                    MainShellDialogHost(
+                        dialog = dialog,
+                        onDismiss = { dialog = null },
+                    )
                 }
                 }
             }
@@ -188,6 +198,30 @@ internal class MainComposeShellHost(
         request.onAccepted()
     }
 
+    fun showFeedbackStartConfirm(message: String, confirmLabel: String, onConfirm: Runnable) {
+        dialog = MainShellDialog.FeedbackStart(message, confirmLabel, onConfirm)
+    }
+
+    fun showFeedbackExitConfirm(onConfirm: Runnable) {
+        dialog = MainShellDialog.FeedbackExit(onConfirm)
+    }
+
+    fun showEnableLogsConfirm(onEnabled: Runnable, onCancelled: Runnable?) {
+        dialog = MainShellDialog.EnableLogs(onEnabled, onCancelled)
+    }
+
+    fun showProcessActionConfirm(actionLabel: String, appLabel: String, onConfirm: Runnable) {
+        dialog = MainShellDialog.ProcessAction(actionLabel, appLabel, onConfirm)
+    }
+
+    fun showWechatDpiHelp() {
+        dialog = MainShellDialog.WechatDpiHelp
+    }
+
+    fun showLsposedExplanation(title: String, explanation: String) {
+        dialog = MainShellDialog.Lsposed(title, explanation)
+    }
+
     fun refreshApps() = workspacePresentation.refreshApps()
 
     fun refreshHome() = workspacePresentation.refreshHome()
@@ -207,4 +241,106 @@ internal class MainComposeShellHost(
         val onAccepted: () -> Unit,
         val onBack: () -> Unit,
     )
+}
+
+private sealed class MainShellDialog {
+    class FeedbackStart(
+        val message: String,
+        val confirmLabel: String,
+        val onConfirm: Runnable,
+    ) : MainShellDialog()
+
+    class FeedbackExit(val onConfirm: Runnable) : MainShellDialog()
+
+    class EnableLogs(
+        val onEnabled: Runnable,
+        val onCancelled: Runnable?,
+    ) : MainShellDialog()
+
+    class ProcessAction(
+        val actionLabel: String,
+        val appLabel: String,
+        val onConfirm: Runnable,
+    ) : MainShellDialog()
+
+    data object WechatDpiHelp : MainShellDialog()
+
+    class Lsposed(
+        val title: String,
+        val explanation: String,
+    ) : MainShellDialog()
+}
+
+@Composable
+private fun MainShellDialogHost(
+    dialog: MainShellDialog?,
+    onDismiss: () -> Unit,
+) {
+    when (dialog) {
+        is MainShellDialog.FeedbackStart -> ConfirmAlertDialog(
+            onDismissRequest = onDismiss,
+            title = stringResource(R.string.feedback_diagnostic_action),
+            message = dialog.message,
+            cancelLabel = stringResource(android.R.string.cancel),
+            confirmLabel = dialog.confirmLabel,
+            onConfirm = {
+                onDismiss()
+                dialog.onConfirm.run()
+            },
+        )
+        is MainShellDialog.FeedbackExit -> ConfirmAlertDialog(
+            onDismissRequest = onDismiss,
+            title = stringResource(R.string.feedback_diagnostic_action),
+            message = stringResource(R.string.feedback_diagnostic_exit_confirm_message),
+            cancelLabel = stringResource(android.R.string.cancel),
+            confirmLabel = stringResource(R.string.feedback_diagnostic_exit_clear_action),
+            onConfirm = {
+                onDismiss()
+                dialog.onConfirm.run()
+            },
+        )
+        is MainShellDialog.EnableLogs -> ConfirmAlertDialog(
+            onDismissRequest = {
+                val cancelled = dialog.onCancelled
+                onDismiss()
+                cancelled?.run()
+            },
+            title = stringResource(R.string.diagnostic_log_required_title),
+            message = stringResource(R.string.diagnostic_log_required_message),
+            cancelLabel = stringResource(android.R.string.cancel),
+            confirmLabel = stringResource(R.string.diagnostic_log_enable_action),
+            onConfirm = {
+                onDismiss()
+                dialog.onEnabled.run()
+            },
+        )
+        is MainShellDialog.ProcessAction -> ConfirmAlertDialog(
+            onDismissRequest = onDismiss,
+            title = stringResource(R.string.dialog_process_action_confirm_title),
+            message = stringResource(
+                R.string.dialog_process_action_confirm_message,
+                dialog.actionLabel,
+                dialog.appLabel,
+            ),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
+            onConfirm = {
+                onDismiss()
+                dialog.onConfirm.run()
+            },
+        )
+        MainShellDialog.WechatDpiHelp -> MessageAlertDialog(
+            onDismissRequest = onDismiss,
+            title = stringResource(R.string.dialog_wechat_dpi_help_title),
+            message = stringResource(R.string.dialog_wechat_dpi_help_message),
+            closeLabel = stringResource(R.string.dialog_close_button),
+        )
+        is MainShellDialog.Lsposed -> MessageAlertDialog(
+            onDismissRequest = onDismiss,
+            title = dialog.title,
+            message = dialog.explanation,
+            closeLabel = stringResource(R.string.dialog_close_button),
+        )
+        null -> Unit
+    }
 }

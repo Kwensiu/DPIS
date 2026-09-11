@@ -110,18 +110,23 @@ public final class LogActivity extends LocalizedActivity {
                 this::refreshLogs,
                 this::toggleMessageExpansion,
                 this::copyEntryByKey);
-        waitingForDiagnosticLogEnable = !LogGate.ensureEnabled(
-                this,
-                () -> {
-                    waitingForDiagnosticLogEnable = false;
-                    loadLogs(true, false, false);
-                    startAutoRefresh();
-                },
-                this::finish
-        );
-        if (!waitingForDiagnosticLogEnable) {
+        if (LogGate.isEnabled(this)) {
             loadLogs(true, false, false);
+        } else {
+            waitingForDiagnosticLogEnable = true;
+            presentation.promptEnableLogs();
         }
+    }
+
+    public void enableDiagnosticLogs() {
+        if (!LogGate.enable(this)) {
+            Toast.makeText(this, R.string.system_settings_save_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        waitingForDiagnosticLogEnable = false;
+        presentation.dismissEnableLogs();
+        loadLogs(true, false, false);
+        startAutoRefresh();
     }
 
     private void toggleSort() {

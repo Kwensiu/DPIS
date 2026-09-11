@@ -35,7 +35,8 @@ object TemplateWorkspacePresentation {
         val editorDestination: ConfigEditorDestination,
         val globalPrefillDraft: TemplateEditorDraft?,
         val quickTemplateDraft: TemplateEditorDraft?,
-        val actions: Actions
+        val actions: Actions,
+        val applyConfirmation: ApplyConfirmation? = null,
     )
 
     data class Template(
@@ -48,12 +49,20 @@ object TemplateWorkspacePresentation {
 
     data class EditorResult(val success: Boolean, val messageResId: Int, val templateId: String? = null)
 
+    data class ApplyConfirmation(
+        val title: String,
+        val message: String,
+        val confirmLabel: String,
+    )
+
     interface Actions {
         fun editGlobalPrefill()
         fun createTemplate()
         /** Persists the full template order; Compose owns dialog visibility. */
         fun reorderTemplates(orderedIds: List<String>): Boolean
         fun applyTemplate(id: String)
+        fun confirmApply()
+        fun dismissApply()
         fun editTemplate(id: String)
         fun selectTargets(id: String)
         fun openEmbeddedTargets(id: String)
@@ -74,7 +83,8 @@ object TemplateWorkspacePresentation {
         detailTemplateId: String? = null,
         editorDestination: ConfigEditorDestination = ConfigEditorDestination.MAIN,
         globalPrefillDraft: TemplateEditorDraft? = null,
-        quickTemplateDraft: TemplateEditorDraft? = null
+        quickTemplateDraft: TemplateEditorDraft? = null,
+        applyConfirmation: ApplyConfirmation? = null,
     ): State {
         val formatter = TemplateConfigSummaryFormatter(Text(context)) { typefaceId ->
             val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
@@ -122,7 +132,8 @@ object TemplateWorkspacePresentation {
             editorDestination,
             globalPrefillDraft,
             quickTemplateDraft,
-            actions
+            actions,
+            applyConfirmation,
         )
     }
 

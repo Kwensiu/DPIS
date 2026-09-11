@@ -9,7 +9,7 @@ class LogGateSourceSmokeTest {
     @Test
     fun diagnosticGateUsesActiveUiConfigStore() {
         val factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
-        val gate = read("src/main/java/com/dpis/module/diagnostics/LogGate.java")
+        val gate = read("src/main/java/com/dpis/module/diagnostics/presentation/LogGate.kt")
 
         assertTrue(factory.contains("DpisApplication.getActiveHookConfigStore(context)"))
         assertTrue(

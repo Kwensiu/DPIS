@@ -18,14 +18,53 @@ subprojects {
 sonar {
     properties {
         property("sonar.gradle.skipCompile", "true")
-        file("sonar-project.properties").readLines()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
-            .forEach { line ->
-                val separator = line.indexOf('=')
-                property(line.substring(0, separator).trim(), line.substring(separator + 1).trim())
-            }
+        loadSonarProjectProperties(file("sonar-project.properties")).forEach { (key, value) ->
+            property(key, value)
+        }
     }
+}
+
+/**
+ * Join backslash-continued values. A line-per-`=` reader drops
+ * `sonar.coverage.exclusions` and must stay in sync with
+ * `com.dpis.module.sonar.SonarProjectProperties` in app unit tests.
+ */
+fun loadSonarProjectProperties(file: java.io.File): Map<String, String> {
+    val result = linkedMapOf<String, String>()
+    var pendingKey: String? = null
+    val pendingValue = StringBuilder()
+    file.readLines().forEach { raw ->
+        val line = raw.trim()
+        if (line.isEmpty() || line.startsWith("#")) {
+            return@forEach
+        }
+        val pending = pendingKey
+        if (pending != null) {
+            val continued = line.endsWith("\\")
+            val chunk = (if (continued) line.removeSuffix("\\") else line).trim()
+            pendingValue.append(chunk)
+            if (!continued) {
+                result[pending] = pendingValue.toString()
+                pendingKey = null
+                pendingValue.setLength(0)
+            }
+            return@forEach
+        }
+        val separator = line.indexOf('=')
+        if (separator < 0) {
+            return@forEach
+        }
+        val key = line.substring(0, separator).trim()
+        val value = line.substring(separator + 1).trim()
+        if (value.endsWith("\\")) {
+            pendingKey = key
+            pendingValue.append(value.removeSuffix("\\").trim())
+        } else {
+            result[key] = value
+        }
+    }
+    pendingKey?.let { result[it] = pendingValue.toString() }
+    return result
 }
 
 tasks.register("Delete", Delete::class) {

@@ -448,6 +448,16 @@ internal fun TemplateWorkspaceContent(
             onDismiss = { sortDialogVisible = false },
         )
     }
+    state.applyConfirmation?.let { confirmation ->
+        ConfirmAlertDialog(
+            onDismissRequest = state.actions::dismissApply,
+            title = confirmation.title,
+            message = confirmation.message,
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = confirmation.confirmLabel,
+            onConfirm = state.actions::confirmApply,
+        )
+    }
     if (deleteConfirmationVisible) {
         ConfirmAlertDialog(
             onDismissRequest = { deleteConfirmationVisible = false },
