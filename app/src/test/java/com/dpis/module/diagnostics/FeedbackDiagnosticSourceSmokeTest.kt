@@ -9,7 +9,7 @@ class FeedbackDiagnosticSourceSmokeTest {
     @Test
     fun appConfigSheetExposesFeedbackDiagnosticEntry() {
         val binder =
-            read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.kt")
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val actions =
             read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
         val layout = read("src/main/res/layout/dialog_app_config.xml")

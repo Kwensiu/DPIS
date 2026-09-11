@@ -9,9 +9,9 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test
     fun coordinatorUsesRootOwnedDisclaimerAndSharedUpdatePrompt() {
         val source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.kt")
-        val dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt")
+        val dialogSource = read("src/main/java/com/dpis/module/updates/presentation/UpdateAvailableDialog.kt")
         val rendererSource = read("src/main/java/com/dpis/module/updates/ReleaseNotesMarkdownRenderer.kt")
-        val markwonPluginSource = read("src/main/java/com/dpis/module/updates/ReleaseNotesMarkwonPlugin.kt")
+        val markwonPluginSource = read("src/main/java/com/dpis/module/updates/presentation/ReleaseNotesMarkwonPlugin.kt")
         val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/interop/AndroidTextInterop.kt")
         val disclaimerSource = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
         val modalSource = read("src/main/java/com/dpis/module/ui/dialog/ModalDialog.kt")

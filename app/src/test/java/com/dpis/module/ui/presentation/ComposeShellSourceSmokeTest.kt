@@ -18,7 +18,7 @@ class ComposeShellSourceSmokeTest {
         val adapter = read("src/main/java/com/dpis/module/MainComposeWorkspaceAdapter.java")
         val mainShell = read("src/main/java/com/dpis/module/MainComposeWorkspaceShell.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
-        val coordinator = read("src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
+        val coordinator = read("src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
 
         // Keep this smoke test limited to stable ownership and routing contracts. Detailed
         // behavior belongs in executable tests, so internal layout names are intentionally not
@@ -183,7 +183,7 @@ class ComposeShellSourceSmokeTest {
 
     @Test
     fun appEditorDerivesPrefillChipFromEditorSession() {
-        val shell = read("src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
+        val shell = read("src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val item = read("src/main/java/com/dpis/module/applist/AppListItem.java")
         val editor = read("src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorController.kt")
 
@@ -284,7 +284,7 @@ class ComposeShellSourceSmokeTest {
     fun composeAppSheetPreservesPartialExpandAndLegacyChromeSemantics() {
         val sheet = read("src/main/java/com/dpis/module/ui/presentation/editor/EditorBottomSheet.kt")
         val coordinator = read(
-                "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
+                "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val overlay = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt")
         val sheetFrame = read(
                 "src/main/java/com/dpis/module/ui/presentation/editor/EditorSheetScaffoldFrame.kt")
@@ -382,7 +382,7 @@ class ComposeShellSourceSmokeTest {
         val appWorkspace = read(
                 "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
         val coordinator = read(
-                "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
+                "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val viewModel = read("src/main/java/com/dpis/module/MainViewModel.kt")
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val templates = read(

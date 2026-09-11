@@ -97,7 +97,7 @@ class MainActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/appconfig/editor/ComposeEditorScopeRequestCoordinator.kt"
         )
         val gateway = read(
-                "src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorActivityGateway.kt"
+                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
 
         assertTrue(source.contains("new ComposeEditorScopeRequestCoordinator("))
@@ -155,7 +155,7 @@ class MainActivitySourceSmokeTest {
     fun settingsPresentationUsesOneWorkspaceCapability() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read(
-            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt"
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt"
         )
         val actions = read("src/main/java/com/dpis/module/settings/SettingsActions.kt")
 
@@ -736,7 +736,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("showLandDetailTypefaceSelector(")
         )
-        val landActions = read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+        val landActions = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
         assertTrue(
             landActions.contains("activity.showLandDetailHookDomains(item, state, onChanged)")
         )
@@ -750,7 +750,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("appConfigSaveHandler.saveResolved("))
         assertTrue(source.contains("updateEditingDraft(state)"))
         assertTrue(
-            read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
                 .contains("fun onDraftStateChanged(")
         )
         assertTrue(source.contains("if (draft == null && mainViewModel != null)"))
@@ -759,7 +759,7 @@ class MainActivitySourceSmokeTest {
                 .contains("AppConfigDialogState.fromItem(item)")
         )
         assertTrue(
-            read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
                 .contains("activity.executeDialogProcessAction(item, action)")
         )
         assertTrue(compact(source).contains("landDetailContent.addView( dialogView"))
@@ -1322,7 +1322,7 @@ class MainActivitySourceSmokeTest {
     fun composeTemplateEditorBridgesSelectionDraftAndCloseLifecycle() {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read(
-            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val workspace = read(
             "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
         val editorSurface = read(

@@ -19,7 +19,7 @@ class LegacyUiSourceSmokeTest {
     @Test
     fun unknownScopeHidesInjectionStatusAndDisablesScopeAction() {
         val source = read("src/main/java/com/dpis/module/applist/AppStatusFormatter.java")
-        val dialogBinder = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.kt")
+        val dialogBinder = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val strings = read("src/main/res/values-zh-rCN/strings.xml")
 
         assertTrue(source.contains("scopeKnown"))
