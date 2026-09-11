@@ -52,8 +52,11 @@ and token configured in your environment:
 ```
 
 The checked in `sonar-project.properties` supplies the source, binary, test, and
-coverage paths shared by local and CI analysis. Android subprojects are skipped
-by the Gradle plugin because `org.sonarqube` 6.3.1 still looks up AGP's removed
+coverage paths shared by local and CI analysis. Root `build.gradle.kts` joins
+backslash-continued values so `sonar.coverage.exclusions` can stay a readable
+list. A parser that only keeps lines containing `=` drops that list and
+publishes an empty coverage gate. Android subprojects are skipped by the Gradle
+plugin because `org.sonarqube` 6.3.1 still looks up AGP's removed
 `AppExtension` / `BaseExtension` types; root analysis reads those explicit paths
 instead of Android variant metadata.
 
