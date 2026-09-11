@@ -42,7 +42,7 @@ class FeedbackDiagnosticSourceSmokeTest {
     fun feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine() {
         val main = read("src/main/java/com/dpis/module/MainActivity.java")
         val pageController = read(
-            "src/main/java/com/dpis/module/diagnostics/PageController.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/PageController.kt"
         )
         val packageActions = read(
             "src/main/java/com/dpis/module/diagnostics/PackageActions.kt"
@@ -64,7 +64,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         val edgeFade = read(
             "src/main/java/com/dpis/module/ui/presentation/editor/HorizontalScrollEdgeFade.kt"
         )
-        val shell = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+        val shell = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
         val segmentedPolicy = read(
             "src/main/java/com/dpis/module/ui/presentation/workspace/SegmentedListItemPolicy.kt"
         )
@@ -82,18 +82,18 @@ class FeedbackDiagnosticSourceSmokeTest {
                     + "StructuredEvidenceExporter.java"
         )
         val logGate = read(
-            "src/main/java/com/dpis/module/diagnostics/LogGate.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/LogGate.kt"
         )
         val confirm = read(
-            "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticConfirm.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticConfirm.kt"
         )
         val sessionOwner = read(
-            "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt"
         )
         val duration = read(
             "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticDuration.kt"
         )
-        val diagnosticShell = read("src/main/java/com/dpis/module/FeedbackDiagnosticShell.kt")
+        val diagnosticShell = read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticShell.kt")
 
         assertTrue(main.contains("new FeedbackDiagnosticActivitySession("))
         assertTrue(main.contains("new FeedbackDiagnosticShell(this)"))
@@ -189,11 +189,11 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(segmentedPolicy.contains("RoundedCornerShape(16.dp)"))
         assertTrue(segmentedPolicy.contains("} else {\n        shapes"))
         assertTrue(
-            read("src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt")
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("FeedbackDiagnosticPreparationPresentation.OutputEntry")
         )
         assertTrue(
-            read("src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt")
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("feedback_diagnostic_result_entry_meta")
         )
         assertTrue(packageActions.contains("feedbackDiagnosticSharedCachePath("))
@@ -203,7 +203,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(main.contains("private void copyFeedbackDiagnosticPath("))
         assertFalse(main.contains("private void writeSharedFeedbackDiagnosticZip("))
         assertTrue(
-            read("src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt")
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("Formatter.formatFileSize")
         )
         assertTrue(hookChain.contains("val shapes = dpisSegmentedShapes(index, total)"))
@@ -296,7 +296,7 @@ class FeedbackDiagnosticSourceSmokeTest {
     @Test
     fun feedbackDiagnosticLaunchesTargetThroughRootRestartOnly() {
         val sessionOwner = read(
-            "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt"
         )
         val launcher = read(
             "src/main/java/com/dpis/module/diagnostics/AppLauncher.java"
@@ -373,7 +373,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
 
         assertTrue(
-            read("src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt")
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("const val SAVE_REQUEST = 10024")
         )
         assertTrue(main.contains("feedbackDiagnostic.handleActivityResult("))
@@ -382,7 +382,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(packageActions.contains("openOutputStream(uri)"))
         assertFalse(packageActions.contains("openOutputStream(uri, \"wt\")"))
         assertTrue(
-            read("src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticActivitySession.kt")
+            read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("session.diagnosticPackage()")
         )
         assertTrue(packageActions.contains("FileProvider.getUriForFile"))

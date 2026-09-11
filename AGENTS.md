@@ -95,6 +95,12 @@ small follow-up on the same topic. Start a new sub-agent only when the previous
 one is overloaded, the task domain has clearly changed, or shared context would
 pollute the result.
 
+For large diffs (Compose dialog migrations, Activity extractions, or any change
+that crosses several feature packages), do not review the whole branch in one
+agent context. Slice by ownership and dispatch one read-only reviewer per
+slice. The split, reuse, and merge rules live in
+`.agents/skills/dpis-precommit-review/SKILL.md`.
+
 ### DPIS runtime route playbook
 
 When a task mentions runtime hooks, LSPosed logs, flicker, relaunch, viewport,
@@ -196,6 +202,17 @@ module paths or optimized code.
   suite, Android CLI order, flavor builds, SonarQube MCP checks, and final
   validation record.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
+- JVM coverage exclusions are a directory contract, decided when the file is
+  created, not after Sonar fails. Put JVM-untestable code under
+  `**/presentation/**`, `ui/**`, `runtime/**`, `root/**`, or a flavor tree
+  (`legacy/**`, `modern/**`). Put stores, parsers, codecs, and policy next to
+  other measurable domain code and write a behavior test in the same change.
+  Do not append a file to `sonar.coverage.exclusions` to make the gate pass.
+  A per-file exclusion means the file is in the wrong directory: move it or
+  extract the policy. Android framework types (`*Activity`, `*Service`,
+  `*Receiver`, `Application`) may be excluded by those suffixes because the
+  JVM harness cannot construct them. Do not invent extra suffix globs
+  (`*Session`, `*Confirm`, `*Handler`, `*Binder`, `*Shell`) to hide coupling.
 - During every review or implementation pass, audit all touched files against
   the full project-level rules above. Fix newly exposed violations in the same
   pass, including non-test style, structure, language, ownership, and

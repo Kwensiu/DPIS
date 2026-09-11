@@ -1329,7 +1329,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/templates/presentation/TemplateEditorContent.kt")
         val editorSheet = read(
             "src/main/java/com/dpis/module/ui/presentation/editor/EditorBottomSheet.kt")
-        val shellHost = read("src/main/java/com/dpis/module/MainComposeShellHost.kt")
+        val shellHost = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
 
         val templateSource = read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentationSource.kt")
         val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")

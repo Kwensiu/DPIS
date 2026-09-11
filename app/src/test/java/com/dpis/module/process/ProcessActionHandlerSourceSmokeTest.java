@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ProcessActionHandlerSourceSmokeTest {
     private static final String PROCESS_ACTION_HANDLER_SOURCE =
-            "src/main/java/com/dpis/module/process/ProcessActionHandler.kt";
+            "src/main/java/com/dpis/module/process/presentation/ProcessActionHandler.kt";
 
     @Test
     public void processActionsDoNotUseMonkeyToLaunchApps() throws IOException {
@@ -79,7 +79,7 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void processActionConfirmationUsesSharedComposeDialog() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
-        String confirm = read("src/main/java/com/dpis/module/process/ProcessActionConfirm.kt");
+        String confirm = read("src/main/java/com/dpis/module/process/presentation/ProcessActionConfirm.kt");
         String dialog = read("src/main/java/com/dpis/module/ui/dialog/ConfirmDialog.kt");
 
         assertTrue(source.contains("confirmSystemApp.confirm("));
