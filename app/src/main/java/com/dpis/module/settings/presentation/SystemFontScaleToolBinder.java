@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.settings.presentation;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -15,6 +15,9 @@ import android.widget.Toast;
 import androidx.appcompat.widget.AppCompatImageButton;
 
 import com.dpis.module.R;
+import com.dpis.module.settings.SystemFontScaleSettingsGateway;
+import com.dpis.module.settings.SystemFontScaleToolState;
+import com.dpis.module.settings.SystemFontScaleWriter;
 import com.dpis.module.ui.WatchUiMode;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;

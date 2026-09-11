@@ -35,7 +35,7 @@ class StringResourceParityTest {
     @Test
     fun settingsScreenWiresLanguageSelector() {
         val layout = read("src/main/res/layout/view_system_server_settings_content.xml")
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
         val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
@@ -51,13 +51,13 @@ class StringResourceParityTest {
 
     @Test
     fun languageSwitchDoesNotUseSavedInstanceStateForPersistedSwitches() {
-        read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt").assertNotContainsAll("STATE_HOOKS_SWITCH_CHECKED", "onSaveInstanceState", "restoreSwitchStates")
+        read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt").assertNotContainsAll("STATE_HOOKS_SWITCH_CHECKED", "onSaveInstanceState", "restoreSwitchStates")
         read("src/main/java/com/dpis/module/settings/AppLocaleManager.java").assertContainsAll("boolean setLanguageTag", ".commit()")
     }
 
     @Test
     fun localeSwitchUsesWrappedBaseContextAndExplicitRecreate() {
-        val settings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val settings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val localized = read("src/main/java/com/dpis/module/LocalizedActivity.kt")
         val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
         val main = read("src/main/java/com/dpis/module/MainActivity.java")

@@ -104,7 +104,7 @@ public final class DpisLog {
         }
     }
 
-    static void setLoggingEnabled(boolean enabled) {
+    public static void setLoggingEnabled(boolean enabled) {
         loggingEnabled = enabled;
     }
 

@@ -6,7 +6,7 @@ import org.junit.Test
 class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     fun settingsActivityWiresFontLibraryEntryToDedicatedPage() {
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val manifest = read("src/main/AndroidManifest.xml")
         val factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
         val store = read("src/main/java/com/dpis/module/fonts/FontLibraryStore.java")

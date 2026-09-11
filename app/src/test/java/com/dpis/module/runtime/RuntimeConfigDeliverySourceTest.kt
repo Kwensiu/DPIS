@@ -16,7 +16,7 @@ class RuntimeConfigDeliverySourceTest {
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
-        val systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val systemSettings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
 
         assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"))
         assertTrue(delivery.contains("public static void publishLocalSnapshotAfterSave()"))

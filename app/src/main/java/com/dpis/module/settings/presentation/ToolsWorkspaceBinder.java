@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.settings.presentation;
 
 import android.content.Intent;
 import android.view.Gravity;

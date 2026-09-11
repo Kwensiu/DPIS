@@ -6,6 +6,7 @@ import android.net.Uri
 import android.provider.Settings
 import android.view.View
 import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.presentation.ToolsWorkspaceBinder
 import com.dpis.module.LogActivity
 import com.dpis.module.diagnostics.LogGate
 import com.dpis.module.ui.TouchFeedbackBinder

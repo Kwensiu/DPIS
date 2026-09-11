@@ -38,7 +38,7 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun settingsControllerOwnsSemanticRowsAndDebugGates() {
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         source.assertContainsAll(
             "R.id.row_experimental_settings", "ExperimentalSettingsActivity::class.java", "R.drawable.ic_experiment_24",
             "R.drawable.ic_volunteer_24", "DonateActivity.createIntent(activity)", "R.drawable.ic_upload_file_24",
@@ -65,7 +65,7 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun backupDialogsAndImportFlowUseSharedComposeAndRuntimePaths() {
-        val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
         source.assertContainsAll("showBackupActions(", "showInterfaceScale(", "SettingsComposeDialogs.showLanguage(", "launchImportBackupPicker()", "private fun showImportBackupConfirmDialog(uri: Uri?)", "pendingImportUri = uri", "confirmImportFromPresentation()", "importConfigBackup(uri)", "relaunchDpisTask()", "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()", "Intent(activity, MainActivity::class.java)", "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK", "finishAffinity()")

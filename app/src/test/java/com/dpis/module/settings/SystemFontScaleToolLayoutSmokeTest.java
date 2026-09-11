@@ -54,10 +54,10 @@ public class SystemFontScaleToolLayoutSmokeTest {
     @Test
     public void toolsWorkspaceToolbarUsesSafeDrawingInsetsLikeSettingsPage()
             throws IOException {
-        String binder = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
+        String binder = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.java");
         String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt");
         String settingsController = read(
-                "src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
+                "src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
 
         assertTrue(binder.contains(
                 "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));

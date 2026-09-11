@@ -92,7 +92,7 @@ public class MainActivityLayoutSmokeTest {
             throws IOException {
         String layout = read("src/main/res/layout/tools_workspace.xml");
         String dimensions = read("src/main/res/values/dimens.xml");
-        String source = read("src/main/java/com/dpis/module/settings/SystemFontScaleToolBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.java");
 
         assertTrue(layout.contains("android:id=\"@+id/tools_toolbar\""));
         assertTrue(layout.contains("android:id=\"@+id/tools_workspace_scroll\""));

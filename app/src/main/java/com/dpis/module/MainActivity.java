@@ -62,7 +62,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.settings.StartupDisclaimerStore;
 import com.dpis.module.settings.ToolsWorkspace;
-import com.dpis.module.settings.SettingsWorkspaceSession;
+import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.TemplateWorkspaceActivitySession;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;

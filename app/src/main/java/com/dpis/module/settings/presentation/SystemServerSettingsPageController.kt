@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.settings.presentation
 
 import android.app.Activity
 import android.content.ActivityNotFoundException
@@ -19,6 +19,15 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.dpis.module.BuildConfig
+import com.dpis.module.DpisApplication
+import com.dpis.module.DpisConfigStore
+import com.dpis.module.DpisLog
+import com.dpis.module.LocalizedActivity
+import com.dpis.module.MainActivity
+import com.dpis.module.R
+import com.dpis.module.SettingsPresentationController
+import com.dpis.module.SettingsUiState
 import com.dpis.module.about.AboutActivity
 import com.dpis.module.backup.ConfigBackupCoordinator
 import com.dpis.module.fonts.FontDebugDataDiagnostics

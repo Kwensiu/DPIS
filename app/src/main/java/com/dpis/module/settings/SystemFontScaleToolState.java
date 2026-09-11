@@ -21,7 +21,7 @@ public final class SystemFontScaleToolState {
     public final boolean userSelectedPending;
     public final boolean unavailable;
 
-    SystemFontScaleToolState(boolean canWrite,
+    public SystemFontScaleToolState(boolean canWrite,
                              Integer currentPercent,
                              int pendingPercent,
                              boolean userSelectedPending,
@@ -41,7 +41,7 @@ public final class SystemFontScaleToolState {
         return percent / 100f;
     }
 
-    static int clampPercent(int percent) {
+    public static int clampPercent(int percent) {
         return Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, percent));
     }
 
@@ -63,7 +63,7 @@ public final class SystemFontScaleToolState {
         return percent != null && percent >= MIN_PERCENT && percent <= MAX_PERCENT;
     }
 
-    static int initialPendingPercent(Integer currentPercent) {
+    public static int initialPendingPercent(Integer currentPercent) {
         if (currentPercent == null) {
             return DEFAULT_PERCENT;
         }
@@ -103,7 +103,7 @@ public final class SystemFontScaleToolState {
                 || currentPercent != DEFAULT_PERCENT);
     }
 
-    boolean shouldRestorePendingOnly() {
+    public boolean shouldRestorePendingOnly() {
         return currentPercent == DEFAULT_PERCENT
                 && pendingPercent != DEFAULT_PERCENT;
     }
