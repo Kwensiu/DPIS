@@ -1,6 +1,7 @@
 package com.dpis.module.templates
 
 import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.templates.presentation.TemplateWorkspaceCoordinator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull

@@ -1,4 +1,4 @@
-package com.dpis.module.templates
+package com.dpis.module.templates.presentation
 
 import android.content.Context
 import com.dpis.module.ConfigEditorDestination
@@ -7,6 +7,12 @@ import com.dpis.module.DpisApplication
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryStore
+import com.dpis.module.templates.GlobalPrefillStore
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.TemplateConfigSummaryFormatter
+import com.dpis.module.templates.TemplateConfigValue
+import com.dpis.module.templates.TemplateEditorDraft
+import com.dpis.module.templates.TemplateEditorForm
 
 /**
  * Immutable template-workspace snapshot assembled outside composition.

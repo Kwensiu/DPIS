@@ -80,10 +80,10 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.settings.SystemFontScaleToolState
-import com.dpis.module.templates.QuickTemplateSortDialog
+import com.dpis.module.templates.presentation.QuickTemplateSortDialog
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.TemplateEditorForm
-import com.dpis.module.templates.TemplateWorkspacePresentation
+import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding

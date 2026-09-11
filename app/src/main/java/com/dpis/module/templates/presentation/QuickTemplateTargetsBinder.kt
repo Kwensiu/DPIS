@@ -1,4 +1,4 @@
-package com.dpis.module.templates
+package com.dpis.module.templates.presentation
 
 import android.app.Activity
 import android.graphics.drawable.Drawable
@@ -13,6 +13,11 @@ import com.dpis.module.DpisApplication
 import com.dpis.module.R
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.config.PackageConfigRepository
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.QuickTemplateTargetAdapter
+import com.dpis.module.templates.QuickTemplateTargetCatalogLoader
+import com.dpis.module.templates.QuickTemplateTargetFilterState
+import com.dpis.module.templates.QuickTemplateTargetOrdering
 import com.dpis.module.ui.TouchFeedbackBinder
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.materialswitch.MaterialSwitch

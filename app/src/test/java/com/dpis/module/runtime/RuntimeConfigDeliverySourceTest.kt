@@ -9,7 +9,7 @@ class RuntimeConfigDeliverySourceTest {
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
         val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
-        val templateWorkspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val templateWorkspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val templateHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt")
         val appConfigHost = hostBlock(mainActivity)
         val sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")

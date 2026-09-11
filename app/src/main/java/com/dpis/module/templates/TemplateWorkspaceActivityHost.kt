@@ -5,6 +5,7 @@ import android.os.Build
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.templates.presentation.TemplateWorkspaceCoordinator
 
 /**
  * Android-platform adapter for the template module.

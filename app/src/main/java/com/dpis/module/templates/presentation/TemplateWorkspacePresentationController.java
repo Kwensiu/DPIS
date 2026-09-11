@@ -1,6 +1,8 @@
-package com.dpis.module.templates;
+package com.dpis.module.templates.presentation;
 
 import android.content.Context;
+
+import com.dpis.module.templates.TemplateEditorDraft;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

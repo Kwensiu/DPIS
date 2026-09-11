@@ -70,7 +70,7 @@ public class QuickTemplateUiPolishSmokeTest {
 
     @Test
     public void quickTemplateApplyCopyAvoidsFailureZeroMessage() throws IOException {
-        String workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
+        String workspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt");
 
         assertTrue(workspace.contains("if (result.failureCount() > 0)"));
         assertTrue(workspace.contains("quick_template_apply_result_partial"));

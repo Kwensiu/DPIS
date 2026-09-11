@@ -1,5 +1,5 @@
 package com.dpis.module;
-import com.dpis.module.templates.QuickTemplateTargetsBinder;
+import com.dpis.module.templates.presentation.QuickTemplateTargetsBinder;
 import com.dpis.module.templates.QuickTemplateTargetOrdering;
 
 import com.dpis.module.templates.QuickTemplateStore;

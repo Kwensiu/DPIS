@@ -52,8 +52,8 @@ import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.settings.SettingsActions
-import com.dpis.module.templates.TemplateWorkspacePresentation
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
+import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
 import com.dpis.module.templates.presentation.TemplateWorkspaceContent
 import com.dpis.module.templates.presentation.TemplateEditorOverlayHost
 import com.dpis.module.ui.compose.AppConfigEditorContent

@@ -1,4 +1,4 @@
-package com.dpis.module.templates
+package com.dpis.module.templates.presentation
 
 import android.app.Activity
 import android.content.Context
@@ -14,7 +14,25 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
-
+import com.dpis.module.templates.BatchScopeRequestCoordinator
+import com.dpis.module.templates.GlobalPrefillSaveHandler
+import com.dpis.module.templates.GlobalPrefillStore
+import com.dpis.module.templates.QuickTemplateApplyAdapters
+import com.dpis.module.templates.QuickTemplateApplyConfirmationMessage
+import com.dpis.module.templates.QuickTemplateApplyCoordinator
+import com.dpis.module.templates.QuickTemplateSaveHandler
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.QuickTemplateTargetCarrierState
+import com.dpis.module.templates.QuickTemplateTargetSelectionActivity
+import com.dpis.module.templates.QuickTemplateTargetSelectionContract
+import com.dpis.module.templates.TemplateConfigValue
+import com.dpis.module.templates.TemplateDetailKind
+import com.dpis.module.templates.TemplateDetailPaneController
+import com.dpis.module.templates.TemplateDetailSelection
+import com.dpis.module.templates.TemplateEditorDraft
+import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.templates.TemplateWorkspacePresentationSource
+import com.dpis.module.templates.TemplateWorkspaceStateCodec
 import com.dpis.module.ui.dialog.ConfirmDialog
 import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.button.MaterialButton

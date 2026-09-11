@@ -388,7 +388,7 @@ class ComposeShellSourceSmokeTest {
         val templates = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
         val templatePresentation = read(
-                "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspacePresentation.kt")
 
         assertTrue(page.contains("fun HookChainEditorPage("))
         assertTrue(page.contains("BackHandler(onBack = onBack)"))

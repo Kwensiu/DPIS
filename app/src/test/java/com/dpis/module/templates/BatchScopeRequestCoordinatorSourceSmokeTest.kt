@@ -8,7 +8,7 @@ class BatchScopeRequestCoordinatorSourceSmokeTest {
     @Test
     fun batchScopeRequestUsesOneListRequestAndManualFallbacks() {
         val coordinator = read("src/main/java/com/dpis/module/templates/BatchScopeRequestCoordinator.kt")
-        val workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val workspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
 
         assertTrue(coordinator.contains("BuildConfig.FLAVOR == \"modern\""))
         assertTrue(coordinator.contains("requester.getScope()"))

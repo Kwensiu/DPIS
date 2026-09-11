@@ -1,4 +1,4 @@
-package com.dpis.module.templates
+package com.dpis.module.templates.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues

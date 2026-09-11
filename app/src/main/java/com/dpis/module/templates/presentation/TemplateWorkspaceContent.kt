@@ -51,11 +51,11 @@ import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.templates.QuickTemplateSortDialog
+
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.templates.TemplateEditorForm
-import com.dpis.module.templates.TemplateWorkspacePresentation
+
 import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.WorkspaceTwoPaneMinWidth

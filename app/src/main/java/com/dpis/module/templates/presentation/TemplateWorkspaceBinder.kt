@@ -1,4 +1,4 @@
-package com.dpis.module.templates
+package com.dpis.module.templates.presentation
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -10,6 +10,12 @@ import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryEntry
 import com.dpis.module.fonts.FontLibraryStore
+import com.dpis.module.templates.GlobalPrefillStore
+import com.dpis.module.templates.QuickTemplateListAdapter
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.TemplateConfigSummaryFormatter
+import com.dpis.module.templates.TemplateSummaryChipBinder
+import com.dpis.module.templates.TemplateTypefaceResolver
 import com.dpis.module.templates.presentation.TemplateUiTokens
 import com.dpis.module.ui.TouchFeedbackBinder
 import com.google.android.material.chip.ChipGroup

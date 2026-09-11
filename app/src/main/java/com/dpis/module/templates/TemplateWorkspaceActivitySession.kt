@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import com.dpis.module.MainActivity
+import com.dpis.module.templates.presentation.TemplateWorkspaceCoordinator
 
 /**
  * The sole Activity-facing entry point for the template workspace.
