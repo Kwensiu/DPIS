@@ -8,8 +8,6 @@ import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
-import com.dpis.module.fonts.FontLibraryEntry
-import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.QuickTemplateListAdapter
 import com.dpis.module.templates.QuickTemplateStore
@@ -44,7 +42,11 @@ class TemplateWorkspaceBinder(
         context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
     private val formatter = TemplateConfigSummaryFormatter(
         ResourceSummaryText(context),
-        TemplateTypefaceResolver(::resolveImportedTypeface)
+        TemplateTypefaceResolver(
+            TemplateTypefaceResolver.importedFrom(
+                ConfigStoreFactory.createLocalUiFontLibraryStore(context, DpisApplication.xposedService),
+            ),
+        ),
     )
     private val summaryChipBinder = TemplateSummaryChipBinder(context)
     private val quickTemplateListAdapter = QuickTemplateListAdapter(
@@ -84,19 +86,6 @@ class TemplateWorkspaceBinder(
         summaryChipBinder.bind(summaryChips, emptySummaryView, result)
         TouchFeedbackBinder.bindPressHaptic(editButton)
         editButton.setOnClickListener { globalPrefillActions?.edit() }
-    }
-
-    private fun resolveImportedTypeface(typefaceId: String?): TemplateConfigSummaryFormatter.TypefaceStatus {
-        if (typefaceId == null) return TemplateConfigSummaryFormatter.TypefaceStatus.none()
-        val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
-            context, DpisApplication.xposedService
-        )
-        val imported: FontLibraryEntry? = store.findById(typefaceId)
-        return if (imported != null && store.resolveFontFile(typefaceId) != null) {
-            TemplateConfigSummaryFormatter.TypefaceStatus.resolved(typefaceId, imported.displayName)
-        } else {
-            TemplateConfigSummaryFormatter.TypefaceStatus.absent(typefaceId)
-        }
     }
 
     private fun bindHeaderActions(workspaceView: View, templates: List<QuickTemplateStore.QuickTemplate>) {

@@ -9,6 +9,7 @@ import com.dpis.module.R
 import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.TemplateTypefaceResolver
 import com.dpis.module.templates.TemplateConfigSummaryFormatter
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.templates.TemplateEditorDraft
@@ -92,18 +93,14 @@ object TemplateWorkspacePresentation {
         quickTemplateDraft: TemplateEditorDraft? = null,
         applyConfirmation: ApplyConfirmation? = null,
     ): State {
-        val formatter = TemplateConfigSummaryFormatter(Text(context)) { typefaceId ->
-            val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
-                context,
-                DpisApplication.xposedService
-            )
-            val entry = store.findById(typefaceId)
-            if (entry != null && store.resolveFontFile(typefaceId) != null) {
-                TemplateConfigSummaryFormatter.TypefaceStatus.resolved(typefaceId, entry.displayName)
-            } else {
-                TemplateConfigSummaryFormatter.TypefaceStatus.absent(typefaceId)
-            }
-        }
+        val store: FontLibraryStore = ConfigStoreFactory.createLocalUiFontLibraryStore(
+            context,
+            DpisApplication.xposedService,
+        )
+        val formatter = TemplateConfigSummaryFormatter(
+            Text(context),
+            TemplateTypefaceResolver(TemplateTypefaceResolver.importedFrom(store)),
+        )
         val preferences = context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
         val normalizedQuery = query?.trim()?.lowercase().orEmpty()
         val allTemplates = QuickTemplateStore(context).readAll()
