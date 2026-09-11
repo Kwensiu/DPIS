@@ -36,16 +36,16 @@ internal class FeedbackDiagnosticConfirm(
 
     fun startFromComposeEditor(
         item: AppListItem,
-        save: BooleanSupplier,
-        markSaved: Runnable,
+        persist: BooleanSupplier,
         dialogState: AppConfigDialogBinder.AppConfigDialogState,
         versionName: String,
         store: DpisConfigStore,
     ) {
-        showStart(item.label) {
-            if (!save.asBoolean) return@showStart
-            markSaved.run()
-            startSession(item, dialogState, versionName, store)
+        whenLogsEnabled {
+            showStart(item.label) {
+                if (!persist.asBoolean) return@showStart
+                startSession(item, dialogState, versionName, store)
+            }
         }
     }
 

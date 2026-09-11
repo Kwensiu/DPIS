@@ -681,6 +681,8 @@ internal fun WearSettingsWorkspaceContent(
     onThemeSettings: () -> Unit,
     onLanguage: () -> Unit,
     onBackup: () -> Unit,
+    onConfirmImport: () -> Unit,
+    onDismissImport: () -> Unit,
     onClearCache: () -> Unit,
     onAbout: () -> Unit
 ) {
@@ -746,6 +748,16 @@ internal fun WearSettingsWorkspaceContent(
                 hideLauncherVisible = false
                 onLauncherHiddenChanged(true)
             },
+        )
+    }
+    if (state?.pendingImportUri != null) {
+        ConfirmAlertDialog(
+            onDismissRequest = onDismissImport,
+            title = stringResource(R.string.config_backup_import_confirm_title),
+            message = stringResource(R.string.config_backup_import_confirm_message),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
+            onConfirm = onConfirmImport,
         )
     }
 }

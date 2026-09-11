@@ -17,6 +17,8 @@ interface SettingsActions {
     fun setLanguage(tag: String)
     fun openLanguage()
     fun openBackup()
+    fun confirmImport()
+    fun dismissImport()
     fun clearCache()
     fun openAbout()
     fun openDonate()

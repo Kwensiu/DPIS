@@ -65,7 +65,7 @@ public final class LogActivitySourceSmokeTest {
         assertTrue(source.contains("LsposedLogReader.readLsposedDpisCurrent()"));
         assertTrue(source.contains("LogGate.isEnabled("));
         assertTrue(source.contains("presentation.promptEnableLogs()"));
-        assertTrue(source.contains("enableDiagnosticLogsFromGate()"));
+        assertTrue(source.contains("enableDiagnosticLogs()"));
         assertTrue(source.contains("waitingForDiagnosticLogEnable"));
         assertTrue(source.contains("|| waitingForDiagnosticLogEnable"));
     }

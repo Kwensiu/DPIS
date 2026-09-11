@@ -34,8 +34,6 @@ class PageController(
 
         fun saveAppConfig(item: AppListItem, draft: EditorDraft): Boolean
 
-        fun markAppConfigSaved(draft: EditorDraft)
-
         fun startDiagnostic(
             item: AppListItem,
             draft: EditorDraft,
@@ -272,7 +270,6 @@ class PageController(
         if (!host.saveAppConfig(item, draft)) {
             return
         }
-        host.markAppConfigSaved(draft)
         val current = presentation
         val started = host.startDiagnostic(
             item,

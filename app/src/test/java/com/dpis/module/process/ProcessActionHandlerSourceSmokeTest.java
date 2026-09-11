@@ -77,11 +77,14 @@ public class ProcessActionHandlerSourceSmokeTest {
     @Test
     public void processActionConfirmationUsesSharedComposeDialog() throws IOException {
         String source = read(PROCESS_ACTION_HANDLER_SOURCE);
+        String confirm = read("src/main/java/com/dpis/module/process/ProcessActionConfirm.kt");
         String dialog = read("src/main/java/com/dpis/module/ui/dialog/ConfirmDialog.kt");
 
-        assertTrue(source.contains("ConfirmDialog.show("));
-        assertTrue(source.contains("R.string.dialog_process_action_confirm_title"));
-        assertTrue(source.contains("R.string.dialog_process_action_confirm_message"));
+        assertTrue(source.contains("confirmSystemApp.confirm("));
+        assertFalse(source.contains("ConfirmDialog.show("));
+        assertTrue(confirm.contains("ConfirmDialog.show("));
+        assertTrue(confirm.contains("R.string.dialog_process_action_confirm_title"));
+        assertTrue(confirm.contains("R.string.dialog_process_action_confirm_message"));
         assertFalse(source.contains("R.layout.dialog_process_action_confirm"));
         assertTrue(dialog.contains("fun ConfirmDialogContent("));
         assertTrue(dialog.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));

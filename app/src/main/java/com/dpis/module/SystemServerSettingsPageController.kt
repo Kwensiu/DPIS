@@ -87,6 +87,7 @@ class SystemServerSettingsPageController(
     @Volatile
     private var clearCacheInProgress = false
     private var lastCacheUsage = "0 B"
+    private var pendingImportUri: Uri? = null
     private var statsPreferences: SharedPreferences? = null
     private var selectedMode = FontDebugStatsStore.MODE_CHAIN
     private var selectedWindow = FontDebugStatsStore.WINDOW_ALL
@@ -113,11 +114,7 @@ class SystemServerSettingsPageController(
                 }
 
                 override fun setSafeModeEnabled(enabled: Boolean) {
-                    if (enabled) {
-                        onSafeModeChanged(null, true)
-                    } else {
-                        showDisableSafeModeConfirmationDialog()
-                    }
+                    persistSafeMode(enabled)
                 }
 
                 override fun setGlobalLogEnabled(enabled: Boolean) {
@@ -125,11 +122,7 @@ class SystemServerSettingsPageController(
                 }
 
                 override fun setLauncherIconHidden(hidden: Boolean) {
-                    if (hidden) {
-                        showHideLauncherIconConfirmationDialog()
-                    } else {
-                        onHideLauncherIconChanged(null, false)
-                    }
+                    persistLauncherHidden(hidden)
                 }
 
                 override fun refresh() {
@@ -152,7 +145,8 @@ class SystemServerSettingsPageController(
             available && store!!.isGlobalLogEnabled(),
             launcherIconVisibilityStore.isHidden(), interfaceScaleStore.getPercent(),
             clearCacheInProgress, lastCacheUsage,
-            getString(AppLocaleManager.selectedLabelResId(activity))
+            getString(AppLocaleManager.selectedLabelResId(activity)),
+            pendingImportUri,
         )
     }
 
@@ -348,6 +342,18 @@ class SystemServerSettingsPageController(
         showConfigBackupDialog(null)
     }
 
+    fun confirmImportFromPresentation() {
+        val uri = pendingImportUri
+        pendingImportUri = null
+        importConfigBackup(uri)
+        publishPresentationState()
+    }
+
+    fun dismissImportFromPresentation() {
+        pendingImportUri = null
+        publishPresentationState()
+    }
+
     fun clearCacheFromPresentation() {
         clearCache(null)
     }
@@ -402,8 +408,12 @@ class SystemServerSettingsPageController(
             return
         }
         if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
-            showImportBackupConfirmDialog(uri)
-            publishPresentationState()
+            if (root == null) {
+                pendingImportUri = uri
+                publishPresentationState()
+            } else {
+                showImportBackupConfirmDialog(uri)
+            }
             return
         }
     }
@@ -1246,21 +1256,7 @@ class SystemServerSettingsPageController(
             showDisableSafeModeConfirmationDialog()
             return
         }
-        if (!store!!.setSystemServerSafeModeEnabled(true)) {
-            setCheckedSilently(
-                safeModeSwitch,
-                false
-            ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                this.onSafeModeChanged(
-                    buttonView,
-                    isChecked
-                )
-            }
-            showToast(R.string.system_settings_save_failed)
-            return
-        }
-        RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-        publishPresentationState()
+        persistSafeMode(true)
     }
 
     private fun showDisableSafeModeConfirmationDialog() {
@@ -1268,24 +1264,7 @@ class SystemServerSettingsPageController(
             activity,
             activity.getString(R.string.system_safe_mode_disable_confirm_title),
             activity.getString(R.string.system_safe_mode_disable_confirm_message),
-            {
-                if (!store!!.setSystemServerSafeModeEnabled(false)) {
-                    setCheckedSilently(
-                        safeModeSwitch,
-                        true
-                    ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                        this.onSafeModeChanged(
-                            buttonView,
-                            isChecked
-                        )
-                    }
-                    showToast(R.string.system_settings_save_failed)
-                    publishPresentationState()
-                    return@show
-                }
-                RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-                publishPresentationState()
-            },
+            { persistSafeMode(false) },
             {
                 setCheckedSilently(
                     safeModeSwitch,
@@ -1331,18 +1310,7 @@ class SystemServerSettingsPageController(
             showHideLauncherIconConfirmationDialog()
             return
         }
-        if (!persistLauncherIconState(false)) {
-            setCheckedSilently(
-                hideLauncherIconSwitch,
-                true
-            ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                this.onHideLauncherIconChanged(
-                    buttonView,
-                    isChecked
-                )
-            }
-        }
-        publishPresentationState()
+        persistLauncherHidden(false)
     }
 
     private fun showHideLauncherIconConfirmationDialog() {
@@ -1350,19 +1318,7 @@ class SystemServerSettingsPageController(
             activity,
             activity.getString(R.string.settings_hide_launcher_icon_confirm_title),
             activity.getString(R.string.settings_hide_launcher_icon_confirm_message),
-            {
-                if (!persistLauncherIconState(true)) {
-                    setCheckedSilently(
-                        hideLauncherIconSwitch, false
-                    ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                        this.onHideLauncherIconChanged(
-                            buttonView,
-                            isChecked
-                        )
-                    }
-                }
-                publishPresentationState()
-            },
+            { persistLauncherHidden(true) },
             {
                 setCheckedSilently(
                     hideLauncherIconSwitch, false

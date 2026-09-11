@@ -118,7 +118,7 @@ public final class LogActivity extends LocalizedActivity {
         }
     }
 
-    public void enableDiagnosticLogsFromGate() {
+    public void enableDiagnosticLogs() {
         if (!LogGate.enable(this)) {
             Toast.makeText(this, R.string.system_settings_save_failed, Toast.LENGTH_SHORT).show();
             return;

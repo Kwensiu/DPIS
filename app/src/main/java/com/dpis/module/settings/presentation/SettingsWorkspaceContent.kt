@@ -74,6 +74,8 @@ fun SettingsWorkspaceContent(
     onThemeSettings: () -> Unit,
     onLanguageSelected: (String) -> Unit,
     onBackup: () -> Unit,
+    onConfirmImport: () -> Unit,
+    onDismissImport: () -> Unit,
     onClearCache: () -> Unit,
     onAbout: () -> Unit,
     onDonate: () -> Unit,
@@ -288,6 +290,16 @@ fun SettingsWorkspaceContent(
                 hideLauncherVisible = false
                 onLauncherHiddenChanged(true)
             },
+        )
+    }
+    if (state?.pendingImportUri != null) {
+        ConfirmAlertDialog(
+            onDismissRequest = onDismissImport,
+            title = stringResource(R.string.config_backup_import_confirm_title),
+            message = stringResource(R.string.config_backup_import_confirm_message),
+            cancelLabel = stringResource(R.string.dialog_process_action_confirm_negative),
+            confirmLabel = stringResource(R.string.dialog_process_action_confirm_positive),
+            onConfirm = onConfirmImport,
         )
     }
     if (showLanguageDialog) {

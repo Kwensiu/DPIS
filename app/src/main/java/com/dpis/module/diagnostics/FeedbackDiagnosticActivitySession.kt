@@ -7,6 +7,7 @@ import com.dpis.module.LocalizedActivity
 import com.dpis.module.MainComposeShellHost
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
@@ -33,16 +34,11 @@ internal class FeedbackDiagnosticActivitySession(
         fun composeShell(): MainComposeShellHost?
         fun showToast(messageResId: Int)
         fun runOnUiThread(action: Runnable)
-        fun saveComposeEditor(item: AppListItem, draft: EditorDraft): Boolean
-        fun markComposeEditorSaved(draft: EditorDraft)
+        fun persistComposeEditor(item: AppListItem, draft: EditorDraft): Boolean
         fun persistViewEditor(
             item: AppListItem,
             state: AppConfigDialogBinder.AppConfigDialogState?,
         ): AppListItem?
-        fun editorDialogState(
-            item: AppListItem,
-            draft: EditorDraft,
-        ): AppConfigDialogBinder.AppConfigDialogState
         fun hookConfigStore(): DpisConfigStore
         fun packageVersionName(packageName: String): String
         fun systemHooksEnabled(): Boolean
@@ -235,9 +231,8 @@ internal class FeedbackDiagnosticActivitySession(
         override fun showFallbackConfirmation(item: AppListItem, draft: EditorDraft) {
             confirm.startFromComposeEditor(
                 item,
-                { shell.saveComposeEditor(item, draft) },
-                { shell.markComposeEditorSaved(draft) },
-                shell.editorDialogState(item, draft),
+                { shell.persistComposeEditor(item, draft) },
+                EditorDialogStateFactory.create(item, draft),
                 shell.packageVersionName(item.packageName),
                 shell.hookConfigStore(),
             )
@@ -252,11 +247,7 @@ internal class FeedbackDiagnosticActivitySession(
         }
 
         override fun saveAppConfig(item: AppListItem, draft: EditorDraft): Boolean =
-            shell.saveComposeEditor(item, draft)
-
-        override fun markAppConfigSaved(draft: EditorDraft) {
-            shell.markComposeEditorSaved(draft)
-        }
+            shell.persistComposeEditor(item, draft)
 
         override fun startDiagnostic(
             item: AppListItem,
@@ -267,7 +258,7 @@ internal class FeedbackDiagnosticActivitySession(
         ): Boolean = session.start(
             Coordinator.Request.fromPersisted(
                 item,
-                shell.editorDialogState(item, draft),
+                EditorDialogStateFactory.create(item, draft),
                 versionName,
                 shell.hookConfigStore(),
             ),

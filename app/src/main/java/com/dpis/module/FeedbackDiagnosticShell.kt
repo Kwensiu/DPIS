@@ -19,22 +19,16 @@ internal class FeedbackDiagnosticShell(
         activity.runOnUiThread(action)
     }
 
-    override fun saveComposeEditor(item: AppListItem, draft: EditorDraft): Boolean =
-        activity.saveComposeEditorForDiagnostic(item, draft)
-
-    override fun markComposeEditorSaved(draft: EditorDraft) {
+    override fun persistComposeEditor(item: AppListItem, draft: EditorDraft): Boolean {
+        if (!activity.saveComposeEditorForDiagnostic(item, draft)) return false
         activity.markComposeEditorSaved(draft)
+        return true
     }
 
     override fun persistViewEditor(
         item: AppListItem,
         state: AppConfigDialogBinder.AppConfigDialogState?,
     ): AppListItem? = activity.saveCurrentEditorConfigForDiagnostic(item, state)
-
-    override fun editorDialogState(
-        item: AppListItem,
-        draft: EditorDraft,
-    ): AppConfigDialogBinder.AppConfigDialogState = activity.composeEditorDialogState(item, draft)
 
     override fun hookConfigStore(): DpisConfigStore = activity.hookConfigStore
 

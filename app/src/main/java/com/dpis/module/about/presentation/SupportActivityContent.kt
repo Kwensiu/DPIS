@@ -367,7 +367,7 @@ object SupportActivityContent {
                     onRefresh = onRefresh::run,
                     onToggleExpanded = onToggleExpanded::accept,
                     onCopyEntry = onCopyEntry::accept,
-                    onEnableLogs = activity::enableDiagnosticLogsFromGate,
+                    onEnableLogs = activity::enableDiagnosticLogs,
                 )
             }
         }

@@ -8,10 +8,10 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.root.RootAppProcessLauncher
 
-class ProcessActionHandler @JvmOverloads constructor(
+class ProcessActionHandler(
     private val activity: Activity,
-    private val beforeTargetLaunch: BeforeTargetLaunch? = null,
-    private val confirmSystemApp: ConfirmSystemApp? = null,
+    private val beforeTargetLaunch: BeforeTargetLaunch?,
+    private val confirmSystemApp: ConfirmSystemApp,
 ) {
     enum class Action {
         START,
@@ -43,22 +43,10 @@ class ProcessActionHandler @JvmOverloads constructor(
 
     private fun showSystemAppActionConfirmation(item: AppListItem, action: Action) {
         val actionLabel = resolveActionLabel(action)
-        val onConfirm = Runnable { runProcessAction(item.packageName, item.label, action) }
-        val host = confirmSystemApp
-        if (host != null) {
-            host.confirm(actionLabel, item.label, onConfirm)
-            return
-        }
-        com.dpis.module.ui.dialog.ConfirmDialog.show(
-            activity,
-            activity.getString(R.string.dialog_process_action_confirm_title),
-            activity.getString(
-                R.string.dialog_process_action_confirm_message,
-                actionLabel,
-                item.label,
-            ),
-            onConfirm,
-            Runnable {},
+        confirmSystemApp.confirm(
+            actionLabel,
+            item.label,
+            Runnable { runProcessAction(item.packageName, item.label, action) },
         )
     }
 

@@ -46,7 +46,7 @@ class SystemServerSettingsLayoutSmokeTest {
             "row.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE", "if (!BuildConfig.DEBUG) {",
             "private fun onHooksEnabledChanged(",
             "showDisableSafeModeConfirmationDialog()", "R.string.system_safe_mode_disable_confirm_title",
-            "R.string.system_safe_mode_disable_confirm_message", "if (!store!!.setSystemServerSafeModeEnabled(false))",
+            "R.string.system_safe_mode_disable_confirm_message", "if (!store!!.setSystemServerSafeModeEnabled(enabled))",
             "setCheckedSilently(", "show(",
             ": DpisApplication.ServiceStateListener", "DpisApplication.addServiceStateListener(this, true)",
             "DpisApplication.removeServiceStateListener(this)", "override fun onServiceStateChanged()",
@@ -68,7 +68,17 @@ class SystemServerSettingsLayoutSmokeTest {
         val source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
-        source.assertContainsAll("showBackupActions(", "showInterfaceScale(", "SettingsComposeDialogs.showLanguage(", "launchImportBackupPicker()", "private fun showImportBackupConfirmDialog(uri: Uri?)", "showImportBackupConfirmDialog(uri)", "importConfigBackup(uri)", "relaunchDpisTask()", "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()", "Intent(activity, MainActivity::class.java)", "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK", "finishAffinity()")
+        source.assertContainsAll("showBackupActions(", "showInterfaceScale(", "SettingsComposeDialogs.showLanguage(", "launchImportBackupPicker()", "private fun showImportBackupConfirmDialog(uri: Uri?)", "pendingImportUri = uri", "confirmImportFromPresentation()", "importConfigBackup(uri)", "relaunchDpisTask()", "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()", "Intent(activity, MainActivity::class.java)", "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK", "finishAffinity()")
+        read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt").assertContainsAll(
+            "state?.pendingImportUri != null",
+            "R.string.config_backup_import_confirm_title",
+            "onConfirm = onConfirmImport",
+        )
+        read("src/main/java/com/dpis/module/ui/presentation/wear/WearWorkspaceContent.kt").assertContainsAll(
+            "state?.pendingImportUri != null",
+            "R.string.config_backup_import_confirm_title",
+            "onConfirm = onConfirmImport",
+        )
         source.assertNotContainsAll("android.os.Process.killProcess(android.os.Process.myPid())", "RootCommandRunner.run(\"reboot\")")
         dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "DialogWindowSizer.applyLargeWidth(dialog, activity)")
         dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", ".weight(1f, fill = false)", "R.dimen.dialog_footer_spacing_top")

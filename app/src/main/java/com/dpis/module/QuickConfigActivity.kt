@@ -66,7 +66,6 @@ import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.ui.compose.QuickConfigDialog
 import com.dpis.module.ui.compose.QuickConfigPresentation
 import com.dpis.module.ui.compose.SupportActivityContent
-import com.dpis.module.ui.dialog.ConfirmDialog
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertySyncer
 import com.google.android.material.textfield.TextInputEditText
@@ -82,24 +81,9 @@ class QuickConfigActivity : LocalizedActivity() {
         this,
         { packageName -> syncRuntimePropertiesForTargetLaunch(packageName) },
         { actionLabel, appLabel, onConfirm ->
-            val current = presentation
-            if (current != null) {
-                current.show(
-                    QuickConfigDialog.ProcessAction(actionLabel, appLabel) { onConfirm.run() },
-                )
-            } else {
-                ConfirmDialog.show(
-                    this,
-                    getString(R.string.dialog_process_action_confirm_title),
-                    getString(
-                        R.string.dialog_process_action_confirm_message,
-                        actionLabel,
-                        appLabel,
-                    ),
-                    onConfirm,
-                    Runnable {},
-                )
-            }
+            presentation?.show(
+                QuickConfigDialog.ProcessAction(actionLabel, appLabel) { onConfirm.run() },
+            )
         },
     )
     private val systemScopeCoordinator = SystemScopeCoordinator(createSystemScopeHost())
@@ -754,72 +738,42 @@ class QuickConfigActivity : LocalizedActivity() {
             showFeedbackDiagnosticConfirmation(item, state)
             return
         }
-        val current = presentation
-        if (current != null) {
-            current.show(
-                QuickConfigDialog.EnableLogs {
-                    if (LogGate.enable(this)) {
-                        showFeedbackDiagnosticConfirmation(item, state)
-                    } else {
-                        showToast(R.string.system_settings_save_failed)
-                    }
-                },
-            )
-            return
-        }
-        if (!LogGate.ensureEnabled(
-                this,
-                { showFeedbackDiagnosticConfirmation(item, state) },
-                null,
-            )
-        ) {
-            return
-        }
-        showFeedbackDiagnosticConfirmation(item, state)
+        presentation?.show(
+            QuickConfigDialog.EnableLogs {
+                if (LogGate.enable(this)) {
+                    showFeedbackDiagnosticConfirmation(item, state)
+                } else {
+                    showToast(R.string.system_settings_save_failed)
+                }
+            },
+        )
     }
 
     private fun showFeedbackDiagnosticConfirmation(
         item: AppListItem,
         state: AppConfigDialogState?
     ) {
-        val onConfirm = {
-            val diagnosticItem = saveCurrentConfigForDiagnostic(item)
-            if (diagnosticItem != null) {
-                val started = feedbackDiagnosticCoordinator.start(
-                    Coordinator.Request.fromPersisted(
-                        diagnosticItem,
-                        state,
-                        resolvePackageVersionName(item.packageName),
-                        this.hookConfigStore
-                    )
-                )
-                if (!started) {
-                    showToast(R.string.feedback_diagnostic_unavailable)
-                }
-            }
-        }
-        val current = presentation
-        if (current != null) {
-            current.show(
-                QuickConfigDialog.FeedbackStart(
-                    getString(R.string.feedback_diagnostic_confirm_message, item.label),
-                    getString(R.string.feedback_diagnostic_save_and_start_button),
-                    onConfirm,
-                ),
-            )
-            return
-        }
-        ConfirmDialog.showWithLabels(
-            this,
-            getString(R.string.feedback_diagnostic_action),
-            getString(
-                R.string.feedback_diagnostic_confirm_message,
-                item.label
+        presentation?.show(
+            QuickConfigDialog.FeedbackStart(
+                getString(R.string.feedback_diagnostic_confirm_message, item.label),
+                getString(R.string.feedback_diagnostic_save_and_start_button),
+                {
+                    val diagnosticItem = saveCurrentConfigForDiagnostic(item)
+                    if (diagnosticItem != null) {
+                        val started = feedbackDiagnosticCoordinator.start(
+                            Coordinator.Request.fromPersisted(
+                                diagnosticItem,
+                                state,
+                                resolvePackageVersionName(item.packageName),
+                                this.hookConfigStore
+                            )
+                        )
+                        if (!started) {
+                            showToast(R.string.feedback_diagnostic_unavailable)
+                        }
+                    }
+                },
             ),
-            getString(android.R.string.cancel),
-            getString(R.string.feedback_diagnostic_save_and_start_button),
-            onConfirm,
-            {},
         )
     }
 

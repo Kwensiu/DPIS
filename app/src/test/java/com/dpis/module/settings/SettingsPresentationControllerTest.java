@@ -20,7 +20,7 @@ public class SettingsPresentationControllerTest {
     }
     private static final class FakePort implements SettingsPresentationController.Port {
         int globalLogWrites; int refreshes;
-        @Override public SettingsUiState snapshot() { return new SettingsUiState(true,false,false,false,false,100,false,"0 B", "Follow system"); }
+        @Override public SettingsUiState snapshot() { return new SettingsUiState(true,false,false,false,false,100,false,"0 B", "Follow system", null); }
         @Override public void setSafeModeEnabled(boolean enabled) { }
         @Override public void setGlobalLogEnabled(boolean enabled) { globalLogWrites++; }
         @Override public void setLauncherIconHidden(boolean hidden) { }

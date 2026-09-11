@@ -22,7 +22,7 @@ import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
-import com.dpis.module.appconfig.EditorDialogStateFactory;
+
 import com.dpis.module.appconfig.EditorDraft;
 import com.dpis.module.appconfig.EditorPresentation;
 import com.dpis.module.appconfig.LandAppDetailPaneBinder;
@@ -1179,13 +1179,6 @@ public final class MainActivity
         if (activeAppEditorDialog != null) {
             activeAppEditorDialog.dismiss();
         }
-    }
-
-    AppConfigDialogBinder.AppConfigDialogState composeEditorDialogState(
-            AppListItem item,
-            EditorDraft draft
-    ) {
-        return EditorDialogStateFactory.create(item, draft);
     }
 
     void showComposeFeedbackDiagnosticPreparation(
@@ -2850,7 +2843,9 @@ public final class MainActivity
             case STOP ->
                 ProcessActionHandler.Action.STOP;
         };
-        processActionHandler.execute(item, mappedAction);
+        if (item != null) {
+            processActionHandler.execute(item, mappedAction);
+        }
     }
 
     boolean isSystemHookEnabledFromStore() {

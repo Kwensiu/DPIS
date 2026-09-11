@@ -102,6 +102,14 @@ class SettingsWorkspaceSession(
         ensureComposeController().showConfigBackupFromPresentation()
     }
 
+    override fun confirmImport() {
+        ensureComposeController().confirmImportFromPresentation()
+    }
+
+    override fun dismissImport() {
+        ensureComposeController().dismissImportFromPresentation()
+    }
+
     override fun clearCache() {
         ensureComposeController().clearCacheFromPresentation()
     }
