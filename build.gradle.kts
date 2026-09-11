@@ -27,7 +27,7 @@ sonar {
 /**
  * Join backslash-continued values. A line-per-`=` reader drops
  * `sonar.coverage.exclusions` and must stay in sync with
- * `SonarProjectProperties` in app unit tests.
+ * `com.dpis.module.sonar.SonarProjectProperties` in app unit tests.
  */
 fun loadSonarProjectProperties(file: java.io.File): Map<String, String> {
     val result = linkedMapOf<String, String>()
