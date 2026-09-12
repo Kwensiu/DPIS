@@ -32,7 +32,7 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val session = read(
-                "src/main/java/com/dpis/module/templates/TemplateWorkspaceActivitySession.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivitySession.kt")
 
         assertTrue(source.contains("private TemplateWorkspaceActivitySession workspaceSession"))
         assertTrue(source.contains(".handleActivityResult(requestCode, data)"))
@@ -188,15 +188,15 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.java")
-        val toolsWorkspace = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt")
+        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.kt")
+        val toolsWorkspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
 
         assertTrue(source.contains("private AppWorkspace appWorkspace"))
         assertTrue(source.contains("appWorkspace = new AppWorkspace("))
         assertTrue(source.contains("appWorkspace.actions()"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
         assertTrue(appWorkspace.contains("interface Host"))
-        assertTrue(appWorkspace.contains("AppWorkspacePresentation.Actions actions()"))
+        assertTrue(appWorkspace.contains("fun actions(): AppWorkspacePresentation.Actions"))
         assertTrue(toolsWorkspace.contains("class ToolsWorkspace("))
         assertTrue(toolsWorkspace.contains("private val binder = ToolsWorkspaceBinder("))
     }

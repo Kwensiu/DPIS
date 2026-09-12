@@ -55,16 +55,17 @@ import com.dpis.module.hooks.HookDomainOverrideStore;
 import com.dpis.module.process.presentation.ProcessActionConfirm;
 import com.dpis.module.process.presentation.ProcessActionHandler;
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
-import com.dpis.module.quirks.WechatDpiSheetBinder;
+import com.dpis.module.quirks.WechatDpiEditor;
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.settings.StartupDisclaimerStore;
-import com.dpis.module.settings.ToolsWorkspace;
+import com.dpis.module.settings.presentation.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
-import com.dpis.module.templates.TemplateWorkspaceActivitySession;
+import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.TouchFeedbackBinder;
@@ -79,11 +80,11 @@ import com.dpis.module.updates.StartupUpdateCheckCoordinator;
 import com.dpis.module.updates.StartupUpdateCheckOnce;
 import com.dpis.module.updates.StartupUpdateDownloadExecutor;
 import com.dpis.module.updates.StartupUpdateManifest;
-import com.dpis.module.updates.StartupUpdatePackageHandler;
+import com.dpis.module.updates.presentation.StartupUpdatePackageHandler;
 import com.dpis.module.updates.presentation.UpdateAvailableDialog;
 import com.dpis.module.updates.UpdateCoordinator;
 import com.dpis.module.updates.presentation.UpdateDownloadCoordinator;
-import com.dpis.module.updates.UpdatePromptDialogCoordinator;
+import com.dpis.module.updates.presentation.UpdatePromptDialogCoordinator;
 import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.UpdateStateStore;
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -2138,9 +2139,9 @@ public final class MainActivity
         if (!saveResult.success) {
             return saveResult;
         }
-        if (!WechatDpiSheetBinder.save(wechatDpiInput, packageName, dpisEnabled, store)) {
+        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
             return AppConfigSaveHandler.Result.failure(
-                    WechatDpiSheetBinder.isInputValid(wechatDpiInput)
+                    WechatDpiEditor.isInputValid(wechatDpiInput)
                             ? R.string.system_settings_save_failed
                             : R.string.status_save_invalid);
         }

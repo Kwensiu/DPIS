@@ -69,7 +69,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
-import com.dpis.module.templates.QuickTemplateTargetsPresentationController
 import com.dpis.module.ui.compose.AppIdentityMarqueeText
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackFilterChip

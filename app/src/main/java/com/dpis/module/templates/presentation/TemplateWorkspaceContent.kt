@@ -53,7 +53,7 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 
 import com.dpis.module.templates.QuickTemplateStore
-import com.dpis.module.templates.QuickTemplateTargetsPresentationController
+
 import com.dpis.module.templates.TemplateEditorForm
 
 import com.dpis.module.ui.compose.PageScrollPositionStore

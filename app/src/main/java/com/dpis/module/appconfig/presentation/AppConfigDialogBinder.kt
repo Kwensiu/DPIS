@@ -39,7 +39,7 @@ import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.fonts.FontTypefaceLoader
 import com.dpis.module.fonts.SystemFontEntry
 import com.dpis.module.fonts.SystemFontRegistry
-import com.dpis.module.quirks.WechatDpiSheetBinder
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec

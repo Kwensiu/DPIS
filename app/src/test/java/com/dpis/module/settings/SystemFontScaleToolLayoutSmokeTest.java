@@ -55,15 +55,15 @@ public class SystemFontScaleToolLayoutSmokeTest {
     @Test
     public void toolsWorkspaceToolbarUsesSafeDrawingInsetsLikeSettingsPage()
             throws IOException {
-        String binder = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.java");
-        String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt");
+        String binder = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.kt");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt");
         String settingsController = read(
                 "src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
 
         assertTrue(binder.contains(
-                "View toolsToolbar = workspaceView.findViewById(R.id.tools_toolbar);"));
+                "val toolsToolbar = workspaceView.findViewById<View>(R.id.tools_toolbar)"));
         assertTrue(binder.contains("WatchUiMode.shouldUseCompactUi(host.activity())"));
-        assertTrue(binder.contains("((LinearLayout) toolsToolbar).setGravity(Gravity.CENTER);"));
+        assertTrue(binder.contains("toolsToolbar.gravity = Gravity.CENTER"));
         assertTrue(binder.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
         assertTrue(source.contains(
                 "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false)"));

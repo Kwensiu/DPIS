@@ -1,13 +1,15 @@
-package com.dpis.module.updates
+package com.dpis.module.updates.presentation
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
 import com.dpis.module.ui.dialog.StartupDisclaimerGate
+import com.dpis.module.updates.ReleaseNotesController
+import com.dpis.module.updates.ReleaseNotesMarkdownRenderer
+import com.dpis.module.updates.UpdatePromptPolicy
+import com.dpis.module.updates.UpdatePromptRequest
 import java.util.Locale
 import java.util.function.BooleanSupplier
-import com.dpis.module.updates.presentation.UpdateAvailableDialog
-import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
 
 class UpdatePromptDialogCoordinator(
     private val activity: Activity,
@@ -82,39 +84,51 @@ class UpdatePromptDialogCoordinator(
         dialogHandle.setCancel(
             activity.getString(R.string.about_update_action_cancel_dialog),
             Runnable {
-                if (host.isDownloadInProgress()) host.cancelActiveUpdateDownload()
-                else dialogHandle.dismiss()
+                if (UpdatePromptPolicy.cancelStopsDownload(host.isDownloadInProgress())) {
+                    host.cancelActiveUpdateDownload()
+                } else {
+                    dialogHandle.dismiss()
+                }
             }
         )
 
-        val releasePageUrl = request.releasePage.takeUnless { it.isNullOrEmpty() }
-            ?: activity.getString(R.string.about_releases_url)
-        if (request.apkUrl.isNullOrBlank()) {
-            dialogHandle.setPrimary(
+        val releasePageUrl = UpdatePromptPolicy.releasePageUrl(
+            request.releasePage,
+            activity.getString(R.string.about_releases_url),
+        )
+        val apkUrl = request.apkUrl
+        when (UpdatePromptPolicy.primaryAction(apkUrl)) {
+            UpdatePromptPolicy.PrimaryAction.VIEW_RELEASE -> dialogHandle.setPrimary(
                 activity.getString(R.string.about_update_action_view_release),
                 Runnable {
                     host.markPromptedVersion(request.versionCode)
                     dialogHandle.dismiss()
                     host.openUrl(releasePageUrl)
-                }
+                },
             )
-        } else {
-            dialogHandle.setPrimary(
-                activity.getString(R.string.about_update_action_download),
-                Runnable {
-                    host.markPromptedVersion(request.versionCode)
-                    host.startStartupUpdateDownload(
-                        request.versionName,
-                        request.apkUrl,
-                        dialogHandle
-                    )
-                }
-            )
+            UpdatePromptPolicy.PrimaryAction.DOWNLOAD -> {
+                check(!apkUrl.isNullOrBlank())
+                dialogHandle.setPrimary(
+                    activity.getString(R.string.about_update_action_download),
+                    Runnable {
+                        host.markPromptedVersion(request.versionCode)
+                        host.startStartupUpdateDownload(
+                            request.versionName,
+                            apkUrl,
+                            dialogHandle,
+                        )
+                    },
+                )
+            }
         }
 
         dialogHandle.setOnDismissListener(Runnable {
             host.onUpdatePromptDismissed()
-            if (!activity.isChangingConfigurations && host.isDownloadInProgress()) {
+            if (UpdatePromptPolicy.shouldCancelDownloadOnDismiss(
+                    activity.isChangingConfigurations,
+                    host.isDownloadInProgress(),
+                )
+            ) {
                 host.cancelActiveUpdateDownload()
             }
         })

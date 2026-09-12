@@ -1,14 +1,15 @@
-package com.dpis.module.settings
+package com.dpis.module.settings.presentation
 
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import android.view.View
-import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.presentation.ToolsWorkspaceBinder
 import com.dpis.module.diagnostics.LogActivity
 import com.dpis.module.diagnostics.presentation.LogGate
+import com.dpis.module.settings.LocalizedActivity
+import com.dpis.module.settings.SystemFontScaleToolPresenter
+import com.dpis.module.settings.SystemFontScaleToolState
 import com.dpis.module.ui.TouchFeedbackBinder
 import com.dpis.module.ui.WindowInsetsBinder
 

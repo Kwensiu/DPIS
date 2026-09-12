@@ -8,7 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.dpis.module.R
-import com.dpis.module.templates.QuickTemplateTargetsPresentationController
+
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
 

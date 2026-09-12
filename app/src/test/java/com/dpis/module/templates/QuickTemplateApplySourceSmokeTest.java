@@ -40,7 +40,7 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(mainActivity.contains("getHookConfigStore()"));
         assertTrue(mainActivity.contains("return DpisApplication.getActiveHookConfigStore(this);"));
         assertTrue(workspace.contains("host.isInstalledTemplateTargetPackage"));
-        String activityHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt");
+        String activityHost = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt");
         assertTrue(activityHost.contains("packageManager.getApplicationInfo("));
         assertTrue(workspace.contains("R.string.quick_template_apply_result_success"));
         assertTrue(workspace.contains("R.string.quick_template_apply_result_partial"));

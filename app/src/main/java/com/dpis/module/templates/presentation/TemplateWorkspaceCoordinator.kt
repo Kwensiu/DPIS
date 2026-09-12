@@ -27,7 +27,6 @@ import com.dpis.module.templates.QuickTemplateTargetSelectionActivity
 import com.dpis.module.templates.QuickTemplateTargetSelectionContract
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.templates.TemplateDetailKind
-import com.dpis.module.templates.TemplateDetailPaneController
 import com.dpis.module.templates.TemplateDetailSelection
 import com.dpis.module.templates.TemplateEditorDraft
 import com.dpis.module.templates.TemplateEditorForm

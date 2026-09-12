@@ -92,7 +92,7 @@ public class MainActivityLayoutSmokeTest {
             throws IOException {
         String layout = read("src/main/res/layout/tools_workspace.xml");
         String dimensions = read("src/main/res/values/dimens.xml");
-        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.kt");
 
         assertTrue(layout.contains("android:id=\"@+id/tools_toolbar\""));
         assertTrue(layout.contains("android:id=\"@+id/tools_workspace_scroll\""));
@@ -106,7 +106,7 @@ public class MainActivityLayoutSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_operation_group\""));
         assertTrue(layout.contains("android:id=\"@+id/system_font_scale_permission_overlay\""));
         assertTrue(dimensions.contains("tools_workspace_content_padding_bottom"));
-        assertTrue(source.contains("revealExpandedPanel();"));
+        assertTrue(source.contains("revealExpandedPanel()"));
         assertTrue(source.contains("requestRectangleOnScreen"));
     }
 

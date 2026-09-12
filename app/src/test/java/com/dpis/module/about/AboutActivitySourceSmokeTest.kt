@@ -64,7 +64,7 @@ class AboutActivitySourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
         val coordinatorSource =
             read("src/main/java/com/dpis/module/updates/presentation/UpdateDownloadCoordinator.kt")
-        val packageHandlerSource = read("src/main/java/com/dpis/module/updates/StartupUpdatePackageHandler.java")
+        val packageHandlerSource = read("src/main/java/com/dpis/module/updates/presentation/StartupUpdatePackageHandler.kt")
 
         source.assertNotContainsAll("extractSigningFingerprints", "about_update_download_untrusted")
         coordinatorSource.assertNotContainsAll("verifyDownloadedApk(", "UntrustedUpdateException")

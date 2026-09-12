@@ -12,9 +12,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import kotlin.concurrent.Volatile
 import kotlin.math.min
+import com.dpis.module.updates.UpdateByteFormatter
 import com.dpis.module.updates.UpdateCoordinator
 import com.dpis.module.updates.StartupUpdateDownloadExecutor
-import com.dpis.module.updates.StartupUpdatePackageHandler
 import com.dpis.module.updates.presentation.UpdateAvailableDialog.DialogHandle
 
 class UpdateDownloadCoordinator(
@@ -280,8 +280,8 @@ class UpdateDownloadCoordinator(
                 false, progress, dialogHandle.dialog.context.getString(
                     R.string.about_update_download_progress_with_percent,
                     progress,
-                    StartupUpdatePackageHandler.formatBytesStatic(downloadedBytes),
-                    StartupUpdatePackageHandler.formatBytesStatic(totalBytes)
+                    UpdateByteFormatter.format(downloadedBytes),
+                    UpdateByteFormatter.format(totalBytes)
                 )
             )
         }
@@ -293,7 +293,7 @@ class UpdateDownloadCoordinator(
             dialogHandle.showProgress(
                 true, 0, dialogHandle.dialog.context.getString(
                     R.string.about_update_download_progress_without_total,
-                    StartupUpdatePackageHandler.formatBytesStatic(downloadedBytes)
+                    UpdateByteFormatter.format(downloadedBytes)
                 )
             )
         }

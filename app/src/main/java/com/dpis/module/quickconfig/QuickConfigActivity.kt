@@ -61,7 +61,8 @@ import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.quickconfig.QuickConfigTargetDecision
-import com.dpis.module.quirks.WechatDpiSheetBinder
+import com.dpis.module.quirks.WechatDpiEditor
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
@@ -340,12 +341,12 @@ class QuickConfigActivity : LocalizedActivity() {
             draft.fontHookDomainsResetRequested, draft.viewportScaleInput,
             draft.viewportAbsoluteInput, this.isSystemHookEnabled, this.hookConfigStore, null
         )
-        if (result.success && !WechatDpiSheetBinder.save(
+        if (result.success && !WechatDpiEditor.save(
                 draft.wechatDpiInput, item.packageName, draft.dpisEnabled, this.hookConfigStore
             )
         ) {
             result = failure(
-                if (WechatDpiSheetBinder.isInputValid(draft.wechatDpiInput))
+                if (WechatDpiEditor.isInputValid(draft.wechatDpiInput))
                     R.string.system_settings_save_failed
                 else
                     R.string.status_save_invalid
@@ -538,7 +539,7 @@ class QuickConfigActivity : LocalizedActivity() {
                     else
                         R.string.dialog_dpis_disabled_status
                 )
-                WechatDpiSheetBinder.publishForDpisState(targetPackageName, enabled)
+                WechatDpiEditor.publishForDpisState(targetPackageName, enabled)
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
                 return true
             }

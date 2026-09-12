@@ -35,7 +35,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
         assertFalse(source.contains("about_update_download_untrusted"));
         assertTrue(source.contains("UpdatePackageInstaller.persistDownloadedFile("));
         assertTrue(source.contains("StartupUpdatePackageHandler.safeDeleteFile("));
-        assertTrue(source.contains("StartupUpdatePackageHandler.formatBytesStatic("));
+        assertTrue(source.contains("UpdateByteFormatter.format("));
     }
 
     @Test
