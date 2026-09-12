@@ -1,7 +1,7 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.applist.presentation
 
 import android.content.res.Configuration
-import android.widget.ImageView
+
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -58,9 +58,11 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -69,15 +71,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.Image
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.ui.compose.*
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
@@ -105,9 +106,6 @@ fun AppWorkspaceContent(
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val configuration = LocalConfiguration.current
     val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    // Match the 64dp MD3 top-app-bar slot: 6dp above and below the 52dp search surface.
-    val searchTopPadding = 6.dp
-    val searchBottomPadding = 6.dp
     // MainActivity owns the session snapshot because the programmatic ComposeView is recreated
     // across orientation changes. Each catalogue page still keeps an independent position.
     val allAppsListState = rememberLazyListState(
@@ -185,8 +183,11 @@ fun AppWorkspaceContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .padding(top = searchTopPadding, bottom = searchBottomPadding)
-                        .height(52.dp)
+                        .padding(
+                            top = PageChromeTokens.SearchVerticalPadding,
+                            bottom = PageChromeTokens.SearchVerticalPadding,
+                        )
+                        .height(PageChromeTokens.SearchCardHeight)
                 )
                 PrimaryTabRow(
                         selectedTabIndex = pagerState.currentPage,
@@ -234,19 +235,20 @@ fun AppWorkspaceContent(
                             inputFocusManager = focusManager
                         )
                     }
-                    if (currentPageListState.firstVisibleItemIndex > 0 ||
-                        currentPageListState.firstVisibleItemScrollOffset > 0
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(EdgeOcclusionFadeTokens.Height)
-                                .edgeOcclusionFade(
-                                    visibility = 1f,
-                                    direction = EdgeOcclusionFadeDirection.TOP_TO_BOTTOM,
-                                )
-                        )
-                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(EdgeOcclusionFadeTokens.Height)
+                            .graphicsLayer {
+                                val scrolled = currentPageListState.firstVisibleItemIndex > 0 ||
+                                    currentPageListState.firstVisibleItemScrollOffset > 0
+                                alpha = if (scrolled) 1f else 0f
+                            }
+                            .edgeOcclusionFade(
+                                visibility = 1f,
+                                direction = EdgeOcclusionFadeDirection.TOP_TO_BOTTOM,
+                            )
+                    )
                 }
                 }
             if (twoPane) {
@@ -254,41 +256,43 @@ fun AppWorkspaceContent(
                     modifier = Modifier.fillMaxHeight(),
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
-                Box(Modifier.weight(1f).fillMaxHeight()) {
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
                     if (editorState != null) {
-                        Box(Modifier.fillMaxSize()) {
-                            ConfigEditorAnimatedContent(
-                                destination = editorState.destination,
-                                mainContent = {
-                                    AppConfigEditorContent(
-                                        editorState,
-                                        extraTopPadding = topSafePadding
-                                    )
-                                },
-                                hookContent = {
-                                    AppHookChainEditorPage(
-                                        state = editorState,
-                                        modifier = Modifier.padding(top = topSafePadding),
-                                        bottomPadding = padding.calculateBottomPadding()
-                                    )
-                                },
-                                typefaceContent = {
-                                    AppTypefacePickerPage(
-                                        selectedTypefaceId = editorState.draft.selectedTypefaceId ?: "",
-                                        onTypefaceSelected = { typefaceId ->
-                                            editorState.actions.updateTypeface(typefaceId ?: "")
-                                            editorState.actions.navigate(ConfigEditorDestination.MAIN)
-                                        },
-                                        onBack = {
-                                            editorState.actions.navigate(ConfigEditorDestination.MAIN)
-                                        },
-                                        modifier = Modifier.padding(top = topSafePadding)
-                                    )
-                                }
-                            )
-                        }
+                        ConfigEditorAnimatedContent(
+                            destination = editorState.destination,
+                            mainContent = {
+                                AppConfigEditorContent(
+                                    editorState,
+                                    extraTopPadding = topSafePadding,
+                                )
+                            },
+                            hookContent = {
+                                AppHookChainEditorPage(
+                                    state = editorState,
+                                    modifier = Modifier.padding(top = topSafePadding),
+                                    bottomPadding = padding.calculateBottomPadding()
+                                )
+                            },
+                            typefaceContent = {
+                                AppTypefacePickerPage(
+                                    selectedTypefaceId = editorState.draft.selectedTypefaceId ?: "",
+                                    onTypefaceSelected = { typefaceId ->
+                                        editorState.actions.updateTypeface(typefaceId ?: "")
+                                        editorState.actions.navigate(ConfigEditorDestination.MAIN)
+                                    },
+                                    onBack = {
+                                        editorState.actions.navigate(ConfigEditorDestination.MAIN)
+                                    },
+                                    modifier = Modifier.padding(top = topSafePadding)
+                                )
+                            }
+                        )
                     } else {
-                        AppWorkspaceEmptyDetail(Modifier.padding(top = topSafePadding))
+                        AppWorkspaceEmptyDetail()
                     }
                 }
             }
@@ -359,6 +363,8 @@ private fun AppListPageContent(
             }
         } else {
             Box(Modifier.fillMaxSize()) {
+                val iconSizePx = with(LocalDensity.current) { 50.dp.roundToPx() }
+                PrefetchVisibleAppIcons(listState, pageItems, iconSizePx)
                 LazyColumn(
                     state = listState,
                     contentPadding = PaddingValues(
@@ -368,10 +374,15 @@ private fun AppListPageContent(
                         bottom = bottomPadding + 12.dp
                     )
                 ) {
-                    items(pageItems, key = { it.packageName }) { item ->
+                    items(
+                        pageItems,
+                        key = { it.packageName },
+                        contentType = { "app_row" },
+                    ) { item ->
                         AppRow(
                             item = item,
                             systemScopeSelected = systemScopeSelected,
+                            iconSizePx = iconSizePx,
                             onClick = {
                                 actions.openApp(item)
                             }
@@ -549,13 +560,14 @@ private fun AppListScrollbar(
 private fun AppRow(
     item: AppListItem,
     systemScopeSelected: Boolean,
+    iconSizePx: Int,
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
     val resources = context.resources
-    // This composable exists only for visible LazyColumn rows. Loading here keeps icon I/O out
-    // of the catalogue state, so an icon result cannot rebuild or re-filter every app row.
-    val icon = rememberInstalledAppIcon(item.packageName, item.icon)
+    // Visible rows load a display-sized bitmap. That keeps PackageManager I/O off the list
+    // snapshot, and Compose Image avoids creating an ImageView on every bind.
+    val icon = rememberInstalledAppIconBitmap(item.packageName, item.icon, iconSizePx)
     val statusInput = AppStatusFormatter.StatusInput(
         item.inScope,
         item.scopeKnown,
@@ -601,10 +613,11 @@ private fun AppRow(
             contentAlignment = Alignment.Center
         ) {
             if (icon != null) {
-                AndroidView(
-                    factory = { ImageView(it).apply { scaleType = ImageView.ScaleType.FIT_CENTER } },
-                    update = { it.setImageDrawable(icon) },
-                    modifier = Modifier.fillMaxSize()
+                Image(
+                    bitmap = icon,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
                 )
             }
         }
@@ -612,31 +625,21 @@ private fun AppRow(
             modifier = Modifier.weight(1f).padding(start = 12.dp),
             verticalArrangement = Arrangement.Center
         ) {
-            AppIdentityMarqueeText(
+            Text(
                 text = item.label,
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                    lineHeightStyle = LineHeightStyle(
-                        alignment = LineHeightStyle.Alignment.Center,
-                        trim = LineHeightStyle.Trim.LastLineBottom,
-                        mode = LineHeightStyle.Mode.Fixed
-                    ),
-                    fontWeight = FontWeight.Bold
-                )
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-            AppIdentityMarqueeText(
+            Text(
                 text = item.packageName,
                 modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    platformStyle = PlatformTextStyle(includeFontPadding = false),
-                    lineHeightStyle = LineHeightStyle(
-                        alignment = LineHeightStyle.Alignment.Center,
-                        trim = LineHeightStyle.Trim.FirstLineTop,
-                        mode = LineHeightStyle.Mode.Fixed
-                    )
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 AppStatusFormatter.formatCompact(resources, statusInput),

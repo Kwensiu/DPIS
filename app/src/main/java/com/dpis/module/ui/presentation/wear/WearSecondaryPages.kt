@@ -20,6 +20,8 @@ import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseItem
+import com.dpis.module.about.presentation.LicenseDetailDialog
+import com.dpis.module.settings.presentation.InterfaceScaleDialogContent
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.ui.presentation.WearMaterialTheme

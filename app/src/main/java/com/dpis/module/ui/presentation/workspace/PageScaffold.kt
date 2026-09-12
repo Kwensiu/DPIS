@@ -1,59 +1,87 @@
 package com.dpis.module.ui.compose
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 internal enum class PageBarBehavior { Collapsing, Pinned }
 
 @Composable
 internal fun SecondaryPageScaffold(
-    @StringRes titleRes: Int, onBack: () -> Unit, modifier: Modifier = Modifier,
-    actions: @Composable RowScope.() -> Unit = {}, bottomBar: @Composable () -> Unit = {},
-    floatingActionButton: @Composable () -> Unit = {}, content: @Composable (PaddingValues) -> Unit
-) = PageScaffold(titleRes = titleRes, pageBar = PageBarBehavior.Collapsing, onBack = onBack, modifier = modifier, actions = actions, bottomBar = bottomBar, floatingActionButton = floatingActionButton, content = content)
+    @StringRes titleRes: Int,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    extraBottomPadding: Dp = edgeToEdgeContentBottomPadding(24.dp),
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(PageChromeTokens.ItemSpacing),
+    contentHorizontalPadding: Dp = PageChromeTokens.ContentInset,
+    content: LazyListScope.() -> Unit,
+) = PageScaffold(
+    titleRes = titleRes,
+    pageBar = PageBarBehavior.Collapsing,
+    onBack = onBack,
+    startCollapsed = true,
+    modifier = modifier,
+    actions = actions,
+    bottomBar = bottomBar,
+    floatingActionButton = floatingActionButton,
+    extraBottomPadding = extraBottomPadding,
+    verticalArrangement = verticalArrangement,
+    contentHorizontalPadding = contentHorizontalPadding,
+    content = content,
+)
 
 @Composable
 internal fun SecondaryPageScaffold(
-    onBack: (() -> Unit)?, modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {},
-    bottomBar: @Composable () -> Unit = {}, floatingActionButton: @Composable () -> Unit = {},
-    title: @Composable () -> Unit, content: @Composable (PaddingValues) -> Unit
-) = PageScaffold(pageBar = PageBarBehavior.Collapsing, onBack = onBack, modifier = modifier, actions = actions, bottomBar = bottomBar, floatingActionButton = floatingActionButton, title = title, content = content)
-
-@Composable
-internal fun PrimaryPageScaffold(
-    @StringRes titleRes: Int, modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {},
-    showTopBarDivider: Boolean = true,
-    bottomBar: @Composable () -> Unit = {}, floatingActionButton: @Composable () -> Unit = {},
-    content: @Composable (PaddingValues) -> Unit
-) = PageScaffold(titleRes = titleRes, pageBar = PageBarBehavior.Pinned, onBack = null, showTopBarDivider = showTopBarDivider, modifier = modifier, actions = actions, bottomBar = bottomBar, floatingActionButton = floatingActionButton, content = content)
-
-@Composable
-internal fun PrimaryPageScaffold(
-    modifier: Modifier = Modifier, actions: @Composable RowScope.() -> Unit = {},
-    showTopBarDivider: Boolean = true,
-    bottomBar: @Composable () -> Unit = {}, floatingActionButton: @Composable () -> Unit = {},
-    title: @Composable () -> Unit, content: @Composable (PaddingValues) -> Unit
-) = PageScaffold(pageBar = PageBarBehavior.Pinned, onBack = null, showTopBarDivider = showTopBarDivider, modifier = modifier, actions = actions, bottomBar = bottomBar, floatingActionButton = floatingActionButton, title = title, content = content)
+    onBack: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    extraBottomPadding: Dp = edgeToEdgeContentBottomPadding(24.dp),
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(PageChromeTokens.ItemSpacing),
+    title: @Composable () -> Unit,
+    content: LazyListScope.() -> Unit,
+) = PageScaffold(
+    pageBar = PageBarBehavior.Collapsing,
+    onBack = onBack,
+    startCollapsed = true,
+    modifier = modifier,
+    actions = actions,
+    bottomBar = bottomBar,
+    floatingActionButton = floatingActionButton,
+    extraBottomPadding = extraBottomPadding,
+    verticalArrangement = verticalArrangement,
+    title = title,
+    content = content,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +89,7 @@ internal fun PageScaffold(
     @StringRes titleRes: Int,
     pageBar: PageBarBehavior,
     onBack: (() -> Unit)? = null,
-    collapsedTitleScale: Float = 1f,
+    startCollapsed: Boolean = false,
     showTopBarDivider: Boolean = true,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
@@ -69,13 +97,18 @@ internal fun PageScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     scrollStore: PageScrollPositionStore? = null,
     scrollKey: String? = null,
-    contentCanScroll: Boolean = true,
-    content: @Composable (PaddingValues) -> Unit
+    bodyInsets: PaddingValues = PaddingValues(),
+    listState: LazyListState? = null,
+    extraBottomPadding: Dp = 0.dp,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(PageChromeTokens.ItemSpacing),
+    contentHorizontalPadding: Dp = PageChromeTokens.ContentInset,
+    subtitle: @Composable (() -> Unit)? = null,
+    content: LazyListScope.() -> Unit,
 ) {
     PageScaffold(
         pageBar = pageBar,
         onBack = onBack,
-        collapsedTitleScale = collapsedTitleScale,
+        startCollapsed = startCollapsed,
         showTopBarDivider = showTopBarDivider,
         modifier = modifier,
         actions = actions,
@@ -83,9 +116,14 @@ internal fun PageScaffold(
         floatingActionButton = floatingActionButton,
         scrollStore = scrollStore,
         scrollKey = scrollKey,
-        contentCanScroll = contentCanScroll,
+        bodyInsets = bodyInsets,
+        listState = listState,
+        extraBottomPadding = extraBottomPadding,
+        verticalArrangement = verticalArrangement,
+        contentHorizontalPadding = contentHorizontalPadding,
         title = { Text(stringResource(titleRes)) },
-        content = content
+        subtitle = subtitle,
+        content = content,
     )
 }
 
@@ -94,7 +132,7 @@ internal fun PageScaffold(
 internal fun PageScaffold(
     pageBar: PageBarBehavior,
     onBack: (() -> Unit)? = null,
-    collapsedTitleScale: Float = 1f,
+    startCollapsed: Boolean = false,
     showTopBarDivider: Boolean = true,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
@@ -102,79 +140,155 @@ internal fun PageScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     scrollStore: PageScrollPositionStore? = null,
     scrollKey: String? = null,
-    contentCanScroll: Boolean = true,
+    bodyInsets: PaddingValues = PaddingValues(),
+    listState: LazyListState? = null,
+    extraBottomPadding: Dp = 0.dp,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(PageChromeTokens.ItemSpacing),
+    contentHorizontalPadding: Dp = PageChromeTokens.ContentInset,
     title: @Composable () -> Unit,
-    collapsedTitle: (@Composable () -> Unit)? = null,
-    content: @Composable (PaddingValues) -> Unit
+    subtitle: @Composable (() -> Unit)? = null,
+    content: LazyListScope.() -> Unit,
 ) {
-    val scrollBehavior = when (pageBar) {
-        PageBarBehavior.Collapsing -> TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-        PageBarBehavior.Pinned -> TopAppBarDefaults.pinnedScrollBehavior()
+    val resolvedListState = listState ?: rememberLazyListState()
+    val collapsing = pageBar == PageBarBehavior.Collapsing
+    val topAppBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val storedCollapsed = if (scrollStore != null && scrollKey != null) {
+        scrollStore.storedTopBarCollapsed(scrollKey)
+    } else {
+        null
     }
-    val hasStoredCollapse = scrollStore != null && scrollKey != null &&
-        scrollStore.topBarCollapsedFor(scrollKey)
-    val canCollapse = pageBar == PageBarBehavior.Collapsing &&
-        (contentCanScroll || scrollBehavior.state.collapsedFraction > 0f || hasStoredCollapse)
-    LaunchedEffect(scrollBehavior, pageBar, scrollStore, scrollKey, canCollapse) {
-        if (pageBar != PageBarBehavior.Collapsing || scrollStore == null || scrollKey == null) return@LaunchedEffect
-        snapshotFlow { scrollBehavior.state.heightOffsetLimit }
-            .collect { limit ->
-                if (limit < 0f) {
-                    scrollBehavior.state.heightOffset = if (canCollapse && scrollStore.topBarCollapsedFor(scrollKey)) limit else 0f
-                    return@collect
-                }
-            }
+    LaunchedEffect(collapsing, startCollapsed, storedCollapsed, topAppBarState.heightOffsetLimit) {
+        if (!collapsing) return@LaunchedEffect
+        val collapsed = storedCollapsed ?: startCollapsed
+        if (collapsed && topAppBarState.heightOffsetLimit < 0f) {
+            topAppBarState.heightOffset = topAppBarState.heightOffsetLimit
+        }
     }
-    LaunchedEffect(scrollBehavior, scrollStore, scrollKey) {
-        if (pageBar != PageBarBehavior.Collapsing || scrollStore == null || scrollKey == null) return@LaunchedEffect
-        snapshotFlow { scrollBehavior.state.collapsedFraction }
-            .collect { fraction -> scrollStore.updateTopBar(scrollKey, fraction >= 0.98f) }
-    }
-    val pageScrollConnection = if (canCollapse) scrollBehavior.nestedScrollConnection else NoTopBarScrollConnection
+    val layoutDirection = LocalLayoutDirection.current
+    val horizontalSafe = pageHorizontalSafePadding(onBack != null)
     Scaffold(
-        modifier = modifier.nestedScroll(pageScrollConnection),
+        modifier = if (collapsing) {
+            modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        } else {
+            modifier
+        },
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        // Keep the page canvas at the same surface level as the top app bar.
-        // Individual cards then provide the intentional brighter elevation contrast.
         containerColor = androidx.compose.ui.graphics.Color.Transparent,
-        // Transparent cannot resolve a contrasting content color itself; keep descendants on the
-        // DPIS surface foreground instead of inheriting LocalContentColor's black fallback.
         contentColor = MaterialTheme.colorScheme.onSurface,
         topBar = {
             when (pageBar) {
-                PageBarBehavior.Collapsing -> CollapsingPageTopBar(onBack = onBack, includeHorizontalSafeInsets = onBack != null, actions = actions, scrollBehavior = scrollBehavior, collapsedTitleScale = collapsedTitleScale, title = title, collapsedTitle = collapsedTitle)
-                PageBarBehavior.Pinned -> PinnedPageTopBar(onBack = onBack, includeHorizontalSafeInsets = onBack != null, actions = actions, scrollBehavior = scrollBehavior, showDivider = showTopBarDivider, title = title)
+                PageBarBehavior.Collapsing -> CollapsingPageTopBar(
+                    onBack = onBack,
+                    includeHorizontalSafeInsets = onBack != null,
+                    actions = actions,
+                    scrollBehavior = scrollBehavior,
+                    title = title,
+                    subtitle = subtitle,
+                )
+                PageBarBehavior.Pinned -> PinnedPageTopBar(
+                    onBack = onBack,
+                    includeHorizontalSafeInsets = onBack != null,
+                    actions = actions,
+                    showDivider = showTopBarDivider,
+                    title = title,
+                )
             }
         },
         bottomBar = bottomBar,
         floatingActionButton = floatingActionButton,
-        floatingActionButtonPosition = FabPosition.End
+        floatingActionButtonPosition = FabPosition.End,
     ) { scaffoldPadding ->
-        content(
-            if (pageBar == PageBarBehavior.Collapsing) {
-                pageContentPadding(scaffoldPadding, includeHorizontalSafeInsets = onBack != null)
-            } else {
-                scaffoldPadding
-            }
+        LazyColumn(
+            state = resolvedListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = bodyInsets.calculateStartPadding(layoutDirection)
+                        + horizontalSafe.calculateStartPadding(layoutDirection),
+                    end = bodyInsets.calculateEndPadding(layoutDirection)
+                        + horizontalSafe.calculateEndPadding(layoutDirection),
+                    bottom = bodyInsets.calculateBottomPadding(),
+                ),
+            contentPadding = PaddingValues(
+                start = contentHorizontalPadding,
+                top = scaffoldPadding.calculateTopPadding(),
+                end = contentHorizontalPadding,
+                bottom = extraBottomPadding,
+            ),
+            verticalArrangement = verticalArrangement,
+        ) {
+            content()
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PageScaffold(
+    pageBar: PageBarBehavior,
+    onBack: (() -> Unit)? = null,
+    showTopBarDivider: Boolean = true,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    title: @Composable () -> Unit,
+    body: @Composable (PaddingValues) -> Unit,
+) {
+    Scaffold(
+        modifier = modifier,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = androidx.compose.ui.graphics.Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        topBar = {
+            PinnedPageTopBar(
+                onBack = onBack,
+                includeHorizontalSafeInsets = onBack != null,
+                actions = actions,
+                showDivider = showTopBarDivider,
+                title = title,
+            )
+        },
+        bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
+        floatingActionButtonPosition = FabPosition.End,
+    ) { scaffoldPadding ->
+        val layoutDirection = LocalLayoutDirection.current
+        val horizontalSafe = pageHorizontalSafePadding(onBack != null)
+        body(
+            PaddingValues(
+                start = scaffoldPadding.calculateStartPadding(layoutDirection)
+                    + horizontalSafe.calculateStartPadding(layoutDirection),
+                top = scaffoldPadding.calculateTopPadding(),
+                end = scaffoldPadding.calculateEndPadding(layoutDirection)
+                    + horizontalSafe.calculateEndPadding(layoutDirection),
+                bottom = scaffoldPadding.calculateBottomPadding(),
+            )
         )
     }
 }
 
-private object NoTopBarScrollConnection : NestedScrollConnection
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun pageContentPadding(
-    scaffoldPadding: PaddingValues,
-    includeHorizontalSafeInsets: Boolean
-): PaddingValues {
-    if (!includeHorizontalSafeInsets) return scaffoldPadding
-
-    val layoutDirection = LocalLayoutDirection.current
-    val safePadding = WindowInsets.safeDrawing.asPaddingValues()
-    return PaddingValues(
-        start = scaffoldPadding.calculateStartPadding(layoutDirection) + safePadding.calculateStartPadding(layoutDirection),
-        top = scaffoldPadding.calculateTopPadding(),
-        end = scaffoldPadding.calculateEndPadding(layoutDirection) + safePadding.calculateEndPadding(layoutDirection),
-        bottom = scaffoldPadding.calculateBottomPadding()
-    )
-}
+internal fun PageScaffold(
+    @StringRes titleRes: Int,
+    pageBar: PageBarBehavior,
+    onBack: (() -> Unit)? = null,
+    showTopBarDivider: Boolean = true,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
+    body: @Composable (PaddingValues) -> Unit,
+) = PageScaffold(
+    pageBar = pageBar,
+    onBack = onBack,
+    showTopBarDivider = showTopBarDivider,
+    modifier = modifier,
+    actions = actions,
+    bottomBar = bottomBar,
+    floatingActionButton = floatingActionButton,
+    title = { Text(stringResource(titleRes)) },
+    body = body,
+)

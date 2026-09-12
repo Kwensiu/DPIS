@@ -38,6 +38,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import androidx.activity.ComponentActivity
+import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
 
@@ -161,8 +163,8 @@ fun LogContent(
                     R.string.log_action_refresh,
                     onRefresh,
                 )
-            }
-        ) { padding ->
+            },
+            body = { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
                 PrimaryTabRow(
                     selectedTabIndex = state.selectedPage,
@@ -201,7 +203,8 @@ fun LogContent(
                     )
                 }
             }
-        }
+            }
+        )
     }
     if (presentation.enableLogsVisible) {
         ConfirmAlertDialog(
@@ -347,5 +350,37 @@ private fun LogContentPreview() {
     }
     ComposeDesignSystem(darkTheme = false) {
         LogContent(presentation, {}, {}, {}, {}, {}, {}, {}, {}, {})
+    }
+}
+
+object LogActivityHost {
+    fun install(
+        activity: ComponentActivity,
+        presentation: LogPresentation,
+        onSelectPage: (Int) -> Unit,
+        onToggleSort: () -> Unit,
+        onToggleAutoRefresh: () -> Unit,
+        onSaveLogs: () -> Unit,
+        onShareLogs: () -> Unit,
+        onRefresh: () -> Unit,
+        onToggleExpanded: (String) -> Unit,
+        onCopyEntry: (String) -> Unit,
+        onEnableLogs: () -> Unit,
+    ) {
+        activity.setFeatureContent {
+            LogContent(
+                presentation = presentation,
+                onBack = activity::finish,
+                onSelectPage = onSelectPage,
+                onToggleSort = onToggleSort,
+                onToggleAutoRefresh = onToggleAutoRefresh,
+                onSaveLogs = onSaveLogs,
+                onShareLogs = onShareLogs,
+                onRefresh = onRefresh,
+                onToggleExpanded = onToggleExpanded,
+                onCopyEntry = onCopyEntry,
+                onEnableLogs = onEnableLogs,
+            )
+        }
     }
 }

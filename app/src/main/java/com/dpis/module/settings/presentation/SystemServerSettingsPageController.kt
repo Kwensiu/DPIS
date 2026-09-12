@@ -1,7 +1,5 @@
 package com.dpis.module.settings.presentation
 
-import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -29,7 +27,7 @@ import com.dpis.module.R
 import com.dpis.module.settings.SettingsPresentationController
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.about.AboutActivity
-import com.dpis.module.backup.presentation.ConfigBackupCoordinator
+import com.dpis.module.backup.presentation.ConfigBackupHost
 import com.dpis.module.fonts.FontDebugDataDiagnostics
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
 import com.dpis.module.fonts.FontDebugOverlayService
@@ -50,13 +48,11 @@ import com.dpis.module.settings.SystemHookState
 import com.dpis.module.settings.SystemHooksToggleController
 import com.dpis.module.settings.SystemHooksToggleController.ScopeGateway
 import com.dpis.module.settings.ThemeSettingsActivity
-import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.settings.presentation.SettingsComposeDialogs.showBackupActions
+import com.dpis.module.settings.presentation.SettingsComposeDialogs.showInterfaceScale
 import com.dpis.module.ui.compose.FontDebugComposeSheet
 import com.dpis.module.ui.compose.FontDebugComposeSheet.show
-import com.dpis.module.ui.compose.LanguageDialogOption
-import com.dpis.module.ui.compose.SettingsComposeDialogs
-import com.dpis.module.ui.compose.SettingsComposeDialogs.showBackupActions
-import com.dpis.module.ui.compose.SettingsComposeDialogs.showInterfaceScale
+
 import com.dpis.module.ui.dialog.ConfirmDialog.show
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
@@ -96,7 +92,6 @@ class SystemServerSettingsPageController(
     @Volatile
     private var clearCacheInProgress = false
     private var lastCacheUsage = "0 B"
-    private var pendingImportUri: Uri? = null
     private var statsPreferences: SharedPreferences? = null
     private var selectedMode = FontDebugStatsStore.MODE_CHAIN
     private var selectedWindow = FontDebugStatsStore.WINDOW_ALL
@@ -104,6 +99,25 @@ class SystemServerSettingsPageController(
     private var fontDebugDialog: FontDebugComposeSheet.Handle? = null
     private var hooksToggleController: SystemHooksToggleController? = null
     private var composePresentationListener: SettingsPresentationController.Listener? = null
+    private val backupHost = ConfigBackupHost(
+        activity,
+        object : ConfigBackupHost.Port {
+            override fun configStore(): DpisConfigStore? = store
+            override fun isComposeSurface(): Boolean = root == null
+            override fun showToast(messageResId: Int) {
+                this@SystemServerSettingsPageController.showToast(messageResId)
+            }
+            override fun publishPresentationState() {
+                this@SystemServerSettingsPageController.publishPresentationState()
+            }
+            override fun onRestoreSucceeded() {
+                relaunchDpisTask()
+            }
+            override fun runOnUiThread(action: Runnable) {
+                this@SystemServerSettingsPageController.runOnUiThread(action)
+            }
+        },
+    )
 
     private val statsHandler = Handler(Looper.getMainLooper())
     private val statsRefreshRunnable: Runnable = object : Runnable {
@@ -155,7 +169,7 @@ class SystemServerSettingsPageController(
             launcherIconVisibilityStore.isHidden(), interfaceScaleStore.getPercent(),
             clearCacheInProgress, lastCacheUsage,
             getString(AppLocaleManager.selectedLabelResId(activity)),
-            pendingImportUri,
+            backupHost.pendingImportUri,
         )
     }
 
@@ -352,15 +366,11 @@ class SystemServerSettingsPageController(
     }
 
     fun confirmImportFromPresentation() {
-        val uri = pendingImportUri
-        pendingImportUri = null
-        importConfigBackup(uri)
-        publishPresentationState()
+        backupHost.confirmPendingImport()
     }
 
     fun dismissImportFromPresentation() {
-        pendingImportUri = null
-        publishPresentationState()
+        backupHost.dismissPendingImport()
     }
 
     fun clearCacheFromPresentation() {
@@ -407,24 +417,7 @@ class SystemServerSettingsPageController(
     }
 
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode != Activity.RESULT_OK || data == null || data.data == null) {
-            return
-        }
-        val uri = data.data
-        if (requestCode == REQUEST_EXPORT_CONFIG_BACKUP) {
-            exportConfigBackup(uri)
-            publishPresentationState()
-            return
-        }
-        if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
-            if (root == null) {
-                pendingImportUri = uri
-                publishPresentationState()
-            } else {
-                showImportBackupConfirmDialog(uri)
-            }
-            return
-        }
+        backupHost.onActivityResult(requestCode, resultCode, data)
     }
 
     private fun applyInsets() {
@@ -489,10 +482,6 @@ class SystemServerSettingsPageController(
 
     private fun startActivity(intent: Intent?) {
         activity.startActivity(intent)
-    }
-
-    private fun startActivityForResult(intent: Intent, requestCode: Int) {
-        activity.startActivityForResult(intent, requestCode)
     }
 
     private fun startService(intent: Intent?) {
@@ -795,101 +784,9 @@ class SystemServerSettingsPageController(
         }
         showBackupActions(
             activity,
-            { this.launchExportBackupPicker() },
-            { this.launchImportBackupPicker() })
-    }
-
-    private fun launchExportBackupPicker() {
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-            .addCategory(Intent.CATEGORY_OPENABLE)
-            .setType("application/json")
-            .putExtra(Intent.EXTRA_TITLE, buildBackupFileName())
-        try {
-            startActivityForResult(intent, REQUEST_EXPORT_CONFIG_BACKUP)
-        } catch (error: ActivityNotFoundException) {
-            showToast(R.string.config_backup_picker_failed)
-        }
-    }
-
-    private fun launchImportBackupPicker() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-            .addCategory(Intent.CATEGORY_OPENABLE)
-            .setType("*/*")
-            .putExtra(
-                Intent.EXTRA_MIME_TYPES, arrayOf(
-                    "application/json",
-                    "text/plain"
-                )
-            )
-        try {
-            startActivityForResult(intent, REQUEST_IMPORT_CONFIG_BACKUP)
-        } catch (error: ActivityNotFoundException) {
-            showToast(R.string.config_backup_picker_failed)
-        }
-    }
-
-    private fun showImportBackupConfirmDialog(uri: Uri?) {
-        show(
-            activity,
-            getString(R.string.config_backup_import_confirm_title),
-            getString(R.string.config_backup_import_confirm_message),
-            {
-                importConfigBackup(uri)
-                publishPresentationState()
-            },
-            { this.publishPresentationState() })
-    }
-
-    private fun exportConfigBackup(uri: Uri?) {
-        val localStore = store
-        if (localStore == null) {
-            showToast(R.string.status_save_requires_init)
-            return
-        }
-        Thread({
-            val result = ConfigBackupCoordinator(
-                activity.contentResolver, localStore, QuickTemplateStore(activity)
-            )
-                .export(uri)
-            runOnUiThread {
-                if (result.isSuccess()) {
-                    showToast(R.string.config_backup_export_success)
-                    publishPresentationState()
-                    return@runOnUiThread
-                }
-                showToast(R.string.config_backup_export_failed)
-                publishPresentationState()
-            }
-        }, "dpis-config-backup-export").start()
-    }
-
-    private fun importConfigBackup(uri: Uri?) {
-        val localStore = store
-        if (localStore == null) {
-            showToast(R.string.status_save_requires_init)
-            return
-        }
-        Thread({
-            val result = ConfigBackupCoordinator(
-                activity.contentResolver, localStore, QuickTemplateStore(activity)
-            )
-                .restore(uri)
-            runOnUiThread {
-                if (!result.isSuccess()) {
-                    showToast(
-                        if (result.code == ConfigBackupCoordinator.Code.INVALID_FILE)
-                            R.string.config_backup_import_invalid
-                        else
-                            R.string.config_backup_import_failed
-                    )
-                    publishPresentationState()
-                    return@runOnUiThread
-                }
-                showToast(R.string.config_backup_import_success)
-                publishPresentationState()
-                relaunchDpisTask()
-            }
-        }, "dpis-config-backup-import").start()
+            { backupHost.launchExportPicker() },
+            { backupHost.launchImportPicker() },
+        )
     }
 
     private fun relaunchDpisTask() {
@@ -1028,14 +925,6 @@ class SystemServerSettingsPageController(
                 isChecked
             )
         }
-    }
-
-    private fun buildBackupFileName(): String {
-        return String.format(
-            Locale.US,
-            $$"dpis-backup-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS.json",
-            Date()
-        )
     }
 
     private fun showFontDebugDialog(anchor: View?) {
@@ -1514,8 +1403,6 @@ class SystemServerSettingsPageController(
 
     companion object {
         private const val STATS_REFRESH_INTERVAL_MS = 500L
-        private const val REQUEST_EXPORT_CONFIG_BACKUP = 1001
-        private const val REQUEST_IMPORT_CONFIG_BACKUP = 1002
         private const val CLEAR_CACHE_MIN_DISABLED_MS = 300L
 
         private fun sleepUntilMinDisabledElapsed(startedAt: Long) {

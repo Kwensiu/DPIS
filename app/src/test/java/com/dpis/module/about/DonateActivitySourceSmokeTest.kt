@@ -10,22 +10,24 @@ class DonateActivitySourceSmokeTest {
     @Test
     @Throws(IOException::class)
     fun donateEntrypointsPreserveActivityContractAndComposePresentation() {
-        val source = read("src/main/java/com/dpis/module/home/DonateActivity.java")
+        val source = read("src/main/java/com/dpis/module/home/DonateActivity.kt")
         val compose =
-            read("src/main/java/com/dpis/module/about/presentation/SupportPages.kt")
-        val cards = read("src/main/java/com/dpis/module/about/presentation/SupportCards.kt")
-        val activityContent =
-            read("src/main/java/com/dpis/module/about/presentation/SupportActivityContent.kt")
+            read("src/main/java/com/dpis/module/home/presentation/DonateContent.kt")
+        val cards = compose
+        val activityContent = compose
         val manifest = read("src/main/AndroidManifest.xml")
         val homeState = read("src/main/java/com/dpis/module/home/HomeWorkspaceState.kt")
         val settingsController =
             read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val homeSession = read(
+            "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceSession.kt"
+        )
 
-        assertTrue(source.contains("static Intent createIntent(Context context)"))
-        assertTrue(source.contains("return new Intent(context, DonateActivity.class);"))
-        assertTrue(source.contains("SupportActivityContent.installDonate(this);"))
-        assertTrue(activityContent.contains("fun installDonate(activity: ComponentActivity)"))
+        assertTrue(source.contains("fun createIntent(context: Context)"))
+        assertTrue(source.contains("Intent(context, DonateActivity::class.java)"))
+        assertTrue(source.contains("installDonate()"))
+        assertTrue(activityContent.contains("fun ComponentActivity.installDonate()"))
         assertTrue(compose.contains("fun DonateSupportPage(onBack: () -> Unit)"))
         assertTrue(compose.contains("DonateSupportPage"))
         assertTrue(cards.contains("ModalBottomSheet(") || compose.contains("ModalBottomSheet("))
@@ -62,7 +64,7 @@ class DonateActivitySourceSmokeTest {
         assertTrue(manifest.contains("android:name=\".home.DonateActivity\""))
         assertTrue(homeState.contains("fun openDonate()"))
         assertTrue(settingsController.contains("DonateActivity.createIntent(activity)"))
-        assertTrue(mainActivity.contains("DonateActivity.createIntent(MainActivity.this)"))
+        assertTrue(homeSession.contains("DonateActivity.createIntent(activity)"))
         assertFalse(mainActivity.contains("MainStandaloneRoute"))
     }
 

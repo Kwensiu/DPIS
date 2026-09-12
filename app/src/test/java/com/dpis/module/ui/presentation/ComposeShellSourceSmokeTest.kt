@@ -26,7 +26,6 @@ class ComposeShellSourceSmokeTest {
         val shell = read("src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt")
         val adapter = read("src/main/java/com/dpis/module/ui/MainComposeWorkspaceAdapter.java")
         val mainShell = read("src/main/java/com/dpis/module/ui/MainComposeWorkspaceShell.kt")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read("src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
 
         // Keep this smoke test limited to stable ownership and routing contracts. Detailed
@@ -39,7 +38,10 @@ class ComposeShellSourceSmokeTest {
         assertTrue(adapter.contains("MainUiState.WorkspaceMode"))
         assertTrue(mainShell.contains("MainUiAction.workspaceModeChanged"))
         assertTrue(mainShell.contains("MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode)"))
-        assertTrue(mainActivity.contains("installComposeWorkspaceShell()"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("mainWorkspaceSession.installComposeWorkspaceShell()"))
         assertTrue(coordinator.contains("ComposeWorkspaceSurface"))
         assertTrue(coordinator.contains("TemplateWorkspaceContent"))
     }
@@ -68,9 +70,10 @@ class ComposeShellSourceSmokeTest {
         assertTrue(home.contains(".clip(CircleShape)"))
         assertTrue(home.contains("PageBarBehavior.Collapsing"))
         assertTrue(home.contains("ToolbarIconButton("))
-        assertTrue(home.contains("collapsedTitle = {"))
+        assertTrue(home.contains("subtitle = {"))
         assertTrue(home.contains("stringResource(R.string.app_name)"))
-        assertTrue(home.contains("contentPadding = PaddingValues("))
+        assertTrue(home.contains("home_workspace_subtitle"))
+        assertTrue(home.contains("bodyInsets = padding"))
         assertTrue(tools.contains("rememberClickAction"))
         assertTrue(tools.contains("SystemFontScaleBadge(state)"))
         assertTrue(tools.contains("if (!state.canWrite && !state.unavailable)"))
@@ -80,10 +83,12 @@ class ComposeShellSourceSmokeTest {
         assertTrue(tools.contains("SystemFontScaleToolState.normalizeSliderPercent(it)"))
         assertTrue(tools.contains("LocalDensity provides Density(displayDensity.density, fontScale = 1f)"))
         assertTrue(tools.contains("PageBarBehavior.Collapsing"))
-        assertTrue(tools.contains("contentCanScroll = contentCanScroll"))
-        assertTrue(tools.contains("listState.canScrollForward || listState.canScrollBackward"))
+        assertTrue(tools.contains("bodyInsets = padding"))
+        assertTrue(tools.contains("listState = listState"))
         assertFalse(tools.contains("TopAppBar("))
         assertTrue(settings.contains("PageBarBehavior.Collapsing"))
+        assertTrue(settings.contains("bodyInsets = padding"))
+        assertTrue(home.contains("bodyInsets = padding"))
         assertFalse(settings.contains("TopAppBar("))
         assertTrue(home.contains("rememberClickAction"))
     }
@@ -98,13 +103,43 @@ class ComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/settings/presentation/ExperimentalSettingsContent.kt")
 
         assertTrue(scaffold.contains("internal fun SecondaryPageScaffold("))
-        assertTrue(scaffold.contains("internal fun PrimaryPageScaffold("))
+        assertFalse(scaffold.contains("internal fun PrimaryPageScaffold("))
+        assertTrue(scaffold.contains("startCollapsed = true"))
+        assertTrue(scaffold.contains("startCollapsed: Boolean = false"))
         assertTrue(scaffold.contains("contentColor = MaterialTheme.colorScheme.onSurface"))
         assertTrue(topBar.contains("internal fun CollapsingPageTopBar("))
-        assertTrue(topBar.contains("TwoRowsTopAppBar("))
-        assertTrue(topBar.contains("MaterialTheme.typography.expandedPageTitle"))
+        assertTrue(topBar.contains("LargeFlexibleTopAppBar("))
+        assertTrue(topBar.contains("pageExpandedSubtitleStyle()"))
+        assertTrue(topBar.contains("pageCompactTitleStyle()"))
+        assertTrue(topBar.contains("pageTitleStart()"))
+        assertTrue(topBar.contains("startInset = !includeHorizontalSafeInsets"))
+        assertTrue(topBar.contains("pageTopBarWindowInsets(includeHorizontalSafeInsets)"))
+        assertTrue(topBar.contains("Spacer(Modifier.size(PageChromeTokens.ContentInset))"))
+        assertTrue(scaffold.contains("pageHorizontalSafePadding(onBack != null)"))
+        assertTrue(topBar.contains("internal fun SplitPaneHeader("))
+        assertTrue(topBar.contains("PageChromeTokens.CompactSlotHeight"))
+        assertTrue(scaffold.contains("PageChromeTokens.ContentInset"))
+        assertTrue(scaffold.contains("PageChromeTokens.ItemSpacing"))
+        assertFalse(topBar.contains("drawEdgeOcclusionFade("))
+        assertTrue(scaffold.contains("exitUntilCollapsedScrollBehavior("))
+        assertTrue(scaffold.contains("nestedScroll(scrollBehavior.nestedScrollConnection)"))
+        assertFalse(scaffold.contains("PAGE_EXPANDED_TITLE_KEY"))
+        assertFalse(scaffold.contains("PageCollapseScrollConnection"))
+        assertFalse(theme.contains("pageExpandedTitle()"))
+        assertFalse(theme.contains("rememberPageListState()"))
         assertFalse(topBar.contains("fontSize = 34.sp"))
         assertTrue(topBar.contains("internal fun InFlowPageHeader("))
+        val appWorkspace = read("src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
+        val templateWorkspace = read(
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
+        assertFalse(appWorkspace.contains("SplitPaneHeader("))
+        assertTrue(appWorkspace.contains("PageChromeTokens.SearchCardHeight"))
+        assertTrue(appWorkspace.contains("extraTopPadding = topSafePadding"))
+        assertFalse(templateWorkspace.contains("SplitPaneHeader("))
+        assertTrue(templateWorkspace.contains("topSafePadding = topSafePadding"))
+        assertTrue(read(
+                "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt")
+            .contains("SplitPaneHeader("))
         assertTrue(toolbar.contains("internal fun ToolbarIconButton("))
         assertTrue(toolbar.contains("internal fun ToolbarOverflowMenu("))
         assertTrue(toolbar.contains("internal fun ToolbarOverflowMenuGroup("))
@@ -117,7 +152,7 @@ class ComposeShellSourceSmokeTest {
     @Test
     fun themeSettingsExpandsStaticColorOptionsWhenDynamicColorIsDisabled() {
         val theme = read("src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt")
-        val support = read("src/main/java/com/dpis/module/about/presentation/SupportActivityContent.kt")
+        val support = read("src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt")
         val colors = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeDesignSystem.kt")
 
         assertTrue(theme.contains("ThemeDynamicColorRow("))
@@ -143,11 +178,11 @@ class ComposeShellSourceSmokeTest {
         assertTrue(theme.contains("SegmentedListItem("))
         assertTrue(theme.contains("shapes = dpisSegmentedShapes(index, total)"))
         assertTrue(theme.contains("rememberSegmentedPressedShape("))
-        assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(activity, enabled)"))
+        assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(this@installThemeSettings, enabled)"))
         assertTrue(support.contains("dynamicColorEnabled = enabled"))
         assertTrue(support.contains("var mode by remember"))
         assertTrue(support.contains("ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme())"))
-        assertTrue(support.contains("activity.markAppearanceAppliedInPlace()"))
+        assertTrue(support.contains("markAppearanceAppliedInPlace()"))
         assertFalse(support.substringAfter("onModeSelected = { selectedMode ->")
             .substringBefore("onDynamicColorChanged")
             .contains("activity.recreate()"))
@@ -235,9 +270,10 @@ class ComposeShellSourceSmokeTest {
         assertTrue(emptyCopy.contains("contentAlignment = Alignment.Center"))
         assertTrue(emptyCopy.contains("Modifier.fillParentMaxSize()"))
         assertFalse(emptyCopy.contains("Alignment.CenterStart"))
+        assertTrue(tokens.contains("PageChromeTokens.SearchCardHeight"))
         assertTrue(tokens.contains("val WorkspaceTopPadding = 14.dp"))
-        assertTrue(tokens.contains("val SectionTitleInset = 12.dp"))
-        assertTrue(tokens.contains("val SectionActionInset = 12.dp"))
+        assertTrue(tokens.contains("val SectionTitleInset = PageChromeTokens.TitleInset"))
+        assertTrue(tokens.contains("val SectionActionInset = PageChromeTokens.TitleInset"))
         assertTrue(tokens.contains("val HeaderActionVisualSize = 36.dp"))
         assertTrue(tokens.contains("val CardActionVisualSize = 28.dp"))
         assertTrue(tokens.contains("val ApplyActionVisualSize = CardActionVisualSize"))
@@ -275,18 +311,22 @@ class ComposeShellSourceSmokeTest {
 
     @Test
     fun composeAppEditorRestoreDoesNotOpenLegacySheet() {
-        val activity = read("src/main/java/com/dpis/module/MainActivity.java")
-        val restoreStart = activity.indexOf(
-                "private void restoreAppEditorForCurrentWorkspace()")
-        val restoreEnd = activity.indexOf(
-                "private void applyLandscapeDetailVisibility", restoreStart)
-        val restore = activity.substring(restoreStart, restoreEnd)
+        val workspace = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
+        )
+        val restoreStart = workspace.indexOf(
+            "fun restoreAppEditorForCurrentWorkspace()"
+        )
+        val restoreEnd = workspace.indexOf(
+            "fun bindForLifecycle(", restoreStart
+        )
+        val restore = workspace.substring(restoreStart, restoreEnd)
 
         val composeGuard = restore.indexOf("if (composeShellHost != null)")
-        val legacySheet = restore.indexOf("showEditBottomSheet(appItem)")
+        val legacySheet = restore.indexOf("shell.appConfigSheetSession().show(appItem)")
         assertTrue(composeGuard >= 0)
         assertTrue(legacySheet > composeGuard)
-        assertTrue(restore.substring(composeGuard, legacySheet).contains("return"));
+        assertTrue(restore.substring(composeGuard, legacySheet).contains("return"))
     }
 
     @Test
@@ -442,12 +482,15 @@ class ComposeShellSourceSmokeTest {
         assertTrue(appOverlay.contains("onReturnToMain"))
         assertTrue(appOverlay.contains("bottomSheetState.partialExpand()"))
         assertTrue(viewModel.contains("var editingDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("mainViewModel.getEditingDestination()"))
-        assertTrue(activity.contains("retainedState.editingDestination"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("viewModel?.editingDestination"))
+        assertTrue(startup.contains("retained.editingDestination"))
         assertTrue(templates.contains("val editorDestination = state.editorDestination"))
         assertTrue(templatePresentation.contains(
                 "val editorDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("retainedState.workspaceSessionState"))
+        assertTrue(startup.contains("retained.workspaceSessionState"))
         assertTrue(templatePresentation.contains("val editorDestination: ConfigEditorDestination"))
         assertTrue(activity.contains("ensureWorkspaceSession().saveState(outState)"))
         assertTrue(templates.contains("HookChainEditorPage("))

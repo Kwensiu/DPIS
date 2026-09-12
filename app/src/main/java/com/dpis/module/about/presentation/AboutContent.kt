@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -27,7 +27,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
 import com.dpis.module.R
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.WearAboutContent
+import com.dpis.module.ui.compose.setFeatureContent
+import com.dpis.module.ui.compose.SecondaryPageScaffold
+
+import com.dpis.module.ui.compose.dpisSegmentedShapes
+import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.compose.rememberClickAction
 
 @Composable
 fun AboutContent(
@@ -45,18 +55,7 @@ fun AboutContent(
         modifier = modifier.fillMaxSize(),
         titleRes = R.string.about_title,
         onBack = onBack,
-    ) { contentPadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = contentPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = contentPadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp)
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    ) {
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -133,7 +132,6 @@ fun AboutContent(
                     )
                 }
             }
-        }
     }
 }
 
@@ -185,5 +183,40 @@ private fun AboutContentPreview() {
             onOpenFeedback = {},
             onOpenLicenses = {}
         )
+    }
+}
+
+fun ComponentActivity.installAbout(
+    versionText: String,
+    showDebugUpdateEntry: Boolean,
+    onCheckUpdates: Runnable,
+    onShowDebugUpdate: Runnable,
+    onOpenSource: Runnable,
+    onOpenFeedback: Runnable,
+    onOpenLicenses: Runnable,
+) {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installAbout)) {
+            WearAboutContent(
+                versionText = versionText,
+                showDebugUpdateEntry = showDebugUpdateEntry,
+                onCheckUpdates = onCheckUpdates::run,
+                onShowDebugUpdate = onShowDebugUpdate::run,
+                onOpenSource = onOpenSource::run,
+                onOpenFeedback = onOpenFeedback::run,
+                onOpenLicenses = onOpenLicenses::run,
+            )
+        } else {
+            AboutContent(
+                versionText = versionText,
+                showDebugUpdateEntry = showDebugUpdateEntry,
+                onBack = ::finish,
+                onCheckUpdates = onCheckUpdates::run,
+                onShowDebugUpdate = onShowDebugUpdate::run,
+                onOpenSource = onOpenSource::run,
+                onOpenFeedback = onOpenFeedback::run,
+                onOpenLicenses = onOpenLicenses::run,
+            )
+        }
     }
 }

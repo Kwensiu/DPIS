@@ -3,7 +3,6 @@ package com.dpis.module
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.config.DpisConfigStore
 
@@ -12,9 +11,14 @@ class RuntimeConfigDeliverySourceTest {
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
         val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
         val templateWorkspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val templateHost = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt")
-        val appConfigHost = hostBlock(mainActivity)
+        val appConfigHost = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+        )
         val sheetActions = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.kt")
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
@@ -29,18 +33,20 @@ class RuntimeConfigDeliverySourceTest {
                 "RuntimeConfigDelivery.setLocalSnapshotReloader(Runnable { reloadConfigStore() })",
         ))
         assertTrue(mainActivity.contains("public void onRuntimeConfigSaved()"))
-        assertTrue(mainActivity.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave();"))
-        assertTrue(mainActivity.contains("private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi("))
-        assertTrue(mainActivity.contains("AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync("))
-        assertTrue(mainActivity.contains("return finalizeAppConfigSaveWithRuntimeSync("))
-        assertTrue(mainActivity.contains("scheduleRuntimePropertiesForTargetLaunch(packageName);"))
-        assertTrue(mainActivity.contains("void syncRuntimePropertiesForTargetLaunch(String packageName)"))
-        assertTrue(mainActivity.contains("ViewportPropertySyncer.syncTarget(packageName, store);"))
-        assertTrue(mainActivity.contains("FontRuntimePropertySyncer.syncTarget(packageName, store);"))
-        assertTrue(mainActivity.contains("new ProcessActionHandler("))
-        assertTrue(mainActivity.contains("this::syncRuntimePropertiesForTargetLaunch"))
-        assertTrue(appConfigHost.contains("public void onRuntimeConfigSaved()"))
-        assertTrue(appConfigHost.contains("MainActivity.this.onRuntimeConfigSaved();"))
+        assertTrue(mainActivity.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))
+        assertTrue(runtimeLaunch.contains("fun onRuntimeConfigSaved()"))
+        assertTrue(runtimeLaunch.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
+        assertTrue(runtimeLaunch.contains("private fun finalizeAppConfigSaveWithWechatDpi("))
+        assertTrue(runtimeLaunch.contains("fun finalizeAppConfigSaveWithRuntimeSync("))
+        assertTrue(appConfigHost.contains("activity.finalizeAppConfigSaveWithRuntimeSync("))
+        assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(runtimeLaunch.contains("fun syncRuntimePropertiesForTargetLaunch(packageName: String?)"))
+        assertTrue(runtimeLaunch.contains("ViewportPropertySyncer.syncTarget(packageName, store)"))
+        assertTrue(runtimeLaunch.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
+        assertTrue(runtimeLaunch.contains("ProcessActionHandler("))
+        assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(appConfigHost.contains("override fun onRuntimeConfigSaved()"))
+        assertTrue(appConfigHost.contains("activity.onRuntimeConfigSaved()"))
         assertTrue(sheetActions.contains("val result = host.saveAppConfig("))
         assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
         assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
@@ -58,11 +64,6 @@ class RuntimeConfigDeliverySourceTest {
 
         assertTrue(activeFontFactory.contains("return createLocalFontLibraryStore(context);"))
         assertFalse(activeFontFactory.contains("getRemotePreferences"))
-    }
-
-    private fun hostBlock(source: String): String {
-        val start = source.indexOf("public AppConfigSaveHandler.Result saveAppConfig(")
-        return source.substring(start, source.indexOf("public void onDraftStateChanged", start))
     }
 
     private fun activeFontLibraryFactoryBlock(source: String): String {

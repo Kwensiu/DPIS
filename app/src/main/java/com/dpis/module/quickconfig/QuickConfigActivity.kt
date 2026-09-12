@@ -67,9 +67,9 @@ import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.SystemScopeCoordinator
-import com.dpis.module.ui.compose.QuickConfigDialog
-import com.dpis.module.ui.compose.QuickConfigPresentation
-import com.dpis.module.ui.compose.SupportActivityContent
+import com.dpis.module.quickconfig.presentation.QuickConfigDialog
+import com.dpis.module.quickconfig.presentation.QuickConfigPresentation
+import com.dpis.module.quickconfig.presentation.installQuickConfig
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertySyncer
 import com.google.android.material.textfield.TextInputEditText
@@ -122,7 +122,7 @@ class QuickConfigActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presentation = QuickConfigPresentation()
-        SupportActivityContent.installQuickConfig(this, presentation!!)
+        installQuickConfig(presentation!!)
 
         val retainedSession = lastCustomNonConfigurationInstance as QuickConfigEditorSession?
         if (retainedSession != null) {

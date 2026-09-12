@@ -3,510 +3,161 @@ package com.dpis.module;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Process;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.compose.ui.platform.ComposeView;
-import androidx.core.view.ViewCompat;
+
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
-import com.dpis.module.appconfig.AppConfigDialogCoordinator;
-import com.dpis.module.appconfig.AppConfigInputValidation;
-import com.dpis.module.appconfig.AppConfigPrefillPreview;
+
 import com.dpis.module.appconfig.AppConfigSaveHandler;
 
 import com.dpis.module.appconfig.EditorDraft;
-import com.dpis.module.appconfig.EditorPresentation;
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder;
-import com.dpis.module.appconfig.WechatDpiConfig;
+
 import com.dpis.module.applist.AppListFilterState;
-import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
-import com.dpis.module.applist.InstalledAppCatalogCoordinator;
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
-import com.dpis.module.fonts.FontApplyMode;
-import com.dpis.module.fonts.FontLibraryActivity;
-import com.dpis.module.fonts.HyperOsNativeAppDetector;
-import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
-import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
+import com.dpis.module.applist.ScopeState;
+import com.dpis.module.applist.presentation.AppListFilterSession;
+import com.dpis.module.applist.presentation.AppListFilterShell;
+import com.dpis.module.applist.presentation.InstalledAppsLoadSession;
+import com.dpis.module.applist.presentation.InstalledAppsLoadShell;
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
-import com.dpis.module.home.DonateActivity;
-import com.dpis.module.home.HomeActivationStateResolver;
+
 import com.dpis.module.home.HomeUpdateUiState;
-import com.dpis.module.home.HomeWorkspaceActions;
-import com.dpis.module.home.HomeWorkspaceLayout;
-import com.dpis.module.home.HomeWorkspaceLayoutStore;
 import com.dpis.module.home.HomeWorkspaceState;
-import com.dpis.module.settings.PageSettingsStore;
-import com.dpis.module.home.ModeHelpActivity;
-import com.dpis.module.hooks.HookDomainOverride;
-import com.dpis.module.hooks.HookDomainOverrideStore;
-import com.dpis.module.process.presentation.ProcessActionConfirm;
-import com.dpis.module.process.presentation.ProcessActionHandler;
+import com.dpis.module.home.presentation.HomeWorkspaceSession;
+import com.dpis.module.home.presentation.HomeWorkspaceShell;
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
-import com.dpis.module.quirks.WechatDpiEditor;
-import com.dpis.module.quirks.presentation.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
-import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
-import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-import com.dpis.module.settings.StartupDisclaimerStore;
+import com.dpis.module.runtime.presentation.RuntimeLaunchSession;
+import com.dpis.module.runtime.presentation.RuntimeLaunchShell;
+
 import com.dpis.module.settings.presentation.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
-import com.dpis.module.templates.TemplateWorkspacePresentationSource;
-import com.dpis.module.ui.DialogWindowSizer;
-import com.dpis.module.ui.TouchFeedbackBinder;
-import com.dpis.module.ui.WatchUiMode;
-import com.dpis.module.ui.WatchWorkspaceChromeBinder;
-import com.dpis.module.ui.WindowInsetsBinder;
-import com.dpis.module.ui.compose.AppFilterComposeSheet;
-import com.dpis.module.updates.GitHubReleaseNotesFetcher;
-import com.dpis.module.updates.ReleaseNotesCacheStore;
-import com.dpis.module.updates.ReleaseNotesController;
-import com.dpis.module.updates.StartupUpdateCheckCoordinator;
-import com.dpis.module.updates.StartupUpdateCheckOnce;
-import com.dpis.module.updates.StartupUpdateDownloadExecutor;
-import com.dpis.module.updates.StartupUpdateManifest;
-import com.dpis.module.updates.presentation.StartupUpdatePackageHandler;
-import com.dpis.module.updates.presentation.UpdateAvailableDialog;
-import com.dpis.module.updates.UpdateCoordinator;
-import com.dpis.module.updates.presentation.UpdateDownloadCoordinator;
-import com.dpis.module.updates.presentation.UpdatePromptDialogCoordinator;
-import com.dpis.module.updates.UpdatePromptRequest;
-import com.dpis.module.updates.UpdateStateStore;
-import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.updates.presentation.MainUpdateSession;
 import com.dpis.module.viewport.ViewportPropertySyncer;
-import com.dpis.module.viewport.ViewportTargetSpec;
-import com.dpis.module.viewport.ViewportTargetType;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.button.MaterialButton;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.File;
-import java.util.ArrayList;
+
+
+
 import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import io.github.libxposed.service.XposedService;
-import kotlin.Unit;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
-import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
-import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
-import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions;
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
+import com.dpis.module.ui.presentation.MainHostWiringSession;
+import com.dpis.module.ui.presentation.MainHostWiringShell;
+import com.dpis.module.ui.presentation.MainStartupSession;
+import com.dpis.module.ui.presentation.MainWorkspaceSession;
+import com.dpis.module.ui.presentation.MainWorkspaceShell;
+import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
+import com.dpis.module.appconfig.presentation.AppConfigSheetSession;
+import com.dpis.module.appconfig.presentation.AppConfigSheetShell;
+import com.dpis.module.appconfig.presentation.EditorDraftSession;
+import com.dpis.module.appconfig.presentation.EditorDraftShell;
+
+import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
+import com.dpis.module.appconfig.landdetail.LandAppDetailShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
-import com.dpis.module.applist.AppWorkspacePresentation;
 import com.dpis.module.applist.AppWorkspace;
-import com.dpis.module.ui.ConfigEditorDestination;
-import com.dpis.module.runtime.ConfigStoreFactory;
+
 import com.dpis.module.config.DpisConfigStore;
-import com.dpis.module.diagnostics.DpisLog;
+
 import com.dpis.module.settings.LocalizedActivity;
-import com.dpis.module.diagnostics.LogActivity;
+
 import com.dpis.module.ui.MainUiAction;
 import com.dpis.module.ui.MainUiState;
 import com.dpis.module.ui.MainViewModel;
 import com.dpis.module.appconfig.editor.ComposeAppEditorController;
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow;
-import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator;
+
 
 public final class MainActivity
         extends LocalizedActivity
         implements DpisApplication.ServiceStateListener {
 
-    private static final long WORKSPACE_TRANSITION_DURATION_MS = 300L;
-    private static final float WORKSPACE_CONTENT_ENTER_START_SCALE = 0.96f;
-    private static final AccelerateDecelerateInterpolator
-            WORKSPACE_CONTENT_ENTER_INTERPOLATOR =
-                    new AccelerateDecelerateInterpolator();
-    private static final String STATE_CURRENT_QUERY = "state.current_query";
-    private static final String STATE_TEMPLATE_QUERY = "state.template_query";
-    private static final String STATE_CURRENT_PAGE = "state.current_page";
-    private static final String STATE_WORKSPACE_MODE = "state.workspace_mode";
-    private static final String STATE_FILTER_SHOW_SYSTEM
-            = "state.filter.show_system";
-    private static final String STATE_FILTER_INJECTED_ONLY
-            = "state.filter.injected_only";
-    private static final String STATE_FILTER_WIDTH_ONLY
-            = "state.filter.width_only";
-    private static final String STATE_FILTER_FONT_ONLY
-            = "state.filter.font_only";
-    private static final String STATE_FILTER_DISABLED_ONLY
-            = "state.filter.disabled_only";
-    private static final String STATE_FILTER_TYPEFACE_ONLY
-            = "state.filter.typeface_only";
-    private static final String STATE_FILTER_HOOK_ONLY
-            = "state.filter.hook_only";
-    private static final String STATE_FILTER_APP_TYPE = "state.filter.app_type";
-    private static final String STATE_FILTER_SORT_ORDER = "state.filter.sort_order";
-    private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
-    private static final String STATE_REFRESHING_PAGES
-            = "state.refreshing_pages";
-    private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
-    private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
-    private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
-    private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
-    private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
-    private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
-            = "com.android.permission.GET_INSTALLED_APPS";
-    private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
-
-
-    private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
-    private final StartupUpdateDownloadExecutor startupUpdateDownloadExecutor
-            = new StartupUpdateDownloadExecutor(
-                    UPDATE_CONNECT_TIMEOUT_MS,
-                    UPDATE_READ_TIMEOUT_MS,
-                    DOWNLOAD_BUFFER_SIZE,
-                    DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS
-            );
-    private UpdateStateStore updateStateStore;
-    private UpdateDownloadCoordinator updateDownloadCoordinator;
+    private final MainUpdateSession updateSession
+            = new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible);
     private final WechatDpiHelp wechatDpiHelp
             = new WechatDpiHelp(this, this::composeShell);
-    private final ProcessActionHandler processActionHandler
-            = new ProcessActionHandler(
-                    this,
-                    this::syncRuntimePropertiesForTargetLaunch,
-                    new ProcessActionConfirm(this, this::composeShell));
+    private final RuntimeLaunchSession runtimeLaunchSession
+            = new RuntimeLaunchSession(new RuntimeLaunchShell(this));
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
-    private FeedbackDiagnosticActivitySession feedbackDiagnostic;
-    private final StartupUpdatePackageHandler startupUpdatePackageHandler
-            = new StartupUpdatePackageHandler(this);
-    private final ExecutorService startupUpdateExecutor
-            = Executors.newSingleThreadExecutor();
     private final SystemScopeCoordinator systemScopeCoordinator
             = new SystemScopeCoordinator(createSystemScopeHost());
-    private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
-            = new InstalledAppCatalogCoordinator(
-                    createInstalledAppCatalogHost(),
-                    INSTALLED_APP_CATALOG_TTL_MS
+    private final AppConfigDialogActivityHost appConfigDialogHost
+            = new AppConfigDialogActivityHost(
+                    this,
+                    appConfigSaveHandler,
+                    systemScopeCoordinator
             );
-    private final StartupUpdateCheckCoordinator startupUpdateCheckCoordinator
-            = new StartupUpdateCheckCoordinator(
-                    createStartupUpdateCheckHost(),
-                    updateCoordinator,
-                    UPDATE_CONNECT_TIMEOUT_MS,
-                    UPDATE_READ_TIMEOUT_MS
+    private final LandAppDetailSession landAppDetailSession
+            = new LandAppDetailSession(
+                    new LandAppDetailShell(this),
+                    appConfigSaveHandler,
+                    systemScopeCoordinator,
+                    appConfigDialogHost
             );
-    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator;
-    private ReleaseNotesController releaseNotesController;
-    private AppListFilterStateStore appListFilterStateStore;
+    private final AppConfigSheetSession appConfigSheetSession
+            = new AppConfigSheetSession(
+                    new AppConfigSheetShell(this),
+                    appConfigDialogHost
+            );
+    private final EditorDraftSession editorDraftSession
+            = new EditorDraftSession(
+                    new EditorDraftShell(this),
+                    appConfigDialogHost
+            );
+    private final InstalledAppsLoadSession installedAppsLoadSession
+            = new InstalledAppsLoadSession(new InstalledAppsLoadShell(this));
+    private final AppListFilterSession appListFilterSession
+            = new AppListFilterSession(new AppListFilterShell(this));
+    private final MainWorkspaceSession mainWorkspaceSession
+            = new MainWorkspaceSession(new MainWorkspaceShell(this));
+    private final HomeWorkspaceSession homeWorkspaceSession
+            = new HomeWorkspaceSession(new HomeWorkspaceShell(this));
+    private final MainHostWiringSession hostWiringSession
+            = new MainHostWiringSession(new MainHostWiringShell(this));
+    private final MainStartupSession startupSession
+            = new MainStartupSession(
+                    this,
+                    updateSession,
+                    hostWiringSession,
+                    mainWorkspaceSession
+            );
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
 
-    private MainViewModel mainViewModel;
-    private ComposeAppEditorController composeAppEditorController;
-    private ComposeAppEditorSaveWorkflow composeAppEditorSaveWorkflow;
-    private MainComposeShellHost composeShellHost;
-    private View topContainer;
-    private View toolsWorkspaceContainer;
-    private View settingsWorkspaceContainer;
-    private View landDetailPane;
-    private View landDetailDivider;
-    private View landDetailEmptyView;
-    private FrameLayout landDetailContent;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private TemplateWorkspaceActivitySession workspaceSession;
-    private ToolsWorkspace toolsWorkspace;
-    private AppWorkspace appWorkspace;
-    private SettingsWorkspaceSession settingsWorkspaceSession;
     private boolean cachedSystemHookEffectiveEnabled;
-    private boolean skipNextImmediateServiceReload;
-    private boolean installedAppsPermissionRequestInFlight;
-    private boolean pendingInstalledAppsLoadAfterPermission;
-    private boolean installedAppsPermissionRequestCompleted;
-    private MainUiState.WorkspaceMode renderedWorkspaceMode;
-    private HomeUpdateUiState homeUpdateUiState = HomeUpdateUiState.UP_TO_DATE;
-    private volatile boolean startupUpdateCheckInProgress;
-    private volatile boolean startupUpdateDownloadInProgress;
-    private volatile boolean startupUpdateDownloadCancelRequested;
-    // A visible update prompt is user work, so retain it across a configuration change.
-    private UpdatePromptRequest pendingUpdatePrompt;
-    private View activeEditorRoot;
-    private String activeEditorPackageName;
-    private BottomSheetDialog activeAppEditorDialog;
-    private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
         refreshSystemHookEffectiveEnabled();
-
-        updateStateStore = new UpdateStateStore(this);
-        updateDownloadCoordinator = new UpdateDownloadCoordinator(
-                createUpdateDownloadHost(),
-                updateCoordinator,
-                startupUpdateDownloadExecutor,
-                startupUpdateExecutor
-        );
-        releaseNotesController = new ReleaseNotesController(
-                new ReleaseNotesCacheStore(this),
-                startupUpdateExecutor,
-                this::runOnUiThread,
-                GitHubReleaseNotesFetcher::fetchByVersionName,
-                System::currentTimeMillis,
-                UPDATE_CONNECT_TIMEOUT_MS,
-                UPDATE_READ_TIMEOUT_MS
-        );
-        appListFilterStateStore = new AppListFilterStateStore(this);
-
-        RetainedState retainedState
-                = (RetainedState) getLastCustomNonConfigurationInstance();
-        feedbackDiagnostic = new FeedbackDiagnosticActivitySession(
-                new FeedbackDiagnosticShell(this),
-                retainedState != null ? retainedState.feedbackDiagnostic : null
-        );
-        String initialQuery = "";
-        String initialTemplateQuery = "";
-        TemplateWorkspaceActivitySession.State initialWorkspaceSessionState = null;
-        AppListFilterState initialFilterState = appListFilterStateStore.load();
-        MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.valueOf(
-                PageSettingsStore.getDefaultStartupPage(this)
-        );
-        List<AppListItem> initialAppsSnapshot = Collections.emptyList();
-        Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(
-                AppListPage.class
-        );
-        if (retainedState != null) {
-            initialQuery = retainedState.query;
-            initialTemplateQuery = retainedState.templateQuery;
-            initialFilterState = retainedState.filterState;
-            initialWorkspaceMode = retainedState.workspaceMode;
-            initialWorkspaceSessionState = retainedState.workspaceSessionState;
-            pendingUpdatePrompt = retainedState.pendingUpdatePrompt;
-            appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
-            initialRefreshingPages = decodeRefreshingPages(
-                    retainedState.refreshingPagePositions
-            );
-            initialAppsSnapshot = new ArrayList<>(retainedState.appsSnapshot);
-            skipNextImmediateServiceReload = !initialAppsSnapshot.isEmpty();
-        }
-        if (savedInstanceState != null) {
-            initialQuery = savedInstanceState.getString(
-                    STATE_CURRENT_QUERY,
-                    ""
-            );
-            initialTemplateQuery = savedInstanceState.getString(
-                    STATE_TEMPLATE_QUERY,
-                    ""
-            );
-            initialFilterState = new AppListFilterState(
-                    parseAppType(savedInstanceState.getString(STATE_FILTER_APP_TYPE),
-                            savedInstanceState.getBoolean(STATE_FILTER_SHOW_SYSTEM, false)),
-                    savedInstanceState.getBoolean(
-                            STATE_FILTER_INJECTED_ONLY,
-                            false
-                    ),
-                    savedInstanceState.getBoolean(STATE_FILTER_DISABLED_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_TYPEFACE_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_HOOK_ONLY, false),
-                    parseSortOrder(savedInstanceState.getString(STATE_FILTER_SORT_ORDER)),
-                    savedInstanceState.getBoolean(STATE_FILTER_REVERSE, false)
-            );
-            initialWorkspaceMode = MainUiState.WorkspaceMode.fromName(
-                    savedInstanceState.getString(STATE_WORKSPACE_MODE)
-            );
-            initialRefreshingPages = decodeRefreshingPages(
-                    savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
-            );
-        }
-        mainViewModel = new MainViewModel(
-                MainUiState.initial(
-                        initialQuery,
-                        initialTemplateQuery,
-                        initialFilterState,
-                        initialAppsSnapshot,
-                        initialRefreshingPages,
-                        initialWorkspaceMode
-                )
-        );
-        initializeWorkspaceSession(initialWorkspaceSessionState, initialTemplateQuery);
-        ensureWorkspaceSession().restore(savedInstanceState);
-        ComposeEditorScopeRequestCoordinator composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
-                mainViewModel,
-                (item, onApproved) -> systemScopeCoordinator.requestScope(
-                        item.packageName,
-                        item.label,
-                        onApproved,
-                        null,
-                        false
-                ),
-                () -> {
-                    if (composeShellHost != null) {
-                        composeShellHost.refreshApps();
-                    }
-                },
-                () -> showToast(R.string.save_scope_request_notice)
-        );
-        ComposeAppEditorActivityGateway composeAppEditorGateway = new ComposeAppEditorActivityGateway(
-                this,
-                composeEditorScopeRequestCoordinator,
-                wechatDpiHelp
-        );
-        composeAppEditorSaveWorkflow = new ComposeAppEditorSaveWorkflow(
-                composeAppEditorGateway
-        );
-        composeAppEditorGateway.setSaveWorkflow(composeAppEditorSaveWorkflow);
-        composeAppEditorController = new ComposeAppEditorController(
-                mainViewModel,
-                composeAppEditorGateway
-        );
-
-        topContainer = findViewById(R.id.top_container);
-        toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
-        settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
-        settingsWorkspaceSession = SettingsWorkspaceSession.create(
-                this,
-                () -> {
-                    if (composeShellHost != null) {
-                        composeShellHost.refreshSettings();
-                    }
-                },
-                () -> startActivity(new Intent(MainActivity.this, LogActivity.class))
-        );
-        WatchWorkspaceChromeBinder.applyIfSupported(
-                this,
-                settingsWorkspaceContainer
-        );
-        landDetailPane = findViewById(R.id.land_detail_pane);
-        landDetailDivider = findViewById(R.id.land_detail_divider);
-        landDetailEmptyView = findViewById(R.id.land_detail_empty);
-        landDetailContent = findViewById(R.id.land_detail_content);
-        ensureWorkspaceSession().attachLegacyViews(
-                findViewById(R.id.template_workspace_container),
-                findViewById(R.id.template_detail_empty),
-                findViewById(R.id.template_detail_content)
-        );
-        toolsWorkspace = new ToolsWorkspace(
-                this,
-                () -> {
-                    if (composeShellHost != null) composeShellHost.refreshTools();
-                },
-                () -> showToast(R.string.system_settings_save_failed)
-        );
-        appWorkspace = new AppWorkspace(new AppWorkspace.Host() {
-            @Override public void changeQuery(String query) {
-                dispatchMainUiAction(MainUiAction.queryChanged(query));
-            }
-
-            @Override public void changePage(AppListPage page) {
-                setCurrentAppListPage(page, true);
-                if (composeShellHost != null) {
-                    composeShellHost.refreshApps();
-                }
-            }
-
-            @Override public void changeFilters(AppListFilterState filterState) {
-                appListFilterStateStore.save(filterState);
-                dispatchMainUiAction(MainUiAction.filterChanged(filterState));
-            }
-
-            @Override public void refresh(AppListPage page) {
-                onPageRefreshRequested(page);
-            }
-
-            @Override public void openApp(AppListItem item) {
-                if (composeAppEditorController != null) {
-                    composeAppEditorController.open(item);
-                }
-            }
-
-            @Override public void updateScrollPosition(
-                    AppListPage page, int index, int scrollOffset) {
-                appWorkspaceScrollStateStore.update(page, index, scrollOffset);
-            }
-        });
-        // Workspace navigation is now rendered by the Compose shell in every
-        // form factor, including the compact watch radial selector.
-        if (savedInstanceState != null) {
-            setCurrentAppListPage(
-                    AppListPage.fromPosition(
-                            savedInstanceState.getInt(STATE_CURRENT_PAGE, 0)
-                    ),
-                    false
-            );
-        } else if (retainedState != null) {
-            setCurrentAppListPage(
-                    AppListPage.fromPosition(retainedState.currentPage),
-                    false
-            );
-        }
-
-        renderMainUiState(requireUiState());
-        installComposeWorkspaceShell();
-        feedbackDiagnostic.restorePage();
-        feedbackDiagnostic.attachHost();
-        // The service state callback is not guaranteed to fire on every Wear image.
-        // Request the catalog explicitly; MainViewModel coalesces any later service reload.
-        requestAppsLoad();
-        if (retainedState != null && retainedState.editingPackageName != null) {
-            mainViewModel.restoreEditingSession(
-                    retainedState.editingPackageName,
-                    retainedState.editingDraft,
-                    retainedState.savedEditingDraft,
-                    retainedState.editingDestination,
-                    retainedState.prefillSnapshot,
-                    retainedState.prefillInvalidated
-            );
-            restoreAppEditorForCurrentWorkspace();
-        }
-        restoreWorkspaceEditorForCurrentConfiguration();
-        if (pendingUpdatePrompt != null) {
-            showPendingUpdatePrompt();
-            return;
-        }
-        if (maybeShowModuleRuntimeReloadAdvice()) {
-            return;
-        }
-        if (!maybeShowStartupDisclaimerDialog()) {
-            maybeCheckForUpdatesOnStartup();
-        }
+        startupSession.launch(savedInstanceState);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         refreshSystemHookEffectiveEnabled();
-        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            bindWorkspaceSession();
-        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-            bindHomeWorkspace();
-        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TOOLS) {
-            bindToolsWorkspace();
-        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.SETTINGS) {
-            bindSettingsWorkspace();
+        mainWorkspaceSession.bindForLifecycle(requireUiState().workspaceMode);
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onStart();
         }
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onStart();
-        }
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onStart();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onStart();
         }
         DpisApplication.addServiceStateListener(this, true);
     }
@@ -515,21 +166,21 @@ public final class MainActivity
     protected void onResume() {
         super.onResume();
         maybeStartRootAccessProbe();
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onResume();
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onResume();
         }
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onResume();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onResume();
         }
     }
 
     @Override
     protected void onStop() {
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onStop();
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onStop();
         }
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onStop();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onStop();
         }
         DpisApplication.removeServiceStateListener(this);
         super.onStop();
@@ -537,17 +188,15 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
-        if (feedbackDiagnostic != null) {
-            feedbackDiagnostic.onDestroy(isChangingConfigurations());
+        if (startupSession.getFeedbackDiagnostic() != null) {
+            startupSession.getFeedbackDiagnostic().onDestroy(isChangingConfigurations());
         }
-        if (updateDownloadCoordinator != null) {
-            updateDownloadCoordinator.shutdown();
-        }
+        updateSession.shutdown();
         ensureWorkspaceSession().onDestroy();
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onDestroy();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onDestroy();
         }
-        installedAppCatalogCoordinator.shutdown();
+        installedAppsLoadSession.shutdown();
         super.onDestroy();
     }
 
@@ -558,11 +207,10 @@ public final class MainActivity
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                 bindHomeWorkspace();
             }
-            if (settingsWorkspaceSession != null) {
-                settingsWorkspaceSession.onServiceStateChanged();
+            if (settingsWorkspaceSession() != null) {
+                settingsWorkspaceSession().onServiceStateChanged();
             }
-            if (skipNextImmediateServiceReload) {
-                skipNextImmediateServiceReload = false;
+            if (startupSession.consumeSkipNextImmediateServiceReload()) {
                 return;
             }
             requestAppsLoad();
@@ -573,17 +221,18 @@ public final class MainActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onActivityResult(requestCode, resultCode, data);
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onActivityResult(requestCode, resultCode, data);
         }
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onActivityResult(requestCode, resultCode, data);
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onActivityResult(requestCode, resultCode, data);
         }
         if (ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
             return;
         }
-        if (feedbackDiagnostic != null
-                && feedbackDiagnostic.handleActivityResult(requestCode, resultCode, data)) {
+        if (startupSession.getFeedbackDiagnostic() != null
+                && startupSession.getFeedbackDiagnostic().handleActivityResult(
+                        requestCode, resultCode, data)) {
             return;
         }
     }
@@ -591,45 +240,10 @@ public final class MainActivity
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        MainUiState state = requireUiState();
-        outState.putString(STATE_CURRENT_QUERY, state.appQuery);
-        outState.putString(STATE_TEMPLATE_QUERY, state.templateQuery);
-        outState.putString(STATE_WORKSPACE_MODE, state.workspaceMode.name());
-        outState.putBoolean(
-                STATE_FILTER_SHOW_SYSTEM,
-                state.filterState.showSystemApps()
-        );
-        outState.putBoolean(
-                STATE_FILTER_INJECTED_ONLY,
-                state.filterState.injectedOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_WIDTH_ONLY,
-                state.filterState.widthConfiguredOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_FONT_ONLY,
-                state.filterState.fontConfiguredOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_DISABLED_ONLY,
-                state.filterState.disabledOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_TYPEFACE_ONLY,
-                state.filterState.typefaceConfiguredOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_HOOK_ONLY,
-                state.filterState.hookConfiguredOnly()
-        );
-        outState.putString(STATE_FILTER_APP_TYPE, state.filterState.appType().name());
-        outState.putString(STATE_FILTER_SORT_ORDER, state.filterState.sortOrder().name());
-        outState.putBoolean(STATE_FILTER_REVERSE, state.filterState.reverseOrder());
-        outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
-        outState.putIntArray(
-                STATE_REFRESHING_PAGES,
-                captureRefreshingPagePositions()
+        startupSession.saveInstanceState(
+                outState,
+                requireUiState(),
+                landCurrentPage.position()
         );
         ensureWorkspaceSession().saveState(outState);
     }
@@ -645,182 +259,50 @@ public final class MainActivity
                 permissions,
                 grantResults
         );
-        if (requestCode != REQUEST_XIAOMI_GET_INSTALLED_APPS) {
-            return;
-        }
-        installedAppsPermissionRequestInFlight = false;
-        boolean shouldReload = pendingInstalledAppsLoadAfterPermission;
-        pendingInstalledAppsLoadAfterPermission = false;
-        installedAppsPermissionRequestCompleted = true;
-        if (shouldReload) {
-            dispatchMainUiAction(MainUiAction.requestAppsLoad(true));
-        }
+        installedAppsLoadSession.onRequestPermissionsResult(requestCode);
     }
 
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
-        MainUiState state = requireUiState();
-        List<AppListItem> snapshot = state.appsSnapshot();
-        int currentPage = landCurrentPage.position();
-        EditorDraft draft = captureAppConfigDraft();
-        if (draft == null && mainViewModel != null) {
-            draft = mainViewModel.getEditingDraft();
-        }
-        return new RetainedState(
-                snapshot,
-                state.appQuery,
-                state.templateQuery,
-                state.filterState,
-                state.workspaceMode,
-                currentPage,
+        return startupSession.retain(
+                requireUiState(),
+                landCurrentPage.position(),
                 appWorkspaceScrollStateStore.snapshot(),
-                captureRefreshingPagePositions(),
-                mainViewModel != null
-                        ? mainViewModel.getEditingPackageName()
-                        : null,
-                draft,
-                mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
-                mainViewModel != null && mainViewModel.getEditorSession() != null
-                        ? mainViewModel.getEditorSession().prefillSnapshot
-                        : null,
-                mainViewModel != null && mainViewModel.getEditorSession() != null
-                        && mainViewModel.getEditorSession().prefillInvalidated,
-                mainViewModel != null
-                        ? mainViewModel.getEditingDestination()
-                        : ConfigEditorDestination.MAIN,
+                editorDraftSession.captureAppConfigDraft(),
+                startupSession.getViewModel(),
                 ensureWorkspaceSession().retainedState(),
-                feedbackDiagnostic.retainedState(),
-                pendingUpdatePrompt
+                startupSession.getFeedbackDiagnostic() != null
+                        ? startupSession.getFeedbackDiagnostic().retainedState()
+                        : null,
+                updateSession.getPendingUpdatePrompt()
         );
     }
 
-    private void onPageRefreshRequested(AppListPage page) {
+    public void onPageRefreshRequested(AppListPage page) {
         dispatchMainUiAction(MainUiAction.markPageRefreshing(page));
-        requestAppsLoad(true);
+        installedAppsLoadSession.requestLoad(true);
     }
 
-    private static Set<AppListPage> decodeRefreshingPages(int[] pagePositions) {
-        EnumSet<AppListPage> refreshingPages = EnumSet.noneOf(
-                AppListPage.class
-        );
-        if (pagePositions == null) {
-            return refreshingPages;
-        }
-        for (int pagePosition : pagePositions) {
-            refreshingPages.add(AppListPage.fromPosition(pagePosition));
-        }
-        return refreshingPages;
-    }
-
-    private int[] captureRefreshingPagePositions() {
-        Set<AppListPage> refreshingPages = requireUiState().refreshingPages();
-        int[] positions = new int[refreshingPages.size()];
-        int index = 0;
-        for (AppListPage page : refreshingPages) {
-            positions[index++] = page.position();
-        }
-        return positions;
-    }
-
-    private void setCurrentAppListPage(AppListPage page, boolean submit) {
+    public void setCurrentAppListPage(AppListPage page, boolean submit) {
         landCurrentPage = page != null ? page : AppListPage.ALL_APPS;
-        if (submit && composeShellHost != null) {
-            composeShellHost.refreshApps();
+        if (submit) {
+            mainWorkspaceSession.refreshApps();
         }
     }
 
     public void requestAppsLoad() {
-        requestAppsLoad(false);
+        installedAppsLoadSession.requestLoad(false);
     }
 
-    private void requestAppsLoad(boolean forceInstalledAppCatalogReload) {
-        boolean permissionReady = ensureInstalledAppsPermissionBeforeLoad();
-        DpisLog.i("app list load permission gate: ready=" + permissionReady
-                + ", forceReload=" + forceInstalledAppCatalogReload);
-        if (!permissionReady) {
-            pendingInstalledAppsLoadAfterPermission = true;
-            return;
-        }
-        dispatchMainUiAction(
-                MainUiAction.requestAppsLoad(forceInstalledAppCatalogReload)
-        );
+    public void dispatchInstalledAppsLoad(boolean forceReload) {
+        dispatchMainUiAction(MainUiAction.requestAppsLoad(forceReload));
     }
 
-    private boolean ensureInstalledAppsPermissionBeforeLoad() {
-        boolean xiaomiPermissionDeclared = isXiaomiInstalledAppsPermissionDeclared();
-        DpisLog.i("installed apps permission state: sdk=" + Build.VERSION.SDK_INT
-                + ", requestCompleted=" + installedAppsPermissionRequestCompleted
-                + ", requestInFlight=" + installedAppsPermissionRequestInFlight
-                + ", xiaomiPermissionDeclared=" + xiaomiPermissionDeclared);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                || installedAppsPermissionRequestCompleted
-                || !xiaomiPermissionDeclared) {
-            return true;
-        }
-        try {
-            int permissionState = checkPermission(
-                    XIAOMI_GET_INSTALLED_APPS_PERMISSION,
-                    Process.myPid(),
-                    Process.myUid()
-            );
-            DpisLog.i("installed apps permission check: granted="
-                    + (permissionState == PackageManager.PERMISSION_GRANTED));
-            if (permissionState == PackageManager.PERMISSION_GRANTED) {
-                return true;
-            }
-            if (!installedAppsPermissionRequestInFlight) {
-                installedAppsPermissionRequestInFlight = true;
-                DpisLog.i("installed apps permission request started");
-                requestPermissions(
-                        new String[]{XIAOMI_GET_INSTALLED_APPS_PERMISSION},
-                        REQUEST_XIAOMI_GET_INSTALLED_APPS
-                );
-            }
-            return false;
-        } catch (RuntimeException ignored) {
-            return true;
-        }
-    }
-
-    private boolean isXiaomiInstalledAppsPermissionDeclared() {
-        try {
-            getPackageManager().getPermissionInfo(
-                    XIAOMI_GET_INSTALLED_APPS_PERMISSION,
-                    0
-            );
-            return true;
-        } catch (PackageManager.NameNotFoundException
-                | RuntimeException ignored) {
-            return false;
-        }
-    }
-
-    private void startAppsLoad(MainViewModel.AppsLoadRequest request) {
-        int requestId = request.requestId;
-        boolean forceInstalledAppCatalogReload
-                = request.forceInstalledAppCatalogReload;
-        new Thread(() -> {
-            List<AppListItem> loaded = null;
-            try {
-                loaded = loadInstalledApps(forceInstalledAppCatalogReload);
-            } catch (Throwable throwable) {
-                DpisLog.e("list load failed", throwable);
-            }
-            List<AppListItem> finalLoaded = loaded;
-            DpisLog.i("app list load finished: requestId=" + requestId
-                    + ", loaded=" + (finalLoaded == null ? "null" : finalLoaded.size())
-                    + ", forceReload=" + forceInstalledAppCatalogReload);
-            runOnUiThread(() -> onAppsLoadFinished(requestId, finalLoaded));
-        }, "dpis-load-apps-" + requestId).start();
-    }
-
-    private void onAppsLoadFinished(int requestId, List<AppListItem> loaded) {
+    public void dispatchInstalledAppsLoadFinished(
+            int requestId,
+            List<AppListItem> loaded
+    ) {
         dispatchMainUiAction(MainUiAction.appsLoadFinished(requestId, loaded));
-    }
-
-    private void applyLandDetailContentInsets(View detailView) {
-        View scrollView = detailView.findViewById(R.id.land_detail_scroll);
-        WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true);
     }
 
     public void showToast(int messageResId) {
@@ -862,34 +344,8 @@ public final class MainActivity
         return true;
     }
 
-    private List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload) {
-        ScopeState scopeState = loadScopeState();
-        return installedAppCatalogCoordinator.loadInstalledApps(
-                forceInstalledAppCatalogReload,
-                getHookConfigStore(),
-                scopeState.packages,
-                scopeState.known
-        );
-    }
-
-    private ScopeState loadScopeState() {
-        Set<String> scopePackages = new HashSet<>();
-        XposedService service = DpisApplication.getXposedService();
-        if (service == null) {
-            return new ScopeState(scopePackages, false);
-        }
-        try {
-            List<String> scope = service.getScope();
-            scopePackages.addAll(scope);
-            return new ScopeState(scopePackages, true);
-        } catch (RuntimeException ignored) {
-            scopePackages.clear();
-        }
-        return new ScopeState(scopePackages, false);
-    }
-
     public MainUiState requireUiState() {
-        MainViewModel viewModel = mainViewModel;
+        MainViewModel viewModel = startupSession.getViewModel();
         if (viewModel == null) {
             return MainUiState.initial(
                     "",
@@ -901,8 +357,8 @@ public final class MainActivity
         return viewModel.getState();
     }
 
-    private void dispatchMainUiAction(MainUiAction action) {
-        MainViewModel viewModel = mainViewModel;
+    public void dispatchMainUiAction(MainUiAction action) {
+        MainViewModel viewModel = startupSession.getViewModel();
         if (viewModel == null) {
             return;
         }
@@ -912,315 +368,48 @@ public final class MainActivity
     }
 
     private void renderMainUiState(MainUiState state) {
-        if (state == null) {
-            return;
-        }
-        if (composeShellHost != null) {
-            composeShellHost.render(state);
-        }
-        applyWorkspaceMode(state.workspaceMode);
-        restoreAppEditorForCurrentWorkspace();
-    }
-
-    /**
-     * Theme 1 keeps the existing workspace root alive inside Compose while later
-     * themes replace individual View workspaces. Navigation itself now belongs
-     * to the stateless Compose shell and still dispatches through MainUiAction.
-     */
-    private void installComposeWorkspaceShell() {
-        ViewGroup activityContent = findViewById(android.R.id.content);
-        if (activityContent == null || activityContent.getChildCount() == 0) {
-            return;
-        }
-        View legacyWorkspaceRoot = activityContent.getChildAt(0);
-        if (legacyWorkspaceRoot == null) {
-            return;
-        }
-        activityContent.removeView(legacyWorkspaceRoot);
-        ComposeView composeRoot = new ComposeView(this);
-        activityContent.addView(
-                composeRoot,
-                new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                )
-        );
-        MainWorkspacePresentationCoordinator workspacePresentationCoordinator = new MainWorkspacePresentationCoordinator(
-                new MainWorkspacePresentationCoordinator.Content() {
-                    @NonNull
-                    @Override
-                    public HomeWorkspaceState homeState() {
-                        return createHomeWorkspaceState();
-                    }
-
-                    @NonNull
-                    @Override
-                    public AppWorkspacePresentation.State appState() {
-                        return AppWorkspacePresentation.create(
-                                requireUiState(),
-                                landCurrentPage,
-                                isSystemHookEnabledFromStore(),
-                                appWorkspaceScrollStateStore,
-                                appWorkspace.actions());
-                    }
-
-                    @Override
-                    public EditorPresentation.State appEditorState() {
-                        return createComposeAppEditorState();
-                    }
-
-                    @Override
-                    public com.dpis.module.settings.SystemFontScaleToolState toolsState() {
-                        return toolsWorkspace != null ? toolsWorkspace.state() : null;
-                    }
-
-                    @Override
-                    public void changeToolsPending(int percent) {
-                        toolsWorkspace.changePending(percent);
-                    }
-
-                    @Override
-                    public void applyTools() {
-                        toolsWorkspace.apply();
-                    }
-
-                    @Override
-                    public void restoreTools() {
-                        toolsWorkspace.restore();
-                    }
-
-                    @Override
-                    public void requestToolsPermission() {
-                        toolsWorkspace.requestPermission();
-                    }
-
-                    @Override
-                    public com.dpis.module.settings.SettingsActions settings() {
-                        return settingsWorkspaceSession;
-                    }
-
-                    @NonNull
-                    @Override
-                    public TemplateWorkspacePresentationSource templateWorkspace() {
-                        return ensureWorkspaceSession().presentationSource(
-                                query -> {
-                                    dispatchMainUiAction(MainUiAction.queryChanged(query));
-                                    return Unit.INSTANCE;
-                                }
-                        );
-                    }
-                });
-        composeShellHost = new MainComposeShellHost(
-                composeRoot,
-                requireUiState(),
-                WatchUiMode.shouldUseCompactUi(this),
-                workspacePresentationCoordinator,
-                action -> {
-                    dispatchMainUiAction(action);
-                    return Unit.INSTANCE;
-                }
-        );
-    }
-
-    private void applyWorkspaceMode(MainUiState.WorkspaceMode workspaceMode) {
-        MainUiState.WorkspaceMode mode
-                = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.HOME;
-        boolean enteringToolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
-                && renderedWorkspaceMode != MainUiState.WorkspaceMode.TOOLS;
-        boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;
-        boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
-        boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
-        boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
-        setVisible(topContainer, appWorkspace || templateWorkspace);
-        boolean animateWorkspace = renderedWorkspaceMode != null
-                && renderedWorkspaceMode != mode;
-        renderedWorkspaceMode = mode;
-        setVisible(toolsWorkspaceContainer, toolsWorkspace);
-        setVisible(settingsWorkspaceContainer, settingsWorkspace);
-        resetHiddenWorkspacePresentation(mode);
-        if (animateWorkspace) {
-            animateVisibleWorkspaceContent(mode);
-        }
-        applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
-        if (templateWorkspace) {
-            bindWorkspaceSession();
-            restoreWorkspaceEditorForCurrentConfiguration();
-        } else if (toolsWorkspace) {
-            bindToolsWorkspace(enteringToolsWorkspace);
-        } else if (settingsWorkspace) {
-            bindSettingsWorkspace();
-        }
-    }
-
-    private void restoreAppEditorForCurrentWorkspace() {
-        if (mainViewModel == null
-                || requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP) {
-            return;
-        }
-        // The Compose app workspace restores its editor directly from MainViewModel. Re-entering
-        // the legacy route here would stack a View BottomSheetDialog over the Compose sheet after
-        // any state render, including the catalog refresh triggered by a successful save.
-        if (composeShellHost != null) {
-            composeShellHost.refreshApps();
-            return;
-        }
-        String editingPackage = mainViewModel.getEditingPackageName();
-        if (editingPackage == null || editingPackage.isBlank()) {
-            return;
-        }
-        if (isLandscapeDetailMode() && landDetailContent.getChildCount() > 0) {
-            return;
-        }
-        for (AppListItem appItem : requireUiState().visibleItems(landCurrentPage)) {
-            if (editingPackage.equals(appItem.packageName)) {
-                if (isLandscapeDetailMode()) {
-                    showEditDetailPane(appItem);
-                } else {
-                    showEditBottomSheet(appItem);
-                }
-                break;
-            }
-        }
-    }
-
-    private void applyLandscapeDetailVisibility(
-            boolean appWorkspace,
-            boolean templateWorkspace
-    ) {
-        boolean showDetailPane = isLandscapeDetailMode()
-                && (appWorkspace || templateWorkspace);
-        setVisible(landDetailPane, showDetailPane);
-        setVisible(landDetailDivider, showDetailPane);
-        setVisible(landDetailEmptyView, appWorkspace
-                && landDetailContent != null
-                && landDetailContent.getChildCount() == 0);
-        setVisible(landDetailContent, appWorkspace
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0);
-        ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace);
-    }
-
-    private boolean isLandscapeDetailMode() {
-        return landDetailContent != null && landDetailEmptyView != null;
-    }
-
-    private void bindWorkspaceSession() {
-        ensureWorkspaceSession().present(
-                requireUiState().currentQuery(), composeShellHost != null
-        );
-    }
-
-    private void bindToolsWorkspace() {
-        bindToolsWorkspace(false);
-    }
-
-    private void bindToolsWorkspace(boolean resetExpandedState) {
-        if (composeShellHost != null && toolsWorkspace != null) {
-            toolsWorkspace.onResume();
-            composeShellHost.refreshTools(resetExpandedState);
-            return;
-        }
-        if (toolsWorkspace != null) {
-            toolsWorkspace.bind(toolsWorkspaceContainer);
-            if (resetExpandedState) {
-                toolsWorkspace.onShown();
-            }
-        }
-    }
-
-    private void restoreWorkspaceEditorForCurrentConfiguration() {
-        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            ensureWorkspaceSession().restoreForConfiguration(
-                    requireUiState().currentQuery(), composeShellHost != null
-            );
-        }
-    }
-
-    private static AppListFilterState.AppType parseAppType(String value, boolean legacyShowSystem) {
-        if (value != null) {
-            try {
-                return AppListFilterState.AppType.valueOf(value);
-            } catch (IllegalArgumentException ignored) {
-                // Fall through to the legacy boolean representation.
-            }
-        }
-        return legacyShowSystem ? AppListFilterState.AppType.ALL : AppListFilterState.AppType.USER;
-    }
-
-    private static AppListFilterState.SortOrder parseSortOrder(String value) {
-        if (value != null) {
-            try {
-                return AppListFilterState.SortOrder.valueOf(value);
-            } catch (IllegalArgumentException ignored) {
-                // Older saved state did not include ordering.
-            }
-        }
-        return AppListFilterState.SortOrder.NAME;
-    }
-
-    private void bindSettingsWorkspace() {
-        if (composeShellHost != null) {
-            settingsWorkspaceSession.ensureComposeController();
-            return;
-        }
-        if (settingsWorkspaceContainer == null || settingsWorkspaceSession == null) {
-            return;
-        }
-        settingsWorkspaceSession.bindLegacy(settingsWorkspaceContainer);
-    }
-
-    private EditorPresentation.State createComposeAppEditorState() {
-        return composeAppEditorController != null
-                ? composeAppEditorController.createState()
-                : null;
+        mainWorkspaceSession.render(state);
     }
 
     public void refreshComposeApps() {
-        if (composeShellHost != null) {
-            composeShellHost.refreshApps();
-        }
+        mainWorkspaceSession.refreshApps();
     }
 
     public MainComposeShellHost composeShell() {
-        return composeShellHost;
+        return mainWorkspaceSession.composeShell();
     }
 
     public boolean saveComposeEditorForDiagnostic(AppListItem item, EditorDraft draft) {
-        return composeAppEditorSaveWorkflow != null
-                && composeAppEditorSaveWorkflow.save(item, draft);
+        return hostWiringSession.getComposeAppEditorSaveWorkflow() != null
+                && hostWiringSession.getComposeAppEditorSaveWorkflow().save(item, draft);
     }
 
     public void markComposeEditorSaved(EditorDraft draft) {
-        if (composeAppEditorController != null) {
-            composeAppEditorController.markSaved(draft);
+        if (composeAppEditorController() != null) {
+            composeAppEditorController().markSaved(draft);
         }
     }
 
     public void dismissActiveEditorDialog() {
-        if (activeAppEditorDialog != null) {
-            activeAppEditorDialog.dismiss();
-        }
+        appConfigSheetSession.dismiss();
+    }
+
+    public void clearEditingSession() {
+        editorDraftSession.clearEditingSession();
+    }
+
+    public MainViewModel editorViewModel() {
+        return startupSession.getViewModel();
     }
 
     public void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
             EditorDraft draft
     ) {
-        feedbackDiagnostic.showPreparation(item, draft);
+        startupSession.getFeedbackDiagnostic().showPreparation(item, draft);
     }
 
-    public void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
-        if (!isHyperOsNativeProxyCandidate(item)) {
-            return;
-        }
-        if (shouldPrepareHyperOsNativeProxyForRestart(item)) {
-            executeHyperOsNativeProxyMount(item, true, success -> { });
-            return;
-        }
-        executeHyperOsNativeProxyMount(item, false, success -> { });
-    }
-
-    private void initializeWorkspaceSession(
+    public void initializeWorkspaceSession(
             TemplateWorkspaceActivitySession.State initialState,
             String initialQuery
     ) {
@@ -1229,16 +418,12 @@ public final class MainActivity
                     this,
                     initialQuery,
                     initialState,
-                    () -> {
-                        if (composeShellHost != null) {
-                            composeShellHost.refreshTemplates();
-                        }
-                    }
+                    () -> mainWorkspaceSession.refreshTemplates()
             );
         }
     }
 
-    private TemplateWorkspaceActivitySession ensureWorkspaceSession() {
+    public TemplateWorkspaceActivitySession ensureWorkspaceSession() {
         initializeWorkspaceSession(
                 null,
                 requireUiState().currentQuery()
@@ -1246,234 +431,28 @@ public final class MainActivity
         return workspaceSession;
     }
 
-    private static void setVisible(View view, boolean visible) {
-        if (view != null) {
-            view.setVisibility(visible ? View.VISIBLE : View.GONE);
-        }
-    }
-
-    private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
-        resetWorkspacePresentationUnlessMode(
-                toolsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TOOLS);
-        resetWorkspacePresentationUnlessMode(
-                settingsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.SETTINGS);
-    }
-
-    private static void resetWorkspacePresentationUnlessMode(
-            View view,
-            MainUiState.WorkspaceMode visibleMode,
-            MainUiState.WorkspaceMode viewMode
-    ) {
-        if (visibleMode != viewMode) {
-            resetWorkspacePresentation(view);
-        }
-    }
-
-    private static void resetWorkspacePresentation(View view) {
-        if (view == null) {
-            return;
-        }
-        view.animate().cancel();
-        view.setAlpha(1f);
-        view.setScaleX(1f);
-        view.setScaleY(1f);
-    }
-
-    private void animateVisibleWorkspaceContent(MainUiState.WorkspaceMode mode) {
-        View target = workspaceViewForMode(mode);
-        if (target == null) {
-            return;
-        }
-        target.animate().cancel();
-        target.setAlpha(0f);
-        target.setScaleX(WORKSPACE_CONTENT_ENTER_START_SCALE);
-        target.setScaleY(WORKSPACE_CONTENT_ENTER_START_SCALE);
-        target.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(WORKSPACE_TRANSITION_DURATION_MS)
-                .setInterpolator(WORKSPACE_CONTENT_ENTER_INTERPOLATOR)
-                .withEndAction(() -> {
-                    target.setAlpha(1f);
-                    target.setScaleX(1f);
-                    target.setScaleY(1f);
-                })
-                .start();
-    }
-
-    private View workspaceViewForMode(MainUiState.WorkspaceMode mode) {
-        if (mode == MainUiState.WorkspaceMode.APP) {
-            return null;
-        }
-        if (mode == MainUiState.WorkspaceMode.TEMPLATE) {
-            return null;
-        }
-        if (mode == MainUiState.WorkspaceMode.TOOLS) {
-            return toolsWorkspaceContainer;
-        }
-        if (mode == MainUiState.WorkspaceMode.SETTINGS) {
-            return settingsWorkspaceContainer;
-        }
-        return null;
-    }
-
     private void handleAppsLoadRequests(List<MainViewModel.AppsLoadRequest> requests) {
         if (requests == null || requests.isEmpty()) {
             return;
         }
         for (MainViewModel.AppsLoadRequest request : requests) {
-            startAppsLoad(request);
+            installedAppsLoadSession.start(request);
         }
     }
 
-    private void showFilterDialog() {
-        MainUiState state = requireUiState();
-        AppFilterComposeSheet.show(this,
-                state.filterState.showSystemApps(),
-                state.filterState.injectedOnly(),
-                state.filterState.widthConfiguredOnly(),
-                state.filterState.fontConfiguredOnly(),
-                (showSystem, injectedOnly, widthOnly, fontOnly) -> {
-            AppListFilterState filterState = new AppListFilterState(
-                    showSystem, injectedOnly, widthOnly, fontOnly
-            );
-            appListFilterStateStore.save(filterState);
-            dispatchMainUiAction(MainUiAction.filterChanged(filterState));
-        });
+    public void showFilterDialog() {
+        appListFilterSession.show();
     }
 
-    private boolean maybeShowStartupDisclaimerDialog() {
-        StartupDisclaimerStore store = new StartupDisclaimerStore(this);
-        return updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog(
-                new UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance() {
-                    @Override
-                    public boolean isAccepted() {
-                        return store.isAccepted();
-                    }
-
-                    @Override
-                    public boolean markAccepted() {
-                        return store.setAccepted(true);
-                    }
-                },
-                this::maybeCheckForUpdatesOnStartup
-        );
-    }
-
-    private boolean maybeShowModuleRuntimeReloadAdvice() {
-        return new ModuleRuntimeReloadNoticeCoordinator(this)
-                .maybeShow(this::continueStartupDialogsAfterRuntimeReloadAdvice);
-    }
-
-    private void continueStartupDialogsAfterRuntimeReloadAdvice() {
-        if (!maybeShowStartupDisclaimerDialog()) {
-            maybeCheckForUpdatesOnStartup();
-        }
-    }
-
-    private void maybeCheckForUpdatesOnStartup() {
-        if (!StartupUpdateCheckOnce.consume()) {
-            return;
-        }
-        startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();
-    }
-
-    private void startStartupUpdateDownload(
-            String targetVersionName,
-            String downloadUrl,
-            UpdateAvailableDialog.DialogHandle dialogHandle
-    ) {
-        updateDownloadCoordinator.startDownload(
-                targetVersionName,
-                downloadUrl,
-                dialogHandle
-        );
-    }
-
-    private void cancelActiveUpdateDownload() {
-        updateDownloadCoordinator.cancelActiveDownload();
-    }
-
-    private UpdateCoordinator.State buildUpdateCoordinatorState() {
-        return updateStateStore.buildCoordinatorState(
-                startupUpdateCheckInProgress,
-                startupUpdateDownloadInProgress,
-                startupUpdateDownloadCancelRequested
-        );
-    }
-
-    private void applyStartupCheckState(UpdateCoordinator.State state) {
-        if (state == null) {
-            return;
-        }
-        updateStateStore.applyStartupCheckState(state);
-        startupUpdateCheckInProgress = state.startupCheckInProgress;
-    }
-
-    private void applyDownloadState(UpdateCoordinator.State state) {
-        if (state == null) {
-            return;
-        }
-        startupUpdateDownloadInProgress = state.downloadInProgress;
-        startupUpdateDownloadCancelRequested = state.downloadCancelRequested;
-    }
-
-    private void applyHomeUpdateState(HomeUpdateUiState state) {
-        if (state == null) {
-            return;
-        }
-        homeUpdateUiState = state;
-        bindHomeWorkspaceIfVisible();
+    public void applyAppListFilter(AppListFilterState filterState) {
+        appListFilterSession.apply(filterState);
     }
 
     private void bindHomeWorkspaceIfVisible() {
-        if (mainViewModel != null
+        if (startupSession.getViewModel() != null
                 && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
         }
-    }
-
-    private void markPromptedVersion(int versionCode) {
-        UpdateCoordinator.State nextState
-                = updateCoordinator.markPromptedVersion(
-                        buildUpdateCoordinatorState(),
-                        versionCode
-                );
-        updateStateStore.applyPromptedVersion(nextState);
-    }
-
-    private void openUrl(String url) {
-        if (url == null || url.trim().isEmpty()) {
-            showToast(R.string.about_link_open_failed);
-            return;
-        }
-        try {
-            Intent intent = new Intent(
-                    Intent.ACTION_VIEW,
-                    android.net.Uri.parse(url)
-            );
-            startActivity(intent);
-        } catch (android.content.ActivityNotFoundException ignored) {
-            showToast(R.string.about_link_open_failed);
-        }
-    }
-
-    private InstalledAppCatalogCoordinator.Host createInstalledAppCatalogHost() {
-        return new InstalledAppCatalogCoordinator.Host() {
-            @NonNull
-            @Override
-            public PackageManager getPackageManager() {
-                return MainActivity.this.getPackageManager();
-            }
-
-            @NonNull
-            @Override
-            public String getSelfPackageName() {
-                return MainActivity.this.getPackageName();
-            }
-
-        };
     }
 
     private SystemScopeCoordinator.Host createSystemScopeHost() {
@@ -1495,426 +474,25 @@ public final class MainActivity
         };
     }
 
-    private StartupUpdateCheckCoordinator.Host createStartupUpdateCheckHost() {
-        return new StartupUpdateCheckCoordinator.Host() {
-            @Override
-            public boolean isActivityAlive() {
-                return !isFinishing() && !isDestroyed();
-            }
-
-            @NonNull
-            @Override
-            public String getManifestUrl() {
-                return MainActivity.this.getString(
-                        R.string.about_update_manifest_url
-                );
-            }
-
-            @Override
-            public void executeBackground(@NonNull Runnable runnable) {
-                startupUpdateExecutor.execute(runnable);
-            }
-
-            @Override
-            public void runOnUiThread(@NonNull Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @NonNull
-            @Override
-            public UpdateCoordinator.State buildUpdateCoordinatorState() {
-                return MainActivity.this.buildUpdateCoordinatorState();
-            }
-
-            @Override
-            public void applyStartupCheckState(@NonNull UpdateCoordinator.State state) {
-                MainActivity.this.applyStartupCheckState(state);
-            }
-
-            @Override
-            public int getLocalVersionCode() {
-                return BuildConfig.VERSION_CODE;
-            }
-
-            @NonNull
-            @Override
-            public String getLocalVersionName() {
-                return BuildConfig.VERSION_NAME;
-            }
-
-            @Override
-            public void onStartupUpdateCheckStarted() {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.CHECKING);
-            }
-
-            @Override
-            public void onStartupUpdateAvailable(@NonNull StartupUpdateManifest manifest) {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.available(manifest));
-                pendingUpdatePrompt = UpdatePromptRequest.from(manifest);
-                showPendingUpdatePrompt();
-            }
-
-            @Override
-            public void onStartupUpdateUpToDate() {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE);
-            }
-
-            @Override
-            public void onStartupUpdateCheckFailed() {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.FAILED);
-            }
-        };
+    public HomeWorkspaceState createHomeWorkspaceState() {
+        return homeWorkspaceSession.createState();
     }
 
-    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator() {
-        if (updatePromptDialogCoordinator == null) {
-            updatePromptDialogCoordinator = new UpdatePromptDialogCoordinator(
-                    this,
-                    createUpdatePromptDialogHost(),
-                    releaseNotesController
-            );
-        }
-        return updatePromptDialogCoordinator;
+    public ScopeState loadInstalledAppScopeState() {
+        return installedAppsLoadSession.loadScopeState();
     }
 
-    private void showPendingUpdatePrompt() {
-        UpdatePromptRequest request = pendingUpdatePrompt;
-        if (request != null) {
-            updatePromptDialogCoordinator().showUpdateAvailableDialog(request);
-        }
+    public HomeUpdateUiState homeUpdateUiState() {
+        return updateSession.getHomeUpdateUiState();
     }
 
-    private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
-        return new UpdatePromptDialogCoordinator.Host() {
-            @Override
-            public void markPromptedVersion(int versionCode) {
-                MainActivity.this.markPromptedVersion(versionCode);
-            }
-
-            @Override
-            public boolean isDownloadInProgress() {
-                return updateDownloadCoordinator.isDownloadInProgress();
-            }
-
-            @Override
-            public void cancelActiveUpdateDownload() {
-                MainActivity.this.cancelActiveUpdateDownload();
-            }
-
-            @Override
-            public void startStartupUpdateDownload(
-                    @NonNull String targetVersionName,
-                    @NonNull String downloadUrl,
-                    @NonNull UpdateAvailableDialog.DialogHandle dialogHandle
-            ) {
-                MainActivity.this.startStartupUpdateDownload(
-                        targetVersionName,
-                        downloadUrl,
-                        dialogHandle
-                );
-            }
-
-            @Override
-            public void openUrl(@NonNull String url) {
-                MainActivity.this.openUrl(url);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-
-            @Override
-            public void applyLargeDialogWidth(@NonNull androidx.appcompat.app.AlertDialog dialog) {
-                DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this);
-            }
-
-            @Override
-            public void onUpdatePromptDismissed() {
-                if (!isChangingConfigurations()) {
-                    pendingUpdatePrompt = null;
-                }
-            }
-
-            @Override
-            public void finishActivity() {
-                MainActivity.this.finish();
-            }
-        };
+    public void checkForUpdatesNow() {
+        updateSession.checkForUpdatesNow();
     }
 
-    private UpdateDownloadCoordinator.Host createUpdateDownloadHost() {
-        return new UpdateDownloadCoordinator.Host() {
-            @Override
-            public boolean isActivityAlive() {
-                return !isFinishing() && !isDestroyed();
-            }
-
-            @Override
-            public Context getContext() {
-                return MainActivity.this;
-            }
-
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-
-            @Override
-            public void onDownloadSuccess(File targetFile) {
-                startupUpdatePackageHandler.launchPackageInstaller(targetFile);
-            }
-
-            @Override
-            public UpdateCoordinator.State buildUpdateCoordinatorState() {
-                return MainActivity.this.buildUpdateCoordinatorState();
-            }
-
-            @Override
-            public void applyDownloadState(UpdateCoordinator.State state) {
-                MainActivity.this.applyDownloadState(state);
-            }
-        };
+    public void bindHomeWorkspace() {
+        mainWorkspaceSession.bindHomeWorkspace();
     }
-
-    private void showEditDialog(AppListItem item) {
-        if (mainViewModel != null) {
-            mainViewModel.setEditingPackageName(item.packageName);
-        }
-        activeEditorPackageName = item.packageName;
-        if (isLandscapeDetailMode()) {
-            showEditDetailPane(item);
-            return;
-        }
-        showEditBottomSheet(item);
-    }
-
-    private void showEditBottomSheet(AppListItem item) {
-        if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing()) {
-            return;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        AppListItem sheetItem = AppConfigPrefillPreview.resolveForEditor(this, item, store);
-        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_app_config,
-                root,
-                false
-        );
-        AppConfigDialogBinder binder = new AppConfigDialogBinder(
-                this,
-                createAppConfigDialogHost()
-        );
-        binder.bind(
-                dialogView,
-                sheetItem,
-                systemHooksEnabled
-        );
-        EditorDraft draft = mainViewModel != null
-                ? mainViewModel.getEditingDraft()
-                : null;
-        if (draft != null) {
-            applyAppConfigDraft(dialogView, draft);
-            binder.applyRetainedDraft(
-                    dialogView,
-                    sheetItem,
-                    systemHooksEnabled,
-                    draft.selectedTypefaceId,
-                    draft.draftFontHookDomainsRaw,
-                    draft.viewportApplyMode,
-                    draft.fontHookDomainsResetRequested,
-                    draft.viewportApplyModeResetRequested
-            );
-            WechatDpiSheetBinder.applyDraft(
-                    dialogView,
-                    draft.wechatDpiInput
-            );
-        }
-        activeEditorRoot = dialogView;
-        activeEditorPackageName = item.packageName;
-        BottomSheetDialog dialog = new AppConfigDialogCoordinator(this).show(
-                dialogView
-        );
-        activeAppEditorDialog = dialog;
-        dialog.setOnDismissListener(d -> {
-            if (activeEditorRoot == dialogView) {
-                activeEditorRoot = null;
-                activeEditorPackageName = null;
-            }
-            if (activeAppEditorDialog == dialog) {
-                activeAppEditorDialog = null;
-            }
-            if (mainViewModel != null && !isChangingConfigurations()) {
-                mainViewModel.clearEditingPackageName();
-                mainViewModel.clearEditingDraft();
-            }
-        });
-    }
-
-    private void showEditDetailPane(AppListItem item) {
-        if (landDetailContent == null) {
-            showEditBottomSheet(item);
-            return;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        AppListItem sheetItem = AppConfigPrefillPreview.resolveForEditor(this, item, store);
-        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.view_land_app_detail,
-                landDetailContent,
-                false
-        );
-        applyLandDetailContentInsets(dialogView);
-        new LandAppDetailPaneBinder(
-                this,
-                new LandAppDetailActivityActions(this)
-        ).bind(dialogView, sheetItem, systemHooksEnabled);
-        landDetailContent.removeAllViews();
-        landDetailContent.addView(
-                dialogView,
-                new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                )
-        );
-        View scrollView = dialogView.findViewById(R.id.land_detail_scroll);
-        if (scrollView != null) {
-            ViewCompat.requestApplyInsets(scrollView);
-        }
-        setVisible(landDetailEmptyView, false);
-        setVisible(landDetailContent, true);
-        activeEditorRoot = dialogView;
-        activeEditorPackageName = item.packageName;
-        if (mainViewModel != null && mainViewModel.getEditingDraft() != null) {
-            EditorDraft draft = mainViewModel.getEditingDraft();
-            applyAppConfigDraft(dialogView, draft);
-            LandAppDetailPaneBinder.applyRetainedDraft(
-                    this,
-                    dialogView,
-                    sheetItem,
-                    draft.selectedTypefaceId,
-                    draft.draftFontHookDomainsRaw,
-                    draft.viewportApplyMode,
-                    draft.fontHookDomainsResetRequested,
-                    draft.viewportApplyModeResetRequested
-            );
-            WechatDpiSheetBinder.applyDraft(
-                    dialogView,
-                    draft.wechatDpiInput
-            );
-        }
-    }
-
-    private void bindHomeWorkspace() {
-        if (composeShellHost != null) {
-            composeShellHost.refreshHome();
-        }
-    }
-
-    private HomeWorkspaceState createHomeWorkspaceState() {
-        DpisConfigStore configStore = getHookConfigStore();
-        int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
-                configStore,
-                loadScopeState()
-        );
-        return new HomeWorkspaceState(
-                isActivatedForHome(),
-                visibleConfiguredAppCount,
-                ConfigStoreFactory.createLocalUiFontLibraryStore(
-                        this,
-                        DpisApplication.getXposedService()
-                ).listFonts().size(),
-                ensureWorkspaceSession().quickItemCount(),
-                RootAccessProbe.cachedResult(),
-                homeUpdateUiState,
-                new HomeWorkspaceLayoutStore(this).load(),
-                createHomeWorkspaceActions(),
-                PageSettingsStore.isHomeEditButtonVisible(this)
-        );
-    }
-
-    private boolean isActivatedForHome() {
-        boolean libXposedService = HomeActivationStateResolver
-                .hasModernLibXposedService(DpisApplication.getXposedService());
-        boolean selfLoaded = DpisApplication.isXposedSelfLoaded();
-        boolean activated = HomeActivationStateResolver.isActivatedForHome(
-                libXposedService,
-                selfLoaded);
-        DpisLog.i("home activation resolved: libxposedService=" + libXposedService
-                + ", selfLoaded=" + selfLoaded
-                + ", activated=" + activated);
-        return activated;
-    }
-
-    private HomeWorkspaceActions createHomeWorkspaceActions() {
-        return new HomeWorkspaceActions() {
-            @Override
-            public void checkForUpdates() {
-                startupUpdateCheckCoordinator.checkForUpdatesNow();
-            }
-
-            @Override
-            public void openConfiguredAppsWorkspace() {
-                setCurrentAppListPage(AppListPage.CONFIGURED_APPS, false);
-                dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.APP)
-                );
-            }
-
-            @Override
-            public void openFontLibrary() {
-                startActivity(new Intent(MainActivity.this, FontLibraryActivity.class));
-            }
-
-            @Override
-            public void openTemplateWorkspace() {
-                dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE)
-                );
-            }
-
-            @Override
-            public void openModeHelp() {
-                startActivity(new Intent(MainActivity.this, ModeHelpActivity.class));
-            }
-
-            @Override
-            public void openDonate() {
-                startActivity(DonateActivity.createIntent(MainActivity.this));
-            }
-
-            @Override
-            public void saveHomeWorkspaceLayout(HomeWorkspaceLayout layout) {
-                new HomeWorkspaceLayoutStore(MainActivity.this).save(layout);
-                bindHomeWorkspace();
-            }
-        };
-    }
-
-    static int countUserVisibleConfiguredPackages(DpisConfigStore store,
-            ScopeState scopeState) {
-        ScopeState safeScopeState = scopeState != null
-                ? scopeState
-                : new ScopeState(Collections.emptySet(), false);
-        return InstalledAppCatalogCoordinator.userVisibleConfiguredPackages(
-                store,
-                safeScopeState.packages,
-                safeScopeState.known
-        ).size();
-    }
-
-    record ScopeState(Set<String> packages, boolean known) {
-            ScopeState(Set<String> packages, boolean known) {
-                this.packages = packages != null ? packages : Collections.emptySet();
-                this.known = known;
-            }
-        }
 
     private void maybeStartRootAccessProbe() {
         RootAccessProbe.refreshAsync(result -> runOnUiThread(() -> {
@@ -1924,207 +502,18 @@ public final class MainActivity
         }));
     }
 
-    public void saveAppConfigDraft(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Integer viewportValue,
-            String viewportTargetType,
-            Integer fontPercent,
-            String fontMode,
-            String selectedTypefaceId,
-            String draftFontHookDomainsRaw,
-            String viewportApplyMode,
-            boolean viewportApplyModeResetRequested,
-            boolean fontHookDomainsResetRequested,
-            String viewportScaleInput,
-            String viewportAbsoluteInput,
-            boolean dpisEnabled,
-            View root,
-            MaterialButton saveButton
-    ) {
-        saveAppConfigDraftInternal(
-                item,
-                state,
-                viewportValue,
-                viewportTargetType,
-                fontPercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                viewportApplyMode,
-                viewportApplyModeResetRequested,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput,
-                dpisEnabled,
-                root,
-                saveButton
-        );
-    }
-
-    private boolean saveAppConfigDraftInternal(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Integer viewportValue,
-            String viewportTargetType,
-            Integer fontPercent,
-            String fontMode,
-            String selectedTypefaceId,
-            String draftFontHookDomainsRaw,
-            String viewportApplyMode,
-            boolean viewportApplyModeResetRequested,
-            boolean fontHookDomainsResetRequested,
-            String viewportScaleInput,
-            String viewportAbsoluteInput,
-            boolean dpisEnabled,
-            View root,
-            MaterialButton saveButton
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return false;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        String normalizedViewportTargetType = ViewportTargetType.normalize(viewportTargetType);
-        String rawViewportInput = ViewportTargetType.ABSOLUTE_DP.equals(normalizedViewportTargetType)
-                ? viewportAbsoluteInput
-                : viewportScaleInput;
-        ViewportTargetSpec spec = AppConfigInputValidation.parseViewportTargetSpec(
-                rawViewportInput,
-                normalizedViewportTargetType
-        );
-        AppConfigSaveHandler.Result result = saveLandDetailResolvedConfig(
-                item,
-                spec,
-                viewportTargetType,
-                viewportApplyMode,
-                fontPercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                viewportApplyModeResetRequested,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput
-        );
-        result = finalizeAppConfigSaveWithRuntimeSync(
-                result,
-                root,
-                item.packageName,
-                dpisEnabled,
-                store
-        );
-        if (result.messageResId != 0) {
-            showToast(result.messageResId);
-        }
-        if (!result.success) {
-            return false;
-        }
-        AppConfigDialogBinder.showSaveButtonFeedback(saveButton);
-        LandAppDetailPaneBinder.markDraftSaved(root, saveButton);
-        requestLandDetailScopeAfterSuccessfulSave(item, state);
-        return true;
-    }
-
-    private void requestLandDetailScopeAfterSuccessfulSave(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state
-    ) {
-        if (item == null
-                || state == null
-                || !state.scopeKnown
-                || state.scopeSelected
-                || state.scopeRequestPending) {
-            return;
-        }
-        state.scopeRequestPending = true;
-        boolean requestStarted = systemScopeCoordinator.requestScope(
-                item.packageName,
-                item.label,
-                () -> state.scopeSelected = true,
-                () -> state.scopeRequestPending = false,
-                false
-        );
-        if (requestStarted) {
-            showToast(R.string.save_scope_request_notice);
-            return;
-        }
-        state.scopeRequestPending = false;
-    }
-
-    public AppConfigSaveHandler.Result saveLandDetailResolvedConfig(
-            AppListItem item,
-            ViewportTargetSpec viewportTargetSpec,
-            String viewportTargetType,
-            String viewportApplyMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String selectedTypefaceId,
-            String draftFontHookDomainsRaw,
-            boolean viewportApplyModeResetRequested,
-            boolean fontHookDomainsResetRequested,
-            String viewportScaleInput,
-            String viewportAbsoluteInput
-    ) {
-        return appConfigSaveHandler.saveResolved(
-                item,
-                viewportTargetSpec,
-                viewportTargetType,
-                viewportApplyMode,
-                viewportApplyModeResetRequested,
-                fontScalePercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput,
-                isSystemHookEnabledFromStore(),
-                getHookConfigStore(),
-                null
-        );
-    }
-
-    private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi(
-            AppConfigSaveHandler.Result saveResult,
-            View configRoot,
-            String packageName,
-            boolean dpisEnabled,
-            DpisConfigStore store) {
-        if (saveResult == null) {
-            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
-        }
-        if (!saveResult.success) {
-            return saveResult;
-        }
-        if (!WechatDpiSheetBinder.save(configRoot, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                    WechatDpiSheetBinder.isInputValid(configRoot)
-                            ? R.string.system_settings_save_failed
-                            : R.string.status_save_invalid);
-        }
-        onRuntimeConfigSaved();
-        return saveResult;
-    }
-
     public AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
             AppConfigSaveHandler.Result saveResult,
             View configRoot,
             String packageName,
             boolean dpisEnabled,
             DpisConfigStore store) {
-        AppConfigSaveHandler.Result result = finalizeAppConfigSaveWithWechatDpi(
+        return runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
                 saveResult,
                 configRoot,
                 packageName,
                 dpisEnabled,
                 store);
-        if (!result.success) {
-            return result;
-        }
-        scheduleRuntimePropertiesForTargetLaunch(packageName);
-        return result;
     }
 
     public AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
@@ -2133,92 +522,20 @@ public final class MainActivity
             String packageName,
             boolean dpisEnabled,
             DpisConfigStore store) {
-        if (saveResult == null) {
-            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
-        }
-        if (!saveResult.success) {
-            return saveResult;
-        }
-        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                    WechatDpiEditor.isInputValid(wechatDpiInput)
-                            ? R.string.system_settings_save_failed
-                            : R.string.status_save_invalid);
-        }
-        onRuntimeConfigSaved();
-        scheduleRuntimePropertiesForTargetLaunch(packageName);
-        return saveResult;
+        return runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
+                saveResult,
+                wechatDpiInput,
+                packageName,
+                dpisEnabled,
+                store);
     }
 
     public void onRuntimeConfigSaved() {
-        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-        requestAppsLoad();
-    }
-
-    private void scheduleRuntimePropertiesForTargetLaunch(String packageName) {
-        if (packageName == null || packageName.isBlank()) {
-            return;
-        }
-        int generation;
-        synchronized (pendingRuntimePropertyGenerations) {
-            Integer currentGeneration = pendingRuntimePropertyGenerations.get(packageName);
-            generation = (currentGeneration != null ? currentGeneration : 0) + 1;
-            pendingRuntimePropertyGenerations.put(packageName, generation);
-        }
-        Thread syncThread = new Thread(
-                () -> syncRuntimePropertiesForTargetLaunch(packageName, generation),
-                "dpis-runtime-property-target-sync");
-        syncThread.setDaemon(true);
-        syncThread.start();
+        runtimeLaunchSession.onRuntimeConfigSaved();
     }
 
     public void syncRuntimePropertiesForTargetLaunch(String packageName) {
-        Integer generation;
-        synchronized (pendingRuntimePropertyGenerations) {
-            generation = pendingRuntimePropertyGenerations.get(packageName);
-        }
-        if (generation == null) {
-            return;
-        }
-        syncRuntimePropertiesForTargetLaunch(packageName, generation);
-    }
-
-    private void syncRuntimePropertiesForTargetLaunch(String packageName, int generation) {
-        DpisConfigStore store = getHookConfigStore();
-        ViewportPropertySyncer.syncTarget(packageName, store);
-        FontRuntimePropertySyncer.syncTarget(packageName, store);
-        synchronized (pendingRuntimePropertyGenerations) {
-            Integer currentGeneration = pendingRuntimePropertyGenerations.get(packageName);
-            if (currentGeneration != null && currentGeneration == generation) {
-                pendingRuntimePropertyGenerations.remove(packageName);
-            }
-        }
-    }
-
-    private String viewportScaleDraftFor(
-            AppListItem item,
-            ViewportTargetSpec activeSpec
-    ) {
-        if (activeSpec != null && activeSpec.isRelativeScale()) {
-            return AppConfigInputValidation.formatScaleMilliPercentInput(activeSpec.scaleMilliPercent());
-        }
-        if (item.viewportScaleMilliPercent != null) {
-            return AppConfigInputValidation.formatScaleMilliPercentInput(item.viewportScaleMilliPercent);
-        }
-        return "";
-    }
-
-    private String viewportAbsoluteDraftFor(
-            AppListItem item,
-            ViewportTargetSpec activeSpec
-    ) {
-        if (activeSpec != null && activeSpec.isAbsoluteDp()) {
-            return String.valueOf(activeSpec.absoluteWidthDp());
-        }
-        if (item.viewportWidthDp != null) {
-            return String.valueOf(item.viewportWidthDp);
-        }
-        return "";
+        runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName);
     }
 
     public void toggleLandDetailScope(
@@ -2227,241 +544,23 @@ public final class MainActivity
             Runnable onTurnedInScope,
             Runnable onTurnedOutScope
     ) {
-        if (item == null || !item.scopeKnown) {
-            return;
-        }
-        systemScopeCoordinator.toggleScope(
-                item.packageName,
-                item.label,
+        landAppDetailSession.toggleScope(
+                item,
                 currentlyInScope,
-                () -> {
-                    if (onTurnedInScope != null) {
-                        onTurnedInScope.run();
-                    }
-                    requestAppsLoad();
-                },
-                () -> {
-                    if (onTurnedOutScope != null) {
-                        onTurnedOutScope.run();
-                    }
-                    requestAppsLoad();
-                }
+                onTurnedInScope,
+                onTurnedOutScope
         );
     }
 
-    public void showLandDetailTypefaceSelector(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onChanged
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return;
-        }
-        MaterialButton selectorAnchor = new MaterialButton(this);
-        new AppConfigDialogBinder(
-                this,
-                createAppConfigDialogHost()
-        ).showTypefaceSelector(selectorAnchor, state, onChanged);
-    }
-
-    public void showLandDetailHookDomains(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onChanged
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return;
-        }
-        showFontHookDomains(item, state, onChanged);
-    }
-
     public AppConfigDialogBinder.Host createAppConfigDialogHost() {
-        return new AppConfigDialogBinder.Host() {
-            @Override
-            public void toggleScope(
-                    AppListItem item,
-                    boolean currentlyInScope,
-                    Runnable onTurnedInScope,
-                    Runnable onTurnedOutScope
-            ) {
-                systemScopeCoordinator.toggleScope(
-                        item.packageName,
-                        item.label,
-                        currentlyInScope,
-                        onTurnedInScope,
-                        onTurnedOutScope
-                );
-            }
-
-            @Override
-            public boolean requestScope(
-                    AppListItem item,
-                    Runnable onTurnedInScope,
-                    Runnable onRequestFinished
-            ) {
-                return systemScopeCoordinator.requestScope(
-                        item.packageName,
-                        item.label,
-                        onTurnedInScope,
-                        onRequestFinished,
-                        false
-                );
-            }
-
-            @Override
-            public void executeProcessAction(
-                    AppListItem item,
-                    AppConfigDialogBinder.ProcessAction action
-            ) {
-                executeDialogProcessAction(item, action);
-            }
-
-            @Override
-            public void applyHyperOsNativeProxy(
-                    AppListItem item,
-                    Runnable onFinished
-            ) {
-                executeHyperOsNativeProxyMount(item, true, onFinished);
-            }
-
-            @Override
-            public void unmountHyperOsNativeProxy(
-                    AppListItem item,
-                    Runnable onFinished
-            ) {
-                executeHyperOsNativeProxyMount(item, false, onFinished);
-            }
-
-            @Override
-            public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
-                return MainActivity.this.isHyperOsNativeProxyCandidate(item);
-            }
-
-            @Override
-            public boolean setDpisEnabled(String packageName, boolean enabled) {
-                return MainActivity.this.setDpisEnabled(packageName, enabled);
-            }
-
-            @Override
-            public void showFontHookDomains(
-                    AppListItem item,
-                    AppConfigDialogBinder.AppConfigDialogState state,
-                    Runnable onStateChanged
-            ) {
-                MainActivity.this.showFontHookDomains(
-                        item,
-                        state,
-                        onStateChanged
-                );
-            }
-
-            @Override
-            public String getFontHookDomainsButtonText(
-                    AppListItem item,
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                return MainActivity.this.getFontHookDomainsButtonText(
-                        item,
-                        state
-                );
-            }
-
-            @Override
-            public void openTypefaceLibrary() {
-                MainActivity.this.startActivity(
-                        new Intent(MainActivity.this, FontLibraryActivity.class)
-                );
-            }
-
-            @Override
-            public void startFeedbackDiagnostic(
-                    AppListItem item,
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                MainActivity.this.startFeedbackDiagnostic(item, state);
-            }
-
-            @Override
-            public AppConfigSaveHandler.Result saveAppConfig(
-                    View dialogView,
-                    AppListItem item,
-                    boolean dpisEnabled,
-                    TextInputEditText viewportInput,
-                    TextInputEditText fontScaleInput,
-                    String viewportMode,
-                    String viewportApplyMode,
-                    boolean viewportApplyModeResetRequested,
-                    String fontMode,
-                    String selectedTypefaceId,
-                    String draftFontHookDomainsRaw,
-                    boolean fontHookDomainsResetRequested,
-                    String viewportScaleInput,
-                    String viewportAbsoluteInput
-            ) {
-                refreshSystemHookEffectiveEnabled();
-                AppConfigSaveHandler.Result result = appConfigSaveHandler.save(
-                        item,
-                        viewportInput,
-                        fontScaleInput,
-                        viewportMode,
-                        viewportApplyMode,
-                        viewportApplyModeResetRequested,
-                        fontMode,
-                        selectedTypefaceId,
-                        draftFontHookDomainsRaw,
-                        fontHookDomainsResetRequested,
-                        viewportScaleInput,
-                        viewportAbsoluteInput,
-                        isSystemHookEnabledFromStore(),
-                        getHookConfigStore(),
-                        null
-                );
-                return finalizeAppConfigSaveWithRuntimeSync(
-                        result,
-                        dialogView,
-                        item.packageName,
-                        dpisEnabled,
-                        getHookConfigStore());
-            }
-
-            @Override
-            public DpisConfigStore getConfigStore() {
-                return MainActivity.this.getHookConfigStore();
-            }
-
-            @Override
-            public void requestAppsLoad() {
-                MainActivity.this.requestAppsLoad();
-            }
-
-            @Override
-            public void onRuntimeConfigSaved() {
-                MainActivity.this.onRuntimeConfigSaved();
-            }
-
-            @Override
-            public void onDraftStateChanged(
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                updateEditingDraft(state);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-        };
+        return appConfigDialogHost;
     }
 
     public void startFeedbackDiagnostic(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        feedbackDiagnostic.startFromViewEditor(item, state);
+        startupSession.getFeedbackDiagnostic().startFromViewEditor(item, state);
     }
 
     public AppListItem saveCurrentEditorConfigForDiagnostic(
@@ -2471,133 +570,17 @@ public final class MainActivity
         if (item == null) {
             return null;
         }
-        View root = activeEditorRoot;
-        if (root == null || !item.packageName.equals(activeEditorPackageName)) {
+        View root = editorDraftSession.activeEditorRoot();
+        if (root == null || !item.packageName.equals(editorDraftSession.activeEditorPackageName())) {
             return item;
         }
         if (AppConfigDialogBinder.viewsFor(root) != null) {
-            return saveDialogConfigForDiagnostic(item, root);
+            return appConfigSheetSession.saveForDiagnostic(item, root);
         }
         if (LandAppDetailPaneBinder.stateFor(root) != null) {
-            return saveLandDetailConfigForDiagnostic(item, state, root);
+            return landAppDetailSession.saveForDiagnostic(item, state, root);
         }
         return item;
-    }
-
-    private AppListItem saveDialogConfigForDiagnostic(AppListItem item, View root) {
-        AppConfigDialogBinder.AppConfigDialogViews views
-                = AppConfigDialogBinder.viewsFor(root);
-        AppConfigDialogBinder.AppConfigDialogState state
-                = AppConfigDialogBinder.stateFor(root);
-        if (views == null || state == null) {
-            return item;
-        }
-        if (!AppConfigDialogBinder.updateSaveButtonState(root, views)) {
-            showToast(R.string.status_save_invalid);
-            return null;
-        }
-        AppConfigSaveHandler.Result result = createAppConfigDialogHost().saveAppConfig(
-                root,
-                item,
-                state.dpisEnabled,
-                views.viewportInputView,
-                views.fontInputView,
-                AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
-                state.viewportApplyMode,
-                state.viewportApplyModeResetRequested,
-                AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
-                state.selectedTypefaceId,
-                state.draftFontHookDomainsRaw,
-                state.fontHookDomainsResetRequested,
-                state.viewportScaleInput,
-                state.viewportAbsoluteInput
-        );
-        if (result.messageResId != 0) {
-            showToast(result.messageResId);
-        }
-        if (!result.success) {
-            return null;
-        }
-        // Keep feedback diagnostic on the same save aftermath as the sheet save button.
-        // Otherwise this side path can persist config but skip scope/proxy preparation.
-        state.previewFromGlobalPrefill = false;
-        state.draftFontHookDomainsRaw = null;
-        state.fontHookDomainsResetRequested = false;
-        state.viewportApplyModeResetRequested = false;
-        state.captureSavedDraft(views, false);
-        AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
-        AppConfigDialogBinder binder = new AppConfigDialogBinder(this, createAppConfigDialogHost());
-        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
-        AppConfigDialogBinder.AppConfigDialogActionStyle style
-                = AppConfigDialogBinder.captureDialogActionStyle(views.scopeButton);
-        binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
-        binder.syncHyperOsNativeProxyAfterSave(item, views, state);
-        binder.requestScopeAfterSuccessfulSave(root, item, views, state, style, systemHooksEnabled);
-        return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName));
-    }
-
-    private AppListItem saveLandDetailConfigForDiagnostic(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            View root
-    ) {
-        if (!WechatDpiSheetBinder.isInputValid(root)) {
-            showToast(R.string.status_save_invalid);
-            return null;
-        }
-        TextInputEditText viewportInput = findEditorInput(
-                root,
-                R.id.land_detail_viewport_input,
-                R.id.dialog_viewport_input
-        );
-        TextInputEditText fontInput = findEditorInput(
-                root,
-                R.id.land_detail_font_scale_input,
-                R.id.dialog_font_scale_input
-        );
-        boolean saved = saveAppConfigDraftInternal(
-                item,
-                state,
-                parseEditorPercentOrNull(viewportInput),
-                AppConfigDialogBinder.resolveViewportMode(findViewportModeToggle(root)),
-                parseEditorPercentOrNull(fontInput),
-                AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)),
-                state != null ? state.selectedTypefaceId : null,
-                state != null ? state.draftFontHookDomainsRaw : null,
-                state != null ? state.viewportApplyMode : ViewportApplyMode.OFF,
-                state != null && state.viewportApplyModeResetRequested,
-                state != null && state.fontHookDomainsResetRequested,
-                state != null ? state.viewportScaleInput : "",
-                state != null ? state.viewportAbsoluteInput : "",
-                state != null && state.dpisEnabled,
-                root,
-                root.findViewById(R.id.land_detail_save_button)
-        );
-        return saved ? item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName))
-                : null;
-    }
-
-    private Integer readPersistedWechatDpiForDiagnostic(String packageName) {
-        if (!WechatDpiConfig.appliesTo(packageName)) {
-            return null;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        return store != null ? store.getWechatDpi(packageName) : null;
-    }
-
-    private static Integer parseEditorPercentOrNull(TextInputEditText input) {
-        if (input == null || input.getText() == null) {
-            return null;
-        }
-        String raw = input.getText().toString().trim();
-        if (raw.isEmpty()) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(raw);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
     }
 
     public String resolvePackageVersionName(String packageName) {
@@ -2611,274 +594,38 @@ public final class MainActivity
         }
     }
 
-    private void showFontHookDomains(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onStateChanged
-    ) {
-        showFontHookDomains(item, state, onStateChanged, isFontHookDomainEditingEnabled());
-    }
-
-    private void showFontHookDomains(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onStateChanged,
-            boolean fontDomainsEditable
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains();
-        HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
-        FontHookDomainDialog.show(
-                this,
-                new FontHookDomainDialog.Host() {
-            @Override
-            public boolean saveCustom(
-                    String packageName,
-                    Set<String> selectedKnownDomains,
-                    Set<String> automaticKnownDomains,
-                    Set<String> unknownDomains
-            ) {
-                if (state != null) {
-                    state.draftFontHookDomainsRaw
-                            = HookDomainOverrideStore.rawValueForSelection(
-                                    selectedKnownDomains,
-                                    automaticKnownDomains,
-                                    unknownDomains
-                            );
-                    state.fontHookDomainsResetRequested
-                            = state.draftFontHookDomainsRaw == null;
-                }
-                if (onStateChanged != null) {
-                    onStateChanged.run();
-                }
-                return true;
-            }
-
-            @Override
-            public boolean restoreRecommended(String packageName) {
-                if (state != null) {
-                    state.draftFontHookDomainsRaw = null;
-                    state.fontHookDomainsResetRequested = true;
-                }
-                if (onStateChanged != null) {
-                    onStateChanged.run();
-                }
-                return true;
-            }
-
-            @Override
-            public boolean saveViewportApplyMode(
-                    String packageName,
-                    String mode
-            ) {
-                if (state != null) {
-                    state.viewportApplyMode = ViewportApplyMode.normalize(mode);
-                    state.viewportApplyModeResetRequested
-                            = ViewportApplyMode.OFF.equals(state.viewportApplyMode);
-                }
-                if (onStateChanged != null) {
-                    onStateChanged.run();
-                }
-                return true;
-            }
-        },
-                item.packageName,
-                automaticKnownDomains,
-                currentOverride,
-                state != null
-                        ? state.viewportApplyMode
-                        : store.getTargetViewportApplyMode(item.packageName),
-                fontDomainsEditable,
-                onStateChanged
-        );
-    }
-
-    private boolean isFontHookDomainEditingEnabled() {
-        View root = activeEditorRoot;
-        if (root == null
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0) {
-            root = landDetailContent.getChildAt(0);
-        }
-        if (root == null) {
-            return false;
-        }
-        return FontApplyMode.FIELD_REWRITE.equals(
-                AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)));
-    }
-
     public String getFontHookDomainsButtonText(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        return FontHookDomainPresentation.forOverride(
-                resolveFontHookDomainsForDraft(item, state),
-                FontHookDomainRegistry.automaticCustomizableDomains())
-                .buttonText(this);
+        return appConfigDialogHost.fontHookDomainsButtonText(item, state);
     }
 
-    private HookDomainOverride resolveFontHookDomainsForDraft(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state
-    ) {
-        if (state != null && state.fontHookDomainsResetRequested) {
-            return HookDomainOverride.automatic();
-        }
-        if (state != null
-                && (state.previewFromGlobalPrefill
-                        || state.draftFontHookDomainsRaw != null)) {
-            return normalizedFontHookDomainsOverride(
-                    HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                    FontHookDomainRegistry.automaticCustomizableDomains());
-        }
-        return normalizedFontHookDomainsOverride(
-                new HookDomainOverrideStore(getHookConfigStore()).read(
-                        item != null ? item.packageName : null),
-                FontHookDomainRegistry.automaticCustomizableDomains());
-    }
-
-    private HookDomainOverride normalizedFontHookDomainsOverride(
-            HookDomainOverride override,
-            Set<String> automaticKnownDomains) {
-        return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
-                override,
-                automaticKnownDomains);
-    }
-
-    private void executeHyperOsNativeProxyMount(
+    public void executeHyperOsNativeProxyMount(
             AppListItem item,
             boolean apply,
             Runnable onFinished
     ) {
-        executeHyperOsNativeProxyMount(item, apply, ignored -> {
-            if (onFinished != null) {
-                onFinished.run();
-            }
-        });
-    }
-
-    private void executeHyperOsNativeProxyMount(
-            AppListItem item,
-            boolean apply,
-            HyperOsNativeProxyMountCallback onFinished
-    ) {
-        new Thread(() -> {
-            HyperOsNativeProxyBindMounter.MountPlan plan
-                    = HyperOsNativeProxyBindMounter.createPlan(
-                            this,
-                            item.packageName
-                    );
-            HyperOsNativeProxyBindMounter.MountResult result = apply
-                    ? HyperOsNativeProxyBindMounter.apply(plan)
-                    : HyperOsNativeProxyBindMounter.unmount(plan);
-            DpisLog.i(
-                    "HyperOS Native Proxy "
-                    + (apply ? "apply" : "rollback")
-                    + " package="
-                    + item.packageName
-                    + " success="
-                    + result.success()
-                    + " output="
-                    + result.output()
-            );
-            int messageResId = apply
-                    ? R.string.dialog_hyperos_native_proxy_apply_failed
-                    : R.string.dialog_hyperos_native_proxy_unmount_failed;
-            runOnUiThread(() -> {
-                if (!result.success()) {
-                    showToast(messageResId);
-                }
-                if (onFinished != null) {
-                    onFinished.onFinished(result.success());
-                }
-            });
-        }, "DPIS-HyperOsNativeProxyMount").start();
+        runtimeLaunchSession.executeHyperOsNativeProxyMount(item, apply, onFinished);
     }
 
     public void executeDialogProcessAction(
             AppListItem item,
             AppConfigDialogBinder.ProcessAction action
     ) {
-        if (action == AppConfigDialogBinder.ProcessAction.RESTART
-                && shouldPrepareHyperOsNativeProxyForRestart(item)) {
-            // Re-prepare before restart because APK updates can leave an old bind mount
-            // pointing at a deleted module native library.
-            executeHyperOsNativeProxyMount(item, true, success -> {
-                if (success) {
-                    executeDialogProcessActionAfterHyperOsProxyReady(
-                            item,
-                            action
-                    );
-                }
-            });
-            return;
-        }
-        executeDialogProcessActionAfterHyperOsProxyReady(item, action);
-    }
-
-    private boolean shouldPrepareHyperOsNativeProxyForRestart(
-            AppListItem item
-    ) {
-        if (!isHyperOsNativeProxyCandidate(item)) {
-            return false;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        return (store.isTargetDpisEnabled(item.packageName)
-                && hasActiveStoredConfig(store, item.packageName));
+        runtimeLaunchSession.executeDialogProcessAction(item, action);
     }
 
     /** The catalogue intentionally does not preload metadata for every installed package. */
-    private boolean isHyperOsNativeProxyCandidate(AppListItem item) {
-        return item != null && (item.hyperOsNativeProxyCandidate
-                || HyperOsNativeAppDetector.isNativeProxyCandidate(
-                        getPackageManager(), item.packageName));
-    }
-
-    private static boolean hasActiveStoredConfig(
-            DpisConfigStore store,
-            String packageName
-    ) {
-        ViewportTargetSpec viewportTargetSpec = store.getTargetViewportSpec(
-                packageName
-        );
-        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
-        return (viewportTargetSpec.isEnabled()
-                || fontScalePercent != null
-                || store.hasTargetAppSpecificConfig(packageName));
-    }
-
-    private void executeDialogProcessActionAfterHyperOsProxyReady(
-            AppListItem item,
-            AppConfigDialogBinder.ProcessAction action
-    ) {
-        ProcessActionHandler.Action mappedAction = switch (action) {
-            case START ->
-                ProcessActionHandler.Action.START;
-            case RESTART ->
-                ProcessActionHandler.Action.RESTART;
-            case STOP ->
-                ProcessActionHandler.Action.STOP;
-        };
-        if (item != null) {
-            processActionHandler.execute(item, mappedAction);
-        }
+    public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+        return runtimeLaunchSession.isHyperOsNativeProxyCandidate(item);
     }
 
     public boolean isSystemHookEnabledFromStore() {
         return cachedSystemHookEffectiveEnabled;
     }
 
-    private interface HyperOsNativeProxyMountCallback {
-
-        void onFinished(boolean success);
-    }
-
-    private void refreshSystemHookEffectiveEnabled() {
+    public void refreshSystemHookEffectiveEnabled() {
         cachedSystemHookEffectiveEnabled
                 = SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(
                         getHookConfigStore()
@@ -2889,354 +636,138 @@ public final class MainActivity
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
-    private EditorDraft captureAppConfigDraft() {
-        View root = activeEditorRoot;
-        String packageName = activeEditorPackageName;
-        if (root == null
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0) {
-            root = landDetailContent.getChildAt(0);
-            packageName = mainViewModel != null
-                    ? mainViewModel.getEditingPackageName()
-                    : packageName;
-        }
-        if (root == null) {
-            return null;
-        }
-        TextInputEditText viewportInput = findEditorInput(
-                root,
-                R.id.land_detail_viewport_input,
-                R.id.dialog_viewport_input
+    public FrameLayout landDetailContent() {
+        return hostWiringSession.getLandDetailContent();
+    }
+
+    public View landDetailEmptyView() {
+        return hostWiringSession.getLandDetailEmptyView();
+    }
+
+    public ComposeAppEditorController composeAppEditorController() {
+        return hostWiringSession.getComposeAppEditorController();
+    }
+
+    public AppWorkspace appWorkspace() {
+        return hostWiringSession.getAppWorkspace();
+    }
+
+    public ToolsWorkspace toolsWorkspace() {
+        return hostWiringSession.getToolsWorkspace();
+    }
+
+    public SettingsWorkspaceSession settingsWorkspaceSession() {
+        return hostWiringSession.getSettingsWorkspaceSession();
+    }
+
+    public AppListPage landCurrentPage() {
+        return landCurrentPage;
+    }
+
+    public AppWorkspaceScrollStateStore appWorkspaceScrollStateStore() {
+        return appWorkspaceScrollStateStore;
+    }
+
+    public LandAppDetailSession landAppDetailSession() {
+        return landAppDetailSession;
+    }
+
+    public AppConfigSheetSession appConfigSheetSession() {
+        return appConfigSheetSession;
+    }
+
+    public View topContainer() {
+        return hostWiringSession.getTopContainer();
+    }
+
+    public View toolsWorkspaceContainer() {
+        return hostWiringSession.getToolsWorkspaceContainer();
+    }
+
+    public View settingsWorkspaceContainer() {
+        return hostWiringSession.getSettingsWorkspaceContainer();
+    }
+
+    public View landDetailPane() {
+        return hostWiringSession.getLandDetailPane();
+    }
+
+    public View landDetailDivider() {
+        return hostWiringSession.getLandDetailDivider();
+    }
+
+    public AppConfigDialogActivityHost appConfigDialogHost() {
+        return appConfigDialogHost;
+    }
+
+    public AppConfigSaveHandler appConfigSaveHandler() {
+        return appConfigSaveHandler;
+    }
+
+    public WechatDpiHelp wechatDpiHelp() {
+        return wechatDpiHelp;
+    }
+
+    public boolean requestEditorScope(AppListItem item, Runnable onApproved) {
+        return systemScopeCoordinator.requestScope(
+                item.packageName,
+                item.label,
+                onApproved,
+                null,
+                false
         );
-        TextInputEditText fontInput = findEditorInput(
-                root,
-                R.id.land_detail_font_scale_input,
-                R.id.dialog_font_scale_input
+    }
+
+    public void refreshComposeSettings() {
+        mainWorkspaceSession.refreshSettings();
+    }
+
+    public void refreshComposeTools() {
+        mainWorkspaceSession.refreshTools();
+    }
+
+    public void saveAppListFilterState(AppListFilterState filterState) {
+        startupSession.getFilterStore().save(filterState);
+    }
+
+    public void updateAppListScrollPosition(
+            AppListPage page,
+            int index,
+            int scrollOffset
+    ) {
+        appWorkspaceScrollStateStore.update(page, index, scrollOffset);
+    }
+
+    public void attachTemplateLegacyViews(
+            View workspaceContainer,
+            View detailEmpty,
+            FrameLayout detailContent
+    ) {
+        ensureWorkspaceSession().attachLegacyViews(
+                workspaceContainer,
+                detailEmpty,
+                detailContent
         );
-        AppConfigDialogBinder.AppConfigDialogState state = findEditorState(root);
-        String viewportText
-                = viewportInput != null && viewportInput.getText() != null
-                ? viewportInput.getText().toString()
-                : "";
-        String fontText
-                = fontInput != null && fontInput.getText() != null
-                ? fontInput.getText().toString()
-                : "";
-        String viewportMode = viewportInput != null
-                ? AppConfigDialogBinder.resolveViewportMode(findViewportModeToggle(root))
-                : ViewportTargetType.RELATIVE_SCALE;
-        String fontMode = fontInput != null
-                ? AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))
-                : FontApplyMode.SYSTEM_EMULATION;
-        if (state != null && !state.packageName.isBlank()) {
-            packageName = state.packageName;
-        }
-        if ((packageName == null || packageName.isBlank()) && mainViewModel != null) {
-            packageName = mainViewModel.getEditingPackageName();
-        }
-        EditorDraft current = mainViewModel != null
-                ? mainViewModel.getEditingDraft()
-                : null;
-        boolean useCurrentState = current != null && current.packageName.equals(packageName);
-        return new EditorDraft(
-                packageName,
-                viewportText,
-                state != null ? state.viewportScaleInput
-                        : useCurrentState ? current.viewportScaleInput : "",
-                state != null ? state.viewportAbsoluteInput
-                        : useCurrentState ? current.viewportAbsoluteInput : "",
-                viewportMode,
-                fontText,
-                fontMode,
-                state != null ? state.selectedTypefaceId
-                        : useCurrentState ? current.selectedTypefaceId : null,
-                state != null ? state.draftFontHookDomainsRaw
-                        : useCurrentState ? current.draftFontHookDomainsRaw : null,
-                state != null ? state.viewportApplyMode
-                        : useCurrentState ? current.viewportApplyMode : ViewportApplyMode.OFF,
-                state != null
-                        ? state.fontHookDomainsResetRequested
-                        : useCurrentState && current.fontHookDomainsResetRequested,
-                state != null
-                        ? state.viewportApplyModeResetRequested
-                        : useCurrentState && current.viewportApplyModeResetRequested,
-                WechatDpiSheetBinder.captureDraft(root),
-                state != null ? state.scopeSelected
-                        : useCurrentState && current.scopeSelected,
-                state != null ? state.dpisEnabled
-                        : useCurrentState && current.dpisEnabled
-        );
+    }
+
+    public EditorDraft currentEditingDraft() {
+        return editorDraftSession.currentEditingDraft();
+    }
+
+    public void rememberActiveEditor(View root, String packageName) {
+        editorDraftSession.rememberActiveEditor(root, packageName);
     }
 
     public void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
-        if (mainViewModel == null || state == null) {
-            return;
-        }
-        EditorDraft captured = captureAppConfigDraft();
-        if (captured != null) {
-            mainViewModel.setEditingDraft(captured);
-            return;
-        }
-        EditorDraft current = mainViewModel.getEditingDraft();
-        String packageName = !state.packageName.isBlank()
-                ? state.packageName
-                : mainViewModel.getEditingPackageName();
-        EditorDraft draft = new EditorDraft(
-                packageName,
-                current != null ? current.viewportInput : "",
-                current != null ? current.viewportScaleInput : "",
-                current != null ? current.viewportAbsoluteInput : "",
-                current != null ? current.viewportMode : ViewportTargetType.RELATIVE_SCALE,
-                current != null ? current.fontInput : "",
-                current != null ? current.fontMode : FontApplyMode.SYSTEM_EMULATION,
-                state.selectedTypefaceId,
-                state.draftFontHookDomainsRaw,
-                state.viewportApplyMode,
-                state.fontHookDomainsResetRequested,
-                state.viewportApplyModeResetRequested,
-                current != null ? current.wechatDpiInput : null,
-                state.scopeSelected,
-                state.dpisEnabled
-        );
-        mainViewModel.setEditingDraft(draft);
+        editorDraftSession.updateEditingDraft(state);
     }
 
-    private void applyAppConfigDraft(View root, EditorDraft draft) {
-        if (draft == null || root == null) {
-            return;
-        }
-        TextInputEditText viewportInput = findEditorInput(
-                root,
-                R.id.land_detail_viewport_input,
-                R.id.dialog_viewport_input
-        );
-        TextInputEditText fontInput = findEditorInput(
-                root,
-                R.id.land_detail_font_scale_input,
-                R.id.dialog_font_scale_input
-        );
-        AppConfigDialogBinder.ModeToggle viewportToggle
-                = findViewportModeToggle(root);
-        AppConfigDialogBinder.ModeToggle fontToggle = findFontModeToggle(root);
-        TextInputLayout viewportInputLayout = findEditorInputLayout(
-                root,
-                R.id.land_detail_viewport_input_layout,
-                R.id.dialog_viewport_input_layout
-        );
-        AppConfigDialogBinder.bindViewportModeToggle(
-                viewportToggle,
-                draft.viewportMode,
-                false
-        );
-        if (viewportInputLayout != null) {
-            if (root.findViewById(R.id.dialog_viewport_input_layout) != null) {
-                new AppConfigDialogBinder(this, createAppConfigDialogHost())
-                        .bindViewportInputHint(
-                                viewportInputLayout,
-                                draft.viewportMode
-                        );
-            } else {
-                viewportInputLayout.setHint(
-                        ViewportTargetType.RELATIVE_SCALE.equals(
-                                ViewportTargetType.normalize(draft.viewportMode)
-                        )
-                                ? R.string.dialog_viewport_hint_scale
-                                : R.string.dialog_viewport_hint_absolute
-                );
-            }
-        }
-        AppConfigDialogBinder.bindFontModeToggle(
-                fontToggle,
-                draft.fontMode,
-                false
-        );
-        if (viewportInput != null) {
-            viewportInput.setText(draft.viewportInput);
-        }
-        if (fontInput != null) {
-            fontInput.setText(draft.fontInput);
-        }
+    public void applyAppConfigDraft(View root, EditorDraft draft) {
+        editorDraftSession.applyAppConfigDraft(root, draft);
     }
 
-    private TextInputEditText findEditorInput(
-            View root,
-            int landId,
-            int dialogId
-    ) {
-        TextInputEditText input = root.findViewById(landId);
-        return input != null ? input : root.findViewById(dialogId);
+    public View currentEditorRoot() {
+        return editorDraftSession.currentEditorRoot();
     }
-
-    private TextInputLayout findEditorInputLayout(
-            View root,
-            int landId,
-            int dialogId
-    ) {
-        TextInputLayout inputLayout = root.findViewById(landId);
-        return inputLayout != null ? inputLayout : root.findViewById(dialogId);
-    }
-
-    private AppConfigDialogBinder.ModeToggle findViewportModeToggle(View root) {
-        View landContainer = root.findViewById(
-                R.id.land_detail_viewport_mode_toggle_button
-        );
-        if (landContainer != null) {
-            return new AppConfigDialogBinder.ModeToggle(
-                    landContainer,
-                    root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                    root.findViewById(R.id.land_detail_viewport_mode_width_label)
-            );
-        }
-        return new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.dialog_viewport_mode_toggle_button),
-                root.findViewById(R.id.dialog_viewport_mode_toggle_thumb),
-                root.findViewById(R.id.dialog_viewport_mode_system_label),
-                root.findViewById(R.id.dialog_viewport_mode_compat_label)
-        );
-    }
-
-    private AppConfigDialogBinder.ModeToggle findFontModeToggle(View root) {
-        View landContainer = root.findViewById(
-                R.id.land_detail_font_mode_toggle_button
-        );
-        if (landContainer != null) {
-            return new AppConfigDialogBinder.ModeToggle(
-                    landContainer,
-                    root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_font_mode_system_label),
-                    root.findViewById(R.id.land_detail_font_mode_compat_label)
-            );
-        }
-        return new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.dialog_font_mode_toggle_button),
-                root.findViewById(R.id.dialog_font_mode_toggle_thumb),
-                root.findViewById(R.id.dialog_font_mode_system_label),
-                root.findViewById(R.id.dialog_font_mode_compat_label)
-        );
-    }
-
-    private AppConfigDialogBinder.AppConfigDialogState findEditorState(
-            View root
-    ) {
-        AppConfigDialogBinder.AppConfigDialogState dialogState
-                = AppConfigDialogBinder.stateFor(root);
-        return dialogState != null
-                ? dialogState
-                : LandAppDetailPaneBinder.stateFor(root);
-    }
-
-    private record RetainedState(List<AppListItem> appsSnapshot, String query, String templateQuery,
-                                 AppListFilterState filterState,
-                                 MainUiState.WorkspaceMode workspaceMode, int currentPage,
-                                 int[] appListScrollPositions, int[] refreshingPagePositions,
-                                 String editingPackageName, EditorDraft editingDraft,
-                                 EditorDraft savedEditingDraft,
-                                 EditorDraft prefillSnapshot,
-                                 boolean prefillInvalidated,
-                                 ConfigEditorDestination editingDestination,
-                                 TemplateWorkspaceActivitySession.State workspaceSessionState,
-                                 FeedbackDiagnosticActivitySession.State feedbackDiagnostic,
-                                 UpdatePromptRequest pendingUpdatePrompt) {
-
-            private RetainedState(
-                    List<AppListItem> appsSnapshot,
-                    String query,
-                    String templateQuery,
-                    AppListFilterState filterState,
-                    MainUiState.WorkspaceMode workspaceMode,
-                    int currentPage,
-                    int[] appListScrollPositions,
-                    int[] refreshingPagePositions,
-                    String editingPackageName,
-                    EditorDraft editingDraft,
-                    EditorDraft savedEditingDraft,
-                    EditorDraft prefillSnapshot,
-                    boolean prefillInvalidated,
-                    ConfigEditorDestination editingDestination,
-                    TemplateWorkspaceActivitySession.State workspaceSessionState,
-                    FeedbackDiagnosticActivitySession.State feedbackDiagnostic,
-                    UpdatePromptRequest pendingUpdatePrompt
-            ) {
-                this.appsSnapshot = appsSnapshot;
-                this.query = query != null ? query : "";
-                this.templateQuery = templateQuery != null ? templateQuery : "";
-                this.filterState
-                        = filterState != null
-                        ? filterState
-                        : AppListFilterState.defaultState();
-                this.workspaceMode
-                        = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.APP;
-                this.currentPage = currentPage;
-                this.appListScrollPositions = appListScrollPositions != null
-                        ? appListScrollPositions.clone()
-                        : new int[0];
-                this.refreshingPagePositions
-                        = refreshingPagePositions != null
-                        ? refreshingPagePositions.clone()
-                        : new int[0];
-                this.editingPackageName = editingPackageName;
-                this.editingDraft = editingDraft;
-                this.savedEditingDraft = savedEditingDraft;
-                this.prefillSnapshot = prefillSnapshot;
-                this.prefillInvalidated = prefillInvalidated;
-                this.editingDestination = editingDestination != null
-                        ? editingDestination
-                        : ConfigEditorDestination.MAIN;
-                this.workspaceSessionState = workspaceSessionState;
-                this.feedbackDiagnostic = feedbackDiagnostic;
-                this.pendingUpdatePrompt = pendingUpdatePrompt;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) {
-                    return true;
-                }
-                if (!(object instanceof RetainedState other)) {
-                    return false;
-                }
-                return currentPage == other.currentPage
-                        && java.util.Objects.equals(appsSnapshot, other.appsSnapshot)
-                        && java.util.Objects.equals(query, other.query)
-                        && java.util.Objects.equals(templateQuery, other.templateQuery)
-                        && java.util.Objects.equals(filterState, other.filterState)
-                        && workspaceMode == other.workspaceMode
-                        && java.util.Arrays.equals(appListScrollPositions, other.appListScrollPositions)
-                        && java.util.Arrays.equals(refreshingPagePositions, other.refreshingPagePositions)
-                        && java.util.Objects.equals(editingPackageName, other.editingPackageName)
-                        && java.util.Objects.equals(editingDraft, other.editingDraft)
-                        && java.util.Objects.equals(savedEditingDraft, other.savedEditingDraft)
-                        && java.util.Objects.equals(prefillSnapshot, other.prefillSnapshot)
-                        && prefillInvalidated == other.prefillInvalidated
-                        && editingDestination == other.editingDestination
-                        && java.util.Objects.equals(workspaceSessionState, other.workspaceSessionState)
-                        && java.util.Objects.equals(feedbackDiagnostic, other.feedbackDiagnostic)
-                        && java.util.Objects.equals(pendingUpdatePrompt, other.pendingUpdatePrompt);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = java.util.Objects.hash(
-                        appsSnapshot, query, templateQuery, filterState, workspaceMode, currentPage,
-                        editingPackageName, editingDraft, savedEditingDraft, prefillSnapshot,
-                        prefillInvalidated, editingDestination,
-                        workspaceSessionState, feedbackDiagnostic, pendingUpdatePrompt);
-                result = 31 * result + java.util.Arrays.hashCode(appListScrollPositions);
-                return 31 * result + java.util.Arrays.hashCode(refreshingPagePositions);
-            }
-
-            @Override
-            public String toString() {
-                return "RetainedState[appsSnapshot=" + appsSnapshot
-                        + ", query=" + query
-                        + ", templateQuery=" + templateQuery
-                        + ", currentPage=" + currentPage
-                        + ", appListScrollPositions="
-                        + java.util.Arrays.toString(appListScrollPositions)
-                        + ", refreshingPagePositions="
-                        + java.util.Arrays.toString(refreshingPagePositions) + "]";
-            }
-        }
 
 }

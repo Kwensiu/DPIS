@@ -77,6 +77,8 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertFalse(composeContent.contains("filterDialogVisible"))
         assertTrue(composeContent.contains("navigationBarsPadding()"))
         assertTrue(composeContent.contains("SecondaryPageTopBar("))
+        assertTrue(composeContent.contains("SplitPaneHeader("))
+        assertTrue(composeContent.contains("WindowInsets.statusBars"))
         assertFalse(composeContent.contains("TopAppBar("))
         assertTrue(presentation.contains("templates.setSelectedPackages(id, LinkedHashSet<String?>(selectedPackages))"))
         assertTrue(presentation.contains("QuickTemplateTargetSelectionPolicy.retainInstalled"))
@@ -158,7 +160,11 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"))
         assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"))
         assertTrue(workspaceCoordinator.contains("activity.startActivityForResult("))
-        assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("))
+        val loadSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+        )
+        assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
+        assertTrue(targetsBinder.contains("InstalledAppCatalogCoordinator("))
         assertFalse(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"))
         assertTrue(routeState.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("))
         assertTrue(routeState.contains("QuickTemplateTargetSelectionContract.closeReasonFrom("))

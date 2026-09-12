@@ -12,6 +12,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import com.dpis.module.R
+import com.dpis.module.settings.presentation.BackupActionsDialogContent
+import com.dpis.module.settings.presentation.InterfaceScaleDialogContent
+import com.dpis.module.settings.presentation.LanguageDialogContent
+import com.dpis.module.settings.presentation.LanguageDialogOption
+import com.dpis.module.settings.presentation.LanguageDialogOptionsTestTag
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
