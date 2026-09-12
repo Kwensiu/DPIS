@@ -188,7 +188,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.java")
+        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.kt")
         val toolsWorkspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
 
         assertTrue(source.contains("private AppWorkspace appWorkspace"))
@@ -196,7 +196,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("appWorkspace.actions()"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
         assertTrue(appWorkspace.contains("interface Host"))
-        assertTrue(appWorkspace.contains("AppWorkspacePresentation.Actions actions()"))
+        assertTrue(appWorkspace.contains("fun actions(): AppWorkspacePresentation.Actions"))
         assertTrue(toolsWorkspace.contains("class ToolsWorkspace("))
         assertTrue(toolsWorkspace.contains("private val binder = ToolsWorkspaceBinder("))
     }
