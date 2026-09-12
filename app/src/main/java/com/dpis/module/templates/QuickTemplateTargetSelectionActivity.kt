@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.templates.presentation.QuickTemplateTargetActivityContent
+import com.dpis.module.templates.presentation.QuickTemplateTargetsPresentationController
 
 class QuickTemplateTargetSelectionActivity : LocalizedActivity() {
     private var targetsController: QuickTemplateTargetsPresentationController? = null

@@ -1,4 +1,4 @@
-package com.dpis.module.templates
+package com.dpis.module.templates.presentation
 
 import android.app.Activity
 import android.view.LayoutInflater
@@ -7,7 +7,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
 import com.dpis.module.R
-import com.dpis.module.templates.presentation.QuickTemplateTargetsBinder
+import com.dpis.module.templates.TemplateDetailKind
+import com.dpis.module.templates.TemplateDetailSelection
 import com.dpis.module.ui.WindowInsetsBinder
 
 /** Owns the legacy landscape template-detail view and its target-picker lifetime. */

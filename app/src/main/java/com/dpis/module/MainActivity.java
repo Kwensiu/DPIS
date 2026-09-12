@@ -64,7 +64,7 @@ import com.dpis.module.settings.StartupDisclaimerStore;
 import com.dpis.module.settings.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
-import com.dpis.module.templates.TemplateWorkspaceActivitySession;
+import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.TouchFeedbackBinder;

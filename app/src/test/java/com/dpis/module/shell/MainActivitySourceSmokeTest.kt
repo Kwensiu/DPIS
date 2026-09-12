@@ -32,7 +32,7 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val session = read(
-                "src/main/java/com/dpis/module/templates/TemplateWorkspaceActivitySession.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivitySession.kt")
 
         assertTrue(source.contains("private TemplateWorkspaceActivitySession workspaceSession"))
         assertTrue(source.contains(".handleActivityResult(requestCode, data)"))
