@@ -27,6 +27,9 @@ import java.util.concurrent.Executors
 /**
  * Owns MainActivity update check, prompt, download, and startup disclaimer hosts.
  * The Activity only forwards lifecycle and rebinds home when update UI state changes.
+ *
+ * Preference-backed stores are lazy: MainActivity constructs this session in a field
+ * initializer, which runs before [android.app.Activity.attach] and has no Context yet.
  */
 class MainUpdateSession(
     private val activity: LocalizedActivity,
@@ -41,7 +44,7 @@ class MainUpdateSession(
     )
     private val packageHandler = StartupUpdatePackageHandler(activity)
     private val updateExecutor = Executors.newSingleThreadExecutor()
-    private val updateStateStore = UpdateStateStore(activity)
+    private val updateStateStore by lazy { UpdateStateStore(activity) }
     private val checkCoordinator = StartupUpdateCheckCoordinator(
         CheckHost(),
         updateCoordinator,
@@ -54,20 +57,24 @@ class MainUpdateSession(
         downloadExecutor,
         updateExecutor,
     )
-    private val releaseNotesController = ReleaseNotesController(
-        ReleaseNotesCacheStore(activity),
-        updateExecutor,
-        activity::runOnUiThread,
-        GitHubReleaseNotesFetcher::fetchByVersionName,
-        System::currentTimeMillis,
-        UPDATE_CONNECT_TIMEOUT_MS,
-        UPDATE_READ_TIMEOUT_MS,
-    )
-    private val promptCoordinator = UpdatePromptDialogCoordinator(
-        activity,
-        PromptHost(),
-        releaseNotesController,
-    )
+    private val releaseNotesController by lazy {
+        ReleaseNotesController(
+            ReleaseNotesCacheStore(activity),
+            updateExecutor,
+            activity::runOnUiThread,
+            GitHubReleaseNotesFetcher::fetchByVersionName,
+            System::currentTimeMillis,
+            UPDATE_CONNECT_TIMEOUT_MS,
+            UPDATE_READ_TIMEOUT_MS,
+        )
+    }
+    private val promptCoordinator by lazy {
+        UpdatePromptDialogCoordinator(
+            activity,
+            PromptHost(),
+            releaseNotesController,
+        )
+    }
 
     @Volatile
     var homeUpdateUiState: HomeUpdateUiState = HomeUpdateUiState.UP_TO_DATE

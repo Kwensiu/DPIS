@@ -63,6 +63,9 @@ class MainActivitySourceSmokeTest {
         )
 
         assertTrue(activity.contains("new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible)"))
+        assertTrue(updateSession.contains("private val updateStateStore by lazy"))
+        assertTrue(updateSession.contains("private val releaseNotesController by lazy"))
+        assertTrue(updateSession.contains("private val promptCoordinator by lazy"))
         assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.CHECKING)"))
         assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.available(manifest))"))
         assertTrue(updateSession.contains("showUpdateAvailableDialog("))
