@@ -55,6 +55,49 @@ Continuous controls keep their domain-specific feedback: the interface-scale
 slider snaps to whole percentages and emits a clock tick only when crossing a
 percentage. Do not replace slider step feedback with generic click feedback.
 
+## Presentation And Code Ownership
+
+These rules are binding for new work and for any change that already touches
+the relevant host. See `docs/architecture-ownership.md` for the expanded
+rules and remaining migration slices.
+
+1. An Activity is a shell. It may own lifecycle, intent, `setContent` /
+   `ComposeView` install, permission/result callbacks, and wiring into a
+   focused host. It must not grow feature workflows, dialogs, exporters,
+   diagnostics, or other state machines. Keep `MainActivity` limited to
+   app-shell startup and event dispatch.
+2. One screen has one state machine. Compose renders and dispatches. It does
+   not write stores, choose runtime routes, persist package config, or run
+   long I/O. Durable work lives in a coordinator, presenter, store, or
+   ViewModel that the screen already uses.
+3. Split policy from host. JVM-testable rules (filter, sort, restore
+   normalization, prompt decisions, byte formatting) stay outside
+   `presentation/`, `ui/`, `runtime/`, and flavor trees, and ship with a
+   behavior test. Android dialog, Activity, binder, and installer glue goes
+   under the feature `presentation/` directory so coverage exclusions follow
+   the directory contract. Do not add one-off Sonar file exclusions.
+4. One UI toolkit. New screens, dialogs, sheets, list rows, and controls are
+   Compose. Do not add XML View binders. Convert a Java host in the same
+   change when this task already materially edits it, unless reflection, JNI,
+   a flavor Xposed entry, or an externally observed JVM signature makes that
+   unsafe.
+5. `ui/` is shell, tokens, scaffold, and shared chrome only. Feature screens
+   belong in the feature package (`about/presentation`, `settings/presentation`,
+   `applist`, `templates/presentation`, and so on). Do not add a new About,
+   Settings, or editor screen under `ui/`. Physical directory and Kotlin
+   package must match; do not leave a feature composable in
+   `about/presentation` with a `ui.compose` package.
+6. Java remains only where the contract requires it: flavor Xposed entrypoints,
+   reflection or JNI boundaries, the pinned Quick Settings tile FQCN
+   `com.dpis.module.QuickConfigTileService`, or another externally observed
+   JVM signature. Record that reason in the change.
+
+When extracting a host, keep the Java-callable surface stable (`@JvmStatic`,
+explicit `Host` interfaces, nullable types Java callers still pass). Prefer
+`MainUiState` / `MainUiAction` for workspace destination selection. Do not
+introduce a repository/use-case stack unless the touched feature already has
+that shape.
+
 ## Viewport Model
 
 `ViewportTargetSpec` is the authoritative viewport target representation.

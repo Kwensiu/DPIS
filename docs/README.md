@@ -20,6 +20,7 @@
 - [font-routing.md](./font-routing.md)：字体模式、自定义 Hook 链路和内部调度边界。
 - [java-toolchain-policy.md](./java-toolchain-policy.md)：JDK、Java 兼容级别和 Android API 使用边界。
 - [ui-guidelines.md](./ui-guidelines.md)：DPIS UI 修改约定。
+- [architecture-ownership.md](./architecture-ownership.md)：Activity / `ui/` / policy 所有权约束，以及后续 host 迁移顺序。
 - [agents/](./agents/)：Agent 协作配置、issue tracker 信息和运行时排查流程。
 - [sonarqube.md](./sonarqube.md)：CI 扫描配置，以及用 SonarQube MCP 读质量门和覆盖率。
 

@@ -7,7 +7,10 @@ DPIS currently uses a single-context documentation layout.
 Agents should read these files first when they need project context:
 
 - `AGENTS.md` for repository workflow, testing, and runtime debugging rules.
-- `CONTEXT.md` for DPIS domain language and route boundaries.
+- `CONTEXT.md` for DPIS domain language, route boundaries, and presentation
+  ownership rules.
+- `docs/architecture-ownership.md` for presentation ownership constraints
+  and remaining-host migration order.
 - `docs/font-routing.md` for font mode, custom hook-chain, and internal
   scheduler-domain ownership.
 - `docs/java-toolchain-policy.md` for JDK, Java compatibility, and Android API
