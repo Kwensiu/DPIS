@@ -13,7 +13,7 @@ import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.ui.compose.LogPresentation;
 import com.dpis.module.ui.compose.LogUiEntry;
 import com.dpis.module.ui.compose.LogUiState;
-import com.dpis.module.ui.compose.SupportActivityContent;
+import com.dpis.module.about.presentation.SupportActivityContent;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;

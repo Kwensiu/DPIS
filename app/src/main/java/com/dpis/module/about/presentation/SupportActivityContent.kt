@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import android.content.Intent
 import androidx.activity.ComponentActivity
@@ -20,6 +20,23 @@ import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.ExperimentalSettingsContent
+import com.dpis.module.ui.compose.FontDetailContent
+import com.dpis.module.ui.compose.FontDetailPresentation
+import com.dpis.module.ui.compose.FontLibraryContent
+import com.dpis.module.ui.compose.FontLibraryPresentation
+import com.dpis.module.ui.compose.LogContent
+import com.dpis.module.ui.compose.LogPresentation
+import com.dpis.module.ui.compose.QuickConfigContent
+import com.dpis.module.ui.compose.QuickConfigPresentation
+import com.dpis.module.ui.compose.ThemeSettingsContent
+import com.dpis.module.ui.compose.WearAboutContent
+import com.dpis.module.ui.compose.WearExperimentalSettingsContent
+import com.dpis.module.ui.compose.WearFontLibraryContent
+import com.dpis.module.ui.compose.WearOpenSourceLicenseContent
+import com.dpis.module.ui.compose.WearThemeSettingsContent
+import com.dpis.module.ui.compose.resolveDarkTheme
 import java.util.function.Consumer
 
 /** Type-safe Compose entry points for Java-owned standalone Activity contracts. */

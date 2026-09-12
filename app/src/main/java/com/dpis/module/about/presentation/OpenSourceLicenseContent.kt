@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +23,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseItem
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.SecondaryPageContentTokens
+import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.compose.dpisSegmentedShapes
+import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.compose.rememberClickAction
 
 @Composable
 fun OpenSourceLicenseContent(

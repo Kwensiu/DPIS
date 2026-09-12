@@ -8,7 +8,7 @@ import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
-import com.dpis.module.ui.compose.SupportActivityContent
+import com.dpis.module.about.presentation.SupportActivityContent
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 

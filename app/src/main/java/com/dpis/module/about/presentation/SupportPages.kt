@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -51,6 +51,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.compose.SecondaryPageContentTokens
+import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.compose.SheetVisualChrome
+import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
 
 /**
  * Compose presentation for standalone support activities. Activity classes retain

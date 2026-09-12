@@ -69,7 +69,7 @@ import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.ui.compose.QuickConfigDialog
 import com.dpis.module.ui.compose.QuickConfigPresentation
-import com.dpis.module.ui.compose.SupportActivityContent
+import com.dpis.module.about.presentation.SupportActivityContent
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertySyncer
 import com.google.android.material.textfield.TextInputEditText

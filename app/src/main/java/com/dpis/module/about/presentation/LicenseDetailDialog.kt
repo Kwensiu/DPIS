@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseItem
+import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.dialog.ModalDialog

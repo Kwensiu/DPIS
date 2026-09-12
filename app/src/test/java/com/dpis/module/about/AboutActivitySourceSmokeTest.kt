@@ -98,6 +98,7 @@ class AboutActivitySourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
 
         content.assertContainsAll(
+            "package com.dpis.module.about.presentation",
             "fun AboutContent(", "SecondaryPageScaffold(", "SegmentedListItem(",
             "verticalAlignment = Alignment.CenterVertically", "dpisSegmentedShapes(index, total)",
             "LazyColumn(", "rememberClickAction", "showDebugUpdateEntry", "AboutContentPreview",

@@ -12,7 +12,7 @@ import com.dpis.module.BuildConfig
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.compose.SupportActivityContent
+import com.dpis.module.about.presentation.SupportActivityContent
 import com.dpis.module.updates.GitHubReleaseNotesFetcher
 import com.dpis.module.updates.ReleaseNotesCacheStore
 import com.dpis.module.updates.ReleaseNotesController

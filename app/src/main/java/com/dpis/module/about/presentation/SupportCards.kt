@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
