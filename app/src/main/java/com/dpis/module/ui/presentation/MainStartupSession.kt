@@ -1,23 +1,44 @@
 package com.dpis.module.ui.presentation
 
 import android.os.Bundle
+import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListFilterState
+import com.dpis.module.applist.AppListFilterStateStore
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
+import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell
+import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator
+import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.MainViewModel
 import com.dpis.module.updates.UpdatePromptRequest
+import com.dpis.module.updates.presentation.MainUpdateSession
 import java.util.EnumSet
 
 /**
- * Owns MainActivity retained-state capture, bundle restore, and the initial
- * shell snapshot. [com.dpis.module.MainActivity] wires hosts after restore.
+ * Owns MainActivity launch, retained-state capture, bundle restore, and the
+ * initial shell snapshot. Filter store, ViewModel, and feedback session live
+ * here so the Activity does not grow setter forwards.
  */
-class MainStartupSession {
+class MainStartupSession(
+    private val activity: MainActivity,
+    private val updateSession: MainUpdateSession,
+    private val hostWiringSession: MainHostWiringSession,
+    private val mainWorkspaceSession: MainWorkspaceSession,
+) {
+    var filterStore: AppListFilterStateStore? = null
+        private set
+    var feedbackDiagnostic: FeedbackDiagnosticActivitySession? = null
+        private set
+    var viewModel: MainViewModel? = null
+        private set
+    var skipNextImmediateServiceReload = false
+        private set
+
     class Restore(
         @JvmField val query: String,
         @JvmField val templateQuery: String,
@@ -28,6 +49,90 @@ class MainStartupSession {
         @JvmField val workspaceSessionState: TemplateWorkspaceActivitySession.State?,
         @JvmField val skipNextImmediateServiceReload: Boolean,
     )
+
+    fun launch(savedInstanceState: Bundle?) {
+        val filterStore = AppListFilterStateStore(activity)
+        this.filterStore = filterStore
+        @Suppress("DEPRECATION")
+        val retainedState = activity.lastCustomNonConfigurationInstance as? MainRetainedState
+        val restore = restore(
+            savedInstanceState,
+            retainedState,
+            filterStore.load(),
+            MainUiState.WorkspaceMode.valueOf(
+                PageSettingsStore.getDefaultStartupPage(activity),
+            ),
+        )
+        val feedbackDiagnostic = FeedbackDiagnosticActivitySession(
+            FeedbackDiagnosticShell(activity),
+            retainedState?.feedbackDiagnostic,
+        )
+        this.feedbackDiagnostic = feedbackDiagnostic
+        if (retainedState != null) {
+            updateSession.restorePendingPrompt(retainedState.pendingUpdatePrompt)
+            activity.appWorkspaceScrollStateStore().restore(retainedState.appListScrollPositions)
+        }
+        skipNextImmediateServiceReload = restore.skipNextImmediateServiceReload
+        val viewModel = MainViewModel(
+            MainUiState.initial(
+                restore.query,
+                restore.templateQuery,
+                restore.filterState,
+                restore.appsSnapshot,
+                restore.refreshingPages,
+                restore.workspaceMode,
+            ),
+        )
+        this.viewModel = viewModel
+        activity.initializeWorkspaceSession(
+            restore.workspaceSessionState,
+            restore.templateQuery,
+        )
+        activity.ensureWorkspaceSession().restore(savedInstanceState)
+        hostWiringSession.wire(viewModel)
+        val restoredPage = restoreCurrentPage(savedInstanceState, retainedState)
+        if (restoredPage != null) {
+            activity.setCurrentAppListPage(restoredPage, false)
+        }
+
+        mainWorkspaceSession.render(activity.requireUiState())
+        mainWorkspaceSession.installComposeWorkspaceShell()
+        feedbackDiagnostic.restorePage()
+        feedbackDiagnostic.attachHost()
+        // The service state callback is not guaranteed to fire on every Wear image.
+        // Request the catalog explicitly; MainViewModel coalesces any later service reload.
+        activity.requestAppsLoad()
+        if (restoreEditingSession(viewModel, retainedState)) {
+            mainWorkspaceSession.restoreAppEditorForCurrentWorkspace()
+        }
+        mainWorkspaceSession.restoreWorkspaceEditorForCurrentConfiguration()
+        if (updateSession.showPendingPromptIfAny()) {
+            return
+        }
+        if (maybeShowModuleRuntimeReloadAdvice()) {
+            return
+        }
+        continueStartupDialogs()
+    }
+
+    fun consumeSkipNextImmediateServiceReload(): Boolean {
+        if (!skipNextImmediateServiceReload) {
+            return false
+        }
+        skipNextImmediateServiceReload = false
+        return true
+    }
+
+    fun maybeShowModuleRuntimeReloadAdvice(): Boolean {
+        return ModuleRuntimeReloadNoticeCoordinator(activity)
+            .maybeShow { continueStartupDialogs() }
+    }
+
+    fun continueStartupDialogs() {
+        if (!updateSession.maybeShowStartupDisclaimerDialog()) {
+            updateSession.maybeCheckForUpdatesOnStartup()
+        }
+    }
 
     fun restore(
         savedInstanceState: Bundle?,

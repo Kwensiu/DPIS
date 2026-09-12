@@ -19,18 +19,13 @@ import com.dpis.module.appconfig.EditorDraft;
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder;
 
 import com.dpis.module.applist.AppListFilterState;
-import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
-import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 import com.dpis.module.applist.ScopeState;
 import com.dpis.module.applist.presentation.AppListFilterSession;
 import com.dpis.module.applist.presentation.AppListFilterShell;
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession;
 import com.dpis.module.applist.presentation.InstalledAppsLoadShell;
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
-
-
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 
 import com.dpis.module.home.HomeUpdateUiState;
@@ -47,10 +42,6 @@ import com.dpis.module.settings.presentation.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
-import com.dpis.module.ui.TouchFeedbackBinder;
-
-
-
 import com.dpis.module.updates.presentation.MainUpdateSession;
 import com.dpis.module.viewport.ViewportPropertySyncer;
 
@@ -63,9 +54,6 @@ import java.util.List;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
 import com.dpis.module.ui.presentation.MainHostWiringSession;
 import com.dpis.module.ui.presentation.MainHostWiringShell;
-import com.dpis.module.ui.presentation.MainLaunchSession;
-import com.dpis.module.ui.presentation.MainLaunchShell;
-import com.dpis.module.ui.presentation.MainRetainedState;
 import com.dpis.module.ui.presentation.MainStartupSession;
 import com.dpis.module.ui.presentation.MainWorkspaceSession;
 import com.dpis.module.ui.presentation.MainWorkspaceShell;
@@ -95,7 +83,6 @@ public final class MainActivity
         extends LocalizedActivity
         implements DpisApplication.ServiceStateListener {
 
-    private final MainStartupSession startupSession = new MainStartupSession();
     private final MainUpdateSession updateSession
             = new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible);
     private final WechatDpiHelp wechatDpiHelp
@@ -104,7 +91,6 @@ public final class MainActivity
             = new RuntimeLaunchSession(new RuntimeLaunchShell(this));
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
-    private FeedbackDiagnosticActivitySession feedbackDiagnostic;
     private final SystemScopeCoordinator systemScopeCoordinator
             = new SystemScopeCoordinator(createSystemScopeHost());
     private final AppConfigDialogActivityHost appConfigDialogHost
@@ -140,30 +126,26 @@ public final class MainActivity
             = new HomeWorkspaceSession(new HomeWorkspaceShell(this));
     private final MainHostWiringSession hostWiringSession
             = new MainHostWiringSession(new MainHostWiringShell(this));
-    private final MainLaunchSession launchSession
-            = new MainLaunchSession(
-                    new MainLaunchShell(this),
-                    startupSession,
+    private final MainStartupSession startupSession
+            = new MainStartupSession(
+                    this,
                     updateSession,
                     hostWiringSession,
                     mainWorkspaceSession
             );
-    private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
 
-    private MainViewModel mainViewModel;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private TemplateWorkspaceActivitySession workspaceSession;
     private boolean cachedSystemHookEffectiveEnabled;
-    private boolean skipNextImmediateServiceReload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
         refreshSystemHookEffectiveEnabled();
-        launchSession.launch(savedInstanceState);
+        startupSession.launch(savedInstanceState);
     }
 
     @Override
@@ -206,8 +188,8 @@ public final class MainActivity
 
     @Override
     protected void onDestroy() {
-        if (feedbackDiagnostic != null) {
-            feedbackDiagnostic.onDestroy(isChangingConfigurations());
+        if (startupSession.getFeedbackDiagnostic() != null) {
+            startupSession.getFeedbackDiagnostic().onDestroy(isChangingConfigurations());
         }
         updateSession.shutdown();
         ensureWorkspaceSession().onDestroy();
@@ -228,8 +210,7 @@ public final class MainActivity
             if (settingsWorkspaceSession() != null) {
                 settingsWorkspaceSession().onServiceStateChanged();
             }
-            if (skipNextImmediateServiceReload) {
-                skipNextImmediateServiceReload = false;
+            if (startupSession.consumeSkipNextImmediateServiceReload()) {
                 return;
             }
             requestAppsLoad();
@@ -249,8 +230,9 @@ public final class MainActivity
         if (ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
             return;
         }
-        if (feedbackDiagnostic != null
-                && feedbackDiagnostic.handleActivityResult(requestCode, resultCode, data)) {
+        if (startupSession.getFeedbackDiagnostic() != null
+                && startupSession.getFeedbackDiagnostic().handleActivityResult(
+                        requestCode, resultCode, data)) {
             return;
         }
     }
@@ -287,9 +269,11 @@ public final class MainActivity
                 landCurrentPage.position(),
                 appWorkspaceScrollStateStore.snapshot(),
                 editorDraftSession.captureAppConfigDraft(),
-                mainViewModel,
+                startupSession.getViewModel(),
                 ensureWorkspaceSession().retainedState(),
-                feedbackDiagnostic.retainedState(),
+                startupSession.getFeedbackDiagnostic() != null
+                        ? startupSession.getFeedbackDiagnostic().retainedState()
+                        : null,
                 updateSession.getPendingUpdatePrompt()
         );
     }
@@ -361,7 +345,7 @@ public final class MainActivity
     }
 
     public MainUiState requireUiState() {
-        MainViewModel viewModel = mainViewModel;
+        MainViewModel viewModel = startupSession.getViewModel();
         if (viewModel == null) {
             return MainUiState.initial(
                     "",
@@ -374,7 +358,7 @@ public final class MainActivity
     }
 
     public void dispatchMainUiAction(MainUiAction action) {
-        MainViewModel viewModel = mainViewModel;
+        MainViewModel viewModel = startupSession.getViewModel();
         if (viewModel == null) {
             return;
         }
@@ -415,14 +399,14 @@ public final class MainActivity
     }
 
     public MainViewModel editorViewModel() {
-        return mainViewModel;
+        return startupSession.getViewModel();
     }
 
     public void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
             EditorDraft draft
     ) {
-        feedbackDiagnostic.showPreparation(item, draft);
+        startupSession.getFeedbackDiagnostic().showPreparation(item, draft);
     }
 
     public void initializeWorkspaceSession(
@@ -465,7 +449,7 @@ public final class MainActivity
     }
 
     private void bindHomeWorkspaceIfVisible() {
-        if (mainViewModel != null
+        if (startupSession.getViewModel() != null
                 && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
         }
@@ -490,20 +474,6 @@ public final class MainActivity
         };
     }
 
-    private void showEditDialog(AppListItem item) {
-        if (mainViewModel != null) {
-            mainViewModel.setEditingPackageName(item.packageName);
-        }
-        editorDraftSession.rememberActiveEditor(
-                editorDraftSession.activeEditorRoot(),
-                item.packageName
-        );
-        if (mainWorkspaceSession.isLandscapeDetailMode() && landAppDetailSession.show(item)) {
-            return;
-        }
-        appConfigSheetSession.show(item);
-    }
-
     public HomeWorkspaceState createHomeWorkspaceState() {
         return homeWorkspaceSession.createState();
     }
@@ -522,18 +492,6 @@ public final class MainActivity
 
     public void bindHomeWorkspace() {
         mainWorkspaceSession.bindHomeWorkspace();
-    }
-
-    public static int countUserVisibleConfiguredPackages(DpisConfigStore store,
-            ScopeState scopeState) {
-        ScopeState safeScopeState = scopeState != null
-                ? scopeState
-                : new ScopeState(Collections.emptySet(), false);
-        return InstalledAppCatalogCoordinator.userVisibleConfiguredPackages(
-                store,
-                safeScopeState.packages,
-                safeScopeState.known
-        ).size();
     }
 
     private void maybeStartRootAccessProbe() {
@@ -602,7 +560,7 @@ public final class MainActivity
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        feedbackDiagnostic.startFromViewEditor(item, state);
+        startupSession.getFeedbackDiagnostic().startFromViewEditor(item, state);
     }
 
     public AppListItem saveCurrentEditorConfigForDiagnostic(
@@ -768,44 +726,8 @@ public final class MainActivity
         mainWorkspaceSession.refreshTools();
     }
 
-    @SuppressWarnings("deprecation")
-    public MainRetainedState lastRetainedState() {
-        Object retained = getLastCustomNonConfigurationInstance();
-        return retained instanceof MainRetainedState
-                ? (MainRetainedState) retained
-                : null;
-    }
-
-    public void attachAppListFilterStateStore(AppListFilterStateStore store) {
-        appListFilterStateStore = store;
-    }
-
-    public void setFeedbackDiagnostic(FeedbackDiagnosticActivitySession session) {
-        feedbackDiagnostic = session;
-    }
-
-    public void restoreAppListScrollPositions(int[] positions) {
-        appWorkspaceScrollStateStore.restore(positions);
-    }
-
-    public void setSkipNextImmediateServiceReload(boolean skip) {
-        skipNextImmediateServiceReload = skip;
-    }
-
-    public void setMainViewModel(MainViewModel viewModel) {
-        mainViewModel = viewModel;
-    }
-
-    public void restoreFeedbackDiagnosticPage() {
-        feedbackDiagnostic.restorePage();
-    }
-
-    public void attachFeedbackDiagnosticHost() {
-        feedbackDiagnostic.attachHost();
-    }
-
     public void saveAppListFilterState(AppListFilterState filterState) {
-        appListFilterStateStore.save(filterState);
+        startupSession.getFilterStore().save(filterState);
     }
 
     public void updateAppListScrollPosition(

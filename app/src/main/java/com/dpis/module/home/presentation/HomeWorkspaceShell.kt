@@ -18,11 +18,6 @@ class HomeWorkspaceShell(
 
     override fun loadScopeState(): ScopeState = activity.loadInstalledAppScopeState()
 
-    override fun countUserVisibleConfiguredPackages(
-        store: DpisConfigStore?,
-        scopeState: ScopeState,
-    ): Int = MainActivity.countUserVisibleConfiguredPackages(store, scopeState)
-
     override fun quickItemCount(): Int = activity.ensureWorkspaceSession().quickItemCount()
 
     override fun homeUpdateUiState(): HomeUpdateUiState = activity.homeUpdateUiState()

@@ -307,14 +307,14 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun appEditorRestoreIsScopedToAppWorkspace() {
-        val launch = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
 
-        assertTrue(launch.contains("restoreAppEditorForCurrentWorkspace()"))
+        assertTrue(startup.contains("restoreAppEditorForCurrentWorkspace()"))
         assertTrue(workspace.contains("fun restoreAppEditorForCurrentWorkspace()"))
         assertTrue(workspace.contains("shell.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
         assertTrue(workspace.contains("shell.appConfigSheetSession().show(appItem)"))
@@ -362,10 +362,10 @@ class MainActivitySourceSmokeTest {
         assertTrue(startup.contains("workspaceSessionState = retained.workspaceSessionState"))
         assertTrue(coordinator.contains("routeState.globalPrefillDraft()"))
         assertTrue(coordinator.contains("routeState.quickTemplateDraft()"))
-        val launchShell = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainLaunchShell.kt"
+        val startupLaunch = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
-        assertTrue(launchShell.contains("ensureWorkspaceSession().restore(savedInstanceState)"))
+        assertTrue(startupLaunch.contains("ensureWorkspaceSession().restore(savedInstanceState)"))
         assertTrue(source.contains("new TemplateWorkspaceActivitySession("))
         assertTrue(draft.contains("viewportScaleInput"))
         assertTrue(draft.contains("viewportAbsoluteInput"))
@@ -460,8 +460,11 @@ class MainActivitySourceSmokeTest {
         val compose = read(
                 "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
         assertTrue(source.contains("appWorkspaceScrollStateStore.snapshot()"))
-        assertTrue(source.contains("appWorkspaceScrollStateStore.restore("))
+        assertTrue(startup.contains("appWorkspaceScrollStateStore().restore("))
         assertFalse(source.contains("STATE_APP_LIST_SCROLL_POSITIONS"))
         assertFalse(source.contains("putIntArray(\n                STATE_APP_LIST_SCROLL_POSITIONS"))
         assertTrue(compose.contains("PersistAppListScrollPosition("))
@@ -487,7 +490,7 @@ class MainActivitySourceSmokeTest {
     fun startupDisclaimerUsesMaterialDialogAndPersistsConsent() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val launch = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
         val runtimeLayout = read(
             "src/main/java/com/dpis/module/tools/presentation/LocalToolDialogs.kt"
@@ -496,7 +499,7 @@ class MainActivitySourceSmokeTest {
         val zhStrings = read("src/main/res/values-zh-rCN/strings.xml")
 
         assertTrue(launch.contains("fun maybeShowModuleRuntimeReloadAdvice(): Boolean"))
-        assertTrue(launch.contains("ModuleRuntimeReloadNoticeCoordinator(shell.activity())"))
+        assertTrue(launch.contains("ModuleRuntimeReloadNoticeCoordinator(activity)"))
         assertTrue(launch.contains("maybeShow { continueStartupDialogs() }"))
         assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"))
         assertFalse(source.contains("ModuleRuntimeReloader.softReloadAsync("))
@@ -755,12 +758,10 @@ class MainActivitySourceSmokeTest {
     fun retainedAppListSkipsImmediateServiceReloadOnRotation() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
-        assertTrue(
-            source.contains("private boolean skipNextImmediateServiceReload")
-        )
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
+        assertTrue(startup.contains("var skipNextImmediateServiceReload = false"))
         assertTrue(
             startup.contains(
                 "skipNextImmediateServiceReload = appsSnapshot.isNotEmpty()"
@@ -771,7 +772,7 @@ class MainActivitySourceSmokeTest {
                 "DpisApplication.addServiceStateListener(this, true)"
             )
         )
-        assertTrue(source.contains("if (skipNextImmediateServiceReload)"))
+        assertTrue(source.contains("consumeSkipNextImmediateServiceReload()"))
     }
 
     @Test
@@ -798,7 +799,9 @@ class MainActivitySourceSmokeTest {
         val landSession = read(
             "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
         )
-
+        val workspace = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt",
+        )
         val sheetSession = read(
             "src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetSession.kt",
         )
@@ -814,14 +817,14 @@ class MainActivitySourceSmokeTest {
             sheetSession.contains("binder.bind(dialogView, sheetItem, systemHooksEnabled)")
                 || landSession.contains("dialogView, sheetItem, systemHooksEnabled")
         )
-        assertTrue(source.contains("appConfigSheetSession.show(item)"))
+        assertTrue(workspace.contains("shell.appConfigSheetSession().show(appItem)"))
         assertTrue(sheetSession.contains("AppConfigDialogBinder(activity, dialogHost)"))
         assertTrue(source.contains("createAppConfigDialogHost()"))
         assertTrue(sheetSession.contains("binder.bind("))
         assertTrue(
             sheetSession.contains("AppConfigDialogCoordinator(activity).show(dialogView)")
         )
-        assertTrue(source.contains("landAppDetailSession.show(item)"))
+        assertTrue(workspace.contains("shell.landAppDetailSession().show(appItem)"))
         assertTrue(landSession.contains("R.layout.view_land_app_detail"))
         assertTrue(landSession.contains("LandAppDetailPaneBinder(activity, this)"))
         assertTrue(landSession.contains("fun saveDraft("))
@@ -867,18 +870,17 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun showEditDialog_doesNotRefreshListRowsBeforeOpeningDetail() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val methodStart = source.indexOf(
-            "private void showEditDialog(AppListItem item) {"
+        val workspace = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt",
         )
-        val methodEnd = source.indexOf(
-            "public HomeWorkspaceState createHomeWorkspaceState()",
-            methodStart
+        val methodStart = workspace.indexOf(
+            "fun restoreAppEditorForCurrentWorkspace()"
         )
+        val methodEnd = workspace.indexOf("fun bindForLifecycle(", methodStart)
         assertTrue(methodStart >= 0)
         assertTrue(methodEnd > methodStart)
 
-        val methodBody = source.substring(methodStart, methodEnd)
+        val methodBody = workspace.substring(methodStart, methodEnd)
         assertFalse(methodBody.contains("refreshVisibleStatuses"))
     }
 

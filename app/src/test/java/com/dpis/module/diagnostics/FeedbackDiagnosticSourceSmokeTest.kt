@@ -95,16 +95,16 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         val diagnosticShell = read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticShell.kt")
 
-        val launch = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
-        assertTrue(launch.contains("FeedbackDiagnosticActivitySession("))
-        assertTrue(launch.contains("FeedbackDiagnosticShell(activity)"))
-        assertTrue(main.contains("feedbackDiagnostic.startFromViewEditor("))
-        assertTrue(main.contains("feedbackDiagnostic.showPreparation("))
-        assertTrue(launch.contains("shell.restoreFeedbackPage()"))
-        assertTrue(launch.contains("shell.attachFeedbackHost()"))
-        assertTrue(main.contains("feedbackDiagnostic.onDestroy(isChangingConfigurations())"))
+        assertTrue(startup.contains("FeedbackDiagnosticActivitySession("))
+        assertTrue(startup.contains("FeedbackDiagnosticShell(activity)"))
+        assertTrue(main.contains("getFeedbackDiagnostic().startFromViewEditor("))
+        assertTrue(main.contains("getFeedbackDiagnostic().showPreparation("))
+        assertTrue(startup.contains("feedbackDiagnostic.restorePage()"))
+        assertTrue(startup.contains("feedbackDiagnostic.attachHost()"))
+        assertTrue(main.contains("getFeedbackDiagnostic().onDestroy(isChangingConfigurations())"))
         assertFalse(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
         assertFalse(main.contains("createDiagnosticPageControllerHost()"))
         assertTrue(confirm.contains("LogGate.isEnabled("))
@@ -379,7 +379,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("const val SAVE_REQUEST = 10024")
         )
-        assertTrue(main.contains("feedbackDiagnostic.handleActivityResult("))
+        assertTrue(main.contains("getFeedbackDiagnostic().handleActivityResult("))
         assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"))
         assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"))
         assertTrue(packageActions.contains("openOutputStream(uri)"))

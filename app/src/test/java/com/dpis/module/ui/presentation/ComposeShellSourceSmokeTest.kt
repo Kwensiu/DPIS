@@ -38,10 +38,10 @@ class ComposeShellSourceSmokeTest {
         assertTrue(adapter.contains("MainUiState.WorkspaceMode"))
         assertTrue(mainShell.contains("MainUiAction.workspaceModeChanged"))
         assertTrue(mainShell.contains("MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode)"))
-        val launch = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
-        assertTrue(launch.contains("mainWorkspaceSession.installComposeWorkspaceShell()"))
+        assertTrue(startup.contains("mainWorkspaceSession.installComposeWorkspaceShell()"))
         assertTrue(coordinator.contains("ComposeWorkspaceSurface"))
         assertTrue(coordinator.contains("TemplateWorkspaceContent"))
     }

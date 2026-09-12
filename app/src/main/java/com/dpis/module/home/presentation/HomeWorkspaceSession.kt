@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import com.dpis.module.DpisApplication
 import com.dpis.module.applist.AppListPage
+import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
@@ -36,11 +37,6 @@ class HomeWorkspaceSession(
 
         fun loadScopeState(): ScopeState
 
-        fun countUserVisibleConfiguredPackages(
-            store: DpisConfigStore?,
-            scopeState: ScopeState,
-        ): Int
-
         fun quickItemCount(): Int
 
         fun homeUpdateUiState(): HomeUpdateUiState
@@ -57,10 +53,11 @@ class HomeWorkspaceSession(
     fun createState(): HomeWorkspaceState {
         val activity = shell.activity()
         val configStore = shell.hookConfigStore()
-        val visibleConfiguredAppCount = shell.countUserVisibleConfiguredPackages(
-            configStore,
-            shell.loadScopeState(),
-        )
+        val visibleConfiguredAppCount =
+            InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
+                configStore,
+                shell.loadScopeState(),
+            )
         return HomeWorkspaceState(
             isActivatedForHome(),
             visibleConfiguredAppCount,
