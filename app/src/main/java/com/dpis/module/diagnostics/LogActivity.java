@@ -13,7 +13,7 @@ import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.ui.compose.LogPresentation;
 import com.dpis.module.ui.compose.LogUiEntry;
 import com.dpis.module.ui.compose.LogUiState;
-import com.dpis.module.about.presentation.SupportActivityContent;
+import com.dpis.module.ui.compose.LogActivityHost;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
@@ -101,7 +101,7 @@ public final class LogActivity extends LocalizedActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         presentation = new LogPresentation();
-        SupportActivityContent.installLog(
+        LogActivityHost.install(
                 this,
                 presentation,
                 this::selectPageIndex,

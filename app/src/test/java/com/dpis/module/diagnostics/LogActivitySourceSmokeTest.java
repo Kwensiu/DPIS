@@ -19,7 +19,7 @@ public final class LogActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/diagnostics/presentation/LogContent.kt");
 
         assertTrue(source.contains("LogPresentation presentation"));
-        assertTrue(source.contains("SupportActivityContent.installLog("));
+        assertTrue(source.contains("LogActivityHost.install("));
         assertTrue(content.contains("LazyColumn("));
         assertTrue(content.contains("items(state.entries.size"));
         assertTrue(content.contains("private fun LogEntryRow("));

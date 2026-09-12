@@ -9,8 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.activity.ComponentActivity
 import com.dpis.module.R
+import com.dpis.module.ui.WatchUiMode
 import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.compose.WearExperimentalSettingsContent
+import com.dpis.module.ui.compose.setFeatureContent
 
 /**
  * Standalone empty-state page kept separate from SettingsWorkspaceContent because
@@ -37,6 +41,16 @@ fun ExperimentalSettingsContent(
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+fun ComponentActivity.installExperimentalSettings() {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installExperimentalSettings)) {
+            WearExperimentalSettingsContent()
+        } else {
+            ExperimentalSettingsContent(onBack = ::finish)
         }
     }
 }

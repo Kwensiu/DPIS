@@ -8,15 +8,14 @@ import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
-import com.dpis.module.about.presentation.SupportActivityContent
+import com.dpis.module.about.presentation.installOpenSourceLicenses
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
 
 class OpenSourceLicenseActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        SupportActivityContent.installOpenSourceLicenses(
-            this,
+        installOpenSourceLicenses(
             loadLicenseItems(),
             ::openUrl,
         )

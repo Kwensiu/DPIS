@@ -43,7 +43,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
+import com.dpis.module.fonts.FontDetailActivity
+import com.dpis.module.fonts.FontLibraryActivity
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.WearFontLibraryContent
+import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
+import java.util.function.Consumer
 
 class FontLibraryUiItem(
     val id: String,
@@ -477,6 +483,71 @@ private fun FontDetailContentPreview() {
     }
     ComposeDesignSystem(darkTheme = false) {
         FontDetailContent(presentation, {}, {}, {}, {}, {}, { true }, {}, {}, {})
+    }
+}
+
+fun FontLibraryActivity.installFontLibrary(
+    presentation: FontLibraryPresentation,
+    onImportFont: Runnable,
+    onExportArchive: Runnable,
+    onImportArchive: Runnable,
+    onFontSelected: Consumer<String>,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: Runnable,
+    onRepairConfirm: Runnable,
+) {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installFontLibrary)) {
+            WearFontLibraryContent(
+                presentation = presentation,
+                onImportFont = onImportFont::run,
+                onExportArchive = onExportArchive::run,
+                onImportArchive = onImportArchive::run,
+                onFontSelected = onFontSelected::accept,
+                onNameSubmit = onNameSubmit,
+                onLargeConfirm = onLargeConfirm::run,
+                onRepairConfirm = onRepairConfirm::run,
+            )
+        } else {
+            FontLibraryContent(
+                presentation = presentation,
+                onBack = ::finish,
+                onImportFont = onImportFont::run,
+                onExportArchive = onExportArchive::run,
+                onImportArchive = onImportArchive::run,
+                onFontSelected = onFontSelected::accept,
+                onNameSubmit = onNameSubmit,
+                onLargeConfirm = onLargeConfirm::run,
+                onRepairConfirm = onRepairConfirm::run,
+            )
+        }
+    }
+}
+
+fun FontDetailActivity.installFontDetail(
+    presentation: FontDetailPresentation,
+    onRetryPublication: Runnable,
+    onRename: Runnable,
+    onDelete: Runnable,
+    onRemoveReference: Consumer<String>,
+    onRenameSubmit: (String) -> Boolean,
+    onFallbackRetry: Runnable,
+    onDeleteConfirm: Runnable,
+    onRestoreConfirm: Runnable,
+) {
+    setFeatureContent {
+        FontDetailContent(
+            presentation = presentation,
+            onBack = ::finish,
+            onRetryPublication = onRetryPublication::run,
+            onRename = onRename::run,
+            onDelete = onDelete::run,
+            onRemoveReference = onRemoveReference::accept,
+            onRenameSubmit = onRenameSubmit,
+            onFallbackRetry = onFallbackRetry::run,
+            onDeleteConfirm = onDeleteConfirm::run,
+            onRestoreConfirm = onRestoreConfirm::run,
+        )
     }
 }
 

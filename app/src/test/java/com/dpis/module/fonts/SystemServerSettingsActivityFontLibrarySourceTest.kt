@@ -74,7 +74,7 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
             "LazyColumn",
             "font_library_empty",
         )
-        source.assertContainsAll("SupportActivityContent.installFontLibrary")
+        source.assertContainsAll("installFontLibrary")
         source.assertNotContainsAll("setContentView(R.layout.activity_font_library)")
     }
 

@@ -27,8 +27,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
 import com.dpis.module.R
+import com.dpis.module.ui.WatchUiMode
 import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.WearAboutContent
+import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.compose.SecondaryPageContentTokens
 import com.dpis.module.ui.compose.SecondaryPageScaffold
 import com.dpis.module.ui.compose.dpisSegmentedShapes
@@ -191,5 +195,40 @@ private fun AboutContentPreview() {
             onOpenFeedback = {},
             onOpenLicenses = {}
         )
+    }
+}
+
+fun ComponentActivity.installAbout(
+    versionText: String,
+    showDebugUpdateEntry: Boolean,
+    onCheckUpdates: Runnable,
+    onShowDebugUpdate: Runnable,
+    onOpenSource: Runnable,
+    onOpenFeedback: Runnable,
+    onOpenLicenses: Runnable,
+) {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installAbout)) {
+            WearAboutContent(
+                versionText = versionText,
+                showDebugUpdateEntry = showDebugUpdateEntry,
+                onCheckUpdates = onCheckUpdates::run,
+                onShowDebugUpdate = onShowDebugUpdate::run,
+                onOpenSource = onOpenSource::run,
+                onOpenFeedback = onOpenFeedback::run,
+                onOpenLicenses = onOpenLicenses::run,
+            )
+        } else {
+            AboutContent(
+                versionText = versionText,
+                showDebugUpdateEntry = showDebugUpdateEntry,
+                onBack = ::finish,
+                onCheckUpdates = onCheckUpdates::run,
+                onShowDebugUpdate = onShowDebugUpdate::run,
+                onOpenSource = onOpenSource::run,
+                onOpenFeedback = onOpenFeedback::run,
+                onOpenLicenses = onOpenLicenses::run,
+            )
+        }
     }
 }

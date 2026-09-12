@@ -6,6 +6,9 @@ import com.dpis.module.ui.dialog.DialogDoneButton
 
 import android.widget.Toast
 import android.view.HapticFeedbackConstants
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -76,8 +79,11 @@ import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.ui.compose.*
 import com.dpis.module.settings.AppUiScaleManager
+import com.dpis.module.settings.InterfaceScaleStore
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.settings.PageSettingsStore
+import com.dpis.module.ui.WatchUiMode
 import kotlin.math.roundToInt
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -907,4 +913,130 @@ private fun ThemeScaleSlider(
         track = { sliderState -> SliderDefaults.Track(sliderState = sliderState) },
         modifier = modifier.fillMaxWidth().height(48.dp),
     )
+}
+
+fun ComponentActivity.installThemeSettings() {
+    setContent {
+        var mode by remember { mutableStateOf(ThemeModeStore.getMode(this@installThemeSettings)) }
+        var dynamicColorEnabled by remember {
+            mutableStateOf(ThemeModeStore.isDynamicColorEnabled(this@installThemeSettings))
+        }
+        var themeColor by remember { mutableStateOf(ThemeModeStore.getThemeColor(this@installThemeSettings)) }
+        var paletteStyle by remember { mutableStateOf(ThemeModeStore.getPaletteStyle(this@installThemeSettings)) }
+        var colorSpecification by remember {
+            mutableStateOf(ThemeModeStore.getColorSpecification(this@installThemeSettings))
+        }
+        var showHomeEditButton by remember {
+            mutableStateOf(PageSettingsStore.isHomeEditButtonVisible(this@installThemeSettings))
+        }
+        var defaultStartupPage by remember {
+            mutableStateOf(PageSettingsStore.getDefaultStartupPage(this@installThemeSettings))
+        }
+        ComposeDesignSystem(
+            darkTheme = ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme()),
+            dynamicColor = dynamicColorEnabled,
+            themeColor = themeColor,
+            paletteStyle = paletteStyle,
+            colorSpecification = colorSpecification,
+        ) {
+            if (WatchUiMode.shouldUseCompactUi(this@installThemeSettings)) {
+                WearThemeSettingsContent(
+                    mode = mode,
+                    dynamicColorEnabled = dynamicColorEnabled,
+                    themeColor = themeColor,
+                    paletteStyle = paletteStyle,
+                    colorSpecification = colorSpecification,
+                    interfaceScalePercent = AppUiScaleManager.getScalePercent(this@installThemeSettings),
+                    onModeSelected = { selectedMode ->
+                        ThemeModeStore.setMode(this@installThemeSettings, selectedMode)
+                        mode = selectedMode
+                        markAppearanceAppliedInPlace()
+                    },
+                    onDynamicColorChanged = { enabled ->
+                        ThemeModeStore.setDynamicColorEnabled(this@installThemeSettings, enabled)
+                        dynamicColorEnabled = enabled
+                        markAppearanceAppliedInPlace()
+                    },
+                    onThemeColorSelected = { color ->
+                        ThemeModeStore.setThemeColor(this@installThemeSettings, color)
+                        themeColor = color
+                        markAppearanceAppliedInPlace()
+                    },
+                    onPaletteStyleSelected = { style ->
+                        ThemeModeStore.setPaletteStyle(this@installThemeSettings, style)
+                        paletteStyle = style
+                        markAppearanceAppliedInPlace()
+                    },
+                    onColorSpecificationSelected = { specification ->
+                        ThemeModeStore.setColorSpecification(this@installThemeSettings, specification)
+                        colorSpecification = specification
+                        markAppearanceAppliedInPlace()
+                    },
+                    onInterfaceScaleChanged = { percent ->
+                        val store = InterfaceScaleStore(this@installThemeSettings)
+                        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                        if (normalized != store.percent || !store.hasExplicitPercent()) {
+                            if (store.setPercent(normalized)) recreate()
+                        }
+                    }
+                )
+            } else {
+                ThemeSettingsContent(
+                    mode = mode,
+                    dynamicColorEnabled = dynamicColorEnabled,
+                    themeColor = themeColor,
+                    paletteStyle = paletteStyle,
+                    colorSpecification = colorSpecification,
+                    interfaceScalePercent = AppUiScaleManager.getScalePercent(this@installThemeSettings),
+                    onModeSelected = { selectedMode ->
+                        ThemeModeStore.setMode(this@installThemeSettings, selectedMode)
+                        mode = selectedMode
+                        markAppearanceAppliedInPlace()
+                    },
+                    onDynamicColorChanged = { enabled ->
+                        ThemeModeStore.setDynamicColorEnabled(this@installThemeSettings, enabled)
+                        dynamicColorEnabled = enabled
+                        markAppearanceAppliedInPlace()
+                    },
+                    onThemeColorSelected = { color ->
+                        ThemeModeStore.setThemeColor(this@installThemeSettings, color)
+                        themeColor = color
+                        markAppearanceAppliedInPlace()
+                    },
+                    onPaletteStyleSelected = { style ->
+                        ThemeModeStore.setPaletteStyle(this@installThemeSettings, style)
+                        paletteStyle = style
+                        markAppearanceAppliedInPlace()
+                    },
+                    onColorSpecificationSelected = { specification ->
+                        ThemeModeStore.setColorSpecification(this@installThemeSettings, specification)
+                        colorSpecification = specification
+                        markAppearanceAppliedInPlace()
+                    },
+                    onInterfaceScaleChanged = { percent ->
+                        val store = InterfaceScaleStore(this@installThemeSettings)
+                        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                        if (normalized != store.percent || !store.hasExplicitPercent()) {
+                            if (store.setPercent(normalized)) recreate()
+                        }
+                    },
+                    onShowHomeEditButtonChanged = { value ->
+                        PageSettingsStore.setHomeEditButtonVisible(this@installThemeSettings, value)
+                        showHomeEditButton = value
+                    },
+                    onDefaultStartupPageSelected = { value ->
+                        PageSettingsStore.setDefaultStartupPage(this@installThemeSettings, value)
+                        defaultStartupPage = value
+                    },
+                    showHomeEditButton = showHomeEditButton,
+                    defaultStartupPage = defaultStartupPage,
+                    onBack = ::finish,
+                )
+            }
+        }
+    }
+}
+
+private fun ComponentActivity.markAppearanceAppliedInPlace() {
+    (this as? LocalizedActivity)?.markAppearanceAppliedInPlace()
 }

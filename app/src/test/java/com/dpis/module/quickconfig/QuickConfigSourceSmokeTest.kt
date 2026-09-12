@@ -35,7 +35,7 @@ class QuickConfigSourceSmokeTest {
             read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigContent.kt")
 
         Assert.assertTrue(activity.contains("EXTRA_PACKAGE_NAME"))
-        Assert.assertTrue(activity.contains("SupportActivityContent.installQuickConfig(this, presentation!!"))
+        Assert.assertTrue(activity.contains("installQuickConfig(presentation!!)"))
         Assert.assertTrue(activity.contains("import com.dpis.module.appconfig.EditorPresentationFactory.create"))
         Assert.assertTrue(content.contains("SheetVisualChrome()"))
         Assert.assertFalse(content.contains("extraTopPadding = 12.dp"))
@@ -113,7 +113,7 @@ class QuickConfigSourceSmokeTest {
     @Throws(IOException::class)
     fun quickConfigKeepsItsTranslucentActivityBackdropTransparent() {
         val content: String =
-            read("src/main/java/com/dpis/module/about/presentation/SupportActivityContent.kt")
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigContent.kt")
         val theme: String = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeDesignSystem.kt")
 
         Assert.assertTrue(content.contains("transparentWindowBackground = true"))

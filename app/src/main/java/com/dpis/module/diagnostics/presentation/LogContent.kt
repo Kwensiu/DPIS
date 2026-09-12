@@ -38,7 +38,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.diagnostics.LogActivity
+import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
+import java.util.function.Consumer
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class LogUiEntry(
@@ -347,5 +350,37 @@ private fun LogContentPreview() {
     }
     ComposeDesignSystem(darkTheme = false) {
         LogContent(presentation, {}, {}, {}, {}, {}, {}, {}, {}, {})
+    }
+}
+
+object LogActivityHost {
+    @JvmStatic
+    fun install(
+        activity: LogActivity,
+        presentation: LogPresentation,
+        onSelectPage: Consumer<Int>,
+        onToggleSort: Runnable,
+        onToggleAutoRefresh: Runnable,
+        onSaveLogs: Runnable,
+        onShareLogs: Runnable,
+        onRefresh: Runnable,
+        onToggleExpanded: Consumer<String>,
+        onCopyEntry: Consumer<String>,
+    ) {
+        activity.setFeatureContent {
+            LogContent(
+                presentation = presentation,
+                onBack = activity::finish,
+                onSelectPage = onSelectPage::accept,
+                onToggleSort = onToggleSort::run,
+                onToggleAutoRefresh = onToggleAutoRefresh::run,
+                onSaveLogs = onSaveLogs::run,
+                onShareLogs = onShareLogs::run,
+                onRefresh = onRefresh::run,
+                onToggleExpanded = onToggleExpanded::accept,
+                onCopyEntry = onCopyEntry::accept,
+                onEnableLogs = activity::enableDiagnosticLogs,
+            )
+        }
     }
 }

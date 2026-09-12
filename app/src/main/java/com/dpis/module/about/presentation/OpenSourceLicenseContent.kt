@@ -21,8 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseItem
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.WearOpenSourceLicenseContent
+import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.SecondaryPageContentTokens
 import com.dpis.module.ui.compose.SecondaryPageScaffold
@@ -115,5 +119,25 @@ private fun OpenSourceLicenseContentPreview() {
             onBack = {},
             onOpenUrl = {}
         )
+    }
+}
+
+fun ComponentActivity.installOpenSourceLicenses(
+    items: List<OpenSourceLicenseItem>,
+    onOpenUrl: (String) -> Unit,
+) {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installOpenSourceLicenses)) {
+            WearOpenSourceLicenseContent(
+                items = items,
+                onOpenUrl = onOpenUrl,
+            )
+        } else {
+            OpenSourceLicenseContent(
+                items = items,
+                onBack = ::finish,
+                onOpenUrl = onOpenUrl,
+            )
+        }
     }
 }

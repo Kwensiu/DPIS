@@ -117,7 +117,7 @@ class ComposeShellSourceSmokeTest {
     @Test
     fun themeSettingsExpandsStaticColorOptionsWhenDynamicColorIsDisabled() {
         val theme = read("src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt")
-        val support = read("src/main/java/com/dpis/module/about/presentation/SupportActivityContent.kt")
+        val support = read("src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt")
         val colors = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeDesignSystem.kt")
 
         assertTrue(theme.contains("ThemeDynamicColorRow("))
@@ -143,11 +143,11 @@ class ComposeShellSourceSmokeTest {
         assertTrue(theme.contains("SegmentedListItem("))
         assertTrue(theme.contains("shapes = dpisSegmentedShapes(index, total)"))
         assertTrue(theme.contains("rememberSegmentedPressedShape("))
-        assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(activity, enabled)"))
+        assertTrue(support.contains("ThemeModeStore.setDynamicColorEnabled(this@installThemeSettings, enabled)"))
         assertTrue(support.contains("dynamicColorEnabled = enabled"))
         assertTrue(support.contains("var mode by remember"))
         assertTrue(support.contains("ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme())"))
-        assertTrue(support.contains("activity.markAppearanceAppliedInPlace()"))
+        assertTrue(support.contains("markAppearanceAppliedInPlace()"))
         assertFalse(support.substringAfter("onModeSelected = { selectedMode ->")
             .substringBefore("onDynamicColorChanged")
             .contains("activity.recreate()"))

@@ -11,11 +11,11 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
     @Test
     public void laboratoryShowsCenteredEmptyState() throws IOException {
         String source = read(
-                "src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.java");
+                "src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.kt");
         String content = read("src/main/java/com/dpis/module/settings/presentation/ExperimentalSettingsContent.kt");
         String strings = read("src/main/res/values/strings.xml");
 
-        assertTrue(source.contains("SupportActivityContent.installExperimentalSettings(this);"));
+        assertTrue(source.contains("installExperimentalSettings()"));
         assertTrue(content.contains("package com.dpis.module.settings.presentation"));
         assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("R.string.settings_experimental_title"));

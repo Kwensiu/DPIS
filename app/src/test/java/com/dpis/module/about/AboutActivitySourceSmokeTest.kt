@@ -12,7 +12,7 @@ class AboutActivitySourceSmokeTest {
         val content = read("src/main/java/com/dpis/module/about/presentation/AboutContent.kt")
 
         source.assertContainsAll(
-            "SupportActivityContent.installAbout(",
+            "installAbout(",
             "Intent(this, OpenSourceLicenseActivity::class.java)",
         )
         content.assertContainsAll(

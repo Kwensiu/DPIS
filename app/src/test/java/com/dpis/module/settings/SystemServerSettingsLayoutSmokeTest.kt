@@ -26,8 +26,8 @@ class SystemServerSettingsLayoutSmokeTest {
         val experimental = read("src/main/java/com/dpis/module/settings/presentation/ExperimentalSettingsContent.kt")
         experimental.assertContainsAll("SecondaryPageScaffold(", "R.string.settings_experimental_title", "R.string.settings_experimental_empty")
         experimental.assertNotContainsAll("row_flutter_font_hook", "row_flutter_settings_font_hook", "row_hyperos_flutter_font_hook", "experimental_ttc_import_row", "item_settings_switch")
-        read("src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.java").apply {
-            assertContainsAll("SupportActivityContent.installExperimentalSettings(this);")
+        read("src/main/java/com/dpis/module/settings/ExperimentalSettingsActivity.kt").apply {
+            assertContainsAll("installExperimentalSettings()")
             assertNotContainsAll("setFlutterFontHookEnabled", "setFlutterSettingsFontHookEnabled", "setHyperOsFlutterFontHookEnabled")
         }
         val strings = read("src/main/res/values/strings.xml")

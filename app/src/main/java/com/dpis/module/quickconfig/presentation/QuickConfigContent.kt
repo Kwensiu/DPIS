@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.appconfig.EditorPresentation
+import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.ui.compose.*
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
@@ -166,5 +167,11 @@ private fun QuickConfigDialogHost(presentation: QuickConfigPresentation) {
 private fun QuickConfigContentPreview() {
     ComposeDesignSystem(darkTheme = false) {
         Surface(Modifier.fillMaxSize(), color = Color.Transparent) {}
+    }
+}
+
+fun QuickConfigActivity.installQuickConfig(presentation: QuickConfigPresentation) {
+    setFeatureContent(transparentWindowBackground = true) {
+        QuickConfigContent(presentation = presentation, onDismiss = ::finish)
     }
 }
