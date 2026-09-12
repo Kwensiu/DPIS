@@ -307,12 +307,14 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun appEditorRestoreIsScopedToAppWorkspace() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val launch = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        )
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
 
-        assertTrue(source.contains("restoreAppEditorForCurrentWorkspace()"))
+        assertTrue(launch.contains("restoreAppEditorForCurrentWorkspace()"))
         assertTrue(workspace.contains("fun restoreAppEditorForCurrentWorkspace()"))
         assertTrue(workspace.contains("shell.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
         assertTrue(workspace.contains("shell.appConfigSheetSession().show(appItem)"))
@@ -360,7 +362,10 @@ class MainActivitySourceSmokeTest {
         assertTrue(startup.contains("workspaceSessionState = retained.workspaceSessionState"))
         assertTrue(coordinator.contains("routeState.globalPrefillDraft()"))
         assertTrue(coordinator.contains("routeState.quickTemplateDraft()"))
-        assertTrue(source.contains("ensureWorkspaceSession().restore(savedInstanceState)"))
+        val launchShell = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainLaunchShell.kt"
+        )
+        assertTrue(launchShell.contains("ensureWorkspaceSession().restore(savedInstanceState)"))
         assertTrue(source.contains("new TemplateWorkspaceActivitySession("))
         assertTrue(draft.contains("viewportScaleInput"))
         assertTrue(draft.contains("viewportAbsoluteInput"))
@@ -481,15 +486,18 @@ class MainActivitySourceSmokeTest {
     @Test
     fun startupDisclaimerUsesMaterialDialogAndPersistsConsent() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val launch = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        )
         val runtimeLayout = read(
             "src/main/java/com/dpis/module/tools/presentation/LocalToolDialogs.kt"
         )
         val strings = read("src/main/res/values/strings.xml")
         val zhStrings = read("src/main/res/values-zh-rCN/strings.xml")
 
-        assertTrue(source.contains("maybeShowModuleRuntimeReloadAdvice()"))
-        assertTrue(source.contains("ModuleRuntimeReloadNoticeCoordinator(this)"))
-        assertTrue(source.contains("maybeShow(this::continueStartupDialogsAfterRuntimeReloadAdvice)"))
+        assertTrue(launch.contains("fun maybeShowModuleRuntimeReloadAdvice(): Boolean"))
+        assertTrue(launch.contains("ModuleRuntimeReloadNoticeCoordinator(shell.activity())"))
+        assertTrue(launch.contains("maybeShow { continueStartupDialogs() }"))
         assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"))
         assertFalse(source.contains("ModuleRuntimeReloader.softReloadAsync("))
         assertFalse(source.contains("module_runtime_reload_now_button"))
@@ -524,9 +532,9 @@ class MainActivitySourceSmokeTest {
         assertFalse(runtimeMessage.contains("Rust"))
         assertFalse(zhRuntimeMessage.contains("HyperOS"))
         assertFalse(zhRuntimeMessage.contains("Rust"))
-        assertTrue(source.contains("updateSession.maybeShowStartupDisclaimerDialog()"))
+        assertTrue(launch.contains("updateSession.maybeShowStartupDisclaimerDialog()"))
         assertTrue(
-            source.contains("if (!updateSession.maybeShowStartupDisclaimerDialog()) {")
+            launch.contains("if (!updateSession.maybeShowStartupDisclaimerDialog()) {")
         )
         val updateSession = read(
             "src/main/java/com/dpis/module/updates/presentation/MainUpdateSession.kt"

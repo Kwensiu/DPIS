@@ -95,12 +95,15 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         val diagnosticShell = read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticShell.kt")
 
-        assertTrue(main.contains("new FeedbackDiagnosticActivitySession("))
-        assertTrue(main.contains("new FeedbackDiagnosticShell(this)"))
+        val launch = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        )
+        assertTrue(launch.contains("FeedbackDiagnosticActivitySession("))
+        assertTrue(launch.contains("FeedbackDiagnosticShell(activity)"))
         assertTrue(main.contains("feedbackDiagnostic.startFromViewEditor("))
         assertTrue(main.contains("feedbackDiagnostic.showPreparation("))
-        assertTrue(main.contains("feedbackDiagnostic.restorePage()"))
-        assertTrue(main.contains("feedbackDiagnostic.attachHost()"))
+        assertTrue(launch.contains("shell.restoreFeedbackPage()"))
+        assertTrue(launch.contains("shell.attachFeedbackHost()"))
         assertTrue(main.contains("feedbackDiagnostic.onDestroy(isChangingConfigurations())"))
         assertFalse(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
         assertFalse(main.contains("createDiagnosticPageControllerHost()"))

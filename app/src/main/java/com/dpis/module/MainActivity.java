@@ -37,10 +37,8 @@ import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceState;
 import com.dpis.module.home.presentation.HomeWorkspaceSession;
 import com.dpis.module.home.presentation.HomeWorkspaceShell;
-import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
 import com.dpis.module.root.RootAccessProbe;
-import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession;
 import com.dpis.module.runtime.presentation.RuntimeLaunchShell;
@@ -53,7 +51,6 @@ import com.dpis.module.ui.TouchFeedbackBinder;
 
 
 
-import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.presentation.MainUpdateSession;
 import com.dpis.module.viewport.ViewportPropertySyncer;
 
@@ -66,6 +63,8 @@ import java.util.List;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
 import com.dpis.module.ui.presentation.MainHostWiringSession;
 import com.dpis.module.ui.presentation.MainHostWiringShell;
+import com.dpis.module.ui.presentation.MainLaunchSession;
+import com.dpis.module.ui.presentation.MainLaunchShell;
 import com.dpis.module.ui.presentation.MainRetainedState;
 import com.dpis.module.ui.presentation.MainStartupSession;
 import com.dpis.module.ui.presentation.MainWorkspaceSession;
@@ -78,7 +77,6 @@ import com.dpis.module.appconfig.presentation.EditorDraftShell;
 
 import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
 import com.dpis.module.appconfig.landdetail.LandAppDetailShell;
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
 import com.dpis.module.applist.AppWorkspace;
 
@@ -142,6 +140,14 @@ public final class MainActivity
             = new HomeWorkspaceSession(new HomeWorkspaceShell(this));
     private final MainHostWiringSession hostWiringSession
             = new MainHostWiringSession(new MainHostWiringShell(this));
+    private final MainLaunchSession launchSession
+            = new MainLaunchSession(
+                    new MainLaunchShell(this),
+                    startupSession,
+                    updateSession,
+                    hostWiringSession,
+                    mainWorkspaceSession
+            );
     private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
@@ -157,71 +163,7 @@ public final class MainActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
         refreshSystemHookEffectiveEnabled();
-
-        appListFilterStateStore = new AppListFilterStateStore(this);
-
-        MainRetainedState retainedState
-                = (MainRetainedState) getLastCustomNonConfigurationInstance();
-        MainStartupSession.Restore restore = startupSession.restore(
-                savedInstanceState,
-                retainedState,
-                appListFilterStateStore.load(),
-                MainUiState.WorkspaceMode.valueOf(
-                        PageSettingsStore.getDefaultStartupPage(this)
-                )
-        );
-        feedbackDiagnostic = new FeedbackDiagnosticActivitySession(
-                new FeedbackDiagnosticShell(this),
-                retainedState != null ? retainedState.feedbackDiagnostic : null
-        );
-        if (retainedState != null) {
-            updateSession.restorePendingPrompt(retainedState.pendingUpdatePrompt);
-            appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
-        }
-        skipNextImmediateServiceReload = restore.skipNextImmediateServiceReload;
-        mainViewModel = new MainViewModel(
-                MainUiState.initial(
-                        restore.query,
-                        restore.templateQuery,
-                        restore.filterState,
-                        restore.appsSnapshot,
-                        restore.refreshingPages,
-                        restore.workspaceMode
-                )
-        );
-        initializeWorkspaceSession(restore.workspaceSessionState, restore.templateQuery);
-        ensureWorkspaceSession().restore(savedInstanceState);
-        hostWiringSession.wire(mainViewModel);
-        // Workspace navigation is now rendered by the Compose shell in every
-        // form factor, including the compact watch radial selector.
-        AppListPage restoredPage = startupSession.restoreCurrentPage(
-                savedInstanceState,
-                retainedState
-        );
-        if (restoredPage != null) {
-            setCurrentAppListPage(restoredPage, false);
-        }
-
-        renderMainUiState(requireUiState());
-        mainWorkspaceSession.installComposeWorkspaceShell();
-        feedbackDiagnostic.restorePage();
-        feedbackDiagnostic.attachHost();
-        // The service state callback is not guaranteed to fire on every Wear image.
-        // Request the catalog explicitly; MainViewModel coalesces any later service reload.
-        requestAppsLoad();
-        if (startupSession.restoreEditingSession(mainViewModel, retainedState)) {
-            mainWorkspaceSession.restoreAppEditorForCurrentWorkspace();
-        }
-        mainWorkspaceSession.restoreWorkspaceEditorForCurrentConfiguration();
-        if (updateSession.showPendingPromptIfAny()) {
-            return;
-        }
-        if (maybeShowModuleRuntimeReloadAdvice()) {
-            return;
-        }
-        if (!updateSession.maybeShowStartupDisclaimerDialog()) {
-            updateSession.maybeCheckForUpdatesOnStartup();
-        }
+        launchSession.launch(savedInstanceState);
     }
 
     @Override
@@ -483,7 +425,7 @@ public final class MainActivity
         feedbackDiagnostic.showPreparation(item, draft);
     }
 
-    private void initializeWorkspaceSession(
+    public void initializeWorkspaceSession(
             TemplateWorkspaceActivitySession.State initialState,
             String initialQuery
     ) {
@@ -520,17 +462,6 @@ public final class MainActivity
 
     public void applyAppListFilter(AppListFilterState filterState) {
         appListFilterSession.apply(filterState);
-    }
-
-    private boolean maybeShowModuleRuntimeReloadAdvice() {
-        return new ModuleRuntimeReloadNoticeCoordinator(this)
-                .maybeShow(this::continueStartupDialogsAfterRuntimeReloadAdvice);
-    }
-
-    private void continueStartupDialogsAfterRuntimeReloadAdvice() {
-        if (!updateSession.maybeShowStartupDisclaimerDialog()) {
-            updateSession.maybeCheckForUpdatesOnStartup();
-        }
     }
 
     private void bindHomeWorkspaceIfVisible() {
@@ -835,6 +766,42 @@ public final class MainActivity
 
     public void refreshComposeTools() {
         mainWorkspaceSession.refreshTools();
+    }
+
+    @SuppressWarnings("deprecation")
+    public MainRetainedState lastRetainedState() {
+        Object retained = getLastCustomNonConfigurationInstance();
+        return retained instanceof MainRetainedState
+                ? (MainRetainedState) retained
+                : null;
+    }
+
+    public void attachAppListFilterStateStore(AppListFilterStateStore store) {
+        appListFilterStateStore = store;
+    }
+
+    public void setFeedbackDiagnostic(FeedbackDiagnosticActivitySession session) {
+        feedbackDiagnostic = session;
+    }
+
+    public void restoreAppListScrollPositions(int[] positions) {
+        appWorkspaceScrollStateStore.restore(positions);
+    }
+
+    public void setSkipNextImmediateServiceReload(boolean skip) {
+        skipNextImmediateServiceReload = skip;
+    }
+
+    public void setMainViewModel(MainViewModel viewModel) {
+        mainViewModel = viewModel;
+    }
+
+    public void restoreFeedbackDiagnosticPage() {
+        feedbackDiagnostic.restorePage();
+    }
+
+    public void attachFeedbackDiagnosticHost() {
+        feedbackDiagnostic.attachHost();
     }
 
     public void saveAppListFilterState(AppListFilterState filterState) {

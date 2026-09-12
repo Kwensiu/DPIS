@@ -10,10 +10,13 @@ class MainActivityFilterStateSourceSmokeTest {
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
+        val launch = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        )
 
         assertTrue(source.contains("private AppListFilterStateStore appListFilterStateStore;"))
-        assertTrue(source.contains("appListFilterStateStore = new AppListFilterStateStore(this);"))
-        assertTrue(source.contains("appListFilterStateStore.load()"))
+        assertTrue(launch.contains("AppListFilterStateStore(activity)"))
+        assertTrue(launch.contains("filterStore.load()"))
         assertTrue(startup.contains("filterState = retained.filterState"))
         assertTrue(startup.contains("filterState = AppListFilterState("))
         val filterSession = read(

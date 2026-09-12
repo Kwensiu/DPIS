@@ -26,7 +26,6 @@ class ComposeShellSourceSmokeTest {
         val shell = read("src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt")
         val adapter = read("src/main/java/com/dpis/module/ui/MainComposeWorkspaceAdapter.java")
         val mainShell = read("src/main/java/com/dpis/module/ui/MainComposeWorkspaceShell.kt")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read("src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
 
         // Keep this smoke test limited to stable ownership and routing contracts. Detailed
@@ -39,7 +38,10 @@ class ComposeShellSourceSmokeTest {
         assertTrue(adapter.contains("MainUiState.WorkspaceMode"))
         assertTrue(mainShell.contains("MainUiAction.workspaceModeChanged"))
         assertTrue(mainShell.contains("MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode)"))
-        assertTrue(mainActivity.contains("mainWorkspaceSession.installComposeWorkspaceShell()"))
+        val launch = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainLaunchSession.kt"
+        )
+        assertTrue(launch.contains("mainWorkspaceSession.installComposeWorkspaceShell()"))
         assertTrue(coordinator.contains("ComposeWorkspaceSurface"))
         assertTrue(coordinator.contains("TemplateWorkspaceContent"))
     }
