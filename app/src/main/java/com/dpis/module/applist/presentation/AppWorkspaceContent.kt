@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.applist.presentation
 
 import android.content.res.Configuration
 import android.widget.ImageView
@@ -78,6 +78,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.ui.compose.*
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R

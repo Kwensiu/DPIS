@@ -63,7 +63,7 @@ import com.dpis.module.ui.compose.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.ComposeMotionTokens
 import com.dpis.module.ui.compose.AppHookChainEditorPage
 import com.dpis.module.ui.compose.AppTypefacePickerPage
-import com.dpis.module.ui.compose.AppWorkspaceContent
+import com.dpis.module.applist.presentation.AppWorkspaceContent
 import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
 import com.dpis.module.home.presentation.HomeWorkspaceContent
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding

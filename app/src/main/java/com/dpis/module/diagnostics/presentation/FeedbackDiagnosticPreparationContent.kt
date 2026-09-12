@@ -58,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.dpis.module.R
+import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 
 private const val MIN_DIAGNOSTIC_DURATION_SECONDS = 1
 private const val MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400
