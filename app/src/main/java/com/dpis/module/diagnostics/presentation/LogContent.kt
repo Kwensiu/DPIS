@@ -38,10 +38,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.diagnostics.LogActivity
+import androidx.activity.ComponentActivity
 import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
-import java.util.function.Consumer
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 class LogUiEntry(
@@ -354,32 +353,32 @@ private fun LogContentPreview() {
 }
 
 object LogActivityHost {
-    @JvmStatic
     fun install(
-        activity: LogActivity,
+        activity: ComponentActivity,
         presentation: LogPresentation,
-        onSelectPage: Consumer<Int>,
-        onToggleSort: Runnable,
-        onToggleAutoRefresh: Runnable,
-        onSaveLogs: Runnable,
-        onShareLogs: Runnable,
-        onRefresh: Runnable,
-        onToggleExpanded: Consumer<String>,
-        onCopyEntry: Consumer<String>,
+        onSelectPage: (Int) -> Unit,
+        onToggleSort: () -> Unit,
+        onToggleAutoRefresh: () -> Unit,
+        onSaveLogs: () -> Unit,
+        onShareLogs: () -> Unit,
+        onRefresh: () -> Unit,
+        onToggleExpanded: (String) -> Unit,
+        onCopyEntry: (String) -> Unit,
+        onEnableLogs: () -> Unit,
     ) {
         activity.setFeatureContent {
             LogContent(
                 presentation = presentation,
                 onBack = activity::finish,
-                onSelectPage = onSelectPage::accept,
-                onToggleSort = onToggleSort::run,
-                onToggleAutoRefresh = onToggleAutoRefresh::run,
-                onSaveLogs = onSaveLogs::run,
-                onShareLogs = onShareLogs::run,
-                onRefresh = onRefresh::run,
-                onToggleExpanded = onToggleExpanded::accept,
-                onCopyEntry = onCopyEntry::accept,
-                onEnableLogs = activity::enableDiagnosticLogs,
+                onSelectPage = onSelectPage,
+                onToggleSort = onToggleSort,
+                onToggleAutoRefresh = onToggleAutoRefresh,
+                onSaveLogs = onSaveLogs,
+                onShareLogs = onShareLogs,
+                onRefresh = onRefresh,
+                onToggleExpanded = onToggleExpanded,
+                onCopyEntry = onCopyEntry,
+                onEnableLogs = onEnableLogs,
             )
         }
     }
