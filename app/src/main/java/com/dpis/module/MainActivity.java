@@ -27,20 +27,15 @@ import com.dpis.module.applist.ScopeState;
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession;
 import com.dpis.module.applist.presentation.InstalledAppsLoadShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
-import com.dpis.module.fonts.FontLibraryActivity;
+
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 
-import com.dpis.module.home.DonateActivity;
-import com.dpis.module.home.HomeActivationStateResolver;
-
-import com.dpis.module.home.HomeWorkspaceActions;
-import com.dpis.module.home.HomeWorkspaceLayout;
-import com.dpis.module.home.HomeWorkspaceLayoutStore;
+import com.dpis.module.home.HomeUpdateUiState;
 import com.dpis.module.home.HomeWorkspaceState;
+import com.dpis.module.home.presentation.HomeWorkspaceSession;
+import com.dpis.module.home.presentation.HomeWorkspaceShell;
 import com.dpis.module.settings.PageSettingsStore;
-import com.dpis.module.home.ModeHelpActivity;
-
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
@@ -68,7 +63,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
-import io.github.libxposed.service.XposedService;
+
 import com.dpis.module.ui.presentation.MainComposeShellHost;
 import com.dpis.module.ui.presentation.MainWorkspaceSession;
 import com.dpis.module.ui.presentation.MainWorkspaceShell;
@@ -85,9 +80,8 @@ import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
 import com.dpis.module.applist.AppWorkspace;
 import com.dpis.module.ui.ConfigEditorDestination;
-import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.config.DpisConfigStore;
-import com.dpis.module.diagnostics.DpisLog;
+
 import com.dpis.module.settings.LocalizedActivity;
 import com.dpis.module.diagnostics.LogActivity;
 import com.dpis.module.ui.MainUiAction;
@@ -164,6 +158,8 @@ public final class MainActivity
             = new InstalledAppsLoadSession(new InstalledAppsLoadShell(this));
     private final MainWorkspaceSession mainWorkspaceSession
             = new MainWorkspaceSession(new MainWorkspaceShell(this));
+    private final HomeWorkspaceSession homeWorkspaceSession
+            = new HomeWorkspaceSession(new HomeWorkspaceShell(this));
     private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
@@ -455,7 +451,7 @@ public final class MainActivity
         runOnUiThread(() -> {
             refreshSystemHookEffectiveEnabled();
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                mainWorkspaceSession.bindHomeWorkspace();
+                bindHomeWorkspace();
             }
             if (settingsWorkspaceSession != null) {
                 settingsWorkspaceSession.onServiceStateChanged();
@@ -612,7 +608,7 @@ public final class MainActivity
         return positions;
     }
 
-    private void setCurrentAppListPage(AppListPage page, boolean submit) {
+    public void setCurrentAppListPage(AppListPage page, boolean submit) {
         landCurrentPage = page != null ? page : AppListPage.ALL_APPS;
         if (submit) {
             mainWorkspaceSession.refreshApps();
@@ -821,7 +817,7 @@ public final class MainActivity
     private void bindHomeWorkspaceIfVisible() {
         if (mainViewModel != null
                 && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-            mainWorkspaceSession.bindHomeWorkspace();
+            bindHomeWorkspace();
         }
     }
 
@@ -859,86 +855,26 @@ public final class MainActivity
     }
 
     public HomeWorkspaceState createHomeWorkspaceState() {
-        DpisConfigStore configStore = getHookConfigStore();
-        int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
-                configStore,
-                installedAppsLoadSession.loadScopeState()
-        );
-        return new HomeWorkspaceState(
-                isActivatedForHome(),
-                visibleConfiguredAppCount,
-                ConfigStoreFactory.createLocalUiFontLibraryStore(
-                        this,
-                        DpisApplication.getXposedService()
-                ).listFonts().size(),
-                ensureWorkspaceSession().quickItemCount(),
-                RootAccessProbe.cachedResult(),
-                updateSession.getHomeUpdateUiState(),
-                new HomeWorkspaceLayoutStore(this).load(),
-                createHomeWorkspaceActions(),
-                PageSettingsStore.isHomeEditButtonVisible(this)
-        );
+        return homeWorkspaceSession.createState();
     }
 
-    private boolean isActivatedForHome() {
-        boolean libXposedService = HomeActivationStateResolver
-                .hasModernLibXposedService(DpisApplication.getXposedService());
-        boolean selfLoaded = DpisApplication.isXposedSelfLoaded();
-        boolean activated = HomeActivationStateResolver.isActivatedForHome(
-                libXposedService,
-                selfLoaded);
-        DpisLog.i("home activation resolved: libxposedService=" + libXposedService
-                + ", selfLoaded=" + selfLoaded
-                + ", activated=" + activated);
-        return activated;
+    public ScopeState loadInstalledAppScopeState() {
+        return installedAppsLoadSession.loadScopeState();
     }
 
-    private HomeWorkspaceActions createHomeWorkspaceActions() {
-        return new HomeWorkspaceActions() {
-            @Override
-            public void checkForUpdates() {
-                updateSession.checkForUpdatesNow();
-            }
-
-            @Override
-            public void openConfiguredAppsWorkspace() {
-                setCurrentAppListPage(AppListPage.CONFIGURED_APPS, false);
-                dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.APP)
-                );
-            }
-
-            @Override
-            public void openFontLibrary() {
-                startActivity(new Intent(MainActivity.this, FontLibraryActivity.class));
-            }
-
-            @Override
-            public void openTemplateWorkspace() {
-                dispatchMainUiAction(
-                        MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE)
-                );
-            }
-
-            @Override
-            public void openModeHelp() {
-                startActivity(new Intent(MainActivity.this, ModeHelpActivity.class));
-            }
-
-            @Override
-            public void openDonate() {
-                startActivity(DonateActivity.createIntent(MainActivity.this));
-            }
-
-            @Override
-            public void saveHomeWorkspaceLayout(HomeWorkspaceLayout layout) {
-                new HomeWorkspaceLayoutStore(MainActivity.this).save(layout);
-                mainWorkspaceSession.bindHomeWorkspace();
-            }
-        };
+    public HomeUpdateUiState homeUpdateUiState() {
+        return updateSession.getHomeUpdateUiState();
     }
 
-    static int countUserVisibleConfiguredPackages(DpisConfigStore store,
+    public void checkForUpdatesNow() {
+        updateSession.checkForUpdatesNow();
+    }
+
+    public void bindHomeWorkspace() {
+        mainWorkspaceSession.bindHomeWorkspace();
+    }
+
+    public static int countUserVisibleConfiguredPackages(DpisConfigStore store,
             ScopeState scopeState) {
         ScopeState safeScopeState = scopeState != null
                 ? scopeState
@@ -953,7 +889,7 @@ public final class MainActivity
     private void maybeStartRootAccessProbe() {
         RootAccessProbe.refreshAsync(result -> runOnUiThread(() -> {
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                mainWorkspaceSession.bindHomeWorkspace();
+                bindHomeWorkspace();
             }
         }));
     }

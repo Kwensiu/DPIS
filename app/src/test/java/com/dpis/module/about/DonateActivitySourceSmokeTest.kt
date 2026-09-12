@@ -20,6 +20,9 @@ class DonateActivitySourceSmokeTest {
         val settingsController =
             read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val homeSession = read(
+            "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceSession.kt"
+        )
 
         assertTrue(source.contains("fun createIntent(context: Context)"))
         assertTrue(source.contains("Intent(context, DonateActivity::class.java)"))
@@ -61,7 +64,7 @@ class DonateActivitySourceSmokeTest {
         assertTrue(manifest.contains("android:name=\".home.DonateActivity\""))
         assertTrue(homeState.contains("fun openDonate()"))
         assertTrue(settingsController.contains("DonateActivity.createIntent(activity)"))
-        assertTrue(mainActivity.contains("DonateActivity.createIntent(MainActivity.this)"))
+        assertTrue(homeSession.contains("DonateActivity.createIntent(activity)"))
         assertFalse(mainActivity.contains("MainStandaloneRoute"))
     }
 

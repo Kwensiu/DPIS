@@ -156,7 +156,10 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("bindWorkspaceSwitch()"))
         assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"))
         assertFalse(source.contains("private boolean updatingWorkspaceSelection"))
-        assertTrue(source.contains("MainUiAction.workspaceModeChanged("))
+        val homeSession = read(
+            "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceSession.kt"
+        )
+        assertTrue(homeSession.contains("MainUiAction.workspaceModeChanged("))
         assertTrue(workspace.contains("applyWorkspaceMode(state.workspaceMode)"))
         assertTrue(
             workspace.contains(
@@ -591,6 +594,9 @@ class MainActivitySourceSmokeTest {
     @Test
     fun homeStatusCardRetainsManualUpdateCheckEntry() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val homeSession = read(
+            "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceSession.kt"
+        )
         val homeState = read(
             "src/main/java/com/dpis/module/home/HomeWorkspaceState.kt"
         )
@@ -599,6 +605,7 @@ class MainActivitySourceSmokeTest {
         )
 
         assertTrue(source.contains("updateSession.checkForUpdatesNow()"))
+        assertTrue(homeSession.contains("shell.checkForUpdatesNow()"))
         assertTrue(homeState.contains("interface HomeWorkspaceActions"))
         val primaryStatus = compose
             .substringAfter("private fun HomePrimaryStatus")
