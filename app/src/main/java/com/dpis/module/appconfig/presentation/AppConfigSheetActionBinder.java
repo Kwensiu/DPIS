@@ -8,7 +8,7 @@ import com.dpis.module.viewport.ViewportTargetType;
 
 import com.dpis.module.applist.AppListItem;
 
-import com.dpis.module.quirks.WechatDpiSheetBinder;
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder;
 
 import android.view.View;
 

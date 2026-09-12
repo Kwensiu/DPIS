@@ -3,7 +3,7 @@ package com.dpis.module.appconfig.landdetail
 import android.view.View
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.quirks.WechatDpiSheetBinder
+import com.dpis.module.quirks.WechatDpiEditor
 import com.google.android.material.button.MaterialButton
 import com.dpis.module.MainActivity
 
@@ -87,7 +87,7 @@ class LandAppDetailActivityActions(
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
         val saved = activity.setDpisEnabled(packageName, enabled)
         if (saved && packageName != null) {
-            WechatDpiSheetBinder.publishForDpisState(packageName, enabled)
+            WechatDpiEditor.publishForDpisState(packageName, enabled)
             activity.requestAppsLoad()
         }
         return saved

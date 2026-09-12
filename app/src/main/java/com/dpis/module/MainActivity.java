@@ -55,7 +55,8 @@ import com.dpis.module.hooks.HookDomainOverrideStore;
 import com.dpis.module.process.presentation.ProcessActionConfirm;
 import com.dpis.module.process.presentation.ProcessActionHandler;
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
-import com.dpis.module.quirks.WechatDpiSheetBinder;
+import com.dpis.module.quirks.WechatDpiEditor;
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
@@ -2138,9 +2139,9 @@ public final class MainActivity
         if (!saveResult.success) {
             return saveResult;
         }
-        if (!WechatDpiSheetBinder.save(wechatDpiInput, packageName, dpisEnabled, store)) {
+        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
             return AppConfigSaveHandler.Result.failure(
-                    WechatDpiSheetBinder.isInputValid(wechatDpiInput)
+                    WechatDpiEditor.isInputValid(wechatDpiInput)
                             ? R.string.system_settings_save_failed
                             : R.string.status_save_invalid);
         }

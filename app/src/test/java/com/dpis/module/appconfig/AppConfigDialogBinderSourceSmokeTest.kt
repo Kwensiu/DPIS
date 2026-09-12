@@ -77,7 +77,7 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun wechatDpiUsesSingleOfficialInput() {
-        val binder = read("src/main/java/com/dpis/module/quirks/WechatDpiSheetBinder.java")
+        val binder = read("src/main/java/com/dpis/module/quirks/presentation/WechatDpiSheetBinder.kt")
         val strings = read("src/main/res/values/strings.xml")
         val zhStrings = read("src/main/res/values-zh-rCN/strings.xml")
 
@@ -86,10 +86,10 @@ class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binder.contains("MaterialAlertDialogBuilder"))
         assertTrue(binder.contains("R.string.dialog_wechat_dpi_help_title"))
         assertTrue(binder.contains("R.string.dialog_wechat_dpi_help_message"))
-        assertTrue(binder.contains("WechatDpiConfig.isInputValid"))
+        assertTrue(binder.contains("WechatDpiEditor.isInputValid"))
         assertTrue(binder.contains("dialog_wechat_dpi_input"))
         assertTrue(binder.contains("DialogWindowSizer.applyStandardWidth("))
-        assertTrue(binder.contains("anchor.getContext()"))
+        assertTrue(binder.contains("anchor.context"))
         assertTrue(strings.contains("WeChat DPI 200-1000"))
         assertTrue(strings.contains("WeChat-specific DisplayMetrics route"))
         assertTrue(strings.contains("Mini Programs are not supported yet."))
@@ -100,10 +100,10 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun wechatDpiSaveDoesNotClearViewportConfig() {
-        val binder = read("src/main/java/com/dpis/module/quirks/WechatDpiSheetBinder.java")
-        val saveStart = binder.indexOf("static boolean save(")
-        val saveEnd = binder.indexOf("static void clearDraft", saveStart)
-        val saveBlock = binder.substring(saveStart, saveEnd)
+        val editor = read("src/main/java/com/dpis/module/quirks/WechatDpiEditor.kt")
+        val saveStart = editor.indexOf("fun save(")
+        val saveEnd = editor.indexOf("fun publishForDpisState", saveStart)
+        val saveBlock = editor.substring(saveStart, saveEnd)
 
         assertTrue(saveBlock.contains("store.setWechatDpi(packageName, dpi)"))
         assertTrue(saveBlock.contains("if (saved)"))
@@ -131,7 +131,7 @@ class AppConfigDialogBinderSourceSmokeTest {
         val hostBlock = gateway.substring(hostStart, hostEnd)
         assertTrue(hostBlock.contains(
                 "if (!activity.setDpisEnabled(packageName, enabled))"))
-        assertTrue(hostBlock.contains("WechatDpiSheetBinder.publishForDpisState("))
+        assertTrue(hostBlock.contains("WechatDpiEditor.publishForDpisState("))
         assertTrue(editorController.contains("if (host.setDpisEnabled(enabled))"))
         assertTrue(editorController.contains("host.updateDraft(draft.withDpisEnabled(enabled))"))
     }

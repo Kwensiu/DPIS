@@ -8,7 +8,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.PackageConfigRepository
-import com.dpis.module.quirks.WechatDpiSheetBinder
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.templates.GlobalPrefillStore
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.TextInputEditText

@@ -12,7 +12,7 @@ import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.quirks.presentation.WechatDpiHelp
-import com.dpis.module.quirks.WechatDpiSheetBinder
+import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
@@ -87,7 +87,7 @@ class ComposeAppEditorActivityGateway(
 
     override fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean {
         if (!activity.setDpisEnabled(packageName, enabled)) return false
-        WechatDpiSheetBinder.publishForDpisState(packageName, enabled)
+        WechatDpiEditor.publishForDpisState(packageName, enabled)
         activity.requestAppsLoad()
         return true
     }

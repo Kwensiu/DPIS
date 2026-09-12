@@ -13,7 +13,7 @@ import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ModeToggle
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ProcessAction
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.quirks.WechatDpiSheetBinder
+import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.ui.FormInputFocusBinder
 import com.dpis.module.ui.TouchFeedbackBinder
 import com.dpis.module.viewport.ViewportApplyMode
