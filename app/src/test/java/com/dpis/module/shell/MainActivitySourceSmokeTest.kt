@@ -55,16 +55,20 @@ class MainActivitySourceSmokeTest {
     @Test
     fun homeStatusReflectsUpdateCheckProgressWhilePromptOwnsUpdateActions() {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val updateSession = read(
+                "src/main/java/com/dpis/module/updates/presentation/MainUpdateSession.kt"
+        )
         val homeState = read("src/main/java/com/dpis/module/home/HomeUpdateUiState.java")
         val composeHome = read(
                 "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.CHECKING)"))
-        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.available(manifest))"))
-        assertTrue(activity.contains("showUpdateAvailableDialog("))
-        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE)"))
-        assertTrue(activity.contains("applyHomeUpdateState(HomeUpdateUiState.FAILED)"))
+        assertTrue(activity.contains("new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible)"))
+        assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.CHECKING)"))
+        assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.available(manifest))"))
+        assertTrue(updateSession.contains("showUpdateAvailableDialog("))
+        assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE)"))
+        assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.FAILED)"))
         assertTrue(homeState.contains("CHECKING,"))
         assertTrue(homeState.contains("AVAILABLE -> context.getString"))
         assertTrue(composeHome.contains("state.updateState.subtitle(context)"))
@@ -460,36 +464,31 @@ class MainActivitySourceSmokeTest {
         assertFalse(runtimeMessage.contains("Rust"))
         assertFalse(zhRuntimeMessage.contains("HyperOS"))
         assertFalse(zhRuntimeMessage.contains("Rust"))
-        assertTrue(source.contains("maybeShowStartupDisclaimerDialog()"))
+        assertTrue(source.contains("updateSession.maybeShowStartupDisclaimerDialog()"))
         assertTrue(
-            source.contains("if (!maybeShowStartupDisclaimerDialog()) {")
+            source.contains("if (!updateSession.maybeShowStartupDisclaimerDialog()) {")
+        )
+        val updateSession = read(
+            "src/main/java/com/dpis/module/updates/presentation/MainUpdateSession.kt"
         )
         assertTrue(
-            source.contains(
-                "updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog("
+            updateSession.contains("fun maybeShowStartupDisclaimerDialog(): Boolean")
+        )
+        assertTrue(
+            updateSession.contains(
+                "object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance"
             )
         )
+        assertTrue(updateSession.contains("StartupDisclaimerStore(activity)"))
+        assertTrue(updateSession.contains("store.isAccepted"))
+        assertTrue(updateSession.contains("store.setAccepted(true)"))
+        assertTrue(updateSession.contains("fun applyLargeDialogWidth("))
         assertTrue(
-            source.contains(
-                "new UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance()"
-            )
+            updateSession.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)")
         )
-        assertTrue(source.contains("new StartupDisclaimerStore(this)"))
-        assertTrue(source.contains("return store.isAccepted()"))
-        assertTrue(source.contains("return store.setAccepted(true)"))
-        assertTrue(
-            source.contains(
-                "void applyLargeDialogWidth("
-            )
-        )
-        assertTrue(
-            source.contains(
-                "DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this)"
-            )
-        )
-        val disclaimerBlock = source.substring(
-            source.indexOf("private boolean maybeShowStartupDisclaimerDialog()"),
-            source.indexOf("private boolean maybeShowModuleRuntimeReloadAdvice()")
+        val disclaimerBlock = updateSession.substring(
+            updateSession.indexOf("fun maybeShowStartupDisclaimerDialog(): Boolean"),
+            updateSession.indexOf("fun maybeCheckForUpdatesOnStartup()")
         )
         assertFalse(disclaimerBlock.contains("DpisConfigStore"))
     }
@@ -570,7 +569,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        assertTrue(source.contains("startupUpdateCheckCoordinator.checkForUpdatesNow()"))
+        assertTrue(source.contains("updateSession.checkForUpdatesNow()"))
         assertTrue(homeState.contains("interface HomeWorkspaceActions"))
         val primaryStatus = compose
             .substringAfter("private fun HomePrimaryStatus")

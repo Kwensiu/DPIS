@@ -43,7 +43,7 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 import com.dpis.module.home.DonateActivity;
 import com.dpis.module.home.HomeActivationStateResolver;
-import com.dpis.module.home.HomeUpdateUiState;
+
 import com.dpis.module.home.HomeWorkspaceActions;
 import com.dpis.module.home.HomeWorkspaceLayout;
 import com.dpis.module.home.HomeWorkspaceLayoutStore;
@@ -61,32 +61,19 @@ import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
 import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
-import com.dpis.module.settings.StartupDisclaimerStore;
+
 import com.dpis.module.settings.presentation.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
-import com.dpis.module.ui.DialogWindowSizer;
 import com.dpis.module.ui.TouchFeedbackBinder;
 import com.dpis.module.ui.WatchUiMode;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.ui.WindowInsetsBinder;
 import com.dpis.module.tools.presentation.AppFilterComposeSheet;
-import com.dpis.module.updates.GitHubReleaseNotesFetcher;
-import com.dpis.module.updates.ReleaseNotesCacheStore;
-import com.dpis.module.updates.ReleaseNotesController;
-import com.dpis.module.updates.StartupUpdateCheckCoordinator;
-import com.dpis.module.updates.StartupUpdateCheckOnce;
-import com.dpis.module.updates.StartupUpdateDownloadExecutor;
-import com.dpis.module.updates.StartupUpdateManifest;
-import com.dpis.module.updates.presentation.StartupUpdatePackageHandler;
-import com.dpis.module.updates.presentation.UpdateAvailableDialog;
-import com.dpis.module.updates.UpdateCoordinator;
-import com.dpis.module.updates.presentation.UpdateDownloadCoordinator;
-import com.dpis.module.updates.presentation.UpdatePromptDialogCoordinator;
 import com.dpis.module.updates.UpdatePromptRequest;
-import com.dpis.module.updates.UpdateStateStore;
+import com.dpis.module.updates.presentation.MainUpdateSession;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportPropertySyncer;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -96,7 +83,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -105,9 +91,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import io.github.libxposed.service.XposedService;
 import kotlin.Unit;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
@@ -163,26 +146,14 @@ public final class MainActivity
     private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
-    private static final int UPDATE_CONNECT_TIMEOUT_MS = 10_000;
-    private static final int UPDATE_READ_TIMEOUT_MS = 10_000;
-    private static final int DOWNLOAD_BUFFER_SIZE = 16 * 1024;
-    private static final long DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS = 180L;
     private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
     private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
             = "com.android.permission.GET_INSTALLED_APPS";
     private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
 
 
-    private final UpdateCoordinator updateCoordinator = new UpdateCoordinator();
-    private final StartupUpdateDownloadExecutor startupUpdateDownloadExecutor
-            = new StartupUpdateDownloadExecutor(
-                    UPDATE_CONNECT_TIMEOUT_MS,
-                    UPDATE_READ_TIMEOUT_MS,
-                    DOWNLOAD_BUFFER_SIZE,
-                    DOWNLOAD_PROGRESS_UPDATE_INTERVAL_MS
-            );
-    private UpdateStateStore updateStateStore;
-    private UpdateDownloadCoordinator updateDownloadCoordinator;
+    private final MainUpdateSession updateSession
+            = new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible);
     private final WechatDpiHelp wechatDpiHelp
             = new WechatDpiHelp(this, this::composeShell);
     private final ProcessActionHandler processActionHandler
@@ -193,10 +164,6 @@ public final class MainActivity
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
     private FeedbackDiagnosticActivitySession feedbackDiagnostic;
-    private final StartupUpdatePackageHandler startupUpdatePackageHandler
-            = new StartupUpdatePackageHandler(this);
-    private final ExecutorService startupUpdateExecutor
-            = Executors.newSingleThreadExecutor();
     private final SystemScopeCoordinator systemScopeCoordinator
             = new SystemScopeCoordinator(createSystemScopeHost());
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
@@ -204,15 +171,6 @@ public final class MainActivity
                     createInstalledAppCatalogHost(),
                     INSTALLED_APP_CATALOG_TTL_MS
             );
-    private final StartupUpdateCheckCoordinator startupUpdateCheckCoordinator
-            = new StartupUpdateCheckCoordinator(
-                    createStartupUpdateCheckHost(),
-                    updateCoordinator,
-                    UPDATE_CONNECT_TIMEOUT_MS,
-                    UPDATE_READ_TIMEOUT_MS
-            );
-    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator;
-    private ReleaseNotesController releaseNotesController;
     private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
@@ -239,12 +197,6 @@ public final class MainActivity
     private boolean pendingInstalledAppsLoadAfterPermission;
     private boolean installedAppsPermissionRequestCompleted;
     private MainUiState.WorkspaceMode renderedWorkspaceMode;
-    private HomeUpdateUiState homeUpdateUiState = HomeUpdateUiState.UP_TO_DATE;
-    private volatile boolean startupUpdateCheckInProgress;
-    private volatile boolean startupUpdateDownloadInProgress;
-    private volatile boolean startupUpdateDownloadCancelRequested;
-    // A visible update prompt is user work, so retain it across a configuration change.
-    private UpdatePromptRequest pendingUpdatePrompt;
     private View activeEditorRoot;
     private String activeEditorPackageName;
     private BottomSheetDialog activeAppEditorDialog;
@@ -256,22 +208,6 @@ public final class MainActivity
         setContentView(R.layout.activity_status);
         refreshSystemHookEffectiveEnabled();
 
-        updateStateStore = new UpdateStateStore(this);
-        updateDownloadCoordinator = new UpdateDownloadCoordinator(
-                createUpdateDownloadHost(),
-                updateCoordinator,
-                startupUpdateDownloadExecutor,
-                startupUpdateExecutor
-        );
-        releaseNotesController = new ReleaseNotesController(
-                new ReleaseNotesCacheStore(this),
-                startupUpdateExecutor,
-                this::runOnUiThread,
-                GitHubReleaseNotesFetcher::fetchByVersionName,
-                System::currentTimeMillis,
-                UPDATE_CONNECT_TIMEOUT_MS,
-                UPDATE_READ_TIMEOUT_MS
-        );
         appListFilterStateStore = new AppListFilterStateStore(this);
 
         RetainedState retainedState
@@ -297,7 +233,7 @@ public final class MainActivity
             initialFilterState = retainedState.filterState;
             initialWorkspaceMode = retainedState.workspaceMode;
             initialWorkspaceSessionState = retainedState.workspaceSessionState;
-            pendingUpdatePrompt = retainedState.pendingUpdatePrompt;
+            updateSession.restorePendingPrompt(retainedState.pendingUpdatePrompt);
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
             initialRefreshingPages = decodeRefreshingPages(
                     retainedState.refreshingPagePositions
@@ -477,15 +413,14 @@ public final class MainActivity
             restoreAppEditorForCurrentWorkspace();
         }
         restoreWorkspaceEditorForCurrentConfiguration();
-        if (pendingUpdatePrompt != null) {
-            showPendingUpdatePrompt();
+        if (updateSession.showPendingPromptIfAny()) {
             return;
         }
         if (maybeShowModuleRuntimeReloadAdvice()) {
             return;
         }
-        if (!maybeShowStartupDisclaimerDialog()) {
-            maybeCheckForUpdatesOnStartup();
+        if (!updateSession.maybeShowStartupDisclaimerDialog()) {
+            updateSession.maybeCheckForUpdatesOnStartup();
         }
     }
 
@@ -540,9 +475,7 @@ public final class MainActivity
         if (feedbackDiagnostic != null) {
             feedbackDiagnostic.onDestroy(isChangingConfigurations());
         }
-        if (updateDownloadCoordinator != null) {
-            updateDownloadCoordinator.shutdown();
-        }
+        updateSession.shutdown();
         ensureWorkspaceSession().onDestroy();
         if (settingsWorkspaceSession != null) {
             settingsWorkspaceSession.onDestroy();
@@ -690,7 +623,7 @@ public final class MainActivity
                         : ConfigEditorDestination.MAIN,
                 ensureWorkspaceSession().retainedState(),
                 feedbackDiagnostic.retainedState(),
-                pendingUpdatePrompt
+                updateSession.getPendingUpdatePrompt()
         );
     }
 
@@ -1343,119 +1276,21 @@ public final class MainActivity
         });
     }
 
-    private boolean maybeShowStartupDisclaimerDialog() {
-        StartupDisclaimerStore store = new StartupDisclaimerStore(this);
-        return updatePromptDialogCoordinator().maybeShowStartupDisclaimerDialog(
-                new UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance() {
-                    @Override
-                    public boolean isAccepted() {
-                        return store.isAccepted();
-                    }
-
-                    @Override
-                    public boolean markAccepted() {
-                        return store.setAccepted(true);
-                    }
-                },
-                this::maybeCheckForUpdatesOnStartup
-        );
-    }
-
     private boolean maybeShowModuleRuntimeReloadAdvice() {
         return new ModuleRuntimeReloadNoticeCoordinator(this)
                 .maybeShow(this::continueStartupDialogsAfterRuntimeReloadAdvice);
     }
 
     private void continueStartupDialogsAfterRuntimeReloadAdvice() {
-        if (!maybeShowStartupDisclaimerDialog()) {
-            maybeCheckForUpdatesOnStartup();
+        if (!updateSession.maybeShowStartupDisclaimerDialog()) {
+            updateSession.maybeCheckForUpdatesOnStartup();
         }
-    }
-
-    private void maybeCheckForUpdatesOnStartup() {
-        if (!StartupUpdateCheckOnce.consume()) {
-            return;
-        }
-        startupUpdateCheckCoordinator.maybeCheckForUpdatesOnStartup();
-    }
-
-    private void startStartupUpdateDownload(
-            String targetVersionName,
-            String downloadUrl,
-            UpdateAvailableDialog.DialogHandle dialogHandle
-    ) {
-        updateDownloadCoordinator.startDownload(
-                targetVersionName,
-                downloadUrl,
-                dialogHandle
-        );
-    }
-
-    private void cancelActiveUpdateDownload() {
-        updateDownloadCoordinator.cancelActiveDownload();
-    }
-
-    private UpdateCoordinator.State buildUpdateCoordinatorState() {
-        return updateStateStore.buildCoordinatorState(
-                startupUpdateCheckInProgress,
-                startupUpdateDownloadInProgress,
-                startupUpdateDownloadCancelRequested
-        );
-    }
-
-    private void applyStartupCheckState(UpdateCoordinator.State state) {
-        if (state == null) {
-            return;
-        }
-        updateStateStore.applyStartupCheckState(state);
-        startupUpdateCheckInProgress = state.startupCheckInProgress;
-    }
-
-    private void applyDownloadState(UpdateCoordinator.State state) {
-        if (state == null) {
-            return;
-        }
-        startupUpdateDownloadInProgress = state.downloadInProgress;
-        startupUpdateDownloadCancelRequested = state.downloadCancelRequested;
-    }
-
-    private void applyHomeUpdateState(HomeUpdateUiState state) {
-        if (state == null) {
-            return;
-        }
-        homeUpdateUiState = state;
-        bindHomeWorkspaceIfVisible();
     }
 
     private void bindHomeWorkspaceIfVisible() {
         if (mainViewModel != null
                 && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
-        }
-    }
-
-    private void markPromptedVersion(int versionCode) {
-        UpdateCoordinator.State nextState
-                = updateCoordinator.markPromptedVersion(
-                        buildUpdateCoordinatorState(),
-                        versionCode
-                );
-        updateStateStore.applyPromptedVersion(nextState);
-    }
-
-    private void openUrl(String url) {
-        if (url == null || url.trim().isEmpty()) {
-            showToast(R.string.about_link_open_failed);
-            return;
-        }
-        try {
-            Intent intent = new Intent(
-                    Intent.ACTION_VIEW,
-                    android.net.Uri.parse(url)
-            );
-            startActivity(intent);
-        } catch (android.content.ActivityNotFoundException ignored) {
-            showToast(R.string.about_link_open_failed);
         }
     }
 
@@ -1491,193 +1326,6 @@ public final class MainActivity
             @Override
             public void runOnUiThread(@NonNull Runnable runnable) {
                 MainActivity.this.runOnUiThread(runnable);
-            }
-        };
-    }
-
-    private StartupUpdateCheckCoordinator.Host createStartupUpdateCheckHost() {
-        return new StartupUpdateCheckCoordinator.Host() {
-            @Override
-            public boolean isActivityAlive() {
-                return !isFinishing() && !isDestroyed();
-            }
-
-            @NonNull
-            @Override
-            public String getManifestUrl() {
-                return MainActivity.this.getString(
-                        R.string.about_update_manifest_url
-                );
-            }
-
-            @Override
-            public void executeBackground(@NonNull Runnable runnable) {
-                startupUpdateExecutor.execute(runnable);
-            }
-
-            @Override
-            public void runOnUiThread(@NonNull Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @NonNull
-            @Override
-            public UpdateCoordinator.State buildUpdateCoordinatorState() {
-                return MainActivity.this.buildUpdateCoordinatorState();
-            }
-
-            @Override
-            public void applyStartupCheckState(@NonNull UpdateCoordinator.State state) {
-                MainActivity.this.applyStartupCheckState(state);
-            }
-
-            @Override
-            public int getLocalVersionCode() {
-                return BuildConfig.VERSION_CODE;
-            }
-
-            @NonNull
-            @Override
-            public String getLocalVersionName() {
-                return BuildConfig.VERSION_NAME;
-            }
-
-            @Override
-            public void onStartupUpdateCheckStarted() {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.CHECKING);
-            }
-
-            @Override
-            public void onStartupUpdateAvailable(@NonNull StartupUpdateManifest manifest) {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.available(manifest));
-                pendingUpdatePrompt = UpdatePromptRequest.from(manifest);
-                showPendingUpdatePrompt();
-            }
-
-            @Override
-            public void onStartupUpdateUpToDate() {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE);
-            }
-
-            @Override
-            public void onStartupUpdateCheckFailed() {
-                MainActivity.this.applyHomeUpdateState(HomeUpdateUiState.FAILED);
-            }
-        };
-    }
-
-    private UpdatePromptDialogCoordinator updatePromptDialogCoordinator() {
-        if (updatePromptDialogCoordinator == null) {
-            updatePromptDialogCoordinator = new UpdatePromptDialogCoordinator(
-                    this,
-                    createUpdatePromptDialogHost(),
-                    releaseNotesController
-            );
-        }
-        return updatePromptDialogCoordinator;
-    }
-
-    private void showPendingUpdatePrompt() {
-        UpdatePromptRequest request = pendingUpdatePrompt;
-        if (request != null) {
-            updatePromptDialogCoordinator().showUpdateAvailableDialog(request);
-        }
-    }
-
-    private UpdatePromptDialogCoordinator.Host createUpdatePromptDialogHost() {
-        return new UpdatePromptDialogCoordinator.Host() {
-            @Override
-            public void markPromptedVersion(int versionCode) {
-                MainActivity.this.markPromptedVersion(versionCode);
-            }
-
-            @Override
-            public boolean isDownloadInProgress() {
-                return updateDownloadCoordinator.isDownloadInProgress();
-            }
-
-            @Override
-            public void cancelActiveUpdateDownload() {
-                MainActivity.this.cancelActiveUpdateDownload();
-            }
-
-            @Override
-            public void startStartupUpdateDownload(
-                    @NonNull String targetVersionName,
-                    @NonNull String downloadUrl,
-                    @NonNull UpdateAvailableDialog.DialogHandle dialogHandle
-            ) {
-                MainActivity.this.startStartupUpdateDownload(
-                        targetVersionName,
-                        downloadUrl,
-                        dialogHandle
-                );
-            }
-
-            @Override
-            public void openUrl(@NonNull String url) {
-                MainActivity.this.openUrl(url);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-
-            @Override
-            public void applyLargeDialogWidth(@NonNull androidx.appcompat.app.AlertDialog dialog) {
-                DialogWindowSizer.applyLargeWidth(dialog, MainActivity.this);
-            }
-
-            @Override
-            public void onUpdatePromptDismissed() {
-                if (!isChangingConfigurations()) {
-                    pendingUpdatePrompt = null;
-                }
-            }
-
-            @Override
-            public void finishActivity() {
-                MainActivity.this.finish();
-            }
-        };
-    }
-
-    private UpdateDownloadCoordinator.Host createUpdateDownloadHost() {
-        return new UpdateDownloadCoordinator.Host() {
-            @Override
-            public boolean isActivityAlive() {
-                return !isFinishing() && !isDestroyed();
-            }
-
-            @Override
-            public Context getContext() {
-                return MainActivity.this;
-            }
-
-            @Override
-            public void runOnUiThread(Runnable runnable) {
-                MainActivity.this.runOnUiThread(runnable);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-
-            @Override
-            public void onDownloadSuccess(File targetFile) {
-                startupUpdatePackageHandler.launchPackageInstaller(targetFile);
-            }
-
-            @Override
-            public UpdateCoordinator.State buildUpdateCoordinatorState() {
-                return MainActivity.this.buildUpdateCoordinatorState();
-            }
-
-            @Override
-            public void applyDownloadState(UpdateCoordinator.State state) {
-                MainActivity.this.applyDownloadState(state);
             }
         };
     }
@@ -1832,7 +1480,7 @@ public final class MainActivity
                 ).listFonts().size(),
                 ensureWorkspaceSession().quickItemCount(),
                 RootAccessProbe.cachedResult(),
-                homeUpdateUiState,
+                updateSession.getHomeUpdateUiState(),
                 new HomeWorkspaceLayoutStore(this).load(),
                 createHomeWorkspaceActions(),
                 PageSettingsStore.isHomeEditButtonVisible(this)
@@ -1856,7 +1504,7 @@ public final class MainActivity
         return new HomeWorkspaceActions() {
             @Override
             public void checkForUpdates() {
-                startupUpdateCheckCoordinator.checkForUpdatesNow();
+                updateSession.checkForUpdatesNow();
             }
 
             @Override
