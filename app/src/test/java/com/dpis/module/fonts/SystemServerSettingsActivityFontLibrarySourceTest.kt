@@ -2,14 +2,14 @@ package com.dpis.module
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 
 class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     fun settingsActivityWiresFontLibraryEntryToDedicatedPage() {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val manifest = read("src/main/AndroidManifest.xml")
-        val factory = read("src/main/java/com/dpis/module/config/ConfigStoreFactory.java")
+        val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
         val store = read("src/main/java/com/dpis/module/fonts/FontLibraryStore.java")
 
         source.assertContainsAll(

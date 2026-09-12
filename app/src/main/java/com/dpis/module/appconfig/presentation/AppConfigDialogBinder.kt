@@ -16,7 +16,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R

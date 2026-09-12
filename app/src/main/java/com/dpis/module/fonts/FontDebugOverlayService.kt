@@ -20,7 +20,7 @@ import android.view.View.OnTouchListener
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R

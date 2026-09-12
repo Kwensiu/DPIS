@@ -1,4 +1,4 @@
-package com.dpis.module.config;
+package com.dpis.module.runtime;
 
 import com.dpis.module.fonts.FontLibraryStore;
 import com.dpis.module.fonts.FontLibraryConfigStore;
@@ -12,6 +12,7 @@ import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
 import com.dpis.module.BuildConfig;
 import com.dpis.module.DpisApplication;
+import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
 
 public final class ConfigStoreFactory {

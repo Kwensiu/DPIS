@@ -38,7 +38,7 @@ import com.dpis.module.runtime.DebugPackageOverride;
 import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
 
 import io.github.libxposed.api.XposedInterface;
-import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.diagnostics.DpisLog;
 
 public final class AppProcessHookInstaller {

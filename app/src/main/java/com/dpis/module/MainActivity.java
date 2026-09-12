@@ -118,7 +118,7 @@ import com.dpis.module.applist.AppWorkspaceScrollStateStore;
 import com.dpis.module.applist.AppWorkspacePresentation;
 import com.dpis.module.applist.AppWorkspace;
 import com.dpis.module.ui.ConfigEditorDestination;
-import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.settings.LocalizedActivity;

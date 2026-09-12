@@ -17,7 +17,7 @@ import io.github.libxposed.service.XposedServiceHelper
 import io.github.libxposed.service.XposedServiceHelper.OnServiceListener
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.Volatile
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 

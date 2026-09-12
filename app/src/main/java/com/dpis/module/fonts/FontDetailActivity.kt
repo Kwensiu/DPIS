@@ -3,7 +3,7 @@ package com.dpis.module.fonts
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.settings.LocalizedActivity

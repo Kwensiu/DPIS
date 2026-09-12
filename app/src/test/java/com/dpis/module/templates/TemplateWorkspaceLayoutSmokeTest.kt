@@ -2,7 +2,7 @@ package com.dpis.module
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 
 class TemplateWorkspaceLayoutSmokeTest {
     @Test

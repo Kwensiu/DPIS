@@ -11,21 +11,26 @@ public class SettingsPresentationControllerTest {
         SettingsPresentationController controller = new SettingsPresentationController(port);
         int[] calls = {0};
         SettingsPresentationController.Listener listener = state -> calls[0]++;
+        controller.addListener(null);
         controller.addListener(listener);
         controller.setGlobalLogEnabled(true);
+        controller.setSafeModeEnabled(true);
+        controller.setLauncherIconHidden(true);
         controller.publishState();
         controller.removeListener(listener);
         controller.refresh();
         assertEquals(2, calls[0]);
         assertEquals(1, port.globalLogWrites);
+        assertEquals(1, port.safeModeWrites);
+        assertEquals(1, port.launcherHiddenWrites);
         assertEquals(1, port.refreshes);
     }
     private static final class FakePort implements SettingsPresentationController.Port {
-        int globalLogWrites; int refreshes;
+        int globalLogWrites; int safeModeWrites; int launcherHiddenWrites; int refreshes;
         @Override public SettingsUiState snapshot() { return new SettingsUiState(true,false,false,false,false,100,false,"0 B", "Follow system", null); }
-        @Override public void setSafeModeEnabled(boolean enabled) { }
+        @Override public void setSafeModeEnabled(boolean enabled) { safeModeWrites++; }
         @Override public void setGlobalLogEnabled(boolean enabled) { globalLogWrites++; }
-        @Override public void setLauncherIconHidden(boolean hidden) { }
+        @Override public void setLauncherIconHidden(boolean hidden) { launcherHiddenWrites++; }
         @Override public void refresh() { refreshes++; }
     }
 }

@@ -70,7 +70,7 @@ import java.util.StringJoiner;
 import java.util.function.Predicate;
 
 import io.github.libxposed.api.XposedInterface;
-import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.diagnostics.DpisLog;
 
 @SuppressWarnings("java:S1872")

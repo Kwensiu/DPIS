@@ -66,7 +66,7 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs

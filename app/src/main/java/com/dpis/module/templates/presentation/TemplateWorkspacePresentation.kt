@@ -2,7 +2,7 @@ package com.dpis.module.templates.presentation
 
 import android.content.Context
 import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R

@@ -1,7 +1,7 @@
 package com.dpis.module.diagnostics.presentation
 
 import android.widget.Toast
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.runtime.RuntimeConfigDelivery

@@ -1,6 +1,6 @@
 package com.dpis.module.runtime;
 
-import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.DpisApplication;
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;

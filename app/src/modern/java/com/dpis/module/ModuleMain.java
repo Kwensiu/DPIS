@@ -53,7 +53,7 @@ import java.nio.file.Files;
 
 import io.github.libxposed.api.XposedModule;
 import io.github.libxposed.api.XposedModuleInterface;
-import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
 

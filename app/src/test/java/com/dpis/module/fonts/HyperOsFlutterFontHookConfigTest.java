@@ -21,7 +21,7 @@ import com.dpis.module.viewport.ViewportPropertyBridge;
 import org.junit.Test;
 
 import java.util.Arrays;
-import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
 

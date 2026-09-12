@@ -4,7 +4,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.dpis.module.process.presentation.ProcessActionHandler
-import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.config.DpisConfigStore
 
 class RuntimeConfigDeliverySourceTest {
@@ -53,7 +53,7 @@ class RuntimeConfigDeliverySourceTest {
 
     @Test
     fun activeFontLibraryStoreUsesLocalPreferencesOnly() {
-        val factory = read("src/main/java/com/dpis/module/config/ConfigStoreFactory.java")
+        val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
         val activeFontFactory = activeFontLibraryFactoryBlock(factory)
 
         assertTrue(activeFontFactory.contains("return createLocalFontLibraryStore(context);"))
