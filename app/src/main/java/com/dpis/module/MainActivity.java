@@ -48,7 +48,7 @@ import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
 import com.dpis.module.ui.TouchFeedbackBinder;
-import com.dpis.module.ui.WatchWorkspaceChromeBinder;
+
 
 import com.dpis.module.tools.presentation.AppFilterComposeSheet;
 import com.dpis.module.updates.UpdatePromptRequest;
@@ -62,6 +62,8 @@ import java.util.Collections;
 import java.util.List;
 
 import com.dpis.module.ui.presentation.MainComposeShellHost;
+import com.dpis.module.ui.presentation.MainHostWiringSession;
+import com.dpis.module.ui.presentation.MainHostWiringShell;
 import com.dpis.module.ui.presentation.MainRetainedState;
 import com.dpis.module.ui.presentation.MainStartupSession;
 import com.dpis.module.ui.presentation.MainWorkspaceSession;
@@ -71,8 +73,7 @@ import com.dpis.module.appconfig.presentation.AppConfigSheetSession;
 import com.dpis.module.appconfig.presentation.AppConfigSheetShell;
 import com.dpis.module.appconfig.presentation.EditorDraftSession;
 import com.dpis.module.appconfig.presentation.EditorDraftShell;
-import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
-import com.dpis.module.appconfig.presentation.ComposeAppEditorShell;
+
 import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
 import com.dpis.module.appconfig.landdetail.LandAppDetailShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
@@ -82,13 +83,13 @@ import com.dpis.module.applist.AppWorkspace;
 import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.settings.LocalizedActivity;
-import com.dpis.module.diagnostics.LogActivity;
+
 import com.dpis.module.ui.MainUiAction;
 import com.dpis.module.ui.MainUiState;
 import com.dpis.module.ui.MainViewModel;
 import com.dpis.module.appconfig.editor.ComposeAppEditorController;
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow;
-import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator;
+
 
 public final class MainActivity
         extends LocalizedActivity
@@ -135,25 +136,15 @@ public final class MainActivity
             = new MainWorkspaceSession(new MainWorkspaceShell(this));
     private final HomeWorkspaceSession homeWorkspaceSession
             = new HomeWorkspaceSession(new HomeWorkspaceShell(this));
+    private final MainHostWiringSession hostWiringSession
+            = new MainHostWiringSession(new MainHostWiringShell(this));
     private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
 
     private MainViewModel mainViewModel;
-    private ComposeAppEditorController composeAppEditorController;
-    private ComposeAppEditorSaveWorkflow composeAppEditorSaveWorkflow;
-    private View topContainer;
-    private View toolsWorkspaceContainer;
-    private View settingsWorkspaceContainer;
-    private View landDetailPane;
-    private View landDetailDivider;
-    private View landDetailEmptyView;
-    private FrameLayout landDetailContent;
     private AppListPage landCurrentPage = AppListPage.ALL_APPS;
     private TemplateWorkspaceActivitySession workspaceSession;
-    private ToolsWorkspace toolsWorkspace;
-    private AppWorkspace appWorkspace;
-    private SettingsWorkspaceSession settingsWorkspaceSession;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
 
@@ -196,90 +187,7 @@ public final class MainActivity
         );
         initializeWorkspaceSession(restore.workspaceSessionState, restore.templateQuery);
         ensureWorkspaceSession().restore(savedInstanceState);
-        ComposeEditorScopeRequestCoordinator composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
-                mainViewModel,
-                (item, onApproved) -> systemScopeCoordinator.requestScope(
-                        item.packageName,
-                        item.label,
-                        onApproved,
-                        null,
-                        false
-                ),
-                () -> mainWorkspaceSession.refreshApps(),
-                () -> showToast(R.string.save_scope_request_notice)
-        );
-        ComposeAppEditorActivityGateway composeAppEditorGateway = new ComposeAppEditorActivityGateway(
-                new ComposeAppEditorShell(this),
-                appConfigDialogHost,
-                appConfigSaveHandler,
-                composeEditorScopeRequestCoordinator,
-                wechatDpiHelp
-        );
-        composeAppEditorSaveWorkflow = new ComposeAppEditorSaveWorkflow(
-                composeAppEditorGateway
-        );
-        composeAppEditorGateway.setSaveWorkflow(composeAppEditorSaveWorkflow);
-        composeAppEditorController = new ComposeAppEditorController(
-                mainViewModel,
-                composeAppEditorGateway
-        );
-
-        topContainer = findViewById(R.id.top_container);
-        toolsWorkspaceContainer = findViewById(R.id.tools_workspace_container);
-        settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
-        settingsWorkspaceSession = SettingsWorkspaceSession.create(
-                this,
-                () -> mainWorkspaceSession.refreshSettings(),
-                () -> startActivity(new Intent(MainActivity.this, LogActivity.class))
-        );
-        WatchWorkspaceChromeBinder.applyIfSupported(
-                this,
-                settingsWorkspaceContainer
-        );
-        landDetailPane = findViewById(R.id.land_detail_pane);
-        landDetailDivider = findViewById(R.id.land_detail_divider);
-        landDetailEmptyView = findViewById(R.id.land_detail_empty);
-        landDetailContent = findViewById(R.id.land_detail_content);
-        ensureWorkspaceSession().attachLegacyViews(
-                findViewById(R.id.template_workspace_container),
-                findViewById(R.id.template_detail_empty),
-                findViewById(R.id.template_detail_content)
-        );
-        toolsWorkspace = new ToolsWorkspace(
-                this,
-                () -> mainWorkspaceSession.refreshTools(),
-                () -> showToast(R.string.system_settings_save_failed)
-        );
-        appWorkspace = new AppWorkspace(new AppWorkspace.Host() {
-            @Override public void changeQuery(String query) {
-                dispatchMainUiAction(MainUiAction.queryChanged(query));
-            }
-
-            @Override public void changePage(AppListPage page) {
-                setCurrentAppListPage(page, true);
-                mainWorkspaceSession.refreshApps();
-            }
-
-            @Override public void changeFilters(AppListFilterState filterState) {
-                appListFilterStateStore.save(filterState);
-                dispatchMainUiAction(MainUiAction.filterChanged(filterState));
-            }
-
-            @Override public void refresh(AppListPage page) {
-                onPageRefreshRequested(page);
-            }
-
-            @Override public void openApp(AppListItem item) {
-                if (composeAppEditorController != null) {
-                    composeAppEditorController.open(item);
-                }
-            }
-
-            @Override public void updateScrollPosition(
-                    AppListPage page, int index, int scrollOffset) {
-                appWorkspaceScrollStateStore.update(page, index, scrollOffset);
-            }
-        });
+        hostWiringSession.wire(mainViewModel);
         // Workspace navigation is now rendered by the Compose shell in every
         // form factor, including the compact watch radial selector.
         AppListPage restoredPage = startupSession.restoreCurrentPage(
@@ -317,11 +225,11 @@ public final class MainActivity
         super.onStart();
         refreshSystemHookEffectiveEnabled();
         mainWorkspaceSession.bindForLifecycle(requireUiState().workspaceMode);
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onStart();
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onStart();
         }
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onStart();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onStart();
         }
         DpisApplication.addServiceStateListener(this, true);
     }
@@ -330,21 +238,21 @@ public final class MainActivity
     protected void onResume() {
         super.onResume();
         maybeStartRootAccessProbe();
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onResume();
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onResume();
         }
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onResume();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onResume();
         }
     }
 
     @Override
     protected void onStop() {
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onStop();
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onStop();
         }
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onStop();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onStop();
         }
         DpisApplication.removeServiceStateListener(this);
         super.onStop();
@@ -357,8 +265,8 @@ public final class MainActivity
         }
         updateSession.shutdown();
         ensureWorkspaceSession().onDestroy();
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onDestroy();
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onDestroy();
         }
         installedAppsLoadSession.shutdown();
         super.onDestroy();
@@ -371,8 +279,8 @@ public final class MainActivity
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
                 bindHomeWorkspace();
             }
-            if (settingsWorkspaceSession != null) {
-                settingsWorkspaceSession.onServiceStateChanged();
+            if (settingsWorkspaceSession() != null) {
+                settingsWorkspaceSession().onServiceStateChanged();
             }
             if (skipNextImmediateServiceReload) {
                 skipNextImmediateServiceReload = false;
@@ -386,11 +294,11 @@ public final class MainActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (settingsWorkspaceSession != null) {
-            settingsWorkspaceSession.onActivityResult(requestCode, resultCode, data);
+        if (settingsWorkspaceSession() != null) {
+            settingsWorkspaceSession().onActivityResult(requestCode, resultCode, data);
         }
-        if (toolsWorkspace != null) {
-            toolsWorkspace.onActivityResult(requestCode, resultCode, data);
+        if (toolsWorkspace() != null) {
+            toolsWorkspace().onActivityResult(requestCode, resultCode, data);
         }
         if (ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
             return;
@@ -440,7 +348,7 @@ public final class MainActivity
         );
     }
 
-    private void onPageRefreshRequested(AppListPage page) {
+    public void onPageRefreshRequested(AppListPage page) {
         dispatchMainUiAction(MainUiAction.markPageRefreshing(page));
         installedAppsLoadSession.requestLoad(true);
     }
@@ -542,13 +450,13 @@ public final class MainActivity
     }
 
     public boolean saveComposeEditorForDiagnostic(AppListItem item, EditorDraft draft) {
-        return composeAppEditorSaveWorkflow != null
-                && composeAppEditorSaveWorkflow.save(item, draft);
+        return hostWiringSession.getComposeAppEditorSaveWorkflow() != null
+                && hostWiringSession.getComposeAppEditorSaveWorkflow().save(item, draft);
     }
 
     public void markComposeEditorSaved(EditorDraft draft) {
-        if (composeAppEditorController != null) {
-            composeAppEditorController.markSaved(draft);
+        if (composeAppEditorController() != null) {
+            composeAppEditorController().markSaved(draft);
         }
     }
 
@@ -844,27 +752,27 @@ public final class MainActivity
     }
 
     public FrameLayout landDetailContent() {
-        return landDetailContent;
+        return hostWiringSession.getLandDetailContent();
     }
 
     public View landDetailEmptyView() {
-        return landDetailEmptyView;
+        return hostWiringSession.getLandDetailEmptyView();
     }
 
     public ComposeAppEditorController composeAppEditorController() {
-        return composeAppEditorController;
+        return hostWiringSession.getComposeAppEditorController();
     }
 
     public AppWorkspace appWorkspace() {
-        return appWorkspace;
+        return hostWiringSession.getAppWorkspace();
     }
 
     public ToolsWorkspace toolsWorkspace() {
-        return toolsWorkspace;
+        return hostWiringSession.getToolsWorkspace();
     }
 
     public SettingsWorkspaceSession settingsWorkspaceSession() {
-        return settingsWorkspaceSession;
+        return hostWiringSession.getSettingsWorkspaceSession();
     }
 
     public AppListPage landCurrentPage() {
@@ -884,23 +792,77 @@ public final class MainActivity
     }
 
     public View topContainer() {
-        return topContainer;
+        return hostWiringSession.getTopContainer();
     }
 
     public View toolsWorkspaceContainer() {
-        return toolsWorkspaceContainer;
+        return hostWiringSession.getToolsWorkspaceContainer();
     }
 
     public View settingsWorkspaceContainer() {
-        return settingsWorkspaceContainer;
+        return hostWiringSession.getSettingsWorkspaceContainer();
     }
 
     public View landDetailPane() {
-        return landDetailPane;
+        return hostWiringSession.getLandDetailPane();
     }
 
     public View landDetailDivider() {
-        return landDetailDivider;
+        return hostWiringSession.getLandDetailDivider();
+    }
+
+    public AppConfigDialogActivityHost appConfigDialogHost() {
+        return appConfigDialogHost;
+    }
+
+    public AppConfigSaveHandler appConfigSaveHandler() {
+        return appConfigSaveHandler;
+    }
+
+    public WechatDpiHelp wechatDpiHelp() {
+        return wechatDpiHelp;
+    }
+
+    public boolean requestEditorScope(AppListItem item, Runnable onApproved) {
+        return systemScopeCoordinator.requestScope(
+                item.packageName,
+                item.label,
+                onApproved,
+                null,
+                false
+        );
+    }
+
+    public void refreshComposeSettings() {
+        mainWorkspaceSession.refreshSettings();
+    }
+
+    public void refreshComposeTools() {
+        mainWorkspaceSession.refreshTools();
+    }
+
+    public void saveAppListFilterState(AppListFilterState filterState) {
+        appListFilterStateStore.save(filterState);
+    }
+
+    public void updateAppListScrollPosition(
+            AppListPage page,
+            int index,
+            int scrollOffset
+    ) {
+        appWorkspaceScrollStateStore.update(page, index, scrollOffset);
+    }
+
+    public void attachTemplateLegacyViews(
+            View workspaceContainer,
+            View detailEmpty,
+            FrameLayout detailContent
+    ) {
+        ensureWorkspaceSession().attachLegacyViews(
+                workspaceContainer,
+                detailEmpty,
+                detailContent
+        );
     }
 
     public EditorDraft currentEditingDraft() {

@@ -124,8 +124,11 @@ class MainActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
 
-        assertTrue(source.contains("new ComposeEditorScopeRequestCoordinator("))
-        assertTrue(source.contains("new ComposeAppEditorShell(this)"))
+        val hostWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
+        )
+        assertTrue(hostWiring.contains("ComposeEditorScopeRequestCoordinator("))
+        assertTrue(hostWiring.contains("ComposeAppEditorShell(shell.activity())"))
         assertFalse(gateway.contains("import com.dpis.module.MainActivity"))
         assertTrue(gateway.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
         assertTrue(coordinator.contains("mainViewModel.markEditingScopeSelected(packageName)"))
@@ -173,6 +176,10 @@ class MainActivitySourceSmokeTest {
         assertTrue(workspace.contains("setVisible(shell.toolsWorkspaceContainer(), toolsWorkspace)"))
         assertTrue(workspace.contains("setVisible(shell.settingsWorkspaceContainer(), settingsWorkspace)"))
         assertFalse(source.contains("setSearchFocusFabVisible("))
+        val hostWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
+        )
+        assertTrue(hostWiring.contains("shell.attachTemplateLegacyViews("))
         assertTrue(source.contains("ensureWorkspaceSession().attachLegacyViews("))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
@@ -214,8 +221,11 @@ class MainActivitySourceSmokeTest {
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
-        assertTrue(source.contains("private AppWorkspace appWorkspace"))
-        assertTrue(source.contains("appWorkspace = new AppWorkspace("))
+        val hostWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
+        )
+        assertTrue(hostWiring.contains("var appWorkspace: AppWorkspace?"))
+        assertTrue(hostWiring.contains("appWorkspace = AppWorkspace("))
         assertTrue(workspace.contains("shell.appWorkspace()!!.actions()"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
         assertTrue(appWorkspace.contains("interface Host"))
@@ -257,8 +267,11 @@ class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/template_detail_content\""))
         assertTrue(layout.contains("android:id=\"@+id/template_detail_empty\""))
         assertTrue(layout.contains("android:id=\"@+id/land_detail_divider\""))
-        assertTrue(source.contains("private View landDetailPane"))
-        assertTrue(source.contains("private View landDetailDivider"))
+        val hostWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
+        )
+        assertTrue(hostWiring.contains("var landDetailPane: View?"))
+        assertTrue(hostWiring.contains("var landDetailDivider: View?"))
         val templateCoordinator = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
@@ -691,7 +704,7 @@ class MainActivitySourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
 
         val refreshStart = source.indexOf(
-            "private void onPageRefreshRequested(AppListPage page) {"
+            "public void onPageRefreshRequested(AppListPage page) {"
         )
         val refreshEnd = source.indexOf(
             "void requestAppsLoad()",

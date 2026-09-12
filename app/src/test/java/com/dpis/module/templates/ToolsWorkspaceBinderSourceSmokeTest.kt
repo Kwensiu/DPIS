@@ -10,10 +10,13 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         val workspaceSession = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
+        val hostWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
+        )
         val workspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
 
-        assertTrue(source.contains("private ToolsWorkspace toolsWorkspace;"))
-        assertTrue(source.contains("toolsWorkspace = new ToolsWorkspace("))
+        assertTrue(hostWiring.contains("var toolsWorkspace: ToolsWorkspace?"))
+        assertTrue(hostWiring.contains("toolsWorkspace = ToolsWorkspace("))
         assertTrue(workspace.contains("private val binder = ToolsWorkspaceBinder("))
         assertTrue(
             workspace.contains(
@@ -24,11 +27,11 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(workspace.contains("LogGate.ensureEnabled("))
         assertTrue(workspaceSession.contains("fun bindToolsWorkspace("))
         assertTrue(source.contains("mainWorkspaceSession.bindForLifecycle("))
-        assertTrue(source.contains("toolsWorkspace.onStart();"))
-        assertTrue(source.contains("toolsWorkspace.onResume();"))
-        assertTrue(source.contains("toolsWorkspace.onStop();"))
+        assertTrue(source.contains("toolsWorkspace().onStart();"))
+        assertTrue(source.contains("toolsWorkspace().onResume();"))
+        assertTrue(source.contains("toolsWorkspace().onStop();"))
         assertTrue(
-            source.contains("toolsWorkspace.onActivityResult(requestCode, resultCode, data);")
+            source.contains("toolsWorkspace().onActivityResult(requestCode, resultCode, data);")
         )
     }
 
