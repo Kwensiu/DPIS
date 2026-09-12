@@ -73,6 +73,9 @@ import androidx.wear.compose.material3.Text as WearText
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.R
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
 
 /** Mirrors MainUiState.WorkspaceMode without introducing a second mutable selection state. */
 enum class WorkspaceDestination(

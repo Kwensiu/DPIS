@@ -14,6 +14,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.ConfigEditorDestination
 
 class AppConfigEditorPresentationControllerTest {
     @Test

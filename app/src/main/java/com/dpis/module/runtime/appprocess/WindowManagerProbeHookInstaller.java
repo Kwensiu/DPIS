@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class WindowManagerProbeHookInstaller {
     private static volatile String targetPackageName;

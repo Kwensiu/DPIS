@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.config;
 
 import com.dpis.module.fonts.FontLibraryStore;
 import com.dpis.module.fonts.FontLibraryConfigStore;
@@ -10,6 +10,9 @@ import java.io.File;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.service.XposedService;
+import com.dpis.module.BuildConfig;
+import com.dpis.module.DpisApplication;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class ConfigStoreFactory {
     private static final File PUBLIC_FONT_DIRECTORY = new File("/data/local/tmp");
@@ -18,7 +21,7 @@ public final class ConfigStoreFactory {
     private ConfigStoreFactory() {
     }
 
-    static DpisConfigStore createLocalModuleConfigStore(Context context) {
+    public static DpisConfigStore createLocalModuleConfigStore(Context context) {
         File legacySharedPrefsFile = legacySharedPrefsFile(context);
         DpisConfigStore store = new DpisConfigStore(
                 context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE),
@@ -85,7 +88,7 @@ public final class ConfigStoreFactory {
                 DpisConfigStore.GROUP + ".xml");
     }
 
-    static DpisConfigStore createRuntimeDeliveryModuleConfigStore(XposedService service) {
+    public static DpisConfigStore createRuntimeDeliveryModuleConfigStore(XposedService service) {
         if (service == null) {
             return null;
         }
@@ -100,7 +103,7 @@ public final class ConfigStoreFactory {
         return null;
     }
 
-    static FontLibraryStore createLocalFontLibraryStore(Context context) {
+    public static FontLibraryStore createLocalFontLibraryStore(Context context) {
         SharedPreferences fontLibraryPreferences =
                 context.getSharedPreferences(FONT_LIBRARY_GROUP, Context.MODE_PRIVATE);
         SharedPreferences legacyPreferences =

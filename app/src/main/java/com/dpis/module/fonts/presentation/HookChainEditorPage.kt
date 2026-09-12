@@ -61,7 +61,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.compose.foundation.shape.CircleShape
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.R
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class FontDebugStatsReporter {
     private static final Object LOCK = new Object();

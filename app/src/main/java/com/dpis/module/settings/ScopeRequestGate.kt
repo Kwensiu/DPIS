@@ -1,6 +1,6 @@
 package com.dpis.module.settings
 
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 
 /**
  * Serializes libxposed scope requests for the DPIS process.

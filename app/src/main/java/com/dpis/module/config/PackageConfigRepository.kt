@@ -1,6 +1,6 @@
 package com.dpis.module.config
 
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.templates.TemplateConfigValue
 
 class PackageConfigRepository(private val store: DpisConfigStore?) {

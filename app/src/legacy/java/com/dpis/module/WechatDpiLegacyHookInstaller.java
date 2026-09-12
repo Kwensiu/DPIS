@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import com.dpis.module.diagnostics.DpisLog;
 
 final class WechatDpiLegacyHookInstaller {
     private static final AtomicBoolean HOOKED = new AtomicBoolean(false);

@@ -8,6 +8,7 @@ import android.graphics.Rect;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class SystemServerDisplayDiagnostics {
     public static final String BUILD_MARKER = "2026-04-16-non-primary-alignment-v9";

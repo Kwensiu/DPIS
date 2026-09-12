@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig;
+package com.dpis.module.appconfig.presentation;
 
 import com.dpis.module.applist.AppListItem;
 

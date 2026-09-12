@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import com.dpis.module.fonts.device.FontDebugLogcatBridge;
+import com.dpis.module.config.DpisConfigStore;
 
 public class FontDebugStatsProviderSourceSmokeTest {
     @Test

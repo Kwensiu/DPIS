@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.hookapi;
 
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 
 import java.lang.reflect.Method;
 

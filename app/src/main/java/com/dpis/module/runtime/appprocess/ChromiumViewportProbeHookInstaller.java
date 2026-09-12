@@ -1,7 +1,7 @@
 package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.*;
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 
 import android.content.Context;
 import android.content.res.Configuration;

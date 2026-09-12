@@ -1,10 +1,11 @@
-package com.dpis.module;
+package com.dpis.module.applist;
 
 import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 
 import java.util.List;
+import com.dpis.module.ui.MainUiState;
 
 /** Immutable Compose boundary for the app catalogue; MainUiState remains authoritative. */
 public final class AppWorkspacePresentation {
@@ -86,7 +87,7 @@ public final class AppWorkspacePresentation {
 
     private AppWorkspacePresentation() {}
 
-    static State create(MainUiState state, AppListPage selectedPage,
+    public static State create(MainUiState state, AppListPage selectedPage,
             boolean systemScopeSelected,
             AppWorkspaceScrollStateStore scrollStateStore,
             Actions actions) {

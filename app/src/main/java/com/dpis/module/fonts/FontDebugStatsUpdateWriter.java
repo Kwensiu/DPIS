@@ -18,7 +18,7 @@ public final class FontDebugStatsUpdateWriter {
         applyExtras(preferences, extras);
     }
 
-    static void applyExtras(SharedPreferences preferences, Bundle extras) {
+    public static void applyExtras(SharedPreferences preferences, Bundle extras) {
         if (preferences == null || extras == null || extras.isEmpty()) {
             return;
         }

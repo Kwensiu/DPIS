@@ -3,7 +3,7 @@ package com.dpis.module.diagnostics
 import android.app.Application
 import android.content.Context
 import android.os.Build
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets

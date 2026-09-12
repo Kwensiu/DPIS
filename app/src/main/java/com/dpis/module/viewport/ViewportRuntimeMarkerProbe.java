@@ -4,7 +4,7 @@ import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 
 import com.dpis.module.BuildConfig;
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 
 import com.dpis.module.viewport.ViewportOverride;
 import com.dpis.module.viewport.ViewportSourceSnapshot;

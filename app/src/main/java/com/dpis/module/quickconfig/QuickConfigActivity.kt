@@ -1,6 +1,9 @@
-package com.dpis.module
+package com.dpis.module.quickconfig
 
 import android.content.ActivityNotFoundException
+import com.dpis.module.DpisApplication
+import com.dpis.module.R
+import com.dpis.module.settings.LocalizedActivity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -76,6 +79,9 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticConfirm
 import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 
 class QuickConfigActivity : LocalizedActivity() {
     private val appConfigSaveHandler = AppConfigSaveHandler()

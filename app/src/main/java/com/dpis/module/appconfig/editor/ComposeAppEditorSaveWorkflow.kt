@@ -1,5 +1,6 @@
-package com.dpis.module
+package com.dpis.module.appconfig.editor
 
+import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.EditorDraft

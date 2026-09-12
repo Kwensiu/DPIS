@@ -8,6 +8,8 @@ import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetType;
 
 import org.junit.Test;
+import com.dpis.module.ui.ConfigEditorDestination;
+import com.dpis.module.quickconfig.QuickConfigEditorSession;
 
 public final class QuickConfigEditorSessionTest {
 

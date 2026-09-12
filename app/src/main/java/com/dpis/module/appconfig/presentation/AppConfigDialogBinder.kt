@@ -16,9 +16,9 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.appcompat.app.AlertDialog
-import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.config.ConfigStoreFactory
 import com.dpis.module.DpisApplication
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigDialogInputLogic
 import com.dpis.module.appconfig.AppConfigDialogInputLogic.parseFontScalePercentOrNull
@@ -27,7 +27,7 @@ import com.dpis.module.appconfig.AppConfigDialogInputLogic.parseViewportTargetSp
 import com.dpis.module.appconfig.AppConfigDialogModeLogic
 import com.dpis.module.appconfig.AppConfigDialogModeToggle
 import com.dpis.module.appconfig.AppConfigDialogStateModel
-import com.dpis.module.appconfig.AppConfigSheetInteractions
+import com.dpis.module.appconfig.presentation.AppConfigSheetInteractions
 import com.dpis.module.appconfig.TypefaceOptionModel
 import com.dpis.module.appconfig.UnsavedBadgeBinder
 import com.dpis.module.applist.AppListItem

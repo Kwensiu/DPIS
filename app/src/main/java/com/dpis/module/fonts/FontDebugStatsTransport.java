@@ -1,6 +1,6 @@
 package com.dpis.module.fonts;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.*;
 
@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class FontDebugStatsTransport {
     private static final String MODULE_CLASS_PACKAGE = "com.dpis.module";

@@ -2,7 +2,7 @@ package com.dpis.module
 
 import android.app.Application
 import android.content.Context
-import com.dpis.module.DpisLog.AppLogSink
+import com.dpis.module.diagnostics.DpisLog.AppLogSink
 import com.dpis.module.diagnostics.DpisAppLogStore
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter
 import com.dpis.module.fonts.TypefaceCatalogCache.preload
@@ -17,6 +17,9 @@ import io.github.libxposed.service.XposedServiceHelper
 import io.github.libxposed.service.XposedServiceHelper.OnServiceListener
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.Volatile
+import com.dpis.module.config.ConfigStoreFactory
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 
 class DpisApplication : Application(), OnServiceListener {
     interface ServiceStateListener {

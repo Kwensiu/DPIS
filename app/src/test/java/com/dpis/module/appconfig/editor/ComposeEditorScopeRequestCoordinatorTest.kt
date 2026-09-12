@@ -10,6 +10,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 
 class ComposeEditorScopeRequestCoordinatorTest {
     @Test

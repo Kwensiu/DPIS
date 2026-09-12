@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
 
 import com.dpis.module.diagnostics.device.RuntimeTransport;
 
@@ -6,12 +6,14 @@ import com.dpis.module.diagnostics.RuntimeEvents;
 
 import android.util.Log;
 
+import com.dpis.module.BuildConfig;
+
 public final class DpisLog {
     public static final String TAG = "DPIS";
     private static volatile boolean loggingEnabled = true;
     private static volatile AppLogSink appLogSink;
 
-    interface AppLogSink {
+    public interface AppLogSink {
         void record(String level, String message);
     }
 
@@ -108,7 +110,7 @@ public final class DpisLog {
         loggingEnabled = enabled;
     }
 
-    static void setAppLogSink(AppLogSink sink) {
+    public static void setAppLogSink(AppLogSink sink) {
         appLogSink = sink;
     }
 

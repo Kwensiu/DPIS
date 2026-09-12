@@ -2,7 +2,7 @@ package com.dpis.module.runtime.systemserver;
 
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
 
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.config.PerAppDisplayConfigSource;
 
 

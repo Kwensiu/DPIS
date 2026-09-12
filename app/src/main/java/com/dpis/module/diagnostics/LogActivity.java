@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.diagnostics;
 
 import com.dpis.module.diagnostics.presentation.LogGate;
 
@@ -48,6 +48,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import com.dpis.module.R;
+import com.dpis.module.settings.LocalizedActivity;
 
 public final class LogActivity extends LocalizedActivity {
     private static final long AUTO_REFRESH_INTERVAL_MS = 5_000L;

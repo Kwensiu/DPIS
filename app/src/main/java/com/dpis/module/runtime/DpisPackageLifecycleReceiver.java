@@ -1,9 +1,9 @@
 package com.dpis.module.runtime;
 
-import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.config.ConfigStoreFactory;
 import com.dpis.module.DpisApplication;
-import com.dpis.module.DpisConfigStore;
-import com.dpis.module.DpisLog;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
 
 import android.content.BroadcastReceiver;

@@ -7,6 +7,7 @@ import org.w3c.dom.Element
 import java.io.InputStream
 import java.util.LinkedHashSet
 import javax.xml.parsers.DocumentBuilderFactory
+import com.dpis.module.settings.LocalizedActivity
 
 class StringResourceParityTest {
     @Test
@@ -58,7 +59,7 @@ class StringResourceParityTest {
     @Test
     fun localeSwitchUsesWrappedBaseContextAndExplicitRecreate() {
         val settings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
-        val localized = read("src/main/java/com/dpis/module/LocalizedActivity.kt")
+        val localized = read("src/main/java/com/dpis/module/settings/LocalizedActivity.kt")
         val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
         val main = read("src/main/java/com/dpis/module/MainActivity.java")
         val about = read("src/main/java/com/dpis/module/about/AboutActivity.kt")

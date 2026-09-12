@@ -14,6 +14,15 @@ import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.process.presentation.ProcessActionConfirm
+import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.AppWorkspace
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
+import com.dpis.module.settings.SettingsUiState
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 
 class MainActivitySourceSmokeTest {
 
@@ -179,7 +188,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val appWorkspace = read("src/main/java/com/dpis/module/AppWorkspace.java")
+        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.java")
         val toolsWorkspace = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt")
 
         assertTrue(source.contains("private AppWorkspace appWorkspace"))
@@ -653,7 +662,7 @@ class MainActivitySourceSmokeTest {
     fun appLoad_reusesInstalledAppCatalogBetweenRefreshes() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val viewModelSource = read(
-            "src/main/java/com/dpis/module/MainViewModel.kt"
+            "src/main/java/com/dpis/module/ui/MainViewModel.kt"
         )
         val coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"

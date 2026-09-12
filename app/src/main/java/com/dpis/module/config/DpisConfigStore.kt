@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.config
 
 import android.content.SharedPreferences
 import com.dpis.module.config.ConfigPreferenceKeys

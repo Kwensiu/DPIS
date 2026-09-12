@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import com.dpis.module.config.DpisConfigStore;
 
 public class ResourcesManagerHookInstallerTest {
     private static final String PACKAGE_NAME = "com.example.target";

@@ -1,6 +1,6 @@
 package com.dpis.module.wechat;
 
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.viewport.DpiConfig;

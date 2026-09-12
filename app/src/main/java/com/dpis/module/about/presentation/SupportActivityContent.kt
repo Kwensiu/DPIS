@@ -8,9 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.dpis.module.LocalizedActivity
-import com.dpis.module.LogActivity
-import com.dpis.module.QuickConfigActivity
+import com.dpis.module.settings.LocalizedActivity
+import com.dpis.module.diagnostics.LogActivity
+import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.about.OpenSourceLicenseItem
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity

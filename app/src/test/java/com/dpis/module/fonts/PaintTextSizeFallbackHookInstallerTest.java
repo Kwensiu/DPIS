@@ -7,6 +7,7 @@ import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import com.dpis.module.config.DpisConfigStore;
 
 public class PaintTextSizeFallbackHookInstallerTest {
     @Test

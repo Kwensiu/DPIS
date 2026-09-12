@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.appconfig.editor
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.AppConfigEditorSession
@@ -9,6 +9,8 @@ import com.dpis.module.appconfig.EditorPresentationFactory
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainViewModel
 
 /**
  * Session and action owner for the primary-workspace Compose app editor.

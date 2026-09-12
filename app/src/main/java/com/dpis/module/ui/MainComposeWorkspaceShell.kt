@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.ui
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable

@@ -2,8 +2,8 @@ package com.dpis.module.diagnostics.presentation
 
 import android.content.Intent
 import android.text.format.Formatter
-import com.dpis.module.DpisConfigStore
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder

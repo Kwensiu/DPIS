@@ -34,9 +34,9 @@ import com.dpis.module.ui.compose.imeWindowPan
 import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
 import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
 import java.util.function.BooleanSupplier
-import com.dpis.module.MainUiState
-import com.dpis.module.MainUiAction
-import com.dpis.module.MainComposeWorkspaceShell
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainComposeWorkspaceShell
 
 /** Installs the Compose shell; domain state and actions remain Activity-owned. */
 class MainComposeShellHost(

@@ -1,8 +1,9 @@
-package com.dpis.module
+package com.dpis.module.quickconfig
 
 import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.ui.ConfigEditorDestination
 
 /**
  * In-memory Quick Config editing session retained only across Activity configuration changes.

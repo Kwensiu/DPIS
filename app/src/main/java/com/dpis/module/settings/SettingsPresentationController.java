@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.settings;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -34,10 +34,10 @@ public final class SettingsPresentationController {
      */
     public void publishState() { publish(port.snapshot()); }
 
-    void setSafeModeEnabled(boolean enabled) { port.setSafeModeEnabled(enabled); }
-    void setGlobalLogEnabled(boolean enabled) { port.setGlobalLogEnabled(enabled); }
-    void setLauncherIconHidden(boolean hidden) { port.setLauncherIconHidden(hidden); }
-    void refresh() { port.refresh(); }
+    public void setSafeModeEnabled(boolean enabled) { port.setSafeModeEnabled(enabled); }
+    public void setGlobalLogEnabled(boolean enabled) { port.setGlobalLogEnabled(enabled); }
+    public void setLauncherIconHidden(boolean hidden) { port.setLauncherIconHidden(hidden); }
+    public void refresh() { port.refresh(); }
 
     private void publish(SettingsUiState state) {
         for (Listener listener : new LinkedHashSet<>(listeners)) listener.onStateChanged(state);

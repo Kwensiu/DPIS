@@ -6,8 +6,8 @@ import android.graphics.Typeface
 import android.util.Log
 import android.widget.TextView
 import com.dpis.module.BuildConfig
-import com.dpis.module.DpisConfigStore
-import com.dpis.module.DpisLog
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.fonts.FontFace
 import com.dpis.module.fonts.FontLibraryStore

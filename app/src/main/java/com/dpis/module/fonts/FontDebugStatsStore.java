@@ -1,6 +1,6 @@
 package com.dpis.module.fonts;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.*;
 

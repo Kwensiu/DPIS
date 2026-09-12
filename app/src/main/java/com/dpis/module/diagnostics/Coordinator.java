@@ -1,6 +1,6 @@
 package com.dpis.module.diagnostics;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
 

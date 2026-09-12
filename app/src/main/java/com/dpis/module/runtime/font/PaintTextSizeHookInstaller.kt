@@ -2,7 +2,7 @@ package com.dpis.module.runtime.font
 
 import android.graphics.Paint
 import android.text.TextPaint
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.fonts.FontDebugStatsReporter
 import com.dpis.module.fonts.PaintProvenanceTracker

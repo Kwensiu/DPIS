@@ -4,7 +4,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.templates.presentation.QuickTemplateTargetActivityContent
 
 class QuickTemplateTargetSelectionActivity : LocalizedActivity() {

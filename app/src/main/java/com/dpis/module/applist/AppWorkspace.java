@@ -1,12 +1,12 @@
-package com.dpis.module;
+package com.dpis.module.applist;
 
 import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 
 /** Owns the app catalogue presentation actions while MainActivity remains the shell. */
-final class AppWorkspace {
-    interface Host {
+public final class AppWorkspace {
+    public interface Host {
         void changeQuery(String query);
         void changePage(AppListPage page);
         void changeFilters(AppListFilterState filterState);
@@ -17,11 +17,11 @@ final class AppWorkspace {
 
     private final Host host;
 
-    AppWorkspace(Host host) {
+    public AppWorkspace(Host host) {
         this.host = host;
     }
 
-    AppWorkspacePresentation.Actions actions() {
+    public AppWorkspacePresentation.Actions actions() {
         return new AppWorkspacePresentation.Actions() {
             @Override public void changeQuery(String query) { host.changeQuery(query); }
             @Override public void changePage(AppListPage page) { host.changePage(page); }

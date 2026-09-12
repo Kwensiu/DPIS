@@ -47,6 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import com.dpis.module.config.DpisConfigStore;
 
 public class ResourcesReadHookInstallerTest {
     private static final String PACKAGE_NAME = "com.example.target";

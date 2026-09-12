@@ -8,6 +8,8 @@ import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.diagnostics.DpisLog;
 
 public class ModuleMainHookInstallerTest {
     @Test
@@ -323,7 +325,7 @@ public class ModuleMainHookInstallerTest {
     public void issueSpecificDiagnosticsDoNotRemainInRuntimeSources() throws IOException {
         assertFalse(read("src/modern/java/com/dpis/module/ModuleMain.java")
                 .contains("DPIS_DIAG"));
-        assertFalse(read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
+        assertFalse(read("src/main/java/com/dpis/module/config/ConfigStoreFactory.java")
                 .contains("DPIS_DIAG"));
         assertFalse(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("DPIS_DIAG"));
@@ -356,7 +358,7 @@ public class ModuleMainHookInstallerTest {
 
     @Test
     public void debugBuildKeepsRuntimeHookLogsVisible() throws IOException {
-        String source = read("src/main/java/com/dpis/module/DpisLog.java");
+        String source = read("src/main/java/com/dpis/module/diagnostics/DpisLog.java");
 
         assertTrue(source.contains("BuildConfig.DEBUG || isLoggingEnabled()"));
     }

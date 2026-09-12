@@ -8,8 +8,8 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.dpis.module.DpisApplication;
-import com.dpis.module.DpisConfigStore;
-import com.dpis.module.DpisLog;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.R;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 import com.dpis.module.applist.InstalledAppCatalogItem;

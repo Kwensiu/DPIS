@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import com.dpis.module.diagnostics.DpisLog;
 
 final class LegacyXposedSelfActivation {
     private static final String APPLICATION_CLASS_NAME = "com.dpis.module.DpisApplication";

@@ -3,8 +3,8 @@ package com.dpis.module.settings.presentation
 import android.app.Activity
 import android.content.Intent
 import android.view.View
-import com.dpis.module.LocalizedActivity
-import com.dpis.module.SettingsUiState
+import com.dpis.module.settings.LocalizedActivity
+import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SettingsActions
 
 /**

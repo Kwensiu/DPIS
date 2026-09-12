@@ -7,6 +7,7 @@ import com.dpis.module.viewport.DpiConfig;
 import com.dpis.module.appconfig.WechatDpiConfig;
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
+import com.dpis.module.diagnostics.DpisLog;
 
 final class LegacyAppSpecificRouteInstaller {
     private LegacyAppSpecificRouteInstaller() {

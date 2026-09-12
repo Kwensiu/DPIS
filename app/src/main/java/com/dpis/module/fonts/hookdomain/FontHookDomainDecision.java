@@ -4,7 +4,7 @@ import com.dpis.module.settings.SystemScopeCoordinator;
 
 import com.dpis.module.config.ConfigSnapshot;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
 

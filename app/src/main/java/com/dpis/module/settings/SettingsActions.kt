@@ -1,6 +1,6 @@
 package com.dpis.module.settings
 
-import com.dpis.module.SettingsUiState
+import com.dpis.module.settings.SettingsUiState
 
 /** Settings presentation capabilities exposed to the main workspace shell. */
 interface SettingsActions {

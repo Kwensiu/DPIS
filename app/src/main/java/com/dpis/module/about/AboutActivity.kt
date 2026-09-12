@@ -9,7 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.dpis.module.BuildConfig
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.SupportActivityContent

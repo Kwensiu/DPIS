@@ -2,8 +2,8 @@ package com.dpis.module.runtime.appprocess
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
-import com.dpis.module.DpisConfigStore
-import com.dpis.module.DpisLog
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.DebugPackageOverride

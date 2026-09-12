@@ -1,7 +1,8 @@
-package com.dpis.module
+package com.dpis.module.appconfig.editor
 
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.ui.MainViewModel
 
 /**
  * Owns the post-save scope request for the Compose app editor.

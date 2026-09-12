@@ -12,6 +12,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
 
 class MainViewModelTest {
     @Test

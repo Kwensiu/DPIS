@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.ui
 
 import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorDraft

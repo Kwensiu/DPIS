@@ -12,6 +12,7 @@ import java.util.List;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import com.dpis.module.diagnostics.DpisLog;
 
 final class LegacyRustProcessHookInstaller {
     private static final String RUST_PROCESS_IMPL = "android.os.RustProcessImpl";

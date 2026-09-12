@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class ViewRootProbeHookInstaller {
     private static final int MAX_LOGS = 8;

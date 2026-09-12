@@ -72,10 +72,10 @@ import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.rememberEditorControlHeight
 import com.dpis.module.ui.compose.dpisClickable
-import com.dpis.module.AppWorkspacePresentation
-import com.dpis.module.MainUiState
+import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.ui.MainUiState
 import com.dpis.module.R
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
 class MainWorkspacePresentationCoordinator(private val content: Content) {

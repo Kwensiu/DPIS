@@ -2,7 +2,7 @@ package com.dpis.module.backup
 
 import android.content.ContentResolver
 import android.net.Uri
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.templates.QuickTemplateStore
 import java.io.ByteArrayOutputStream
 import java.io.IOException

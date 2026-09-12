@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.ui;
 
 /** Visible destination inside one app or template configuration editing session. */
 public enum ConfigEditorDestination {

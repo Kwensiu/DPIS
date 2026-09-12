@@ -1,6 +1,6 @@
 package com.dpis.module.fonts;
 
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 
 import android.content.SharedPreferences;
 

@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.font;
 
-import com.dpis.module.DpisLog;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;

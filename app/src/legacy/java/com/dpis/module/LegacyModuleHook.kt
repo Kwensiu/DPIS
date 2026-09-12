@@ -31,6 +31,8 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 
 @Suppress("unused", "java:S1872")
 class LegacyModuleHook : IXposedHookLoadPackage, IXposedHookZygoteInit {

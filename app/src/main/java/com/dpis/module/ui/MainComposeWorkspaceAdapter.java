@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.ui;
 
 import com.dpis.module.ui.compose.WorkspaceDestination;
 
@@ -8,11 +8,11 @@ import com.dpis.module.ui.compose.WorkspaceDestination;
  * This class deliberately owns no state: MainUiState and MainUiAction remain
  * the sole representation and transition API for the selected workspace.
  */
-final class MainComposeWorkspaceAdapter {
+public final class MainComposeWorkspaceAdapter {
     private MainComposeWorkspaceAdapter() {
     }
 
-    static WorkspaceDestination destinationFor(MainUiState.WorkspaceMode mode) {
+    public static WorkspaceDestination destinationFor(MainUiState.WorkspaceMode mode) {
         if (mode == null) {
             return WorkspaceDestination.APP;
         }
@@ -31,7 +31,7 @@ final class MainComposeWorkspaceAdapter {
         }
     }
 
-    static MainUiState.WorkspaceMode workspaceModeFor(WorkspaceDestination destination) {
+    public static MainUiState.WorkspaceMode workspaceModeFor(WorkspaceDestination destination) {
         if (destination == null) {
             return MainUiState.WorkspaceMode.APP;
         }

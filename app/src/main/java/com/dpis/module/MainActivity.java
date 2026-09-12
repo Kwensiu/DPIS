@@ -114,6 +114,21 @@ import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
 import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
+import com.dpis.module.applist.AppWorkspaceScrollStateStore;
+import com.dpis.module.applist.AppWorkspacePresentation;
+import com.dpis.module.applist.AppWorkspace;
+import com.dpis.module.ui.ConfigEditorDestination;
+import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.diagnostics.DpisLog;
+import com.dpis.module.settings.LocalizedActivity;
+import com.dpis.module.diagnostics.LogActivity;
+import com.dpis.module.ui.MainUiAction;
+import com.dpis.module.ui.MainUiState;
+import com.dpis.module.ui.MainViewModel;
+import com.dpis.module.appconfig.editor.ComposeAppEditorController;
+import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow;
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator;
 
 public final class MainActivity
         extends LocalizedActivity

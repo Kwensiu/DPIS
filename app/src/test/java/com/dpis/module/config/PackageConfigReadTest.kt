@@ -1,6 +1,6 @@
 package com.dpis.module.config
 
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.FakePrefs
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode

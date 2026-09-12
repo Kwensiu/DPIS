@@ -1,8 +1,8 @@
 package com.dpis.module.config
 
 import android.os.SystemClock
-import com.dpis.module.DpisConfigStore
-import com.dpis.module.DpisLog
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDecision
 import com.dpis.module.runtime.systemserver.PerAppDisplayConfig

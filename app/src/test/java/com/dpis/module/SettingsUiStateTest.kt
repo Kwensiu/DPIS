@@ -3,6 +3,7 @@ package com.dpis.module
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import com.dpis.module.settings.SettingsUiState
 
 class SettingsUiStateTest {
     @Test

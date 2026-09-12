@@ -12,7 +12,7 @@ import com.dpis.module.config.ConfigSnapshotLoader;
 
 import com.dpis.module.config.ConfigSnapshot;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 
 
@@ -70,6 +70,8 @@ import java.util.StringJoiner;
 import java.util.function.Predicate;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.config.ConfigStoreFactory;
+import com.dpis.module.diagnostics.DpisLog;
 
 @SuppressWarnings("java:S1872")
 public final class SystemServerDisplayEnvironmentInstaller {

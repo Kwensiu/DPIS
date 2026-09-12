@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig;
+package com.dpis.module.appconfig.presentation;
 
 import com.dpis.module.fonts.FontApplyMode;
 
@@ -13,6 +13,7 @@ import com.dpis.module.quirks.WechatDpiSheetBinder;
 import android.view.View;
 
 import com.dpis.module.ui.FormInputFocusBinder;
+import com.dpis.module.appconfig.AppConfigSaveHandler;
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 
 final class AppConfigSheetActionBinder {

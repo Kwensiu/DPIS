@@ -10,6 +10,13 @@ import java.nio.file.Files
 import org.junit.Test
 import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
 import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainComposeWorkspaceAdapter
+import com.dpis.module.ui.MainComposeWorkspaceShell
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
+import com.dpis.module.appconfig.editor.ComposeAppEditorController
 
 /** Guards the stable Compose shell and workspace routing boundaries. */
 class ComposeShellSourceSmokeTest {
@@ -17,8 +24,8 @@ class ComposeShellSourceSmokeTest {
     fun composeThemeAndShellKeepTheRequiredBoundaries() {
         val theme = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeDesignSystem.kt")
         val shell = read("src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt")
-        val adapter = read("src/main/java/com/dpis/module/MainComposeWorkspaceAdapter.java")
-        val mainShell = read("src/main/java/com/dpis/module/MainComposeWorkspaceShell.kt")
+        val adapter = read("src/main/java/com/dpis/module/ui/MainComposeWorkspaceAdapter.java")
+        val mainShell = read("src/main/java/com/dpis/module/ui/MainComposeWorkspaceShell.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read("src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
 
@@ -378,14 +385,14 @@ class ComposeShellSourceSmokeTest {
     @Test
     fun hookChainIsARecoverableChildPageOfBothEditorSessions() {
         val page = read("src/main/java/com/dpis/module/fonts/presentation/HookChainEditorPage.kt")
-        val destination = read("src/main/java/com/dpis/module/ConfigEditorDestination.java")
+        val destination = read("src/main/java/com/dpis/module/ui/ConfigEditorDestination.java")
         val appEditor = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorContent.kt")
         val appWorkspace = read(
                 "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
         val coordinator = read(
                 "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
-        val viewModel = read("src/main/java/com/dpis/module/MainViewModel.kt")
+        val viewModel = read("src/main/java/com/dpis/module/ui/MainViewModel.kt")
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val templates = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")

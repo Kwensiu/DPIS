@@ -2,6 +2,8 @@ package com.dpis.module;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import com.dpis.module.settings.SettingsPresentationController;
+import com.dpis.module.settings.SettingsUiState;
 
 public class SettingsPresentationControllerTest {
     @Test public void listenerGetsInitialAndPublishedSnapshotsAndCanBeRemoved() {

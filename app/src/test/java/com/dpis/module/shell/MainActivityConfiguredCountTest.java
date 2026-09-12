@@ -5,6 +5,7 @@ import org.junit.Test;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import com.dpis.module.config.DpisConfigStore;
 
 public class MainActivityConfiguredCountTest {
     @Test

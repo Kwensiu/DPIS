@@ -1,7 +1,7 @@
 package com.dpis.module.appconfig.landdetail
 
 import android.app.Activity
-import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.config.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.R
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState

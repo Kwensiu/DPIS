@@ -15,6 +15,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import com.dpis.module.config.DpisConfigStore;
 
 public class QuickTemplateTargetSelectionTest {
     @Test

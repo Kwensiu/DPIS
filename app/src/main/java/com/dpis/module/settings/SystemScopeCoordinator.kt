@@ -2,8 +2,8 @@ package com.dpis.module.settings
 
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
-import com.dpis.module.DpisConfigStore
-import com.dpis.module.DpisLog
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.R
 import io.github.libxposed.service.XposedService
 

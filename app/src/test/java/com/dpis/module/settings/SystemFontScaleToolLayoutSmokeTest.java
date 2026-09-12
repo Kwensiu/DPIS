@@ -9,6 +9,7 @@ import static org.junit.Assert.assertFalse;
 import java.io.IOException;
 
 import org.junit.Test;
+import com.dpis.module.diagnostics.LogActivity;
 
 public class SystemFontScaleToolLayoutSmokeTest {
     @Test

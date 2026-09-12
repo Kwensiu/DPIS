@@ -1,9 +1,9 @@
 package com.dpis.module.fonts;
 
 import com.dpis.module.BuildConfig;
-import com.dpis.module.ConfigStoreFactory;
+import com.dpis.module.config.ConfigStoreFactory;
 import com.dpis.module.DpisApplication;
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;

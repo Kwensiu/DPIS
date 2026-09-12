@@ -18,6 +18,7 @@ import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
 import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class WindowMetricsHookInstaller {
     private static final String ROUTE_NAME = "window_metrics_bounds_override";

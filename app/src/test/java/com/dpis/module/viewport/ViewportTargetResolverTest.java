@@ -17,6 +17,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Test;
+import com.dpis.module.config.DpisConfigStore;
 
 public class ViewportTargetResolverTest {
     @After

@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.ui;
 
 import com.dpis.module.applist.AppListFilter;
 import com.dpis.module.applist.AppListItem;
@@ -158,7 +158,7 @@ public final class MainUiState {
                 : EnumSet.copyOf(refreshingPages);
     }
 
-    String currentQuery() {
+    public String currentQuery() {
         return workspaceMode == WorkspaceMode.TEMPLATE ? templateQuery : appQuery;
     }
 

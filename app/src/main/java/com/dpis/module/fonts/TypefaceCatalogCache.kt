@@ -2,7 +2,7 @@ package com.dpis.module.fonts
 
 import android.content.Context
 import android.graphics.Typeface
-import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.config.ConfigStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers

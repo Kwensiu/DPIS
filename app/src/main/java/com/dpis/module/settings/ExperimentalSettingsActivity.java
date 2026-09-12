@@ -1,6 +1,6 @@
 package com.dpis.module.settings;
 
-import com.dpis.module.LocalizedActivity;
+import com.dpis.module.settings.LocalizedActivity;
 import com.dpis.module.ui.compose.SupportActivityContent;
 
 import android.os.Bundle;

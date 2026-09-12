@@ -12,9 +12,9 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun binder_wiresExpectedActionButtons() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val interactionsSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
-        val source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java") +
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
+        val interactionsSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.java")
+        val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java") +
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.java")
 
         assertTrue(binderSource.contains("AppConfigSheetInteractions(this, host)"))
         assertTrue(binderSource.contains(".bind(dialogView, item, views, state, style, systemHooksEnabled)"))
@@ -63,9 +63,9 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun sheetModeAndInputChangesRefreshRetainedDraft() {
-        val interactionsSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
+        val interactionsSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.java")
         val modeValidationSource =
-                read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
+                read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.java")
         val mainActivitySource = read("src/main/java/com/dpis/module/MainActivity.java")
 
         assertTrue(interactionsSource.contains(
@@ -115,7 +115,7 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun wechatDpiPublishFollowsSavedHostState() {
-        val actionBinder = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val actionBinder = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val gateway = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt")
         val editorController = read(
@@ -250,8 +250,8 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun binder_validationWatcherUpdatesSaveStateAndStatus() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java") +
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.java") +
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
 
         assertTrue(source.contains(
                 "views.viewportInputView.addTextChangedListener(viewportValidationWatcher)"))
@@ -280,7 +280,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun binderWiresFontHookDomainButtonToHost() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val layout = read("src/main/res/layout/dialog_app_config.xml")
 
         assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""))
@@ -389,8 +389,8 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun viewportTargetTypeControlsInputHintAndStackedLabels() {
         val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt") +
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java") +
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.java") +
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.java")
         val layout = read("src/main/res/layout/dialog_app_config.xml")
         val strings = read("src/main/res/values/strings.xml")
         val zhStrings = read("src/main/res/values-zh-rCN/strings.xml")
@@ -434,8 +434,8 @@ class AppConfigDialogBinderSourceSmokeTest {
         val modeSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogPolicy.kt")
         val source = binderSource + stateSource +
             modeSource +
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java") +
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.java") +
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.java")
         val switchStart = modeSource.indexOf("fun switchViewportTargetType(")
         val switchBlock = modeSource.substring(switchStart)
 
@@ -528,9 +528,9 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun appConfigSheetUsesSharedFormInputFocusBehavior() {
-        val interactions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetInteractions.java")
-        val validation = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetModeValidationBinder.java")
-        val actions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val interactions = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.java")
+        val validation = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.java")
+        val actions = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val host = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val focusBinder = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java")
 
@@ -564,7 +564,7 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun resetButtonOnlyClearsDialogInputsUntilSaved() {
-        val source = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val resetStart = source.indexOf("views.disableButton.setOnClickListener")
         val saveStart = source.indexOf("views.saveButton.setOnClickListener")
         val resetBlock = source.substring(resetStart, saveStart)
@@ -591,7 +591,7 @@ class AppConfigDialogBinderSourceSmokeTest {
     fun previewViewportApplyModeUsesMutableSheetStateForStatusAndSave() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
-        val actionSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val actionSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
 
         assertTrue(stateSource.contains("viewportApplyMode: String?"))

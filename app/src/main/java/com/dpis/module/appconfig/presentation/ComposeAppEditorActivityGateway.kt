@@ -15,10 +15,10 @@ import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.quirks.WechatDpiSheetBinder
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.MainActivity
-import com.dpis.module.ComposeEditorScopeRequestCoordinator
-import com.dpis.module.ComposeAppEditorController
-import com.dpis.module.ComposeAppEditorSaveWorkflow
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
+import com.dpis.module.appconfig.editor.ComposeAppEditorController
+import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
+import com.dpis.module.config.DpisConfigStore
 
 /** Android-facing capability bridge for the primary Compose app editor. */
 class ComposeAppEditorActivityGateway(

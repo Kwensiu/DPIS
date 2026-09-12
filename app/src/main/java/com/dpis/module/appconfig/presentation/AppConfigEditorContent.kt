@@ -65,7 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.EditorPresentation
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.applist.AppStatusFormatter

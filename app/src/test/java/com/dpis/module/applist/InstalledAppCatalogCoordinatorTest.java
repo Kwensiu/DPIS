@@ -2,7 +2,7 @@ package com.dpis.module.applist;
 
 import android.content.pm.ApplicationInfo;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.FakePrefs;
 
 

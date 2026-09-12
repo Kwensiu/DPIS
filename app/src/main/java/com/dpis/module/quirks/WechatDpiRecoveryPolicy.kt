@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.quirks
 
 /** Pure decision boundary for independent WeChat DisplayMetrics recovery. */
 object WechatDpiRecoveryPolicy {

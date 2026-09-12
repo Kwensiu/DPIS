@@ -5,6 +5,8 @@ import static org.junit.Assert.assertEquals;
 import com.dpis.module.applist.AppListPage;
 
 import org.junit.Test;
+import com.dpis.module.applist.AppWorkspaceScrollStateStore;
+import com.dpis.module.applist.AppWorkspacePresentation;
 
 public final class AppWorkspaceScrollStateStoreTest {
     @Test

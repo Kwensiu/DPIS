@@ -14,8 +14,8 @@ import android.view.View
 import android.widget.TextView
 import android.widget.TextView.BufferType
 import com.dpis.module.BuildConfig
-import com.dpis.module.DpisConfigStore
-import com.dpis.module.DpisLog
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.FontDebugStatsReporter
