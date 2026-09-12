@@ -51,12 +51,11 @@ import com.dpis.module.settings.SystemHooksToggleController
 import com.dpis.module.settings.SystemHooksToggleController.ScopeGateway
 import com.dpis.module.settings.ThemeSettingsActivity
 import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.settings.presentation.SettingsComposeDialogs.showBackupActions
+import com.dpis.module.settings.presentation.SettingsComposeDialogs.showInterfaceScale
 import com.dpis.module.ui.compose.FontDebugComposeSheet
 import com.dpis.module.ui.compose.FontDebugComposeSheet.show
-import com.dpis.module.ui.compose.LanguageDialogOption
-import com.dpis.module.ui.compose.SettingsComposeDialogs
-import com.dpis.module.ui.compose.SettingsComposeDialogs.showBackupActions
-import com.dpis.module.ui.compose.SettingsComposeDialogs.showInterfaceScale
+
 import com.dpis.module.ui.dialog.ConfirmDialog.show
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider

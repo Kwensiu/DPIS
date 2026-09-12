@@ -21,7 +21,7 @@ import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.ui.WatchUiMode
 import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.ExperimentalSettingsContent
+import com.dpis.module.settings.presentation.ExperimentalSettingsContent
 import com.dpis.module.ui.compose.FontDetailContent
 import com.dpis.module.ui.compose.FontDetailPresentation
 import com.dpis.module.ui.compose.FontLibraryContent
@@ -30,7 +30,7 @@ import com.dpis.module.ui.compose.LogContent
 import com.dpis.module.ui.compose.LogPresentation
 import com.dpis.module.ui.compose.QuickConfigContent
 import com.dpis.module.ui.compose.QuickConfigPresentation
-import com.dpis.module.ui.compose.ThemeSettingsContent
+import com.dpis.module.settings.presentation.ThemeSettingsContent
 import com.dpis.module.ui.compose.WearAboutContent
 import com.dpis.module.ui.compose.WearExperimentalSettingsContent
 import com.dpis.module.ui.compose.WearFontLibraryContent

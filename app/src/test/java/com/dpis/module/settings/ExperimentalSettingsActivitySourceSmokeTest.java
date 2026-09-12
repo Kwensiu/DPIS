@@ -16,6 +16,7 @@ public final class ExperimentalSettingsActivitySourceSmokeTest {
         String strings = read("src/main/res/values/strings.xml");
 
         assertTrue(source.contains("SupportActivityContent.installExperimentalSettings(this);"));
+        assertTrue(content.contains("package com.dpis.module.settings.presentation"));
         assertTrue(content.contains("SecondaryPageScaffold("));
         assertTrue(content.contains("R.string.settings_experimental_title"));
         assertTrue(content.contains("contentAlignment = Alignment.Center"));

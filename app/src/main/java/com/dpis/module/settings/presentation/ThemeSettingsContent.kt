@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.settings.presentation
 
 import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.dialog.DialogColumn
@@ -74,6 +74,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
+import com.dpis.module.ui.compose.*
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.settings.PageSettingsStore

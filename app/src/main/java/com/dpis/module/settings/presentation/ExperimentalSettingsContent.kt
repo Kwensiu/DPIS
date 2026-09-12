@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.settings.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.R
+import com.dpis.module.ui.compose.SecondaryPageScaffold
 
 /**
  * Standalone empty-state page kept separate from SettingsWorkspaceContent because

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.settings.presentation
 
 import com.dpis.module.ui.dialog.ModalDialog
 
@@ -51,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.compose.*
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
