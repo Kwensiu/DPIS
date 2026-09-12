@@ -69,7 +69,7 @@ import com.dpis.module.home.presentation.HomeWorkspaceContent
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.settings.presentation.SettingsWorkspaceContent
-import com.dpis.module.ui.compose.ToolsWorkspaceContent
+import com.dpis.module.tools.presentation.ToolsWorkspaceContent
 import com.dpis.module.ui.compose.rememberEditorControlHeight
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.applist.AppWorkspacePresentation

@@ -72,7 +72,7 @@ import com.dpis.module.ui.TouchFeedbackBinder;
 import com.dpis.module.ui.WatchUiMode;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.ui.WindowInsetsBinder;
-import com.dpis.module.ui.compose.AppFilterComposeSheet;
+import com.dpis.module.tools.presentation.AppFilterComposeSheet;
 import com.dpis.module.updates.GitHubReleaseNotesFetcher;
 import com.dpis.module.updates.ReleaseNotesCacheStore;
 import com.dpis.module.updates.ReleaseNotesController;

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.tools.presentation
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.compose.*
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.DialogWindowSizer
 import com.google.android.material.bottomsheet.BottomSheetDialog

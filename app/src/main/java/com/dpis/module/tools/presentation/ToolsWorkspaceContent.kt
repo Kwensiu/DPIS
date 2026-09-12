@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.tools.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
 import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.ui.compose.*
 
 @Composable
 fun ToolsWorkspaceContent(
