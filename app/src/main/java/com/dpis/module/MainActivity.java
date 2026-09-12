@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Process;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -18,15 +17,14 @@ import androidx.compose.ui.platform.ComposeView;
 
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
-import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.appconfig.AppConfigInputValidation;
-import com.dpis.module.appconfig.AppConfigPrefillPreview;
+
 import com.dpis.module.appconfig.AppConfigSaveHandler;
 
 import com.dpis.module.appconfig.EditorDraft;
 import com.dpis.module.appconfig.EditorPresentation;
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder;
-import com.dpis.module.appconfig.WechatDpiConfig;
+
 import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.applist.AppListItem;
@@ -76,7 +74,7 @@ import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportPropertySyncer;
 import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
+
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -94,6 +92,8 @@ import kotlin.Unit;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
 import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
+import com.dpis.module.appconfig.presentation.AppConfigSheetSession;
+import com.dpis.module.appconfig.presentation.AppConfigSheetShell;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorShell;
 import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
@@ -180,6 +180,11 @@ public final class MainActivity
                     systemScopeCoordinator,
                     appConfigDialogHost
             );
+    private final AppConfigSheetSession appConfigSheetSession
+            = new AppConfigSheetSession(
+                    new AppConfigSheetShell(this),
+                    appConfigDialogHost
+            );
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
             = new InstalledAppCatalogCoordinator(
                     createInstalledAppCatalogHost(),
@@ -213,7 +218,6 @@ public final class MainActivity
     private MainUiState.WorkspaceMode renderedWorkspaceMode;
     private View activeEditorRoot;
     private String activeEditorPackageName;
-    private BottomSheetDialog activeAppEditorDialog;
     private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
 
     @Override
@@ -1020,7 +1024,7 @@ public final class MainActivity
                 if (isLandscapeDetailMode()) {
                     landAppDetailSession.show(appItem);
                 } else {
-                    showEditBottomSheet(appItem);
+                    appConfigSheetSession.show(appItem);
                 }
                 break;
             }
@@ -1141,8 +1145,13 @@ public final class MainActivity
     }
 
     public void dismissActiveEditorDialog() {
-        if (activeAppEditorDialog != null) {
-            activeAppEditorDialog.dismiss();
+        appConfigSheetSession.dismiss();
+    }
+
+    public void clearEditingSession() {
+        if (mainViewModel != null) {
+            mainViewModel.clearEditingPackageName();
+            mainViewModel.clearEditingDraft();
         }
     }
 
@@ -1338,70 +1347,7 @@ public final class MainActivity
         if (isLandscapeDetailMode() && landAppDetailSession.show(item)) {
             return;
         }
-        showEditBottomSheet(item);
-    }
-
-    private void showEditBottomSheet(AppListItem item) {
-        if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing()) {
-            return;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        AppListItem sheetItem = AppConfigPrefillPreview.resolveForEditor(this, item, store);
-        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
-        ViewGroup root = findViewById(android.R.id.content);
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.dialog_app_config,
-                root,
-                false
-        );
-        AppConfigDialogBinder binder = new AppConfigDialogBinder(
-                this,
-                createAppConfigDialogHost()
-        );
-        binder.bind(
-                dialogView,
-                sheetItem,
-                systemHooksEnabled
-        );
-        EditorDraft draft = mainViewModel != null
-                ? mainViewModel.getEditingDraft()
-                : null;
-        if (draft != null) {
-            applyAppConfigDraft(dialogView, draft);
-            binder.applyRetainedDraft(
-                    dialogView,
-                    sheetItem,
-                    systemHooksEnabled,
-                    draft.selectedTypefaceId,
-                    draft.draftFontHookDomainsRaw,
-                    draft.viewportApplyMode,
-                    draft.fontHookDomainsResetRequested,
-                    draft.viewportApplyModeResetRequested
-            );
-            WechatDpiSheetBinder.applyDraft(
-                    dialogView,
-                    draft.wechatDpiInput
-            );
-        }
-        activeEditorRoot = dialogView;
-        activeEditorPackageName = item.packageName;
-        BottomSheetDialog dialog = new AppConfigDialogCoordinator(this).show(
-                dialogView
-        );
-        activeAppEditorDialog = dialog;
-        dialog.setOnDismissListener(d -> {
-            if (activeEditorRoot == dialogView) {
-                activeEditorRoot = null;
-                activeEditorPackageName = null;
-            }
-            if (activeAppEditorDialog == dialog) {
-                activeAppEditorDialog = null;
-            }
-            if (mainViewModel != null && !isChangingConfigurations()) {
-                mainViewModel.clearEditingPackageName();
-                mainViewModel.clearEditingDraft();
-            }
-        });
+        appConfigSheetSession.show(item);
     }
 
     private void bindHomeWorkspace() {
@@ -1689,72 +1635,12 @@ public final class MainActivity
             return item;
         }
         if (AppConfigDialogBinder.viewsFor(root) != null) {
-            return saveDialogConfigForDiagnostic(item, root);
+            return appConfigSheetSession.saveForDiagnostic(item, root);
         }
         if (LandAppDetailPaneBinder.stateFor(root) != null) {
             return landAppDetailSession.saveForDiagnostic(item, state, root);
         }
         return item;
-    }
-
-    private AppListItem saveDialogConfigForDiagnostic(AppListItem item, View root) {
-        AppConfigDialogBinder.AppConfigDialogViews views
-                = AppConfigDialogBinder.viewsFor(root);
-        AppConfigDialogBinder.AppConfigDialogState state
-                = AppConfigDialogBinder.stateFor(root);
-        if (views == null || state == null) {
-            return item;
-        }
-        if (!AppConfigDialogBinder.updateSaveButtonState(root, views)) {
-            showToast(R.string.status_save_invalid);
-            return null;
-        }
-        AppConfigSaveHandler.Result result = createAppConfigDialogHost().saveAppConfig(
-                root,
-                item,
-                state.dpisEnabled,
-                views.viewportInputView,
-                views.fontInputView,
-                AppConfigDialogBinder.resolveViewportMode(views.viewportModeToggle),
-                state.viewportApplyMode,
-                state.viewportApplyModeResetRequested,
-                AppConfigDialogBinder.resolveFontMode(views.fontModeToggle),
-                state.selectedTypefaceId,
-                state.draftFontHookDomainsRaw,
-                state.fontHookDomainsResetRequested,
-                state.viewportScaleInput,
-                state.viewportAbsoluteInput
-        );
-        if (result.messageResId != 0) {
-            showToast(result.messageResId);
-        }
-        if (!result.success) {
-            return null;
-        }
-        // Keep feedback diagnostic on the same save aftermath as the sheet save button.
-        // Otherwise this side path can persist config but skip scope/proxy preparation.
-        state.previewFromGlobalPrefill = false;
-        state.draftFontHookDomainsRaw = null;
-        state.fontHookDomainsResetRequested = false;
-        state.viewportApplyModeResetRequested = false;
-        state.captureSavedDraft(views, false);
-        AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton);
-        AppConfigDialogBinder binder = new AppConfigDialogBinder(this, createAppConfigDialogHost());
-        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
-        AppConfigDialogBinder.AppConfigDialogActionStyle style
-                = AppConfigDialogBinder.captureDialogActionStyle(views.scopeButton);
-        binder.refreshDialogState(views, state, style, systemHooksEnabled, item);
-        binder.syncHyperOsNativeProxyAfterSave(item, views, state);
-        binder.requestScopeAfterSuccessfulSave(root, item, views, state, style, systemHooksEnabled);
-        return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName));
-    }
-
-    private Integer readPersistedWechatDpiForDiagnostic(String packageName) {
-        if (!WechatDpiConfig.appliesTo(packageName)) {
-            return null;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        return store != null ? store.getWechatDpi(packageName) : null;
     }
 
     public String resolvePackageVersionName(String packageName) {

@@ -28,8 +28,7 @@ import com.google.android.material.textfield.TextInputEditText
 
 /**
  * Owns landscape XML detail-pane bind, save, and land-detail scope/typeface/hook
- * actions. [com.dpis.module.MainActivity] keeps portrait sheet routing and
- * shared runtime/process hosts.
+ * actions. Portrait XML sheets live on [com.dpis.module.appconfig.presentation.AppConfigSheetSession].
  */
 class LandAppDetailSession(
     private val shell: Shell,

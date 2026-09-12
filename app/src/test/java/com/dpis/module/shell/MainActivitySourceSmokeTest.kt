@@ -272,12 +272,14 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("restoreAppEditorForCurrentWorkspace()"))
         assertTrue(source.contains("private void restoreAppEditorForCurrentWorkspace()"))
         assertTrue(source.contains("requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
-        assertTrue(source.contains("showEditBottomSheet(appItem)"))
+        assertTrue(source.contains("appConfigSheetSession.show(appItem)"))
         assertTrue(source.contains("landAppDetailSession.show(appItem)"))
-        assertTrue(source.contains("private BottomSheetDialog activeAppEditorDialog"))
-        assertTrue(source.contains("activeAppEditorDialog != null && activeAppEditorDialog.isShowing()"))
-        assertTrue(source.contains("if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing())"))
-        assertTrue(source.contains("activeAppEditorDialog = dialog"))
+        val sheetSession = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetSession.kt",
+        )
+        assertTrue(sheetSession.contains("private var dialog: BottomSheetDialog? = null"))
+        assertTrue(sheetSession.contains("if (dialog?.isShowing == true)"))
+        assertTrue(sheetSession.contains("dialog = shown"))
     }
 
     @Test
@@ -724,31 +726,27 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
         )
 
+        val sheetSession = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetSession.kt",
+        )
         assertTrue(
-            source.contains("AppConfigPrefillPreview.resolveForEditor(this, item, store)")
+            sheetSession.contains(
+                "AppConfigPrefillPreview.resolveForEditor(activity, item, store)",
+            )
                 || landSession.contains(
                     "AppConfigPrefillPreview.resolveForEditor(activity, item, store)",
                 )
         )
         assertTrue(
-            source.contains("dialogView, sheetItem, systemHooksEnabled")
+            sheetSession.contains("binder.bind(dialogView, sheetItem, systemHooksEnabled)")
                 || landSession.contains("dialogView, sheetItem, systemHooksEnabled")
         )
-        assertTrue(
-            source.contains(
-                "private void showEditBottomSheet(AppListItem item)"
-            )
-        )
-        assertTrue(
-            source.contains("new AppConfigDialogBinder(")
-        )
+        assertTrue(source.contains("appConfigSheetSession.show(item)"))
+        assertTrue(sheetSession.contains("AppConfigDialogBinder(activity, dialogHost)"))
         assertTrue(source.contains("createAppConfigDialogHost()"))
-        assertTrue(source.contains("binder.bind("))
+        assertTrue(sheetSession.contains("binder.bind("))
         assertTrue(
-            source.contains("new AppConfigDialogCoordinator(this).show(")
-                    || compact(source).contains(
-                            "new AppConfigDialogCoordinator(this).show("
-                    )
+            sheetSession.contains("AppConfigDialogCoordinator(activity).show(dialogView)")
         )
         assertTrue(source.contains("landAppDetailSession.show(item)"))
         assertTrue(landSession.contains("R.layout.view_land_app_detail"))
@@ -798,7 +796,7 @@ class MainActivitySourceSmokeTest {
             "private void showEditDialog(AppListItem item) {"
         )
         val methodEnd = source.indexOf(
-            "private void showEditBottomSheet(AppListItem item)",
+            "private void bindHomeWorkspace()",
             methodStart
         )
         assertTrue(methodStart >= 0)

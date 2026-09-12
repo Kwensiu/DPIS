@@ -283,7 +283,7 @@ class ComposeShellSourceSmokeTest {
         val restore = activity.substring(restoreStart, restoreEnd)
 
         val composeGuard = restore.indexOf("if (composeShellHost != null)")
-        val legacySheet = restore.indexOf("showEditBottomSheet(appItem)")
+        val legacySheet = restore.indexOf("appConfigSheetSession.show(appItem)")
         assertTrue(composeGuard >= 0)
         assertTrue(legacySheet > composeGuard)
         assertTrue(restore.substring(composeGuard, legacySheet).contains("return"));
