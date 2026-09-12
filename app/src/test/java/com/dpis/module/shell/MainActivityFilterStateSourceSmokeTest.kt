@@ -16,8 +16,11 @@ class MainActivityFilterStateSourceSmokeTest {
         assertTrue(source.contains("appListFilterStateStore.load()"))
         assertTrue(startup.contains("filterState = retained.filterState"))
         assertTrue(startup.contains("filterState = AppListFilterState("))
+        val filterSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/AppListFilterSession.kt"
+        )
         assertTrue(source.contains("appListFilterStateStore.save(filterState);"))
-        assertTrue(source.contains("dispatchMainUiAction(MainUiAction.filterChanged(filterState));"))
+        assertTrue(filterSession.contains("MainUiAction.filterChanged(filterState)"))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

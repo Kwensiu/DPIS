@@ -153,7 +153,6 @@ class MainHostWiringSession(
 
             override fun changeFilters(filterState: AppListFilterState) {
                 shell.saveFilterState(filterState)
-                shell.dispatch(MainUiAction.filterChanged(filterState))
             }
 
             override fun refresh(page: AppListPage) {

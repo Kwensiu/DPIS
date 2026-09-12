@@ -6,7 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import com.dpis.module.R
-import com.dpis.module.tools.presentation.AppFilterContent
+import com.dpis.module.applist.presentation.AppFilterContent
 import com.dpis.module.tools.presentation.RuntimeReloadNoticeContent
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

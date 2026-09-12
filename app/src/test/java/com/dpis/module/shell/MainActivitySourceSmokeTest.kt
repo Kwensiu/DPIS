@@ -143,7 +143,10 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("focusSearchInputAndShowKeyboard()"))
         assertFalse(source.contains("hideSearchFocusFab()"))
         assertFalse(source.contains("showSearchFocusFab()"))
-        assertTrue(source.contains("new AppListFilterState("))
+        val filterSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/AppListFilterSession.kt"
+        )
+        assertTrue(filterSession.contains("AppListFilterState("))
         assertTrue(composeWorkspace.contains("AppFilterSheet("))
     }
 

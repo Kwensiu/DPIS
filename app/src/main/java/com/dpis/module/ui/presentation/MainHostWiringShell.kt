@@ -43,7 +43,7 @@ class MainHostWiringShell(
         activity.setCurrentAppListPage(page, submit)
 
     override fun saveFilterState(filterState: AppListFilterState) =
-        activity.saveAppListFilterState(filterState)
+        activity.applyAppListFilter(filterState)
 
     override fun onPageRefreshRequested(page: AppListPage) =
         activity.onPageRefreshRequested(page)

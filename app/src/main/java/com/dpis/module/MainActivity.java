@@ -24,6 +24,8 @@ import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 import com.dpis.module.applist.ScopeState;
+import com.dpis.module.applist.presentation.AppListFilterSession;
+import com.dpis.module.applist.presentation.AppListFilterShell;
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession;
 import com.dpis.module.applist.presentation.InstalledAppsLoadShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
@@ -50,7 +52,7 @@ import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
 import com.dpis.module.ui.TouchFeedbackBinder;
 
 
-import com.dpis.module.tools.presentation.AppFilterComposeSheet;
+
 import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.presentation.MainUpdateSession;
 import com.dpis.module.viewport.ViewportPropertySyncer;
@@ -132,6 +134,8 @@ public final class MainActivity
             );
     private final InstalledAppsLoadSession installedAppsLoadSession
             = new InstalledAppsLoadSession(new InstalledAppsLoadShell(this));
+    private final AppListFilterSession appListFilterSession
+            = new AppListFilterSession(new AppListFilterShell(this));
     private final MainWorkspaceSession mainWorkspaceSession
             = new MainWorkspaceSession(new MainWorkspaceShell(this));
     private final HomeWorkspaceSession homeWorkspaceSession
@@ -510,20 +514,12 @@ public final class MainActivity
         }
     }
 
-    private void showFilterDialog() {
-        MainUiState state = requireUiState();
-        AppFilterComposeSheet.show(this,
-                state.filterState.showSystemApps(),
-                state.filterState.injectedOnly(),
-                state.filterState.widthConfiguredOnly(),
-                state.filterState.fontConfiguredOnly(),
-                (showSystem, injectedOnly, widthOnly, fontOnly) -> {
-            AppListFilterState filterState = new AppListFilterState(
-                    showSystem, injectedOnly, widthOnly, fontOnly
-            );
-            appListFilterStateStore.save(filterState);
-            dispatchMainUiAction(MainUiAction.filterChanged(filterState));
-        });
+    public void showFilterDialog() {
+        appListFilterSession.show();
+    }
+
+    public void applyAppListFilter(AppListFilterState filterState) {
+        appListFilterSession.apply(filterState);
     }
 
     private boolean maybeShowModuleRuntimeReloadAdvice() {

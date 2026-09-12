@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.applist.presentation
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.FlowRow
@@ -14,6 +14,12 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.BuildConfig
 import com.dpis.module.applist.AppListFilterState
+import com.dpis.module.ui.compose.EdgeFadeTokens
+import com.dpis.module.ui.compose.FeedbackFilterChip
+import com.dpis.module.ui.compose.FilterSheetResetButton
+import com.dpis.module.ui.compose.FilterSheetScaffold
+import com.dpis.module.ui.compose.FilterSheetUiTokens
+import com.dpis.module.ui.compose.HorizontalScrollWithEdgeFade
 
 /** App catalogue filters. Visual grouping mirrors the template target picker, state remains local. */
 @OptIn(ExperimentalMaterial3Api::class)
