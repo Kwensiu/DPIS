@@ -42,11 +42,11 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
 
     @Test
     public void systemFontScalePermissionPanelOwnsAuthorizationClick() throws IOException {
-        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.kt");
 
-        assertTrue(source.contains("host.bindPressHaptic(permissionOverlay);"));
-        assertTrue(source.contains("permissionOverlay.setOnClickListener(v -> openWriteSettingsPermission());"));
-        assertTrue(source.contains("setVisible(operationGroup, expanded && (state.canWrite || state.unavailable));"));
+        assertTrue(source.contains("host.bindPressHaptic(permissionOverlay)"));
+        assertTrue(source.contains("permissionOverlay?.setOnClickListener { openWriteSettingsPermission() }"));
+        assertTrue(source.contains("setVisible(operationGroup, expanded && (current.canWrite || current.unavailable))"));
     }
 
     private static String read(String relativePath) throws IOException {

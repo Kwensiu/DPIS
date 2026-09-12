@@ -29,7 +29,7 @@ import com.dpis.module.R
 import com.dpis.module.settings.SettingsPresentationController
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.about.AboutActivity
-import com.dpis.module.backup.ConfigBackupCoordinator
+import com.dpis.module.backup.presentation.ConfigBackupCoordinator
 import com.dpis.module.fonts.FontDebugDataDiagnostics
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
 import com.dpis.module.fonts.FontDebugOverlayService

@@ -11,7 +11,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         val binder =
             read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val actions =
-            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.kt")
         val layout = read("src/main/res/layout/dialog_app_config.xml")
         val dimens = read("src/main/res/values/dimens.xml")
 
@@ -25,7 +25,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         assertTrue(binder.contains("startFeedbackDiagnostic("))
         assertTrue(binder.contains("feedbackDiagnosticButton"))
-        assertTrue(actions.contains("host.startFeedbackDiagnostic(item, state);"))
+        assertTrue(actions.contains("host.startFeedbackDiagnostic(item, state)"))
         assertTrue(
             dimens.contains(
                 "<dimen name=\"dialog_feedback_diagnostic_button_size\">32dp</dimen>"
