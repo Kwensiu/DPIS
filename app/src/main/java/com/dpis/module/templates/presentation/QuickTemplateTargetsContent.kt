@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -78,6 +80,8 @@ import com.dpis.module.ui.compose.FilterSheetResetButton
 import com.dpis.module.ui.compose.FilterSheetScaffold
 import com.dpis.module.ui.compose.FilterSheetUiTokens
 import com.dpis.module.ui.compose.SecondaryPageTopBar
+import com.dpis.module.ui.compose.SplitPaneHeader
+import com.dpis.module.ui.compose.pageHorizontalSafePadding
 import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
 import com.dpis.module.ui.compose.dialogListContentFade
 import com.dpis.module.ui.compose.rememberClickAction
@@ -159,10 +163,8 @@ fun QuickTemplateTargetsContent(
                 .padding(scaffoldPadding)
         ) {
             Box(Modifier.zIndex(1f)) {
-                SecondaryPageTopBar(
-                    onBack = requestBack.takeIf { showBackButton },
-                    includeHorizontalSafeInsets = showBackButton,
-                    title = {
+                val headerTitle: @Composable () -> Unit = {
+                    if (showBackButton) {
                         Column {
                             Text(
                                 text = current.templateName.orEmpty(),
@@ -180,39 +182,63 @@ fun QuickTemplateTargetsContent(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                    },
-                    actions = {
-                        FeedbackIconButton(
-                            onClick = {
-                                searchVisible = !searchVisible
-                                if (!searchVisible) focusManager.clearFocus()
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_search_24),
-                                contentDescription = stringResource(R.string.quick_search_button),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        FeedbackIconButton(
-                            onClick = {
-                                focusManager.clearFocus()
-                                filterSheetVisible = true
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_tune_24),
-                                contentDescription = stringResource(R.string.filter_button),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    } else {
+                        Text(
+                            text = current.templateName.orEmpty(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
-                )
+                }
+                val headerActions: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit = {
+                    FeedbackIconButton(
+                        onClick = {
+                            searchVisible = !searchVisible
+                            if (!searchVisible) focusManager.clearFocus()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_search_24),
+                            contentDescription = stringResource(R.string.quick_search_button),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    FeedbackIconButton(
+                        onClick = {
+                            focusManager.clearFocus()
+                            filterSheetVisible = true
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_tune_24),
+                            contentDescription = stringResource(R.string.filter_button),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (showBackButton) {
+                    SecondaryPageTopBar(
+                        onBack = requestBack,
+                        includeHorizontalSafeInsets = true,
+                        title = headerTitle,
+                        actions = headerActions,
+                    )
+                } else {
+                    SplitPaneHeader(
+                        modifier = Modifier.padding(
+                            top = WindowInsets.statusBars.asPaddingValues()
+                                .calculateTopPadding(),
+                        ),
+                        title = headerTitle,
+                        actions = headerActions,
+                    )
+                }
             }
             Box(
                 Modifier
                     .fillMaxSize()
                     .weight(1f)
+                    .padding(pageHorizontalSafePadding(showBackButton))
                     .clearTextInputFocusOutside(focusManager, inputFocusBoundary)
             ) {
                 Box(Modifier.fillMaxSize()) {

@@ -28,19 +28,19 @@ fun ExperimentalSettingsContent(
     SecondaryPageScaffold(
         titleRes = R.string.settings_experimental_title,
         onBack = onBack,
-    ) { contentPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(modifier)
-                .padding(contentPadding),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.settings_experimental_empty),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        modifier = modifier,
+    ) {
+        item {
+            Box(
+                modifier = Modifier.fillParentMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_experimental_empty),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

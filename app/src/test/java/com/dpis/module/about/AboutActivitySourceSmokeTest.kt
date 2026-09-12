@@ -102,7 +102,7 @@ class AboutActivitySourceSmokeTest {
             "package com.dpis.module.about.presentation",
             "fun AboutContent(", "SecondaryPageScaffold(", "SegmentedListItem(",
             "verticalAlignment = Alignment.CenterVertically", "dpisSegmentedShapes(index, total)",
-            "LazyColumn(", "rememberClickAction", "showDebugUpdateEntry", "AboutContentPreview",
+            "item {", "rememberClickAction", "showDebugUpdateEntry", "AboutContentPreview",
         )
         source.assertContainsAll("BuildConfig.DEBUG")
         source.assertNotContainsAll("setContentView(R.layout.activity_about)")

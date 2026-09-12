@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,8 +18,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -402,10 +399,8 @@ private fun CompactWearWorkspaceNavigation(
     }
 }
 
-/** The current Compose BOM exposes safe drawing as the system-bar and cutout union. */
 @Composable
-private fun safeDrawingInsets(): WindowInsets = WindowInsets.systemBars
-    .union(WindowInsets.displayCutout)
+private fun safeDrawingInsets(): WindowInsets = pageSafeDrawingInsets()
 
 /** The start-side rail owns only its own horizontal cutout and top status inset. */
 @Composable

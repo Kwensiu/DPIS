@@ -163,8 +163,8 @@ fun LogContent(
                     R.string.log_action_refresh,
                     onRefresh,
                 )
-            }
-        ) { padding ->
+            },
+            body = { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
                 PrimaryTabRow(
                     selectedTabIndex = state.selectedPage,
@@ -203,7 +203,8 @@ fun LogContent(
                     )
                 }
             }
-        }
+            }
+        )
     }
     if (presentation.enableLogsVisible) {
         ConfirmAlertDialog(

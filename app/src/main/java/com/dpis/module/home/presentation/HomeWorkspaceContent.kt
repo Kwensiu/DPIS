@@ -32,7 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,7 +62,7 @@ import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.compose.PageBarBehavior
 import com.dpis.module.ui.compose.PageScaffold
-import com.dpis.module.ui.compose.SecondaryPageContentTokens
+
 import com.dpis.module.ui.compose.ToolbarIconButton
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberClickAction
@@ -96,9 +96,6 @@ fun HomeWorkspaceContent(
     }
     val restoreAll = rememberClickAction { draftLayout = HomeWorkspaceLayout.defaults() }
     val listState = rememberRestorableLazyListState("home", scrollStore)
-    val contentCanScroll by remember {
-        derivedStateOf { listState.canScrollForward || listState.canScrollBackward }
-    }
     val visibleCountItems = listOf(
         HomeCountItem(
             HomeWorkspaceLayout.Item.CONFIGURED_APPS,
@@ -124,7 +121,9 @@ fun HomeWorkspaceContent(
         onBack = null,
         scrollStore = scrollStore,
         scrollKey = "home",
-        contentCanScroll = contentCanScroll,
+        bodyInsets = padding,
+        listState = listState,
+        extraBottomPadding = LocalSpacing.current.xl,
         actions = if (state.showEditButton) {
             {
             ToolbarIconButton(
@@ -135,41 +134,9 @@ fun HomeWorkspaceContent(
             )
             }
         } else ({}),
-        title = {
-            Column {
-                Text(
-                    stringResource(R.string.home_workspace_title),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    stringResource(R.string.home_workspace_subtitle),
-                    modifier = Modifier.padding(top = 0.dp),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        },
-        collapsedTitle = {
-            Text(
-                stringResource(R.string.app_name),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    ) { pagePadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            state = listState,
-            contentPadding = PaddingValues(
-                start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = pagePadding.calculateBottomPadding() + LocalSpacing.current.xl,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize().padding(padding)
-        ) {
+        title = { Text(stringResource(R.string.app_name)) },
+        subtitle = { Text(stringResource(R.string.home_workspace_subtitle)) },
+    ) {
             item { HomePrimaryStatus(state) }
             if (visibleCountItems.isNotEmpty()) item {
                 Row(
@@ -275,12 +242,14 @@ fun HomeWorkspaceContent(
                     }
                 }
             }
-        }
     }
 }
 
 @Composable
-private fun HomePrimaryStatus(state: HomeWorkspaceState) {
+private fun HomePrimaryStatus(
+    state: HomeWorkspaceState,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val disabled = !state.xposedModuleActivated
     val onClick = rememberClickAction {
@@ -294,7 +263,11 @@ private fun HomePrimaryStatus(state: HomeWorkspaceState) {
         disabled -> MaterialTheme.colorScheme.onErrorContainer
         else -> MaterialTheme.colorScheme.onPrimaryContainer
     }
-    Card(onClick = onClick, colors = CardDefaults.cardColors(containerColor = container), modifier = Modifier.fillMaxWidth()) {
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(containerColor = container),
+        modifier = modifier.fillMaxWidth(),
+    ) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(if (disabled) R.drawable.ic_error_outline_24 else R.drawable.ic_check_24), null, tint = content)
             Column(Modifier.padding(start = 12.dp).weight(1f)) {

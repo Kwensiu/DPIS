@@ -117,20 +117,10 @@ fun ThemeSettingsContent(
     var pendingScale by remember(interfaceScalePercent) {
         mutableFloatStateOf(interfaceScalePercent.toFloat())
     }
-    val layoutDirection = LocalLayoutDirection.current
     SecondaryPageScaffold(
         titleRes = R.string.settings_theme_settings_title,
         onBack = onBack,
-    ) { topBarPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = topBarPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = topBarPadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = topBarPadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = 24.dp,
-            ),
-        ) {
+    ) {
             item {
             ThemeSettingsSection(R.string.settings_theme_section_appearance) {
                     ThemeChoiceMenuAnchor(
@@ -240,7 +230,6 @@ fun ThemeSettingsContent(
                     )
                 }
             }
-        }
     }
     if (showScaleDialog) {
         val scaleInputBoundary = rememberTextInputFocusBoundary()
@@ -721,14 +710,8 @@ private fun ThemeSettingsSection(
     title: Int,
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
-    Column(modifier = Modifier.padding(bottom = SecondaryPageContentTokens.SectionLabelToFirstItemGap * 2)) {
-        PageSectionLabel(
-            stringResource(title),
-            modifier = Modifier.padding(
-                start = SecondaryPageContentTokens.SectionLabelHorizontalInset,
-            ),
-        )
-        Spacer(Modifier.height(SecondaryPageContentTokens.SectionLabelToFirstItemGap))
+    Column(modifier = Modifier.padding(bottom = PageChromeTokens.SectionBlockGap)) {
+        PageSectionLabel(stringResource(title))
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),

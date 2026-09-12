@@ -25,9 +25,13 @@ class PageScrollPositionStore {
         positions.remove(key)
     }
 
-    fun topBarCollapsedFor(key: String): Boolean = positions["@topbar:$key"]?.index == 1
+    fun storedTopBarCollapsed(key: String): Boolean? =
+        positions["@topbar:$key"]?.let { it.index == 1 }
+
+    fun topBarCollapsedFor(key: String): Boolean = storedTopBarCollapsed(key) == true
 
     fun updateTopBar(key: String, collapsed: Boolean) {
+        if (topBarCollapsedFor(key) == collapsed) return
         positions["@topbar:$key"] = Position(if (collapsed) 1 else 0, 0)
     }
 

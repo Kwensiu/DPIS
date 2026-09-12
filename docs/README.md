@@ -28,6 +28,7 @@
 
 已完成的执行计划和设计在 [archive/](./archive/)。近期归档：
 
+- [2026-09-12-page-chrome-contract.md](./archive/specs/2026-09-12-page-chrome-contract.md)
 - [2026-09-08-app-config-prefill-session.md](./archive/plans/2026-09-08-app-config-prefill-session.md)
 - [2026-09-08-app-config-prefill-session-design.md](./archive/specs/2026-09-08-app-config-prefill-session-design.md)
 - [2026-09-05-compose-presentation-cleanup.md](./archive/plans/2026-09-05-compose-presentation-cleanup.md)

@@ -33,8 +33,8 @@ import com.dpis.module.ui.WatchUiMode
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.WearAboutContent
 import com.dpis.module.ui.compose.setFeatureContent
-import com.dpis.module.ui.compose.SecondaryPageContentTokens
 import com.dpis.module.ui.compose.SecondaryPageScaffold
+
 import com.dpis.module.ui.compose.dpisSegmentedShapes
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
 import com.dpis.module.ui.compose.rememberClickAction
@@ -55,18 +55,7 @@ fun AboutContent(
         modifier = modifier.fillMaxSize(),
         titleRes = R.string.about_title,
         onBack = onBack,
-    ) { contentPadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = contentPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = contentPadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp)
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+    ) {
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -143,7 +132,6 @@ fun AboutContent(
                     )
                 }
             }
-        }
     }
 }
 

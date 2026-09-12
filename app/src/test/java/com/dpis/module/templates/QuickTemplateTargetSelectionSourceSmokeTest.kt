@@ -77,6 +77,8 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertFalse(composeContent.contains("filterDialogVisible"))
         assertTrue(composeContent.contains("navigationBarsPadding()"))
         assertTrue(composeContent.contains("SecondaryPageTopBar("))
+        assertTrue(composeContent.contains("SplitPaneHeader("))
+        assertTrue(composeContent.contains("WindowInsets.statusBars"))
         assertFalse(composeContent.contains("TopAppBar("))
         assertTrue(presentation.contains("templates.setSelectedPackages(id, LinkedHashSet<String?>(selectedPackages))"))
         assertTrue(presentation.contains("QuickTemplateTargetSelectionPolicy.retainInstalled"))

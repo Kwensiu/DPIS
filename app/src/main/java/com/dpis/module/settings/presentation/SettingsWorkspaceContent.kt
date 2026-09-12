@@ -108,19 +108,10 @@ fun SettingsWorkspaceContent(
         titleRes = R.string.system_settings_title,
         scrollStore = scrollStore,
         scrollKey = "settings",
-    ) { pagePadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxWidth().padding(padding),
-            contentPadding = PaddingValues(
-                start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = pagePadding.calculateBottomPadding() + LocalSpacing.current.xl,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        bodyInsets = padding,
+        listState = listState,
+        extraBottomPadding = LocalSpacing.current.xl,
+    ) {
             item {
                 SettingsGroup(R.string.system_settings_section_general) {
                 SettingsSwitchRow(
@@ -266,7 +257,6 @@ fun SettingsWorkspaceContent(
             }
         }
     }
-    }
     SettingsWorkspaceConfirmDialogs(
         disableSafeModeVisible = disableSafeModeVisible,
         hideLauncherVisible = hideLauncherVisible,
@@ -304,14 +294,7 @@ fun SettingsWorkspaceContent(
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun SettingsGroup(title: Int, content: @Composable ColumnScope.() -> Unit) {
     androidx.compose.foundation.layout.Column {
-        PageSectionLabel(
-            stringResource(title),
-            modifier = Modifier.padding(
-                start = SecondaryPageContentTokens.SectionLabelHorizontalInset,
-                top = 8.dp,
-            ),
-        )
-        Spacer(Modifier.height(SecondaryPageContentTokens.SectionLabelToFirstItemGap))
+        PageSectionLabel(stringResource(title))
         androidx.compose.foundation.layout.Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),

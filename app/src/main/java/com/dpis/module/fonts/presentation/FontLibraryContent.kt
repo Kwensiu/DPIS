@@ -195,33 +195,25 @@ fun FontLibraryContent(
                     contentDescription = stringResource(R.string.font_library_import_action)
                 )
             }
-        }
-    ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
+        },
+        extraBottomPadding = edgeToEdgeContentBottomPadding(88.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         val items = presentation.items
         if (items.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.font_library_empty),
-                    modifier = Modifier.padding(32.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            item {
+                Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(R.string.font_library_empty),
+                        modifier = Modifier.padding(32.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                    top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                    end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                    bottom = edgeToEdgeContentBottomPadding(88.dp)
-                ),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(items, key = { it.id }) { item ->
-                    FontLibraryCard(item, rememberClickAction { onFontSelected(item.id) })
-                }
+            items(items, key = { it.id }) { item ->
+                FontLibraryCard(item, rememberClickAction { onFontSelected(item.id) })
             }
         }
     }
@@ -315,21 +307,11 @@ fun FontDetailContent(
                 onClick = onDelete,
             )
         },
-    ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp),
-            ),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
+        extraBottomPadding = edgeToEdgeContentBottomPadding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
             item { FontDetailCard(state) }
             item { FontReferenceSection(state.references, onRemoveReference) }
-        }
     }
 }
 

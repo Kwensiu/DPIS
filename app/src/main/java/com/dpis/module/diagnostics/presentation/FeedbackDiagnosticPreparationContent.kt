@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -290,8 +291,10 @@ fun FeedbackDiagnosticPreparationContent(
                     else -> Unit
                 }
             },
-        ) { padding ->
-            DiagnosticPage(state, presentation, padding)
+            extraBottomPadding = 76.dp,
+            contentHorizontalPadding = 20.dp,
+        ) {
+            diagnosticPageItems(state, presentation)
         }
     }
 }
@@ -344,23 +347,10 @@ private fun DiagnosticPrimaryActionButton(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun DiagnosticPage(
+private fun LazyListScope.diagnosticPageItems(
     state: FeedbackDiagnosticPreparationPresentation.State,
     presentation: FeedbackDiagnosticPreparationPresentation,
-    padding: PaddingValues,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(
-            start = 20.dp,
-            top = padding.calculateTopPadding() + 16.dp,
-            end = 20.dp,
-            bottom = padding.calculateBottomPadding() + 76.dp,
-        ),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
         item {
             Text(
                 text = stringResource(R.string.feedback_diagnostic_preparation_hint),
@@ -372,7 +362,6 @@ private fun DiagnosticPage(
         item { EnvironmentSection(state, presentation) }
         item { DiagnosticSessionSection(state, presentation) }
         item { DiagnosticPhaseSection(state, presentation) }
-    }
 }
 
 @Composable

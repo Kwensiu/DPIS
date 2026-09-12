@@ -35,8 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.home.ModeGuideActivity
-import com.dpis.module.ui.compose.SecondaryPageContentTokens
 import com.dpis.module.ui.compose.SecondaryPageScaffold
+
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
 import com.dpis.module.ui.compose.setFeatureContent
@@ -47,18 +47,7 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
     SecondaryPageScaffold(
         titleRes = R.string.mode_help_title,
         onBack = onBack,
-    ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp),
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+    ) {
             item {
                 Text(
                     stringResource(R.string.mode_help_tips_title),
@@ -133,7 +122,6 @@ fun ModeHelpPage(onBack: () -> Unit, onOpenModeGuide: () -> Unit) {
                     }
                 }
             }
-        }
     }
 }
 

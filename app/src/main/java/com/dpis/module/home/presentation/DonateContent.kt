@@ -42,8 +42,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.SecondaryPageContentTokens
 import com.dpis.module.ui.compose.SecondaryPageScaffold
+
 import com.dpis.module.ui.compose.SheetVisualChrome
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
@@ -53,18 +53,7 @@ import com.dpis.module.ui.compose.setFeatureContent
 @Composable
 fun DonateSupportPage(onBack: () -> Unit) {
     var supportersVisible by remember { mutableStateOf(false) }
-    SecondaryPageScaffold(titleRes = R.string.donate_title, onBack = onBack) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp),
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
+    SecondaryPageScaffold(titleRes = R.string.donate_title, onBack = onBack) {
             item {
                 SupportCard {
                     Text(stringResource(R.string.donate_message), style = MaterialTheme.typography.bodyLarge)
@@ -116,7 +105,6 @@ fun DonateSupportPage(onBack: () -> Unit) {
                     R.string.donate_alipay_qr_description,
                 )
             }
-        }
     }
     if (supportersVisible) {
         ModalBottomSheet(
