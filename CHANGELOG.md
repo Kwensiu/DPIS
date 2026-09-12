@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.1.1](https://github.com/Kwensiu/DPIS/compare/v2.1.0...v2.1.1) (2026-09-12)
+
+
+### Bug Fixes
+
+* **deps:** update baselineprofile to v1.5.0-rc02 ([#127](https://github.com/Kwensiu/DPIS/issues/127)) ([507e970](https://github.com/Kwensiu/DPIS/commit/507e9702d328fc7c8183f05eb5dd6914409f946a))
+* **deps:** update dependency androidx.test.uiautomator:uiautomator to v2.4.0 ([#130](https://github.com/Kwensiu/DPIS/issues/130)) ([380b464](https://github.com/Kwensiu/DPIS/commit/380b464bb55f3121d16a91344cb33603fb1a9a60))
+* keep Parcelable CREATOR through release R8 ([4a68e9f](https://github.com/Kwensiu/DPIS/commit/4a68e9f225c712299434365d8429de0d6a69430d))
+
+
+### Refactoring
+
+* extract remaining host policies and convert leftover Kotlin hosts ([#137](https://github.com/Kwensiu/DPIS/issues/137)) ([a33edf4](https://github.com/Kwensiu/DPIS/commit/a33edf41535f651ff31a3ef3e79f8a86c60f0f90))
+* own confirm dialogs in Compose and extract diagnostic session ([#135](https://github.com/Kwensiu/DPIS/issues/135)) ([e68c9ed](https://github.com/Kwensiu/DPIS/commit/e68c9edc09221c9d464ea3c40cf68c48f5f42c70))
+* own font page dialogs in Compose state ([#134](https://github.com/Kwensiu/DPIS/issues/134)) ([7a2be1f](https://github.com/Kwensiu/DPIS/commit/7a2be1f943fab9a009cd8e37b04f35e651e83057))
+* own license detail dialog in Compose state ([#132](https://github.com/Kwensiu/DPIS/issues/132)) ([5275b74](https://github.com/Kwensiu/DPIS/commit/5275b74f0b404348158e0bbf055df593f3ca7126))
+* own template sort dialog in Compose state ([#133](https://github.com/Kwensiu/DPIS/issues/133)) ([e4a99d0](https://github.com/Kwensiu/DPIS/commit/e4a99d0e5e33a0e105f1351edb44b237320dc06a))
+* place template workspace hosts under presentation ([#136](https://github.com/Kwensiu/DPIS/issues/136)) ([7c01472](https://github.com/Kwensiu/DPIS/commit/7c01472429a0bf5f835cfcba3c4047d17c0d2006))
+
 ## [2.1.0](https://github.com/Kwensiu/DPIS/compare/v2.0.0...v2.1.0) (2026-09-08)
 
 
