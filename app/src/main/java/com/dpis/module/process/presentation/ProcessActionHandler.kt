@@ -1,4 +1,4 @@
-package com.dpis.module.process
+package com.dpis.module.process.presentation
 
 import android.app.Activity
 import android.content.Intent
@@ -7,6 +7,7 @@ import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.root.RootAppProcessLauncher
+import com.dpis.module.process.ProcessActionPolicy
 
 class ProcessActionHandler(
     private val activity: Activity,

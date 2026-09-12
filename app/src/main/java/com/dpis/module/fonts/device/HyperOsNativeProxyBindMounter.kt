@@ -1,4 +1,4 @@
-package com.dpis.module.fonts
+package com.dpis.module.fonts.device
 
 import android.content.Context
 import android.content.pm.PackageManager

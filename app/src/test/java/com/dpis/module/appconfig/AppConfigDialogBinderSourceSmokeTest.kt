@@ -5,6 +5,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Element
 import javax.xml.parsers.DocumentBuilderFactory
+import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
+import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
 
 class AppConfigDialogBinderSourceSmokeTest {
     @Test

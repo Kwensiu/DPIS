@@ -1,4 +1,4 @@
-package com.dpis.module.updates;
+package com.dpis.module.updates.presentation;
 
 import android.app.DownloadManager;
 import android.content.Context;

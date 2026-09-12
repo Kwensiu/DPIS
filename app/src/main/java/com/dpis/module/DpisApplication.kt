@@ -10,7 +10,7 @@ import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator
 import com.dpis.module.runtime.RuntimePropertyInstallCleanup
-import com.dpis.module.updates.UpdatePackageInstaller
+import com.dpis.module.updates.presentation.UpdatePackageInstaller
 import com.google.android.material.color.DynamicColors
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper

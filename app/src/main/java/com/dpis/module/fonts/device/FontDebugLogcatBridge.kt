@@ -1,4 +1,4 @@
-package com.dpis.module.fonts
+package com.dpis.module.fonts.device
 
 import android.content.Context
 import android.os.Bundle
@@ -7,6 +7,8 @@ import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
+import com.dpis.module.fonts.FontDebugStatsStore
+import com.dpis.module.fonts.FontDebugStatsUpdateWriter
 
 object FontDebugLogcatBridge {
     private const val MAX_LINES = 300

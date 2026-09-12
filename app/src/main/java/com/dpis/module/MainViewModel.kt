@@ -14,7 +14,7 @@ import com.dpis.module.applist.AppLoadCoordinator
  * their results back here. The editor fields deliberately remain alongside shell state because
  * editor presentation must survive asynchronous catalog refreshes without making Activity own it.
  */
-internal class MainViewModel(initialState: MainUiState?) {
+class MainViewModel(initialState: MainUiState?) {
     class AppsLoadRequest(
         @JvmField val requestId: Int,
         @JvmField val forceInstalledAppCatalogReload: Boolean,

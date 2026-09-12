@@ -1,4 +1,4 @@
-package com.dpis.module.updates
+package com.dpis.module.updates.presentation
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
@@ -50,6 +50,8 @@ import com.dpis.module.R
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.updates.toReleaseNotesAnnotatedString
+import com.dpis.module.updates.RELEASE_NOTES_QUOTE_TAG
 
 data class UpdateDialogState(
     val releaseNotes: AnnotatedString = AnnotatedString(""),

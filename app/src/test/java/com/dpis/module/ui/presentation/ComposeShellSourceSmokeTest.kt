@@ -8,6 +8,8 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import org.junit.Test
+import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 /** Guards the stable Compose shell and workspace routing boundaries. */
 class ComposeShellSourceSmokeTest {

@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.ui.presentation
 
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedContent
@@ -70,17 +70,15 @@ import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.SettingsWorkspaceContent
 import com.dpis.module.ui.compose.ToolsWorkspaceContent
-import com.dpis.module.ui.presentation.WearAppConfigEditorContent
-import com.dpis.module.ui.presentation.WearAppWorkspaceContent
-import com.dpis.module.ui.presentation.WearHomeWorkspaceContent
-import com.dpis.module.ui.presentation.WearSettingsWorkspaceContent
-import com.dpis.module.ui.presentation.WearTemplateWorkspaceContent
-import com.dpis.module.ui.presentation.WearToolsWorkspaceContent
 import com.dpis.module.ui.compose.rememberEditorControlHeight
 import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.AppWorkspacePresentation
+import com.dpis.module.MainUiState
+import com.dpis.module.R
+import com.dpis.module.ConfigEditorDestination
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
-internal class MainWorkspacePresentationCoordinator(private val content: Content) {
+class MainWorkspacePresentationCoordinator(private val content: Content) {
     interface Content {
         fun homeState(): HomeWorkspaceState
         fun appState(): AppWorkspacePresentation.State

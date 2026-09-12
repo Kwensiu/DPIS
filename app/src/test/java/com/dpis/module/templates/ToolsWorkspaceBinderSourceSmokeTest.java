@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.LogGate;
+import com.dpis.module.diagnostics.presentation.LogGate;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;

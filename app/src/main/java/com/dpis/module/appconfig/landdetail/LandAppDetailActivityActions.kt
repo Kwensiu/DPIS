@@ -1,11 +1,11 @@
-package com.dpis.module
+package com.dpis.module.appconfig.landdetail
 
 import android.view.View
-import com.dpis.module.appconfig.AppConfigDialogBinder
-import com.dpis.module.appconfig.LandAppDetailPaneBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.quirks.WechatDpiSheetBinder
 import com.google.android.material.button.MaterialButton
+import com.dpis.module.MainActivity
 
 /**
  * Landscape detail-pane callbacks owned outside [MainActivity].
@@ -13,7 +13,7 @@ import com.google.android.material.button.MaterialButton
  * The activity still performs save/scope/process work; this class is only the binder-facing
  * adapter so the app shell does not grow another nested editor workflow.
  */
-internal class LandAppDetailActivityActions(
+class LandAppDetailActivityActions(
     private val activity: MainActivity,
 ) : LandAppDetailPaneBinder.Actions {
     override fun saveDraft(

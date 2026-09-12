@@ -4,6 +4,7 @@ import com.dpis.module.ConfigEditorDestination
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportTargetType
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 /** Immutable Compose-facing projection for the per-app configuration editor. */
 class EditorPresentation private constructor() {

@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.process.presentation.ProcessActionConfirm;
+import com.dpis.module.process.ProcessActionPolicy;
 
 public class ProcessActionHandlerSourceSmokeTest {
     private static final String PROCESS_ACTION_HANDLER_SOURCE =

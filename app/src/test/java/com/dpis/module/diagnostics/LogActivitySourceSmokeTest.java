@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.diagnostics.presentation.LogGate;
+import com.dpis.module.diagnostics.device.LsposedLogReader;
 
 public final class LogActivitySourceSmokeTest {
     @Test

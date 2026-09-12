@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.presentation
 
 import android.widget.Toast
 import com.dpis.module.ConfigStoreFactory

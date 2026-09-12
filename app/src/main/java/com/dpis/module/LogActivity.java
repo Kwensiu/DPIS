@@ -1,13 +1,13 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.LogGate;
+import com.dpis.module.diagnostics.presentation.LogGate;
 
 import com.dpis.module.diagnostics.DpisLogEntry;
 import com.dpis.module.diagnostics.DpisAppLogStore;
 import com.dpis.module.diagnostics.DpisLogParser;
 
 import com.dpis.module.diagnostics.LogReadResult;
-import com.dpis.module.diagnostics.LsposedLogReader;
+import com.dpis.module.diagnostics.device.LsposedLogReader;
 
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.ui.compose.LogPresentation;

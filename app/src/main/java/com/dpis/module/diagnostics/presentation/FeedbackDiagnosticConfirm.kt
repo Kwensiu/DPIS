@@ -1,19 +1,21 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.presentation
 
 import android.widget.Toast
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.LocalizedActivity
-import com.dpis.module.MainComposeShellHost
+import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.ComposeMessageDialog
 import com.dpis.module.ui.dialog.ConfirmDialog
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier
+import com.dpis.module.diagnostics.Session
+import com.dpis.module.diagnostics.Coordinator
 
 /** Owns diagnostic start/exit confirmation, log-gate prompting, and LSPosed explanation. */
-internal class FeedbackDiagnosticConfirm(
+class FeedbackDiagnosticConfirm(
     private val activity: LocalizedActivity,
     private val shell: Supplier<MainComposeShellHost?>,
     private val session: Supplier<Session>,

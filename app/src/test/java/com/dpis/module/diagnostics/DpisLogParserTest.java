@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import com.dpis.module.diagnostics.device.LsposedLogReader;
 
 public final class DpisLogParserTest {
     @Test
@@ -133,7 +134,7 @@ public final class DpisLogParserTest {
     @Test
     public void lsposedReaderUsesDirectCurrentLogFiles() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/diagnostics/LsposedLogReader.kt");
+                "src/main/java/com/dpis/module/diagnostics/device/LsposedLogReader.kt");
 
         assertTrue(source.contains("for file in /data/adb/lspd/log/modules_*.log"));
         assertTrue(source.contains("for file in /data/adb/lspd/log/verbose_*.log"));

@@ -324,7 +324,7 @@ class FeedbackDiagnosticSourceSmokeTest {
     @Test
     fun feedbackDiagnosticForegroundObserverUsesRootTopAppSnapshot() {
         val reader = read(
-            "src/main/java/com/dpis/module/diagnostics/ForegroundAppReader.kt"
+            "src/main/java/com/dpis/module/diagnostics/device/ForegroundAppReader.kt"
         )
 
         assertTrue(reader.contains("SecureProcessLauncher.startMerged(\"su\", \"-c\", COMMAND)"))

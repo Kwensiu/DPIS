@@ -1,10 +1,10 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.app.Activity
 import android.content.res.ColorStateList
 import android.view.View
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogBinder.AppConfigDialogState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.color.MaterialColors
 

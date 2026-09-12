@@ -3,6 +3,7 @@ package com.dpis.module
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.process.presentation.ProcessActionHandler
 
 class RuntimeConfigDeliverySourceTest {
     @Test

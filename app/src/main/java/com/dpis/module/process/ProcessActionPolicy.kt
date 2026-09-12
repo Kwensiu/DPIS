@@ -1,6 +1,7 @@
 package com.dpis.module.process
 
 import com.dpis.module.R
+import com.dpis.module.process.presentation.ProcessActionHandler
 
 /** Root and system-app confirmation rules for process actions. */
 internal object ProcessActionPolicy {

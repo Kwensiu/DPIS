@@ -1,13 +1,13 @@
-package com.dpis.module.process
+package com.dpis.module.process.presentation
 
 import android.app.Activity
-import com.dpis.module.MainComposeShellHost
+import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
 import com.dpis.module.ui.dialog.ConfirmDialog
 import java.util.function.Supplier
 
 /** Routes system-app process confirmation to the Compose shell, with a platform-dialog fallback. */
-internal class ProcessActionConfirm(
+class ProcessActionConfirm(
     private val activity: Activity,
     private val shell: Supplier<MainComposeShellHost?>,
 ) : ProcessActionHandler.ConfirmSystemApp {

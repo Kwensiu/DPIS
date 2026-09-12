@@ -5,6 +5,7 @@ import com.dpis.module.*;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import com.dpis.module.diagnostics.device.ForegroundAppReader;
 
 public final class ForegroundAppReaderTest {
     @Test

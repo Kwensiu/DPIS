@@ -12,16 +12,16 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
-import com.dpis.module.appconfig.AppConfigDialogBinder
-import com.dpis.module.appconfig.AppConfigDialogBinder.AppConfigDialogState
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.captureDialogActionStyle
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.resolveFontMode
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.resolveViewportMode
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.showSaveButtonFeedback
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.stateFor
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.updateSaveButtonState
-import com.dpis.module.appconfig.AppConfigDialogBinder.Companion.viewsFor
-import com.dpis.module.appconfig.AppConfigDialogBinder.ProcessAction
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.captureDialogActionStyle
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.resolveFontMode
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.resolveViewportMode
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.showSaveButtonFeedback
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.stateFor
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.updateSaveButtonState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.viewsFor
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ProcessAction
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigSaveHandler
@@ -43,20 +43,20 @@ import com.dpis.module.diagnostics.AppLauncher
 import com.dpis.module.diagnostics.Coordinator
 import com.dpis.module.diagnostics.ExportBuilder
 import com.dpis.module.diagnostics.ExportBuilder.DiagnosticPackage
-import com.dpis.module.diagnostics.LogGate
+import com.dpis.module.diagnostics.presentation.LogGate
 import com.dpis.module.diagnostics.PackagingDialog.show
 import com.dpis.module.diagnostics.ResultSheet
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.HyperOsNativeAppDetector
-import com.dpis.module.fonts.HyperOsNativeProxyBindMounter
+import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation.Companion.forOverride
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry.automaticCustomizableDomains
 import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.process.ProcessActionHandler
+import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.quickconfig.QuickConfigTargetDecision
 import com.dpis.module.quirks.WechatDpiSheetBinder
 import com.dpis.module.root.RootAccessProbe
@@ -74,6 +74,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticConfirm
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 class QuickConfigActivity : LocalizedActivity() {
     private val appConfigSaveHandler = AppConfigSaveHandler()

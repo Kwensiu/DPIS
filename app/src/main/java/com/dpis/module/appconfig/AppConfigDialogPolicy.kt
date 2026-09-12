@@ -5,6 +5,7 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 
 object AppConfigDialogModeLogic {
     @JvmStatic fun resolveFontMode(toggle: AppConfigDialogBinder.ModeToggle) =

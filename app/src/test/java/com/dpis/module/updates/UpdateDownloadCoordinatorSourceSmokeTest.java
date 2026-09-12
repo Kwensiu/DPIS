@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.updates.presentation.UpdatePackageInstaller;
 
 public class UpdateDownloadCoordinatorSourceSmokeTest {
     @Test

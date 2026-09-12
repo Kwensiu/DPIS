@@ -7,6 +7,7 @@ import com.dpis.module.fonts.FontApplyMode;
 import android.content.Context;
 
 import java.util.LinkedHashSet;
+import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
 
 public final class HyperOsNativeProxyRefreshCoordinator {
     private HyperOsNativeProxyRefreshCoordinator() {

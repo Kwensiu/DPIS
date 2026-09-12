@@ -1,7 +1,6 @@
-package com.dpis.module
+package com.dpis.module.appconfig.presentation
 
 import android.content.Context
-import com.dpis.module.appconfig.AppConfigDialogBinder
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.EditorDialogStateFactory
@@ -12,12 +11,17 @@ import com.dpis.module.config.PackageConfigRepository
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.quirks.WechatDpiHelp
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.quirks.WechatDpiSheetBinder
 import com.dpis.module.viewport.ViewportTargetSpec
+import com.dpis.module.MainActivity
+import com.dpis.module.ComposeEditorScopeRequestCoordinator
+import com.dpis.module.ComposeAppEditorController
+import com.dpis.module.ComposeAppEditorSaveWorkflow
+import com.dpis.module.DpisConfigStore
 
 /** Android-facing capability bridge for the primary Compose app editor. */
-internal class ComposeAppEditorActivityGateway(
+class ComposeAppEditorActivityGateway(
     private val activity: MainActivity,
     private val scopeCoordinator: ComposeEditorScopeRequestCoordinator,
     private val wechatDpiHelp: WechatDpiHelp,

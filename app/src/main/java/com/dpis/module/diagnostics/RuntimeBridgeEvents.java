@@ -3,6 +3,7 @@ package com.dpis.module.diagnostics;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 /**
  * Emits low-volume diagnostic bridge events from injected runtime processes.

@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
@@ -18,6 +18,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 class ComposeAppEditorControllerTest {
     @Test

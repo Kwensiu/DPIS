@@ -14,15 +14,15 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-final class MainUiState {
-    enum WorkspaceMode {
+public final class MainUiState {
+    public enum WorkspaceMode {
         APP,
         HOME,
         TEMPLATE,
         TOOLS,
         SETTINGS;
 
-        static WorkspaceMode fromName(String name) {
+        public static WorkspaceMode fromName(String name) {
             if (name == null) {
                 return APP;
             }
@@ -34,10 +34,10 @@ final class MainUiState {
         }
     }
 
-    final String appQuery;
-    final String templateQuery;
-    final AppListFilterState filterState;
-    final WorkspaceMode workspaceMode;
+    public final String appQuery;
+    public final String templateQuery;
+    public final AppListFilterState filterState;
+    public final WorkspaceMode workspaceMode;
     private final List<AppListItem> appsSnapshot;
     private final EnumMap<AppListPage, List<AppListItem>> visibleSections;
     private final EnumSet<AppListPage> refreshingPages;
@@ -62,14 +62,14 @@ final class MainUiState {
                 : EnumSet.copyOf(refreshingPages);
     }
 
-    static MainUiState initial(String query,
+    public static MainUiState initial(String query,
                                AppListFilterState filterState,
                                List<AppListItem> appsSnapshot,
                                Set<AppListPage> refreshingPages) {
         return initial(query, filterState, appsSnapshot, refreshingPages, WorkspaceMode.APP);
     }
 
-    static MainUiState initial(String query,
+    public static MainUiState initial(String query,
                                AppListFilterState filterState,
                                List<AppListItem> appsSnapshot,
                                Set<AppListPage> refreshingPages,
@@ -77,7 +77,7 @@ final class MainUiState {
         return new MainUiState(query, "", filterState, appsSnapshot, refreshingPages, workspaceMode);
     }
 
-    static MainUiState initial(String appQuery,
+    public static MainUiState initial(String appQuery,
                                String templateQuery,
                                AppListFilterState filterState,
                                List<AppListItem> appsSnapshot,
@@ -87,7 +87,7 @@ final class MainUiState {
                 refreshingPages, workspaceMode);
     }
 
-    MainUiState withQuery(String query) {
+    public MainUiState withQuery(String query) {
         if (workspaceMode == WorkspaceMode.TEMPLATE) {
             return new MainUiState(appQuery, query, filterState, appsSnapshot,
                     refreshingPages, workspaceMode);
@@ -96,17 +96,17 @@ final class MainUiState {
                 refreshingPages, workspaceMode);
     }
 
-    MainUiState withFilterState(AppListFilterState filterState) {
+    public MainUiState withFilterState(AppListFilterState filterState) {
         return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
                 refreshingPages, workspaceMode);
     }
 
-    MainUiState withApps(List<AppListItem> appsSnapshot) {
+    public MainUiState withApps(List<AppListItem> appsSnapshot) {
         return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
                 refreshingPages, workspaceMode);
     }
 
-    MainUiState withWorkspaceMode(WorkspaceMode workspaceMode) {
+    public MainUiState withWorkspaceMode(WorkspaceMode workspaceMode) {
         WorkspaceMode nextMode = workspaceMode != null ? workspaceMode : WorkspaceMode.APP;
         if (this.workspaceMode == nextMode) {
             return this;
@@ -115,7 +115,7 @@ final class MainUiState {
                 refreshingPages, nextMode);
     }
 
-    MainUiState withRefreshingPage(AppListPage page, boolean refreshing) {
+    public MainUiState withRefreshingPage(AppListPage page, boolean refreshing) {
         if (page == null) {
             return this;
         }
@@ -131,7 +131,7 @@ final class MainUiState {
                 workspaceMode);
     }
 
-    MainUiState clearRefreshingPages() {
+    public MainUiState clearRefreshingPages() {
         if (refreshingPages.isEmpty()) {
             return this;
         }
@@ -139,20 +139,20 @@ final class MainUiState {
                 Collections.emptySet(), workspaceMode);
     }
 
-    List<AppListItem> appsSnapshot() {
+    public List<AppListItem> appsSnapshot() {
         return new ArrayList<>(appsSnapshot);
     }
 
-    List<AppListItem> visibleItems(AppListPage page) {
+    public List<AppListItem> visibleItems(AppListPage page) {
         List<AppListItem> items = visibleSections.get(page);
         return items != null ? items : Collections.emptyList();
     }
 
-    boolean isRefreshing(AppListPage page) {
+    public boolean isRefreshing(AppListPage page) {
         return page != null && refreshingPages.contains(page);
     }
 
-    Set<AppListPage> refreshingPages() {
+    public Set<AppListPage> refreshingPages() {
         return refreshingPages.isEmpty()
                 ? Collections.emptySet()
                 : EnumSet.copyOf(refreshingPages);

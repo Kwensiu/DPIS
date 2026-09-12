@@ -1,12 +1,15 @@
-package com.dpis.module
+package com.dpis.module.diagnostics.presentation
 
-import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.diagnostics.FeedbackDiagnosticActivitySession
+import com.dpis.module.ui.presentation.MainComposeShellHost
+import com.dpis.module.MainActivity
+import com.dpis.module.LocalizedActivity
+import com.dpis.module.DpisConfigStore
 
 /** Wires the diagnostic session to MainActivity platform capabilities. */
-internal class FeedbackDiagnosticShell(
+class FeedbackDiagnosticShell(
     private val activity: MainActivity,
 ) : FeedbackDiagnosticActivitySession.Shell {
     override fun activity(): LocalizedActivity = activity

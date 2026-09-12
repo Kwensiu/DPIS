@@ -1,4 +1,4 @@
-package com.dpis.module.updates
+package com.dpis.module.updates.presentation
 
 import android.content.Context
 import android.graphics.Typeface
@@ -13,6 +13,9 @@ import io.noties.markwon.core.CoreProps
 import org.commonmark.node.Heading
 import org.commonmark.node.ListItem
 import org.commonmark.node.SoftLineBreak
+import com.dpis.module.updates.insertVisibleListMarkers
+import com.dpis.module.updates.headingScale
+import com.dpis.module.updates.ReleaseNotesListMarker
 
 internal fun renderReleaseNotesWithMarkwon(context: Context, markdown: String): CharSequence {
     val rendered = Markwon.builder(context)

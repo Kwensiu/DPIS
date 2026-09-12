@@ -25,7 +25,7 @@ import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
 
 import com.dpis.module.runtime.appprocess.WindowFrameOverride;
 
-import com.dpis.module.diagnostics.RuntimeTransport;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 import com.dpis.module.*;
 

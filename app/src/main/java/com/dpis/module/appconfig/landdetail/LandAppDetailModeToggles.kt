@@ -1,8 +1,8 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.view.View
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogBinder.ModeToggle
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ModeToggle
 import com.google.android.material.textview.MaterialTextView
 
 /** Landscape detail pane viewport/font mode-toggle view groups. */

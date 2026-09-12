@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.presentation
 
 import android.app.Activity
 import android.content.DialogInterface
@@ -20,9 +20,16 @@ import com.dpis.module.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.R
+import com.dpis.module.appconfig.AppConfigDialogInputLogic
 import com.dpis.module.appconfig.AppConfigDialogInputLogic.parseFontScalePercentOrNull
 import com.dpis.module.appconfig.AppConfigDialogInputLogic.parsePositiveIntOrNull
 import com.dpis.module.appconfig.AppConfigDialogInputLogic.parseViewportTargetSpecOrNull
+import com.dpis.module.appconfig.AppConfigDialogModeLogic
+import com.dpis.module.appconfig.AppConfigDialogModeToggle
+import com.dpis.module.appconfig.AppConfigDialogStateModel
+import com.dpis.module.appconfig.AppConfigSheetInteractions
+import com.dpis.module.appconfig.TypefaceOptionModel
+import com.dpis.module.appconfig.UnsavedBadgeBinder
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppStatusFormatter
 import com.dpis.module.applist.AppStatusFormatter.StatusInput
@@ -48,6 +55,9 @@ import com.google.android.material.textview.MaterialTextView
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import com.dpis.module.appconfig.AppConfigSaveHandler
+import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.ConfigValueInputErrorBinder
 
 class AppConfigDialogBinder @JvmOverloads constructor(
     private val activity: Activity,

@@ -17,7 +17,7 @@ import com.dpis.module.BuildConfig
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
-import com.dpis.module.diagnostics.RuntimeTransport.isCaptureActive
+import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.FontDebugStatsReporter
 import com.dpis.module.fonts.FontFieldRewriteMath
 import com.dpis.module.fonts.FontMutationScheduler

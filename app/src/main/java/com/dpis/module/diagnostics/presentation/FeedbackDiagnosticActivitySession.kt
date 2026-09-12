@@ -1,17 +1,25 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.presentation
 
 import android.content.Intent
 import android.text.format.Formatter
 import com.dpis.module.DpisConfigStore
 import com.dpis.module.LocalizedActivity
-import com.dpis.module.MainComposeShellHost
+import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.Executors
+import com.dpis.module.diagnostics.Session
+import com.dpis.module.diagnostics.AppLauncher
+import com.dpis.module.diagnostics.PackageActions
+import com.dpis.module.diagnostics.FeedbackDiagnosticPageRequest
+import com.dpis.module.diagnostics.ExportBuilder
+import com.dpis.module.diagnostics.ResultSheet
+import com.dpis.module.diagnostics.FeedbackDiagnosticDuration
+import com.dpis.module.diagnostics.Coordinator
 
 /**
  * Sole Activity-facing owner for feedback diagnostics.
@@ -19,7 +27,7 @@ import java.util.concurrent.Executors
  * Recording, preparation UI, confirms, and package file actions stay in this module.
  * The app shell only supplies platform capabilities through [Shell] and forwards lifecycle.
  */
-internal class FeedbackDiagnosticActivitySession(
+class FeedbackDiagnosticActivitySession(
     private val shell: Shell,
     retained: State? = null,
 ) {

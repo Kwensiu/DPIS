@@ -3,17 +3,18 @@ package com.dpis.module.appconfig;
 import com.dpis.module.applist.AppListItem;
 
 import android.view.View;
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 
-final class AppConfigSheetInteractions {
+public final class AppConfigSheetInteractions {
     private final AppConfigSheetModeValidationBinder modeValidationBinder;
     private final AppConfigSheetActionBinder actionBinder;
 
-    AppConfigSheetInteractions(AppConfigDialogBinder binder, AppConfigDialogBinder.Host host) {
+    public AppConfigSheetInteractions(AppConfigDialogBinder binder, AppConfigDialogBinder.Host host) {
         this.modeValidationBinder = new AppConfigSheetModeValidationBinder(binder, host);
         this.actionBinder = new AppConfigSheetActionBinder(binder, host);
     }
 
-    void bind(View dialogView,
+    public void bind(View dialogView,
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogViews views,
             AppConfigDialogBinder.AppConfigDialogState state,

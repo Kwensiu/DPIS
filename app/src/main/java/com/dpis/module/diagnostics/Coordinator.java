@@ -6,7 +6,7 @@ import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.*;
 
-import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
+import com.dpis.module.diagnostics.device.ForegroundAppReader;
 
 public final class Coordinator {
     private static final long FOREGROUND_CHECK_INTERVAL_MS = 1_000L;

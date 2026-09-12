@@ -9,7 +9,7 @@ import com.dpis.module.applist.AppListItem
  * Approval updates the editor's immutable draft rather than a transient dialog state, so the
  * Compose scope action reflects the LSPosed result even when the request started from Save.
  */
-internal class ComposeEditorScopeRequestCoordinator(
+class ComposeEditorScopeRequestCoordinator(
     private val mainViewModel: MainViewModel,
     private val scopeRequester: ScopeRequester,
     private val refreshEditor: Runnable,

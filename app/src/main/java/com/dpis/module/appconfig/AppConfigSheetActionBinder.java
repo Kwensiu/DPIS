@@ -13,6 +13,7 @@ import com.dpis.module.quirks.WechatDpiSheetBinder;
 import android.view.View;
 
 import com.dpis.module.ui.FormInputFocusBinder;
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 
 final class AppConfigSheetActionBinder {
     private final AppConfigDialogBinder binder;

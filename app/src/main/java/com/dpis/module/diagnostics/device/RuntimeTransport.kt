@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.device
 
 import com.dpis.module.diagnostics.ProcessPerformance.RouteSnapshot
 import com.dpis.module.root.RootAppProcessLauncher.ShellResult
@@ -18,6 +18,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.concurrent.Volatile
+import com.dpis.module.diagnostics.RuntimeBridgeEvents
 
 object RuntimeTransport {
     private const val DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic"

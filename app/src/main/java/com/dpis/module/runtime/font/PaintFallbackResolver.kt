@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.font
 
-import com.dpis.module.diagnostics.RuntimeTransport.isCaptureActive
+import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.PaintDiagnosticCallerSampler
 import com.dpis.module.fonts.PaintProvenanceTracker
 

@@ -5,6 +5,15 @@ import com.dpis.module.ui.DialogWindowSizer
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.ui.presentation.MainComposeShellHost
+import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
+import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
+import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
+import com.dpis.module.process.presentation.ProcessActionHandler
+import com.dpis.module.process.presentation.ProcessActionConfirm
 
 class MainActivitySourceSmokeTest {
 

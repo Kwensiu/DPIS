@@ -8,35 +8,35 @@ import com.dpis.module.applist.AppListFilterState;
 
 import java.util.List;
 
-abstract class MainUiAction {
+public abstract class MainUiAction {
     private MainUiAction() {
     }
 
-    static MainUiAction queryChanged(String query) {
+    public static MainUiAction queryChanged(String query) {
         return new QueryChanged(query);
     }
 
-    static MainUiAction filterChanged(AppListFilterState filterState) {
+    public static MainUiAction filterChanged(AppListFilterState filterState) {
         return new FilterChanged(filterState);
     }
 
-    static MainUiAction requestAppsLoad(boolean forceInstalledAppCatalogReload) {
+    public static MainUiAction requestAppsLoad(boolean forceInstalledAppCatalogReload) {
         return new RequestAppsLoad(forceInstalledAppCatalogReload);
     }
 
-    static MainUiAction appsLoadFinished(int requestId, List<AppListItem> loadedApps) {
+    public static MainUiAction appsLoadFinished(int requestId, List<AppListItem> loadedApps) {
         return new AppsLoadFinished(requestId, loadedApps);
     }
 
-    static MainUiAction markPageRefreshing(AppListPage page) {
+    public static MainUiAction markPageRefreshing(AppListPage page) {
         return new MarkPageRefreshing(page);
     }
 
-    static MainUiAction workspaceModeChanged(MainUiState.WorkspaceMode workspaceMode) {
+    public static MainUiAction workspaceModeChanged(MainUiState.WorkspaceMode workspaceMode) {
         return new WorkspaceModeChanged(workspaceMode);
     }
 
-    static final class QueryChanged extends MainUiAction {
+    public static final class QueryChanged extends MainUiAction {
         final String query;
 
         QueryChanged(String query) {
@@ -44,7 +44,7 @@ abstract class MainUiAction {
         }
     }
 
-    static final class FilterChanged extends MainUiAction {
+    public static final class FilterChanged extends MainUiAction {
         final AppListFilterState filterState;
 
         FilterChanged(AppListFilterState filterState) {
@@ -52,7 +52,7 @@ abstract class MainUiAction {
         }
     }
 
-    static final class RequestAppsLoad extends MainUiAction {
+    public static final class RequestAppsLoad extends MainUiAction {
         final boolean forceInstalledAppCatalogReload;
 
         RequestAppsLoad(boolean forceInstalledAppCatalogReload) {
@@ -60,7 +60,7 @@ abstract class MainUiAction {
         }
     }
 
-    static final class AppsLoadFinished extends MainUiAction {
+    public static final class AppsLoadFinished extends MainUiAction {
         final int requestId;
         final List<AppListItem> loadedApps;
 
@@ -70,7 +70,7 @@ abstract class MainUiAction {
         }
     }
 
-    static final class MarkPageRefreshing extends MainUiAction {
+    public static final class MarkPageRefreshing extends MainUiAction {
         final AppListPage page;
 
         MarkPageRefreshing(AppListPage page) {
@@ -78,7 +78,7 @@ abstract class MainUiAction {
         }
     }
 
-    static final class WorkspaceModeChanged extends MainUiAction {
+    public static final class WorkspaceModeChanged extends MainUiAction {
         final MainUiState.WorkspaceMode workspaceMode;
 
         WorkspaceModeChanged(MainUiState.WorkspaceMode workspaceMode) {

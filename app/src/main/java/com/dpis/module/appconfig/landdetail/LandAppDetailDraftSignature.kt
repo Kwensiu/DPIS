@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.view.View
 import com.dpis.module.R
@@ -6,6 +6,7 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportTargetType
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textview.MaterialTextView
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 
 /** Persistable-looking landscape draft identity used to decide Unsaved / Save enablement. */
 internal object LandAppDetailDraftSignature {

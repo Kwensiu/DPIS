@@ -1,10 +1,9 @@
-package com.dpis.module.updates
+package com.dpis.module.updates.presentation
 
 import android.content.Context
 import android.net.Uri
 import com.dpis.module.R
 import com.dpis.module.updates.StartupUpdateDownloadExecutor.DownloadCanceledException
-import com.dpis.module.updates.UpdateAvailableDialog.DialogHandle
 import com.dpis.module.updates.UpdateCoordinator.DownloadStartReason
 import java.io.File
 import java.net.HttpURLConnection
@@ -13,6 +12,10 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import kotlin.concurrent.Volatile
 import kotlin.math.min
+import com.dpis.module.updates.UpdateCoordinator
+import com.dpis.module.updates.StartupUpdateDownloadExecutor
+import com.dpis.module.updates.StartupUpdatePackageHandler
+import com.dpis.module.updates.presentation.UpdateAvailableDialog.DialogHandle
 
 class UpdateDownloadCoordinator(
     host: Host,

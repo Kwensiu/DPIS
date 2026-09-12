@@ -4,7 +4,7 @@ import android.util.TypedValue
 import android.widget.TextView
 import com.dpis.module.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
-import com.dpis.module.diagnostics.RuntimeTransport.isCaptureActive
+import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.FontDebugStatsReporter
 import com.dpis.module.fonts.TextViewFontProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker.UnitKind

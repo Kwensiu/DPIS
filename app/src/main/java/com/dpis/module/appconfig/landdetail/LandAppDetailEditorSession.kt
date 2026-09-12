@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.app.Activity
 import android.content.Context
@@ -13,6 +13,10 @@ import com.dpis.module.templates.GlobalPrefillStore
 import com.google.android.material.color.MaterialColors
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textview.MaterialTextView
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.AppConfigEditorSession
+import com.dpis.module.appconfig.AppConfigEditorChip
+import com.dpis.module.appconfig.EditorDraft
 
 /** Landscape detail pane consumes the same editor-session chip as Compose. */
 object LandAppDetailEditorSession {

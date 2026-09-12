@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigDialogBinder.AppConfigDialogState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem

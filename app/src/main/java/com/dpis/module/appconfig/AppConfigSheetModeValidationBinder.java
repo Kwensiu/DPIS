@@ -18,6 +18,7 @@ import android.view.inputmethod.EditorInfo;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.dpis.module.ui.FormInputFocusBinder;
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 
 final class AppConfigSheetModeValidationBinder {
     private final AppConfigDialogBinder binder;

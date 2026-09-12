@@ -4,6 +4,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import com.dpis.module.SourceSmokeTestPaths
+import com.dpis.module.ui.presentation.MainComposeShellHost
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
 
 class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test

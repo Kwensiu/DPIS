@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.app.Activity
 import android.content.pm.PackageManager
@@ -7,9 +7,10 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.ImageView
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogBinder.AppConfigDialogState
-import com.dpis.module.appconfig.AppConfigDialogBinder.ModeToggle
-import com.dpis.module.appconfig.AppConfigDialogBinder.ProcessAction
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ModeToggle
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ProcessAction
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.quirks.WechatDpiSheetBinder
@@ -21,6 +22,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.textview.MaterialTextView
+import com.dpis.module.appconfig.AppConfigInputValidation
 
 class LandAppDetailPaneBinder(
     private val activity: Activity,

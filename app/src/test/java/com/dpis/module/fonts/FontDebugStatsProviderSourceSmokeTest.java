@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.fonts.device.FontDebugLogcatBridge;
 
 public class FontDebugStatsProviderSourceSmokeTest {
     @Test

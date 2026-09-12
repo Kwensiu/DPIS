@@ -5,6 +5,7 @@ import com.dpis.module.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 public final class RuntimeHotPathEvents {
     private static final Map<String, ActiveMeasurement> ACTIVE = new ConcurrentHashMap<>();

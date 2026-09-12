@@ -2,6 +2,8 @@ package com.dpis.module
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
+import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
 
 class AboutActivitySourceSmokeTest {
     @Test

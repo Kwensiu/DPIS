@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.device
 
 import com.dpis.module.runtime.SecureProcessLauncher
 import java.io.BufferedReader
@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import com.dpis.module.diagnostics.LogReadResult
 
 object LsposedLogReader {
     private const val ROOT_READ_TIMEOUT_MS = 8000L

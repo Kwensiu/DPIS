@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.RuntimeTransport;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 import com.dpis.module.diagnostics.RuntimeEvents;
 

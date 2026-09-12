@@ -32,6 +32,7 @@ import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import com.dpis.module.fonts.device.FontDebugLogcatBridge
 
 class FontDebugOverlayService : Service() {
     private val handler = Handler(Looper.getMainLooper())

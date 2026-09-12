@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.device
 
 import com.dpis.module.runtime.SecureProcessLauncher
 import java.io.BufferedReader
@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
-internal object ForegroundAppReader {
+object ForegroundAppReader {
     private const val READ_TIMEOUT_MS = 1500L
     private val COMPONENT_PATTERN: Pattern = Pattern.compile(
         "([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_]+)+)/"
