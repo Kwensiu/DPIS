@@ -39,7 +39,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(adapter.contains("MainUiState.WorkspaceMode"))
         assertTrue(mainShell.contains("MainUiAction.workspaceModeChanged"))
         assertTrue(mainShell.contains("MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode)"))
-        assertTrue(mainActivity.contains("installComposeWorkspaceShell()"))
+        assertTrue(mainActivity.contains("mainWorkspaceSession.installComposeWorkspaceShell()"))
         assertTrue(coordinator.contains("ComposeWorkspaceSurface"))
         assertTrue(coordinator.contains("TemplateWorkspaceContent"))
     }
@@ -275,18 +275,22 @@ class ComposeShellSourceSmokeTest {
 
     @Test
     fun composeAppEditorRestoreDoesNotOpenLegacySheet() {
-        val activity = read("src/main/java/com/dpis/module/MainActivity.java")
-        val restoreStart = activity.indexOf(
-                "private void restoreAppEditorForCurrentWorkspace()")
-        val restoreEnd = activity.indexOf(
-                "private void applyLandscapeDetailVisibility", restoreStart)
-        val restore = activity.substring(restoreStart, restoreEnd)
+        val workspace = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
+        )
+        val restoreStart = workspace.indexOf(
+            "fun restoreAppEditorForCurrentWorkspace()"
+        )
+        val restoreEnd = workspace.indexOf(
+            "fun bindForLifecycle(", restoreStart
+        )
+        val restore = workspace.substring(restoreStart, restoreEnd)
 
         val composeGuard = restore.indexOf("if (composeShellHost != null)")
-        val legacySheet = restore.indexOf("appConfigSheetSession.show(appItem)")
+        val legacySheet = restore.indexOf("shell.appConfigSheetSession().show(appItem)")
         assertTrue(composeGuard >= 0)
         assertTrue(legacySheet > composeGuard)
-        assertTrue(restore.substring(composeGuard, legacySheet).contains("return"));
+        assertTrue(restore.substring(composeGuard, legacySheet).contains("return"))
     }
 
     @Test

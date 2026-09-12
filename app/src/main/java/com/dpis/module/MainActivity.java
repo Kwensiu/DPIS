@@ -5,13 +5,10 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.compose.ui.platform.ComposeView;
 
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
@@ -19,7 +16,6 @@ import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigSaveHandler;
 
 import com.dpis.module.appconfig.EditorDraft;
-import com.dpis.module.appconfig.EditorPresentation;
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder;
 
 import com.dpis.module.applist.AppListFilterState;
@@ -56,9 +52,7 @@ import com.dpis.module.settings.presentation.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession;
-import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.ui.TouchFeedbackBinder;
-import com.dpis.module.ui.WatchUiMode;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 
 import com.dpis.module.tools.presentation.AppFilterComposeSheet;
@@ -75,9 +69,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import io.github.libxposed.service.XposedService;
-import kotlin.Unit;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
-import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
+import com.dpis.module.ui.presentation.MainWorkspaceSession;
+import com.dpis.module.ui.presentation.MainWorkspaceShell;
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
 import com.dpis.module.appconfig.presentation.AppConfigSheetSession;
 import com.dpis.module.appconfig.presentation.AppConfigSheetShell;
@@ -89,7 +83,6 @@ import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
 import com.dpis.module.appconfig.landdetail.LandAppDetailShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
-import com.dpis.module.applist.AppWorkspacePresentation;
 import com.dpis.module.applist.AppWorkspace;
 import com.dpis.module.ui.ConfigEditorDestination;
 import com.dpis.module.runtime.ConfigStoreFactory;
@@ -108,11 +101,6 @@ public final class MainActivity
         extends LocalizedActivity
         implements DpisApplication.ServiceStateListener {
 
-    private static final long WORKSPACE_TRANSITION_DURATION_MS = 300L;
-    private static final float WORKSPACE_CONTENT_ENTER_START_SCALE = 0.96f;
-    private static final AccelerateDecelerateInterpolator
-            WORKSPACE_CONTENT_ENTER_INTERPOLATOR =
-                    new AccelerateDecelerateInterpolator();
     private static final String STATE_CURRENT_QUERY = "state.current_query";
     private static final String STATE_TEMPLATE_QUERY = "state.template_query";
     private static final String STATE_CURRENT_PAGE = "state.current_page";
@@ -174,6 +162,8 @@ public final class MainActivity
             );
     private final InstalledAppsLoadSession installedAppsLoadSession
             = new InstalledAppsLoadSession(new InstalledAppsLoadShell(this));
+    private final MainWorkspaceSession mainWorkspaceSession
+            = new MainWorkspaceSession(new MainWorkspaceShell(this));
     private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
@@ -181,7 +171,6 @@ public final class MainActivity
     private MainViewModel mainViewModel;
     private ComposeAppEditorController composeAppEditorController;
     private ComposeAppEditorSaveWorkflow composeAppEditorSaveWorkflow;
-    private MainComposeShellHost composeShellHost;
     private View topContainer;
     private View toolsWorkspaceContainer;
     private View settingsWorkspaceContainer;
@@ -196,7 +185,6 @@ public final class MainActivity
     private SettingsWorkspaceSession settingsWorkspaceSession;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
-    private MainUiState.WorkspaceMode renderedWorkspaceMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -289,11 +277,7 @@ public final class MainActivity
                         null,
                         false
                 ),
-                () -> {
-                    if (composeShellHost != null) {
-                        composeShellHost.refreshApps();
-                    }
-                },
+                () -> mainWorkspaceSession.refreshApps(),
                 () -> showToast(R.string.save_scope_request_notice)
         );
         ComposeAppEditorActivityGateway composeAppEditorGateway = new ComposeAppEditorActivityGateway(
@@ -317,11 +301,7 @@ public final class MainActivity
         settingsWorkspaceContainer = findViewById(R.id.settings_workspace_container);
         settingsWorkspaceSession = SettingsWorkspaceSession.create(
                 this,
-                () -> {
-                    if (composeShellHost != null) {
-                        composeShellHost.refreshSettings();
-                    }
-                },
+                () -> mainWorkspaceSession.refreshSettings(),
                 () -> startActivity(new Intent(MainActivity.this, LogActivity.class))
         );
         WatchWorkspaceChromeBinder.applyIfSupported(
@@ -339,9 +319,7 @@ public final class MainActivity
         );
         toolsWorkspace = new ToolsWorkspace(
                 this,
-                () -> {
-                    if (composeShellHost != null) composeShellHost.refreshTools();
-                },
+                () -> mainWorkspaceSession.refreshTools(),
                 () -> showToast(R.string.system_settings_save_failed)
         );
         appWorkspace = new AppWorkspace(new AppWorkspace.Host() {
@@ -351,9 +329,7 @@ public final class MainActivity
 
             @Override public void changePage(AppListPage page) {
                 setCurrentAppListPage(page, true);
-                if (composeShellHost != null) {
-                    composeShellHost.refreshApps();
-                }
+                mainWorkspaceSession.refreshApps();
             }
 
             @Override public void changeFilters(AppListFilterState filterState) {
@@ -393,7 +369,7 @@ public final class MainActivity
         }
 
         renderMainUiState(requireUiState());
-        installComposeWorkspaceShell();
+        mainWorkspaceSession.installComposeWorkspaceShell();
         feedbackDiagnostic.restorePage();
         feedbackDiagnostic.attachHost();
         // The service state callback is not guaranteed to fire on every Wear image.
@@ -408,9 +384,9 @@ public final class MainActivity
                     retainedState.prefillSnapshot,
                     retainedState.prefillInvalidated
             );
-            restoreAppEditorForCurrentWorkspace();
+            mainWorkspaceSession.restoreAppEditorForCurrentWorkspace();
         }
-        restoreWorkspaceEditorForCurrentConfiguration();
+        mainWorkspaceSession.restoreWorkspaceEditorForCurrentConfiguration();
         if (updateSession.showPendingPromptIfAny()) {
             return;
         }
@@ -426,15 +402,7 @@ public final class MainActivity
     protected void onStart() {
         super.onStart();
         refreshSystemHookEffectiveEnabled();
-        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            bindWorkspaceSession();
-        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-            bindHomeWorkspace();
-        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TOOLS) {
-            bindToolsWorkspace();
-        } else if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.SETTINGS) {
-            bindSettingsWorkspace();
-        }
+        mainWorkspaceSession.bindForLifecycle(requireUiState().workspaceMode);
         if (toolsWorkspace != null) {
             toolsWorkspace.onStart();
         }
@@ -487,7 +455,7 @@ public final class MainActivity
         runOnUiThread(() -> {
             refreshSystemHookEffectiveEnabled();
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                bindHomeWorkspace();
+                mainWorkspaceSession.bindHomeWorkspace();
             }
             if (settingsWorkspaceSession != null) {
                 settingsWorkspaceSession.onServiceStateChanged();
@@ -646,8 +614,8 @@ public final class MainActivity
 
     private void setCurrentAppListPage(AppListPage page, boolean submit) {
         landCurrentPage = page != null ? page : AppListPage.ALL_APPS;
-        if (submit && composeShellHost != null) {
-            composeShellHost.refreshApps();
+        if (submit) {
+            mainWorkspaceSession.refreshApps();
         }
     }
 
@@ -718,7 +686,7 @@ public final class MainActivity
         return viewModel.getState();
     }
 
-    private void dispatchMainUiAction(MainUiAction action) {
+    public void dispatchMainUiAction(MainUiAction action) {
         MainViewModel viewModel = mainViewModel;
         if (viewModel == null) {
             return;
@@ -729,277 +697,15 @@ public final class MainActivity
     }
 
     private void renderMainUiState(MainUiState state) {
-        if (state == null) {
-            return;
-        }
-        if (composeShellHost != null) {
-            composeShellHost.render(state);
-        }
-        applyWorkspaceMode(state.workspaceMode);
-        restoreAppEditorForCurrentWorkspace();
-    }
-
-    /**
-     * Theme 1 keeps the existing workspace root alive inside Compose while later
-     * themes replace individual View workspaces. Navigation itself now belongs
-     * to the stateless Compose shell and still dispatches through MainUiAction.
-     */
-    private void installComposeWorkspaceShell() {
-        ViewGroup activityContent = findViewById(android.R.id.content);
-        if (activityContent == null || activityContent.getChildCount() == 0) {
-            return;
-        }
-        View legacyWorkspaceRoot = activityContent.getChildAt(0);
-        if (legacyWorkspaceRoot == null) {
-            return;
-        }
-        activityContent.removeView(legacyWorkspaceRoot);
-        ComposeView composeRoot = new ComposeView(this);
-        activityContent.addView(
-                composeRoot,
-                new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                )
-        );
-        MainWorkspacePresentationCoordinator workspacePresentationCoordinator = new MainWorkspacePresentationCoordinator(
-                new MainWorkspacePresentationCoordinator.Content() {
-                    @NonNull
-                    @Override
-                    public HomeWorkspaceState homeState() {
-                        return createHomeWorkspaceState();
-                    }
-
-                    @NonNull
-                    @Override
-                    public AppWorkspacePresentation.State appState() {
-                        return AppWorkspacePresentation.create(
-                                requireUiState(),
-                                landCurrentPage,
-                                isSystemHookEnabledFromStore(),
-                                appWorkspaceScrollStateStore,
-                                appWorkspace.actions());
-                    }
-
-                    @Override
-                    public EditorPresentation.State appEditorState() {
-                        return createComposeAppEditorState();
-                    }
-
-                    @Override
-                    public com.dpis.module.settings.SystemFontScaleToolState toolsState() {
-                        return toolsWorkspace != null ? toolsWorkspace.state() : null;
-                    }
-
-                    @Override
-                    public void changeToolsPending(int percent) {
-                        toolsWorkspace.changePending(percent);
-                    }
-
-                    @Override
-                    public void applyTools() {
-                        toolsWorkspace.apply();
-                    }
-
-                    @Override
-                    public void restoreTools() {
-                        toolsWorkspace.restore();
-                    }
-
-                    @Override
-                    public void requestToolsPermission() {
-                        toolsWorkspace.requestPermission();
-                    }
-
-                    @Override
-                    public com.dpis.module.settings.SettingsActions settings() {
-                        return settingsWorkspaceSession;
-                    }
-
-                    @NonNull
-                    @Override
-                    public TemplateWorkspacePresentationSource templateWorkspace() {
-                        return ensureWorkspaceSession().presentationSource(
-                                query -> {
-                                    dispatchMainUiAction(MainUiAction.queryChanged(query));
-                                    return Unit.INSTANCE;
-                                }
-                        );
-                    }
-                });
-        composeShellHost = new MainComposeShellHost(
-                composeRoot,
-                requireUiState(),
-                WatchUiMode.shouldUseCompactUi(this),
-                workspacePresentationCoordinator,
-                action -> {
-                    dispatchMainUiAction(action);
-                    return Unit.INSTANCE;
-                }
-        );
-    }
-
-    private void applyWorkspaceMode(MainUiState.WorkspaceMode workspaceMode) {
-        MainUiState.WorkspaceMode mode
-                = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.HOME;
-        boolean enteringToolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
-                && renderedWorkspaceMode != MainUiState.WorkspaceMode.TOOLS;
-        boolean appWorkspace = mode == MainUiState.WorkspaceMode.APP;
-        boolean templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE;
-        boolean toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS;
-        boolean settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS;
-        setVisible(topContainer, appWorkspace || templateWorkspace);
-        boolean animateWorkspace = renderedWorkspaceMode != null
-                && renderedWorkspaceMode != mode;
-        renderedWorkspaceMode = mode;
-        setVisible(toolsWorkspaceContainer, toolsWorkspace);
-        setVisible(settingsWorkspaceContainer, settingsWorkspace);
-        resetHiddenWorkspacePresentation(mode);
-        if (animateWorkspace) {
-            animateVisibleWorkspaceContent(mode);
-        }
-        applyLandscapeDetailVisibility(appWorkspace, templateWorkspace);
-        if (templateWorkspace) {
-            bindWorkspaceSession();
-            restoreWorkspaceEditorForCurrentConfiguration();
-        } else if (toolsWorkspace) {
-            bindToolsWorkspace(enteringToolsWorkspace);
-        } else if (settingsWorkspace) {
-            bindSettingsWorkspace();
-        }
-    }
-
-    private void restoreAppEditorForCurrentWorkspace() {
-        if (mainViewModel == null
-                || requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP) {
-            return;
-        }
-        // The Compose app workspace restores its editor directly from MainViewModel. Re-entering
-        // the legacy route here would stack a View BottomSheetDialog over the Compose sheet after
-        // any state render, including the catalog refresh triggered by a successful save.
-        if (composeShellHost != null) {
-            composeShellHost.refreshApps();
-            return;
-        }
-        String editingPackage = mainViewModel.getEditingPackageName();
-        if (editingPackage == null || editingPackage.isBlank()) {
-            return;
-        }
-        if (isLandscapeDetailMode() && landDetailContent.getChildCount() > 0) {
-            return;
-        }
-        for (AppListItem appItem : requireUiState().visibleItems(landCurrentPage)) {
-            if (editingPackage.equals(appItem.packageName)) {
-                if (isLandscapeDetailMode()) {
-                    landAppDetailSession.show(appItem);
-                } else {
-                    appConfigSheetSession.show(appItem);
-                }
-                break;
-            }
-        }
-    }
-
-    private void applyLandscapeDetailVisibility(
-            boolean appWorkspace,
-            boolean templateWorkspace
-    ) {
-        boolean showDetailPane = isLandscapeDetailMode()
-                && (appWorkspace || templateWorkspace);
-        setVisible(landDetailPane, showDetailPane);
-        setVisible(landDetailDivider, showDetailPane);
-        setVisible(landDetailEmptyView, appWorkspace
-                && landDetailContent != null
-                && landDetailContent.getChildCount() == 0);
-        setVisible(landDetailContent, appWorkspace
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0);
-        ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace);
-    }
-
-    private boolean isLandscapeDetailMode() {
-        return landDetailContent != null && landDetailEmptyView != null;
-    }
-
-    private void bindWorkspaceSession() {
-        ensureWorkspaceSession().present(
-                requireUiState().currentQuery(), composeShellHost != null
-        );
-    }
-
-    private void bindToolsWorkspace() {
-        bindToolsWorkspace(false);
-    }
-
-    private void bindToolsWorkspace(boolean resetExpandedState) {
-        if (composeShellHost != null && toolsWorkspace != null) {
-            toolsWorkspace.onResume();
-            composeShellHost.refreshTools(resetExpandedState);
-            return;
-        }
-        if (toolsWorkspace != null) {
-            toolsWorkspace.bind(toolsWorkspaceContainer);
-            if (resetExpandedState) {
-                toolsWorkspace.onShown();
-            }
-        }
-    }
-
-    private void restoreWorkspaceEditorForCurrentConfiguration() {
-        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            ensureWorkspaceSession().restoreForConfiguration(
-                    requireUiState().currentQuery(), composeShellHost != null
-            );
-        }
-    }
-
-    private static AppListFilterState.AppType parseAppType(String value, boolean legacyShowSystem) {
-        if (value != null) {
-            try {
-                return AppListFilterState.AppType.valueOf(value);
-            } catch (IllegalArgumentException ignored) {
-                // Fall through to the legacy boolean representation.
-            }
-        }
-        return legacyShowSystem ? AppListFilterState.AppType.ALL : AppListFilterState.AppType.USER;
-    }
-
-    private static AppListFilterState.SortOrder parseSortOrder(String value) {
-        if (value != null) {
-            try {
-                return AppListFilterState.SortOrder.valueOf(value);
-            } catch (IllegalArgumentException ignored) {
-                // Older saved state did not include ordering.
-            }
-        }
-        return AppListFilterState.SortOrder.NAME;
-    }
-
-    private void bindSettingsWorkspace() {
-        if (composeShellHost != null) {
-            settingsWorkspaceSession.ensureComposeController();
-            return;
-        }
-        if (settingsWorkspaceContainer == null || settingsWorkspaceSession == null) {
-            return;
-        }
-        settingsWorkspaceSession.bindLegacy(settingsWorkspaceContainer);
-    }
-
-    private EditorPresentation.State createComposeAppEditorState() {
-        return composeAppEditorController != null
-                ? composeAppEditorController.createState()
-                : null;
+        mainWorkspaceSession.render(state);
     }
 
     public void refreshComposeApps() {
-        if (composeShellHost != null) {
-            composeShellHost.refreshApps();
-        }
+        mainWorkspaceSession.refreshApps();
     }
 
     public MainComposeShellHost composeShell() {
-        return composeShellHost;
+        return mainWorkspaceSession.composeShell();
     }
 
     public boolean saveComposeEditorForDiagnostic(AppListItem item, EditorDraft draft) {
@@ -1041,16 +747,12 @@ public final class MainActivity
                     this,
                     initialQuery,
                     initialState,
-                    () -> {
-                        if (composeShellHost != null) {
-                            composeShellHost.refreshTemplates();
-                        }
-                    }
+                    () -> mainWorkspaceSession.refreshTemplates()
             );
         }
     }
 
-    private TemplateWorkspaceActivitySession ensureWorkspaceSession() {
+    public TemplateWorkspaceActivitySession ensureWorkspaceSession() {
         initializeWorkspaceSession(
                 null,
                 requireUiState().currentQuery()
@@ -1058,76 +760,26 @@ public final class MainActivity
         return workspaceSession;
     }
 
-    private static void setVisible(View view, boolean visible) {
-        if (view != null) {
-            view.setVisibility(visible ? View.VISIBLE : View.GONE);
+    private static AppListFilterState.AppType parseAppType(String value, boolean legacyShowSystem) {
+        if (value != null) {
+            try {
+                return AppListFilterState.AppType.valueOf(value);
+            } catch (IllegalArgumentException ignored) {
+                // Fall through to the legacy boolean representation.
+            }
         }
+        return legacyShowSystem ? AppListFilterState.AppType.ALL : AppListFilterState.AppType.USER;
     }
 
-    private void resetHiddenWorkspacePresentation(MainUiState.WorkspaceMode visibleMode) {
-        resetWorkspacePresentationUnlessMode(
-                toolsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.TOOLS);
-        resetWorkspacePresentationUnlessMode(
-                settingsWorkspaceContainer, visibleMode, MainUiState.WorkspaceMode.SETTINGS);
-    }
-
-    private static void resetWorkspacePresentationUnlessMode(
-            View view,
-            MainUiState.WorkspaceMode visibleMode,
-            MainUiState.WorkspaceMode viewMode
-    ) {
-        if (visibleMode != viewMode) {
-            resetWorkspacePresentation(view);
+    private static AppListFilterState.SortOrder parseSortOrder(String value) {
+        if (value != null) {
+            try {
+                return AppListFilterState.SortOrder.valueOf(value);
+            } catch (IllegalArgumentException ignored) {
+                // Older saved state did not include ordering.
+            }
         }
-    }
-
-    private static void resetWorkspacePresentation(View view) {
-        if (view == null) {
-            return;
-        }
-        view.animate().cancel();
-        view.setAlpha(1f);
-        view.setScaleX(1f);
-        view.setScaleY(1f);
-    }
-
-    private void animateVisibleWorkspaceContent(MainUiState.WorkspaceMode mode) {
-        View target = workspaceViewForMode(mode);
-        if (target == null) {
-            return;
-        }
-        target.animate().cancel();
-        target.setAlpha(0f);
-        target.setScaleX(WORKSPACE_CONTENT_ENTER_START_SCALE);
-        target.setScaleY(WORKSPACE_CONTENT_ENTER_START_SCALE);
-        target.animate()
-                .alpha(1f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(WORKSPACE_TRANSITION_DURATION_MS)
-                .setInterpolator(WORKSPACE_CONTENT_ENTER_INTERPOLATOR)
-                .withEndAction(() -> {
-                    target.setAlpha(1f);
-                    target.setScaleX(1f);
-                    target.setScaleY(1f);
-                })
-                .start();
-    }
-
-    private View workspaceViewForMode(MainUiState.WorkspaceMode mode) {
-        if (mode == MainUiState.WorkspaceMode.APP) {
-            return null;
-        }
-        if (mode == MainUiState.WorkspaceMode.TEMPLATE) {
-            return null;
-        }
-        if (mode == MainUiState.WorkspaceMode.TOOLS) {
-            return toolsWorkspaceContainer;
-        }
-        if (mode == MainUiState.WorkspaceMode.SETTINGS) {
-            return settingsWorkspaceContainer;
-        }
-        return null;
+        return AppListFilterState.SortOrder.NAME;
     }
 
     private void handleAppsLoadRequests(List<MainViewModel.AppsLoadRequest> requests) {
@@ -1169,7 +821,7 @@ public final class MainActivity
     private void bindHomeWorkspaceIfVisible() {
         if (mainViewModel != null
                 && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-            bindHomeWorkspace();
+            mainWorkspaceSession.bindHomeWorkspace();
         }
     }
 
@@ -1200,19 +852,13 @@ public final class MainActivity
                 editorDraftSession.activeEditorRoot(),
                 item.packageName
         );
-        if (isLandscapeDetailMode() && landAppDetailSession.show(item)) {
+        if (mainWorkspaceSession.isLandscapeDetailMode() && landAppDetailSession.show(item)) {
             return;
         }
         appConfigSheetSession.show(item);
     }
 
-    private void bindHomeWorkspace() {
-        if (composeShellHost != null) {
-            composeShellHost.refreshHome();
-        }
-    }
-
-    private HomeWorkspaceState createHomeWorkspaceState() {
+    public HomeWorkspaceState createHomeWorkspaceState() {
         DpisConfigStore configStore = getHookConfigStore();
         int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
                 configStore,
@@ -1287,7 +933,7 @@ public final class MainActivity
             @Override
             public void saveHomeWorkspaceLayout(HomeWorkspaceLayout layout) {
                 new HomeWorkspaceLayoutStore(MainActivity.this).save(layout);
-                bindHomeWorkspace();
+                mainWorkspaceSession.bindHomeWorkspace();
             }
         };
     }
@@ -1307,7 +953,7 @@ public final class MainActivity
     private void maybeStartRootAccessProbe() {
         RootAccessProbe.refreshAsync(result -> runOnUiThread(() -> {
             if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                bindHomeWorkspace();
+                mainWorkspaceSession.bindHomeWorkspace();
             }
         }));
     }
@@ -1452,6 +1098,58 @@ public final class MainActivity
 
     public View landDetailEmptyView() {
         return landDetailEmptyView;
+    }
+
+    public ComposeAppEditorController composeAppEditorController() {
+        return composeAppEditorController;
+    }
+
+    public AppWorkspace appWorkspace() {
+        return appWorkspace;
+    }
+
+    public ToolsWorkspace toolsWorkspace() {
+        return toolsWorkspace;
+    }
+
+    public SettingsWorkspaceSession settingsWorkspaceSession() {
+        return settingsWorkspaceSession;
+    }
+
+    public AppListPage landCurrentPage() {
+        return landCurrentPage;
+    }
+
+    public AppWorkspaceScrollStateStore appWorkspaceScrollStateStore() {
+        return appWorkspaceScrollStateStore;
+    }
+
+    public LandAppDetailSession landAppDetailSession() {
+        return landAppDetailSession;
+    }
+
+    public AppConfigSheetSession appConfigSheetSession() {
+        return appConfigSheetSession;
+    }
+
+    public View topContainer() {
+        return topContainer;
+    }
+
+    public View toolsWorkspaceContainer() {
+        return toolsWorkspaceContainer;
+    }
+
+    public View settingsWorkspaceContainer() {
+        return settingsWorkspaceContainer;
+    }
+
+    public View landDetailPane() {
+        return landDetailPane;
+    }
+
+    public View landDetailDivider() {
+        return landDetailDivider;
     }
 
     public EditorDraft currentEditingDraft() {
