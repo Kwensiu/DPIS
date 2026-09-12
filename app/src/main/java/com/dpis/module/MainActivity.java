@@ -30,7 +30,6 @@ import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
-import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
@@ -46,7 +45,6 @@ import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.home.ModeHelpActivity;
 
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
-import com.dpis.module.quirks.presentation.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
@@ -65,13 +63,10 @@ import com.dpis.module.ui.WatchWorkspaceChromeBinder;
 import com.dpis.module.tools.presentation.AppFilterComposeSheet;
 import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.presentation.MainUpdateSession;
-import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportPropertySyncer;
-import com.dpis.module.viewport.ViewportTargetType;
 
 
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
+
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,6 +81,8 @@ import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
 import com.dpis.module.appconfig.presentation.AppConfigSheetSession;
 import com.dpis.module.appconfig.presentation.AppConfigSheetShell;
+import com.dpis.module.appconfig.presentation.EditorDraftSession;
+import com.dpis.module.appconfig.presentation.EditorDraftShell;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorShell;
 import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
@@ -174,6 +171,11 @@ public final class MainActivity
                     new AppConfigSheetShell(this),
                     appConfigDialogHost
             );
+    private final EditorDraftSession editorDraftSession
+            = new EditorDraftSession(
+                    new EditorDraftShell(this),
+                    appConfigDialogHost
+            );
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
             = new InstalledAppCatalogCoordinator(
                     createInstalledAppCatalogHost(),
@@ -205,8 +207,6 @@ public final class MainActivity
     private boolean pendingInstalledAppsLoadAfterPermission;
     private boolean installedAppsPermissionRequestCompleted;
     private MainUiState.WorkspaceMode renderedWorkspaceMode;
-    private View activeEditorRoot;
-    private String activeEditorPackageName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -603,7 +603,7 @@ public final class MainActivity
         MainUiState state = requireUiState();
         List<AppListItem> snapshot = state.appsSnapshot();
         int currentPage = landCurrentPage.position();
-        EditorDraft draft = captureAppConfigDraft();
+        EditorDraft draft = editorDraftSession.captureAppConfigDraft();
         if (draft == null && mainViewModel != null) {
             draft = mainViewModel.getEditingDraft();
         }
@@ -1137,10 +1137,11 @@ public final class MainActivity
     }
 
     public void clearEditingSession() {
-        if (mainViewModel != null) {
-            mainViewModel.clearEditingPackageName();
-            mainViewModel.clearEditingDraft();
-        }
+        editorDraftSession.clearEditingSession();
+    }
+
+    public MainViewModel editorViewModel() {
+        return mainViewModel;
     }
 
     public void showComposeFeedbackDiagnosticPreparation(
@@ -1331,7 +1332,10 @@ public final class MainActivity
         if (mainViewModel != null) {
             mainViewModel.setEditingPackageName(item.packageName);
         }
-        activeEditorPackageName = item.packageName;
+        editorDraftSession.rememberActiveEditor(
+                editorDraftSession.activeEditorRoot(),
+                item.packageName
+        );
         if (isLandscapeDetailMode() && landAppDetailSession.show(item)) {
             return;
         }
@@ -1519,8 +1523,8 @@ public final class MainActivity
         if (item == null) {
             return null;
         }
-        View root = activeEditorRoot;
-        if (root == null || !item.packageName.equals(activeEditorPackageName)) {
+        View root = editorDraftSession.activeEditorRoot();
+        if (root == null || !item.packageName.equals(editorDraftSession.activeEditorPackageName())) {
             return item;
         }
         if (AppConfigDialogBinder.viewsFor(root) != null) {
@@ -1541,16 +1545,6 @@ public final class MainActivity
         } catch (PackageManager.NameNotFoundException ignored) {
             return "";
         }
-    }
-
-    public View currentEditorRoot() {
-        View root = activeEditorRoot;
-        if (root == null
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0) {
-            root = landDetailContent.getChildAt(0);
-        }
-        return root;
     }
 
     public String getFontHookDomainsButtonText(
@@ -1604,249 +1598,23 @@ public final class MainActivity
     }
 
     public EditorDraft currentEditingDraft() {
-        return mainViewModel != null ? mainViewModel.getEditingDraft() : null;
+        return editorDraftSession.currentEditingDraft();
     }
 
     public void rememberActiveEditor(View root, String packageName) {
-        activeEditorRoot = root;
-        activeEditorPackageName = packageName;
-    }
-
-    private EditorDraft captureAppConfigDraft() {
-        View root = activeEditorRoot;
-        String packageName = activeEditorPackageName;
-        if (root == null
-                && landDetailContent != null
-                && landDetailContent.getChildCount() > 0) {
-            root = landDetailContent.getChildAt(0);
-            packageName = mainViewModel != null
-                    ? mainViewModel.getEditingPackageName()
-                    : packageName;
-        }
-        if (root == null) {
-            return null;
-        }
-        TextInputEditText viewportInput = findEditorInput(
-                root,
-                R.id.land_detail_viewport_input,
-                R.id.dialog_viewport_input
-        );
-        TextInputEditText fontInput = findEditorInput(
-                root,
-                R.id.land_detail_font_scale_input,
-                R.id.dialog_font_scale_input
-        );
-        AppConfigDialogBinder.AppConfigDialogState state = findEditorState(root);
-        String viewportText
-                = viewportInput != null && viewportInput.getText() != null
-                ? viewportInput.getText().toString()
-                : "";
-        String fontText
-                = fontInput != null && fontInput.getText() != null
-                ? fontInput.getText().toString()
-                : "";
-        String viewportMode = viewportInput != null
-                ? AppConfigDialogBinder.resolveViewportMode(findViewportModeToggle(root))
-                : ViewportTargetType.RELATIVE_SCALE;
-        String fontMode = fontInput != null
-                ? AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))
-                : FontApplyMode.SYSTEM_EMULATION;
-        if (state != null && !state.packageName.isBlank()) {
-            packageName = state.packageName;
-        }
-        if ((packageName == null || packageName.isBlank()) && mainViewModel != null) {
-            packageName = mainViewModel.getEditingPackageName();
-        }
-        EditorDraft current = mainViewModel != null
-                ? mainViewModel.getEditingDraft()
-                : null;
-        boolean useCurrentState = current != null && current.packageName.equals(packageName);
-        return new EditorDraft(
-                packageName,
-                viewportText,
-                state != null ? state.viewportScaleInput
-                        : useCurrentState ? current.viewportScaleInput : "",
-                state != null ? state.viewportAbsoluteInput
-                        : useCurrentState ? current.viewportAbsoluteInput : "",
-                viewportMode,
-                fontText,
-                fontMode,
-                state != null ? state.selectedTypefaceId
-                        : useCurrentState ? current.selectedTypefaceId : null,
-                state != null ? state.draftFontHookDomainsRaw
-                        : useCurrentState ? current.draftFontHookDomainsRaw : null,
-                state != null ? state.viewportApplyMode
-                        : useCurrentState ? current.viewportApplyMode : ViewportApplyMode.OFF,
-                state != null
-                        ? state.fontHookDomainsResetRequested
-                        : useCurrentState && current.fontHookDomainsResetRequested,
-                state != null
-                        ? state.viewportApplyModeResetRequested
-                        : useCurrentState && current.viewportApplyModeResetRequested,
-                WechatDpiSheetBinder.captureDraft(root),
-                state != null ? state.scopeSelected
-                        : useCurrentState && current.scopeSelected,
-                state != null ? state.dpisEnabled
-                        : useCurrentState && current.dpisEnabled
-        );
+        editorDraftSession.rememberActiveEditor(root, packageName);
     }
 
     public void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
-        if (mainViewModel == null || state == null) {
-            return;
-        }
-        EditorDraft captured = captureAppConfigDraft();
-        if (captured != null) {
-            mainViewModel.setEditingDraft(captured);
-            return;
-        }
-        EditorDraft current = mainViewModel.getEditingDraft();
-        String packageName = !state.packageName.isBlank()
-                ? state.packageName
-                : mainViewModel.getEditingPackageName();
-        EditorDraft draft = new EditorDraft(
-                packageName,
-                current != null ? current.viewportInput : "",
-                current != null ? current.viewportScaleInput : "",
-                current != null ? current.viewportAbsoluteInput : "",
-                current != null ? current.viewportMode : ViewportTargetType.RELATIVE_SCALE,
-                current != null ? current.fontInput : "",
-                current != null ? current.fontMode : FontApplyMode.SYSTEM_EMULATION,
-                state.selectedTypefaceId,
-                state.draftFontHookDomainsRaw,
-                state.viewportApplyMode,
-                state.fontHookDomainsResetRequested,
-                state.viewportApplyModeResetRequested,
-                current != null ? current.wechatDpiInput : null,
-                state.scopeSelected,
-                state.dpisEnabled
-        );
-        mainViewModel.setEditingDraft(draft);
+        editorDraftSession.updateEditingDraft(state);
     }
 
     public void applyAppConfigDraft(View root, EditorDraft draft) {
-        if (draft == null || root == null) {
-            return;
-        }
-        TextInputEditText viewportInput = findEditorInput(
-                root,
-                R.id.land_detail_viewport_input,
-                R.id.dialog_viewport_input
-        );
-        TextInputEditText fontInput = findEditorInput(
-                root,
-                R.id.land_detail_font_scale_input,
-                R.id.dialog_font_scale_input
-        );
-        AppConfigDialogBinder.ModeToggle viewportToggle
-                = findViewportModeToggle(root);
-        AppConfigDialogBinder.ModeToggle fontToggle = findFontModeToggle(root);
-        TextInputLayout viewportInputLayout = findEditorInputLayout(
-                root,
-                R.id.land_detail_viewport_input_layout,
-                R.id.dialog_viewport_input_layout
-        );
-        AppConfigDialogBinder.bindViewportModeToggle(
-                viewportToggle,
-                draft.viewportMode,
-                false
-        );
-        if (viewportInputLayout != null) {
-            if (root.findViewById(R.id.dialog_viewport_input_layout) != null) {
-                new AppConfigDialogBinder(this, createAppConfigDialogHost())
-                        .bindViewportInputHint(
-                                viewportInputLayout,
-                                draft.viewportMode
-                        );
-            } else {
-                viewportInputLayout.setHint(
-                        ViewportTargetType.RELATIVE_SCALE.equals(
-                                ViewportTargetType.normalize(draft.viewportMode)
-                        )
-                                ? R.string.dialog_viewport_hint_scale
-                                : R.string.dialog_viewport_hint_absolute
-                );
-            }
-        }
-        AppConfigDialogBinder.bindFontModeToggle(
-                fontToggle,
-                draft.fontMode,
-                false
-        );
-        if (viewportInput != null) {
-            viewportInput.setText(draft.viewportInput);
-        }
-        if (fontInput != null) {
-            fontInput.setText(draft.fontInput);
-        }
+        editorDraftSession.applyAppConfigDraft(root, draft);
     }
 
-    private TextInputEditText findEditorInput(
-            View root,
-            int landId,
-            int dialogId
-    ) {
-        TextInputEditText input = root.findViewById(landId);
-        return input != null ? input : root.findViewById(dialogId);
-    }
-
-    private TextInputLayout findEditorInputLayout(
-            View root,
-            int landId,
-            int dialogId
-    ) {
-        TextInputLayout inputLayout = root.findViewById(landId);
-        return inputLayout != null ? inputLayout : root.findViewById(dialogId);
-    }
-
-    private AppConfigDialogBinder.ModeToggle findViewportModeToggle(View root) {
-        View landContainer = root.findViewById(
-                R.id.land_detail_viewport_mode_toggle_button
-        );
-        if (landContainer != null) {
-            return new AppConfigDialogBinder.ModeToggle(
-                    landContainer,
-                    root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                    root.findViewById(R.id.land_detail_viewport_mode_width_label)
-            );
-        }
-        return new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.dialog_viewport_mode_toggle_button),
-                root.findViewById(R.id.dialog_viewport_mode_toggle_thumb),
-                root.findViewById(R.id.dialog_viewport_mode_system_label),
-                root.findViewById(R.id.dialog_viewport_mode_compat_label)
-        );
-    }
-
-    private AppConfigDialogBinder.ModeToggle findFontModeToggle(View root) {
-        View landContainer = root.findViewById(
-                R.id.land_detail_font_mode_toggle_button
-        );
-        if (landContainer != null) {
-            return new AppConfigDialogBinder.ModeToggle(
-                    landContainer,
-                    root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_font_mode_system_label),
-                    root.findViewById(R.id.land_detail_font_mode_compat_label)
-            );
-        }
-        return new AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.dialog_font_mode_toggle_button),
-                root.findViewById(R.id.dialog_font_mode_toggle_thumb),
-                root.findViewById(R.id.dialog_font_mode_system_label),
-                root.findViewById(R.id.dialog_font_mode_compat_label)
-        );
-    }
-
-    private AppConfigDialogBinder.AppConfigDialogState findEditorState(
-            View root
-    ) {
-        AppConfigDialogBinder.AppConfigDialogState dialogState
-                = AppConfigDialogBinder.stateFor(root);
-        return dialogState != null
-                ? dialogState
-                : LandAppDetailPaneBinder.stateFor(root);
+    public View currentEditorRoot() {
+        return editorDraftSession.currentEditorRoot();
     }
 
     private record RetainedState(List<AppListItem> appsSnapshot, String query, String templateQuery,

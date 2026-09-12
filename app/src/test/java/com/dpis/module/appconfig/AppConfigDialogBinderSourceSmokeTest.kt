@@ -66,13 +66,15 @@ class AppConfigDialogBinderSourceSmokeTest {
         val interactionsSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.kt")
         val modeValidationSource =
                 read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.kt")
-        val mainActivitySource = read("src/main/java/com/dpis/module/MainActivity.java")
+        val draftSession = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/EditorDraftSession.kt"
+        )
 
         assertTrue(interactionsSource.contains(
                 "AppConfigSheetModeValidationBinder(binder, host)"))
         assertTrue(draftStateChangeCount(modeValidationSource) >= 7)
-        assertTrue(mainActivitySource.contains("EditorDraft captured = captureAppConfigDraft()"))
-        assertTrue(mainActivitySource.contains("mainViewModel.setEditingDraft(captured)"))
+        assertTrue(draftSession.contains("val captured = captureAppConfigDraft()"))
+        assertTrue(draftSession.contains("viewModel.editingDraft = captured"))
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.EditorDraftSession
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.quirks.WechatDpiEditor
@@ -134,7 +135,7 @@ class LandAppDetailSession(
             shell.showToast(R.string.status_save_invalid)
             return null
         }
-        val fontInput = findEditorInput(
+        val fontInput = EditorDraftSession.findEditorInput(
             root,
             R.id.land_detail_font_scale_input,
             R.id.dialog_font_scale_input,
@@ -142,9 +143,13 @@ class LandAppDetailSession(
         val saved = saveDraftInternal(
             item,
             state,
-            AppConfigDialogBinder.resolveViewportMode(findViewportModeToggle(root)),
+            AppConfigDialogBinder.resolveViewportMode(
+                EditorDraftSession.findViewportModeToggle(root),
+            ),
             parseEditorPercentOrNull(fontInput),
-            AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)),
+            AppConfigDialogBinder.resolveFontMode(
+                EditorDraftSession.findFontModeToggle(root),
+            ),
             state?.selectedTypefaceId,
             state?.draftFontHookDomainsRaw,
             state?.viewportApplyMode ?: ViewportApplyMode.OFF,
@@ -417,15 +422,6 @@ class LandAppDetailSession(
             }
         }
 
-        private fun findEditorInput(
-            root: View,
-            landId: Int,
-            dialogId: Int,
-        ): TextInputEditText? {
-            val input = root.findViewById<TextInputEditText>(landId)
-            return input ?: root.findViewById(dialogId)
-        }
-
         private fun parseEditorPercentOrNull(input: TextInputEditText?): Int? {
             val raw = input?.text?.toString()?.trim().orEmpty()
             if (raw.isEmpty()) {
@@ -436,46 +432,6 @@ class LandAppDetailSession(
             } catch (_: NumberFormatException) {
                 null
             }
-        }
-
-        private fun findViewportModeToggle(root: View): AppConfigDialogBinder.ModeToggle {
-            val landContainer = root.findViewById<View>(
-                R.id.land_detail_viewport_mode_toggle_button,
-            )
-            if (landContainer != null) {
-                return AppConfigDialogBinder.ModeToggle(
-                    landContainer,
-                    root.findViewById(R.id.land_detail_viewport_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_viewport_mode_scale_label),
-                    root.findViewById(R.id.land_detail_viewport_mode_width_label),
-                )
-            }
-            return AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.dialog_viewport_mode_toggle_button),
-                root.findViewById(R.id.dialog_viewport_mode_toggle_thumb),
-                root.findViewById(R.id.dialog_viewport_mode_system_label),
-                root.findViewById(R.id.dialog_viewport_mode_compat_label),
-            )
-        }
-
-        private fun findFontModeToggle(root: View): AppConfigDialogBinder.ModeToggle {
-            val landContainer = root.findViewById<View>(
-                R.id.land_detail_font_mode_toggle_button,
-            )
-            if (landContainer != null) {
-                return AppConfigDialogBinder.ModeToggle(
-                    landContainer,
-                    root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                    root.findViewById(R.id.land_detail_font_mode_system_label),
-                    root.findViewById(R.id.land_detail_font_mode_compat_label),
-                )
-            }
-            return AppConfigDialogBinder.ModeToggle(
-                root.findViewById(R.id.dialog_font_mode_toggle_button),
-                root.findViewById(R.id.dialog_font_mode_toggle_thumb),
-                root.findViewById(R.id.dialog_font_mode_system_label),
-                root.findViewById(R.id.dialog_font_mode_compat_label),
-            )
         }
     }
 }
