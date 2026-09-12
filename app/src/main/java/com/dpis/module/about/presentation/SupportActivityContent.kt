@@ -28,8 +28,8 @@ import com.dpis.module.ui.compose.FontLibraryContent
 import com.dpis.module.ui.compose.FontLibraryPresentation
 import com.dpis.module.ui.compose.LogContent
 import com.dpis.module.ui.compose.LogPresentation
-import com.dpis.module.ui.compose.QuickConfigContent
-import com.dpis.module.ui.compose.QuickConfigPresentation
+import com.dpis.module.quickconfig.presentation.QuickConfigContent
+import com.dpis.module.quickconfig.presentation.QuickConfigPresentation
 import com.dpis.module.settings.presentation.ThemeSettingsContent
 import com.dpis.module.ui.compose.WearAboutContent
 import com.dpis.module.ui.compose.WearExperimentalSettingsContent

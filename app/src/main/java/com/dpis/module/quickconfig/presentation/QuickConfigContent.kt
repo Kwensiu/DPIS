@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.quickconfig.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.appconfig.EditorPresentation
+import com.dpis.module.ui.compose.*
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 

@@ -67,8 +67,8 @@ import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.SystemScopeCoordinator
-import com.dpis.module.ui.compose.QuickConfigDialog
-import com.dpis.module.ui.compose.QuickConfigPresentation
+import com.dpis.module.quickconfig.presentation.QuickConfigDialog
+import com.dpis.module.quickconfig.presentation.QuickConfigPresentation
 import com.dpis.module.about.presentation.SupportActivityContent
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertySyncer
