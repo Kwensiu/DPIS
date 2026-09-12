@@ -150,9 +150,12 @@ class MainActivitySourceSmokeTest {
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
 
-        assertTrue(source.contains("STATE_WORKSPACE_MODE"))
-        assertTrue(source.contains("MainUiState.WorkspaceMode.fromName("))
+        assertTrue(startup.contains("STATE_WORKSPACE_MODE"))
+        assertTrue(startup.contains("MainUiState.WorkspaceMode.fromName("))
         assertFalse(source.contains("bindWorkspaceSwitch()"))
         assertFalse(source.contains("workspaceSwitch.setOnItemSelectedListener"))
         assertFalse(source.contains("private boolean updatingWorkspaceSelection"))
@@ -176,7 +179,7 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
         assertTrue(workspace.contains("fun bindWorkspaceSession()"))
         assertTrue(workspace.contains("shell.ensureTemplateWorkspace().present("))
-        assertTrue(source.contains("STATE_TEMPLATE_QUERY"))
+        assertTrue(startup.contains("STATE_TEMPLATE_QUERY"))
         assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"))
         assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"))
         assertFalse(source.contains("workspaceModeForButtonId(int checkedId)"))
@@ -223,20 +226,25 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun restoreSnapshot_isNotBlockedBySavedStateBranch() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val source = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
 
         val restoreSnapshotLine = source.indexOf(
-            "initialAppsSnapshot = new ArrayList<>(retainedState.appsSnapshot)"
+            "appsSnapshot = ArrayList(retained.appsSnapshot)"
         )
         assertTrue(restoreSnapshotLine > 0)
         val beforeRestoreSnapshot = source.substring(0, restoreSnapshotLine)
 
         assertTrue(
-            beforeRestoreSnapshot.contains("if (retainedState != null) {")
+            beforeRestoreSnapshot.contains("if (retained != null) {")
         )
         assertFalse(
-            beforeRestoreSnapshot.contains("else if (retainedState != null)")
+            beforeRestoreSnapshot.contains("else if (retained != null)")
         )
+        val afterRestoreSnapshot = source.substring(restoreSnapshotLine)
+        assertTrue(afterRestoreSnapshot.contains("if (savedInstanceState != null)"))
+        assertFalse(afterRestoreSnapshot.contains("else if (savedInstanceState != null)"))
     }
 
     @Test
@@ -329,8 +337,11 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
 
-        assertTrue(source.contains("TemplateWorkspaceActivitySession.State initialWorkspaceSessionState"))
-        assertTrue(source.contains("initialWorkspaceSessionState = retainedState.workspaceSessionState"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("val workspaceSessionState: TemplateWorkspaceActivitySession.State?"))
+        assertTrue(startup.contains("workspaceSessionState = retained.workspaceSessionState"))
         assertTrue(coordinator.contains("routeState.globalPrefillDraft()"))
         assertTrue(coordinator.contains("routeState.quickTemplateDraft()"))
         assertTrue(source.contains("ensureWorkspaceSession().restore(savedInstanceState)"))
@@ -722,9 +733,12 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("private boolean skipNextImmediateServiceReload")
         )
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
         assertTrue(
-            source.contains(
-                "skipNextImmediateServiceReload = !initialAppsSnapshot.isEmpty()"
+            startup.contains(
+                "skipNextImmediateServiceReload = appsSnapshot.isNotEmpty()"
             )
         )
         assertTrue(
@@ -804,7 +818,10 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(dialogHost.contains("activity.updateEditingDraft(state)"))
         assertTrue(landSession.contains("fun onDraftStateChanged("))
-        assertTrue(source.contains("if (draft == null && mainViewModel != null)"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("val editingDraft = draft ?: viewModel?.editingDraft"))
         assertTrue(
             read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
                 .contains("AppConfigDialogState.fromItem(item)")

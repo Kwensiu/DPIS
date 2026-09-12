@@ -446,12 +446,15 @@ class ComposeShellSourceSmokeTest {
         assertTrue(appOverlay.contains("onReturnToMain"))
         assertTrue(appOverlay.contains("bottomSheetState.partialExpand()"))
         assertTrue(viewModel.contains("var editingDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("mainViewModel.getEditingDestination()"))
-        assertTrue(activity.contains("retainedState.editingDestination"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("viewModel?.editingDestination"))
+        assertTrue(startup.contains("retained.editingDestination"))
         assertTrue(templates.contains("val editorDestination = state.editorDestination"))
         assertTrue(templatePresentation.contains(
                 "val editorDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("retainedState.workspaceSessionState"))
+        assertTrue(startup.contains("retained.workspaceSessionState"))
         assertTrue(templatePresentation.contains("val editorDestination: ConfigEditorDestination"))
         assertTrue(activity.contains("ensureWorkspaceSession().saveState(outState)"))
         assertTrue(templates.contains("HookChainEditorPage("))

@@ -58,13 +58,12 @@ import com.dpis.module.viewport.ViewportPropertySyncer;
 
 
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 
 import com.dpis.module.ui.presentation.MainComposeShellHost;
+import com.dpis.module.ui.presentation.MainRetainedState;
+import com.dpis.module.ui.presentation.MainStartupSession;
 import com.dpis.module.ui.presentation.MainWorkspaceSession;
 import com.dpis.module.ui.presentation.MainWorkspaceShell;
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
@@ -79,7 +78,7 @@ import com.dpis.module.appconfig.landdetail.LandAppDetailShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
 import com.dpis.module.applist.AppWorkspace;
-import com.dpis.module.ui.ConfigEditorDestination;
+
 import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.settings.LocalizedActivity;
@@ -95,31 +94,7 @@ public final class MainActivity
         extends LocalizedActivity
         implements DpisApplication.ServiceStateListener {
 
-    private static final String STATE_CURRENT_QUERY = "state.current_query";
-    private static final String STATE_TEMPLATE_QUERY = "state.template_query";
-    private static final String STATE_CURRENT_PAGE = "state.current_page";
-    private static final String STATE_WORKSPACE_MODE = "state.workspace_mode";
-    private static final String STATE_FILTER_SHOW_SYSTEM
-            = "state.filter.show_system";
-    private static final String STATE_FILTER_INJECTED_ONLY
-            = "state.filter.injected_only";
-    private static final String STATE_FILTER_WIDTH_ONLY
-            = "state.filter.width_only";
-    private static final String STATE_FILTER_FONT_ONLY
-            = "state.filter.font_only";
-    private static final String STATE_FILTER_DISABLED_ONLY
-            = "state.filter.disabled_only";
-    private static final String STATE_FILTER_TYPEFACE_ONLY
-            = "state.filter.typeface_only";
-    private static final String STATE_FILTER_HOOK_ONLY
-            = "state.filter.hook_only";
-    private static final String STATE_FILTER_APP_TYPE = "state.filter.app_type";
-    private static final String STATE_FILTER_SORT_ORDER = "state.filter.sort_order";
-    private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
-    private static final String STATE_REFRESHING_PAGES
-            = "state.refreshing_pages";
-
-
+    private final MainStartupSession startupSession = new MainStartupSession();
     private final MainUpdateSession updateSession
             = new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible);
     private final WechatDpiHelp wechatDpiHelp
@@ -190,79 +165,36 @@ public final class MainActivity
 
         appListFilterStateStore = new AppListFilterStateStore(this);
 
-        RetainedState retainedState
-                = (RetainedState) getLastCustomNonConfigurationInstance();
+        MainRetainedState retainedState
+                = (MainRetainedState) getLastCustomNonConfigurationInstance();
+        MainStartupSession.Restore restore = startupSession.restore(
+                savedInstanceState,
+                retainedState,
+                appListFilterStateStore.load(),
+                MainUiState.WorkspaceMode.valueOf(
+                        PageSettingsStore.getDefaultStartupPage(this)
+                )
+        );
         feedbackDiagnostic = new FeedbackDiagnosticActivitySession(
                 new FeedbackDiagnosticShell(this),
                 retainedState != null ? retainedState.feedbackDiagnostic : null
         );
-        String initialQuery = "";
-        String initialTemplateQuery = "";
-        TemplateWorkspaceActivitySession.State initialWorkspaceSessionState = null;
-        AppListFilterState initialFilterState = appListFilterStateStore.load();
-        MainUiState.WorkspaceMode initialWorkspaceMode = MainUiState.WorkspaceMode.valueOf(
-                PageSettingsStore.getDefaultStartupPage(this)
-        );
-        List<AppListItem> initialAppsSnapshot = Collections.emptyList();
-        Set<AppListPage> initialRefreshingPages = EnumSet.noneOf(
-                AppListPage.class
-        );
         if (retainedState != null) {
-            initialQuery = retainedState.query;
-            initialTemplateQuery = retainedState.templateQuery;
-            initialFilterState = retainedState.filterState;
-            initialWorkspaceMode = retainedState.workspaceMode;
-            initialWorkspaceSessionState = retainedState.workspaceSessionState;
             updateSession.restorePendingPrompt(retainedState.pendingUpdatePrompt);
             appWorkspaceScrollStateStore.restore(retainedState.appListScrollPositions);
-            initialRefreshingPages = decodeRefreshingPages(
-                    retainedState.refreshingPagePositions
-            );
-            initialAppsSnapshot = new ArrayList<>(retainedState.appsSnapshot);
-            skipNextImmediateServiceReload = !initialAppsSnapshot.isEmpty();
         }
-        if (savedInstanceState != null) {
-            initialQuery = savedInstanceState.getString(
-                    STATE_CURRENT_QUERY,
-                    ""
-            );
-            initialTemplateQuery = savedInstanceState.getString(
-                    STATE_TEMPLATE_QUERY,
-                    ""
-            );
-            initialFilterState = new AppListFilterState(
-                    parseAppType(savedInstanceState.getString(STATE_FILTER_APP_TYPE),
-                            savedInstanceState.getBoolean(STATE_FILTER_SHOW_SYSTEM, false)),
-                    savedInstanceState.getBoolean(
-                            STATE_FILTER_INJECTED_ONLY,
-                            false
-                    ),
-                    savedInstanceState.getBoolean(STATE_FILTER_DISABLED_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_TYPEFACE_ONLY, false),
-                    savedInstanceState.getBoolean(STATE_FILTER_HOOK_ONLY, false),
-                    parseSortOrder(savedInstanceState.getString(STATE_FILTER_SORT_ORDER)),
-                    savedInstanceState.getBoolean(STATE_FILTER_REVERSE, false)
-            );
-            initialWorkspaceMode = MainUiState.WorkspaceMode.fromName(
-                    savedInstanceState.getString(STATE_WORKSPACE_MODE)
-            );
-            initialRefreshingPages = decodeRefreshingPages(
-                    savedInstanceState.getIntArray(STATE_REFRESHING_PAGES)
-            );
-        }
+        skipNextImmediateServiceReload = restore.skipNextImmediateServiceReload;
         mainViewModel = new MainViewModel(
                 MainUiState.initial(
-                        initialQuery,
-                        initialTemplateQuery,
-                        initialFilterState,
-                        initialAppsSnapshot,
-                        initialRefreshingPages,
-                        initialWorkspaceMode
+                        restore.query,
+                        restore.templateQuery,
+                        restore.filterState,
+                        restore.appsSnapshot,
+                        restore.refreshingPages,
+                        restore.workspaceMode
                 )
         );
-        initializeWorkspaceSession(initialWorkspaceSessionState, initialTemplateQuery);
+        initializeWorkspaceSession(restore.workspaceSessionState, restore.templateQuery);
         ensureWorkspaceSession().restore(savedInstanceState);
         ComposeEditorScopeRequestCoordinator composeEditorScopeRequestCoordinator = new ComposeEditorScopeRequestCoordinator(
                 mainViewModel,
@@ -350,18 +282,12 @@ public final class MainActivity
         });
         // Workspace navigation is now rendered by the Compose shell in every
         // form factor, including the compact watch radial selector.
-        if (savedInstanceState != null) {
-            setCurrentAppListPage(
-                    AppListPage.fromPosition(
-                            savedInstanceState.getInt(STATE_CURRENT_PAGE, 0)
-                    ),
-                    false
-            );
-        } else if (retainedState != null) {
-            setCurrentAppListPage(
-                    AppListPage.fromPosition(retainedState.currentPage),
-                    false
-            );
+        AppListPage restoredPage = startupSession.restoreCurrentPage(
+                savedInstanceState,
+                retainedState
+        );
+        if (restoredPage != null) {
+            setCurrentAppListPage(restoredPage, false);
         }
 
         renderMainUiState(requireUiState());
@@ -371,15 +297,7 @@ public final class MainActivity
         // The service state callback is not guaranteed to fire on every Wear image.
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         requestAppsLoad();
-        if (retainedState != null && retainedState.editingPackageName != null) {
-            mainViewModel.restoreEditingSession(
-                    retainedState.editingPackageName,
-                    retainedState.editingDraft,
-                    retainedState.savedEditingDraft,
-                    retainedState.editingDestination,
-                    retainedState.prefillSnapshot,
-                    retainedState.prefillInvalidated
-            );
+        if (startupSession.restoreEditingSession(mainViewModel, retainedState)) {
             mainWorkspaceSession.restoreAppEditorForCurrentWorkspace();
         }
         mainWorkspaceSession.restoreWorkspaceEditorForCurrentConfiguration();
@@ -486,45 +404,10 @@ public final class MainActivity
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-        MainUiState state = requireUiState();
-        outState.putString(STATE_CURRENT_QUERY, state.appQuery);
-        outState.putString(STATE_TEMPLATE_QUERY, state.templateQuery);
-        outState.putString(STATE_WORKSPACE_MODE, state.workspaceMode.name());
-        outState.putBoolean(
-                STATE_FILTER_SHOW_SYSTEM,
-                state.filterState.showSystemApps()
-        );
-        outState.putBoolean(
-                STATE_FILTER_INJECTED_ONLY,
-                state.filterState.injectedOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_WIDTH_ONLY,
-                state.filterState.widthConfiguredOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_FONT_ONLY,
-                state.filterState.fontConfiguredOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_DISABLED_ONLY,
-                state.filterState.disabledOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_TYPEFACE_ONLY,
-                state.filterState.typefaceConfiguredOnly()
-        );
-        outState.putBoolean(
-                STATE_FILTER_HOOK_ONLY,
-                state.filterState.hookConfiguredOnly()
-        );
-        outState.putString(STATE_FILTER_APP_TYPE, state.filterState.appType().name());
-        outState.putString(STATE_FILTER_SORT_ORDER, state.filterState.sortOrder().name());
-        outState.putBoolean(STATE_FILTER_REVERSE, state.filterState.reverseOrder());
-        outState.putInt(STATE_CURRENT_PAGE, landCurrentPage.position());
-        outState.putIntArray(
-                STATE_REFRESHING_PAGES,
-                captureRefreshingPagePositions()
+        startupSession.saveInstanceState(
+                outState,
+                requireUiState(),
+                landCurrentPage.position()
         );
         ensureWorkspaceSession().saveState(outState);
     }
@@ -545,35 +428,12 @@ public final class MainActivity
 
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
-        MainUiState state = requireUiState();
-        List<AppListItem> snapshot = state.appsSnapshot();
-        int currentPage = landCurrentPage.position();
-        EditorDraft draft = editorDraftSession.captureAppConfigDraft();
-        if (draft == null && mainViewModel != null) {
-            draft = mainViewModel.getEditingDraft();
-        }
-        return new RetainedState(
-                snapshot,
-                state.appQuery,
-                state.templateQuery,
-                state.filterState,
-                state.workspaceMode,
-                currentPage,
+        return startupSession.retain(
+                requireUiState(),
+                landCurrentPage.position(),
                 appWorkspaceScrollStateStore.snapshot(),
-                captureRefreshingPagePositions(),
-                mainViewModel != null
-                        ? mainViewModel.getEditingPackageName()
-                        : null,
-                draft,
-                mainViewModel != null ? mainViewModel.getSavedEditingDraft() : null,
-                mainViewModel != null && mainViewModel.getEditorSession() != null
-                        ? mainViewModel.getEditorSession().prefillSnapshot
-                        : null,
-                mainViewModel != null && mainViewModel.getEditorSession() != null
-                        && mainViewModel.getEditorSession().prefillInvalidated,
-                mainViewModel != null
-                        ? mainViewModel.getEditingDestination()
-                        : ConfigEditorDestination.MAIN,
+                editorDraftSession.captureAppConfigDraft(),
+                mainViewModel,
                 ensureWorkspaceSession().retainedState(),
                 feedbackDiagnostic.retainedState(),
                 updateSession.getPendingUpdatePrompt()
@@ -583,29 +443,6 @@ public final class MainActivity
     private void onPageRefreshRequested(AppListPage page) {
         dispatchMainUiAction(MainUiAction.markPageRefreshing(page));
         installedAppsLoadSession.requestLoad(true);
-    }
-
-    private static Set<AppListPage> decodeRefreshingPages(int[] pagePositions) {
-        EnumSet<AppListPage> refreshingPages = EnumSet.noneOf(
-                AppListPage.class
-        );
-        if (pagePositions == null) {
-            return refreshingPages;
-        }
-        for (int pagePosition : pagePositions) {
-            refreshingPages.add(AppListPage.fromPosition(pagePosition));
-        }
-        return refreshingPages;
-    }
-
-    private int[] captureRefreshingPagePositions() {
-        Set<AppListPage> refreshingPages = requireUiState().refreshingPages();
-        int[] positions = new int[refreshingPages.size()];
-        int index = 0;
-        for (AppListPage page : refreshingPages) {
-            positions[index++] = page.position();
-        }
-        return positions;
     }
 
     public void setCurrentAppListPage(AppListPage page, boolean submit) {
@@ -754,28 +591,6 @@ public final class MainActivity
                 requireUiState().currentQuery()
         );
         return workspaceSession;
-    }
-
-    private static AppListFilterState.AppType parseAppType(String value, boolean legacyShowSystem) {
-        if (value != null) {
-            try {
-                return AppListFilterState.AppType.valueOf(value);
-            } catch (IllegalArgumentException ignored) {
-                // Fall through to the legacy boolean representation.
-            }
-        }
-        return legacyShowSystem ? AppListFilterState.AppType.ALL : AppListFilterState.AppType.USER;
-    }
-
-    private static AppListFilterState.SortOrder parseSortOrder(String value) {
-        if (value != null) {
-            try {
-                return AppListFilterState.SortOrder.valueOf(value);
-            } catch (IllegalArgumentException ignored) {
-                // Older saved state did not include ordering.
-            }
-        }
-        return AppListFilterState.SortOrder.NAME;
     }
 
     private void handleAppsLoadRequests(List<MainViewModel.AppsLoadRequest> requests) {
@@ -1107,118 +922,5 @@ public final class MainActivity
     public View currentEditorRoot() {
         return editorDraftSession.currentEditorRoot();
     }
-
-    private record RetainedState(List<AppListItem> appsSnapshot, String query, String templateQuery,
-                                 AppListFilterState filterState,
-                                 MainUiState.WorkspaceMode workspaceMode, int currentPage,
-                                 int[] appListScrollPositions, int[] refreshingPagePositions,
-                                 String editingPackageName, EditorDraft editingDraft,
-                                 EditorDraft savedEditingDraft,
-                                 EditorDraft prefillSnapshot,
-                                 boolean prefillInvalidated,
-                                 ConfigEditorDestination editingDestination,
-                                 TemplateWorkspaceActivitySession.State workspaceSessionState,
-                                 FeedbackDiagnosticActivitySession.State feedbackDiagnostic,
-                                 UpdatePromptRequest pendingUpdatePrompt) {
-
-            private RetainedState(
-                    List<AppListItem> appsSnapshot,
-                    String query,
-                    String templateQuery,
-                    AppListFilterState filterState,
-                    MainUiState.WorkspaceMode workspaceMode,
-                    int currentPage,
-                    int[] appListScrollPositions,
-                    int[] refreshingPagePositions,
-                    String editingPackageName,
-                    EditorDraft editingDraft,
-                    EditorDraft savedEditingDraft,
-                    EditorDraft prefillSnapshot,
-                    boolean prefillInvalidated,
-                    ConfigEditorDestination editingDestination,
-                    TemplateWorkspaceActivitySession.State workspaceSessionState,
-                    FeedbackDiagnosticActivitySession.State feedbackDiagnostic,
-                    UpdatePromptRequest pendingUpdatePrompt
-            ) {
-                this.appsSnapshot = appsSnapshot;
-                this.query = query != null ? query : "";
-                this.templateQuery = templateQuery != null ? templateQuery : "";
-                this.filterState
-                        = filterState != null
-                        ? filterState
-                        : AppListFilterState.defaultState();
-                this.workspaceMode
-                        = workspaceMode != null ? workspaceMode : MainUiState.WorkspaceMode.APP;
-                this.currentPage = currentPage;
-                this.appListScrollPositions = appListScrollPositions != null
-                        ? appListScrollPositions.clone()
-                        : new int[0];
-                this.refreshingPagePositions
-                        = refreshingPagePositions != null
-                        ? refreshingPagePositions.clone()
-                        : new int[0];
-                this.editingPackageName = editingPackageName;
-                this.editingDraft = editingDraft;
-                this.savedEditingDraft = savedEditingDraft;
-                this.prefillSnapshot = prefillSnapshot;
-                this.prefillInvalidated = prefillInvalidated;
-                this.editingDestination = editingDestination != null
-                        ? editingDestination
-                        : ConfigEditorDestination.MAIN;
-                this.workspaceSessionState = workspaceSessionState;
-                this.feedbackDiagnostic = feedbackDiagnostic;
-                this.pendingUpdatePrompt = pendingUpdatePrompt;
-            }
-
-            @Override
-            public boolean equals(Object object) {
-                if (this == object) {
-                    return true;
-                }
-                if (!(object instanceof RetainedState other)) {
-                    return false;
-                }
-                return currentPage == other.currentPage
-                        && java.util.Objects.equals(appsSnapshot, other.appsSnapshot)
-                        && java.util.Objects.equals(query, other.query)
-                        && java.util.Objects.equals(templateQuery, other.templateQuery)
-                        && java.util.Objects.equals(filterState, other.filterState)
-                        && workspaceMode == other.workspaceMode
-                        && java.util.Arrays.equals(appListScrollPositions, other.appListScrollPositions)
-                        && java.util.Arrays.equals(refreshingPagePositions, other.refreshingPagePositions)
-                        && java.util.Objects.equals(editingPackageName, other.editingPackageName)
-                        && java.util.Objects.equals(editingDraft, other.editingDraft)
-                        && java.util.Objects.equals(savedEditingDraft, other.savedEditingDraft)
-                        && java.util.Objects.equals(prefillSnapshot, other.prefillSnapshot)
-                        && prefillInvalidated == other.prefillInvalidated
-                        && editingDestination == other.editingDestination
-                        && java.util.Objects.equals(workspaceSessionState, other.workspaceSessionState)
-                        && java.util.Objects.equals(feedbackDiagnostic, other.feedbackDiagnostic)
-                        && java.util.Objects.equals(pendingUpdatePrompt, other.pendingUpdatePrompt);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = java.util.Objects.hash(
-                        appsSnapshot, query, templateQuery, filterState, workspaceMode, currentPage,
-                        editingPackageName, editingDraft, savedEditingDraft, prefillSnapshot,
-                        prefillInvalidated, editingDestination,
-                        workspaceSessionState, feedbackDiagnostic, pendingUpdatePrompt);
-                result = 31 * result + java.util.Arrays.hashCode(appListScrollPositions);
-                return 31 * result + java.util.Arrays.hashCode(refreshingPagePositions);
-            }
-
-            @Override
-            public String toString() {
-                return "RetainedState[appsSnapshot=" + appsSnapshot
-                        + ", query=" + query
-                        + ", templateQuery=" + templateQuery
-                        + ", currentPage=" + currentPage
-                        + ", appListScrollPositions="
-                        + java.util.Arrays.toString(appListScrollPositions)
-                        + ", refreshingPagePositions="
-                        + java.util.Arrays.toString(refreshingPagePositions) + "]";
-            }
-        }
 
 }
