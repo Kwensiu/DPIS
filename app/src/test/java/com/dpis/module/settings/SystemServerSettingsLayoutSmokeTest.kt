@@ -66,9 +66,31 @@ class SystemServerSettingsLayoutSmokeTest {
     @Test
     fun backupDialogsAndImportFlowUseSharedComposeAndRuntimePaths() {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
+        val backupHost = read("src/main/java/com/dpis/module/backup/presentation/ConfigBackupHost.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
-        source.assertContainsAll("showBackupActions(", "showInterfaceScale(", "SettingsComposeDialogs.showLanguage(", "launchImportBackupPicker()", "private fun showImportBackupConfirmDialog(uri: Uri?)", "pendingImportUri = uri", "confirmImportFromPresentation()", "importConfigBackup(uri)", "relaunchDpisTask()", "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()", "Intent(activity, MainActivity::class.java)", "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK", "finishAffinity()")
+        source.assertContainsAll(
+            "showBackupActions(",
+            "showInterfaceScale(",
+            "SettingsComposeDialogs.showLanguage(",
+            "backupHost.launchImportPicker()",
+            "backupHost.confirmPendingImport()",
+            "backupHost.pendingImportUri",
+            "relaunchDpisTask()",
+            "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()",
+            "Intent(activity, MainActivity::class.java)",
+            "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK",
+            "finishAffinity()",
+        )
+        backupHost.assertContainsAll(
+            "fun launchImportPicker()",
+            "pendingImportUri = uri",
+            "fun confirmPendingImport()",
+            "coordinator(store).export(uri)",
+            "coordinator(store).restore(uri)",
+            "ConfirmDialog.show(",
+            "R.string.config_backup_import_confirm_title",
+        )
         read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt").assertContainsAll(
             "R.string.config_backup_import_confirm_title",
             "R.string.system_safe_mode_disable_confirm_title",
