@@ -11,8 +11,6 @@ import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
-import com.dpis.module.process.presentation.ProcessActionHandler
-import com.dpis.module.process.presentation.ProcessActionConfirm
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.applist.AppWorkspace
 import com.dpis.module.config.DpisConfigStore
@@ -336,6 +334,9 @@ class MainActivitySourceSmokeTest {
         val iconSource = read("src/main/java/com/dpis/module/applist/presentation/InstalledAppIcon.kt")
         val workspaceSource = read("src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
 
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
         assertTrue(
             source.contains("installedAppCatalogCoordinator.loadInstalledApps(")
         )
@@ -343,7 +344,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"))
         assertTrue(coordinatorSource.contains("getInstalledApplications(0)"))
         assertFalse(coordinatorSource.contains("GET_META_DATA"))
-        assertTrue(source.contains("HyperOsNativeAppDetector.isNativeProxyCandidate("))
+        assertTrue(runtimeLaunch.contains("HyperOsNativeAppDetector.isNativeProxyCandidate("))
         assertTrue(iconSource.contains("produceState<Drawable?>"))
         assertTrue(iconSource.contains("InstalledAppIconCache.load"))
         assertTrue(workspaceSource.contains("rememberInstalledAppIcon(item.packageName, item.icon)"))
@@ -1095,14 +1096,20 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appConfigAndProcessActions_delegateToDedicatedHandlers() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
+        val runtimeShell = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchShell.kt"
+        )
 
-        assertTrue(source.contains(
-                "new ProcessActionHandler("))
-        assertTrue(source.contains("this::syncRuntimePropertiesForTargetLaunch"))
-        assertTrue(source.contains("new ProcessActionConfirm(this, this::composeShell)"))
+        assertTrue(source.contains("new RuntimeLaunchSession(new RuntimeLaunchShell(this))"))
+        assertTrue(runtimeLaunch.contains("ProcessActionHandler("))
+        assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(runtimeShell.contains("ProcessActionConfirm(activity, activity::composeShell)"))
         assertTrue(source.contains("new AppConfigSaveHandler()"))
         assertTrue(
-            source.contains("processActionHandler.execute(item, mappedAction)")
+            runtimeLaunch.contains("processActionHandler.execute(item, mappedAction)")
         )
         assertTrue(
             read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt")
@@ -1266,8 +1273,11 @@ class MainActivitySourceSmokeTest {
         assertFalse(
             saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         )
-        assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
-        assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
+        assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(runtimeLaunch.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
         assertTrue(host.contains("FontHookDomainRegistry.automaticCustomizableDomains()"))
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("))
         assertTrue(host.contains("FontHookDomainPresentation.forOverride("))
@@ -1427,12 +1437,14 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun hyperOsRestartPreparesNativeProxyBeforeProcessAction() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val source = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
         val methodStart = source.indexOf(
-            "private boolean shouldPrepareHyperOsNativeProxyForRestart"
+            "private fun shouldPrepareHyperOsNativeProxyForRestart"
         )
         val methodEnd = source.indexOf(
-            "private static boolean hasActiveStoredConfig",
+            "private fun executeDialogProcessActionAfterHyperOsProxyReady",
             methodStart
         )
         assertTrue(methodStart >= 0)
@@ -1442,19 +1454,20 @@ class MainActivitySourceSmokeTest {
         val landSession = read(
             "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
         )
+        val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         assertTrue(
             source.contains("executeDialogProcessActionAfterHyperOsProxyReady")
         )
         assertTrue(landSession.contains("AppConfigInputValidation.parseViewportTargetSpec("))
-        assertFalse(source.contains("ViewportTargetSpec.relativeScale(viewportValue * 10)"))
+        assertFalse(activity.contains("ViewportTargetSpec.relativeScale(viewportValue * 10)"))
         assertTrue(
             source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
         )
         assertTrue(
-            methodBody.contains("DpisConfigStore store = getHookConfigStore()")
+            methodBody.contains("val store = shell.hookConfigStore()")
         )
         assertTrue(
-            methodBody.contains("store.isTargetDpisEnabled(item.packageName)")
+            methodBody.contains("store.isTargetDpisEnabled(item!!.packageName)")
         )
         assertTrue(
             methodBody.contains(
@@ -1475,7 +1488,7 @@ class MainActivitySourceSmokeTest {
         assertFalse(methodBody.contains("FontApplyMode.isEnabled"))
         assertTrue(
             source.contains(
-                "executeHyperOsNativeProxyMount(item, true, success ->"
+                "executeHyperOsNativeProxyMount(item, true) { success ->"
             )
         )
         assertTrue(source.contains("if (success)"))

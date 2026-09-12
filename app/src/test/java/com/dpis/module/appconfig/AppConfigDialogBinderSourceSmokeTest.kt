@@ -575,13 +575,15 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun savingViewportConfigPublishesRuntimeViewportTarget() {
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
-        val mainSource = read("src/main/java/com/dpis/module/MainActivity.java")
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
 
         assertTrue(saveSource.contains(
                 "ViewportApplyMode.SYSTEM == ViewportApplyMode.normalize(viewportApplyMode)"))
-        assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
-        assertTrue(mainSource.contains("ViewportPropertySyncer.syncTarget(packageName, store)"))
-        assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("))
+        assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(runtimeLaunch.contains("ViewportPropertySyncer.syncTarget(packageName, store)"))
+        assertTrue(runtimeLaunch.contains("fun finalizeAppConfigSaveWithRuntimeSync("))
         assertTrue(saveSource.contains("ViewportDraftValue.invalid()"))
         assertFalse(saveSource.contains("INVALID_DRAFT"))
         assertFalse(saveSource.contains("Integer.MIN_VALUE"))
@@ -642,11 +644,13 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun savingFontConfigPublishesUnifiedFontRuntimeTarget() {
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
-        val mainSource = read("src/main/java/com/dpis/module/MainActivity.java")
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
 
-        assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
-        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
-        assertTrue(mainSource.contains("finalizeAppConfigSaveWithRuntimeSync("))
+        assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(runtimeLaunch.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
+        assertTrue(runtimeLaunch.contains("fun finalizeAppConfigSaveWithRuntimeSync("))
         assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync("))
         assertTrue(saveSource.contains(
                 "FontApplyMode.SYSTEM_EMULATION == FontApplyMode.normalize("))
@@ -655,10 +659,12 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun savingTypefaceConfigPublishesRuntimeTypefaceTarget() {
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
-        val mainSource = read("src/main/java/com/dpis/module/MainActivity.java")
+        val runtimeLaunch = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
 
-        assertTrue(mainSource.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
-        assertTrue(mainSource.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
+        assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
+        assertTrue(runtimeLaunch.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
         assertFalse(saveSource.contains("FontRuntimePropertySyncer.publishTypefaceTargetAsync("))
     }
 

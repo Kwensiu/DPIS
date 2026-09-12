@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.ComposeView;
 
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
-import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.appconfig.AppConfigSaveHandler;
 
@@ -33,8 +32,6 @@ import com.dpis.module.applist.InstalledAppCatalogCoordinator;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
-import com.dpis.module.fonts.HyperOsNativeAppDetector;
-import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
 
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
 
@@ -48,15 +45,13 @@ import com.dpis.module.home.HomeWorkspaceState;
 import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.home.ModeHelpActivity;
 
-import com.dpis.module.process.presentation.ProcessActionConfirm;
-import com.dpis.module.process.presentation.ProcessActionHandler;
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
-import com.dpis.module.quirks.WechatDpiEditor;
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
-import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
+import com.dpis.module.runtime.presentation.RuntimeLaunchSession;
+import com.dpis.module.runtime.presentation.RuntimeLaunchShell;
 
 import com.dpis.module.settings.presentation.ToolsWorkspace;
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
@@ -72,7 +67,6 @@ import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.presentation.MainUpdateSession;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportPropertySyncer;
-import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 
 
@@ -82,10 +76,8 @@ import com.google.android.material.textfield.TextInputLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import io.github.libxposed.service.XposedService;
 import kotlin.Unit;
@@ -157,11 +149,8 @@ public final class MainActivity
             = new MainUpdateSession(this, this::bindHomeWorkspaceIfVisible);
     private final WechatDpiHelp wechatDpiHelp
             = new WechatDpiHelp(this, this::composeShell);
-    private final ProcessActionHandler processActionHandler
-            = new ProcessActionHandler(
-                    this,
-                    this::syncRuntimePropertiesForTargetLaunch,
-                    new ProcessActionConfirm(this, this::composeShell));
+    private final RuntimeLaunchSession runtimeLaunchSession
+            = new RuntimeLaunchSession(new RuntimeLaunchShell(this));
     private final AppConfigSaveHandler appConfigSaveHandler
             = new AppConfigSaveHandler();
     private FeedbackDiagnosticActivitySession feedbackDiagnostic;
@@ -218,7 +207,6 @@ public final class MainActivity
     private MainUiState.WorkspaceMode renderedWorkspaceMode;
     private View activeEditorRoot;
     private String activeEditorPackageName;
-    private final Map<String, Integer> pendingRuntimePropertyGenerations = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1463,45 +1451,18 @@ public final class MainActivity
         }));
     }
 
-    private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi(
-            AppConfigSaveHandler.Result saveResult,
-            View configRoot,
-            String packageName,
-            boolean dpisEnabled,
-            DpisConfigStore store) {
-        if (saveResult == null) {
-            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
-        }
-        if (!saveResult.success) {
-            return saveResult;
-        }
-        if (!WechatDpiSheetBinder.save(configRoot, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                    WechatDpiSheetBinder.isInputValid(configRoot)
-                            ? R.string.system_settings_save_failed
-                            : R.string.status_save_invalid);
-        }
-        onRuntimeConfigSaved();
-        return saveResult;
-    }
-
     public AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
             AppConfigSaveHandler.Result saveResult,
             View configRoot,
             String packageName,
             boolean dpisEnabled,
             DpisConfigStore store) {
-        AppConfigSaveHandler.Result result = finalizeAppConfigSaveWithWechatDpi(
+        return runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
                 saveResult,
                 configRoot,
                 packageName,
                 dpisEnabled,
                 store);
-        if (!result.success) {
-            return result;
-        }
-        scheduleRuntimePropertiesForTargetLaunch(packageName);
-        return result;
     }
 
     public AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
@@ -1510,92 +1471,20 @@ public final class MainActivity
             String packageName,
             boolean dpisEnabled,
             DpisConfigStore store) {
-        if (saveResult == null) {
-            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed);
-        }
-        if (!saveResult.success) {
-            return saveResult;
-        }
-        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                    WechatDpiEditor.isInputValid(wechatDpiInput)
-                            ? R.string.system_settings_save_failed
-                            : R.string.status_save_invalid);
-        }
-        onRuntimeConfigSaved();
-        scheduleRuntimePropertiesForTargetLaunch(packageName);
-        return saveResult;
+        return runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
+                saveResult,
+                wechatDpiInput,
+                packageName,
+                dpisEnabled,
+                store);
     }
 
     public void onRuntimeConfigSaved() {
-        RuntimeConfigDelivery.publishLocalSnapshotAfterSave();
-        requestAppsLoad();
-    }
-
-    private void scheduleRuntimePropertiesForTargetLaunch(String packageName) {
-        if (packageName == null || packageName.isBlank()) {
-            return;
-        }
-        int generation;
-        synchronized (pendingRuntimePropertyGenerations) {
-            Integer currentGeneration = pendingRuntimePropertyGenerations.get(packageName);
-            generation = (currentGeneration != null ? currentGeneration : 0) + 1;
-            pendingRuntimePropertyGenerations.put(packageName, generation);
-        }
-        Thread syncThread = new Thread(
-                () -> syncRuntimePropertiesForTargetLaunch(packageName, generation),
-                "dpis-runtime-property-target-sync");
-        syncThread.setDaemon(true);
-        syncThread.start();
+        runtimeLaunchSession.onRuntimeConfigSaved();
     }
 
     public void syncRuntimePropertiesForTargetLaunch(String packageName) {
-        Integer generation;
-        synchronized (pendingRuntimePropertyGenerations) {
-            generation = pendingRuntimePropertyGenerations.get(packageName);
-        }
-        if (generation == null) {
-            return;
-        }
-        syncRuntimePropertiesForTargetLaunch(packageName, generation);
-    }
-
-    private void syncRuntimePropertiesForTargetLaunch(String packageName, int generation) {
-        DpisConfigStore store = getHookConfigStore();
-        ViewportPropertySyncer.syncTarget(packageName, store);
-        FontRuntimePropertySyncer.syncTarget(packageName, store);
-        synchronized (pendingRuntimePropertyGenerations) {
-            Integer currentGeneration = pendingRuntimePropertyGenerations.get(packageName);
-            if (currentGeneration != null && currentGeneration == generation) {
-                pendingRuntimePropertyGenerations.remove(packageName);
-            }
-        }
-    }
-
-    private String viewportScaleDraftFor(
-            AppListItem item,
-            ViewportTargetSpec activeSpec
-    ) {
-        if (activeSpec != null && activeSpec.isRelativeScale()) {
-            return AppConfigInputValidation.formatScaleMilliPercentInput(activeSpec.scaleMilliPercent());
-        }
-        if (item.viewportScaleMilliPercent != null) {
-            return AppConfigInputValidation.formatScaleMilliPercentInput(item.viewportScaleMilliPercent);
-        }
-        return "";
-    }
-
-    private String viewportAbsoluteDraftFor(
-            AppListItem item,
-            ViewportTargetSpec activeSpec
-    ) {
-        if (activeSpec != null && activeSpec.isAbsoluteDp()) {
-            return String.valueOf(activeSpec.absoluteWidthDp());
-        }
-        if (item.viewportWidthDp != null) {
-            return String.valueOf(item.viewportWidthDp);
-        }
-        return "";
+        runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName);
     }
 
     public void toggleLandDetailScope(
@@ -1676,127 +1565,23 @@ public final class MainActivity
             boolean apply,
             Runnable onFinished
     ) {
-        executeHyperOsNativeProxyMount(item, apply, ignored -> {
-            if (onFinished != null) {
-                onFinished.run();
-            }
-        });
-    }
-
-    private void executeHyperOsNativeProxyMount(
-            AppListItem item,
-            boolean apply,
-            HyperOsNativeProxyMountCallback onFinished
-    ) {
-        new Thread(() -> {
-            HyperOsNativeProxyBindMounter.MountPlan plan
-                    = HyperOsNativeProxyBindMounter.createPlan(
-                            this,
-                            item.packageName
-                    );
-            HyperOsNativeProxyBindMounter.MountResult result = apply
-                    ? HyperOsNativeProxyBindMounter.apply(plan)
-                    : HyperOsNativeProxyBindMounter.unmount(plan);
-            DpisLog.i(
-                    "HyperOS Native Proxy "
-                    + (apply ? "apply" : "rollback")
-                    + " package="
-                    + item.packageName
-                    + " success="
-                    + result.success()
-                    + " output="
-                    + result.output()
-            );
-            int messageResId = apply
-                    ? R.string.dialog_hyperos_native_proxy_apply_failed
-                    : R.string.dialog_hyperos_native_proxy_unmount_failed;
-            runOnUiThread(() -> {
-                if (!result.success()) {
-                    showToast(messageResId);
-                }
-                if (onFinished != null) {
-                    onFinished.onFinished(result.success());
-                }
-            });
-        }, "DPIS-HyperOsNativeProxyMount").start();
+        runtimeLaunchSession.executeHyperOsNativeProxyMount(item, apply, onFinished);
     }
 
     public void executeDialogProcessAction(
             AppListItem item,
             AppConfigDialogBinder.ProcessAction action
     ) {
-        if (action == AppConfigDialogBinder.ProcessAction.RESTART
-                && shouldPrepareHyperOsNativeProxyForRestart(item)) {
-            // Re-prepare before restart because APK updates can leave an old bind mount
-            // pointing at a deleted module native library.
-            executeHyperOsNativeProxyMount(item, true, success -> {
-                if (success) {
-                    executeDialogProcessActionAfterHyperOsProxyReady(
-                            item,
-                            action
-                    );
-                }
-            });
-            return;
-        }
-        executeDialogProcessActionAfterHyperOsProxyReady(item, action);
-    }
-
-    private boolean shouldPrepareHyperOsNativeProxyForRestart(
-            AppListItem item
-    ) {
-        if (!isHyperOsNativeProxyCandidate(item)) {
-            return false;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        return (store.isTargetDpisEnabled(item.packageName)
-                && hasActiveStoredConfig(store, item.packageName));
+        runtimeLaunchSession.executeDialogProcessAction(item, action);
     }
 
     /** The catalogue intentionally does not preload metadata for every installed package. */
     public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
-        return item != null && (item.hyperOsNativeProxyCandidate
-                || HyperOsNativeAppDetector.isNativeProxyCandidate(
-                        getPackageManager(), item.packageName));
-    }
-
-    private static boolean hasActiveStoredConfig(
-            DpisConfigStore store,
-            String packageName
-    ) {
-        ViewportTargetSpec viewportTargetSpec = store.getTargetViewportSpec(
-                packageName
-        );
-        Integer fontScalePercent = store.getTargetFontScalePercent(packageName);
-        return (viewportTargetSpec.isEnabled()
-                || fontScalePercent != null
-                || store.hasTargetAppSpecificConfig(packageName));
-    }
-
-    private void executeDialogProcessActionAfterHyperOsProxyReady(
-            AppListItem item,
-            AppConfigDialogBinder.ProcessAction action
-    ) {
-        ProcessActionHandler.Action mappedAction = switch (action) {
-            case START ->
-                ProcessActionHandler.Action.START;
-            case RESTART ->
-                ProcessActionHandler.Action.RESTART;
-            case STOP ->
-                ProcessActionHandler.Action.STOP;
-        };
-        if (item != null) {
-            processActionHandler.execute(item, mappedAction);
-        }
+        return runtimeLaunchSession.isHyperOsNativeProxyCandidate(item);
     }
 
     public boolean isSystemHookEnabledFromStore() {
         return cachedSystemHookEffectiveEnabled;
-    }
-
-    private interface HyperOsNativeProxyMountCallback {
-
-        void onFinished(boolean success);
     }
 
     public void refreshSystemHookEffectiveEnabled() {
