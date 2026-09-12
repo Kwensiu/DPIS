@@ -37,10 +37,9 @@ import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
 import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
-import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
+
 import com.dpis.module.home.DonateActivity;
 import com.dpis.module.home.HomeActivationStateResolver;
 
@@ -50,8 +49,7 @@ import com.dpis.module.home.HomeWorkspaceLayoutStore;
 import com.dpis.module.home.HomeWorkspaceState;
 import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.home.ModeHelpActivity;
-import com.dpis.module.hooks.HookDomainOverride;
-import com.dpis.module.hooks.HookDomainOverrideStore;
+
 import com.dpis.module.process.presentation.ProcessActionConfirm;
 import com.dpis.module.process.presentation.ProcessActionHandler;
 import com.dpis.module.quirks.presentation.WechatDpiHelp;
@@ -95,6 +93,7 @@ import io.github.libxposed.service.XposedService;
 import kotlin.Unit;
 import com.dpis.module.ui.presentation.MainComposeShellHost;
 import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
+import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
 import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
@@ -166,6 +165,12 @@ public final class MainActivity
     private FeedbackDiagnosticActivitySession feedbackDiagnostic;
     private final SystemScopeCoordinator systemScopeCoordinator
             = new SystemScopeCoordinator(createSystemScopeHost());
+    private final AppConfigDialogActivityHost appConfigDialogHost
+            = new AppConfigDialogActivityHost(
+                    this,
+                    appConfigSaveHandler,
+                    systemScopeCoordinator
+            );
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
             = new InstalledAppCatalogCoordinator(
                     createInstalledAppCatalogHost(),
@@ -1924,185 +1929,11 @@ public final class MainActivity
                 || item.packageName.isBlank()) {
             return;
         }
-        showFontHookDomains(item, state, onChanged);
+        appConfigDialogHost.showFontHookDomains(item, state, onChanged);
     }
 
     public AppConfigDialogBinder.Host createAppConfigDialogHost() {
-        return new AppConfigDialogBinder.Host() {
-            @Override
-            public void toggleScope(
-                    AppListItem item,
-                    boolean currentlyInScope,
-                    Runnable onTurnedInScope,
-                    Runnable onTurnedOutScope
-            ) {
-                systemScopeCoordinator.toggleScope(
-                        item.packageName,
-                        item.label,
-                        currentlyInScope,
-                        onTurnedInScope,
-                        onTurnedOutScope
-                );
-            }
-
-            @Override
-            public boolean requestScope(
-                    AppListItem item,
-                    Runnable onTurnedInScope,
-                    Runnable onRequestFinished
-            ) {
-                return systemScopeCoordinator.requestScope(
-                        item.packageName,
-                        item.label,
-                        onTurnedInScope,
-                        onRequestFinished,
-                        false
-                );
-            }
-
-            @Override
-            public void executeProcessAction(
-                    AppListItem item,
-                    AppConfigDialogBinder.ProcessAction action
-            ) {
-                executeDialogProcessAction(item, action);
-            }
-
-            @Override
-            public void applyHyperOsNativeProxy(
-                    AppListItem item,
-                    Runnable onFinished
-            ) {
-                executeHyperOsNativeProxyMount(item, true, onFinished);
-            }
-
-            @Override
-            public void unmountHyperOsNativeProxy(
-                    AppListItem item,
-                    Runnable onFinished
-            ) {
-                executeHyperOsNativeProxyMount(item, false, onFinished);
-            }
-
-            @Override
-            public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
-                return MainActivity.this.isHyperOsNativeProxyCandidate(item);
-            }
-
-            @Override
-            public boolean setDpisEnabled(String packageName, boolean enabled) {
-                return MainActivity.this.setDpisEnabled(packageName, enabled);
-            }
-
-            @Override
-            public void showFontHookDomains(
-                    AppListItem item,
-                    AppConfigDialogBinder.AppConfigDialogState state,
-                    Runnable onStateChanged
-            ) {
-                MainActivity.this.showFontHookDomains(
-                        item,
-                        state,
-                        onStateChanged
-                );
-            }
-
-            @Override
-            public String getFontHookDomainsButtonText(
-                    AppListItem item,
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                return MainActivity.this.getFontHookDomainsButtonText(
-                        item,
-                        state
-                );
-            }
-
-            @Override
-            public void openTypefaceLibrary() {
-                MainActivity.this.startActivity(
-                        new Intent(MainActivity.this, FontLibraryActivity.class)
-                );
-            }
-
-            @Override
-            public void startFeedbackDiagnostic(
-                    AppListItem item,
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                MainActivity.this.startFeedbackDiagnostic(item, state);
-            }
-
-            @Override
-            public AppConfigSaveHandler.Result saveAppConfig(
-                    View dialogView,
-                    AppListItem item,
-                    boolean dpisEnabled,
-                    TextInputEditText viewportInput,
-                    TextInputEditText fontScaleInput,
-                    String viewportMode,
-                    String viewportApplyMode,
-                    boolean viewportApplyModeResetRequested,
-                    String fontMode,
-                    String selectedTypefaceId,
-                    String draftFontHookDomainsRaw,
-                    boolean fontHookDomainsResetRequested,
-                    String viewportScaleInput,
-                    String viewportAbsoluteInput
-            ) {
-                refreshSystemHookEffectiveEnabled();
-                AppConfigSaveHandler.Result result = appConfigSaveHandler.save(
-                        item,
-                        viewportInput,
-                        fontScaleInput,
-                        viewportMode,
-                        viewportApplyMode,
-                        viewportApplyModeResetRequested,
-                        fontMode,
-                        selectedTypefaceId,
-                        draftFontHookDomainsRaw,
-                        fontHookDomainsResetRequested,
-                        viewportScaleInput,
-                        viewportAbsoluteInput,
-                        isSystemHookEnabledFromStore(),
-                        getHookConfigStore(),
-                        null
-                );
-                return finalizeAppConfigSaveWithRuntimeSync(
-                        result,
-                        dialogView,
-                        item.packageName,
-                        dpisEnabled,
-                        getHookConfigStore());
-            }
-
-            @Override
-            public DpisConfigStore getConfigStore() {
-                return MainActivity.this.getHookConfigStore();
-            }
-
-            @Override
-            public void requestAppsLoad() {
-                MainActivity.this.requestAppsLoad();
-            }
-
-            @Override
-            public void onRuntimeConfigSaved() {
-                MainActivity.this.onRuntimeConfigSaved();
-            }
-
-            @Override
-            public void onDraftStateChanged(
-                    AppConfigDialogBinder.AppConfigDialogState state
-            ) {
-                updateEditingDraft(state);
-            }
-
-            @Override
-            public void showToast(int messageResId) {
-                MainActivity.this.showToast(messageResId);
-            }
-        };
+        return appConfigDialogHost;
     }
 
     public void startFeedbackDiagnostic(
@@ -2259,146 +2090,24 @@ public final class MainActivity
         }
     }
 
-    private void showFontHookDomains(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onStateChanged
-    ) {
-        showFontHookDomains(item, state, onStateChanged, isFontHookDomainEditingEnabled());
-    }
-
-    private void showFontHookDomains(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onStateChanged,
-            boolean fontDomainsEditable
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        Set<String> automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains();
-        HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state);
-        FontHookDomainDialog.show(
-                this,
-                new FontHookDomainDialog.Host() {
-            @Override
-            public boolean saveCustom(
-                    String packageName,
-                    Set<String> selectedKnownDomains,
-                    Set<String> automaticKnownDomains,
-                    Set<String> unknownDomains
-            ) {
-                if (state != null) {
-                    state.draftFontHookDomainsRaw
-                            = HookDomainOverrideStore.rawValueForSelection(
-                                    selectedKnownDomains,
-                                    automaticKnownDomains,
-                                    unknownDomains
-                            );
-                    state.fontHookDomainsResetRequested
-                            = state.draftFontHookDomainsRaw == null;
-                }
-                if (onStateChanged != null) {
-                    onStateChanged.run();
-                }
-                return true;
-            }
-
-            @Override
-            public boolean restoreRecommended(String packageName) {
-                if (state != null) {
-                    state.draftFontHookDomainsRaw = null;
-                    state.fontHookDomainsResetRequested = true;
-                }
-                if (onStateChanged != null) {
-                    onStateChanged.run();
-                }
-                return true;
-            }
-
-            @Override
-            public boolean saveViewportApplyMode(
-                    String packageName,
-                    String mode
-            ) {
-                if (state != null) {
-                    state.viewportApplyMode = ViewportApplyMode.normalize(mode);
-                    state.viewportApplyModeResetRequested
-                            = ViewportApplyMode.OFF.equals(state.viewportApplyMode);
-                }
-                if (onStateChanged != null) {
-                    onStateChanged.run();
-                }
-                return true;
-            }
-        },
-                item.packageName,
-                automaticKnownDomains,
-                currentOverride,
-                state != null
-                        ? state.viewportApplyMode
-                        : store.getTargetViewportApplyMode(item.packageName),
-                fontDomainsEditable,
-                onStateChanged
-        );
-    }
-
-    private boolean isFontHookDomainEditingEnabled() {
+    public View currentEditorRoot() {
         View root = activeEditorRoot;
         if (root == null
                 && landDetailContent != null
                 && landDetailContent.getChildCount() > 0) {
             root = landDetailContent.getChildAt(0);
         }
-        if (root == null) {
-            return false;
-        }
-        return FontApplyMode.FIELD_REWRITE.equals(
-                AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)));
+        return root;
     }
 
     public String getFontHookDomainsButtonText(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
-        return FontHookDomainPresentation.forOverride(
-                resolveFontHookDomainsForDraft(item, state),
-                FontHookDomainRegistry.automaticCustomizableDomains())
-                .buttonText(this);
+        return appConfigDialogHost.fontHookDomainsButtonText(item, state);
     }
 
-    private HookDomainOverride resolveFontHookDomainsForDraft(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state
-    ) {
-        if (state != null && state.fontHookDomainsResetRequested) {
-            return HookDomainOverride.automatic();
-        }
-        if (state != null
-                && (state.previewFromGlobalPrefill
-                        || state.draftFontHookDomainsRaw != null)) {
-            return normalizedFontHookDomainsOverride(
-                    HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
-                    FontHookDomainRegistry.automaticCustomizableDomains());
-        }
-        return normalizedFontHookDomainsOverride(
-                new HookDomainOverrideStore(getHookConfigStore()).read(
-                        item != null ? item.packageName : null),
-                FontHookDomainRegistry.automaticCustomizableDomains());
-    }
-
-    private HookDomainOverride normalizedFontHookDomainsOverride(
-            HookDomainOverride override,
-            Set<String> automaticKnownDomains) {
-        return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
-                override,
-                automaticKnownDomains);
-    }
-
-    private void executeHyperOsNativeProxyMount(
+    public void executeHyperOsNativeProxyMount(
             AppListItem item,
             boolean apply,
             Runnable onFinished
@@ -2481,7 +2190,7 @@ public final class MainActivity
     }
 
     /** The catalogue intentionally does not preload metadata for every installed package. */
-    private boolean isHyperOsNativeProxyCandidate(AppListItem item) {
+    public boolean isHyperOsNativeProxyCandidate(AppListItem item) {
         return item != null && (item.hyperOsNativeProxyCandidate
                 || HyperOsNativeAppDetector.isNativeProxyCandidate(
                         getPackageManager(), item.packageName));
@@ -2526,7 +2235,7 @@ public final class MainActivity
         void onFinished(boolean success);
     }
 
-    private void refreshSystemHookEffectiveEnabled() {
+    public void refreshSystemHookEffectiveEnabled() {
         cachedSystemHookEffectiveEnabled
                 = SystemScopeCoordinator.resolveSystemHookEffectiveEnabled(
                         getHookConfigStore()

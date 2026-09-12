@@ -765,7 +765,10 @@ class MainActivitySourceSmokeTest {
         )
         assertFalse(source.contains("resetLandDetailConfig(editorItem)"))
         assertTrue(source.contains("appConfigSaveHandler.saveResolved("))
-        assertTrue(source.contains("updateEditingDraft(state)"))
+        val dialogHost = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+        )
+        assertTrue(dialogHost.contains("activity.updateEditingDraft(state)"))
         assertTrue(
             read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
                 .contains("fun onDraftStateChanged(")
@@ -1102,7 +1105,10 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("processActionHandler.execute(item, mappedAction)")
         )
-        assertTrue(source.contains("appConfigSaveHandler.save("))
+        assertTrue(
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt")
+                .contains("saveHandler.save(")
+        )
         assertTrue(
             source.contains(
                 "FontRuntimePropertySyncer.clearTargetAsync(packageName)"
@@ -1236,62 +1242,52 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appConfigHostWiresFontHookDomainEditor() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val host = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+        )
 
-        assertTrue(
-            source.contains("public void showFontHookDomains(")
-        )
-        assertTrue(
-            source.contains("AppConfigDialogBinder.AppConfigDialogState state,")
-        )
-        assertTrue(
-            compact(source).contains(
-                "MainActivity.this.showFontHookDomains( item, state, onStateChanged )"
-            )
-        )
-        assertTrue(
-            source.contains("public String getFontHookDomainsButtonText(")
-        )
-        assertTrue(
-            source.contains("AppConfigDialogBinder.AppConfigDialogState state")
-        )
-        assertTrue(
-            source.contains("MainActivity.this.getFontHookDomainsButtonText(")
-        )
-        assertTrue(source.contains("resolveFontHookDomainsForDraft(item, state)"))
-        assertTrue(source.contains("new HookDomainOverrideStore(getHookConfigStore()).read("))
-        assertTrue(source.contains("FontHookDomainDialog.show("))
-        assertTrue(source.contains("isFontHookDomainEditingEnabled()"))
-        assertTrue(source.contains("AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root))"))
-        assertTrue(source.contains("this,"))
+        assertTrue(source.contains("createAppConfigDialogHost()"))
+        assertTrue(source.contains("return appConfigDialogHost"))
+        assertTrue(source.contains("appConfigDialogHost.showFontHookDomains(item, state, onChanged)"))
+        assertTrue(source.contains("public String getFontHookDomainsButtonText("))
+        assertTrue(source.contains("appConfigDialogHost.fontHookDomainsButtonText(item, state)"))
+        assertTrue(host.contains("fun showFontHookDomains("))
+        assertTrue(host.contains("resolveFontHookDomainsForDraft(target, state)"))
+        assertTrue(host.contains("HookDomainOverrideStore(activity.hookConfigStore).read("))
+        assertTrue(host.contains("FontHookDomainDialog.show("))
+        assertTrue(host.contains("isFontHookDomainEditingEnabled()"))
+        assertTrue(host.contains("AppConfigDialogBinder.resolveFontMode(fontModeToggle(root))"))
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
         assertFalse(
             saveSource.contains("FontRuntimePropertySyncer.publishTargetAsync(")
         )
         assertTrue(source.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(source.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
-        assertTrue(source.contains("FontHookDomainRegistry.automaticCustomizableDomains()"))
+        assertTrue(host.contains("FontHookDomainRegistry.automaticCustomizableDomains()"))
         assertFalse(source.contains("AppProcessHookInstaller.resolveDebugFontOverrideForPackage("))
-        assertTrue(source.contains("FontHookDomainPresentation.forOverride("))
-        assertTrue(source.contains(".buttonText(this)"))
+        assertTrue(host.contains("FontHookDomainPresentation.forOverride("))
+        assertTrue(host.contains(".buttonText(activity)"))
         assertFalse(source.contains("item.fontScalePercent != null && item.fontScalePercent > 0"))
         assertFalse(source.contains("publishFontRuntimeTarget("))
     }
 
     @Test
     fun fontHookDomainEditorUsesDraftStateOnly() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val source = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+        )
         val methodStart = source.indexOf(
-            "private void showFontHookDomains("
+            "fun showFontHookDomains("
         )
         val methodEnd = source.indexOf(
-            "String getFontHookDomainsButtonText",
+            "override fun getFontHookDomainsButtonText(",
             methodStart
         )
         val method = source.substring(methodStart, methodEnd)
 
         assertTrue(
             compact(method).contains(
-                "HookDomainOverride currentOverride = resolveFontHookDomainsForDraft(item, state)"
+                "val currentOverride = resolveFontHookDomainsForDraft(target, state)"
             )
         )
         assertTrue(
@@ -1307,31 +1303,33 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(
             compact(method).contains(
-                "state != null ? state.viewportApplyMode : store.getTargetViewportApplyMode(item.packageName)"
+                "store.getTargetViewportApplyMode(target.packageName)"
             )
         )
         val compactMethod = compact(method)
         assertFalse(compactMethod.contains("saveCustomIfDifferentFromAutomatic("))
-        assertFalse(compactMethod.contains("restoreRecommended(packageName)"))
+        assertFalse(compactMethod.contains("store.restoreRecommended("))
         assertFalse(compactMethod.contains("store.setTargetViewportApplyMode("))
         assertFalse(compactMethod.contains("requestAppsLoad()"))
     }
 
     @Test
     fun fontHookDomainButtonTextUsesMutablePreviewStateFlag() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val source = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+        )
         val methodStart = source.indexOf(
-            "String getFontHookDomainsButtonText("
+            "override fun getFontHookDomainsButtonText("
         )
         val methodEnd = source.indexOf(
-            "private HookDomainOverride normalizedFontHookDomainsOverride(",
+            "override fun openTypefaceLibrary()",
             methodStart
         )
         val method = source.substring(methodStart, methodEnd)
 
         assertTrue(method.contains("FontHookDomainPresentation.forOverride("))
         assertTrue(source.contains("FontHookDomainPresentation"))
-        assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState state"))
+        assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState?"))
         assertFalse(method.contains("item.previewFromGlobalPrefill"))
     }
 
