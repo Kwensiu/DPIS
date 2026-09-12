@@ -6,7 +6,7 @@ plugins {
     jacoco
 }
 
-private val appVersionName = "2.1.0" // x-release-please-version
+private val appVersionName = "2.1.1" // x-release-please-version
 private val defaultNdkVersion = "28.2.13676358"
 private val defaultCmakeVersion = "3.22.1"
 
