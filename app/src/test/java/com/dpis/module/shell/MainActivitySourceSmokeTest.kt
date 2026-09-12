@@ -123,6 +123,8 @@ class MainActivitySourceSmokeTest {
         )
 
         assertTrue(source.contains("new ComposeEditorScopeRequestCoordinator("))
+        assertTrue(source.contains("new ComposeAppEditorShell(this)"))
+        assertFalse(gateway.contains("import com.dpis.module.MainActivity"))
         assertTrue(gateway.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
         assertTrue(coordinator.contains("mainViewModel.markEditingScopeSelected(packageName)"))
     }

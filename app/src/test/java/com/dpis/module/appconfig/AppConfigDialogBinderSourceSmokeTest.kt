@@ -130,7 +130,7 @@ class AppConfigDialogBinderSourceSmokeTest {
         val hostEnd = gateway.indexOf("override fun executeProcessAction", hostStart)
         val hostBlock = gateway.substring(hostStart, hostEnd)
         assertTrue(hostBlock.contains(
-                "if (!activity.setDpisEnabled(packageName, enabled))"))
+                "if (!shell.setDpisEnabled(packageName, enabled))"))
         assertTrue(hostBlock.contains("WechatDpiEditor.publishForDpisState("))
         assertTrue(editorController.contains("if (host.setDpisEnabled(enabled))"))
         assertTrue(editorController.contains("host.updateDraft(draft.withDpisEnabled(enabled))"))

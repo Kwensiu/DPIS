@@ -95,6 +95,7 @@ import com.dpis.module.ui.presentation.MainComposeShellHost;
 import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
+import com.dpis.module.appconfig.presentation.ComposeAppEditorShell;
 import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
@@ -306,7 +307,9 @@ public final class MainActivity
                 () -> showToast(R.string.save_scope_request_notice)
         );
         ComposeAppEditorActivityGateway composeAppEditorGateway = new ComposeAppEditorActivityGateway(
-                this,
+                new ComposeAppEditorShell(this),
+                appConfigDialogHost,
+                appConfigSaveHandler,
                 composeEditorScopeRequestCoordinator,
                 wechatDpiHelp
         );
@@ -1145,17 +1148,6 @@ public final class MainActivity
             EditorDraft draft
     ) {
         feedbackDiagnostic.showPreparation(item, draft);
-    }
-
-    public void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
-        if (!isHyperOsNativeProxyCandidate(item)) {
-            return;
-        }
-        if (shouldPrepareHyperOsNativeProxyForRestart(item)) {
-            executeHyperOsNativeProxyMount(item, true, success -> { });
-            return;
-        }
-        executeHyperOsNativeProxyMount(item, false, success -> { });
     }
 
     private void initializeWorkspaceSession(
