@@ -46,10 +46,11 @@ class StartupUpdateCheckCoordinator(
         readTimeoutMs
     )
 
-    fun maybeCheckForUpdatesOnStartup() = checkForUpdates(true)
-    fun checkForUpdatesNow() = checkForUpdates(true)
+    fun maybeCheckForUpdatesOnStartup() = checkForUpdates(ignoreGate = true, forceShow = false)
+    fun checkForUpdatesNow() = checkForUpdates(ignoreGate = true, forceShow = false)
+    fun checkForUpdates(forceShow: Boolean) = checkForUpdates(ignoreGate = true, forceShow = forceShow)
 
-    private fun checkForUpdates(ignoreGate: Boolean) {
+    private fun checkForUpdates(ignoreGate: Boolean, forceShow: Boolean) {
         if (!host.isActivityAlive()) return
         val state = host.buildUpdateCoordinatorState()
         val gate = updateCoordinator.evaluateStartupCheck(state, clock.currentTimeMillis())
@@ -80,7 +81,7 @@ class StartupUpdateCheckCoordinator(
                     host.getLocalVersionCode(),
                     host.getLocalVersionName()
                 )
-                if (!remoteNewer) {
+                if (!remoteNewer && !forceShow) {
                     host.runOnUiThread(Runnable { host.onStartupUpdateUpToDate() })
                 } else {
                     host.runOnUiThread(Runnable { host.onStartupUpdateAvailable(manifest) })

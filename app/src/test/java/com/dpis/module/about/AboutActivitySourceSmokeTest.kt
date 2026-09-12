@@ -29,7 +29,8 @@ class AboutActivitySourceSmokeTest {
         val manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java")
 
         source.assertContainsAll(
-            "UpdateManifestFetcher.fetch(",
+            "updateCheckCoordinator.checkForUpdates(forceShow)",
+            "StartupUpdateCheckCoordinator(",
             "updatePromptDialogCoordinator::showUpdateAvailableDialog",
             "updatePromptDialogCoordinator = UpdatePromptDialogCoordinator(",
             "UpdatePromptRequest.from(manifest)",
