@@ -158,7 +158,11 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"))
         assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"))
         assertTrue(workspaceCoordinator.contains("activity.startActivityForResult("))
-        assertTrue(mainActivity.contains("new InstalledAppCatalogCoordinator("))
+        val loadSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+        )
+        assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
+        assertTrue(targetsBinder.contains("InstalledAppCatalogCoordinator("))
         assertFalse(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"))
         assertTrue(routeState.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("))
         assertTrue(routeState.contains("QuickTemplateTargetSelectionContract.closeReasonFrom("))

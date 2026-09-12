@@ -3,9 +3,7 @@ package com.dpis.module;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Process;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -29,6 +27,9 @@ import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
+import com.dpis.module.applist.ScopeState;
+import com.dpis.module.applist.presentation.InstalledAppsLoadSession;
+import com.dpis.module.applist.presentation.InstalledAppsLoadShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
 import com.dpis.module.fonts.FontLibraryActivity;
 
@@ -71,7 +72,6 @@ import com.dpis.module.viewport.ViewportPropertySyncer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import io.github.libxposed.service.XposedService;
@@ -136,10 +136,6 @@ public final class MainActivity
     private static final String STATE_FILTER_REVERSE = "state.filter.reverse";
     private static final String STATE_REFRESHING_PAGES
             = "state.refreshing_pages";
-    private static final long INSTALLED_APP_CATALOG_TTL_MS = 60_000L;
-    private static final String XIAOMI_GET_INSTALLED_APPS_PERMISSION
-            = "com.android.permission.GET_INSTALLED_APPS";
-    private static final int REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022;
 
 
     private final MainUpdateSession updateSession
@@ -176,11 +172,8 @@ public final class MainActivity
                     new EditorDraftShell(this),
                     appConfigDialogHost
             );
-    private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
-            = new InstalledAppCatalogCoordinator(
-                    createInstalledAppCatalogHost(),
-                    INSTALLED_APP_CATALOG_TTL_MS
-            );
+    private final InstalledAppsLoadSession installedAppsLoadSession
+            = new InstalledAppsLoadSession(new InstalledAppsLoadShell(this));
     private AppListFilterStateStore appListFilterStateStore;
     private final AppWorkspaceScrollStateStore appWorkspaceScrollStateStore
             = new AppWorkspaceScrollStateStore();
@@ -203,9 +196,6 @@ public final class MainActivity
     private SettingsWorkspaceSession settingsWorkspaceSession;
     private boolean cachedSystemHookEffectiveEnabled;
     private boolean skipNextImmediateServiceReload;
-    private boolean installedAppsPermissionRequestInFlight;
-    private boolean pendingInstalledAppsLoadAfterPermission;
-    private boolean installedAppsPermissionRequestCompleted;
     private MainUiState.WorkspaceMode renderedWorkspaceMode;
 
     @Override
@@ -488,7 +478,7 @@ public final class MainActivity
         if (settingsWorkspaceSession != null) {
             settingsWorkspaceSession.onDestroy();
         }
-        installedAppCatalogCoordinator.shutdown();
+        installedAppsLoadSession.shutdown();
         super.onDestroy();
     }
 
@@ -586,16 +576,7 @@ public final class MainActivity
                 permissions,
                 grantResults
         );
-        if (requestCode != REQUEST_XIAOMI_GET_INSTALLED_APPS) {
-            return;
-        }
-        installedAppsPermissionRequestInFlight = false;
-        boolean shouldReload = pendingInstalledAppsLoadAfterPermission;
-        pendingInstalledAppsLoadAfterPermission = false;
-        installedAppsPermissionRequestCompleted = true;
-        if (shouldReload) {
-            dispatchMainUiAction(MainUiAction.requestAppsLoad(true));
-        }
+        installedAppsLoadSession.onRequestPermissionsResult(requestCode);
     }
 
     @Override
@@ -637,7 +618,7 @@ public final class MainActivity
 
     private void onPageRefreshRequested(AppListPage page) {
         dispatchMainUiAction(MainUiAction.markPageRefreshing(page));
-        requestAppsLoad(true);
+        installedAppsLoadSession.requestLoad(true);
     }
 
     private static Set<AppListPage> decodeRefreshingPages(int[] pagePositions) {
@@ -671,91 +652,17 @@ public final class MainActivity
     }
 
     public void requestAppsLoad() {
-        requestAppsLoad(false);
+        installedAppsLoadSession.requestLoad(false);
     }
 
-    private void requestAppsLoad(boolean forceInstalledAppCatalogReload) {
-        boolean permissionReady = ensureInstalledAppsPermissionBeforeLoad();
-        DpisLog.i("app list load permission gate: ready=" + permissionReady
-                + ", forceReload=" + forceInstalledAppCatalogReload);
-        if (!permissionReady) {
-            pendingInstalledAppsLoadAfterPermission = true;
-            return;
-        }
-        dispatchMainUiAction(
-                MainUiAction.requestAppsLoad(forceInstalledAppCatalogReload)
-        );
+    public void dispatchInstalledAppsLoad(boolean forceReload) {
+        dispatchMainUiAction(MainUiAction.requestAppsLoad(forceReload));
     }
 
-    private boolean ensureInstalledAppsPermissionBeforeLoad() {
-        boolean xiaomiPermissionDeclared = isXiaomiInstalledAppsPermissionDeclared();
-        DpisLog.i("installed apps permission state: sdk=" + Build.VERSION.SDK_INT
-                + ", requestCompleted=" + installedAppsPermissionRequestCompleted
-                + ", requestInFlight=" + installedAppsPermissionRequestInFlight
-                + ", xiaomiPermissionDeclared=" + xiaomiPermissionDeclared);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M
-                || installedAppsPermissionRequestCompleted
-                || !xiaomiPermissionDeclared) {
-            return true;
-        }
-        try {
-            int permissionState = checkPermission(
-                    XIAOMI_GET_INSTALLED_APPS_PERMISSION,
-                    Process.myPid(),
-                    Process.myUid()
-            );
-            DpisLog.i("installed apps permission check: granted="
-                    + (permissionState == PackageManager.PERMISSION_GRANTED));
-            if (permissionState == PackageManager.PERMISSION_GRANTED) {
-                return true;
-            }
-            if (!installedAppsPermissionRequestInFlight) {
-                installedAppsPermissionRequestInFlight = true;
-                DpisLog.i("installed apps permission request started");
-                requestPermissions(
-                        new String[]{XIAOMI_GET_INSTALLED_APPS_PERMISSION},
-                        REQUEST_XIAOMI_GET_INSTALLED_APPS
-                );
-            }
-            return false;
-        } catch (RuntimeException ignored) {
-            return true;
-        }
-    }
-
-    private boolean isXiaomiInstalledAppsPermissionDeclared() {
-        try {
-            getPackageManager().getPermissionInfo(
-                    XIAOMI_GET_INSTALLED_APPS_PERMISSION,
-                    0
-            );
-            return true;
-        } catch (PackageManager.NameNotFoundException
-                | RuntimeException ignored) {
-            return false;
-        }
-    }
-
-    private void startAppsLoad(MainViewModel.AppsLoadRequest request) {
-        int requestId = request.requestId;
-        boolean forceInstalledAppCatalogReload
-                = request.forceInstalledAppCatalogReload;
-        new Thread(() -> {
-            List<AppListItem> loaded = null;
-            try {
-                loaded = loadInstalledApps(forceInstalledAppCatalogReload);
-            } catch (Throwable throwable) {
-                DpisLog.e("list load failed", throwable);
-            }
-            List<AppListItem> finalLoaded = loaded;
-            DpisLog.i("app list load finished: requestId=" + requestId
-                    + ", loaded=" + (finalLoaded == null ? "null" : finalLoaded.size())
-                    + ", forceReload=" + forceInstalledAppCatalogReload);
-            runOnUiThread(() -> onAppsLoadFinished(requestId, finalLoaded));
-        }, "dpis-load-apps-" + requestId).start();
-    }
-
-    private void onAppsLoadFinished(int requestId, List<AppListItem> loaded) {
+    public void dispatchInstalledAppsLoadFinished(
+            int requestId,
+            List<AppListItem> loaded
+    ) {
         dispatchMainUiAction(MainUiAction.appsLoadFinished(requestId, loaded));
     }
 
@@ -796,32 +703,6 @@ public final class MainActivity
         );
         onRuntimeConfigSaved();
         return true;
-    }
-
-    private List<AppListItem> loadInstalledApps(boolean forceInstalledAppCatalogReload) {
-        ScopeState scopeState = loadScopeState();
-        return installedAppCatalogCoordinator.loadInstalledApps(
-                forceInstalledAppCatalogReload,
-                getHookConfigStore(),
-                scopeState.packages,
-                scopeState.known
-        );
-    }
-
-    private ScopeState loadScopeState() {
-        Set<String> scopePackages = new HashSet<>();
-        XposedService service = DpisApplication.getXposedService();
-        if (service == null) {
-            return new ScopeState(scopePackages, false);
-        }
-        try {
-            List<String> scope = service.getScope();
-            scopePackages.addAll(scope);
-            return new ScopeState(scopePackages, true);
-        } catch (RuntimeException ignored) {
-            scopePackages.clear();
-        }
-        return new ScopeState(scopePackages, false);
     }
 
     public MainUiState requireUiState() {
@@ -1254,7 +1135,7 @@ public final class MainActivity
             return;
         }
         for (MainViewModel.AppsLoadRequest request : requests) {
-            startAppsLoad(request);
+            installedAppsLoadSession.start(request);
         }
     }
 
@@ -1290,23 +1171,6 @@ public final class MainActivity
                 && requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
             bindHomeWorkspace();
         }
-    }
-
-    private InstalledAppCatalogCoordinator.Host createInstalledAppCatalogHost() {
-        return new InstalledAppCatalogCoordinator.Host() {
-            @NonNull
-            @Override
-            public PackageManager getPackageManager() {
-                return MainActivity.this.getPackageManager();
-            }
-
-            @NonNull
-            @Override
-            public String getSelfPackageName() {
-                return MainActivity.this.getPackageName();
-            }
-
-        };
     }
 
     private SystemScopeCoordinator.Host createSystemScopeHost() {
@@ -1352,7 +1216,7 @@ public final class MainActivity
         DpisConfigStore configStore = getHookConfigStore();
         int visibleConfiguredAppCount = countUserVisibleConfiguredPackages(
                 configStore,
-                loadScopeState()
+                installedAppsLoadSession.loadScopeState()
         );
         return new HomeWorkspaceState(
                 isActivatedForHome(),
@@ -1439,13 +1303,6 @@ public final class MainActivity
                 safeScopeState.known
         ).size();
     }
-
-    record ScopeState(Set<String> packages, boolean known) {
-            ScopeState(Set<String> packages, boolean known) {
-                this.packages = packages != null ? packages : Collections.emptySet();
-                this.known = known;
-            }
-        }
 
     private void maybeStartRootAccessProbe() {
         RootAccessProbe.refreshAsync(result -> runOnUiThread(() -> {

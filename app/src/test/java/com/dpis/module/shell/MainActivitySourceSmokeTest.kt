@@ -337,8 +337,11 @@ class MainActivitySourceSmokeTest {
         val runtimeLaunch = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
+        val loadSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+        )
         assertTrue(
-            source.contains("installedAppCatalogCoordinator.loadInstalledApps(")
+            loadSession.contains("catalogCoordinator.loadInstalledApps(")
         )
         assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate,"))
         assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"))
@@ -357,43 +360,45 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appLoad_requestsXiaomiInstalledAppsPermissionBeforeQueryingPackages() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val loadSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+        )
 
-        assertTrue(source.contains("XIAOMI_GET_INSTALLED_APPS_PERMISSION"))
+        assertTrue(loadSession.contains("XIAOMI_GET_INSTALLED_APPS_PERMISSION"))
         assertTrue(
-            source.contains("com.android.permission.GET_INSTALLED_APPS")
+            loadSession.contains("com.android.permission.GET_INSTALLED_APPS")
         )
-        assertTrue(source.contains("requestPermissions("))
-        assertTrue(source.contains("REQUEST_XIAOMI_GET_INSTALLED_APPS"))
+        assertTrue(loadSession.contains("activity.requestPermissions("))
+        assertTrue(loadSession.contains("REQUEST_XIAOMI_GET_INSTALLED_APPS"))
         assertTrue(source.contains("onRequestPermissionsResult("))
-        assertTrue(source.contains("installedAppsPermissionRequestCompleted"))
+        assertTrue(source.contains("installedAppsLoadSession.onRequestPermissionsResult(requestCode)"))
+        assertTrue(loadSession.contains("permissionRequestCompleted"))
         assertTrue(
-            source.contains("isXiaomiInstalledAppsPermissionDeclared()")
+            loadSession.contains("isXiaomiPermissionDeclared()")
         )
-        assertTrue(source.contains("getPermissionInfo("))
+        assertTrue(loadSession.contains("getPermissionInfo("))
         assertTrue(
-            source.contains(
-                "dispatchMainUiAction(MainUiAction.requestAppsLoad(true))"
-            )
+            loadSession.contains("shell.dispatchRequestAppsLoad(true)")
         )
-        val requestLoadStart = source.indexOf(
-            "private void requestAppsLoad(boolean forceInstalledAppCatalogReload)"
+        val requestLoadStart = loadSession.indexOf(
+            "fun requestLoad(forceInstalledAppCatalogReload: Boolean)"
         )
-        val requestLoadEnd = source.indexOf(
-            "private boolean ensureInstalledAppsPermissionBeforeLoad()",
+        val requestLoadEnd = loadSession.indexOf(
+            "fun onRequestPermissionsResult(requestCode: Int)",
             requestLoadStart
         )
         assertTrue(requestLoadStart >= 0)
         assertTrue(requestLoadEnd > requestLoadStart)
-        val requestLoadBody = source.substring(
+        val requestLoadBody = loadSession.substring(
             requestLoadStart,
             requestLoadEnd
         )
         assertTrue(
             compact(requestLoadBody).indexOf(
-                "ensureInstalledAppsPermissionBeforeLoad()"
+                "ensurePermissionBeforeLoad()"
             ) <
                 compact(requestLoadBody).indexOf(
-                    "dispatchMainUiAction("
+                    "shell.dispatchRequestAppsLoad("
                 )
         )
     }
@@ -663,7 +668,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(refreshEnd > refreshStart)
 
         val refreshBody = source.substring(refreshStart, refreshEnd)
-        assertTrue(refreshBody.contains("requestAppsLoad(true)"))
+        assertTrue(refreshBody.contains("installedAppsLoadSession.requestLoad(true)"))
     }
 
     @Test
@@ -676,8 +681,11 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
         )
 
-        assertTrue(source.contains("INSTALLED_APP_CATALOG_TTL_MS"))
-        assertTrue(source.contains("new InstalledAppCatalogCoordinator("))
+        val loadSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+        )
+        assertTrue(loadSession.contains("INSTALLED_APP_CATALOG_TTL_MS"))
+        assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
         assertTrue(coordinatorSource.contains("getInstalledAppCatalog("))
         assertTrue(
             viewModelSource.contains("forceInstalledAppCatalogReloadRequested")
@@ -1135,7 +1143,10 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
         )
 
-        assertTrue(source.contains("loadInstalledApps(forceInstalledAppCatalogReload)"))
+        val loadSession = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+        )
+        assertTrue(loadSession.contains("loadInstalledApps(forceInstalledAppCatalogReload)"))
         assertTrue(coordinatorSource.contains("val catalog = loadInstalledAppCatalog("))
         assertTrue(coordinatorSource.contains("applicationInfo.loadIcon(packageManager)"))
         assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo)"))
