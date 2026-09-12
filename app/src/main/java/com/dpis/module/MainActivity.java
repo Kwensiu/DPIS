@@ -15,7 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.compose.ui.platform.ComposeView;
-import androidx.core.view.ViewCompat;
+
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
@@ -68,7 +68,7 @@ import com.dpis.module.templates.TemplateWorkspacePresentationSource;
 import com.dpis.module.ui.TouchFeedbackBinder;
 import com.dpis.module.ui.WatchUiMode;
 import com.dpis.module.ui.WatchWorkspaceChromeBinder;
-import com.dpis.module.ui.WindowInsetsBinder;
+
 import com.dpis.module.tools.presentation.AppFilterComposeSheet;
 import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.presentation.MainUpdateSession;
@@ -77,7 +77,7 @@ import com.dpis.module.viewport.ViewportPropertySyncer;
 import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.button.MaterialButton;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -96,7 +96,8 @@ import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
 import com.dpis.module.appconfig.presentation.ComposeAppEditorShell;
-import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions;
+import com.dpis.module.appconfig.landdetail.LandAppDetailSession;
+import com.dpis.module.appconfig.landdetail.LandAppDetailShell;
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
 import com.dpis.module.applist.AppWorkspaceScrollStateStore;
 import com.dpis.module.applist.AppWorkspacePresentation;
@@ -171,6 +172,13 @@ public final class MainActivity
                     this,
                     appConfigSaveHandler,
                     systemScopeCoordinator
+            );
+    private final LandAppDetailSession landAppDetailSession
+            = new LandAppDetailSession(
+                    new LandAppDetailShell(this),
+                    appConfigSaveHandler,
+                    systemScopeCoordinator,
+                    appConfigDialogHost
             );
     private final InstalledAppCatalogCoordinator installedAppCatalogCoordinator
             = new InstalledAppCatalogCoordinator(
@@ -759,11 +767,6 @@ public final class MainActivity
         dispatchMainUiAction(MainUiAction.appsLoadFinished(requestId, loaded));
     }
 
-    private void applyLandDetailContentInsets(View detailView) {
-        View scrollView = detailView.findViewById(R.id.land_detail_scroll);
-        WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true);
-    }
-
     public void showToast(int messageResId) {
         showToast(getString(messageResId));
     }
@@ -1015,7 +1018,7 @@ public final class MainActivity
         for (AppListItem appItem : requireUiState().visibleItems(landCurrentPage)) {
             if (editingPackage.equals(appItem.packageName)) {
                 if (isLandscapeDetailMode()) {
-                    showEditDetailPane(appItem);
+                    landAppDetailSession.show(appItem);
                 } else {
                     showEditBottomSheet(appItem);
                 }
@@ -1332,8 +1335,7 @@ public final class MainActivity
             mainViewModel.setEditingPackageName(item.packageName);
         }
         activeEditorPackageName = item.packageName;
-        if (isLandscapeDetailMode()) {
-            showEditDetailPane(item);
+        if (isLandscapeDetailMode() && landAppDetailSession.show(item)) {
             return;
         }
         showEditBottomSheet(item);
@@ -1400,60 +1402,6 @@ public final class MainActivity
                 mainViewModel.clearEditingDraft();
             }
         });
-    }
-
-    private void showEditDetailPane(AppListItem item) {
-        if (landDetailContent == null) {
-            showEditBottomSheet(item);
-            return;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        AppListItem sheetItem = AppConfigPrefillPreview.resolveForEditor(this, item, store);
-        boolean systemHooksEnabled = isSystemHookEnabledFromStore();
-        View dialogView = LayoutInflater.from(this).inflate(
-                R.layout.view_land_app_detail,
-                landDetailContent,
-                false
-        );
-        applyLandDetailContentInsets(dialogView);
-        new LandAppDetailPaneBinder(
-                this,
-                new LandAppDetailActivityActions(this)
-        ).bind(dialogView, sheetItem, systemHooksEnabled);
-        landDetailContent.removeAllViews();
-        landDetailContent.addView(
-                dialogView,
-                new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                )
-        );
-        View scrollView = dialogView.findViewById(R.id.land_detail_scroll);
-        if (scrollView != null) {
-            ViewCompat.requestApplyInsets(scrollView);
-        }
-        setVisible(landDetailEmptyView, false);
-        setVisible(landDetailContent, true);
-        activeEditorRoot = dialogView;
-        activeEditorPackageName = item.packageName;
-        if (mainViewModel != null && mainViewModel.getEditingDraft() != null) {
-            EditorDraft draft = mainViewModel.getEditingDraft();
-            applyAppConfigDraft(dialogView, draft);
-            LandAppDetailPaneBinder.applyRetainedDraft(
-                    this,
-                    dialogView,
-                    sheetItem,
-                    draft.selectedTypefaceId,
-                    draft.draftFontHookDomainsRaw,
-                    draft.viewportApplyMode,
-                    draft.fontHookDomainsResetRequested,
-                    draft.viewportApplyModeResetRequested
-            );
-            WechatDpiSheetBinder.applyDraft(
-                    dialogView,
-                    draft.wechatDpiInput
-            );
-        }
     }
 
     private void bindHomeWorkspace() {
@@ -1567,168 +1515,6 @@ public final class MainActivity
                 bindHomeWorkspace();
             }
         }));
-    }
-
-    public void saveAppConfigDraft(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Integer viewportValue,
-            String viewportTargetType,
-            Integer fontPercent,
-            String fontMode,
-            String selectedTypefaceId,
-            String draftFontHookDomainsRaw,
-            String viewportApplyMode,
-            boolean viewportApplyModeResetRequested,
-            boolean fontHookDomainsResetRequested,
-            String viewportScaleInput,
-            String viewportAbsoluteInput,
-            boolean dpisEnabled,
-            View root,
-            MaterialButton saveButton
-    ) {
-        saveAppConfigDraftInternal(
-                item,
-                state,
-                viewportValue,
-                viewportTargetType,
-                fontPercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                viewportApplyMode,
-                viewportApplyModeResetRequested,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput,
-                dpisEnabled,
-                root,
-                saveButton
-        );
-    }
-
-    private boolean saveAppConfigDraftInternal(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Integer viewportValue,
-            String viewportTargetType,
-            Integer fontPercent,
-            String fontMode,
-            String selectedTypefaceId,
-            String draftFontHookDomainsRaw,
-            String viewportApplyMode,
-            boolean viewportApplyModeResetRequested,
-            boolean fontHookDomainsResetRequested,
-            String viewportScaleInput,
-            String viewportAbsoluteInput,
-            boolean dpisEnabled,
-            View root,
-            MaterialButton saveButton
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return false;
-        }
-        DpisConfigStore store = getHookConfigStore();
-        String normalizedViewportTargetType = ViewportTargetType.normalize(viewportTargetType);
-        String rawViewportInput = ViewportTargetType.ABSOLUTE_DP.equals(normalizedViewportTargetType)
-                ? viewportAbsoluteInput
-                : viewportScaleInput;
-        ViewportTargetSpec spec = AppConfigInputValidation.parseViewportTargetSpec(
-                rawViewportInput,
-                normalizedViewportTargetType
-        );
-        AppConfigSaveHandler.Result result = saveLandDetailResolvedConfig(
-                item,
-                spec,
-                viewportTargetType,
-                viewportApplyMode,
-                fontPercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                viewportApplyModeResetRequested,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput
-        );
-        result = finalizeAppConfigSaveWithRuntimeSync(
-                result,
-                root,
-                item.packageName,
-                dpisEnabled,
-                store
-        );
-        if (result.messageResId != 0) {
-            showToast(result.messageResId);
-        }
-        if (!result.success) {
-            return false;
-        }
-        AppConfigDialogBinder.showSaveButtonFeedback(saveButton);
-        LandAppDetailPaneBinder.markDraftSaved(root, saveButton);
-        requestLandDetailScopeAfterSuccessfulSave(item, state);
-        return true;
-    }
-
-    private void requestLandDetailScopeAfterSuccessfulSave(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state
-    ) {
-        if (item == null
-                || state == null
-                || !state.scopeKnown
-                || state.scopeSelected
-                || state.scopeRequestPending) {
-            return;
-        }
-        state.scopeRequestPending = true;
-        boolean requestStarted = systemScopeCoordinator.requestScope(
-                item.packageName,
-                item.label,
-                () -> state.scopeSelected = true,
-                () -> state.scopeRequestPending = false,
-                false
-        );
-        if (requestStarted) {
-            showToast(R.string.save_scope_request_notice);
-            return;
-        }
-        state.scopeRequestPending = false;
-    }
-
-    public AppConfigSaveHandler.Result saveLandDetailResolvedConfig(
-            AppListItem item,
-            ViewportTargetSpec viewportTargetSpec,
-            String viewportTargetType,
-            String viewportApplyMode,
-            Integer fontScalePercent,
-            String fontMode,
-            String selectedTypefaceId,
-            String draftFontHookDomainsRaw,
-            boolean viewportApplyModeResetRequested,
-            boolean fontHookDomainsResetRequested,
-            String viewportScaleInput,
-            String viewportAbsoluteInput
-    ) {
-        return appConfigSaveHandler.saveResolved(
-                item,
-                viewportTargetSpec,
-                viewportTargetType,
-                viewportApplyMode,
-                viewportApplyModeResetRequested,
-                fontScalePercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput,
-                isSystemHookEnabledFromStore(),
-                getHookConfigStore(),
-                null
-        );
     }
 
     private AppConfigSaveHandler.Result finalizeAppConfigSaveWithWechatDpi(
@@ -1872,56 +1658,12 @@ public final class MainActivity
             Runnable onTurnedInScope,
             Runnable onTurnedOutScope
     ) {
-        if (item == null || !item.scopeKnown) {
-            return;
-        }
-        systemScopeCoordinator.toggleScope(
-                item.packageName,
-                item.label,
+        landAppDetailSession.toggleScope(
+                item,
                 currentlyInScope,
-                () -> {
-                    if (onTurnedInScope != null) {
-                        onTurnedInScope.run();
-                    }
-                    requestAppsLoad();
-                },
-                () -> {
-                    if (onTurnedOutScope != null) {
-                        onTurnedOutScope.run();
-                    }
-                    requestAppsLoad();
-                }
+                onTurnedInScope,
+                onTurnedOutScope
         );
-    }
-
-    public void showLandDetailTypefaceSelector(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onChanged
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return;
-        }
-        MaterialButton selectorAnchor = new MaterialButton(this);
-        new AppConfigDialogBinder(
-                this,
-                createAppConfigDialogHost()
-        ).showTypefaceSelector(selectorAnchor, state, onChanged);
-    }
-
-    public void showLandDetailHookDomains(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            Runnable onChanged
-    ) {
-        if (item == null
-                || item.packageName == null
-                || item.packageName.isBlank()) {
-            return;
-        }
-        appConfigDialogHost.showFontHookDomains(item, state, onChanged);
     }
 
     public AppConfigDialogBinder.Host createAppConfigDialogHost() {
@@ -1950,7 +1692,7 @@ public final class MainActivity
             return saveDialogConfigForDiagnostic(item, root);
         }
         if (LandAppDetailPaneBinder.stateFor(root) != null) {
-            return saveLandDetailConfigForDiagnostic(item, state, root);
+            return landAppDetailSession.saveForDiagnostic(item, state, root);
         }
         return item;
     }
@@ -2007,68 +1749,12 @@ public final class MainActivity
         return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName));
     }
 
-    private AppListItem saveLandDetailConfigForDiagnostic(
-            AppListItem item,
-            AppConfigDialogBinder.AppConfigDialogState state,
-            View root
-    ) {
-        if (!WechatDpiSheetBinder.isInputValid(root)) {
-            showToast(R.string.status_save_invalid);
-            return null;
-        }
-        TextInputEditText viewportInput = findEditorInput(
-                root,
-                R.id.land_detail_viewport_input,
-                R.id.dialog_viewport_input
-        );
-        TextInputEditText fontInput = findEditorInput(
-                root,
-                R.id.land_detail_font_scale_input,
-                R.id.dialog_font_scale_input
-        );
-        boolean saved = saveAppConfigDraftInternal(
-                item,
-                state,
-                parseEditorPercentOrNull(viewportInput),
-                AppConfigDialogBinder.resolveViewportMode(findViewportModeToggle(root)),
-                parseEditorPercentOrNull(fontInput),
-                AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)),
-                state != null ? state.selectedTypefaceId : null,
-                state != null ? state.draftFontHookDomainsRaw : null,
-                state != null ? state.viewportApplyMode : ViewportApplyMode.OFF,
-                state != null && state.viewportApplyModeResetRequested,
-                state != null && state.fontHookDomainsResetRequested,
-                state != null ? state.viewportScaleInput : "",
-                state != null ? state.viewportAbsoluteInput : "",
-                state != null && state.dpisEnabled,
-                root,
-                root.findViewById(R.id.land_detail_save_button)
-        );
-        return saved ? item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName))
-                : null;
-    }
-
     private Integer readPersistedWechatDpiForDiagnostic(String packageName) {
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null;
         }
         DpisConfigStore store = getHookConfigStore();
         return store != null ? store.getWechatDpi(packageName) : null;
-    }
-
-    private static Integer parseEditorPercentOrNull(TextInputEditText input) {
-        if (input == null || input.getText() == null) {
-            return null;
-        }
-        String raw = input.getText().toString().trim();
-        if (raw.isEmpty()) {
-            return null;
-        }
-        try {
-            return Integer.parseInt(raw);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
     }
 
     public String resolvePackageVersionName(String packageName) {
@@ -2238,6 +1924,23 @@ public final class MainActivity
         return DpisApplication.getActiveHookConfigStore(this);
     }
 
+    public FrameLayout landDetailContent() {
+        return landDetailContent;
+    }
+
+    public View landDetailEmptyView() {
+        return landDetailEmptyView;
+    }
+
+    public EditorDraft currentEditingDraft() {
+        return mainViewModel != null ? mainViewModel.getEditingDraft() : null;
+    }
+
+    public void rememberActiveEditor(View root, String packageName) {
+        activeEditorRoot = root;
+        activeEditorPackageName = packageName;
+    }
+
     private EditorDraft captureAppConfigDraft() {
         View root = activeEditorRoot;
         String packageName = activeEditorPackageName;
@@ -2350,7 +2053,7 @@ public final class MainActivity
         mainViewModel.setEditingDraft(draft);
     }
 
-    private void applyAppConfigDraft(View root, EditorDraft draft) {
+    public void applyAppConfigDraft(View root, EditorDraft draft) {
         if (draft == null || root == null) {
             return;
         }

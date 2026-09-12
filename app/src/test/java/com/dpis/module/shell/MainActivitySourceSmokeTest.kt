@@ -10,7 +10,6 @@ import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
-import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.process.presentation.ProcessActionConfirm
@@ -99,17 +98,19 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun landDetailSaveRequestsScopeAfterSuccessfulSave() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val landSession = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
+        )
         val binder = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
 
         assertTrue(binder.contains("fun saveDraft("))
         assertTrue(binder.contains("state: AppConfigDialogState?"))
-        assertTrue(source.contains("requestLandDetailScopeAfterSuccessfulSave(item, state)"))
-        assertTrue(source.contains("!state.scopeKnown"))
-        assertTrue(source.contains("state.scopeSelected"))
-        assertTrue(source.contains("state.scopeRequestPending"))
-        assertTrue(source.contains("systemScopeCoordinator.requestScope("))
-        assertTrue(source.contains("showToast(R.string.save_scope_request_notice)"))
+        assertTrue(landSession.contains("requestScopeAfterSuccessfulSave(item, state)"))
+        assertTrue(landSession.contains("!state.scopeKnown"))
+        assertTrue(landSession.contains("state.scopeSelected"))
+        assertTrue(landSession.contains("state.scopeRequestPending"))
+        assertTrue(landSession.contains("scopeCoordinator.requestScope("))
+        assertTrue(landSession.contains("shell.showToast(R.string.save_scope_request_notice)"))
     }
 
     @Test
@@ -272,7 +273,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("private void restoreAppEditorForCurrentWorkspace()"))
         assertTrue(source.contains("requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
         assertTrue(source.contains("showEditBottomSheet(appItem)"))
-        assertTrue(source.contains("showEditDetailPane(appItem)"))
+        assertTrue(source.contains("landAppDetailSession.show(appItem)"))
         assertTrue(source.contains("private BottomSheetDialog activeAppEditorDialog"))
         assertTrue(source.contains("activeAppEditorDialog != null && activeAppEditorDialog.isShowing()"))
         assertTrue(source.contains("if (activeAppEditorDialog != null && activeAppEditorDialog.isShowing())"))
@@ -719,10 +720,19 @@ class MainActivitySourceSmokeTest {
     @Test
     fun showEditDialog_usesSheetCoordinatorInPortraitAndDetailPaneInLandscape() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val landSession = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
+        )
 
-        assertTrue(source.contains("AppConfigPrefillPreview.resolveForEditor(this, item, store)"))
+        assertTrue(
+            source.contains("AppConfigPrefillPreview.resolveForEditor(this, item, store)")
+                || landSession.contains(
+                    "AppConfigPrefillPreview.resolveForEditor(activity, item, store)",
+                )
+        )
         assertTrue(
             source.contains("dialogView, sheetItem, systemHooksEnabled")
+                || landSession.contains("dialogView, sheetItem, systemHooksEnabled")
         )
         assertTrue(
             source.contains(
@@ -740,52 +750,36 @@ class MainActivitySourceSmokeTest {
                             "new AppConfigDialogCoordinator(this).show("
                     )
         )
-        assertTrue(
-            source.contains("private void showEditDetailPane(")
-        )
-        assertTrue(source.contains("R.layout.view_land_app_detail"))
-        assertTrue(source.contains("new LandAppDetailPaneBinder("))
-        assertTrue(
-            source.contains(
-                "saveAppConfigDraft("
-            )
-        )
-        assertTrue(source.contains("void saveAppConfigDraft("))
+        assertTrue(source.contains("landAppDetailSession.show(item)"))
+        assertTrue(landSession.contains("R.layout.view_land_app_detail"))
+        assertTrue(landSession.contains("LandAppDetailPaneBinder(activity, this)"))
+        assertTrue(landSession.contains("fun saveDraft("))
         assertTrue(source.contains("state,"))
+        assertTrue(landSession.contains("override fun showTypefaceSelector("))
         assertTrue(
-            source.contains("showLandDetailTypefaceSelector(")
+            landSession.contains("dialogHost.showFontHookDomains(item, state, onChanged)")
         )
-        val landActions = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
-        assertTrue(
-            landActions.contains("activity.showLandDetailHookDomains(item, state, onChanged)")
-        )
-        assertTrue(landActions.contains("activity.toggleLandDetailScope("))
+        assertTrue(landSession.contains("override fun toggleScope("))
         assertTrue(
             source.contains(
                 "public boolean setDpisEnabled(String packageName, boolean enabled)"
             )
         )
         assertFalse(source.contains("resetLandDetailConfig(editorItem)"))
-        assertTrue(source.contains("appConfigSaveHandler.saveResolved("))
+        assertTrue(landSession.contains("saveHandler.saveResolved("))
         val dialogHost = read(
             "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
         )
         assertTrue(dialogHost.contains("activity.updateEditingDraft(state)"))
-        assertTrue(
-            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
-                .contains("fun onDraftStateChanged(")
-        )
+        assertTrue(landSession.contains("fun onDraftStateChanged("))
         assertTrue(source.contains("if (draft == null && mainViewModel != null)"))
         assertTrue(
             read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
                 .contains("AppConfigDialogState.fromItem(item)")
         )
-        assertTrue(
-            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
-                .contains("activity.executeDialogProcessAction(item, action)")
-        )
-        assertTrue(compact(source).contains("landDetailContent.addView( dialogView"))
-        assertTrue(source.contains("ViewGroup.LayoutParams.MATCH_PARENT"))
+        assertTrue(landSession.contains("shell.executeProcessAction(item, action)"))
+        assertTrue(compact(landSession).contains("landDetailContent.addView( dialogView"))
+        assertTrue(landSession.contains("ViewGroup.LayoutParams.MATCH_PARENT"))
         assertFalse(source.contains("createLandDetailContentLayoutParams()"))
         assertFalse(
             source.contains(
@@ -1079,20 +1073,22 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun landscapeDetailInsetsAreAppliedToScrollableContent() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val methodStart = source.indexOf("private void applyLandDetailContentInsets")
-        val methodEnd = source.indexOf("private void showToast", methodStart)
+        val landSession = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
+        )
+        val methodStart = landSession.indexOf("private fun applyContentInsets")
+        val methodEnd = landSession.indexOf("private fun readPersistedWechatDpiForDiagnostic", methodStart)
 
         assertTrue(methodStart >= 0)
         assertTrue(methodEnd > methodStart)
-        val methodBody = source.substring(methodStart, methodEnd)
-        assertTrue(methodBody.contains("detailView.findViewById(R.id.land_detail_scroll)"))
+        val methodBody = landSession.substring(methodStart, methodEnd)
+        assertTrue(methodBody.contains("detailView.findViewById<View>(R.id.land_detail_scroll)"))
         assertTrue(methodBody.contains(
                 "WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true)"
         ))
         assertFalse(methodBody.contains("ViewCompat.requestApplyInsets(scrollView)"))
-        assertTrue(source.contains("applyLandDetailContentInsets(dialogView)"))
-        assertTrue(source.contains("ViewCompat.requestApplyInsets(scrollView)"))
+        assertTrue(landSession.contains("applyContentInsets(dialogView)"))
+        assertTrue(landSession.contains("ViewCompat.requestApplyInsets(scrollView)"))
     }
 
     @Test
@@ -1150,7 +1146,10 @@ class MainActivitySourceSmokeTest {
                 "new SystemScopeCoordinator(createSystemScopeHost())"
             )
         )
-        assertTrue(source.contains("systemScopeCoordinator.toggleScope("))
+        val landSession = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
+        )
+        assertTrue(landSession.contains("scopeCoordinator.toggleScope("))
         assertTrue(
             source.contains(
                 "SystemScopeCoordinator.resolveSystemHookEffectiveEnabled("
@@ -1248,9 +1247,12 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
         )
 
+        val landSession = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
+        )
         assertTrue(source.contains("createAppConfigDialogHost()"))
         assertTrue(source.contains("return appConfigDialogHost"))
-        assertTrue(source.contains("appConfigDialogHost.showFontHookDomains(item, state, onChanged)"))
+        assertTrue(landSession.contains("dialogHost.showFontHookDomains(item, state, onChanged)"))
         assertTrue(source.contains("public String getFontHookDomainsButtonText("))
         assertTrue(source.contains("appConfigDialogHost.fontHookDomainsButtonText(item, state)"))
         assertTrue(host.contains("fun showFontHookDomains("))
@@ -1436,10 +1438,13 @@ class MainActivitySourceSmokeTest {
         assertTrue(methodEnd > methodStart)
         val methodBody = source.substring(methodStart, methodEnd)
 
+        val landSession = read(
+            "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt",
+        )
         assertTrue(
             source.contains("executeDialogProcessActionAfterHyperOsProxyReady")
         )
-        assertTrue(source.contains("AppConfigInputValidation.parseViewportTargetSpec("))
+        assertTrue(landSession.contains("AppConfigInputValidation.parseViewportTargetSpec("))
         assertFalse(source.contains("ViewportTargetSpec.relativeScale(viewportValue * 10)"))
         assertTrue(
             source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
