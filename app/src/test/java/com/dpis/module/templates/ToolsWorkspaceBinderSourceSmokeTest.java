@@ -13,7 +13,7 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
     @Test
     public void mainActivityWiresToolsWorkspaceBinderLifecycle() throws IOException {
         String source = read("src/main/java/com/dpis/module/MainActivity.java");
-        String workspace = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt");
+        String workspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt");
 
         assertTrue(source.contains("private ToolsWorkspace toolsWorkspace;"));
         assertTrue(source.contains("toolsWorkspace = new ToolsWorkspace("));
@@ -31,13 +31,13 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
 
     @Test
     public void toolsWorkspaceBinderOwnsSystemFontScaleToolBinder() throws IOException {
-        String source = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.kt");
 
-        assertTrue(source.contains("private SystemFontScaleToolBinder fontScaleToolBinder;"));
+        assertTrue(source.contains("private var fontScaleToolBinder: SystemFontScaleToolBinder? = null"));
         assertTrue(source.contains(
-                "fontScaleToolBinder = new SystemFontScaleToolBinder(host.activity(), workspaceView, host);"));
-        assertTrue(source.contains("fontScaleToolBinder.refreshFromSystem();"));
-        assertTrue(source.contains("fontScaleToolBinder.collapseAndRefreshFromSystem();"));
+                "fontScaleToolBinder = SystemFontScaleToolBinder(host.activity(), workspaceView, host)"));
+        assertTrue(source.contains("fontScaleToolBinder?.refreshFromSystem()"));
+        assertTrue(source.contains("fontScaleToolBinder?.collapseAndRefreshFromSystem()"));
     }
 
     @Test
