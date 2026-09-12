@@ -18,12 +18,12 @@ import com.dpis.module.updates.ReleaseNotesCacheStore
 import com.dpis.module.updates.ReleaseNotesController
 import com.dpis.module.updates.StartupUpdateDownloadExecutor
 import com.dpis.module.updates.StartupUpdateManifest
-import com.dpis.module.updates.StartupUpdatePackageHandler
+import com.dpis.module.updates.presentation.StartupUpdatePackageHandler
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
 import com.dpis.module.updates.UpdateCoordinator
 import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
 import com.dpis.module.updates.UpdateManifestFetcher
-import com.dpis.module.updates.UpdatePromptDialogCoordinator
+import com.dpis.module.updates.presentation.UpdatePromptDialogCoordinator
 import com.dpis.module.updates.UpdatePromptRequest
 import java.io.File
 import java.util.concurrent.ExecutorService

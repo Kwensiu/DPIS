@@ -10,7 +10,7 @@ import com.dpis.module.updates.presentation.UpdateAvailableDialog
 class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test
     fun coordinatorUsesRootOwnedDisclaimerAndSharedUpdatePrompt() {
-        val source = read("src/main/java/com/dpis/module/updates/UpdatePromptDialogCoordinator.kt")
+        val source = read("src/main/java/com/dpis/module/updates/presentation/UpdatePromptDialogCoordinator.kt")
         val dialogSource = read("src/main/java/com/dpis/module/updates/presentation/UpdateAvailableDialog.kt")
         val rendererSource = read("src/main/java/com/dpis/module/updates/ReleaseNotesMarkdownRenderer.kt")
         val markwonPluginSource = read("src/main/java/com/dpis/module/updates/presentation/ReleaseNotesMarkwonPlugin.kt")
@@ -56,7 +56,7 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("host.applyLargeDialogWidth(dialogHandle.dialog)"))
         assertFalse(source.contains("DialogWindowSizer"))
         assertTrue(source.contains("dialogHandle.setCancel("))
-        assertTrue(source.contains("if (host.isDownloadInProgress())"))
+        assertTrue(source.contains("UpdatePromptPolicy.cancelStopsDownload(host.isDownloadInProgress())"))
         val cancelStart = source.indexOf("dialogHandle.setCancel(")
         val cancelEnd = source.indexOf("        )", cancelStart)
         assertTrue(cancelStart >= 0)
@@ -66,7 +66,7 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertTrue(source.contains("startStartupUpdateDownload("))
         assertTrue(source.contains("request: UpdatePromptRequest"))
         assertTrue(source.contains("host.onUpdatePromptDismissed()"))
-        assertTrue(source.contains("!activity.isChangingConfigurations"))
+        assertTrue(source.contains("UpdatePromptPolicy.shouldCancelDownloadOnDismiss("))
         assertTrue(source.contains("private val releaseNotesController: ReleaseNotesController"))
         assertTrue(source.contains("releaseNotesController.load("))
         assertTrue(source.contains("dialogHandle.isShowing()"))

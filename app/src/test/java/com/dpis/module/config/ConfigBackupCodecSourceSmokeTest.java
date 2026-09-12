@@ -64,7 +64,7 @@ public class ConfigBackupCodecSourceSmokeTest {
         String codec = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.kt");
         assertTrue(codec.contains("decodeDocument"));
         assertTrue(codec.contains("MAX_JSON_CHARS"));
-        assertTrue(read("src/main/java/com/dpis/module/backup/ConfigBackupCoordinator.kt")
+        assertTrue(read("src/main/java/com/dpis/module/backup/ConfigBackupRestorePolicy.kt")
                 .contains("normalizeLegacyResolutionKeys"));
         assertTrue(read("src/main/java/com/dpis/module/backup/BackupModels.kt")
                 .contains("BackupMetadata"));

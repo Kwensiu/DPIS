@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.net.Uri
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.templates.QuickTemplateStore
-import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
@@ -46,7 +45,7 @@ class ConfigBackupCoordinator(
     fun restore(uri: Uri?): Result {
         if (uri == null) return Result.failure(Code.INVALID_FILE)
         val payload = try {
-            resolver.openInputStream(uri)?.use(::readLimited)
+            resolver.openInputStream(uri)?.use(ConfigBackupRestorePolicy::readLimited)
                 ?: return Result.failure(Code.IO_ERROR)
         } catch (error: IOException) {
             return Result.failure(Code.IO_ERROR, error)
@@ -58,72 +57,21 @@ class ConfigBackupCoordinator(
         } catch (error: Exception) {
             return Result.failure(Code.INVALID_FILE, error)
         }
-        if (incoming.keys.any { !BackupKeyPolicy.isImportable(it) }) {
+        if (ConfigBackupRestorePolicy.hasUnknownKeys(incoming)) {
             return Result.failure(Code.INVALID_FILE, IllegalArgumentException("Unknown backup key"))
         }
-        normalizeLegacyTargetPackages(incoming)
+        ConfigBackupRestorePolicy.normalizeIncoming(incoming)
         val snapshot = configStore.snapshotBackup().entries
             .mapNotNull { (key, value) -> key?.let { it to value } }
             .toMap(LinkedHashMap<String, Any?>())
             .also { templateStore.copyToBackup(it) }
-        val configEntries = incoming.filterKeys { !it.startsWith("template.") }.toMutableMap()
+        val configEntries = ConfigBackupRestorePolicy.configEntries(incoming)
         if (!configStore.replaceBackup(configEntries)) return Result.failure(Code.RESTORE_ERROR)
         if (!QuickTemplateStore.containsTemplateEntries(incoming) || templateStore.restoreFromBackup(incoming)) {
             return Result.success()
         }
-        val rolledConfig = configStore.replaceBackup(snapshot.filterKeys { !it.startsWith("template.") }.toMutableMap())
+        val rolledConfig = configStore.replaceBackup(ConfigBackupRestorePolicy.configEntries(snapshot))
         val rolledTemplates = templateStore.restoreFromBackup(snapshot)
         return Result.failure(if (rolledConfig && rolledTemplates) Code.RESTORE_ERROR else Code.ROLLBACK_ERROR)
-    }
-
-    private fun readLimited(input: java.io.InputStream): String {
-        val output = ByteArrayOutputStream()
-        val buffer = ByteArray(8192)
-        var total = 0
-        while (true) {
-            val count = input.read(buffer)
-            if (count < 0) break
-            total += count
-            if (total > MAX_BACKUP_BYTES) throw IOException("Backup exceeds size limit")
-            output.write(buffer, 0, count)
-        }
-        return output.toString(StandardCharsets.UTF_8.name())
-    }
-
-    private fun normalizeLegacyTargetPackages(entries: MutableMap<String, Any?>) {
-        normalizeLegacyResolutionKeys(entries)
-        if (entries.keys.any { it.startsWith("package_config.") }) {
-            entries.remove("target_packages")
-            return
-        }
-        val values = entries["target_packages"] as? Set<*> ?: return
-        val valid = values.filterIsInstance<String>()
-            .filter { it.matches(Regex("[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+")) }
-            .toCollection(LinkedHashSet())
-        if (valid.isEmpty()) entries.remove("target_packages") else entries["target_packages"] = valid
-    }
-
-    private fun normalizeLegacyResolutionKeys(entries: MutableMap<String, Any?>) {
-        val migrated = LinkedHashMap<String, Any?>()
-        entries.forEach { (key, value) ->
-            val marker = "package_config."
-            val resolution = ".resolution."
-            val start = key.indexOf(resolution, marker.length)
-            if (key.startsWith(marker) && start > marker.length) {
-                val packageName = key.substring(marker.length, start)
-                val field = key.substring(start + resolution.length)
-                if (packageName.isNotEmpty() && field.isNotEmpty()) {
-                    migrated["resolution.$packageName.$field"] = value
-                    return@forEach
-                }
-            }
-            migrated[key] = value
-        }
-        entries.clear()
-        entries.putAll(migrated)
-    }
-
-    companion object {
-        const val MAX_BACKUP_BYTES = 4 * 1024 * 1024
     }
 }
