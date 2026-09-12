@@ -2,7 +2,7 @@ package com.dpis.module.templates;
 
 import com.dpis.module.config.PackageConfigRepository;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.fonts.FontApplyMode;
 

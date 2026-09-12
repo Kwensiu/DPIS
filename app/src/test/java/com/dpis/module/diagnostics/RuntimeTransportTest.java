@@ -13,6 +13,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 public final class RuntimeTransportTest {
     @Before

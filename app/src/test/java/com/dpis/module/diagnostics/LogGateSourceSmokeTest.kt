@@ -3,12 +3,13 @@ package com.dpis.module.diagnostics
 import com.dpis.module.SourceSmokeTestPaths
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.runtime.ConfigStoreFactory
 
 /** Locks the log gate to the same active preference store as the Settings page. */
 class LogGateSourceSmokeTest {
     @Test
     fun diagnosticGateUsesActiveUiConfigStore() {
-        val factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
+        val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
         val gate = read("src/main/java/com/dpis/module/diagnostics/presentation/LogGate.kt")
 
         assertTrue(factory.contains("DpisApplication.getActiveHookConfigStore(context)"))

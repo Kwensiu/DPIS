@@ -7,6 +7,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import com.dpis.module.diagnostics.DpisLog;
 
 /**
  * Behavior tests for the {@code FontDebugStatsReporter} hot-path entry gates.

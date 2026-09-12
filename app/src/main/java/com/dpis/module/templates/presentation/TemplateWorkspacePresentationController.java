@@ -1,9 +1,12 @@
-package com.dpis.module.templates;
+package com.dpis.module.templates.presentation;
 
 import android.content.Context;
 
+import com.dpis.module.templates.TemplateEditorDraft;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
+import com.dpis.module.ui.ConfigEditorDestination;
 
 /** Owns template-list refresh timing so Compose never reads template stores during recomposition. */
 public final class TemplateWorkspacePresentationController {
@@ -35,7 +38,7 @@ public final class TemplateWorkspacePresentationController {
             String query,
             TemplateWorkspacePresentation.DetailKind nextDetailKind,
             String nextDetailTemplateId,
-            com.dpis.module.ConfigEditorDestination editorDestination,
+            com.dpis.module.ui.ConfigEditorDestination editorDestination,
             TemplateEditorDraft globalPrefillDraft,
             TemplateEditorDraft quickTemplateDraft,
             TemplateWorkspacePresentation.ApplyConfirmation applyConfirmation

@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.service.quicksettings.TileService;
 
-import com.dpis.module.QuickConfigActivity;
+import com.dpis.module.quickconfig.QuickConfigActivity;
 import com.dpis.module.applist.ForegroundPackageResolver;
 
 public class QuickConfigTileService extends TileService {

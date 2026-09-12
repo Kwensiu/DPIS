@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller;
 
 import org.junit.Test;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 public final class TypefaceOverrideHookInstallerTest {
     @Test

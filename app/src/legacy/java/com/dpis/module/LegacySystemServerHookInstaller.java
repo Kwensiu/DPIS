@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import com.dpis.module.diagnostics.DpisLog;
 
 final class LegacySystemServerHookInstaller {
     private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;

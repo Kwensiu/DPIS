@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.fonts.device.FontDebugLogcatBridge;
+import com.dpis.module.config.DpisConfigStore;
 
 public class FontDebugStatsProviderSourceSmokeTest {
     @Test
@@ -74,7 +76,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
     @Test
     public void settingsExposeSafeCacheCleanup() throws IOException {
         String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
-        String source = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
 
         assertTrue(layout.contains("android:id=\"@+id/row_clear_cache\""));
         assertTrue(layout.indexOf("android:id=\"@+id/row_language\"")

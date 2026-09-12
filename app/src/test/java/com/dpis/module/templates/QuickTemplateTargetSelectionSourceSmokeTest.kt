@@ -21,8 +21,8 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         val activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.kt")
         val contract = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java")
-        val targetsBinder = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsBinder.kt")
-        val routeState = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val targetsBinder = read("src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsBinder.kt")
+        val routeState = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val filterState = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetFilterState.kt")
         val catalogLoader = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetCatalogLoader.kt")
         val presentation = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetsPresentationController.java")
@@ -38,7 +38,7 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         val composeHost = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetActivityContent.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
-        val binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt")
+        val binder = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceBinder.kt")
 
         assertTrue(manifest.contains("android:name=\".templates.QuickTemplateTargetSelectionActivity\""))
         assertTrue(manifest.contains("android:exported=\"false\""))
@@ -146,7 +146,7 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(itemLayout.contains("@dimen/template_target_icon_size"))
         assertTrue(itemLayout.contains("?attr/textAppearanceTitleSmall"))
         assertTrue(itemLayout.contains("@string/quick_template_targets_configured_badge"))
-        val workspaceCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val workspaceCoordinator = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         assertTrue(workspaceCoordinator.contains("openQuickTemplateTargets(templateId)"))
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(selection.templateId)"))
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"))

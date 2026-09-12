@@ -2,7 +2,7 @@ package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.config.ModulePackagePlan;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.runtime.font.DebugFontOverride;
 
@@ -38,6 +38,8 @@ import com.dpis.module.runtime.DebugPackageOverride;
 import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.runtime.ConfigStoreFactory;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class AppProcessHookInstaller {
     private static final String PROP_FORCE_FLUTTER_SETTINGS_PACKAGE =

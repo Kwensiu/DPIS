@@ -91,14 +91,7 @@ public final class TemplateTypefaceResolverTest {
 
     private static TemplateTypefaceResolver.ImportedTypefaceProvider importedProvider(
             FontLibraryStore store) {
-        return typefaceId -> {
-            FontLibraryEntry imported = store.findById(typefaceId);
-            if (imported != null && store.resolveFontFile(typefaceId) != null) {
-                return TemplateConfigSummaryFormatter.TypefaceStatus.resolved(
-                        typefaceId, imported.displayName);
-            }
-            return TemplateConfigSummaryFormatter.TypefaceStatus.missing(typefaceId);
-        };
+        return TemplateTypefaceResolver.importedFrom(store);
     }
 
     private static final class FakeSystemTypefaceProvider

@@ -1,5 +1,6 @@
-package com.dpis.module
+package com.dpis.module.appconfig.editor
 
+import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.EditorDraft
@@ -12,7 +13,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
  * Persists a Compose editor draft and performs only the post-save effects belonging to that
  * surface. Legacy land-detail continues to call its existing save entry point.
  */
-internal class ComposeAppEditorSaveWorkflow(private val host: Host) {
+class ComposeAppEditorSaveWorkflow(private val host: Host) {
     interface Host {
         fun saveResolvedConfig(
             item: AppListItem,

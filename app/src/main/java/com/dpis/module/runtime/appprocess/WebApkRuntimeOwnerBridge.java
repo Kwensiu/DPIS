@@ -2,7 +2,7 @@ package com.dpis.module.runtime.appprocess;
 
 import com.dpis.module.config.RuntimePropertyConfigPreferences;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.*;
 import com.dpis.module.viewport.DensityOverride;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class WebApkRuntimeOwnerBridge {
     public static final String CHROME_PACKAGE = "com.android.chrome";

@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import com.dpis.module.config.DpisConfigStore;
 
 public class WebApkRuntimeOwnerBridgeTest {
     private static final String OWNER = "org.chromium.webapk.ac19cf34f94565db5_v2";

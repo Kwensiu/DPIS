@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import com.dpis.module.config.DpisConfigStore;
 
 public class QuickTemplateApplyCoordinatorTest {
     @Test

@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import com.dpis.module.diagnostics.device.LsposedLogReader;
+import com.dpis.module.diagnostics.LogActivity;
 
 public final class DpisLogParserTest {
     @Test
@@ -19,7 +21,7 @@ public final class DpisLogParserTest {
                 "[ 2026-06-19T03:06:29.817     1000:  3460:  6224 I/LSPosedFramework ] "
                         + "(system)[io.github.chimio.inxlocker,InstallerRedirect,id,0,1] "
                         + "ActivityStarter.execute: Processing intent Intent { xflg=0x4 "
-                        + "cmp=io.github.kwensiu.dpis/com.dpis.module.LogActivity }",
+                        + "cmp=io.github.kwensiu.dpis/com.dpis.module.diagnostics.LogActivity }",
                 "[ 2026-06-19T03:06:29.817     1000:  3460:  6224 D/LSPosedFramework ] "
                         + "(system)[io.github.chimio.inxlocker,IntentAnalyzer,id,0,1] "
                         + "Intent data: null",
@@ -46,7 +48,7 @@ public final class DpisLogParserTest {
                         + "DPIS system_server config miss: entry=config-dispatch",
                 "[ 2026-06-19T03:06:30.817     1000:  3460:  6224 I/LSPosedFramework ] "
                         + "(system)[io.github.chimio.inxlocker,InstallerRedirect,id,0,1] "
-                        + "ActivityStarter.execute: cmp=io.github.kwensiu.dpis/com.dpis.module.LogActivity",
+                        + "ActivityStarter.execute: cmp=io.github.kwensiu.dpis/com.dpis.module.diagnostics.LogActivity",
                 "[ 2026-06-19T03:06:31.817     1000:  3460:  6224 I/LSPosedFramework ] "
                         + "(system)[io.github.chimio.inxlocker,IntentAnalyzer,id,0,1] "
                         + "package: null");
@@ -133,7 +135,7 @@ public final class DpisLogParserTest {
     @Test
     public void lsposedReaderUsesDirectCurrentLogFiles() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/diagnostics/LsposedLogReader.kt");
+                "src/main/java/com/dpis/module/diagnostics/device/LsposedLogReader.kt");
 
         assertTrue(source.contains("for file in /data/adb/lspd/log/modules_*.log"));
         assertTrue(source.contains("for file in /data/adb/lspd/log/verbose_*.log"));

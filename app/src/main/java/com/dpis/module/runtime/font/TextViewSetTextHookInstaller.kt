@@ -3,7 +3,7 @@ package com.dpis.module.runtime.font
 import android.widget.TextView
 import android.widget.TextView.BufferType
 import android.text.Spanned
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.fonts.FontDebugStatsReporter
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan

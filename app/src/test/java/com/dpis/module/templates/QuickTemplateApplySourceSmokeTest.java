@@ -6,13 +6,14 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.config.DpisConfigStore;
 
 public class QuickTemplateApplySourceSmokeTest {
     @Test
     public void templateWorkspaceCoordinatorOwnsApplyConfirmationAndResultCopy() throws IOException {
         String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
-        String workspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt");
-        String binder = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceBinder.kt");
+        String workspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt");
+        String binder = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceBinder.kt");
         String coordinator = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateApplyCoordinator.kt");
         String adapters = read("src/main/java/com/dpis/module/templates/QuickTemplateApplyAdapters.java");

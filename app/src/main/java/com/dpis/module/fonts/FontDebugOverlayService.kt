@@ -20,9 +20,9 @@ import android.view.View.OnTouchListener
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
-import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
 import java.util.Locale
@@ -32,6 +32,7 @@ import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import com.dpis.module.fonts.device.FontDebugLogcatBridge
 
 class FontDebugOverlayService : Service() {
     private val handler = Handler(Looper.getMainLooper())

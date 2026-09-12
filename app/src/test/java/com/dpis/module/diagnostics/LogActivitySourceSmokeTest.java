@@ -6,12 +6,15 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.diagnostics.presentation.LogGate;
+import com.dpis.module.diagnostics.device.LsposedLogReader;
+import com.dpis.module.diagnostics.LogActivity;
 
 public final class LogActivitySourceSmokeTest {
     @Test
     public void logPageUsesVirtualizedListForLargeLsposedLogs() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/LogActivity.java");
+                "src/main/java/com/dpis/module/diagnostics/LogActivity.java");
         String content = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/diagnostics/presentation/LogContent.kt");
 
@@ -42,7 +45,7 @@ public final class LogActivitySourceSmokeTest {
     @Test
     public void messageExpansionStateUsesEntryKeys() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/LogActivity.java");
+                "src/main/java/com/dpis/module/diagnostics/LogActivity.java");
 
         assertTrue(source.contains("boolean expanded = !expandedEntryKeys.contains(key);"));
         assertFalse(source.contains("boolean expanded = messageView.getMaxLines() == 2;"));
@@ -51,7 +54,7 @@ public final class LogActivitySourceSmokeTest {
     @Test
     public void lsposedLogsUseSharedRootProbeBeforeReadingFiles() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/LogActivity.java");
+                "src/main/java/com/dpis/module/diagnostics/LogActivity.java");
         String application = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/DpisApplication.kt");
 
@@ -73,7 +76,7 @@ public final class LogActivitySourceSmokeTest {
     @Test
     public void autoRefreshReadsLsposedOnlyWhenLsposedPageIsSelected() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/LogActivity.java");
+                "src/main/java/com/dpis/module/diagnostics/LogActivity.java");
         int autoRefreshStart = source.indexOf("private final Runnable autoRefreshRunnable");
         int autoRefreshEnd = source.indexOf("private LogPresentation presentation;");
         String autoRefreshBlock = source.substring(autoRefreshStart, autoRefreshEnd);
@@ -87,7 +90,7 @@ public final class LogActivitySourceSmokeTest {
     @Test
     public void logExportUsesSystemFilePickerForDiagnosticZip() throws IOException {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/LogActivity.java");
+                "src/main/java/com/dpis/module/diagnostics/LogActivity.java");
         String content = SourceSmokeTestPaths.read(
                 "src/main/java/com/dpis/module/diagnostics/presentation/LogContent.kt");
         String strings = SourceSmokeTestPaths.read(

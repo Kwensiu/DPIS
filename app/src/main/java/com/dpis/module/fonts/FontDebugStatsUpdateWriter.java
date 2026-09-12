@@ -10,7 +10,7 @@ public final class FontDebugStatsUpdateWriter {
     private FontDebugStatsUpdateWriter() {
     }
 
-    static void applyExtras(Context context, Bundle extras) {
+    public static void applyExtras(Context context, Bundle extras) {
         if (context == null || extras == null || extras.isEmpty()) {
             return;
         }
@@ -18,7 +18,7 @@ public final class FontDebugStatsUpdateWriter {
         applyExtras(preferences, extras);
     }
 
-    static void applyExtras(SharedPreferences preferences, Bundle extras) {
+    public static void applyExtras(SharedPreferences preferences, Bundle extras) {
         if (preferences == null || extras == null || extras.isEmpty()) {
             return;
         }

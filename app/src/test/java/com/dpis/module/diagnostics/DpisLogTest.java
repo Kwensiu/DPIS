@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.After;
 import org.junit.Test;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class DpisLogTest {
     private final List<String> recorded = new ArrayList<>();

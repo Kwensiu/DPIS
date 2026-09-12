@@ -3,6 +3,7 @@ package com.dpis.module.runtime;
 import com.dpis.module.*;
 
 import java.lang.reflect.Method;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class XposedSelfActivation {
     private static final String APPLICATION_CLASS_NAME = "com.dpis.module.DpisApplication";

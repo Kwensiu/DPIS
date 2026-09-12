@@ -1,7 +1,7 @@
 package com.dpis.module.settings;
 
-final class SystemFontScaleWriter {
-    interface Host {
+public final class SystemFontScaleWriter {
+    public interface Host {
         boolean writePercent(int percent);
 
         void onWriteSucceeded(int percent);
@@ -12,7 +12,7 @@ final class SystemFontScaleWriter {
     private SystemFontScaleWriter() {
     }
 
-    static void write(Host host, int percent) {
+    public static void write(Host host, int percent) {
         if (host == null) {
             return;
         }

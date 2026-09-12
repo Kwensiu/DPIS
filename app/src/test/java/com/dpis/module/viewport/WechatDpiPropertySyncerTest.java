@@ -5,6 +5,7 @@ import com.dpis.module.quirks.WechatDpiPropertySyncer;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import com.dpis.module.config.DpisConfigStore;
 
 public class WechatDpiPropertySyncerTest {
     @Test

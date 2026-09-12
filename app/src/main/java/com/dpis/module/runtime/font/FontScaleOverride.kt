@@ -3,7 +3,7 @@ package com.dpis.module.runtime.font
 import android.content.res.Configuration
 import android.util.DisplayMetrics
 import android.util.TypedValue
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.DensityOverride
 import com.dpis.module.viewport.EffectiveModeResolver

@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.templates.TemplateConfigSummaryFormatter
-import com.dpis.module.templates.TemplateWorkspacePresentation
+
 import com.dpis.module.ui.compose.EdgeOcclusionFadeDirection
 import com.dpis.module.ui.compose.EdgeOcclusionFadeTokens
 import com.dpis.module.ui.compose.PageScrollPositionStore

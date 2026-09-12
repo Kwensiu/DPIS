@@ -1,6 +1,6 @@
 package com.dpis.module.viewport
 
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException

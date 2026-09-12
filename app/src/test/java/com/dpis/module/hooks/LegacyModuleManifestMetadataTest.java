@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.runtime.ConfigStoreFactory;
+import com.dpis.module.config.DpisConfigStore;
 
 public final class LegacyModuleManifestMetadataTest {
 
@@ -115,7 +117,7 @@ public final class LegacyModuleManifestMetadataTest {
 
     @Test
     public void legacyDoesNotExposeConfigProvider() throws IOException {
-        String factory = readProjectFile("src/main/java/com/dpis/module/ConfigStoreFactory.java");
+        String factory = readProjectFile("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java");
 
         assertTrue(SourceSmokeTestPaths.exists("src", "legacy", "AndroidManifest.xml"));
         assertFalse(SourceSmokeTestPaths.exists("src", "main", "java", "com", "dpis", "module", "CompatConfigProvider.java"));
@@ -132,7 +134,7 @@ public final class LegacyModuleManifestMetadataTest {
 
     @Test
     public void modernPreferenceBoundaryHasNoClassicFallback() throws IOException {
-        String factory = readProjectFile("src/main/java/com/dpis/module/ConfigStoreFactory.java");
+        String factory = readProjectFile("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java");
         assertFalse(factory.contains("XSharedPreferencesAdapter"));
         assertTrue(factory.contains("requires libxposed remote preferences"));
     }

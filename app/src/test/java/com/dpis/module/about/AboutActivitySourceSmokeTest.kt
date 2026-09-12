@@ -2,6 +2,8 @@ package com.dpis.module
 
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
+import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
 
 class AboutActivitySourceSmokeTest {
     @Test
@@ -22,7 +24,7 @@ class AboutActivitySourceSmokeTest {
     @Test
     fun aboutActivityUpdateFlowUsesSharedDownloadCoordinatorAndHttpsOnly() {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
-        val dialogSource = read("src/main/java/com/dpis/module/updates/UpdateAvailableDialog.kt")
+        val dialogSource = read("src/main/java/com/dpis/module/updates/presentation/UpdateAvailableDialog.kt")
         val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/interop/AndroidTextInterop.kt")
         val manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java")
 
@@ -61,7 +63,7 @@ class AboutActivitySourceSmokeTest {
     fun aboutActivityDoesNotApplyLocalApkSignatureGate() {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
         val coordinatorSource =
-            read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.kt")
+            read("src/main/java/com/dpis/module/updates/presentation/UpdateDownloadCoordinator.kt")
         val packageHandlerSource = read("src/main/java/com/dpis/module/updates/StartupUpdatePackageHandler.java")
 
         source.assertNotContainsAll("extractSigningFingerprints", "about_update_download_untrusted")

@@ -81,16 +81,16 @@ public final class ProcessPerformance {
     }
 
     public static final class RouteSnapshot {
-        final long calls;
-        final long applied;
-        final long skipped;
-        final long kept;
-        final Map<String, Long> skipReasons;
-        final long measuredCalls;
-        final long p50Us;
-        final long p95Us;
-        final long p99Us;
-        final long maxUs;
+        public final long calls;
+        public final long applied;
+        public final long skipped;
+        public final long kept;
+        public final Map<String, Long> skipReasons;
+        public final long measuredCalls;
+        public final long p50Us;
+        public final long p95Us;
+        public final long p99Us;
+        public final long maxUs;
 
         RouteSnapshot(
                 long calls,

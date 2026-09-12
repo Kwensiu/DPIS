@@ -2,9 +2,10 @@ package com.dpis.module.templates
 
 import android.content.pm.PackageManager
 import android.os.Build
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.templates.presentation.TemplateWorkspaceCoordinator
 
 /**
  * Android-platform adapter for the template module.

@@ -11,6 +11,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.android.material.textview.MaterialTextView
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 
 open class AppConfigDialogModeToggle(
     @JvmField val container: View,

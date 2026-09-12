@@ -1,7 +1,7 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.FakePrefs
 import org.junit.Assert.assertNull
 import org.junit.Test

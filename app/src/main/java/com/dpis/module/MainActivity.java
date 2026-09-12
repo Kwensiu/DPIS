@@ -17,7 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.compose.ui.platform.ComposeView;
 import androidx.core.view.ViewCompat;
 
-import com.dpis.module.appconfig.AppConfigDialogBinder;
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 import com.dpis.module.appconfig.AppConfigDialogCoordinator;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 import com.dpis.module.appconfig.AppConfigPrefillPreview;
@@ -25,18 +25,18 @@ import com.dpis.module.appconfig.AppConfigSaveHandler;
 
 import com.dpis.module.appconfig.EditorDraft;
 import com.dpis.module.appconfig.EditorPresentation;
-import com.dpis.module.appconfig.LandAppDetailPaneBinder;
+import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder;
 import com.dpis.module.appconfig.WechatDpiConfig;
 import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListFilterStateStore;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.InstalledAppCatalogCoordinator;
-import com.dpis.module.diagnostics.FeedbackDiagnosticActivitySession;
+import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.FontLibraryActivity;
 import com.dpis.module.fonts.HyperOsNativeAppDetector;
-import com.dpis.module.fonts.HyperOsNativeProxyBindMounter;
+import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
 import com.dpis.module.fonts.hookdomain.FontHookDomainDialog;
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation;
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer;
@@ -52,9 +52,9 @@ import com.dpis.module.settings.PageSettingsStore;
 import com.dpis.module.home.ModeHelpActivity;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
-import com.dpis.module.process.ProcessActionConfirm;
-import com.dpis.module.process.ProcessActionHandler;
-import com.dpis.module.quirks.WechatDpiHelp;
+import com.dpis.module.process.presentation.ProcessActionConfirm;
+import com.dpis.module.process.presentation.ProcessActionHandler;
+import com.dpis.module.quirks.presentation.WechatDpiHelp;
 import com.dpis.module.quirks.WechatDpiSheetBinder;
 import com.dpis.module.root.RootAccessProbe;
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator;
@@ -62,7 +62,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery;
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer;
 import com.dpis.module.settings.StartupDisclaimerStore;
 import com.dpis.module.settings.ToolsWorkspace;
-import com.dpis.module.settings.SettingsWorkspaceSession;
+import com.dpis.module.settings.presentation.SettingsWorkspaceSession;
 import com.dpis.module.settings.SystemScopeCoordinator;
 import com.dpis.module.templates.TemplateWorkspaceActivitySession;
 import com.dpis.module.templates.TemplateWorkspacePresentationSource;
@@ -80,9 +80,9 @@ import com.dpis.module.updates.StartupUpdateCheckOnce;
 import com.dpis.module.updates.StartupUpdateDownloadExecutor;
 import com.dpis.module.updates.StartupUpdateManifest;
 import com.dpis.module.updates.StartupUpdatePackageHandler;
-import com.dpis.module.updates.UpdateAvailableDialog;
+import com.dpis.module.updates.presentation.UpdateAvailableDialog;
 import com.dpis.module.updates.UpdateCoordinator;
-import com.dpis.module.updates.UpdateDownloadCoordinator;
+import com.dpis.module.updates.presentation.UpdateDownloadCoordinator;
 import com.dpis.module.updates.UpdatePromptDialogCoordinator;
 import com.dpis.module.updates.UpdatePromptRequest;
 import com.dpis.module.updates.UpdateStateStore;
@@ -109,6 +109,26 @@ import java.util.concurrent.Executors;
 
 import io.github.libxposed.service.XposedService;
 import kotlin.Unit;
+import com.dpis.module.ui.presentation.MainComposeShellHost;
+import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator;
+import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway;
+import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions;
+import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell;
+import com.dpis.module.applist.AppWorkspaceScrollStateStore;
+import com.dpis.module.applist.AppWorkspacePresentation;
+import com.dpis.module.applist.AppWorkspace;
+import com.dpis.module.ui.ConfigEditorDestination;
+import com.dpis.module.runtime.ConfigStoreFactory;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.diagnostics.DpisLog;
+import com.dpis.module.settings.LocalizedActivity;
+import com.dpis.module.diagnostics.LogActivity;
+import com.dpis.module.ui.MainUiAction;
+import com.dpis.module.ui.MainUiState;
+import com.dpis.module.ui.MainViewModel;
+import com.dpis.module.appconfig.editor.ComposeAppEditorController;
+import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow;
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator;
 
 public final class MainActivity
         extends LocalizedActivity
@@ -802,7 +822,7 @@ public final class MainActivity
         WindowInsetsBinder.applySafeDrawingPadding(scrollView, false, true, false, true);
     }
 
-    void showToast(int messageResId) {
+    public void showToast(int messageResId) {
         showToast(getString(messageResId));
     }
 
@@ -817,7 +837,7 @@ public final class MainActivity
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 
-    boolean setDpisEnabled(String packageName, boolean enabled) {
+    public boolean setDpisEnabled(String packageName, boolean enabled) {
         DpisConfigStore store = getHookConfigStore();
         if (store == null) {
             showToast(R.string.status_save_requires_init);
@@ -867,7 +887,7 @@ public final class MainActivity
         return new ScopeState(scopePackages, false);
     }
 
-    MainUiState requireUiState() {
+    public MainUiState requireUiState() {
         MainViewModel viewModel = mainViewModel;
         if (viewModel == null) {
             return MainUiState.initial(
@@ -1154,41 +1174,41 @@ public final class MainActivity
                 : null;
     }
 
-    void refreshComposeApps() {
+    public void refreshComposeApps() {
         if (composeShellHost != null) {
             composeShellHost.refreshApps();
         }
     }
 
-    MainComposeShellHost composeShell() {
+    public MainComposeShellHost composeShell() {
         return composeShellHost;
     }
 
-    boolean saveComposeEditorForDiagnostic(AppListItem item, EditorDraft draft) {
+    public boolean saveComposeEditorForDiagnostic(AppListItem item, EditorDraft draft) {
         return composeAppEditorSaveWorkflow != null
                 && composeAppEditorSaveWorkflow.save(item, draft);
     }
 
-    void markComposeEditorSaved(EditorDraft draft) {
+    public void markComposeEditorSaved(EditorDraft draft) {
         if (composeAppEditorController != null) {
             composeAppEditorController.markSaved(draft);
         }
     }
 
-    void dismissActiveEditorDialog() {
+    public void dismissActiveEditorDialog() {
         if (activeAppEditorDialog != null) {
             activeAppEditorDialog.dismiss();
         }
     }
 
-    void showComposeFeedbackDiagnosticPreparation(
+    public void showComposeFeedbackDiagnosticPreparation(
             AppListItem item,
             EditorDraft draft
     ) {
         feedbackDiagnostic.showPreparation(item, draft);
     }
 
-    void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
+    public void syncComposeHyperOsNativeProxyAfterSave(AppListItem item) {
         if (!isHyperOsNativeProxyCandidate(item)) {
             return;
         }
@@ -1903,7 +1923,7 @@ public final class MainActivity
         }));
     }
 
-    void saveAppConfigDraft(
+    public void saveAppConfigDraft(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Integer viewportValue,
@@ -2032,7 +2052,7 @@ public final class MainActivity
         state.scopeRequestPending = false;
     }
 
-    AppConfigSaveHandler.Result saveLandDetailResolvedConfig(
+    public AppConfigSaveHandler.Result saveLandDetailResolvedConfig(
             AppListItem item,
             ViewportTargetSpec viewportTargetSpec,
             String viewportTargetType,
@@ -2087,7 +2107,7 @@ public final class MainActivity
         return saveResult;
     }
 
-    AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
+    public AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
             AppConfigSaveHandler.Result saveResult,
             View configRoot,
             String packageName,
@@ -2106,7 +2126,7 @@ public final class MainActivity
         return result;
     }
 
-    AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
+    public AppConfigSaveHandler.Result finalizeAppConfigSaveWithRuntimeSync(
             AppConfigSaveHandler.Result saveResult,
             String wechatDpiInput,
             String packageName,
@@ -2151,7 +2171,7 @@ public final class MainActivity
         syncThread.start();
     }
 
-    void syncRuntimePropertiesForTargetLaunch(String packageName) {
+    public void syncRuntimePropertiesForTargetLaunch(String packageName) {
         Integer generation;
         synchronized (pendingRuntimePropertyGenerations) {
             generation = pendingRuntimePropertyGenerations.get(packageName);
@@ -2200,7 +2220,7 @@ public final class MainActivity
         return "";
     }
 
-    void toggleLandDetailScope(
+    public void toggleLandDetailScope(
             AppListItem item,
             boolean currentlyInScope,
             Runnable onTurnedInScope,
@@ -2228,7 +2248,7 @@ public final class MainActivity
         );
     }
 
-    void showLandDetailTypefaceSelector(
+    public void showLandDetailTypefaceSelector(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Runnable onChanged
@@ -2245,7 +2265,7 @@ public final class MainActivity
         ).showTypefaceSelector(selectorAnchor, state, onChanged);
     }
 
-    void showLandDetailHookDomains(
+    public void showLandDetailHookDomains(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state,
             Runnable onChanged
@@ -2436,14 +2456,14 @@ public final class MainActivity
         };
     }
 
-    void startFeedbackDiagnostic(
+    public void startFeedbackDiagnostic(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
         feedbackDiagnostic.startFromViewEditor(item, state);
     }
 
-    AppListItem saveCurrentEditorConfigForDiagnostic(
+    public AppListItem saveCurrentEditorConfigForDiagnostic(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
@@ -2579,7 +2599,7 @@ public final class MainActivity
         }
     }
 
-    String resolvePackageVersionName(String packageName) {
+    public String resolvePackageVersionName(String packageName) {
         if (packageName == null || packageName.isBlank()) {
             return "";
         }
@@ -2691,7 +2711,7 @@ public final class MainActivity
                 AppConfigDialogBinder.resolveFontMode(findFontModeToggle(root)));
     }
 
-    String getFontHookDomainsButtonText(
+    public String getFontHookDomainsButtonText(
             AppListItem item,
             AppConfigDialogBinder.AppConfigDialogState state
     ) {
@@ -2779,7 +2799,7 @@ public final class MainActivity
         }, "DPIS-HyperOsNativeProxyMount").start();
     }
 
-    void executeDialogProcessAction(
+    public void executeDialogProcessAction(
             AppListItem item,
             AppConfigDialogBinder.ProcessAction action
     ) {
@@ -2848,7 +2868,7 @@ public final class MainActivity
         }
     }
 
-    boolean isSystemHookEnabledFromStore() {
+    public boolean isSystemHookEnabledFromStore() {
         return cachedSystemHookEffectiveEnabled;
     }
 
@@ -2947,7 +2967,7 @@ public final class MainActivity
         );
     }
 
-    void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
+    public void updateEditingDraft(AppConfigDialogBinder.AppConfigDialogState state) {
         if (mainViewModel == null || state == null) {
             return;
         }

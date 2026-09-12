@@ -3,8 +3,8 @@ package com.dpis.module.settings;
 import android.content.Context;
 import android.provider.Settings;
 
-final class SystemFontScaleSettingsGateway {
-    Integer readPercent(Context context) {
+public final class SystemFontScaleSettingsGateway {
+    public Integer readPercent(Context context) {
         try {
             float scale = Settings.System.getFloat(
                     context.getContentResolver(),
@@ -17,11 +17,11 @@ final class SystemFontScaleSettingsGateway {
         }
     }
 
-    boolean canWrite(Context context) {
+    public boolean canWrite(Context context) {
         return Settings.System.canWrite(context);
     }
 
-    boolean writePercent(Context context, int percent) {
+    public boolean writePercent(Context context, int percent) {
         return Settings.System.putFloat(
                 context.getContentResolver(),
                 Settings.System.FONT_SCALE,

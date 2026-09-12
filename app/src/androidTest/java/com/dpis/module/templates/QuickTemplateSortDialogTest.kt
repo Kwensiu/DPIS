@@ -8,6 +8,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.dpis.module.R
+import com.dpis.module.templates.presentation.QuickTemplateSortContent
+import com.dpis.module.templates.presentation.QuickTemplateSortItem
 import com.dpis.module.ui.compose.DpisTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule

@@ -1,9 +1,10 @@
 package com.dpis.module.templates
 
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.applist.InstalledAppCatalogItem
 import com.dpis.module.config.PackageConfigRepository
+import com.dpis.module.templates.presentation.QuickTemplateTargetsBinder
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 

@@ -1,6 +1,6 @@
 package com.dpis.module.config
 
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import android.content.SharedPreferences
 import org.w3c.dom.Element
 import java.io.File

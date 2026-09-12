@@ -1,6 +1,6 @@
 package com.dpis.module.appconfig
 
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.PackageConfigValue

@@ -43,7 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.size

@@ -1,6 +1,6 @@
 package com.dpis.module.appconfig
 
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.applist.AppListItem
 
 /** Pure projection boundary for the Compose app editor. */

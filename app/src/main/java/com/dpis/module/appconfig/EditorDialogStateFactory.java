@@ -2,6 +2,7 @@ package com.dpis.module.appconfig;
 
 import com.dpis.module.appconfig.EditorDraft;
 import com.dpis.module.applist.AppListItem;
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 
 /**
  * Projects an immutable Compose editor draft into the state consumed by legacy dialog helpers.

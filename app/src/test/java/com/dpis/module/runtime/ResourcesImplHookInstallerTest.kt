@@ -21,6 +21,7 @@ import com.dpis.module.viewport.VirtualDisplayState
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
+import com.dpis.module.config.DpisConfigStore
 
 class ResourcesImplHookInstallerTest {
     @After

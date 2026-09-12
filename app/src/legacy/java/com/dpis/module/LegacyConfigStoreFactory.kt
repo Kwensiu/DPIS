@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.dpis.module.config.RuntimePropertyConfigPreferences
 import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.runtime.XSharedPreferencesAdapter
+import com.dpis.module.config.DpisConfigStore
 
 /** Legacy-only owner of the classic Xposed preference compatibility boundary. */
 object LegacyConfigStoreFactory {

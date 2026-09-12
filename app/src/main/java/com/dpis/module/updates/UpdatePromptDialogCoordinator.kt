@@ -6,6 +6,8 @@ import com.dpis.module.R
 import com.dpis.module.ui.dialog.StartupDisclaimerGate
 import java.util.Locale
 import java.util.function.BooleanSupplier
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
+import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
 
 class UpdatePromptDialogCoordinator(
     private val activity: Activity,

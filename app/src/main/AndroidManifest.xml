@@ -64,7 +64,7 @@
             android:name=".about.OpenSourceLicenseActivity"
             android:exported="false" />
         <activity
-            android:name=".LogActivity"
+            android:name=".diagnostics.LogActivity"
             android:exported="false" />
         <activity
             android:name=".fonts.FontDebugStatsIngestActivity"
@@ -74,7 +74,7 @@
             android:noHistory="true"
             android:theme="@style/Theme.Dpis.Ingest" />
         <activity
-            android:name=".QuickConfigActivity"
+            android:name=".quickconfig.QuickConfigActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:finishOnTaskLaunch="true"

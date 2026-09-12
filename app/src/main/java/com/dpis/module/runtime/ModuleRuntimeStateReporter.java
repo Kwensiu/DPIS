@@ -3,6 +3,7 @@ package com.dpis.module.runtime;
 import com.dpis.module.*;
 
 import java.lang.reflect.Method;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class ModuleRuntimeStateReporter {
     private static final String KEY_SYSTEM_SERVER_LOADED_AT = "debug.dpis.module.system_server_loaded_at";

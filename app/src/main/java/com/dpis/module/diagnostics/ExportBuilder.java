@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import com.dpis.module.diagnostics.device.LsposedLogReader;
 
 public final class ExportBuilder {
     public static final String DIAGNOSTIC_ENTRY_NAME = "diagnostic.txt";

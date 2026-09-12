@@ -9,7 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.dpis.module.BuildConfig
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.SupportActivityContent
@@ -19,9 +19,9 @@ import com.dpis.module.updates.ReleaseNotesController
 import com.dpis.module.updates.StartupUpdateDownloadExecutor
 import com.dpis.module.updates.StartupUpdateManifest
 import com.dpis.module.updates.StartupUpdatePackageHandler
-import com.dpis.module.updates.UpdateAvailableDialog
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
 import com.dpis.module.updates.UpdateCoordinator
-import com.dpis.module.updates.UpdateDownloadCoordinator
+import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
 import com.dpis.module.updates.UpdateManifestFetcher
 import com.dpis.module.updates.UpdatePromptDialogCoordinator
 import com.dpis.module.updates.UpdatePromptRequest

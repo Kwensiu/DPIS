@@ -19,6 +19,8 @@ import de.robv.android.xposed.XposedBridge
 import java.io.File
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
 
 internal object LegacyTypefaceOverrideHookInstaller {
     private val LOG_PREFIX = "DPIS_FONT_STYLE "

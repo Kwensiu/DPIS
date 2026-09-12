@@ -65,7 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.EditorPresentation
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.applist.AppStatusFormatter
@@ -74,6 +74,7 @@ import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackOutlinedButton
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable

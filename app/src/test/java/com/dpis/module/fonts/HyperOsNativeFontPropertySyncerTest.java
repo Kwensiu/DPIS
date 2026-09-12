@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import com.dpis.module.config.DpisConfigStore;
 
 public class HyperOsNativeFontPropertySyncerTest {
     @Test

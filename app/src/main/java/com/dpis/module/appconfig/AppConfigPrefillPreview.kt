@@ -1,7 +1,7 @@
 package com.dpis.module.appconfig
 
 import android.content.Context
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.PackageConfigRepository
 import com.dpis.module.templates.GlobalPrefillStore

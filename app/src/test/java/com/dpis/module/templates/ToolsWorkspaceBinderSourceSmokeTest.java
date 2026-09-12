@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.LogGate;
+import com.dpis.module.diagnostics.presentation.LogGate;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
@@ -31,7 +31,7 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
 
     @Test
     public void toolsWorkspaceBinderOwnsSystemFontScaleToolBinder() throws IOException {
-        String source = read("src/main/java/com/dpis/module/settings/ToolsWorkspaceBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.java");
 
         assertTrue(source.contains("private SystemFontScaleToolBinder fontScaleToolBinder;"));
         assertTrue(source.contains(
@@ -42,7 +42,7 @@ public class ToolsWorkspaceBinderSourceSmokeTest {
 
     @Test
     public void systemFontScalePermissionPanelOwnsAuthorizationClick() throws IOException {
-        String source = read("src/main/java/com/dpis/module/settings/SystemFontScaleToolBinder.java");
+        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.java");
 
         assertTrue(source.contains("host.bindPressHaptic(permissionOverlay);"));
         assertTrue(source.contains("permissionOverlay.setOnClickListener(v -> openWriteSettingsPermission());"));

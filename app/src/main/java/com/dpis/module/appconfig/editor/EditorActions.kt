@@ -1,7 +1,9 @@
 package com.dpis.module.appconfig
 
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 /** Builds immutable-draft actions without owning Activity state or side effects. */
 object EditorActions {

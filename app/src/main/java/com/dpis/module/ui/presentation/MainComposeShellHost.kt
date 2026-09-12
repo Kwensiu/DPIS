@@ -1,4 +1,4 @@
-package com.dpis.module
+package com.dpis.module.ui.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -34,9 +34,12 @@ import com.dpis.module.ui.compose.imeWindowPan
 import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
 import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
 import java.util.function.BooleanSupplier
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainComposeWorkspaceShell
 
 /** Installs the Compose shell; domain state and actions remain Activity-owned. */
-internal class MainComposeShellHost(
+class MainComposeShellHost(
     composeView: ComposeView,
     initialState: MainUiState,
     private val isCompactUi: Boolean,

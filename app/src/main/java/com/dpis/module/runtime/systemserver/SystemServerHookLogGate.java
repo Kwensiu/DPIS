@@ -4,6 +4,7 @@ import com.dpis.module.*;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class SystemServerHookLogGate {
     private static final int MAX_LOG_CACHE_ENTRIES = 2048;

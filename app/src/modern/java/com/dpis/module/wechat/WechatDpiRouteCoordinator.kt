@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.util.Log
-import com.dpis.module.DpisLog
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import io.github.libxposed.api.XposedInterface

@@ -3,6 +3,7 @@ package com.dpis.module.diagnostics;
 import com.dpis.module.*;
 
 import java.util.List;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
 
 final class RuntimeSelfTest {
     private static volatile Status lastStatus = Status.notStarted();

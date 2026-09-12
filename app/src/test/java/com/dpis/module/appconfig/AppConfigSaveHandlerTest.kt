@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigDialogBinder.AppConfigDialogState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
@@ -16,6 +16,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.config.DpisConfigStore
 
 class AppConfigSaveHandlerTest {
     @Test

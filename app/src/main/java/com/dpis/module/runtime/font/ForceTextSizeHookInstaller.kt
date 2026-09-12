@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.font
 
-import com.dpis.module.DpisConfigStore
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver

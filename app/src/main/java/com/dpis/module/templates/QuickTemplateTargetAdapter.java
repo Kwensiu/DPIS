@@ -1,5 +1,6 @@
 package com.dpis.module.templates;
 import com.dpis.module.R;
+import com.dpis.module.templates.presentation.QuickTemplateTargetsBinder;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,11 +20,11 @@ import java.util.Set;
 
 public final class QuickTemplateTargetAdapter
         extends RecyclerView.Adapter<QuickTemplateTargetAdapter.TargetHolder> {
-    interface SelectionListener {
+    public interface SelectionListener {
         void onSelectionChanged(String packageName, boolean selected);
     }
 
-    interface IconResolveRequestListener {
+    public interface IconResolveRequestListener {
         void onIconResolveRequested(String packageName);
     }
 
@@ -33,7 +34,7 @@ public final class QuickTemplateTargetAdapter
     private final SelectionListener selectionListener;
     private final IconResolveRequestListener iconResolveRequestListener;
 
-    QuickTemplateTargetAdapter(Set<String> selectedPackages,
+    public QuickTemplateTargetAdapter(Set<String> selectedPackages,
             SelectionListener selectionListener,
             IconResolveRequestListener iconResolveRequestListener) {
         this.selectedPackages = selectedPackages != null
@@ -43,7 +44,7 @@ public final class QuickTemplateTargetAdapter
         this.iconResolveRequestListener = iconResolveRequestListener;
     }
 
-    void submit(List<QuickTemplateTargetsBinder.TargetAppItem> newItems) {
+    public void submit(List<QuickTemplateTargetsBinder.TargetAppItem> newItems) {
         items.clear();
         if (newItems != null) {
             items.addAll(newItems);

@@ -6,6 +6,7 @@ import com.dpis.module.settings.InterfaceScaleStore;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import com.dpis.module.config.DpisConfigStore;
 
 public final class InterfaceScaleStoreTest {
     @Test

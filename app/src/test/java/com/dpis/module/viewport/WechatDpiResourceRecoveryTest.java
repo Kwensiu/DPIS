@@ -3,6 +3,7 @@ package com.dpis.module;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import com.dpis.module.quirks.WechatDpiRecoveryPolicy;
 
 public final class WechatDpiResourceRecoveryTest {
     @Test

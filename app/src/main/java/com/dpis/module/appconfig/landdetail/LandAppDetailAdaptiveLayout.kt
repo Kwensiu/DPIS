@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.app.Activity
 import android.view.View

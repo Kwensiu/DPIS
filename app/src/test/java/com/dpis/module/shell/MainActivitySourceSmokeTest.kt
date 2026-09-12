@@ -5,6 +5,24 @@ import com.dpis.module.ui.DialogWindowSizer
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.ui.presentation.MainComposeShellHost
+import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
+import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
+import com.dpis.module.appconfig.landdetail.LandAppDetailActivityActions
+import com.dpis.module.updates.presentation.UpdateAvailableDialog
+import com.dpis.module.process.presentation.ProcessActionHandler
+import com.dpis.module.process.presentation.ProcessActionConfirm
+import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.AppWorkspace
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
+import com.dpis.module.settings.SettingsUiState
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 
 class MainActivitySourceSmokeTest {
 
@@ -12,7 +30,7 @@ class MainActivitySourceSmokeTest {
     fun templateWorkspaceImplementationLivesBehindTheActivitySession() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read(
-                "src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val session = read(
                 "src/main/java/com/dpis/module/templates/TemplateWorkspaceActivitySession.kt")
 
@@ -97,7 +115,7 @@ class MainActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/appconfig/editor/ComposeEditorScopeRequestCoordinator.kt"
         )
         val gateway = read(
-                "src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorActivityGateway.kt"
+                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
 
         assertTrue(source.contains("new ComposeEditorScopeRequestCoordinator("))
@@ -155,7 +173,7 @@ class MainActivitySourceSmokeTest {
     fun settingsPresentationUsesOneWorkspaceCapability() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read(
-            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt"
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt"
         )
         val actions = read("src/main/java/com/dpis/module/settings/SettingsActions.kt")
 
@@ -170,7 +188,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
-        val appWorkspace = read("src/main/java/com/dpis/module/AppWorkspace.java")
+        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.java")
         val toolsWorkspace = read("src/main/java/com/dpis/module/settings/ToolsWorkspace.kt")
 
         assertTrue(source.contains("private AppWorkspace appWorkspace"))
@@ -213,7 +231,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(layout.contains("android:id=\"@+id/land_detail_divider\""))
         assertTrue(source.contains("private View landDetailPane"))
         assertTrue(source.contains("private View landDetailDivider"))
-        val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val templateCoordinator = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         assertFalse(source.contains("templateDetailContent"))
         assertFalse(source.contains("TemplateDetailPaneController"))
         assertTrue(source.contains("applyLandscapeDetailVisibility(appWorkspace, templateWorkspace)"))
@@ -279,9 +297,9 @@ class MainActivitySourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val draft = read("src/main/java/com/dpis/module/templates/TemplateEditorDraft.kt")
         val workspace = read(
-                "src/main/java/com/dpis/module/templates/TemplateWorkspacePresentation.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspacePresentation.kt")
         val coordinator = read(
-                "src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+                "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
 
         assertTrue(source.contains("TemplateWorkspaceActivitySession.State initialWorkspaceSessionState"))
         assertTrue(source.contains("initialWorkspaceSessionState = retainedState.workspaceSessionState"))
@@ -644,7 +662,7 @@ class MainActivitySourceSmokeTest {
     fun appLoad_reusesInstalledAppCatalogBetweenRefreshes() {
         val source = read("src/main/java/com/dpis/module/MainActivity.java")
         val viewModelSource = read(
-            "src/main/java/com/dpis/module/MainViewModel.kt"
+            "src/main/java/com/dpis/module/ui/MainViewModel.kt"
         )
         val coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
@@ -736,7 +754,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("showLandDetailTypefaceSelector(")
         )
-        val landActions = read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+        val landActions = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
         assertTrue(
             landActions.contains("activity.showLandDetailHookDomains(item, state, onChanged)")
         )
@@ -750,7 +768,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("appConfigSaveHandler.saveResolved("))
         assertTrue(source.contains("updateEditingDraft(state)"))
         assertTrue(
-            read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
                 .contains("fun onDraftStateChanged(")
         )
         assertTrue(source.contains("if (draft == null && mainViewModel != null)"))
@@ -759,7 +777,7 @@ class MainActivitySourceSmokeTest {
                 .contains("AppConfigDialogState.fromItem(item)")
         )
         assertTrue(
-            read("src/main/java/com/dpis/module/LandAppDetailActivityActions.kt")
+            read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailActivityActions.kt")
                 .contains("activity.executeDialogProcessAction(item, action)")
         )
         assertTrue(compact(source).contains("landDetailContent.addView( dialogView"))
@@ -1322,7 +1340,7 @@ class MainActivitySourceSmokeTest {
     fun composeTemplateEditorBridgesSelectionDraftAndCloseLifecycle() {
         val activity = read("src/main/java/com/dpis/module/MainActivity.java")
         val coordinator = read(
-            "src/main/java/com/dpis/module/MainWorkspacePresentationCoordinator.kt")
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val workspace = read(
             "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
         val editorSurface = read(
@@ -1332,7 +1350,7 @@ class MainActivitySourceSmokeTest {
         val shellHost = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
 
         val templateSource = read("src/main/java/com/dpis/module/templates/TemplateWorkspacePresentationSource.kt")
-        val templateCoordinator = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val templateCoordinator = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         assertTrue(activity.contains("TemplateWorkspacePresentationSource templateWorkspace()"))
         assertFalse(activity.contains("onComposeTemplateEditorOpened"))
         assertTrue(templateSource.contains("fun openEditor("))

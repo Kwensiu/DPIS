@@ -12,6 +12,7 @@ import com.dpis.module.R;
 
 import java.io.File;
 import java.util.Locale;
+import com.dpis.module.updates.presentation.UpdatePackageInstaller;
 
 public final class StartupUpdatePackageHandler {
     private final Activity activity;

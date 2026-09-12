@@ -1,6 +1,7 @@
 package com.dpis.module.templates
 
-import com.dpis.module.ConfigEditorDestination
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
 
 /**
  * The complete Compose/Wear interaction surface for the template workspace.

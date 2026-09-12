@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.appprocess;
 
-import com.dpis.module.DpisConfigStore;
+import com.dpis.module.config.DpisConfigStore;
 
 import com.dpis.module.*;
 import com.dpis.module.viewport.DensityOverride;
@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.github.libxposed.api.XposedInterface;
+import com.dpis.module.diagnostics.DpisLog;
 
 public final class ResourcesProbeHookInstaller {
     private static final int MAX_LOGS_PER_METHOD = 8;

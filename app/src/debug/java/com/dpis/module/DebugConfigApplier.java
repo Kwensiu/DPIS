@@ -12,6 +12,8 @@ import android.content.Intent;
 import android.util.Log;
 
 import java.io.IOException;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.diagnostics.DpisLog;
 
 final class DebugConfigApplier {
     static final String ACTION_SET_PACKAGE_CONFIG =

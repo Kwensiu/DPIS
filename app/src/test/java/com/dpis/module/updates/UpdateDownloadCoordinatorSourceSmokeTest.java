@@ -6,11 +6,12 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
+import com.dpis.module.updates.presentation.UpdatePackageInstaller;
 
 public class UpdateDownloadCoordinatorSourceSmokeTest {
     @Test
     public void coordinatorOwnsDownloadExecutionAndProgressUIContracts() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.kt");
+        String source = read("src/main/java/com/dpis/module/updates/presentation/UpdateDownloadCoordinator.kt");
 
         assertTrue(source.contains("class UpdateDownloadCoordinator("));
         assertTrue(source.contains("interface Host"));
@@ -39,7 +40,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
 
     @Test
     public void coordinatorReusesUpdateCoordinatorForDownloadDecisions() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.kt");
+        String source = read("src/main/java/com/dpis/module/updates/presentation/UpdateDownloadCoordinator.kt");
 
         assertTrue(source.contains("updateCoordinator.requestDownloadStart("));
         assertTrue(source.contains("updateCoordinator.requestDownloadCancel("));
@@ -50,7 +51,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
 
     @Test
     public void coordinatorReusesStartupUpdateDownloadExecutorForHttpDownload() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.kt");
+        String source = read("src/main/java/com/dpis/module/updates/presentation/UpdateDownloadCoordinator.kt");
 
         assertTrue(source.contains("downloadExecutor.download("));
         assertTrue(source.contains("StartupUpdateDownloadExecutor.DownloadCanceledException"));
@@ -58,7 +59,7 @@ public class UpdateDownloadCoordinatorSourceSmokeTest {
 
     @Test
     public void coordinatorTreatsInterruptedExceptionPathAsCanceledWhenCancelRequested() throws IOException {
-        String source = read("src/main/java/com/dpis/module/updates/UpdateDownloadCoordinator.kt");
+        String source = read("src/main/java/com/dpis/module/updates/presentation/UpdateDownloadCoordinator.kt");
 
         assertTrue(source.contains("val canceled = downloadCancelRequested"));
         assertTrue(source.contains("R.string.about_update_download_canceled"));

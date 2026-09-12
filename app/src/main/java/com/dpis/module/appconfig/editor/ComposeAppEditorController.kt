@@ -1,6 +1,6 @@
-package com.dpis.module
+package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.AppConfigDialogBinder
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorActions
 import com.dpis.module.appconfig.EditorDraft
@@ -8,6 +8,9 @@ import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.appconfig.EditorPresentationFactory
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.templates.TemplateConfigValue
+import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainViewModel
 
 /**
  * Session and action owner for the primary-workspace Compose app editor.
@@ -16,7 +19,7 @@ import com.dpis.module.templates.TemplateConfigValue
  * transitions so opening, saving, closing, and asynchronous presentation feedback do not grow
  * another feature workflow inside the app shell.
  */
-internal class ComposeAppEditorController(
+class ComposeAppEditorController(
     private val session: MainViewModel,
     private val host: Host,
 ) {

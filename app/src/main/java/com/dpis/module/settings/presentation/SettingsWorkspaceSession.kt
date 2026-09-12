@@ -1,11 +1,11 @@
-package com.dpis.module.settings
+package com.dpis.module.settings.presentation
 
 import android.app.Activity
 import android.content.Intent
 import android.view.View
-import com.dpis.module.LocalizedActivity
-import com.dpis.module.SettingsUiState
-import com.dpis.module.SystemServerSettingsPageController
+import com.dpis.module.settings.LocalizedActivity
+import com.dpis.module.settings.SettingsUiState
+import com.dpis.module.settings.SettingsActions
 
 /**
  * Java-facing adapter that owns the settings controller's Activity session while MainActivity

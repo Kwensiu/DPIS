@@ -1,5 +1,6 @@
 package com.dpis.module.templates
 
+import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.templates.TemplateConfigSummaryFormatter.TypefaceResolver
 import com.dpis.module.templates.TemplateConfigSummaryFormatter.TypefaceStatus
@@ -63,5 +64,19 @@ class TemplateTypefaceResolver @JvmOverloads constructor(
             }
             return typefaceId
         }
+    }
+
+    companion object {
+        @JvmStatic
+        fun importedFrom(store: FontLibraryStore): ImportedTypefaceProvider =
+            ImportedTypefaceProvider { typefaceId ->
+                val imported = store.findById(typefaceId)
+                    ?: return@ImportedTypefaceProvider TypefaceStatus.absent(typefaceId)
+                if (store.resolveFontFile(typefaceId) != null) {
+                    TypefaceStatus.resolved(typefaceId, imported.displayName)
+                } else {
+                    TypefaceStatus.absent(typefaceId)
+                }
+            }
     }
 }

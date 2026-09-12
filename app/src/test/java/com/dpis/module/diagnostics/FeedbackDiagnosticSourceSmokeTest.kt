@@ -9,9 +9,9 @@ class FeedbackDiagnosticSourceSmokeTest {
     @Test
     fun appConfigSheetExposesFeedbackDiagnosticEntry() {
         val binder =
-            read("src/main/java/com/dpis/module/appconfig/AppConfigDialogBinder.kt")
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val actions =
-            read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val layout = read("src/main/res/layout/dialog_app_config.xml")
         val dimens = read("src/main/res/values/dimens.xml")
 
@@ -256,7 +256,7 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticMirrorsRuntimeDpisLogEvents() {
-        val dpisLog = read("src/main/java/com/dpis/module/DpisLog.java")
+        val dpisLog = read("src/main/java/com/dpis/module/diagnostics/DpisLog.java")
         val collector = read(
             "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.java"
         )
@@ -324,7 +324,7 @@ class FeedbackDiagnosticSourceSmokeTest {
     @Test
     fun feedbackDiagnosticForegroundObserverUsesRootTopAppSnapshot() {
         val reader = read(
-            "src/main/java/com/dpis/module/diagnostics/ForegroundAppReader.kt"
+            "src/main/java/com/dpis/module/diagnostics/device/ForegroundAppReader.kt"
         )
 
         assertTrue(reader.contains("SecureProcessLauncher.startMerged(\"su\", \"-c\", COMMAND)"))

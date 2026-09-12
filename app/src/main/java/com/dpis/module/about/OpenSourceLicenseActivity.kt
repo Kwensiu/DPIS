@@ -6,7 +6,7 @@ import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.ui.compose.SupportActivityContent
 import java.io.InputStream

@@ -12,7 +12,7 @@ class QuickConfigSourceSmokeTest {
         val manifest: String = read("src/main/AndroidManifest.xml")
 
         Assert.assertTrue(manifest.contains("android.permission.PACKAGE_USAGE_STATS"))
-        Assert.assertTrue(manifest.contains("android:name=\".QuickConfigActivity\""))
+        Assert.assertTrue(manifest.contains("android:name=\".quickconfig.QuickConfigActivity\""))
         Assert.assertTrue(manifest.contains("android:taskAffinity=\"\""))
         Assert.assertTrue(manifest.contains("@style/Theme.Dpis.QuickConfig"))
         Assert.assertTrue(manifest.contains("android:name=\".QuickConfigTileService\""))
@@ -24,7 +24,7 @@ class QuickConfigSourceSmokeTest {
     @Test
     @Throws(IOException::class)
     fun quickConfigUsesAppConfigSheetForForegroundPackage() {
-        val activity: String = read("src/main/java/com/dpis/module/QuickConfigActivity.kt")
+        val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
         val resolver: String =
             read("src/main/java/com/dpis/module/applist/ForegroundPackageResolver.java")
         val manifestTile: String = read("src/main/java/com/dpis/module/QuickConfigTileService.java")
@@ -62,7 +62,7 @@ class QuickConfigSourceSmokeTest {
     @Test
     @Throws(IOException::class)
     fun quickConfigRoutesSheetActionsToExistingRuntimeSemantics() {
-        val activity: String = read("src/main/java/com/dpis/module/QuickConfigActivity.kt")
+        val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
 
         Assert.assertTrue(activity.contains("appConfigSaveHandler.saveResolved("))
         Assert.assertTrue(activity.contains("WechatDpiSheetBinder.save("))
@@ -85,7 +85,7 @@ class QuickConfigSourceSmokeTest {
     @Test
     @Throws(IOException::class)
     fun quickConfigKeepsFeedbackDiagnosticSemanticsAvailable() {
-        val activity: String = read("src/main/java/com/dpis/module/QuickConfigActivity.kt")
+        val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
 
         Assert.assertTrue(activity.contains("Coordinator(createFeedbackDiagnosticHost())"))
         Assert.assertTrue(activity.contains("this@QuickConfigActivity.startFeedbackDiagnostic("))

@@ -6,9 +6,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.widget.Toast
-import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.ui.compose.FontLibraryDialog

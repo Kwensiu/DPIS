@@ -2,6 +2,7 @@ package com.dpis.module.updates
 
 import android.content.Context
 import android.text.SpannableStringBuilder
+import com.dpis.module.updates.presentation.renderReleaseNotesWithMarkwon
 import android.text.Spanned
 import android.text.style.URLSpan
 import java.net.URI

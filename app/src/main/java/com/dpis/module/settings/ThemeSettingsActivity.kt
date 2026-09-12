@@ -1,7 +1,7 @@
 package com.dpis.module.settings
 
 import android.os.Bundle
-import com.dpis.module.LocalizedActivity
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.ui.compose.SupportActivityContent
 
 class ThemeSettingsActivity : LocalizedActivity() {

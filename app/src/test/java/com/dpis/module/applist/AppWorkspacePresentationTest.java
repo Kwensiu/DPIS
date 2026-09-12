@@ -15,6 +15,9 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 import java.util.Collections;
 import java.util.List;
 import org.junit.Test;
+import com.dpis.module.applist.AppWorkspaceScrollStateStore;
+import com.dpis.module.applist.AppWorkspacePresentation;
+import com.dpis.module.ui.MainUiState;
 
 public final class AppWorkspacePresentationTest {
     @Test

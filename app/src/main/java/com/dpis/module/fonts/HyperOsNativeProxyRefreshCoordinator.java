@@ -1,12 +1,13 @@
 package com.dpis.module.fonts;
 
-import com.dpis.module.DpisConfigStore;
-import com.dpis.module.DpisLog;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
 
 import android.content.Context;
 
 import java.util.LinkedHashSet;
+import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
 
 public final class HyperOsNativeProxyRefreshCoordinator {
     private HyperOsNativeProxyRefreshCoordinator() {

@@ -3,20 +3,23 @@ package com.dpis.module
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.process.presentation.ProcessActionHandler
+import com.dpis.module.runtime.ConfigStoreFactory
+import com.dpis.module.config.DpisConfigStore
 
 class RuntimeConfigDeliverySourceTest {
     @Test
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
         val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
-        val templateWorkspace = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceCoordinator.kt")
+        val templateWorkspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val templateHost = read("src/main/java/com/dpis/module/templates/TemplateWorkspaceActivityHost.kt")
         val appConfigHost = hostBlock(mainActivity)
-        val sheetActions = read("src/main/java/com/dpis/module/appconfig/AppConfigSheetActionBinder.java")
+        val sheetActions = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.java")
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
-        val systemSettings = read("src/main/java/com/dpis/module/SystemServerSettingsPageController.kt")
+        val systemSettings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
 
         assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"))
         assertTrue(delivery.contains("public static void publishLocalSnapshotAfterSave()"))
@@ -50,7 +53,7 @@ class RuntimeConfigDeliverySourceTest {
 
     @Test
     fun activeFontLibraryStoreUsesLocalPreferencesOnly() {
-        val factory = read("src/main/java/com/dpis/module/ConfigStoreFactory.java")
+        val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
         val activeFontFactory = activeFontLibraryFactoryBlock(factory)
 
         assertTrue(activeFontFactory.contains("return createLocalFontLibraryStore(context);"))

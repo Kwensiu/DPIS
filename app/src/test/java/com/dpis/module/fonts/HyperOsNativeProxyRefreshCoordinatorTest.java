@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.LinkedHashSet;
 
 import org.junit.Test;
+import com.dpis.module.config.DpisConfigStore;
 
 public class HyperOsNativeProxyRefreshCoordinatorTest {
     @Test

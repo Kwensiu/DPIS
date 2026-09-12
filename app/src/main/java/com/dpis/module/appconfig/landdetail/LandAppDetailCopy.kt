@@ -1,10 +1,10 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.landdetail
 
 import android.app.Activity
-import com.dpis.module.ConfigStoreFactory
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogBinder.AppConfigDialogState
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
