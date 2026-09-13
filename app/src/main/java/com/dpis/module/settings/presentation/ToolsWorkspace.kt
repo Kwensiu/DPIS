@@ -1,43 +1,18 @@
 package com.dpis.module.settings.presentation
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
-import android.view.View
-import com.dpis.module.diagnostics.LogActivity
-import com.dpis.module.diagnostics.presentation.LogGate
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.SystemFontScaleToolPresenter
 import com.dpis.module.settings.SystemFontScaleToolState
-import com.dpis.module.ui.TouchFeedbackBinder
-import com.dpis.module.ui.WindowInsetsBinder
 
-/** Owns the tools page's legacy binding, Compose state, and platform callbacks. */
+/** Owns the tools page's Compose state and platform callbacks. */
 class ToolsWorkspace(
     private val activity: LocalizedActivity,
     private val onComposeStateChanged: Runnable,
     private val onWriteFailed: Runnable,
 ) {
-    private val binder = ToolsWorkspaceBinder(object : ToolsWorkspaceBinder.Host {
-        override fun activity(): Activity = this@ToolsWorkspace.activity
-
-        override fun applyToolsToolbarInsets(toolbar: View?) {
-            WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false)
-        }
-
-        override fun bindPressHaptic(view: View?) {
-            TouchFeedbackBinder.bindPressHaptic(view)
-        }
-
-        override fun openLogsWhenDiagnosticLogsEnabled() {
-            val openLogs = Runnable { activity.startActivity(Intent(activity, LogActivity::class.java)) }
-            if (LogGate.ensureEnabled(activity, openLogs, null)) {
-                openLogs.run()
-            }
-        }
-    })
-
     private val presenter = SystemFontScaleToolPresenter(
         activity,
         object : SystemFontScaleToolPresenter.Listener {
@@ -71,30 +46,17 @@ class ToolsWorkspace(
         )
     }
 
-    fun bind(root: View?) {
-        binder.bind(root)
-    }
-
     fun onStart() {
         presenter.refresh()
-        binder.onStart()
     }
 
     fun onResume() {
         presenter.refresh()
-        binder.onResume()
     }
 
-    fun onStop() {
-        binder.onStop()
-    }
+    fun onStop() = Unit
 
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         presenter.refresh()
-        binder.onActivityResult(requestCode, resultCode, data)
-    }
-
-    fun onShown() {
-        binder.onShown()
     }
 }

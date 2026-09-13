@@ -138,7 +138,6 @@ class MainWorkspaceSession(
     fun bindWorkspaceSession() {
         activity.startupSession.ensureWorkspaceSession().present(
             activity.startupSession.requireUiState().currentQuery(),
-            true,
         )
     }
 
@@ -157,7 +156,6 @@ class MainWorkspaceSession(
         if (activity.startupSession.requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
             activity.startupSession.ensureWorkspaceSession().restoreForConfiguration(
                 activity.startupSession.requireUiState().currentQuery(),
-                true,
             )
         }
     }

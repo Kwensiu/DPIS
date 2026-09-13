@@ -2,15 +2,13 @@ package com.dpis.module.settings.presentation
 
 import android.app.Activity
 import android.content.Intent
-import android.view.View
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SettingsActions
 
 /**
  * Java-facing adapter that owns the settings controller's Activity session while MainActivity
- * remains the platform shell. Legacy View and Compose presentations share one workflow
- * controller, but only one root is active for a given Activity instance.
+ * remains the platform shell.
  */
 class SettingsWorkspaceSession(
     private val activity: LocalizedActivity,
@@ -36,13 +34,8 @@ class SettingsWorkspaceSession(
     private var controller: SystemServerSettingsPageController? = null
     private var composePresentationStarted = false
 
-    fun bindLegacy(root: View) {
-        if (controller != null) return
-        controller = SystemServerSettingsPageController(activity, root).also { it.bind() }
-    }
-
     fun ensureComposeController(): SystemServerSettingsPageController {
-        val current = controller ?: SystemServerSettingsPageController(activity, null).also {
+        val current = controller ?: SystemServerSettingsPageController(activity).also {
             controller = it
         }
         if (!composePresentationStarted) {

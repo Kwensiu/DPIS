@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.FrameLayout
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
@@ -32,7 +30,6 @@ import com.dpis.module.templates.TemplateEditorDraft
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.TemplateWorkspaceStateCodec
-import com.dpis.module.ui.dialog.ConfirmDialog
 import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.button.MaterialButton
 
@@ -204,7 +201,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
         override fun openEmbeddedTargets(id: String) {
             routeState.openEmbeddedQuickTemplateTargets(id)
-            legacyDetailController?.dispose()
             publish()
         }
 
@@ -344,12 +340,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     private val routeState = initialRoute
     private val presentation = TemplateWorkspacePresentationController(activity, actions, initialQuery)
-    private var legacyWorkspace: View? = null
-    private var legacyDetailEmpty: View? = null
-    private var legacyDetailContent: FrameLayout? = null
-    private var legacyWorkspaceBinder: TemplateWorkspaceBinder? = null
-    private var legacyDetailController: TemplateDetailPaneController? = null
-    private var composePresentation = false
     private var pendingApply: PendingApply? = null
 
     fun state() = presentation.state()
@@ -400,77 +390,17 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     fun route() = routeState
 
-    /** Attaches the retained View-only surfaces without leaking their binders into MainActivity. */
-    fun attachLegacyViews(workspace: View?, detailEmpty: View?, detailContent: FrameLayout?) {
-        legacyWorkspace = workspace
-        legacyDetailEmpty = detailEmpty
-        legacyDetailContent = detailContent
-        legacyDetailController = TemplateDetailPaneController(
-            activity,
-            detailContent,
-            detailEmpty,
-            legacyTargetsHost(),
-            Runnable { closeRoute() },
-        )
-        legacyWorkspaceBinder = TemplateWorkspaceBinder(
-            activity,
-            object : TemplateWorkspaceBinder.GlobalPrefillActions {
-                override fun edit() = openGlobalPrefill()
-            },
-            object : TemplateWorkspaceBinder.QuickTemplateActions {
-                override fun apply(templateId: String) = applyQuickTemplate(templateId)
-                override fun edit(templateId: String) = openQuickTemplate(templateId)
-                override fun select(templateId: String) = openQuickTemplateTargets(templateId)
-                override fun create() = openQuickTemplate(null)
-                override fun sort(templates: List<QuickTemplateStore.QuickTemplate>) {
-                    // Sort dialog visibility is owned by Compose phone/Wear. This View binder is
-                    // only used when the Compose shell is absent.
-                    if (templates.isEmpty()) return
-                }
-            },
-        )
-    }
-
-    /** Rebinds whichever presentation is active after a template state transition. */
-    fun present(query: String, compose: Boolean) {
-        composePresentation = compose
+    fun present(query: String) {
         refresh(query)
-        if (compose) {
-            publish()
-            return
-        }
-        legacyWorkspaceBinder?.bind(legacyWorkspace, query)
-        updateLegacyDetailVisibility(true)
+        publish()
     }
 
-    fun restoreForConfiguration(query: String, compose: Boolean) {
-        val selection = routeState.selection()
-        if (selection.kind == TemplateDetailKind.NONE) return
-        if (compose) {
-            present(query, true)
-            return
-        }
-        if (selection.kind == TemplateDetailKind.QUICK_TEMPLATE_TARGETS) {
-            routeState.resetTargetSelectionActivityForConfiguration()
-            showLegacyDetail(selection)
-            startPortraitTargetSelection(selection.templateId)
-        }
+    fun restoreForConfiguration(query: String) {
+        if (routeState.selection().kind == TemplateDetailKind.NONE) return
+        present(query)
     }
 
-    fun updateLegacyDetailVisibility(templateWorkspaceVisible: Boolean) {
-        val hasSelection = routeState.selection().kind != TemplateDetailKind.NONE
-        legacyDetailEmpty?.visibility = if (templateWorkspaceVisible && !hasSelection) View.VISIBLE else View.GONE
-        legacyDetailContent?.visibility = if (templateWorkspaceVisible && hasSelection) View.VISIBLE else View.GONE
-    }
-
-    fun onDestroy() {
-        legacyDetailController?.dispose()
-        legacyDetailController = null
-        legacyWorkspaceBinder = null
-        legacyWorkspace = null
-        legacyDetailEmpty = null
-        legacyDetailContent = null
-    }
+    fun onDestroy() = Unit
 
     fun restoreRoute(savedState: Bundle?) {
         if (savedState == null) return
@@ -506,7 +436,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         if (requestCode != REQUEST_TARGET_SELECTION) return false
         routeState.markTargetSelectionActivityFinished()
         if (QuickTemplateTargetCarrierState.shouldClearPendingAfterResult(
-                isLegacyLandscapeDetailMode(),
+                false,
                 routeState.hasPendingQuickTemplateTargets(),
                 closeReason(data),
             )
@@ -563,20 +493,7 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             ),
         )
         refresh(presentation.state().query)
-        if (composePresentation) {
-            publish()
-            return
-        }
-        val confirmation = pendingApply!!.confirmation
-        ConfirmDialog.showWithLabels(
-            activity,
-            confirmation.title,
-            confirmation.message,
-            activity.getString(R.string.dialog_process_action_confirm_negative),
-            confirmation.confirmLabel,
-            { actions.confirmApply() },
-            { actions.dismissApply() },
-        )
+        publish()
     }
 
     fun refresh(query: String) {
@@ -656,28 +573,22 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
 
     private fun openGlobalPrefill() {
         routeState.openGlobalPrefill()
-        legacyDetailController?.dispose()
         publish()
     }
 
     private fun openQuickTemplate(templateId: String?) {
         routeState.openQuickTemplate(templateId)
-        legacyDetailController?.dispose()
         publish()
     }
 
     private fun openQuickTemplateTargets(templateId: String) {
         routeState.openQuickTemplateTargets(templateId)
-        if (isLegacyLandscapeDetailMode()) {
-            showLegacyDetail(routeState.selection())
-        } else {
-            startPortraitTargetSelection(templateId)
-        }
+        startPortraitTargetSelection(templateId)
     }
 
     private fun startPortraitTargetSelection(templateId: String?) {
         if (templateId == null || !QuickTemplateTargetCarrierState.shouldStartPortraitActivity(
-                isLegacyLandscapeDetailMode(), routeState.hasPendingQuickTemplateTargets(),
+                false, routeState.hasPendingQuickTemplateTargets(),
                 routeState.targetSelectionActivityStarted(),
             )
         ) return
@@ -690,39 +601,12 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         )
     }
 
-    private fun showLegacyDetail(selection: TemplateDetailSelection) {
-        if (legacyDetailController?.show(selection) != true) {
-            closeRoute()
-            return
-        }
-        updateLegacyDetailVisibility(true)
-    }
-
     private fun closeRoute() {
         routeState.clear()
-        legacyDetailController?.clear()
     }
-
-    private fun isLegacyLandscapeDetailMode() =
-        !composePresentation && legacyDetailContent != null && legacyDetailEmpty != null
 
     private fun publish() {
-        if (composePresentation) {
-            host.refreshTemplateWorkspace()
-        } else {
-            legacyWorkspaceBinder?.bind(legacyWorkspace, presentation.state().query)
-            updateLegacyDetailVisibility(true)
-        }
-    }
-
-    private fun legacyTargetsHost() = object : QuickTemplateTargetsBinder.Host {
-        override fun getPackageManager() = activity.packageManager
-        override fun getSelfPackageName() = activity.packageName
-        override fun runOnUiThread(runnable: Runnable) = activity.runOnUiThread(runnable)
-        override fun getIconRefreshAnchor(): View? = legacyDetailContent?.findViewById(R.id.quick_template_targets_list)
-        override fun onSaved() = publish()
-        override fun onMissingTemplate() = closeRoute()
-        override fun showToast(messageResId: Int) = host.showToast(messageResId)
+        host.refreshTemplateWorkspace()
     }
 
     private class PendingApply(

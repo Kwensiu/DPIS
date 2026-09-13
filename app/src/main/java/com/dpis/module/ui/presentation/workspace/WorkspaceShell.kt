@@ -79,8 +79,7 @@ enum class WorkspaceDestination(
     @param:StringRes val labelRes: Int,
     @param:DrawableRes val iconRes: Int
 ) {
-    // Keep this sequence aligned with main_workspace_navigation.xml so Compose
-    // does not reorder or restyle established workspace navigation for users.
+    // Keep this sequence aligned with the established workspace navigation order.
     APP(R.string.workspace_app, R.drawable.ic_apps_24),
     TEMPLATE(R.string.workspace_template, R.drawable.ic_template_24),
     HOME(R.string.workspace_home, R.drawable.ic_home_24),

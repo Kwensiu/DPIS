@@ -35,5 +35,7 @@
     <item name="dialog_wechat_dpi_input" type="id" />
     <item name="dialog_wechat_dpi_help_button" type="id" />
     <item name="sheet_unsaved_badge_container" type="id" />
+    <item name="sheet_drag_handle" type="id" />
+    <item name="sheet_unsaved_badge" type="id" />
     <item name="sheet_unsaved_inline_badge" type="id" />
 </resources>

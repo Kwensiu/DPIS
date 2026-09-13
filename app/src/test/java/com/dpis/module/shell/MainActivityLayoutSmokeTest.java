@@ -29,32 +29,32 @@ public class MainActivityLayoutSmokeTest {
     public void composeWorkspaceDestinationsKeepEstablishedNavigationOrder() throws IOException {
         String shell = read(
                 "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt");
-        String workspaceMenu = read("src/main/res/menu/main_workspace_navigation.xml");
 
         assertTrue(shell.contains("APP(R.string.workspace_app, R.drawable.ic_apps_24)"));
         assertTrue(shell.contains("TEMPLATE(R.string.workspace_template, R.drawable.ic_template_24)"));
         assertTrue(shell.contains("HOME(R.string.workspace_home, R.drawable.ic_home_24)"));
         assertTrue(shell.contains("TOOLS(R.string.workspace_tools, R.drawable.ic_build_24)"));
         assertTrue(shell.contains("SETTINGS(R.string.workspace_settings, R.drawable.ic_settings_24)"));
-        assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_app_button\""));
-        assertTrue(workspaceMenu.contains("android:id=\"@+id/workspace_template_button\""));
-        assertTrue(workspaceMenu.contains("android:icon=\"@drawable/ic_apps_24\""));
-        assertTrue(workspaceMenu.contains("android:icon=\"@drawable/ic_template_24\""));
+        int app = shell.indexOf("APP(R.string.workspace_app");
+        int template = shell.indexOf("TEMPLATE(R.string.workspace_template");
+        int home = shell.indexOf("HOME(R.string.workspace_home");
+        int tools = shell.indexOf("TOOLS(R.string.workspace_tools");
+        int settings = shell.indexOf("SETTINGS(R.string.workspace_settings");
+        assertTrue(app >= 0 && app < template && template < home && home < tools && tools < settings);
     }
 
     @Test
-    public void toolsWorkspaceKeepsExpandedCardsInsideScrollableContent()
-            throws IOException {
-        String layout = read("src/main/res/layout/tools_workspace.xml");
-        String dimensions = read("src/main/res/values/dimens.xml");
-        String source = read("src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.kt");
+    public void toolsWorkspaceComposeOwnsFontScaleAndLogSurfaces() throws IOException {
+        String content = read(
+                "src/main/java/com/dpis/module/tools/presentation/ToolsWorkspaceContent.kt");
+        String workspace = read(
+                "src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt");
 
-        assertTrue(layout.contains("android:id=\"@+id/tools_toolbar\""));
-        assertTrue(layout.contains("android:id=\"@+id/tools_workspace_scroll\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_card\""));
-        assertTrue(dimensions.contains("tools_workspace_content_padding_bottom"));
-        assertTrue(source.contains("revealExpandedPanel()"));
-        assertTrue(source.contains("requestRectangleOnScreen"));
+        assertTrue(content.contains("R.string.system_font_scale_title"));
+        assertTrue(content.contains("R.string.workspace_tools"));
+        assertTrue(workspace.contains("SystemFontScaleToolPresenter("));
+        assertTrue(workspace.contains("presenter.refresh()"));
+        assertFalse(workspace.contains("ToolsWorkspaceBinder"));
     }
 
     private static String read(String relativePath) throws IOException {

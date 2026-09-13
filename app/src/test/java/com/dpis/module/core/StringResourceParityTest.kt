@@ -35,17 +35,17 @@ class StringResourceParityTest {
 
     @Test
     fun settingsScreenWiresLanguageSelector() {
-        val layout = read("src/main/res/layout/view_system_server_settings_content.xml")
+        val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
         val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
-        layout.assertContainsAll("android:id=\"@+id/row_language\"")
+        content.assertContainsAll("R.string.settings_language_label")
         dialogs.assertContainsAll("LanguageDialogContent(")
         assertTrue(dialogs.indexOf("dismiss()", dialogs.indexOf("onSelected = {")) >= 0)
         assertTrue(dialogs.indexOf("onSelected.accept(selectedTag)") > dialogs.indexOf("dismiss()", dialogs.indexOf("onSelected = {")))
         dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", "R.dimen.dialog_action_spacing_top")
-        source.assertContainsAll("R.id.row_language", "bindLanguageRow()", "showLanguageDialog", "AppLocaleManager.supportedLanguages()", "LanguageDialogOption(option.tag", "AppLocaleManager.setLanguageTag", "SettingsComposeDialogs.showLanguage", "updateLanguageEntrySubtitle()", "AppLocaleManager.selectedLabelResId(activity)")
+        source.assertContainsAll("showLanguageDialog", "AppLocaleManager.supportedLanguages()", "LanguageDialogOption(option.tag", "AppLocaleManager.setLanguageTag", "SettingsComposeDialogs.showLanguage", "AppLocaleManager.selectedLabelResId(activity)")
         source.assertNotContainsAll("settings_language_hint")
         localeManager.assertContainsAll("SUPPORTED_LANGUAGES = List.of(", "TAG_JAPANESE", "R.string.settings_language_japanese", "TAG_RUSSIAN", "R.string.settings_language_russian", "static List<LanguageOption> supportedLanguages()")
     }

@@ -2,16 +2,14 @@ package com.dpis.module.templates.presentation
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.widget.FrameLayout
 import com.dpis.module.MainActivity
 
 /**
  * The sole Activity-facing entry point for the template workspace.
  *
- * This keeps retained route state, legacy View attachment, platform-result forwarding, and
- * Compose presentation setup in the template module. MainActivity only supplies its generic
- * shell query and lifecycle callbacks.
+ * This keeps retained route state, platform-result forwarding, and Compose presentation setup
+ * in the template module. MainActivity only supplies its generic shell query and lifecycle
+ * callbacks.
  */
 class TemplateWorkspaceActivitySession(
     activity: MainActivity,
@@ -31,19 +29,9 @@ class TemplateWorkspaceActivitySession(
 
     fun restore(savedState: Bundle?) = coordinator.restoreRoute(savedState)
 
-    fun attachLegacyViews(
-        workspace: View?,
-        detailEmpty: View?,
-        detailContent: FrameLayout?,
-    ) = coordinator.attachLegacyViews(workspace, detailEmpty, detailContent)
+    fun present(query: String) = coordinator.present(query)
 
-    fun present(query: String, compose: Boolean) = coordinator.present(query, compose)
-
-    fun restoreForConfiguration(query: String, compose: Boolean) =
-        coordinator.restoreForConfiguration(query, compose)
-
-    fun updateLegacyDetailVisibility(templateWorkspaceVisible: Boolean) =
-        coordinator.updateLegacyDetailVisibility(templateWorkspaceVisible)
+    fun restoreForConfiguration(query: String) = coordinator.restoreForConfiguration(query)
 
     fun handleActivityResult(requestCode: Int, data: Intent?) =
         coordinator.handleActivityResult(requestCode, data)

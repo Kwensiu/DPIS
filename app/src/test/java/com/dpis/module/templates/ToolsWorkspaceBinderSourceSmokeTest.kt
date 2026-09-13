@@ -1,11 +1,12 @@
 package com.dpis.module
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ToolsWorkspaceBinderSourceSmokeTest {
     @Test
-    fun mainActivityWiresToolsWorkspaceBinderLifecycle() {
+    fun mainActivityWiresToolsWorkspaceLifecycle() {
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
@@ -19,14 +20,8 @@ class ToolsWorkspaceBinderSourceSmokeTest {
 
         assertTrue(hostWiring.contains("var toolsWorkspace: ToolsWorkspace?"))
         assertTrue(hostWiring.contains("toolsWorkspace = ToolsWorkspace("))
-        assertTrue(workspace.contains("private val binder = ToolsWorkspaceBinder("))
-        assertTrue(
-            workspace.contains(
-                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false)"
-            )
-        )
-        assertTrue(workspace.contains("TouchFeedbackBinder.bindPressHaptic(view)"))
-        assertTrue(workspace.contains("LogGate.ensureEnabled("))
+        assertTrue(workspace.contains("SystemFontScaleToolPresenter("))
+        assertFalse(workspace.contains("ToolsWorkspaceBinder"))
         assertTrue(workspaceSession.contains("fun bindToolsWorkspace("))
         assertTrue(startup.contains("mainWorkspaceSession.bindForLifecycle("))
         assertTrue(startup.contains("hostWiringSession.toolsWorkspace?.onStart()"))
@@ -40,40 +35,17 @@ class ToolsWorkspaceBinderSourceSmokeTest {
     }
 
     @Test
-    fun toolsWorkspaceBinderOwnsSystemFontScaleToolBinder() {
-        val source = read(
-            "src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.kt"
+    fun composeToolsWorkspaceOwnsFontScalePermissionAndApply() {
+        val content = read(
+            "src/main/java/com/dpis/module/tools/presentation/ToolsWorkspaceContent.kt"
         )
+        val workspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
 
-        assertTrue(
-            source.contains("private var fontScaleToolBinder: SystemFontScaleToolBinder? = null")
-        )
-        assertTrue(
-            source.contains(
-                "fontScaleToolBinder = SystemFontScaleToolBinder(host.activity(), workspaceView, host)"
-            )
-        )
-        assertTrue(source.contains("fontScaleToolBinder?.refreshFromSystem()"))
-        assertTrue(source.contains("fontScaleToolBinder?.collapseAndRefreshFromSystem()"))
-    }
-
-    @Test
-    fun systemFontScalePermissionPanelOwnsAuthorizationClick() {
-        val source = read(
-            "src/main/java/com/dpis/module/settings/presentation/SystemFontScaleToolBinder.kt"
-        )
-
-        assertTrue(source.contains("host.bindPressHaptic(permissionOverlay)"))
-        assertTrue(
-            source.contains(
-                "permissionOverlay?.setOnClickListener { openWriteSettingsPermission() }"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "setVisible(operationGroup, expanded && (current.canWrite || current.unavailable))"
-            )
-        )
+        assertTrue(content.contains("onRequestPermission"))
+        assertTrue(content.contains("R.string.system_font_scale_apply"))
+        assertTrue(workspace.contains("fun requestPermission()"))
+        assertTrue(workspace.contains("Settings.ACTION_MANAGE_WRITE_SETTINGS"))
+        assertTrue(workspace.contains("presenter.apply()"))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

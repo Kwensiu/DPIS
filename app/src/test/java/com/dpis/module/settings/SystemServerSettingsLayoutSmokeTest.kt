@@ -6,18 +6,19 @@ import org.junit.Test
 class SystemServerSettingsLayoutSmokeTest {
     @Test
     fun settingsLayoutPlacesLanguageInThemeAndAboutRowsAtBottom() {
-        val layout = read("src/main/res/layout/view_system_server_settings_content.xml")
-        layout.assertContainsAll(
-            "android:id=\"@+id/row_config_backup\"", "android:id=\"@+id/row_language\"",
-            "android:id=\"@+id/row_interface_scale\"", "android:id=\"@+id/row_about\"",
-            "android:id=\"@+id/row_donate\"", "android:id=\"@+id/row_hide_launcher_icon\"",
-            "@string/settings_section_other", "@string/settings_section_about",
-            "@dimen/settings_content_padding_horizontal", "@dimen/page_card_corner_radius",
-            "@dimen/settings_divider_margin_horizontal",
+        val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
+        content.assertContainsAll(
+            "R.string.settings_config_backup_label",
+            "R.string.settings_language_label",
+            "R.string.settings_about_label",
+            "R.string.settings_donate_label",
+            "R.string.settings_hide_launcher_icon_label",
+            "R.string.settings_section_other",
+            "R.string.settings_section_about",
         )
-        assertInOrder(layout, "@string/settings_section_theme", "android:id=\"@+id/row_language\"", "android:id=\"@+id/row_interface_scale\"")
-        assertInOrder(layout, "@string/settings_section_other", "android:id=\"@+id/row_config_backup\"")
-        assertInOrder(layout, "@string/settings_section_about", "android:id=\"@+id/row_about\"", "android:id=\"@+id/row_donate\"")
+        assertInOrder(content, "R.string.settings_section_theme", "R.string.settings_language_label")
+        assertInOrder(content, "R.string.settings_section_other", "R.string.settings_config_backup_label")
+        assertInOrder(content, "R.string.settings_section_about", "R.string.settings_about_label", "R.string.settings_donate_label")
     }
 
     @Test
@@ -39,24 +40,39 @@ class SystemServerSettingsLayoutSmokeTest {
     @Test
     fun settingsControllerOwnsSemanticRowsAndDebugGates() {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
+        val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
+        val confirms = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt")
         source.assertContainsAll(
-            "R.id.row_experimental_settings", "ExperimentalSettingsActivity::class.java", "R.drawable.ic_experiment_24",
-            "R.drawable.ic_volunteer_24", "DonateActivity.createIntent(activity)", "R.drawable.ic_upload_file_24",
-            "R.drawable.ic_language_24", "R.drawable.ic_hide_image_24", "applySystemHooksRowVisibility()",
-            "row.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE", "if (!BuildConfig.DEBUG) {",
+            "ExperimentalSettingsActivity::class.java",
+            "DonateActivity.createIntent(activity)",
+            "if (!BuildConfig.DEBUG) {",
             "private fun onHooksEnabledChanged(",
-            "showDisableSafeModeConfirmationDialog()", "R.string.system_safe_mode_disable_confirm_title",
-            "R.string.system_safe_mode_disable_confirm_message", "if (!store!!.setSystemServerSafeModeEnabled(enabled))",
-            "setCheckedSilently(", "show(",
-            ": DpisApplication.ServiceStateListener", "DpisApplication.addServiceStateListener(this, true)",
-            "DpisApplication.removeServiceStateListener(this)", "override fun onServiceStateChanged()",
-            "store = DpisApplication.getConfigStore()", "applyRestoredStoreState()", "refreshStoreState(true)",
-            "private fun applyLauncherIconVisibilityFromStore()", "val actualHidden = resolveLauncherIconHiddenState(",
-            "LauncherIconVisibilityStore(activity)", "launcherIconVisibilityStore.isHidden =", "ComponentName(",
-            "MainActivity::class.java.name + \"Launcher\"", "private fun showHideLauncherIconConfirmationDialog()",
-            "R.string.settings_hide_launcher_icon_confirm_title", "R.string.settings_hide_launcher_icon_confirm_message",
-            "if (!persistLauncherIconState(true))", "hideLauncherIconSwitch,",
-            "RuntimeDebugPropertySyncer.publishAsync(", "isChecked,", "store!!.isFontDebugOverlayEnabled", "requestedEnabled", "show(", "handle.update(",
+            "if (!store!!.setSystemServerSafeModeEnabled(enabled))",
+            ": DpisApplication.ServiceStateListener",
+            "DpisApplication.addServiceStateListener(this, true)",
+            "DpisApplication.removeServiceStateListener(this)",
+            "override fun onServiceStateChanged()",
+            "store = DpisApplication.getConfigStore()",
+            "val hidden = resolveLauncherIconHiddenState(",
+            "LauncherIconVisibilityStore(activity)",
+            "launcherIconVisibilityStore.isHidden =",
+            "ComponentName(",
+            "MainActivity::class.java.name + \"Launcher\"",
+            "RuntimeDebugPropertySyncer.publishAsync(",
+            "handle.update(",
+        )
+        content.assertContainsAll(
+            "R.drawable.ic_experiment_24",
+            "R.drawable.ic_volunteer_24",
+            "R.drawable.ic_upload_file_24",
+            "R.drawable.ic_language_24",
+            "R.drawable.ic_hide_image_24",
+        )
+        confirms.assertContainsAll(
+            "R.string.system_safe_mode_disable_confirm_title",
+            "R.string.system_safe_mode_disable_confirm_message",
+            "R.string.settings_hide_launcher_icon_confirm_title",
+            "R.string.settings_hide_launcher_icon_confirm_message",
         )
         source.assertNotContainsAll("if (!setLauncherAliasHidden(requestedHidden))", "getPackageName() + \".MainActivityLauncher\"", "R.layout.dialog_process_action_confirm", "new AlertDialog.Builder(this)")
         read("src/main/java/com/dpis/module/config/GlobalConfigStore.kt").assertContainsAll("!BuildConfig.DEBUG", "SYSTEM_SERVER_HOOKS_ENABLED, true")
@@ -71,7 +87,6 @@ class SystemServerSettingsLayoutSmokeTest {
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
         source.assertContainsAll(
             "showBackupActions(",
-            "showInterfaceScale(",
             "SettingsComposeDialogs.showLanguage(",
             "backupHost.launchImportPicker()",
             "backupHost.confirmPendingImport()",
@@ -118,8 +133,6 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun rowLayoutsAndFontDebugSurfaceKeepExpectedSpacing() {
-        read("src/main/res/layout/item_settings_switch.xml").assertContainsAll("android:saveEnabled=\"false\"", "@dimen/settings_row_min_height", "@dimen/settings_row_padding_horizontal", "@dimen/settings_row_switch_spacing_start")
-        read("src/main/res/layout/item_settings_entry.xml").assertContainsAll("@dimen/settings_row_min_height", "@dimen/settings_row_padding_horizontal", "@dimen/settings_row_chevron_size")
         read("src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt").assertContainsAll("R.dimen.font_debug_dialog_surface_padding_horizontal", "MaterialTheme.colorScheme.surfaceContainer", "MaterialTheme.colorScheme.errorContainer")
     }
 

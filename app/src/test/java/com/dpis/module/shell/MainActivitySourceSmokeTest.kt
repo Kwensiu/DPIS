@@ -42,10 +42,10 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("TemplateEditorForm"))
         assertFalse(source.contains("QuickTemplateStore"))
         assertFalse(source.contains("REQUEST_QUICK_TEMPLATE_TARGETS"))
-        assertTrue(coordinator.contains("fun attachLegacyViews("))
+        assertFalse(coordinator.contains("fun attachLegacyViews("))
         assertTrue(coordinator.contains("fun presentationSource("))
         assertTrue(coordinator.contains("fun handleActivityResult("))
-        assertTrue(session.contains("fun attachLegacyViews("))
+        assertFalse(session.contains("fun attachLegacyViews("))
         assertTrue(session.contains("fun saveState("))
     }
 
@@ -223,7 +223,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(workspace.contains("checkNotNull(hostWiring.appWorkspaceActions)"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
         assertTrue(toolsWorkspace.contains("class ToolsWorkspace("))
-        assertTrue(toolsWorkspace.contains("private val binder = ToolsWorkspaceBinder("))
+        assertTrue(toolsWorkspace.contains("SystemFontScaleToolPresenter("))
+        assertFalse(toolsWorkspace.contains("ToolsWorkspaceBinder"))
     }
 
     @Test
@@ -252,8 +253,6 @@ class MainActivitySourceSmokeTest {
     @Test
     fun composeTemplateWorkspaceKeepsTargetSelectionFallbackOnly() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
-        val targetsDetail = read("src/main/res/layout/view_land_quick_template_targets_detail.xml")
-
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
@@ -262,28 +261,25 @@ class MainActivitySourceSmokeTest {
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
+        val composeContent = read(
+            "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt"
+        )
         assertFalse(source.contains("templateDetailContent"))
         assertFalse(source.contains("TemplateDetailPaneController"))
         assertTrue(workspace.contains("restoreForConfiguration("))
-        assertTrue(templateCoordinator.contains("fun attachLegacyViews("))
-        assertTrue(templateCoordinator.contains("TemplateDetailPaneController("))
+        assertFalse(templateCoordinator.contains("fun attachLegacyViews("))
+        assertFalse(templateCoordinator.contains("TemplateDetailPaneController("))
         assertTrue(templateCoordinator.contains("startPortraitTargetSelection("))
         assertFalse(source.contains("GlobalPrefillEditorBinder"))
         assertFalse(source.contains("QuickTemplateEditorBinder"))
         assertFalse(source.contains("GlobalPrefillSheetDialog"))
         assertFalse(source.contains("QuickTemplateEditSheetDialog"))
         assertTrue(templateCoordinator.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"))
-        assertTrue(templateCoordinator.contains("legacyDetailController?.dispose()"))
+        assertFalse(templateCoordinator.contains("legacyDetailController"))
         assertFalse(source.contains("? R.layout.dialog_global_prefill_sheet"))
         assertFalse(source.contains(": R.layout.dialog_quick_template_edit_sheet"))
-        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""))
-        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_list\""))
-        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_save_button\""))
-        assertTrue(targetsDetail.contains("@dimen/land_template_detail_subtitle_spacing_top"))
-        assertFalse(targetsDetail.contains("@dimen/land_app_identity_secondary_spacing_top"))
-        assertFalse(targetsDetail.contains("quick_template_targets_back_button"))
-        assertFalse(targetsDetail.contains("@layout/activity_quick_template_targets"))
-        assertTrue(targetsDetail.contains("android:id=\"@+id/quick_template_targets_detail_root\""))
+        assertTrue(composeContent.contains("SecondaryPageTopBar("))
+        assertTrue(composeContent.contains("SplitPaneHeader("))
     }
 
     @Test
@@ -639,44 +635,20 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun startupDisclaimerLayoutKeepsScrollableContent() {
-        val layout = read(
-            "src/main/res/layout/dialog_startup_disclaimer.xml"
-        )
-        val roundLayout = read(
-            "src/main/res/layout-round/dialog_startup_disclaimer.xml"
-        )
+    fun startupDisclaimerComposeKeepsMandatoryAcceptContract() {
+        val source = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
         val dimensions = read("src/main/res/values/dimens.xml")
 
-        assertTrue(
-            layout.contains("com.dpis.module.ui.MaxHeightNestedScrollView")
-        )
-        assertTrue(layout.contains("app:maxHeightFraction=\"0.45\""))
-        assertTrue(layout.contains("startup_disclaimer_message"))
-        assertTrue(layout.contains("startup_disclaimer_checkbox"))
-        assertTrue(
-            layout.indexOf("</com.dpis.module.ui.MaxHeightNestedScrollView>") <
-                layout.indexOf(
-                    "android:id=\"@+id/startup_disclaimer_checkbox\""
-                )
-        )
-        assertTrue(layout.contains("startup_disclaimer_accept_button"))
-        assertFalse(layout.contains("startup_disclaimer_exit_button"))
-        assertTrue(layout.contains("@dimen/dialog_surface_padding_horizontal"))
-        assertTrue(layout.contains("@dimen/dialog_body_spacing"))
-        assertTrue(layout.contains("@dimen/dialog_text_line_spacing"))
-        assertTrue(layout.contains("@dimen/dialog_action_spacing_top"))
-        assertFalse(layout.contains("@dimen/dialog_action_spacing_between"))
-        assertTrue(roundLayout.contains("@style/TextAppearance.Material3.TitleSmall"))
-        assertTrue(roundLayout.contains("android:maxLines=\"2\""))
-        assertTrue(roundLayout.contains("app:maxHeightFraction=\"0.25\""))
-        assertTrue(roundLayout.contains("@style/TextAppearance.Material3.BodySmall"))
-        assertTrue(roundLayout.contains("startup_disclaimer_checkbox"))
-        assertTrue(roundLayout.contains("startup_disclaimer_accept_button"))
+        assertTrue(source.contains("fun StartupDisclaimerDialog("))
+        assertTrue(source.contains("R.string.startup_disclaimer_title"))
+        assertTrue(source.contains("R.string.startup_disclaimer_message"))
+        assertTrue(source.contains("R.string.startup_disclaimer_checkbox_text"))
+        assertTrue(source.contains("R.string.startup_disclaimer_accept_button"))
+        assertTrue(source.contains("dismissOnBackPress = false"))
+        assertTrue(source.contains("dismissOnClickOutside = false"))
+        assertTrue(source.contains("R.dimen.dialog_surface_padding_horizontal"))
+        assertFalse(source.contains("startup_disclaimer_exit_button"))
         assertTrue(dimensions.contains("dialog_round_surface_padding_horizontal"))
-        assertTrue(dimensions.contains("dialog_round_surface_padding_vertical"))
-        assertTrue(dimensions.contains("dialog_round_body_spacing"))
-        assertTrue(dimensions.contains("dialog_round_text_line_spacing"))
         assertTrue(dimensions.contains("dialog_round_action_spacing_top"))
     }
 

@@ -1,18 +1,8 @@
 package com.dpis.module
 
-
-
-
-
-
-
-
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-
 import org.junit.Test
-
-
 
 class QuickTemplateTargetSelectionSourceSmokeTest {
     @Test
@@ -20,25 +10,21 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         val manifest = read("src/main/AndroidManifest.xml")
         val activity = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionActivity.kt")
         val contract = read(
-                "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java")
-        val targetsBinder = read("src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsBinder.kt")
+            "src/main/java/com/dpis/module/templates/QuickTemplateTargetSelectionContract.java",
+        )
         val routeState = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val filterState = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetFilterState.kt")
-        val catalogLoader = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetCatalogLoader.kt")
         val presentation = read("src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsPresentationController.kt")
         val carrierState = read(
-                "src/main/java/com/dpis/module/templates/QuickTemplateTargetCarrierState.java")
-        val adapter = read("src/main/java/com/dpis/module/templates/QuickTemplateTargetAdapter.java")
-        val layout = read("src/main/res/layout/activity_quick_template_targets.xml")
-        val landLayout = read("src/main/res/layout/view_land_quick_template_targets_detail.xml")
-        val filterLayout = read("src/main/res/layout/dialog_quick_template_target_filters.xml")
-        val itemLayout = read("src/main/res/layout/item_quick_template_target_app.xml")
+            "src/main/java/com/dpis/module/templates/QuickTemplateTargetCarrierState.java",
+        )
         val composeContent = read(
-                "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt")
+            "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt",
+        )
         val composeHost = read(
-                "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetActivityContent.kt")
+            "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetActivityContent.kt",
+        )
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
-        val binder = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceBinder.kt")
 
         assertTrue(manifest.contains("android:name=\".templates.QuickTemplateTargetSelectionActivity\""))
         assertTrue(manifest.contains("android:exported=\"false\""))
@@ -50,8 +36,11 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(contract.contains("CLOSE_REASON_MISSING_TEMPLATE"))
         assertTrue(activity.contains("Configuration.ORIENTATION_LANDSCAPE"))
         assertTrue(activity.contains("shouldClosePortraitPageInLandscape()"))
-        assertTrue(activity.contains(
-                "finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_ORIENTATION_MIGRATION)"))
+        assertTrue(
+            activity.contains(
+                "finishWithReason(QuickTemplateTargetSelectionContract.CLOSE_REASON_ORIENTATION_MIGRATION)",
+            ),
+        )
         assertTrue(activity.contains("val controller = QuickTemplateTargetsPresentationController(this)"))
         assertTrue(activity.contains("targetsController?.dispose()"))
         assertTrue(activity.contains("finish()"))
@@ -85,108 +74,47 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(presentation.contains("catalog.loadInstalledAppCatalogWithIcons(false)"))
         assertTrue(presentation.contains("item.icon"))
         assertTrue(presentation.contains("catch (throwable: Throwable)"))
-        assertTrue(presentation.contains(
-                "quick template target presentation load failed"))
+        assertTrue(
+            presentation.contains(
+                "quick template target presentation load failed",
+            ),
+        )
         assertTrue(presentation.contains("loading = false"))
-        assertTrue(targetsBinder.contains("quickTemplateStore.setSelectedPackages("))
-        assertTrue(targetsBinder.contains("pruneSelectedPackagesToInstalledApps(selectedPackages, allTargetItems)"))
-        assertTrue(targetsBinder.contains("DpisApplication.getActiveHookConfigStore(activity)"))
-        assertTrue(targetsBinder.contains("PackageConfigRepository("))
-        assertTrue(catalogLoader.contains("loadInstalledAppCatalogWithIcons(false)"))
-        assertTrue(catalogLoader.contains("packageConfigRepository.hasRealPackageConfig(item.packageName)"))
-        assertTrue(targetsBinder.contains("FILTER_PREFS_NAME = \"quick_template_target_filters\""))
         assertTrue(filterState.contains("KEY_SHOW_SYSTEM_APPS = \"show_system_apps\""))
         assertTrue(filterState.contains("KEY_HIDE_CONFIGURED_APPS = \"hide_configured_apps\""))
-        assertFalse(targetsBinder.contains("AppListFilterStateStore"))
-        assertTrue(targetsBinder.contains("hideConfiguredApps && item.configured && !selected"))
-        assertTrue(targetsBinder.contains("matchesTargetFilters("))
-        assertTrue(targetsBinder.contains("R.layout.dialog_quick_template_target_filters"))
-        assertTrue(targetsBinder.contains("targetCatalogLoader.load()"))
-        assertTrue(catalogLoader.contains("buildItems()"))
-        assertTrue(targetsBinder.contains("onTargetAppsLoaded("))
-        assertTrue(targetsBinder.contains("applyTargetFilters()"))
-        assertFalse(targetsBinder.contains("private void filterApps("))
-        assertTrue(catalogLoader.contains("executor.execute"))
-        assertTrue(catalogLoader.contains("item.icon"))
-        assertTrue(catalogLoader.contains("quick template target list load failed"))
-        assertTrue(targetsBinder.contains("if (disposed)"))
-        assertFalse(targetsBinder.contains("applicationInfo.loadIcon(packageManager)"))
-        assertFalse(targetsBinder.contains("getInstalledApplications("))
-        assertTrue(adapter.contains("MaterialCheckBox"))
-        assertTrue(adapter.contains("quick_template_target_icon"))
-        assertTrue(adapter.contains("holder.icon.setImageDrawable(item.icon);"))
-        assertTrue(adapter.contains("holder.iconSkeleton.setVisibility(View.VISIBLE);"))
-        assertTrue(adapter.contains("iconResolveRequestListener.onIconResolveRequested(item.packageName);"))
         assertTrue(composeContent.contains("if (icon == null)"))
         assertTrue(composeContent.contains("surfaceVariant"))
-        assertTrue(adapter.contains("quick_template_target_configured_badge"))
-        assertFalse(adapter.contains("selectionListener.onSelectionChanged(item.packageName, selected);"))
-        assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_search_input\""))
-        assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_search_clear_button\""))
-        assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_filter_button\""))
-        assertTrue(layout.contains("@dimen/main_search_card_height"))
-        assertTrue(layout.contains("android:layout_marginTop=\"@dimen/template_target_list_container_spacing_top\""))
-        assertTrue(layout.contains("@drawable/ic_search_24"))
-        assertTrue(layout.contains("@drawable/ic_tune_24"))
-        assertTrue(layout.contains("android:id=\"@+id/quick_template_targets_save_button\""))
-        assertTrue(layout.contains("android:layout_marginTop=\"@dimen/template_target_save_button_margin_top\""))
-        assertTrue(layout.contains("app:tint=\"?attr/colorOnSurface\""))
-        assertTrue(landLayout.contains("android:id=\"@+id/quick_template_targets_detail_root\""))
-        assertTrue(landLayout.contains("android:id=\"@+id/quick_template_targets_save_button\""))
-        assertTrue(landLayout.contains("android:id=\"@+id/quick_template_targets_filter_button\""))
-        assertTrue(landLayout.contains("android:id=\"@+id/quick_template_targets_list\""))
-        assertFalse(landLayout.contains("quick_template_targets_back_button"))
-        assertFalse(landLayout.contains("@layout/activity_quick_template_targets"))
-        assertTrue(filterLayout.contains("@+id/quick_template_targets_filter_show_system_switch"))
-        assertTrue(filterLayout.contains("@+id/quick_template_targets_filter_hide_configured_switch"))
-        assertTrue(filterLayout.contains("@string/quick_template_targets_filter_hide_configured"))
-        assertFalse(filterLayout.contains("filter_width_only_switch"))
-        assertFalse(filterLayout.contains("filter_font_only_switch"))
-        assertTrue(itemLayout.contains("android:id=\"@+id/quick_template_target_icon\""))
-        assertTrue(itemLayout.contains("android:id=\"@+id/quick_template_target_icon_skeleton\""))
-        assertTrue(itemLayout.contains("@drawable/bg_app_icon_skeleton_mask"))
-        assertTrue(itemLayout.contains("@dimen/template_target_icon_size"))
-        assertTrue(itemLayout.contains("?attr/textAppearanceTitleSmall"))
-        assertTrue(itemLayout.contains("@string/quick_template_targets_configured_badge"))
         val workspaceCoordinator = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         assertTrue(workspaceCoordinator.contains("openQuickTemplateTargets(templateId)"))
-        assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(selection.templateId)"))
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"))
         assertTrue(workspaceCoordinator.contains("REQUEST_TARGET_SELECTION"))
         assertTrue(workspaceCoordinator.contains("routeState.targetSelectionActivityStarted()"))
         assertTrue(workspaceCoordinator.contains("routeState.markTargetSelectionActivityStarted()"))
-        assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"))
-        assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"))
-        assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"))
         val startup = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt",
         )
         assertTrue(startup.contains("handleActivityResult(requestCode, data)"))
         assertTrue(workspaceCoordinator.contains("activity.startActivityForResult("))
         val loadSession = read(
-            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt",
         )
         assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
-        assertTrue(targetsBinder.contains("InstalledAppCatalogCoordinator("))
         assertFalse(mainActivity.contains("REQUEST_QUICK_TEMPLATE_TARGETS"))
         assertTrue(routeState.contains("QuickTemplateTargetCarrierState.shouldClearPendingAfterResult("))
         assertTrue(routeState.contains("QuickTemplateTargetSelectionContract.closeReasonFrom("))
         assertTrue(carrierState.contains("enum CloseReason"))
         assertTrue(carrierState.contains("ORIENTATION_MIGRATION"))
         assertTrue(workspaceCoordinator.contains("TemplateDetailKind.QUICK_TEMPLATE_TARGETS"))
-        assertTrue(workspaceCoordinator.contains("TemplateDetailPaneController"))
+        assertFalse(workspaceCoordinator.contains("TemplateDetailPaneController"))
         assertTrue(routeState.contains("class RouteState"))
         assertTrue(routeState.contains("fun resetTargetSelectionActivityForConfiguration()"))
-        val detailController = read("src/main/java/com/dpis/module/templates/presentation/TemplateDetailPaneController.kt")
-        assertTrue(detailController.contains("view_land_quick_template_targets_detail"))
-        assertTrue(detailController.contains("QuickTemplateTargetsBinder(activity, detailView, host)"))
         assertTrue(workspaceCoordinator.contains("QuickTemplateTargetSelectionContract.EXTRA_TEMPLATE_ID"))
         val showTargetsMethod = workspaceCoordinator.substring(
-                workspaceCoordinator.indexOf("private fun openQuickTemplateTargets("),
-                workspaceCoordinator.indexOf("private fun startPortraitTargetSelection("))
+            workspaceCoordinator.indexOf("private fun openQuickTemplateTargets("),
+            workspaceCoordinator.indexOf("private fun startPortraitTargetSelection("),
+        )
         assertFalse(showTargetsMethod.contains("clearTemplateDetailSelection();"))
-        assertTrue(binder.contains("fun select(templateId: String)"))
-        assertFalse(targetsBinder.contains("target_packages"))
+        assertFalse(showTargetsMethod.contains("showLegacyDetail"))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)
