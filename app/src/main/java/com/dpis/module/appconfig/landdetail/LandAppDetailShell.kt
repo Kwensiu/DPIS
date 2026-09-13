@@ -16,9 +16,10 @@ class LandAppDetailShell(
 ) : LandAppDetailSession.Shell {
     override fun activity(): Activity = activity
 
-    override fun landDetailContent(): FrameLayout? = activity.landDetailContent()
+    override fun landDetailContent(): FrameLayout? =
+        activity.hostWiringSession.landDetailContent
 
-    override fun landDetailEmptyView(): View? = activity.landDetailEmptyView()
+    override fun landDetailEmptyView(): View? = activity.hostWiringSession.landDetailEmptyView
 
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
@@ -41,14 +42,14 @@ class LandAppDetailShell(
         activity.hookConfigStore,
     )
 
-    override fun editingDraft(): EditorDraft? = activity.currentEditingDraft()
+    override fun editingDraft(): EditorDraft? = activity.editorDraftSession.currentEditingDraft()
 
     override fun applyAppConfigDraft(root: View, draft: EditorDraft) {
-        activity.applyAppConfigDraft(root, draft)
+        activity.editorDraftSession.applyAppConfigDraft(root, draft)
     }
 
     override fun rememberActiveEditor(root: View?, packageName: String?) {
-        activity.rememberActiveEditor(root, packageName)
+        activity.editorDraftSession.rememberActiveEditor(root, packageName)
     }
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean =
@@ -72,6 +73,6 @@ class LandAppDetailShell(
     }
 
     override fun updateEditingDraft(state: AppConfigDialogBinder.AppConfigDialogState?) {
-        activity.updateEditingDraft(state)
+        activity.editorDraftSession.updateEditingDraft(state)
     }
 }

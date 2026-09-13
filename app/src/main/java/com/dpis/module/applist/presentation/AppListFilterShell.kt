@@ -14,8 +14,9 @@ class AppListFilterShell(
 
     override fun requireUiState(): MainUiState = activity.requireUiState()
 
-    override fun saveFilterState(filterState: AppListFilterState) =
-        activity.saveAppListFilterState(filterState)
+    override fun saveFilterState(filterState: AppListFilterState) {
+        activity.startupSession.filterStore?.save(filterState)
+    }
 
     override fun dispatch(action: MainUiAction) = activity.dispatchMainUiAction(action)
 }

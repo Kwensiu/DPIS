@@ -16,18 +16,19 @@ class HomeWorkspaceShell(
 
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
-    override fun loadScopeState(): ScopeState = activity.loadInstalledAppScopeState()
+    override fun loadScopeState(): ScopeState =
+        activity.installedAppsLoadSession.loadScopeState()
 
     override fun quickItemCount(): Int = activity.ensureWorkspaceSession().quickItemCount()
 
-    override fun homeUpdateUiState(): HomeUpdateUiState = activity.homeUpdateUiState()
+    override fun homeUpdateUiState(): HomeUpdateUiState = activity.updateSession.homeUpdateUiState
 
-    override fun checkForUpdatesNow() = activity.checkForUpdatesNow()
+    override fun checkForUpdatesNow() = activity.updateSession.checkForUpdatesNow()
 
     override fun setCurrentAppListPage(page: AppListPage, submit: Boolean) =
         activity.setCurrentAppListPage(page, submit)
 
     override fun dispatch(action: MainUiAction) = activity.dispatchMainUiAction(action)
 
-    override fun bindHomeWorkspace() = activity.bindHomeWorkspace()
+    override fun bindHomeWorkspace() = activity.mainWorkspaceSession.bindHomeWorkspace()
 }

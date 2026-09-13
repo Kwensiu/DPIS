@@ -27,11 +27,13 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(workspace.contains("LogGate.ensureEnabled("))
         assertTrue(workspaceSession.contains("fun bindToolsWorkspace("))
         assertTrue(source.contains("mainWorkspaceSession.bindForLifecycle("))
-        assertTrue(source.contains("toolsWorkspace()?.onStart()"))
-        assertTrue(source.contains("toolsWorkspace()?.onResume()"))
-        assertTrue(source.contains("toolsWorkspace()?.onStop()"))
+        assertTrue(source.contains("hostWiringSession.toolsWorkspace?.onStart()"))
+        assertTrue(source.contains("hostWiringSession.toolsWorkspace?.onResume()"))
+        assertTrue(source.contains("hostWiringSession.toolsWorkspace?.onStop()"))
         assertTrue(
-            source.contains("toolsWorkspace()?.onActivityResult(requestCode, resultCode, data)")
+            source.contains(
+                "hostWiringSession.toolsWorkspace?.onActivityResult(requestCode, resultCode, data)",
+            )
         )
     }
 

@@ -22,20 +22,19 @@ class MainHostWiringShell(
     override fun requestEditorScope(item: AppListItem, onApproved: Runnable): Boolean =
         activity.requestEditorScope(item, onApproved)
 
-    override fun refreshApps() = activity.refreshComposeApps()
+    override fun refreshApps() = activity.mainWorkspaceSession.refreshApps()
 
-    override fun refreshSettings() = activity.refreshComposeSettings()
+    override fun refreshSettings() = activity.mainWorkspaceSession.refreshSettings()
 
-    override fun refreshTools() = activity.refreshComposeTools()
+    override fun refreshTools() = activity.mainWorkspaceSession.refreshTools()
 
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 
-    override fun appConfigDialogHost(): AppConfigDialogActivityHost =
-        activity.appConfigDialogHost()
+    override fun appConfigDialogHost(): AppConfigDialogActivityHost = activity.dialogHost
 
-    override fun appConfigSaveHandler(): AppConfigSaveHandler = activity.appConfigSaveHandler()
+    override fun appConfigSaveHandler(): AppConfigSaveHandler = activity.saveHandler
 
-    override fun wechatDpiHelp(): WechatDpiHelp = activity.wechatDpiHelp()
+    override fun wechatDpiHelp(): WechatDpiHelp = activity.wechatHelp
 
     override fun dispatch(action: MainUiAction) = activity.dispatchMainUiAction(action)
 
@@ -52,13 +51,17 @@ class MainHostWiringShell(
         page: AppListPage,
         index: Int,
         scrollOffset: Int,
-    ) = activity.updateAppListScrollPosition(page, index, scrollOffset)
+    ) = activity.scrollStateStore.update(page, index, scrollOffset)
 
     override fun attachTemplateLegacyViews(
         workspaceContainer: View?,
         detailEmpty: View?,
         detailContent: FrameLayout?,
-    ) = activity.attachTemplateLegacyViews(workspaceContainer, detailEmpty, detailContent)
+    ) = activity.ensureWorkspaceSession().attachLegacyViews(
+        workspaceContainer,
+        detailEmpty,
+        detailContent,
+    )
 
     override fun openLogs() {
         activity.startActivity(Intent(activity, LogActivity::class.java))

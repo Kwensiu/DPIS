@@ -81,9 +81,11 @@ class TemplateWorkspaceLayoutSmokeTest {
         read("src/main/java/com/dpis/module/ui/presentation/wear/WearWorkspaceContent.kt").assertContainsAll("var sortDialogVisible by rememberSaveable", "QuickTemplateSortDialog(", "enabled = state.sortItems.isNotEmpty()")
         read("src/main/java/com/dpis/module/MainActivity.kt").apply {
             assertContainsAll("private var workspaceSession: TemplateWorkspaceActivitySession?", "ensureWorkspaceSession()")
-            assertContainsAll("TemplateWorkspaceActivitySession.State", "attachLegacyViews(")
+            assertContainsAll("TemplateWorkspaceActivitySession.State")
             assertNotContainsAll("ensureComposeTemplateWorkspacePresentation()", "new GlobalPrefillSaveHandler().save(", "new QuickTemplateSaveHandler().save(", "QuickTemplateSortDialog.show(")
         }
+        read("src/main/java/com/dpis/module/ui/presentation/MainHostWiringShell.kt")
+            .assertContainsAll("attachLegacyViews(")
     }
 
     private fun assertDashedEmptySummaryState(element: String) {

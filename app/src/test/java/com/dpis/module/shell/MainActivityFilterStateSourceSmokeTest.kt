@@ -6,7 +6,6 @@ import org.junit.Test
 class MainActivityFilterStateSourceSmokeTest {
     @Test
     fun mainActivityLoadsAndSavesPersistedFilterState() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
@@ -18,7 +17,10 @@ class MainActivityFilterStateSourceSmokeTest {
         val filterSession = read(
             "src/main/java/com/dpis/module/applist/presentation/AppListFilterSession.kt"
         )
-        assertTrue(source.contains("startupSession.filterStore?.save(filterState)"))
+        val filterShell = read(
+            "src/main/java/com/dpis/module/applist/presentation/AppListFilterShell.kt"
+        )
+        assertTrue(filterShell.contains("startupSession.filterStore?.save(filterState)"))
         assertTrue(filterSession.contains("MainUiAction.filterChanged(filterState)"))
     }
 

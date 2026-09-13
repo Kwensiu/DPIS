@@ -16,22 +16,22 @@ class AppConfigSheetShell(
 
     override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
 
-    override fun editingDraft(): EditorDraft? = activity.currentEditingDraft()
+    override fun editingDraft(): EditorDraft? = activity.editorDraftSession.currentEditingDraft()
 
     override fun applyAppConfigDraft(root: View, draft: EditorDraft) {
-        activity.applyAppConfigDraft(root, draft)
+        activity.editorDraftSession.applyAppConfigDraft(root, draft)
     }
 
     override fun rememberActiveEditor(root: View?, packageName: String?) {
-        activity.rememberActiveEditor(root, packageName)
+        activity.editorDraftSession.rememberActiveEditor(root, packageName)
     }
 
-    override fun currentEditorRoot(): View? = activity.currentEditorRoot()
+    override fun currentEditorRoot(): View? = activity.editorDraftSession.currentEditorRoot()
 
     override fun isChangingConfigurations(): Boolean = activity.isChangingConfigurations
 
     override fun clearEditingSession() {
-        activity.clearEditingSession()
+        activity.editorDraftSession.clearEditingSession()
     }
 
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)

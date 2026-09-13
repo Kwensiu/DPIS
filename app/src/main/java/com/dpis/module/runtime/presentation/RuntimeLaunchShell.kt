@@ -19,5 +19,5 @@ class RuntimeLaunchShell(
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 
     override fun confirmSystemApp(): ProcessActionHandler.ConfirmSystemApp =
-        ProcessActionConfirm(activity, activity::composeShell)
+        ProcessActionConfirm(activity) { activity.mainWorkspaceSession.composeShell() }
 }

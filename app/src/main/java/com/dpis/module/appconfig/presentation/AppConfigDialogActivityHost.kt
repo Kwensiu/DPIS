@@ -238,7 +238,7 @@ class AppConfigDialogActivityHost(
     }
 
     override fun onDraftStateChanged(state: AppConfigDialogBinder.AppConfigDialogState?) {
-        activity.updateEditingDraft(state)
+        activity.editorDraftSession.updateEditingDraft(state)
     }
 
     override fun showToast(messageResId: Int) {
@@ -251,7 +251,7 @@ class AppConfigDialogActivityHost(
     ): String = getFontHookDomainsButtonText(item, state).orEmpty()
 
     private fun isFontHookDomainEditingEnabled(): Boolean {
-        val root = activity.currentEditorRoot() ?: return false
+        val root = activity.editorDraftSession.currentEditorRoot() ?: return false
         return FontApplyMode.FIELD_REWRITE ==
             AppConfigDialogBinder.resolveFontMode(fontModeToggle(root))
     }

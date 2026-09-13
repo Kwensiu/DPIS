@@ -11,7 +11,8 @@ class EditorDraftShell(
 ) : EditorDraftSession.Shell {
     override fun activity(): Activity = activity
 
-    override fun viewModel(): MainViewModel? = activity.editorViewModel()
+    override fun viewModel(): MainViewModel? = activity.startupSession.viewModel
 
-    override fun landDetailContent(): FrameLayout? = activity.landDetailContent()
+    override fun landDetailContent(): FrameLayout? =
+        activity.hostWiringSession.landDetailContent
 }

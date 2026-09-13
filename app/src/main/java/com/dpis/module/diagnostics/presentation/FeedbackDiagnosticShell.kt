@@ -14,7 +14,8 @@ class FeedbackDiagnosticShell(
 ) : FeedbackDiagnosticActivitySession.Shell {
     override fun activity(): LocalizedActivity = activity
 
-    override fun composeShell(): MainComposeShellHost? = activity.composeShell()
+    override fun composeShell(): MainComposeShellHost? =
+        activity.mainWorkspaceSession.composeShell()
 
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 
@@ -45,6 +46,6 @@ class FeedbackDiagnosticShell(
     }
 
     override fun dismissActiveEditorDialog() {
-        activity.dismissActiveEditorDialog()
+        activity.sheetSession.dismiss()
     }
 }

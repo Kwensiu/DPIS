@@ -28,45 +28,47 @@ class MainWorkspaceShell(
 
     override fun dispatch(action: MainUiAction) = activity.dispatchMainUiAction(action)
 
-    override fun editorViewModel(): MainViewModel? = activity.editorViewModel()
+    override fun editorViewModel(): MainViewModel? = activity.startupSession.viewModel
 
     override fun composeAppEditorController(): ComposeAppEditorController? =
-        activity.composeAppEditorController()
+        activity.hostWiringSession.composeAppEditorController
 
-    override fun appWorkspace(): AppWorkspace? = activity.appWorkspace()
+    override fun appWorkspace(): AppWorkspace? = activity.hostWiringSession.appWorkspace
 
-    override fun toolsWorkspace(): ToolsWorkspace? = activity.toolsWorkspace()
+    override fun toolsWorkspace(): ToolsWorkspace? = activity.hostWiringSession.toolsWorkspace
 
     override fun settingsWorkspaceSession(): SettingsWorkspaceSession? =
-        activity.settingsWorkspaceSession()
+        activity.hostWiringSession.settingsWorkspaceSession
 
-    override fun landCurrentPage(): AppListPage = activity.landCurrentPage()
+    override fun landCurrentPage(): AppListPage = activity.currentAppListPage
 
     override fun appWorkspaceScrollStateStore(): AppWorkspaceScrollStateStore =
-        activity.appWorkspaceScrollStateStore()
+        activity.scrollStateStore
 
     override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
 
-    override fun homeState(): HomeWorkspaceState = activity.createHomeWorkspaceState()
+    override fun homeState(): HomeWorkspaceState = activity.homeWorkspaceSession.createState()
 
     override fun ensureTemplateWorkspace(): TemplateWorkspaceActivitySession =
         activity.ensureWorkspaceSession()
 
-    override fun landAppDetailSession(): LandAppDetailSession = activity.landAppDetailSession()
+    override fun landAppDetailSession(): LandAppDetailSession = activity.landDetailSession
 
-    override fun appConfigSheetSession(): AppConfigSheetSession = activity.appConfigSheetSession()
+    override fun appConfigSheetSession(): AppConfigSheetSession = activity.sheetSession
 
-    override fun topContainer(): View? = activity.topContainer()
+    override fun topContainer(): View? = activity.hostWiringSession.topContainer
 
-    override fun toolsWorkspaceContainer(): View? = activity.toolsWorkspaceContainer()
+    override fun toolsWorkspaceContainer(): View? =
+        activity.hostWiringSession.toolsWorkspaceContainer
 
-    override fun settingsWorkspaceContainer(): View? = activity.settingsWorkspaceContainer()
+    override fun settingsWorkspaceContainer(): View? =
+        activity.hostWiringSession.settingsWorkspaceContainer
 
-    override fun landDetailPane(): View? = activity.landDetailPane()
+    override fun landDetailPane(): View? = activity.hostWiringSession.landDetailPane
 
-    override fun landDetailDivider(): View? = activity.landDetailDivider()
+    override fun landDetailDivider(): View? = activity.hostWiringSession.landDetailDivider
 
-    override fun landDetailEmptyView(): View? = activity.landDetailEmptyView()
+    override fun landDetailEmptyView(): View? = activity.hostWiringSession.landDetailEmptyView
 
-    override fun landDetailContent(): FrameLayout? = activity.landDetailContent()
+    override fun landDetailContent(): FrameLayout? = activity.hostWiringSession.landDetailContent
 }

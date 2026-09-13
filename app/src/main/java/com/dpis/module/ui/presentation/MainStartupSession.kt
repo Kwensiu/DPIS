@@ -70,7 +70,7 @@ class MainStartupSession(
         this.feedbackDiagnostic = feedbackDiagnostic
         if (retainedState != null) {
             updateSession.restorePendingPrompt(retainedState.pendingUpdatePrompt)
-            activity.appWorkspaceScrollStateStore().restore(retainedState.appListScrollPositions)
+            activity.scrollStateStore.restore(retainedState.appListScrollPositions)
         }
         skipNextImmediateServiceReload = restore.skipNextImmediateServiceReload
         val viewModel = MainViewModel(

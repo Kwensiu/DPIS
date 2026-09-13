@@ -21,7 +21,7 @@ internal class TemplateWorkspaceActivityHost(
     override fun showToast(messageResId: Int, vararg formatArgs: Any?) =
         activity.showToast(messageResId, *formatArgs)
 
-    override fun appConfigDialogHost(): AppConfigDialogBinder.Host = activity.createAppConfigDialogHost()
+    override fun appConfigDialogHost(): AppConfigDialogBinder.Host = activity.dialogHost
 
     override fun hookConfigStore(): DpisConfigStore = checkNotNull(activity.hookConfigStore)
 

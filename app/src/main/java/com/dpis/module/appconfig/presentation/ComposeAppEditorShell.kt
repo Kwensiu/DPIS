@@ -22,7 +22,7 @@ class ComposeAppEditorShell(
 
     override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
 
-    override fun refreshEditor() = activity.refreshComposeApps()
+    override fun refreshEditor() = activity.mainWorkspaceSession.refreshApps()
 
     override fun requestAppsLoad() = activity.requestAppsLoad()
 
@@ -31,7 +31,12 @@ class ComposeAppEditorShell(
         currentlySelected: Boolean,
         onSelected: Runnable,
         onDeselected: Runnable,
-    ) = activity.toggleLandDetailScope(item, currentlySelected, onSelected, onDeselected)
+    ) = activity.landDetailSession.toggleScope(
+        item,
+        currentlySelected,
+        onSelected,
+        onDeselected,
+    )
 
     override fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean =
         activity.setDpisEnabled(packageName, enabled)
