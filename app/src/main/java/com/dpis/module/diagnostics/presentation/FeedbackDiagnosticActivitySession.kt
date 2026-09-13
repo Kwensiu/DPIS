@@ -5,8 +5,8 @@ import android.text.format.Formatter
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.MainActivity
 import com.dpis.module.R
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
-import com.dpis.module.appconfig.EditorDialogStateFactory
+import com.dpis.module.appconfig.AppConfigDialogState
+
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
@@ -83,7 +83,7 @@ class FeedbackDiagnosticActivitySession(
 
     fun startFromViewEditor(
         item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
+        state: AppConfigDialogState?,
     ) {
         if (item == null) return
         confirm.startFromViewEditor(
@@ -234,7 +234,7 @@ class FeedbackDiagnosticActivitySession(
             confirm.startFromComposeEditor(
                 item,
                 { persistComposeEditor(item, draft) },
-                EditorDialogStateFactory.create(item, draft),
+                AppConfigDialogState.from(item, draft),
                 activity.resolvePackageVersionName(item.packageName),
                 requireHookConfigStore(),
             )
@@ -260,7 +260,7 @@ class FeedbackDiagnosticActivitySession(
         ): Boolean = session.start(
             Coordinator.Request.fromPersisted(
                 item,
-                EditorDialogStateFactory.create(item, draft),
+                AppConfigDialogState.from(item, draft),
                 versionName,
                 requireHookConfigStore(),
             ),

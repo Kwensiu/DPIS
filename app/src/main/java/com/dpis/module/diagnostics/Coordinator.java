@@ -6,7 +6,7 @@ import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.*;
 
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
+import com.dpis.module.appconfig.AppConfigDialogState;
 import com.dpis.module.appconfig.AppConfigInputValidation;
 
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -107,14 +107,14 @@ public final class Coordinator {
 
         public static Request from(
                 AppListItem item,
-                AppConfigDialogBinder.AppConfigDialogState state
+                AppConfigDialogState state
         ) {
             return from(item, state, "");
         }
 
         public static Request from(
                 AppListItem item,
-                AppConfigDialogBinder.AppConfigDialogState state,
+                AppConfigDialogState state,
                 String versionName
         ) {
             boolean useState = state != null;
@@ -140,7 +140,7 @@ public final class Coordinator {
 
         public static Request fromPersisted(
                 AppListItem item,
-                AppConfigDialogBinder.AppConfigDialogState state,
+                AppConfigDialogState state,
                 String versionName,
                 DpisConfigStore store
         ) {

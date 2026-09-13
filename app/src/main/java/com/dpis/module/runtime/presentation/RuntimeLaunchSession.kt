@@ -3,7 +3,7 @@ package com.dpis.module.runtime.presentation
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
@@ -168,12 +168,12 @@ class RuntimeLaunchSession(
 
     fun executeDialogProcessAction(
         item: AppListItem?,
-        action: AppConfigDialogBinder.ProcessAction?,
+        action: AppConfigProcessAction?,
     ) {
         if (action == null) {
             return
         }
-        if (action == AppConfigDialogBinder.ProcessAction.RESTART
+        if (action == AppConfigProcessAction.RESTART
             && shouldPrepareHyperOsNativeProxyForRestart(item)
         ) {
             // Re-prepare before restart because APK updates can leave an old bind mount
@@ -237,12 +237,12 @@ class RuntimeLaunchSession(
 
     private fun executeDialogProcessActionAfterHyperOsProxyReady(
         item: AppListItem?,
-        action: AppConfigDialogBinder.ProcessAction,
+        action: AppConfigProcessAction,
     ) {
         val mappedAction = when (action) {
-            AppConfigDialogBinder.ProcessAction.START -> ProcessActionHandler.Action.START
-            AppConfigDialogBinder.ProcessAction.RESTART -> ProcessActionHandler.Action.RESTART
-            AppConfigDialogBinder.ProcessAction.STOP -> ProcessActionHandler.Action.STOP
+            AppConfigProcessAction.START -> ProcessActionHandler.Action.START
+            AppConfigProcessAction.RESTART -> ProcessActionHandler.Action.RESTART
+            AppConfigProcessAction.STOP -> ProcessActionHandler.Action.STOP
         }
         if (item != null) {
             processActionHandler.execute(item, mappedAction)

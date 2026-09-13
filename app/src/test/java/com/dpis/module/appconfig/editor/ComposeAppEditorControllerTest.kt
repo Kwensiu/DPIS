@@ -1,8 +1,9 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.AppConfigDialogState
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigEditorChip
-import com.dpis.module.appconfig.EditorDialogStateFactory
+
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
@@ -157,7 +158,7 @@ class ComposeAppEditorControllerTest {
         val host = RecordingHost()
         val controller = ComposeAppEditorController(viewModel, host)
         controller.open(ITEM)
-        val dialogState = AppConfigDialogBinder.AppConfigDialogState.fromItem(ITEM)
+        val dialogState = AppConfigDialogState.fromItem(ITEM)
         dialogState.selectedTypefaceId = "serif"
         dialogState.draftFontHookDomainsRaw = "resources_font"
         dialogState.viewportApplyMode = ViewportApplyMode.SYSTEM
@@ -228,7 +229,7 @@ class ComposeAppEditorControllerTest {
         assertFalse(host.requestedDpisEnabled!!)
 
         actions.startProcess()
-        assertEquals(AppConfigDialogBinder.ProcessAction.START, host.processAction)
+        assertEquals(AppConfigProcessAction.START, host.processAction)
 
         actions.startFeedbackDiagnostic()
         assertSame(presented.draft, host.diagnosticDraft)
@@ -266,7 +267,7 @@ class ComposeAppEditorControllerTest {
         var wechatHelpShown = false
         var scopeToggled = false
         var requestedDpisEnabled: Boolean? = null
-        var processAction: AppConfigDialogBinder.ProcessAction? = null
+        var processAction: AppConfigProcessAction? = null
         var diagnosticDraft: EditorDraft? = null
         var saveSucceeds = true
         val delayed = mutableListOf<Runnable>()
@@ -276,11 +277,11 @@ class ComposeAppEditorControllerTest {
         override fun resolveGlobalPrefill(): TemplateConfigValue? = PREFILL
         override fun resolvePackageVersionName(packageName: String) = "1.2.3"
         override fun createDialogState(item: AppListItem, draft: EditorDraft) =
-            EditorDialogStateFactory.create(item, draft)
+            AppConfigDialogState.from(item, draft)
         override fun typefaceSelectorText(typefaceId: String?) = typefaceId ?: "default"
         override fun hookChainText(
             item: AppListItem,
-            state: AppConfigDialogBinder.AppConfigDialogState,
+            state: AppConfigDialogState,
         ) = "hook"
         override fun systemHooksEnabled() = true
         override fun automaticFontHookDomains() = setOf("android.widget.TextView")
@@ -302,7 +303,7 @@ class ComposeAppEditorControllerTest {
         }
         override fun executeProcessAction(
             item: AppListItem,
-            action: AppConfigDialogBinder.ProcessAction,
+            action: AppConfigProcessAction,
         ) {
             processAction = action
         }

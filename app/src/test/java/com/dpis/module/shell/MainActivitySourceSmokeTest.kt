@@ -8,7 +8,7 @@ import org.junit.Test
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
@@ -1030,7 +1030,7 @@ class MainActivitySourceSmokeTest {
 
         assertTrue(method.contains("FontHookDomainPresentation.forOverride("))
         assertTrue(source.contains("FontHookDomainPresentation"))
-        assertTrue(method.contains("AppConfigDialogBinder.AppConfigDialogState?"))
+        assertTrue(method.contains("AppConfigDialogState?"))
         assertFalse(method.contains("item.previewFromGlobalPrefill"))
     }
 

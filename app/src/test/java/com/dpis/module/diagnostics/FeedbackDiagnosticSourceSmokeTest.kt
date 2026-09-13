@@ -106,7 +106,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(confirm.contains("whenLogsEnabled"))
         assertTrue(confirm.contains("showStart(item.label)"))
         assertTrue(sessionOwner.contains("persistComposeEditor("))
-        assertTrue(sessionOwner.contains("EditorDialogStateFactory.create("))
+        assertTrue(sessionOwner.contains("AppConfigDialogState.from("))
         assertTrue(confirm.contains("ConfirmDialog.showWithLabels("))
         assertTrue(sessionOwner.contains("activity.resolvePackageVersionName(item.packageName)"))
         assertTrue(confirm.contains("session.get().start("))

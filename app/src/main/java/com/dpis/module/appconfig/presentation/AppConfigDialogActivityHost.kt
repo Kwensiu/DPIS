@@ -1,6 +1,8 @@
 package com.dpis.module.appconfig.presentation
 
 import com.dpis.module.MainActivity
+import com.dpis.module.appconfig.AppConfigDialogState
+import com.dpis.module.appconfig.AppConfigEditorHost
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
@@ -15,7 +17,7 @@ import com.dpis.module.settings.SystemScopeCoordinator
 class AppConfigDialogActivityHost(
     private val activity: MainActivity,
     private val scopeCoordinator: SystemScopeCoordinator,
-) : AppConfigDialogBinder.Host {
+) : AppConfigEditorHost {
     override fun toggleScope(
         item: AppListItem?,
         currentlyInScope: Boolean,
@@ -36,7 +38,7 @@ class AppConfigDialogActivityHost(
 
     override fun getFontHookDomainsButtonText(
         item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
+        state: AppConfigDialogState?,
     ): String = FontHookDomainPresentation.forOverride(
         resolveFontHookDomainsForDraft(item, state),
         FontHookDomainRegistry.automaticCustomizableDomains(),
@@ -47,12 +49,12 @@ class AppConfigDialogActivityHost(
 
     fun fontHookDomainsButtonText(
         item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
+        state: AppConfigDialogState?,
     ): String = getFontHookDomainsButtonText(item, state).orEmpty()
 
     private fun resolveFontHookDomainsForDraft(
         item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
+        state: AppConfigDialogState?,
     ): HookDomainOverride {
         if (state != null && state.fontHookDomainsResetRequested) {
             return HookDomainOverride.automatic()

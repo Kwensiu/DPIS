@@ -2,9 +2,11 @@ package com.dpis.module.appconfig.presentation
 
 import android.content.Context
 import com.dpis.module.MainActivity
+import com.dpis.module.appconfig.AppConfigDialogState
+import com.dpis.module.appconfig.AppConfigEditorHost
 import com.dpis.module.appconfig.AppConfigPrefillPreview
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
@@ -25,7 +27,7 @@ import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
  */
 class ComposeAppEditorActivityGateway(
     private val activity: MainActivity,
-    private val dialogHost: AppConfigDialogBinder.Host,
+    private val dialogHost: AppConfigEditorHost,
     private val saveHandler: AppConfigSaveHandler,
     private val scopeCoordinator: ComposeEditorScopeRequestCoordinator,
     private val wechatDpiHelp: WechatDpiHelp,
@@ -61,14 +63,14 @@ class ComposeAppEditorActivityGateway(
         activity.resolvePackageVersionName(packageName)
 
     override fun createDialogState(item: AppListItem, draft: EditorDraft) =
-        EditorDialogStateFactory.create(item, draft)
+        AppConfigDialogState.from(item, draft)
 
     override fun typefaceSelectorText(typefaceId: String?): String =
-        AppConfigDialogBinder(activity).typefaceSelectorText(typefaceId)
+        AppConfigTypefaceLabels.selectorText(activity, typefaceId)
 
     override fun hookChainText(
         item: AppListItem,
-        state: AppConfigDialogBinder.AppConfigDialogState,
+        state: AppConfigDialogState,
     ): String = dialogHost.getFontHookDomainsButtonText(item, state).orEmpty()
 
     override fun systemHooksEnabled(): Boolean =
@@ -110,7 +112,7 @@ class ComposeAppEditorActivityGateway(
 
     override fun executeProcessAction(
         item: AppListItem,
-        action: AppConfigDialogBinder.ProcessAction,
+        action: AppConfigProcessAction,
     ) = activity.runtimeLaunchSession.executeDialogProcessAction(item, action)
 
     override fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft) {

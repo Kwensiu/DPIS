@@ -1,8 +1,9 @@
 package com.dpis.module
 
+import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.AppConfigEditorSession
-import com.dpis.module.appconfig.EditorDialogStateFactory
+
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.appconfig.EditorPresentationFactory
@@ -87,7 +88,7 @@ class AppConfigEditorPresentationFactoryTest {
             ViewportApplyMode.COMPAT, true, true, "420", true, false,
         )
 
-        val state = EditorDialogStateFactory.create(app("Example", draft.packageName), draft)
+        val state = AppConfigDialogState.from(app("Example", draft.packageName), draft)
 
         assertEquals("font-id", state.selectedTypefaceId)
         assertEquals("domain-a,domain-b", state.draftFontHookDomainsRaw)

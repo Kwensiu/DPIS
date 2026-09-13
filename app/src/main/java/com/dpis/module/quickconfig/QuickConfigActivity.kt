@@ -15,11 +15,10 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
-
-
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ProcessAction
+import com.dpis.module.appconfig.AppConfigDialogState
+import com.dpis.module.appconfig.AppConfigEditorHost
+import com.dpis.module.appconfig.AppConfigProcessAction
+import com.dpis.module.appconfig.presentation.AppConfigTypefaceLabels
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigSaveHandler
@@ -27,7 +26,6 @@ import com.dpis.module.appconfig.AppConfigSaveHandler.Result.Companion.failure
 import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.EditorActions
 import com.dpis.module.appconfig.EditorActions.create
-import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorPresentation
 import com.dpis.module.appconfig.EditorPresentationFactory.create
@@ -92,7 +90,7 @@ class QuickConfigActivity : LocalizedActivity() {
     private val feedbackDiagnosticExportBuilder = ExportBuilder(this)
     private val feedbackDiagnosticExportExecutor
             : ExecutorService = Executors.newSingleThreadExecutor()
-    private val appConfigDialogHost: AppConfigDialogBinder.Host = createHost()
+    private val appConfigDialogHost: AppConfigEditorHost = createHost()
     private val feedbackDiagnosticCoordinator = Coordinator(createFeedbackDiagnosticHost())
     private var activityResumed = false
     private var pendingFeedbackDiagnosticResult: Coordinator.Result? = null
@@ -208,8 +206,7 @@ class QuickConfigActivity : LocalizedActivity() {
                 item,
                 resolvePackageVersionName(item.packageName),
                 draft,
-                AppConfigDialogBinder(this)
-                    .typefaceSelectorText(draft.selectedTypefaceId),
+                AppConfigTypefaceLabels.selectorText(this, draft.selectedTypefaceId),
                 forOverride(
                     resolveFontHookDomainsForDraft(item, dialogState),
                     automaticCustomizableDomains()
@@ -272,7 +269,7 @@ class QuickConfigActivity : LocalizedActivity() {
                 }
 
                 override fun executeProcessAction(
-                    action: ProcessAction
+                    action: AppConfigProcessAction
                 ) {
                     executeDialogProcessAction(item, action)
                 }
@@ -314,10 +311,10 @@ class QuickConfigActivity : LocalizedActivity() {
     }
 
     private fun composeDialogState(
-        item: AppListItem?,
+        item: AppListItem,
         draft: EditorDraft
     ): AppConfigDialogState {
-        return EditorDialogStateFactory.create(item, draft)
+        return AppConfigDialogState.from(item, draft)
     }
 
     private fun saveComposeEditor(item: AppListItem, draft: EditorDraft): Boolean {
@@ -464,8 +461,8 @@ class QuickConfigActivity : LocalizedActivity() {
         }
     }
 
-    private fun createHost(): AppConfigDialogBinder.Host {
-        return object : AppConfigDialogBinder.Host {
+    private fun createHost(): AppConfigEditorHost {
+        return object : AppConfigEditorHost {
             override fun toggleScope(
                 item: AppListItem?,
                 currentlyInScope: Boolean,
@@ -956,9 +953,9 @@ class QuickConfigActivity : LocalizedActivity() {
 
     private fun executeDialogProcessAction(
         item: AppListItem?,
-        action: ProcessAction
+        action: AppConfigProcessAction
     ) {
-        if (action == ProcessAction.RESTART
+        if (action == AppConfigProcessAction.RESTART
             && shouldPrepareHyperOsNativeProxyForRestart(item)
         ) {
             // Re-prepare before restart because APK updates can stale the bind mount.
@@ -989,12 +986,12 @@ class QuickConfigActivity : LocalizedActivity() {
 
     private fun executeDialogProcessActionAfterHyperOsProxyReady(
         item: AppListItem?,
-        action: ProcessAction
+        action: AppConfigProcessAction
     ) {
         val mappedAction = when (action) {
-            ProcessAction.START -> ProcessActionHandler.Action.START
-            ProcessAction.RESTART -> ProcessActionHandler.Action.RESTART
-            ProcessAction.STOP -> ProcessActionHandler.Action.STOP
+            AppConfigProcessAction.START -> ProcessActionHandler.Action.START
+            AppConfigProcessAction.RESTART -> ProcessActionHandler.Action.RESTART
+            AppConfigProcessAction.STOP -> ProcessActionHandler.Action.STOP
         }
         if (item != null) {
             processActionHandler.execute(item, mappedAction)

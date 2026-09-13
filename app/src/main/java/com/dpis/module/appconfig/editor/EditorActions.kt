@@ -2,8 +2,6 @@ package com.dpis.module.appconfig
 
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
-import com.dpis.module.quirks.presentation.WechatDpiHelp
 
 /** Builds immutable-draft actions without owning Activity state or side effects. */
 object EditorActions {
@@ -14,7 +12,7 @@ object EditorActions {
         fun navigate(destination: ConfigEditorDestination)
         fun toggleScope(currentlySelected: Boolean, onSelected: Runnable, onDeselected: Runnable)
         fun setDpisEnabled(enabled: Boolean): Boolean
-        fun executeProcessAction(action: AppConfigDialogBinder.ProcessAction)
+        fun executeProcessAction(action: AppConfigProcessAction)
         fun startFeedbackDiagnostic(draft: EditorDraft)
         fun save(draft: EditorDraft)
         fun close()
@@ -61,9 +59,9 @@ object EditorActions {
                 val enabled = !draft.dpisEnabled
                 if (host.setDpisEnabled(enabled)) host.updateDraft(draft.withDpisEnabled(enabled))
             }
-            override fun startProcess() = host.executeProcessAction(AppConfigDialogBinder.ProcessAction.START)
-            override fun restartProcess() = host.executeProcessAction(AppConfigDialogBinder.ProcessAction.RESTART)
-            override fun stopProcess() = host.executeProcessAction(AppConfigDialogBinder.ProcessAction.STOP)
+            override fun startProcess() = host.executeProcessAction(AppConfigProcessAction.START)
+            override fun restartProcess() = host.executeProcessAction(AppConfigProcessAction.RESTART)
+            override fun stopProcess() = host.executeProcessAction(AppConfigProcessAction.STOP)
             override fun startFeedbackDiagnostic() = host.startFeedbackDiagnostic(draft)
             override fun save() = host.save(draft)
             override fun close() = host.close()

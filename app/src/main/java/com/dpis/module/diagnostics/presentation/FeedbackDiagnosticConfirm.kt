@@ -5,7 +5,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.ComposeMessageDialog
 import com.dpis.module.ui.dialog.ConfirmDialog
@@ -22,7 +22,7 @@ class FeedbackDiagnosticConfirm(
 ) {
     fun startFromViewEditor(
         item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
+        state: AppConfigDialogState?,
         persist: Supplier<AppListItem?>,
         versionName: String,
         store: DpisConfigStore,
@@ -39,7 +39,7 @@ class FeedbackDiagnosticConfirm(
     fun startFromComposeEditor(
         item: AppListItem,
         persist: BooleanSupplier,
-        dialogState: AppConfigDialogBinder.AppConfigDialogState,
+        dialogState: AppConfigDialogState,
         versionName: String,
         store: DpisConfigStore,
     ) {
@@ -141,7 +141,7 @@ class FeedbackDiagnosticConfirm(
 
     private fun startSession(
         item: AppListItem,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
+        state: AppConfigDialogState?,
         versionName: String,
         store: DpisConfigStore,
     ) {
