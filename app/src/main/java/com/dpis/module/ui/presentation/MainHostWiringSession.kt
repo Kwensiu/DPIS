@@ -9,7 +9,6 @@ import com.dpis.module.appconfig.editor.ComposeAppEditorController
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
 import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
-import com.dpis.module.appconfig.presentation.ComposeAppEditorShell
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
@@ -69,7 +68,7 @@ class MainHostWiringSession(
             { activity.showToast(R.string.save_scope_request_notice) },
         )
         val gateway = ComposeAppEditorActivityGateway(
-            ComposeAppEditorShell(activity),
+            activity,
             activity.dialogHost,
             activity.saveHandler,
             scopeCoordinator,

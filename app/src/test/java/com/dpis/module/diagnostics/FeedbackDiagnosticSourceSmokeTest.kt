@@ -93,21 +93,18 @@ class FeedbackDiagnosticSourceSmokeTest {
         val duration = read(
             "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticDuration.kt"
         )
-        val diagnosticShell = read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticShell.kt")
-
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
         assertTrue(startup.contains("FeedbackDiagnosticActivitySession("))
-        assertTrue(startup.contains("FeedbackDiagnosticShell(activity)"))
         assertTrue(
             read(
-                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailShell.kt"
+                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt"
             ).contains("feedbackDiagnostic?.startFromViewEditor(")
         )
         assertTrue(
             read(
-                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorShell.kt"
+                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
             ).contains("feedbackDiagnostic?.showPreparation(")
         )
         assertTrue(startup.contains("feedbackDiagnostic.restorePage()"))
@@ -122,9 +119,8 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(confirm.contains("showStart(item.label)"))
         assertTrue(sessionOwner.contains("persistComposeEditor("))
         assertTrue(sessionOwner.contains("EditorDialogStateFactory.create("))
-        assertTrue(diagnosticShell.contains("persistComposeEditor("))
         assertTrue(confirm.contains("ConfirmDialog.showWithLabels("))
-        assertTrue(diagnosticShell.contains("activity.resolvePackageVersionName(packageName)"))
+        assertTrue(sessionOwner.contains("activity.resolvePackageVersionName(item.packageName)"))
         assertTrue(confirm.contains("session.get().start("))
         assertTrue(pageController.contains("selectedDurationSeconds()"))
         assertTrue(pageController.contains("isDurationEnabled()"))

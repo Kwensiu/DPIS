@@ -113,7 +113,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(landSession.contains("state.scopeSelected"))
         assertTrue(landSession.contains("state.scopeRequestPending"))
         assertTrue(landSession.contains("scopeCoordinator.requestScope("))
-        assertTrue(landSession.contains("shell.showToast(R.string.save_scope_request_notice)"))
+        assertTrue(landSession.contains("activity.showToast(R.string.save_scope_request_notice)"))
     }
 
     @Test
@@ -130,8 +130,8 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
         assertTrue(hostWiring.contains("ComposeEditorScopeRequestCoordinator("))
-        assertTrue(hostWiring.contains("ComposeAppEditorShell(activity)"))
-        assertFalse(gateway.contains("import com.dpis.module.MainActivity"))
+        assertTrue(hostWiring.contains("ComposeAppEditorActivityGateway("))
+        assertTrue(gateway.contains("import com.dpis.module.MainActivity"))
         assertTrue(gateway.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
         assertTrue(coordinator.contains("mainViewModel.markEditingScopeSelected(packageName)"))
     }
@@ -865,7 +865,7 @@ class MainActivitySourceSmokeTest {
             read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
                 .contains("AppConfigDialogState.fromItem(item)")
         )
-        assertTrue(landSession.contains("shell.executeProcessAction(item, action)"))
+        assertTrue(landSession.contains("runtimeLaunchSession.executeDialogProcessAction(item, action)"))
         assertTrue(compact(landSession).contains("landDetailContent.addView( dialogView"))
         assertTrue(landSession.contains("ViewGroup.LayoutParams.MATCH_PARENT"))
         assertFalse(source.contains("createLandDetailContentLayoutParams()"))

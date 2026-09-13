@@ -10,7 +10,7 @@ import com.dpis.module.applist.AppListFilterStateStore
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell
+
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
@@ -74,7 +74,7 @@ class MainStartupSession(
             ),
         )
         val feedbackDiagnostic = FeedbackDiagnosticActivitySession(
-            FeedbackDiagnosticShell(activity),
+            activity,
             retainedState?.feedbackDiagnostic,
         )
         this.feedbackDiagnostic = feedbackDiagnostic

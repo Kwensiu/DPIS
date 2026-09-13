@@ -1,22 +1,20 @@
 package com.dpis.module.appconfig.landdetail
 
-import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
+import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.WechatDpiConfig
-import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.presentation.EditorDraftSession
+import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.settings.SystemScopeCoordinator
@@ -32,60 +30,16 @@ import com.google.android.material.textfield.TextInputEditText
  * actions. Portrait XML sheets live on [com.dpis.module.appconfig.presentation.AppConfigSheetSession].
  */
 class LandAppDetailSession(
-    private val shell: Shell,
+    private val activity: MainActivity,
     private val saveHandler: AppConfigSaveHandler,
     private val scopeCoordinator: SystemScopeCoordinator,
     private val dialogHost: AppConfigDialogActivityHost,
 ) : LandAppDetailPaneBinder.Actions {
-    interface Shell {
-        fun activity(): Activity
-
-        fun landDetailContent(): FrameLayout?
-
-        fun landDetailEmptyView(): View?
-
-        fun hookConfigStore(): DpisConfigStore?
-
-        fun systemHooksEnabled(): Boolean
-
-        fun showToast(messageResId: Int)
-
-        fun requestAppsLoad()
-
-        fun finalizeRuntimeSync(
-            result: AppConfigSaveHandler.Result,
-            configRoot: View?,
-            packageName: String?,
-            dpisEnabled: Boolean,
-        ): AppConfigSaveHandler.Result
-
-        fun editingDraft(): EditorDraft?
-
-        fun applyAppConfigDraft(root: View, draft: EditorDraft)
-
-        fun rememberActiveEditor(root: View?, packageName: String?)
-
-        fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean
-
-        fun executeProcessAction(
-            item: AppListItem?,
-            action: AppConfigDialogBinder.ProcessAction?,
-        )
-
-        fun startFeedbackDiagnostic(
-            item: AppListItem?,
-            state: AppConfigDialogBinder.AppConfigDialogState?,
-        )
-
-        fun updateEditingDraft(state: AppConfigDialogBinder.AppConfigDialogState?)
-    }
-
     fun show(item: AppListItem): Boolean {
-        val landDetailContent = shell.landDetailContent() ?: return false
-        val activity = shell.activity()
-        val store = shell.hookConfigStore()
+        val landDetailContent = activity.hostWiringSession.landDetailContent ?: return false
+        val store = activity.hookConfigStore
         val sheetItem = AppConfigPrefillPreview.resolveForEditor(activity, item, store) ?: item
-        val systemHooksEnabled = shell.systemHooksEnabled()
+        val systemHooksEnabled = activity.startupSession.isSystemHookEnabledFromStore
         val dialogView = LayoutInflater.from(activity).inflate(
             R.layout.view_land_app_detail,
             landDetailContent,
@@ -105,12 +59,12 @@ class LandAppDetailSession(
         if (scrollView != null) {
             ViewCompat.requestApplyInsets(scrollView)
         }
-        setVisible(shell.landDetailEmptyView(), false)
+        setVisible(activity.hostWiringSession.landDetailEmptyView, false)
         setVisible(landDetailContent, true)
-        shell.rememberActiveEditor(dialogView, item.packageName)
-        val draft = shell.editingDraft()
+        activity.editorDraftSession.rememberActiveEditor(dialogView, item.packageName)
+        val draft = activity.editorDraftSession.currentEditingDraft()
         if (draft != null) {
-            shell.applyAppConfigDraft(dialogView, draft)
+            activity.editorDraftSession.applyAppConfigDraft(dialogView, draft)
             LandAppDetailPaneBinder.applyRetainedDraft(
                 activity,
                 dialogView,
@@ -132,7 +86,7 @@ class LandAppDetailSession(
         root: View,
     ): AppListItem? {
         if (!WechatDpiSheetBinder.isInputValid(root)) {
-            shell.showToast(R.string.status_save_invalid)
+            activity.showToast(R.string.status_save_invalid)
             return null
         }
         val fontInput = EditorDraftSession.findEditorInput(
@@ -213,7 +167,6 @@ class LandAppDetailSession(
         if (item?.packageName.isNullOrBlank() || state == null) {
             return
         }
-        val activity = shell.activity()
         val selectorAnchor = MaterialButton(activity)
         AppConfigDialogBinder(activity, dialogHost)
             .showTypefaceSelector(selectorAnchor, state, onChanged)
@@ -245,20 +198,20 @@ class LandAppDetailSession(
             currentlyInScope,
             {
                 onTurnedInScope?.run()
-                shell.requestAppsLoad()
+                activity.startupSession.requestAppsLoad()
             },
             {
                 onTurnedOutScope?.run()
-                shell.requestAppsLoad()
+                activity.startupSession.requestAppsLoad()
             },
         )
     }
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
-        val saved = shell.setDpisEnabled(packageName, enabled)
+        val saved = activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)
         if (saved && packageName != null) {
             WechatDpiEditor.publishForDpisState(packageName, enabled)
-            shell.requestAppsLoad()
+            activity.startupSession.requestAppsLoad()
         }
         return saved
     }
@@ -267,18 +220,21 @@ class LandAppDetailSession(
         item: AppListItem?,
         action: AppConfigDialogBinder.ProcessAction?,
     ) {
-        shell.executeProcessAction(item, action)
+        if (item == null || action == null) {
+            return
+        }
+        activity.runtimeLaunchSession.executeDialogProcessAction(item, action)
     }
 
     override fun startFeedbackDiagnostic(
         item: AppListItem?,
         state: AppConfigDialogBinder.AppConfigDialogState?,
     ) {
-        shell.startFeedbackDiagnostic(item, state)
+        activity.startupSession.feedbackDiagnostic?.startFromViewEditor(item, state)
     }
 
     override fun onDraftStateChanged(state: AppConfigDialogBinder.AppConfigDialogState?) {
-        shell.updateEditingDraft(state)
+        activity.editorDraftSession.updateEditingDraft(state)
     }
 
     private fun saveDraftInternal(
@@ -327,14 +283,15 @@ class LandAppDetailSession(
             viewportScaleInput,
             viewportAbsoluteInput,
         )
-        result = shell.finalizeRuntimeSync(
+        result = activity.runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
             result,
             root,
             item.packageName,
             dpisEnabled,
+            activity.hookConfigStore,
         )
         if (result.messageResId != 0) {
-            shell.showToast(result.messageResId)
+            activity.showToast(result.messageResId)
         }
         if (!result.success) {
             return false
@@ -371,8 +328,8 @@ class LandAppDetailSession(
         fontHookDomainsResetRequested,
         viewportScaleInput,
         viewportAbsoluteInput,
-        shell.systemHooksEnabled(),
-        shell.hookConfigStore(),
+        activity.startupSession.isSystemHookEnabledFromStore,
+        activity.hookConfigStore,
         null,
     )
 
@@ -397,7 +354,7 @@ class LandAppDetailSession(
             false,
         )
         if (requestStarted) {
-            shell.showToast(R.string.save_scope_request_notice)
+            activity.showToast(R.string.save_scope_request_notice)
             return
         }
         state.scopeRequestPending = false
@@ -412,7 +369,7 @@ class LandAppDetailSession(
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null
         }
-        return shell.hookConfigStore()?.getWechatDpi(packageName)
+        return activity.hookConfigStore?.getWechatDpi(packageName)
     }
 
     companion object {

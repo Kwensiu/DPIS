@@ -1,48 +1,24 @@
 package com.dpis.module.appconfig.presentation
 
-import android.app.Activity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigDialogCoordinator
 import com.dpis.module.appconfig.AppConfigPrefillPreview
-import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
 /**
  * Owns portrait XML app-config sheet bind, show, dismiss, and diagnostic save.
- * [com.dpis.module.MainActivity] keeps landscape routing and shared runtime hosts.
  */
 class AppConfigSheetSession(
-    private val shell: Shell,
+    private val activity: MainActivity,
     private val dialogHost: AppConfigDialogActivityHost,
 ) {
-    interface Shell {
-        fun activity(): Activity
-
-        fun hookConfigStore(): DpisConfigStore?
-
-        fun systemHooksEnabled(): Boolean
-
-        fun editingDraft(): EditorDraft?
-
-        fun applyAppConfigDraft(root: View, draft: EditorDraft)
-
-        fun rememberActiveEditor(root: View?, packageName: String?)
-
-        fun currentEditorRoot(): View?
-
-        fun isChangingConfigurations(): Boolean
-
-        fun clearEditingSession()
-
-        fun showToast(messageResId: Int)
-    }
 
     private var dialog: BottomSheetDialog? = null
 
@@ -50,10 +26,9 @@ class AppConfigSheetSession(
         if (dialog?.isShowing == true) {
             return
         }
-        val activity = shell.activity()
-        val store = shell.hookConfigStore()
+        val store = activity.hookConfigStore
         val sheetItem = AppConfigPrefillPreview.resolveForEditor(activity, item, store) ?: item
-        val systemHooksEnabled = shell.systemHooksEnabled()
+        val systemHooksEnabled = activity.startupSession.isSystemHookEnabledFromStore
         val root = activity.findViewById<ViewGroup>(android.R.id.content)
         val dialogView = LayoutInflater.from(activity).inflate(
             R.layout.dialog_app_config,
@@ -62,9 +37,9 @@ class AppConfigSheetSession(
         )
         val binder = AppConfigDialogBinder(activity, dialogHost)
         binder.bind(dialogView, sheetItem, systemHooksEnabled)
-        val draft = shell.editingDraft()
+        val draft = activity.editorDraftSession.currentEditingDraft()
         if (draft != null) {
-            shell.applyAppConfigDraft(dialogView, draft)
+            activity.editorDraftSession.applyAppConfigDraft(dialogView, draft)
             binder.applyRetainedDraft(
                 dialogView,
                 sheetItem,
@@ -77,18 +52,18 @@ class AppConfigSheetSession(
             )
             WechatDpiSheetBinder.applyDraft(dialogView, draft.wechatDpiInput)
         }
-        shell.rememberActiveEditor(dialogView, item.packageName)
+        activity.editorDraftSession.rememberActiveEditor(dialogView, item.packageName)
         val shown = AppConfigDialogCoordinator(activity).show(dialogView)
         dialog = shown
         shown.setOnDismissListener {
-            if (shell.currentEditorRoot() === dialogView) {
-                shell.rememberActiveEditor(null, null)
+            if (activity.editorDraftSession.currentEditorRoot() === dialogView) {
+                activity.editorDraftSession.rememberActiveEditor(null, null)
             }
             if (dialog === shown) {
                 dialog = null
             }
-            if (!shell.isChangingConfigurations()) {
-                shell.clearEditingSession()
+            if (!activity.isChangingConfigurations) {
+                activity.editorDraftSession.clearEditingSession()
             }
         }
     }
@@ -104,7 +79,7 @@ class AppConfigSheetSession(
             return item
         }
         if (!AppConfigDialogBinder.updateSaveButtonState(root, views)) {
-            shell.showToast(R.string.status_save_invalid)
+            activity.showToast(R.string.status_save_invalid)
             return null
         }
         val result = dialogHost.saveAppConfig(
@@ -124,7 +99,7 @@ class AppConfigSheetSession(
             state.viewportAbsoluteInput,
         ) ?: return item
         if (result.messageResId != 0) {
-            shell.showToast(result.messageResId)
+            activity.showToast(result.messageResId)
         }
         if (!result.success) {
             return null
@@ -137,8 +112,8 @@ class AppConfigSheetSession(
         state.viewportApplyModeResetRequested = false
         state.captureSavedDraft(views, false)
         AppConfigDialogBinder.showSaveButtonFeedback(views.saveButton)
-        val binder = AppConfigDialogBinder(shell.activity(), dialogHost)
-        val systemHooksEnabled = shell.systemHooksEnabled()
+        val binder = AppConfigDialogBinder(activity, dialogHost)
+        val systemHooksEnabled = activity.startupSession.isSystemHookEnabledFromStore
         val style = AppConfigDialogBinder.captureDialogActionStyle(views.scopeButton)
         binder.refreshDialogState(views, state, style, systemHooksEnabled, item)
         binder.syncHyperOsNativeProxyAfterSave(item, views, state)
@@ -150,6 +125,6 @@ class AppConfigSheetSession(
         if (!WechatDpiConfig.appliesTo(packageName)) {
             return null
         }
-        return shell.hookConfigStore()?.getWechatDpi(packageName)
+        return activity.hookConfigStore?.getWechatDpi(packageName)
     }
 }
