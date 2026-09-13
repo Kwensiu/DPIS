@@ -106,8 +106,8 @@ class MainStartupSession(
             setCurrentAppListPage(restoredPage, false)
         }
 
-        mainWorkspaceSession.render(requireUiState())
         mainWorkspaceSession.installComposeWorkspaceShell()
+        mainWorkspaceSession.render(requireUiState())
         feedbackDiagnostic.restorePage()
         feedbackDiagnostic.attachHost()
         // The service state callback is not guaranteed to fire on every Wear image.

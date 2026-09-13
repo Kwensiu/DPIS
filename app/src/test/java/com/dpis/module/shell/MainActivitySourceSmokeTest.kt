@@ -168,19 +168,14 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(homeSession.contains("MainUiAction.workspaceModeChanged("))
         assertTrue(workspace.contains("applyWorkspaceMode(state.workspaceMode)"))
-        assertTrue(
-            workspace.contains(
-                "val appWorkspace = mode == MainUiState.WorkspaceMode.APP"
-            )
-        )
+        assertTrue(workspace.contains("MainUiState.WorkspaceMode.TEMPLATE"))
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"))
-        assertTrue(workspace.contains("setVisible(hostWiring.toolsWorkspaceContainer, toolsWorkspace)"))
-        assertTrue(workspace.contains("setVisible(hostWiring.settingsWorkspaceContainer, settingsWorkspace)"))
+        assertFalse(workspace.contains("setVisible(hostWiring.toolsWorkspaceContainer, toolsWorkspace)"))
         assertFalse(source.contains("setSearchFocusFabVisible("))
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
-        assertTrue(hostWiring.contains("ensureWorkspaceSession().attachLegacyViews("))
+        assertFalse(hostWiring.contains("attachLegacyViews("))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
@@ -257,26 +252,18 @@ class MainActivitySourceSmokeTest {
     @Test
     fun composeTemplateWorkspaceKeepsTargetSelectionFallbackOnly() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
-        val layout = read("src/main/res/layout-land/activity_status.xml")
         val targetsDetail = read("src/main/res/layout/view_land_quick_template_targets_detail.xml")
 
-        assertTrue(layout.contains("android:id=\"@+id/land_detail_content\""))
-        assertTrue(layout.contains("android:id=\"@+id/template_detail_content\""))
-        assertTrue(layout.contains("android:id=\"@+id/template_detail_empty\""))
-        assertTrue(layout.contains("android:id=\"@+id/land_detail_divider\""))
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
-        assertTrue(hostWiring.contains("var landDetailPane: View?"))
-        assertTrue(hostWiring.contains("var landDetailDivider: View?"))
+        assertFalse(hostWiring.contains("var landDetailPane: View?"))
         val templateCoordinator = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
         assertFalse(source.contains("templateDetailContent"))
         assertFalse(source.contains("TemplateDetailPaneController"))
-        assertTrue(workspace.contains("applyLandscapeDetailVisibility(appWorkspace, templateWorkspace)"))
-        assertTrue(workspace.contains("appWorkspace || templateWorkspace"))
         assertTrue(workspace.contains("restoreForConfiguration("))
         assertTrue(templateCoordinator.contains("fun attachLegacyViews("))
         assertTrue(templateCoordinator.contains("TemplateDetailPaneController("))
@@ -323,17 +310,15 @@ class MainActivitySourceSmokeTest {
     @Test
     fun landscapeWorkspaceRailUsesCompactMaterialItemHeightAndScrollsWhenNeeded() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
-        val landLayout = read("src/main/res/layout-land/activity_status.xml")
+        val shell = read(
+            "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt"
+        )
         val dimensions = read("src/main/res/values/dimens.xml")
         val roundDimensions = read("src/main/res/values-round/dimens.xml")
 
-        assertTrue(landLayout.contains("com.google.android.material.navigationrail.NavigationRailView"))
-        assertTrue(landLayout.contains("android:id=\"@+id/workspace_switch_scroll\""))
-        assertTrue(landLayout.contains("android:fillViewport=\"true\""))
-        assertTrue(landLayout.contains("app:labelVisibilityMode=\"selected\""))
+        assertTrue(shell.contains("NAVIGATION_RAIL"))
         assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight()"))
         assertFalse(source.contains("workspaceSwitch instanceof NavigationRailView"))
-        assertFalse(source.contains("availableHeight / railView.getMenu().size()"))
         assertTrue(dimensions.contains("main_land_workspace_rail_item_min_height\">64dp"))
         assertTrue(roundDimensions.contains("main_land_workspace_rail_item_min_height\">56dp"))
         assertFalse(source.contains("NavigationRailMenuView"))
@@ -825,20 +810,11 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun landscapeStatusLayout_usesFlatDetailPane() {
-        val layout = read("src/main/res/layout-land/activity_status.xml")
-
-        assertTrue(layout.contains("@+id/land_root_row"))
-        assertFalse(layout.contains("@+id/app_pager"))
-        assertTrue(layout.contains("@+id/land_detail_pane"))
-        assertTrue(layout.contains("@+id/land_detail_content"))
-        assertFalse(layout.contains("android:paddingTop=\"@dimen/main_land_detail_top_padding\""))
-        assertTrue(layout.contains("<FrameLayout"))
-        assertFalse(
-            layout.contains(
-                "<com.google.android.material.card.MaterialCardView\n" +
-                    "                android:id=\"@+id/land_detail_pane\""
-            )
+        val workspace = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
+        assertTrue(workspace.contains("ComposeView(activity)"))
+        assertFalse(workspace.contains("applyLandscapeDetailVisibility("))
     }
 
     @Test

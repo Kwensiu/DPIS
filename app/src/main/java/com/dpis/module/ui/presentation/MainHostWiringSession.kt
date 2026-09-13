@@ -1,8 +1,6 @@
 package com.dpis.module.ui.presentation
 
 import android.content.Intent
-import android.view.View
-import android.widget.FrameLayout
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.editor.ComposeAppEditorController
@@ -18,7 +16,6 @@ import com.dpis.module.settings.presentation.SettingsWorkspaceSession
 import com.dpis.module.settings.presentation.ToolsWorkspace
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainViewModel
-import com.dpis.module.ui.WatchWorkspaceChromeBinder
 
 /**
  * Owns onCreate host construction for the Compose editor, catalogue, tools,
@@ -30,20 +27,6 @@ class MainHostWiringSession(
     var composeAppEditorController: ComposeAppEditorController? = null
         private set
     var composeAppEditorSaveWorkflow: ComposeAppEditorSaveWorkflow? = null
-        private set
-    var topContainer: View? = null
-        private set
-    var toolsWorkspaceContainer: View? = null
-        private set
-    var settingsWorkspaceContainer: View? = null
-        private set
-    var landDetailPane: View? = null
-        private set
-    var landDetailDivider: View? = null
-        private set
-    var landDetailEmptyView: View? = null
-        private set
-    var landDetailContent: FrameLayout? = null
         private set
     var toolsWorkspace: ToolsWorkspace? = null
         private set
@@ -79,28 +62,12 @@ class MainHostWiringSession(
         composeAppEditorSaveWorkflow = saveWorkflow
         composeAppEditorController = ComposeAppEditorController(viewModel, gateway)
 
-        topContainer = activity.findViewById(R.id.top_container)
-        toolsWorkspaceContainer = activity.findViewById(R.id.tools_workspace_container)
-        settingsWorkspaceContainer = activity.findViewById(R.id.settings_workspace_container)
         settingsWorkspaceSession = SettingsWorkspaceSession.create(
             activity,
             { activity.mainWorkspaceSession.refreshSettings() },
             {
                 activity.startActivity(Intent(activity, LogActivity::class.java))
             },
-        )
-        WatchWorkspaceChromeBinder.applyIfSupported(
-            activity,
-            settingsWorkspaceContainer,
-        )
-        landDetailPane = activity.findViewById(R.id.land_detail_pane)
-        landDetailDivider = activity.findViewById(R.id.land_detail_divider)
-        landDetailEmptyView = activity.findViewById(R.id.land_detail_empty)
-        landDetailContent = activity.findViewById(R.id.land_detail_content)
-        activity.startupSession.ensureWorkspaceSession().attachLegacyViews(
-            activity.findViewById(R.id.template_workspace_container),
-            activity.findViewById(R.id.template_detail_empty),
-            activity.findViewById(R.id.template_detail_content),
         )
         toolsWorkspace = ToolsWorkspace(
             activity,

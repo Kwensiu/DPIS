@@ -1,8 +1,6 @@
 package com.dpis.module.ui.presentation
 
-import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.compose.ui.platform.ComposeView
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.EditorPresentation
@@ -27,14 +25,8 @@ class MainWorkspaceSession(
     fun composeShell(): MainComposeShellHost? = composeShellHost
 
     fun installComposeWorkspaceShell() {
-        val activityContent = activity.findViewById<ViewGroup>(android.R.id.content)
-        if (activityContent == null || activityContent.childCount == 0) {
-            return
-        }
-        val legacyWorkspaceRoot = activityContent.getChildAt(0) ?: return
-        activityContent.removeView(legacyWorkspaceRoot)
         val composeRoot = ComposeView(activity)
-        activityContent.addView(
+        activity.setContentView(
             composeRoot,
             ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -107,27 +99,15 @@ class MainWorkspaceSession(
         val mode = workspaceMode ?: MainUiState.WorkspaceMode.HOME
         val enteringToolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
             && renderedWorkspaceMode != MainUiState.WorkspaceMode.TOOLS
-        val appWorkspace = mode == MainUiState.WorkspaceMode.APP
-        val templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE
-        val toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
-        val settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS
-        setVisible(hostWiring.topContainer, appWorkspace || templateWorkspace)
-        val animateWorkspace = renderedWorkspaceMode != null && renderedWorkspaceMode != mode
         renderedWorkspaceMode = mode
-        setVisible(hostWiring.toolsWorkspaceContainer, toolsWorkspace)
-        setVisible(hostWiring.settingsWorkspaceContainer, settingsWorkspace)
-        resetHiddenWorkspacePresentation(mode)
-        if (animateWorkspace) {
-            animateVisibleWorkspaceContent(mode)
-        }
-        applyLandscapeDetailVisibility(appWorkspace, templateWorkspace)
-        if (templateWorkspace) {
-            bindWorkspaceSession()
-            restoreWorkspaceEditorForCurrentConfiguration()
-        } else if (toolsWorkspace) {
-            bindToolsWorkspace(enteringToolsWorkspace)
-        } else if (settingsWorkspace) {
-            bindSettingsWorkspace()
+        when (mode) {
+            MainUiState.WorkspaceMode.TEMPLATE -> {
+                bindWorkspaceSession()
+                restoreWorkspaceEditorForCurrentConfiguration()
+            }
+            MainUiState.WorkspaceMode.TOOLS -> bindToolsWorkspace(enteringToolsWorkspace)
+            MainUiState.WorkspaceMode.SETTINGS -> bindSettingsWorkspace()
+            else -> Unit
         }
     }
 
@@ -158,45 +138,26 @@ class MainWorkspaceSession(
     fun bindWorkspaceSession() {
         activity.startupSession.ensureWorkspaceSession().present(
             activity.startupSession.requireUiState().currentQuery(),
-            composeShellHost != null,
+            true,
         )
     }
 
     @JvmOverloads
     fun bindToolsWorkspace(resetExpandedState: Boolean = false) {
-        val toolsWorkspace = hostWiring.toolsWorkspace
-        val composeShellHost = composeShellHost
-        if (composeShellHost != null && toolsWorkspace != null) {
-            toolsWorkspace.onResume()
-            composeShellHost.refreshTools(resetExpandedState)
-            return
-        }
-        if (toolsWorkspace != null) {
-            toolsWorkspace.bind(hostWiring.toolsWorkspaceContainer)
-            if (resetExpandedState) {
-                toolsWorkspace.onShown()
-            }
-        }
+        val toolsWorkspace = hostWiring.toolsWorkspace ?: return
+        toolsWorkspace.onResume()
+        composeShellHost?.refreshTools(resetExpandedState)
     }
 
     fun bindSettingsWorkspace() {
-        val settingsWorkspaceSession = hostWiring.settingsWorkspaceSession
-        if (composeShellHost != null) {
-            settingsWorkspaceSession?.ensureComposeController()
-            return
-        }
-        val settingsWorkspaceContainer = hostWiring.settingsWorkspaceContainer
-        if (settingsWorkspaceContainer == null || settingsWorkspaceSession == null) {
-            return
-        }
-        settingsWorkspaceSession.bindLegacy(settingsWorkspaceContainer)
+        hostWiring.settingsWorkspaceSession?.ensureComposeController()
     }
 
     fun restoreWorkspaceEditorForCurrentConfiguration() {
         if (activity.startupSession.requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
             activity.startupSession.ensureWorkspaceSession().restoreForConfiguration(
                 activity.startupSession.requireUiState().currentQuery(),
-                composeShellHost != null,
+                true,
             )
         }
     }
@@ -215,99 +176,5 @@ class MainWorkspaceSession(
 
     fun refreshTemplates() {
         composeShellHost?.refreshTemplates()
-    }
-
-    fun isLandscapeDetailMode(): Boolean =
-        hostWiring.landDetailContent != null && hostWiring.landDetailEmptyView != null
-
-    private fun applyLandscapeDetailVisibility(
-        appWorkspace: Boolean,
-        templateWorkspace: Boolean,
-    ) {
-        val landDetailContent = hostWiring.landDetailContent
-        val showDetailPane = isLandscapeDetailMode() && (appWorkspace || templateWorkspace)
-        setVisible(hostWiring.landDetailPane, showDetailPane)
-        setVisible(hostWiring.landDetailDivider, showDetailPane)
-        setVisible(
-            hostWiring.landDetailEmptyView,
-            appWorkspace && landDetailContent != null && landDetailContent.childCount == 0,
-        )
-        setVisible(
-            landDetailContent,
-            appWorkspace && landDetailContent != null && landDetailContent.childCount > 0,
-        )
-        activity.startupSession.ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace)
-    }
-
-    private fun resetHiddenWorkspacePresentation(visibleMode: MainUiState.WorkspaceMode) {
-        resetWorkspacePresentationUnlessMode(
-            hostWiring.toolsWorkspaceContainer,
-            visibleMode,
-            MainUiState.WorkspaceMode.TOOLS,
-        )
-        resetWorkspacePresentationUnlessMode(
-            hostWiring.settingsWorkspaceContainer,
-            visibleMode,
-            MainUiState.WorkspaceMode.SETTINGS,
-        )
-    }
-
-    private fun animateVisibleWorkspaceContent(mode: MainUiState.WorkspaceMode) {
-        val target = workspaceViewForMode(mode) ?: return
-        target.animate().cancel()
-        target.alpha = 0f
-        target.scaleX = WORKSPACE_CONTENT_ENTER_START_SCALE
-        target.scaleY = WORKSPACE_CONTENT_ENTER_START_SCALE
-        target.animate()
-            .alpha(1f)
-            .scaleX(1f)
-            .scaleY(1f)
-            .setDuration(WORKSPACE_TRANSITION_DURATION_MS)
-            .setInterpolator(WORKSPACE_CONTENT_ENTER_INTERPOLATOR)
-            .withEndAction {
-                target.alpha = 1f
-                target.scaleX = 1f
-                target.scaleY = 1f
-            }
-            .start()
-    }
-
-    private fun workspaceViewForMode(mode: MainUiState.WorkspaceMode): View? = when (mode) {
-        MainUiState.WorkspaceMode.TOOLS -> hostWiring.toolsWorkspaceContainer
-        MainUiState.WorkspaceMode.SETTINGS -> hostWiring.settingsWorkspaceContainer
-        else -> null
-    }
-
-    companion object {
-        private const val WORKSPACE_TRANSITION_DURATION_MS = 300L
-        private const val WORKSPACE_CONTENT_ENTER_START_SCALE = 0.96f
-        private val WORKSPACE_CONTENT_ENTER_INTERPOLATOR =
-            AccelerateDecelerateInterpolator()
-
-        private fun setVisible(view: View?, visible: Boolean) {
-            if (view != null) {
-                view.visibility = if (visible) View.VISIBLE else View.GONE
-            }
-        }
-
-        private fun resetWorkspacePresentationUnlessMode(
-            view: View?,
-            visibleMode: MainUiState.WorkspaceMode,
-            viewMode: MainUiState.WorkspaceMode,
-        ) {
-            if (visibleMode != viewMode) {
-                resetWorkspacePresentation(view)
-            }
-        }
-
-        private fun resetWorkspacePresentation(view: View?) {
-            if (view == null) {
-                return
-            }
-            view.animate().cancel()
-            view.alpha = 1f
-            view.scaleX = 1f
-            view.scaleY = 1f
-        }
     }
 }

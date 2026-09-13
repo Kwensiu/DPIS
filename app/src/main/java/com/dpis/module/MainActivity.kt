@@ -84,7 +84,6 @@ class MainActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_status)
         startupSession.launch(savedInstanceState)
     }
 
