@@ -15,8 +15,10 @@ import com.dpis.module.ui.MainViewModel
  * Owns Xiaomi installed-apps permission gating, catalog load, and Xposed
  * scope snapshot.
  */
-class InstalledAppsLoadSession @JvmOverloads constructor(
+class InstalledAppsLoadSession(
     private val activity: MainActivity,
+    private val dispatchInstalledAppsLoad: (Boolean) -> Unit,
+    private val dispatchInstalledAppsLoadFinished: (Int, List<AppListItem>?) -> Unit,
     catalogTtlMs: Long = INSTALLED_APP_CATALOG_TTL_MS,
 ) {
     private val catalogCoordinator = InstalledAppCatalogCoordinator(
@@ -44,7 +46,7 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
             pendingLoadAfterPermission = true
             return
         }
-        activity.startupSession.dispatchInstalledAppsLoad(forceInstalledAppCatalogReload)
+        dispatchInstalledAppsLoad(forceInstalledAppCatalogReload)
     }
 
     fun onRequestPermissionsResult(requestCode: Int): Boolean {
@@ -56,7 +58,7 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
         pendingLoadAfterPermission = false
         permissionRequestCompleted = true
         if (shouldReload) {
-            activity.startupSession.dispatchInstalledAppsLoad(true)
+            dispatchInstalledAppsLoad(true)
         }
         return true
     }
@@ -78,7 +80,7 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
                     + ", forceReload=" + forceInstalledAppCatalogReload,
             )
             activity.runOnUiThread {
-                activity.startupSession.dispatchInstalledAppsLoadFinished(requestId, finalLoaded)
+                dispatchInstalledAppsLoadFinished(requestId, finalLoaded)
             }
         }, "dpis-load-apps-$requestId").start()
     }

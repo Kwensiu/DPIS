@@ -30,7 +30,11 @@ class MainActivity :
         startupSession.bindHomeWorkspaceIfVisible()
     }
     internal val wechatHelp = WechatDpiHelp(this) { mainWorkspaceSession.composeShell() }
-    internal val runtimeLaunchSession = RuntimeLaunchSession(this)
+    internal val runtimeLaunchSession = RuntimeLaunchSession(
+        this,
+        requestAppsLoad = { startupSession.requestAppsLoad() },
+        composeShell = { mainWorkspaceSession.composeShell() },
+    )
     internal val saveHandler = AppConfigSaveHandler()
     internal val systemScopeCoordinator: SystemScopeCoordinator = SystemScopeCoordinator(
         object : SystemScopeCoordinator.Host {
@@ -68,10 +72,27 @@ class MainActivity :
         sheetSession,
         landDetailSession,
     )
-    internal val installedAppsLoadSession = InstalledAppsLoadSession(this)
+    internal val installedAppsLoadSession = InstalledAppsLoadSession(
+        this,
+        dispatchInstalledAppsLoad = { startupSession.dispatchInstalledAppsLoad(it) },
+        dispatchInstalledAppsLoadFinished = { requestId, loaded ->
+            startupSession.dispatchInstalledAppsLoadFinished(requestId, loaded)
+        },
+    )
     internal val hostWiringSession = MainHostWiringSession(this)
     internal val mainWorkspaceSession = MainWorkspaceSession(this, hostWiringSession)
-    internal val homeWorkspaceSession = HomeWorkspaceSession(this)
+    internal val homeWorkspaceSession = HomeWorkspaceSession(
+        this,
+        loadScopeState = { installedAppsLoadSession.loadScopeState() },
+        quickItemCount = { startupSession.ensureWorkspaceSession().quickItemCount() },
+        homeUpdateUiState = { updateSession.homeUpdateUiState },
+        checkForUpdatesNow = { updateSession.checkForUpdatesNow() },
+        setCurrentAppListPage = { page, submit ->
+            startupSession.setCurrentAppListPage(page, submit)
+        },
+        dispatch = { startupSession.dispatch(it) },
+        bindHomeWorkspace = { mainWorkspaceSession.bindHomeWorkspace() },
+    )
     internal val startupSession: MainStartupSession = MainStartupSession(
         this,
         updateSession,

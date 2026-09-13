@@ -438,7 +438,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(loadSession.contains("getPermissionInfo("))
         assertTrue(
-            loadSession.contains("activity.startupSession.dispatchInstalledAppsLoad(true)")
+            loadSession.contains("dispatchInstalledAppsLoad(true)")
         )
         val requestLoadStart = loadSession.indexOf(
             "fun requestLoad(forceInstalledAppCatalogReload: Boolean)"
@@ -458,7 +458,7 @@ class MainActivitySourceSmokeTest {
                 "ensurePermissionBeforeLoad()"
             ) <
                 compact(requestLoadBody).indexOf(
-                    "activity.startupSession.dispatchInstalledAppsLoad("
+                    "dispatchInstalledAppsLoad("
                 )
         )
     }
@@ -652,7 +652,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        assertTrue(homeSession.contains("updateSession.checkForUpdatesNow()"))
+        assertTrue(homeSession.contains("checkForUpdatesNow()"))
         assertTrue(homeState.contains("interface HomeWorkspaceActions"))
         val primaryStatus = compose
             .substringAfter("private fun HomePrimaryStatus")
@@ -1184,12 +1184,13 @@ class MainActivitySourceSmokeTest {
         val runtimeLaunch = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
-        assertTrue(source.contains("RuntimeLaunchSession(this)"))
+        assertTrue(source.contains("RuntimeLaunchSession("))
+        assertTrue(source.contains("requestAppsLoad = { startupSession.requestAppsLoad() }"))
         assertTrue(runtimeLaunch.contains("ProcessActionHandler("))
         assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(
             runtimeLaunch.contains(
-                "ProcessActionConfirm(activity) { activity.mainWorkspaceSession.composeShell() }",
+                "ProcessActionConfirm(activity) { composeShell() }",
             )
         )
         assertTrue(source.contains("AppConfigSaveHandler()"))

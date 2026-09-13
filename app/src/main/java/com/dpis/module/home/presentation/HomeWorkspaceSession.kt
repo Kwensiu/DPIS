@@ -5,10 +5,12 @@ import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.home.DonateActivity
 import com.dpis.module.home.HomeActivationStateResolver
+import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.home.HomeWorkspaceActions
 import com.dpis.module.home.HomeWorkspaceLayout
 import com.dpis.module.home.HomeWorkspaceLayoutStore
@@ -25,13 +27,20 @@ import com.dpis.module.ui.MainUiState
  */
 class HomeWorkspaceSession(
     private val activity: MainActivity,
+    private val loadScopeState: () -> ScopeState,
+    private val quickItemCount: () -> Int,
+    private val homeUpdateUiState: () -> HomeUpdateUiState,
+    private val checkForUpdatesNow: () -> Unit,
+    private val setCurrentAppListPage: (AppListPage, Boolean) -> Unit,
+    private val dispatch: (MainUiAction) -> Unit,
+    private val bindHomeWorkspace: () -> Unit,
 ) {
     fun createState(): HomeWorkspaceState {
         val configStore = activity.hookConfigStore
         val visibleConfiguredAppCount =
             InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
                 configStore,
-                activity.installedAppsLoadSession.loadScopeState(),
+                loadScopeState(),
             )
         return HomeWorkspaceState(
             isActivatedForHome(),
@@ -40,9 +49,9 @@ class HomeWorkspaceSession(
                 activity,
                 DpisApplication.xposedService,
             ).listFonts().size,
-            activity.startupSession.ensureWorkspaceSession().quickItemCount(),
+            quickItemCount(),
             RootAccessProbe.cachedResult(),
-            activity.updateSession.homeUpdateUiState,
+            homeUpdateUiState(),
             HomeWorkspaceLayoutStore(activity).load(),
             createActions(),
             PageSettingsStore.isHomeEditButtonVisible(activity),
@@ -68,12 +77,12 @@ class HomeWorkspaceSession(
     private fun createActions(): HomeWorkspaceActions {
         return object : HomeWorkspaceActions {
             override fun checkForUpdates() {
-                activity.updateSession.checkForUpdatesNow()
+                checkForUpdatesNow()
             }
 
             override fun openConfiguredAppsWorkspace() {
-                activity.startupSession.setCurrentAppListPage(AppListPage.CONFIGURED_APPS, false)
-                activity.startupSession.dispatch(
+                setCurrentAppListPage(AppListPage.CONFIGURED_APPS, false)
+                dispatch(
                     MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.APP),
                 )
             }
@@ -83,7 +92,7 @@ class HomeWorkspaceSession(
             }
 
             override fun openTemplateWorkspace() {
-                activity.startupSession.dispatch(
+                dispatch(
                     MainUiAction.workspaceModeChanged(MainUiState.WorkspaceMode.TEMPLATE),
                 )
             }
@@ -98,7 +107,7 @@ class HomeWorkspaceSession(
 
             override fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout) {
                 HomeWorkspaceLayoutStore(activity).save(layout)
-                activity.mainWorkspaceSession.bindHomeWorkspace()
+                bindHomeWorkspace()
             }
         }
     }

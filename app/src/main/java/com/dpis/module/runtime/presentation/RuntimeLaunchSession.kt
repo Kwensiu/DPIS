@@ -12,6 +12,7 @@ import com.dpis.module.fonts.HyperOsNativeAppDetector
 import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
 import com.dpis.module.process.presentation.ProcessActionConfirm
 import com.dpis.module.process.presentation.ProcessActionHandler
+import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
@@ -25,6 +26,8 @@ import com.dpis.module.viewport.ViewportPropertySyncer
  */
 class RuntimeLaunchSession(
     private val activity: MainActivity,
+    private val requestAppsLoad: () -> Unit,
+    private val composeShell: () -> MainComposeShellHost?,
 ) {
 
     fun interface HyperOsNativeProxyMountCallback {
@@ -63,7 +66,7 @@ class RuntimeLaunchSession(
         ProcessActionHandler.BeforeTargetLaunch { packageName ->
             syncRuntimePropertiesForTargetLaunch(packageName)
         },
-        ProcessActionConfirm(activity) { activity.mainWorkspaceSession.composeShell() },
+        ProcessActionConfirm(activity) { composeShell() },
     )
 
     fun finalizeAppConfigSaveWithRuntimeSync(
@@ -116,7 +119,7 @@ class RuntimeLaunchSession(
 
     fun onRuntimeConfigSaved() {
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-        activity.startupSession.requestAppsLoad()
+        requestAppsLoad()
     }
 
     fun syncRuntimePropertiesForTargetLaunch(packageName: String?) {
