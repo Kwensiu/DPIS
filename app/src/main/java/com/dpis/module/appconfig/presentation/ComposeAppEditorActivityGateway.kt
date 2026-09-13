@@ -64,7 +64,7 @@ class ComposeAppEditorActivityGateway(
         EditorDialogStateFactory.create(item, draft)
 
     override fun typefaceSelectorText(typefaceId: String?): String =
-        AppConfigDialogBinder(activity, dialogHost).typefaceSelectorText(typefaceId)
+        AppConfigDialogBinder(activity).typefaceSelectorText(typefaceId)
 
     override fun hookChainText(
         item: AppListItem,

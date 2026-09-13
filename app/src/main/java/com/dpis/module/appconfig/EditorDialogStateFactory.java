@@ -5,10 +5,7 @@ import com.dpis.module.applist.AppListItem;
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder;
 
 /**
- * Projects an immutable Compose editor draft into the state consumed by legacy dialog helpers.
- *
- * The dialog helpers still own their View-specific behavior. This factory only keeps the shared
- * MainActivity and QuickConfig draft projection consistent while they use those helpers.
+ * Projects an immutable Compose editor draft into [AppConfigDialogBinder.AppConfigDialogState].
  */
 public final class EditorDialogStateFactory {
     private EditorDialogStateFactory() {

@@ -821,8 +821,8 @@ class MainActivitySourceSmokeTest {
             runtimeLaunch.contains("processActionHandler.execute(item, mappedAction)")
         )
         assertTrue(
-            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt")
-                .contains("saveHandler.save(")
+            read("src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt")
+                .contains("saveHandler.saveResolved(")
         )
         assertTrue(
             runtimeLaunch.contains(
@@ -1023,7 +1023,7 @@ class MainActivitySourceSmokeTest {
             "override fun getFontHookDomainsButtonText("
         )
         val methodEnd = source.indexOf(
-            "override fun openTypefaceLibrary()",
+            "override fun setDpisEnabled(",
             methodStart
         )
         val method = source.substring(methodStart, methodEnd)

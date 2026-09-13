@@ -74,7 +74,7 @@ class QuickConfigSourceSmokeTest {
         Assert.assertTrue(activity.contains("systemScopeCoordinator.requestScope("))
         Assert.assertTrue(activity.contains("requestScopeAfterSuccessfulComposeSave(item)"))
         Assert.assertTrue(activity.contains("editorSession = current.withScopeSelected(true)"))
-        Assert.assertTrue(activity.contains("executeHyperOsNativeProxyMount(item, true, onFinished)"))
+        Assert.assertTrue(activity.contains("executeHyperOsNativeProxyMount("))
         Assert.assertTrue(activity.contains("executeDialogProcessAction(item, action)"))
         Assert.assertTrue(activity.contains("FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)"))
         Assert.assertFalse(activity.contains("quick_config_open_main_for_advanced"))

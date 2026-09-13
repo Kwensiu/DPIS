@@ -43,15 +43,7 @@ class AppConfigDialogBinderSourceSmokeTest {
         assertTrue(binder.contains("STOP"))
         assertTrue(actions.contains("host.executeProcessAction(AppConfigDialogBinder.ProcessAction.START)"))
         assertTrue(gateway.contains("fun typefaceSelectorText(typefaceId: String?): String"))
-        assertTrue(gateway.contains("AppConfigDialogBinder(activity, dialogHost).typefaceSelectorText(typefaceId)"))
-    }
-
-    @Test
-    fun modeToggleThumbUsesHalfOfMeasuredTrackAfterRelayout() {
-        val binder = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        assertTrue(binder.contains("private fun updateModeToggleThumbLayout(toggle: ModeToggle?): Int"))
-        assertTrue(binder.contains("private fun modeToggleTrack(toggle: ModeToggle): View"))
-        assertTrue(binder.contains("val half = availableWidth / 2"))
+        assertTrue(gateway.contains("AppConfigDialogBinder(activity).typefaceSelectorText(typefaceId)"))
     }
 
     @Test
@@ -64,17 +56,11 @@ class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    fun viewportModePolicyKeepsSeparateInputValues() {
-        val modeSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogPolicy.kt")
+    fun dialogStateKeepsIndependentViewportInputs() {
         val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
-        val switchStart = modeSource.indexOf("fun switchViewportTargetType(")
-        val switchBlock = modeSource.substring(switchStart)
-
         assertTrue(stateSource.contains("fun viewportInputFor(viewportTargetType: String?)"))
         assertTrue(stateSource.contains("fun clearViewportInputs()"))
-        assertTrue(switchBlock.contains("bindViewportModeToggle(toggle, nextType, animate)"))
-        assertTrue(switchBlock.contains("state.updateViewportInput(resolveViewportMode(toggle), inputView.text)"))
-        assertTrue(switchBlock.contains("inputView.text = state.viewportInputFor(nextType)"))
+        assertTrue(stateSource.contains("fun updateViewportInput("))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

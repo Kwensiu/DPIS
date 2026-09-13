@@ -50,7 +50,6 @@ class MainActivity :
     )
     internal val dialogHost = AppConfigDialogActivityHost(
         this,
-        saveHandler,
         systemScopeCoordinator,
     )
     internal val installedAppsLoadSession = InstalledAppsLoadSession(

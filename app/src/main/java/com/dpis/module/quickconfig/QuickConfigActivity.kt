@@ -18,10 +18,6 @@ import androidx.core.content.FileProvider
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
 
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.resolveViewportMode
-
-
-
 
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ProcessAction
 import com.dpis.module.appconfig.AppConfigInputValidation
@@ -49,7 +45,6 @@ import com.dpis.module.diagnostics.presentation.LogGate
 import com.dpis.module.diagnostics.PackagingDialog.show
 import com.dpis.module.diagnostics.ResultSheet
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.HyperOsNativeAppDetector
 import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
 
@@ -70,7 +65,6 @@ import com.dpis.module.quickconfig.presentation.QuickConfigPresentation
 import com.dpis.module.quickconfig.presentation.installQuickConfig
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertySyncer
-import com.google.android.material.textfield.TextInputEditText
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -214,7 +208,7 @@ class QuickConfigActivity : LocalizedActivity() {
                 item,
                 resolvePackageVersionName(item.packageName),
                 draft,
-                AppConfigDialogBinder(this, appConfigDialogHost)
+                AppConfigDialogBinder(this)
                     .typefaceSelectorText(draft.selectedTypefaceId),
                 forOverride(
                     resolveFontHookDomainsForDraft(item, dialogState),
@@ -488,34 +482,15 @@ class QuickConfigActivity : LocalizedActivity() {
                 )
             }
 
-            override fun requestScope(
+            override fun getFontHookDomainsButtonText(
                 item: AppListItem?,
-                onTurnedInScope: Runnable?,
-                onRequestFinished: Runnable?
-            ): Boolean {
-                val target = item ?: return false
-                return systemScopeCoordinator.requestScope(
-                    target.packageName,
-                    target.label,
-                    onTurnedInScope,
-                    onRequestFinished,
-                    false
+                state: AppConfigDialogState?
+            ): String {
+                return forOverride(
+                    resolveFontHookDomainsForDraft(item, state),
+                    automaticCustomizableDomains()
                 )
-            }
-
-            override fun executeProcessAction(
-                item: AppListItem?,
-                action: ProcessAction?
-            ) {
-                if (action != null) executeDialogProcessAction(item, action)
-            }
-
-            override fun applyHyperOsNativeProxy(item: AppListItem?, onFinished: Runnable?) {
-                if (item != null) executeHyperOsNativeProxyMount(item, true, onFinished)
-            }
-
-            override fun unmountHyperOsNativeProxy(item: AppListItem?, onFinished: Runnable?) {
-                if (item != null) executeHyperOsNativeProxyMount(item, false, onFinished)
+                    .buttonText(this@QuickConfigActivity)
             }
 
             override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
@@ -539,82 +514,6 @@ class QuickConfigActivity : LocalizedActivity() {
                 WechatDpiEditor.publishForDpisState(targetPackageName, enabled)
                 RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
                 return true
-            }
-
-            override fun getFontHookDomainsButtonText(
-                item: AppListItem?,
-                state: AppConfigDialogState?
-            ): String {
-                return forOverride(
-                    resolveFontHookDomainsForDraft(item, state),
-                    automaticCustomizableDomains()
-                )
-                    .buttonText(this@QuickConfigActivity)
-            }
-
-            override fun openTypefaceLibrary() {
-                startActivity(Intent(this@QuickConfigActivity, FontLibraryActivity::class.java))
-            }
-
-            override fun startFeedbackDiagnostic(
-                item: AppListItem?,
-                state: AppConfigDialogState?
-            ) {
-                this@QuickConfigActivity.startFeedbackDiagnostic(item, state)
-            }
-
-            override fun saveAppConfig(
-                wechatDpiInput: String?,
-                item: AppListItem?,
-                dpisEnabled: Boolean,
-                viewportInput: TextInputEditText?,
-                fontScaleInput: TextInputEditText?,
-                viewportMode: String?,
-                viewportApplyMode: String?,
-                viewportApplyModeResetRequested: Boolean,
-                fontMode: String?,
-                selectedTypefaceId: String?,
-                draftFontHookDomainsRaw: String?,
-                fontHookDomainsResetRequested: Boolean,
-                viewportScaleInput: String?,
-                viewportAbsoluteInput: String?
-            ): AppConfigSaveHandler.Result? {
-                val target = item ?: return null
-                val result = appConfigSaveHandler.save(
-                    target,
-                    viewportInput!!,
-                    fontScaleInput!!,
-                    viewportMode,
-                    viewportApplyMode,
-                    viewportApplyModeResetRequested,
-                    fontMode,
-                    selectedTypefaceId,
-                    draftFontHookDomainsRaw,
-                    fontHookDomainsResetRequested,
-                    viewportScaleInput,
-                    viewportAbsoluteInput,
-                    this@QuickConfigActivity.isSystemHookEnabled,
-                    this@QuickConfigActivity.hookConfigStore,
-                    null
-                )
-                return finalizeSave(result, wechatDpiInput, target.packageName, dpisEnabled)
-            }
-
-            override val configStore: DpisConfigStore?
-                get() = this@QuickConfigActivity.hookConfigStore
-
-            override fun requestAppsLoad() {
-            }
-
-            override fun onRuntimeConfigSaved() {
-                RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-            }
-
-            override fun onDraftStateChanged(state: AppConfigDialogState?) {
-            }
-
-            override fun showToast(messageResId: Int) {
-                this@QuickConfigActivity.showToast(messageResId)
             }
         }
     }
@@ -698,31 +597,6 @@ class QuickConfigActivity : LocalizedActivity() {
 
     private fun syncRuntimePropertiesForTargetLaunch(packageName: String?) {
         publishAfterSave(packageName)
-    }
-
-    private fun finalizeSave(
-        result: AppConfigSaveHandler.Result?,
-        wechatDpiInput: String?,
-        packageName: String?,
-        dpisEnabled: Boolean
-    ): AppConfigSaveHandler.Result {
-        if (result == null) {
-            return failure(R.string.system_settings_save_failed)
-        }
-        if (!result.success) {
-            return result
-        }
-        val store = this.hookConfigStore
-        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
-            return failure(
-                if (WechatDpiEditor.isInputValid(wechatDpiInput))
-                    R.string.system_settings_save_failed
-                else
-                    R.string.status_save_invalid
-            )
-        }
-        publishAfterSave(packageName)
-        return result
     }
 
     private fun startFeedbackDiagnostic(

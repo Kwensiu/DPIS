@@ -16,9 +16,6 @@ class RuntimeConfigDeliverySourceTest {
         )
         val templateWorkspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val templateHost = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt")
-        val appConfigHost = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
-        )
         val saveWorkflow = read("src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorSaveWorkflow.kt")
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
@@ -37,15 +34,17 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(runtimeLaunch.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
         assertTrue(runtimeLaunch.contains("WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)"))
         assertTrue(runtimeLaunch.contains("fun finalizeAppConfigSaveWithRuntimeSync("))
-        assertTrue(appConfigHost.contains("runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync("))
+        assertTrue(
+            read("src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt")
+                .contains("runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync("),
+        )
         assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(runtimeLaunch.contains("fun syncRuntimePropertiesForTargetLaunch(packageName: String?)"))
         assertTrue(runtimeLaunch.contains("ViewportPropertySyncer.syncTarget(packageName, store)"))
         assertTrue(runtimeLaunch.contains("FontRuntimePropertySyncer.syncTarget(packageName, store)"))
         assertTrue(runtimeLaunch.contains("ProcessActionHandler("))
         assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
-        assertTrue(appConfigHost.contains("override fun onRuntimeConfigSaved()"))
-        assertTrue(appConfigHost.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))
+        assertTrue(runtimeLaunch.contains("fun onRuntimeConfigSaved()"))
         assertTrue(saveWorkflow.contains("host.saveResolvedConfig("))
         assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
         assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
