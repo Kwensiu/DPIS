@@ -52,7 +52,7 @@ class MainWorkspaceSession(
                         activity.startupSession.currentAppListPage,
                         activity.startupSession.isSystemHookEnabledFromStore,
                         activity.scrollStateStore,
-                        checkNotNull(hostWiring.appWorkspace).actions(),
+                        checkNotNull(hostWiring.appWorkspaceActions),
                     )
 
                 override fun appEditorState(): EditorPresentation.State? =

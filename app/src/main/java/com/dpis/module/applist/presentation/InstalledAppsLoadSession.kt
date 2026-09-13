@@ -1,43 +1,31 @@
 package com.dpis.module.applist.presentation
 
-import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
 import com.dpis.module.DpisApplication
+import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.applist.ScopeState
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.ui.MainViewModel
 
 /**
  * Owns Xiaomi installed-apps permission gating, catalog load, and Xposed
- * scope snapshot. [com.dpis.module.MainActivity] forwards lifecycle and
- * ViewModel dispatch.
+ * scope snapshot.
  */
 class InstalledAppsLoadSession @JvmOverloads constructor(
-    private val shell: Shell,
+    private val activity: MainActivity,
     catalogTtlMs: Long = INSTALLED_APP_CATALOG_TTL_MS,
 ) {
-    interface Shell {
-        fun activity(): Activity
-
-        fun hookConfigStore(): DpisConfigStore?
-
-        fun dispatchRequestAppsLoad(forceReload: Boolean)
-
-        fun dispatchAppsLoadFinished(requestId: Int, loaded: List<AppListItem>?)
-    }
-
     private val catalogCoordinator = InstalledAppCatalogCoordinator(
         object : InstalledAppCatalogCoordinator.Host {
             override fun getPackageManager(): PackageManager =
-                shell.activity().packageManager
+                activity.packageManager
 
             override fun getSelfPackageName(): String =
-                shell.activity().packageName
+                activity.packageName
         },
         catalogTtlMs,
     )
@@ -56,7 +44,7 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
             pendingLoadAfterPermission = true
             return
         }
-        shell.dispatchRequestAppsLoad(forceInstalledAppCatalogReload)
+        activity.startupSession.dispatchInstalledAppsLoad(forceInstalledAppCatalogReload)
     }
 
     fun onRequestPermissionsResult(requestCode: Int): Boolean {
@@ -68,7 +56,7 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
         pendingLoadAfterPermission = false
         permissionRequestCompleted = true
         if (shouldReload) {
-            shell.dispatchRequestAppsLoad(true)
+            activity.startupSession.dispatchInstalledAppsLoad(true)
         }
         return true
     }
@@ -89,8 +77,8 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
                     + ", loaded=" + (finalLoaded?.size ?: "null")
                     + ", forceReload=" + forceInstalledAppCatalogReload,
             )
-            shell.activity().runOnUiThread {
-                shell.dispatchAppsLoadFinished(requestId, finalLoaded)
+            activity.runOnUiThread {
+                activity.startupSession.dispatchInstalledAppsLoadFinished(requestId, finalLoaded)
             }
         }, "dpis-load-apps-$requestId").start()
     }
@@ -118,14 +106,13 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
         val scopeState = loadScopeState()
         return catalogCoordinator.loadInstalledApps(
             forceInstalledAppCatalogReload,
-            shell.hookConfigStore(),
+            activity.hookConfigStore,
             scopeState.packages,
             scopeState.known,
         )
     }
 
     private fun ensurePermissionBeforeLoad(): Boolean {
-        val activity = shell.activity()
         val xiaomiPermissionDeclared = isXiaomiPermissionDeclared()
         DpisLog.i(
             "installed apps permission state: sdk=" + Build.VERSION.SDK_INT
@@ -168,7 +155,7 @@ class InstalledAppsLoadSession @JvmOverloads constructor(
 
     private fun isXiaomiPermissionDeclared(): Boolean {
         return try {
-            shell.activity().packageManager.getPermissionInfo(
+            activity.packageManager.getPermissionInfo(
                 XIAOMI_GET_INSTALLED_APPS_PERMISSION,
                 0,
             )

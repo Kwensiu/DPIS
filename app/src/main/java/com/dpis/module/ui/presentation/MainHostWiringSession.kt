@@ -1,5 +1,6 @@
 package com.dpis.module.ui.presentation
 
+import android.content.Intent
 import android.view.View
 import android.widget.FrameLayout
 import com.dpis.module.MainActivity
@@ -7,15 +8,13 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.editor.ComposeAppEditorController
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
 import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
-import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
 import com.dpis.module.appconfig.presentation.ComposeAppEditorShell
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.AppWorkspace
-import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.diagnostics.LogActivity
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession
 import com.dpis.module.settings.presentation.ToolsWorkspace
 import com.dpis.module.ui.MainUiAction
@@ -24,50 +23,11 @@ import com.dpis.module.ui.WatchWorkspaceChromeBinder
 
 /**
  * Owns onCreate host construction for the Compose editor, catalogue, tools,
- * and settings workspaces. [com.dpis.module.MainActivity] assigns the
- * resulting hosts and continues lifecycle forwarding.
+ * and settings workspaces.
  */
 class MainHostWiringSession(
-    private val shell: Shell,
+    private val activity: MainActivity,
 ) {
-    interface Shell {
-        fun activity(): MainActivity
-
-        fun requestEditorScope(item: AppListItem, onApproved: Runnable): Boolean
-
-        fun refreshApps()
-
-        fun refreshSettings()
-
-        fun refreshTools()
-
-        fun showToast(messageResId: Int)
-
-        fun appConfigDialogHost(): AppConfigDialogActivityHost
-
-        fun appConfigSaveHandler(): AppConfigSaveHandler
-
-        fun wechatDpiHelp(): WechatDpiHelp
-
-        fun dispatch(action: MainUiAction)
-
-        fun setCurrentAppListPage(page: AppListPage, submit: Boolean)
-
-        fun saveFilterState(filterState: AppListFilterState)
-
-        fun onPageRefreshRequested(page: AppListPage)
-
-        fun updateScrollPosition(page: AppListPage, index: Int, scrollOffset: Int)
-
-        fun attachTemplateLegacyViews(
-            workspaceContainer: View?,
-            detailEmpty: View?,
-            detailContent: FrameLayout?,
-        )
-
-        fun openLogs()
-    }
-
     var composeAppEditorController: ComposeAppEditorController? = null
         private set
     var composeAppEditorSaveWorkflow: ComposeAppEditorSaveWorkflow? = null
@@ -88,27 +48,32 @@ class MainHostWiringSession(
         private set
     var toolsWorkspace: ToolsWorkspace? = null
         private set
-    var appWorkspace: AppWorkspace? = null
+    var appWorkspaceActions: AppWorkspacePresentation.Actions? = null
         private set
     var settingsWorkspaceSession: SettingsWorkspaceSession? = null
         private set
 
     fun wire(viewModel: MainViewModel) {
-        val activity = shell.activity()
         val scopeCoordinator = ComposeEditorScopeRequestCoordinator(
             viewModel,
             ComposeEditorScopeRequestCoordinator.ScopeRequester { item, onApproved ->
-                shell.requestEditorScope(item, onApproved)
+                activity.systemScopeCoordinator.requestScope(
+                    item.packageName,
+                    item.label,
+                    onApproved,
+                    null,
+                    false,
+                )
             },
-            { shell.refreshApps() },
-            { shell.showToast(R.string.save_scope_request_notice) },
+            { activity.mainWorkspaceSession.refreshApps() },
+            { activity.showToast(R.string.save_scope_request_notice) },
         )
         val gateway = ComposeAppEditorActivityGateway(
-            ComposeAppEditorShell(shell.activity()),
-            shell.appConfigDialogHost(),
-            shell.appConfigSaveHandler(),
+            ComposeAppEditorShell(activity),
+            activity.dialogHost,
+            activity.saveHandler,
             scopeCoordinator,
-            shell.wechatDpiHelp(),
+            activity.wechatHelp,
         )
         val saveWorkflow = ComposeAppEditorSaveWorkflow(gateway)
         gateway.setSaveWorkflow(saveWorkflow)
@@ -120,8 +85,10 @@ class MainHostWiringSession(
         settingsWorkspaceContainer = activity.findViewById(R.id.settings_workspace_container)
         settingsWorkspaceSession = SettingsWorkspaceSession.create(
             activity,
-            { shell.refreshSettings() },
-            { shell.openLogs() },
+            { activity.mainWorkspaceSession.refreshSettings() },
+            {
+                activity.startActivity(Intent(activity, LogActivity::class.java))
+            },
         )
         WatchWorkspaceChromeBinder.applyIfSupported(
             activity,
@@ -131,32 +98,33 @@ class MainHostWiringSession(
         landDetailDivider = activity.findViewById(R.id.land_detail_divider)
         landDetailEmptyView = activity.findViewById(R.id.land_detail_empty)
         landDetailContent = activity.findViewById(R.id.land_detail_content)
-        shell.attachTemplateLegacyViews(
+        activity.startupSession.ensureWorkspaceSession().attachLegacyViews(
             activity.findViewById(R.id.template_workspace_container),
             activity.findViewById(R.id.template_detail_empty),
             activity.findViewById(R.id.template_detail_content),
         )
         toolsWorkspace = ToolsWorkspace(
             activity,
-            { shell.refreshTools() },
-            { shell.showToast(R.string.system_settings_save_failed) },
+            { activity.mainWorkspaceSession.refreshTools() },
+            { activity.showToast(R.string.system_settings_save_failed) },
         )
-        appWorkspace = AppWorkspace(object : AppWorkspace.Host {
+        appWorkspaceActions = object : AppWorkspacePresentation.Actions {
             override fun changeQuery(query: String) {
-                shell.dispatch(MainUiAction.queryChanged(query))
+                activity.startupSession.dispatch(MainUiAction.queryChanged(query))
             }
 
             override fun changePage(page: AppListPage) {
-                shell.setCurrentAppListPage(page, true)
-                shell.refreshApps()
+                activity.startupSession.setCurrentAppListPage(page, true)
+                activity.mainWorkspaceSession.refreshApps()
             }
 
             override fun changeFilters(filterState: AppListFilterState) {
-                shell.saveFilterState(filterState)
+                activity.startupSession.filterStore?.save(filterState)
+                activity.startupSession.dispatch(MainUiAction.filterChanged(filterState))
             }
 
             override fun refresh(page: AppListPage) {
-                shell.onPageRefreshRequested(page)
+                activity.startupSession.onPageRefreshRequested(page)
             }
 
             override fun openApp(item: AppListItem) {
@@ -168,8 +136,8 @@ class MainHostWiringSession(
                 index: Int,
                 scrollOffset: Int,
             ) {
-                shell.updateScrollPosition(page, index, scrollOffset)
+                activity.scrollStateStore.update(page, index, scrollOffset)
             }
-        })
+        }
     }
 }

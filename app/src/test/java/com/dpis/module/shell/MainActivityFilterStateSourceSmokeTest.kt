@@ -15,7 +15,7 @@ class MainActivityFilterStateSourceSmokeTest {
         assertTrue(startup.contains("filterState = retained.filterState"))
         assertTrue(startup.contains("filterState = AppListFilterState("))
         val hostWiring = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringShell.kt"
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
         assertTrue(hostWiring.contains("startupSession.filterStore?.save(filterState)"))
         assertTrue(hostWiring.contains("MainUiAction.filterChanged(filterState)"))

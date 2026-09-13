@@ -1,8 +1,7 @@
 package com.dpis.module.appconfig.presentation
 
-import android.app.Activity
 import android.view.View
-import android.widget.FrameLayout
+import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
@@ -10,7 +9,6 @@ import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
 import com.dpis.module.appconfig.landdetail.LandAppDetailSession
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
-import com.dpis.module.ui.MainViewModel
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
 import com.google.android.material.textfield.TextInputEditText
@@ -18,22 +16,14 @@ import com.google.android.material.textfield.TextInputLayout
 
 /**
  * Owns XML editor draft capture, apply, and active-root tracking for
- * portrait sheets and landscape detail. [com.dpis.module.MainActivity]
- * only forwards remaining host calls.
+ * portrait sheets and landscape detail.
  */
 class EditorDraftSession(
-    private val shell: Shell,
+    private val activity: MainActivity,
     private val dialogHost: AppConfigDialogBinder.Host,
     private val sheetSession: AppConfigSheetSession,
     private val landDetailSession: LandAppDetailSession,
 ) {
-    interface Shell {
-        fun activity(): Activity
-
-        fun viewModel(): MainViewModel?
-
-        fun landDetailContent(): FrameLayout?
-    }
 
     private var activeEditorRoot: View? = null
     private var activeEditorPackageName: String? = null
@@ -43,11 +33,11 @@ class EditorDraftSession(
         activeEditorPackageName = packageName
     }
 
-    fun currentEditingDraft(): EditorDraft? = shell.viewModel()?.editingDraft
+    fun currentEditingDraft(): EditorDraft? = activity.startupSession.viewModel?.editingDraft
 
     fun currentEditorRoot(): View? {
         var root = activeEditorRoot
-        val landDetailContent = shell.landDetailContent()
+        val landDetailContent = activity.hostWiringSession.landDetailContent
         if (root == null
             && landDetailContent != null
             && landDetailContent.childCount > 0
@@ -78,7 +68,7 @@ class EditorDraftSession(
     }
 
     fun clearEditingSession() {
-        val viewModel = shell.viewModel() ?: return
+        val viewModel = activity.startupSession.viewModel ?: return
         viewModel.clearEditingPackageName()
         viewModel.clearEditingDraft()
     }
@@ -86,8 +76,8 @@ class EditorDraftSession(
     fun captureAppConfigDraft(): EditorDraft? {
         var root = activeEditorRoot
         var packageName = activeEditorPackageName
-        val landDetailContent = shell.landDetailContent()
-        val viewModel = shell.viewModel()
+        val landDetailContent = activity.hostWiringSession.landDetailContent
+        val viewModel = activity.startupSession.viewModel
         if (root == null
             && landDetailContent != null
             && landDetailContent.childCount > 0
@@ -161,7 +151,7 @@ class EditorDraftSession(
     }
 
     fun updateEditingDraft(state: AppConfigDialogBinder.AppConfigDialogState?) {
-        val viewModel = shell.viewModel()
+        val viewModel = activity.startupSession.viewModel
         if (viewModel == null || state == null) {
             return
         }
@@ -224,7 +214,7 @@ class EditorDraftSession(
         )
         if (viewportInputLayout != null) {
             if (root.findViewById<View>(R.id.dialog_viewport_input_layout) != null) {
-                AppConfigDialogBinder(shell.activity(), dialogHost)
+                AppConfigDialogBinder(activity, dialogHost)
                     .bindViewportInputHint(
                         viewportInputLayout,
                         draft.viewportMode,

@@ -11,20 +11,15 @@ import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost
 import com.dpis.module.appconfig.presentation.AppConfigSheetSession
 import com.dpis.module.appconfig.presentation.AppConfigSheetShell
 import com.dpis.module.appconfig.presentation.EditorDraftSession
-import com.dpis.module.appconfig.presentation.EditorDraftShell
 import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
-import com.dpis.module.applist.presentation.InstalledAppsLoadShell
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.home.presentation.HomeWorkspaceSession
-import com.dpis.module.home.presentation.HomeWorkspaceShell
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
-import com.dpis.module.runtime.presentation.RuntimeLaunchShell
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.ui.presentation.MainHostWiringSession
-import com.dpis.module.ui.presentation.MainHostWiringShell
 import com.dpis.module.ui.presentation.MainStartupSession
 import com.dpis.module.ui.presentation.MainWorkspaceSession
 import com.dpis.module.updates.presentation.MainUpdateSession
@@ -37,7 +32,7 @@ class MainActivity :
         startupSession.bindHomeWorkspaceIfVisible()
     }
     internal val wechatHelp = WechatDpiHelp(this) { mainWorkspaceSession.composeShell() }
-    internal val runtimeLaunchSession = RuntimeLaunchSession(RuntimeLaunchShell(this))
+    internal val runtimeLaunchSession = RuntimeLaunchSession(this)
     internal val saveHandler = AppConfigSaveHandler()
     internal val systemScopeCoordinator: SystemScopeCoordinator = SystemScopeCoordinator(
         object : SystemScopeCoordinator.Host {
@@ -70,16 +65,15 @@ class MainActivity :
         dialogHost,
     )
     internal val editorDraftSession = EditorDraftSession(
-        EditorDraftShell(this),
+        this,
         dialogHost,
         sheetSession,
         landDetailSession,
     )
-    internal val installedAppsLoadSession =
-        InstalledAppsLoadSession(InstalledAppsLoadShell(this))
-    internal val hostWiringSession = MainHostWiringSession(MainHostWiringShell(this))
+    internal val installedAppsLoadSession = InstalledAppsLoadSession(this)
+    internal val hostWiringSession = MainHostWiringSession(this)
     internal val mainWorkspaceSession = MainWorkspaceSession(this, hostWiringSession)
-    internal val homeWorkspaceSession = HomeWorkspaceSession(HomeWorkspaceShell(this))
+    internal val homeWorkspaceSession = HomeWorkspaceSession(this)
     internal val startupSession: MainStartupSession = MainStartupSession(
         this,
         updateSession,

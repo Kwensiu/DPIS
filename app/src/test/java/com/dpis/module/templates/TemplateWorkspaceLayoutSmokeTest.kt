@@ -86,7 +86,7 @@ class TemplateWorkspaceLayoutSmokeTest {
         read("src/main/java/com/dpis/module/MainActivity.kt").apply {
             assertNotContainsAll("ensureComposeTemplateWorkspacePresentation()", "new GlobalPrefillSaveHandler().save(", "new QuickTemplateSaveHandler().save(", "QuickTemplateSortDialog.show(")
         }
-        read("src/main/java/com/dpis/module/ui/presentation/MainHostWiringShell.kt")
+        read("src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt")
             .assertContainsAll("attachLegacyViews(")
     }
 

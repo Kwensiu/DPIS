@@ -1,7 +1,7 @@
 package com.dpis.module.runtime.presentation
 
-import android.app.Activity
 import android.view.View
+import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
@@ -10,6 +10,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.HyperOsNativeAppDetector
 import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
+import com.dpis.module.process.presentation.ProcessActionConfirm
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
@@ -20,36 +21,24 @@ import com.dpis.module.viewport.ViewportPropertySyncer
 
 /**
  * Owns post-save runtime property sync, HyperOS native-proxy mount, and
- * editor process actions. [com.dpis.module.MainActivity] only forwards
- * these calls from remaining hosts.
+ * editor process actions.
  */
 class RuntimeLaunchSession(
-    private val shell: Shell,
+    private val activity: MainActivity,
 ) {
-    interface Shell {
-        fun activity(): Activity
-
-        fun hookConfigStore(): DpisConfigStore?
-
-        fun requestAppsLoad()
-
-        fun showToast(messageResId: Int)
-
-        fun confirmSystemApp(): ProcessActionHandler.ConfirmSystemApp
-    }
 
     fun interface HyperOsNativeProxyMountCallback {
         fun onFinished(success: Boolean)
     }
 
     fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
-        val store = shell.hookConfigStore()
+        val store = activity.hookConfigStore
         if (store == null || packageName == null) {
-            shell.showToast(R.string.status_save_requires_init)
+            activity.showToast(R.string.status_save_requires_init)
             return false
         }
         if (!store.setTargetDpisEnabled(packageName, enabled)) {
-            shell.showToast(R.string.system_settings_save_failed)
+            activity.showToast(R.string.system_settings_save_failed)
             return false
         }
         if (!enabled) {
@@ -57,7 +46,7 @@ class RuntimeLaunchSession(
             FontHookDomainPropertySyncer.clearTargetAsync(packageName)
             ViewportPropertySyncer.clearTargetAsync(packageName)
         }
-        shell.showToast(
+        activity.showToast(
             if (enabled) {
                 R.string.dialog_dpis_enabled_status
             } else {
@@ -70,11 +59,11 @@ class RuntimeLaunchSession(
 
     private val pendingRuntimePropertyGenerations = HashMap<String, Int>()
     private val processActionHandler = ProcessActionHandler(
-        shell.activity(),
+        activity,
         ProcessActionHandler.BeforeTargetLaunch { packageName ->
             syncRuntimePropertiesForTargetLaunch(packageName)
         },
-        shell.confirmSystemApp(),
+        ProcessActionConfirm(activity) { activity.mainWorkspaceSession.composeShell() },
     )
 
     fun finalizeAppConfigSaveWithRuntimeSync(
@@ -127,7 +116,7 @@ class RuntimeLaunchSession(
 
     fun onRuntimeConfigSaved() {
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-        shell.requestAppsLoad()
+        activity.startupSession.requestAppsLoad()
     }
 
     fun syncRuntimePropertiesForTargetLaunch(packageName: String?) {
@@ -163,7 +152,6 @@ class RuntimeLaunchSession(
             onFinished?.onFinished(false)
             return
         }
-        val activity = shell.activity()
         Thread({
             val plan = HyperOsNativeProxyBindMounter.createPlan(
                 activity,
@@ -191,7 +179,7 @@ class RuntimeLaunchSession(
             }
             activity.runOnUiThread {
                 if (!result.success()) {
-                    shell.showToast(messageResId)
+                    activity.showToast(messageResId)
                 }
                 onFinished?.onFinished(result.success())
             }
@@ -223,7 +211,7 @@ class RuntimeLaunchSession(
     fun isHyperOsNativeProxyCandidate(item: AppListItem?): Boolean {
         return item != null && (item.hyperOsNativeProxyCandidate
             || HyperOsNativeAppDetector.isNativeProxyCandidate(
-                shell.activity().packageManager,
+                activity.packageManager,
                 item.packageName,
             ))
     }
@@ -273,7 +261,7 @@ class RuntimeLaunchSession(
     }
 
     private fun syncRuntimePropertiesForTargetLaunch(packageName: String, generation: Int) {
-        val store = shell.hookConfigStore()
+        val store = activity.hookConfigStore
         ViewportPropertySyncer.syncTarget(packageName, store)
         FontRuntimePropertySyncer.syncTarget(packageName, store)
         synchronized(pendingRuntimePropertyGenerations) {
@@ -288,7 +276,7 @@ class RuntimeLaunchSession(
         if (!isHyperOsNativeProxyCandidate(item)) {
             return false
         }
-        val store = shell.hookConfigStore() ?: return false
+        val store = activity.hookConfigStore ?: return false
         return (store.isTargetDpisEnabled(item!!.packageName)
             && hasActiveStoredConfig(store, item.packageName))
     }

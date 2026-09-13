@@ -11,8 +11,6 @@ import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
-import com.dpis.module.applist.AppWorkspacePresentation
-import com.dpis.module.applist.AppWorkspace
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.ui.MainUiAction
@@ -132,7 +130,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
         assertTrue(hostWiring.contains("ComposeEditorScopeRequestCoordinator("))
-        assertTrue(hostWiring.contains("ComposeAppEditorShell(shell.activity())"))
+        assertTrue(hostWiring.contains("ComposeAppEditorShell(activity)"))
         assertFalse(gateway.contains("import com.dpis.module.MainActivity"))
         assertTrue(gateway.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
         assertTrue(coordinator.contains("mainViewModel.markEditingScopeSelected(packageName)"))
@@ -148,7 +146,7 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("hideSearchFocusFab()"))
         assertFalse(source.contains("showSearchFocusFab()"))
         val hostWiring = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringShell.kt"
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
         assertTrue(hostWiring.contains("MainUiAction.filterChanged(filterState)"))
         assertTrue(composeWorkspace.contains("AppFilterSheet("))
@@ -186,11 +184,7 @@ class MainActivitySourceSmokeTest {
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
-        assertTrue(hostWiring.contains("shell.attachTemplateLegacyViews("))
-        val hostWiringShell = read(
-            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringShell.kt"
-        )
-        assertTrue(hostWiringShell.contains("ensureWorkspaceSession().attachLegacyViews("))
+        assertTrue(hostWiring.contains("ensureWorkspaceSession().attachLegacyViews("))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
@@ -225,7 +219,6 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
-        val appWorkspace = read("src/main/java/com/dpis/module/applist/AppWorkspace.kt")
         val toolsWorkspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
 
         val workspace = read(
@@ -234,12 +227,10 @@ class MainActivitySourceSmokeTest {
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
-        assertTrue(hostWiring.contains("var appWorkspace: AppWorkspace?"))
-        assertTrue(hostWiring.contains("appWorkspace = AppWorkspace("))
-        assertTrue(workspace.contains("checkNotNull(hostWiring.appWorkspace).actions()"))
+        assertTrue(hostWiring.contains("var appWorkspaceActions: AppWorkspacePresentation.Actions?"))
+        assertTrue(hostWiring.contains("object : AppWorkspacePresentation.Actions"))
+        assertTrue(workspace.contains("checkNotNull(hostWiring.appWorkspaceActions)"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
-        assertTrue(appWorkspace.contains("interface Host"))
-        assertTrue(appWorkspace.contains("fun actions(): AppWorkspacePresentation.Actions"))
         assertTrue(toolsWorkspace.contains("class ToolsWorkspace("))
         assertTrue(toolsWorkspace.contains("private val binder = ToolsWorkspaceBinder("))
     }
@@ -447,7 +438,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(loadSession.contains("getPermissionInfo("))
         assertTrue(
-            loadSession.contains("shell.dispatchRequestAppsLoad(true)")
+            loadSession.contains("activity.startupSession.dispatchInstalledAppsLoad(true)")
         )
         val requestLoadStart = loadSession.indexOf(
             "fun requestLoad(forceInstalledAppCatalogReload: Boolean)"
@@ -467,7 +458,7 @@ class MainActivitySourceSmokeTest {
                 "ensurePermissionBeforeLoad()"
             ) <
                 compact(requestLoadBody).indexOf(
-                    "shell.dispatchRequestAppsLoad("
+                    "activity.startupSession.dispatchInstalledAppsLoad("
                 )
         )
     }
@@ -661,11 +652,7 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        val homeShell = read(
-            "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceShell.kt"
-        )
-        assertTrue(homeShell.contains("updateSession.checkForUpdatesNow()"))
-        assertTrue(homeSession.contains("shell.checkForUpdatesNow()"))
+        assertTrue(homeSession.contains("updateSession.checkForUpdatesNow()"))
         assertTrue(homeState.contains("interface HomeWorkspaceActions"))
         val primaryStatus = compose
             .substringAfter("private fun HomePrimaryStatus")
@@ -1197,15 +1184,11 @@ class MainActivitySourceSmokeTest {
         val runtimeLaunch = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
-        val runtimeShell = read(
-            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchShell.kt"
-        )
-
-        assertTrue(source.contains("RuntimeLaunchSession(RuntimeLaunchShell(this))"))
+        assertTrue(source.contains("RuntimeLaunchSession(this)"))
         assertTrue(runtimeLaunch.contains("ProcessActionHandler("))
         assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(
-            runtimeShell.contains(
+            runtimeLaunch.contains(
                 "ProcessActionConfirm(activity) { activity.mainWorkspaceSession.composeShell() }",
             )
         )
@@ -1578,7 +1561,7 @@ class MainActivitySourceSmokeTest {
             source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
         )
         assertTrue(
-            methodBody.contains("val store = shell.hookConfigStore()")
+            methodBody.contains("val store = activity.hookConfigStore")
         )
         assertTrue(
             methodBody.contains("store.isTargetDpisEnabled(item!!.packageName)")
