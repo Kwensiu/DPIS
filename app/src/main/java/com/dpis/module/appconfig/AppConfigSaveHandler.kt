@@ -12,56 +12,8 @@ import com.dpis.module.viewport.EffectiveModeResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
-import com.google.android.material.textfield.TextInputEditText
 
 class AppConfigSaveHandler {
-    fun save(
-        item: AppListItem,
-        viewportInput: TextInputEditText,
-        fontScaleInput: TextInputEditText,
-        viewportTargetType: String?,
-        currentViewportApplyMode: String?,
-        viewportApplyModeResetRequested: Boolean,
-        fontMode: String?,
-        selectedTypefaceId: String?,
-        draftFontHookDomainsRaw: String?,
-        fontHookDomainsResetRequested: Boolean,
-        viewportScaleInput: String?,
-        viewportAbsoluteInput: String?,
-        systemHooksEnabled: Boolean,
-        store: DpisConfigStore?,
-        onChanged: Runnable?
-    ): Result {
-        try {
-            val viewportTargetSpec: ViewportTargetSpec? = parseViewportTargetSpecOrNull(
-                viewportInput, viewportTargetType
-            )
-            val fontScalePercent: Int? = parseFontScalePercentOrNull(fontScaleInput)
-            if (store == null) {
-                return Result.Companion.failure(R.string.status_save_requires_init)
-            }
-            return saveResolved(
-                item,
-                viewportTargetSpec,
-                viewportTargetType,
-                currentViewportApplyMode,
-                viewportApplyModeResetRequested,
-                fontScalePercent,
-                fontMode,
-                selectedTypefaceId,
-                draftFontHookDomainsRaw,
-                fontHookDomainsResetRequested,
-                viewportScaleInput,
-                viewportAbsoluteInput,
-                systemHooksEnabled,
-                store,
-                onChanged
-            )
-        } catch (exception: NumberFormatException) {
-            return Result.Companion.failure(R.string.status_save_invalid)
-        }
-    }
-
     fun saveResolved(
         item: AppListItem,
         viewportTargetSpec: ViewportTargetSpec?,
@@ -482,35 +434,6 @@ class AppConfigSaveHandler {
             }
             val value = AppConfigInputValidation.parseViewportScaleMilliPercentOrNull(raw)
             return if (value != null) ViewportDraftValue.valid(value) else ViewportDraftValue.invalid()
-        }
-
-        @Throws(NumberFormatException::class)
-        private fun parseViewportTargetSpecOrNull(
-            inputView: TextInputEditText,
-            viewportTargetType: String?
-        ): ViewportTargetSpec? {
-            val raw = if (inputView.getText() != null) inputView.getText().toString()
-                .trim { it <= ' ' } else ""
-            if (!AppConfigInputValidation.isViewportInputValid(raw, viewportTargetType)) {
-                throw NumberFormatException("invalid viewport target")
-            }
-            val spec =
-                AppConfigInputValidation.parseViewportTargetSpec(raw, viewportTargetType)
-            return spec
-        }
-
-        @Throws(NumberFormatException::class)
-        private fun parseFontScalePercentOrNull(inputView: TextInputEditText): Int? {
-            val raw = if (inputView.getText() != null) inputView.getText().toString()
-                .trim { it <= ' ' } else ""
-            if (raw.isEmpty()) {
-                return null
-            }
-            val value = AppConfigInputValidation.parseFontScalePercentOrNull(raw)
-            if (value == null) {
-                throw NumberFormatException("invalid font scale")
-            }
-            return value
         }
     }
 }
