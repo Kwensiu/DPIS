@@ -147,10 +147,10 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("focusSearchInputAndShowKeyboard()"))
         assertFalse(source.contains("hideSearchFocusFab()"))
         assertFalse(source.contains("showSearchFocusFab()"))
-        val filterSession = read(
-            "src/main/java/com/dpis/module/applist/presentation/AppListFilterSession.kt"
+        val hostWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringShell.kt"
         )
-        assertTrue(filterSession.contains("AppListFilterState("))
+        assertTrue(hostWiring.contains("MainUiAction.filterChanged(filterState)"))
         assertTrue(composeWorkspace.contains("AppFilterSheet("))
     }
 

@@ -57,10 +57,6 @@ class EditorDraftSession(
         return root
     }
 
-    fun activeEditorRoot(): View? = activeEditorRoot
-
-    fun activeEditorPackageName(): String? = activeEditorPackageName
-
     fun saveCurrentEditorConfigForDiagnostic(
         item: AppListItem?,
         state: AppConfigDialogBinder.AppConfigDialogState?,

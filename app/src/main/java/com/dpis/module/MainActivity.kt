@@ -13,8 +13,6 @@ import com.dpis.module.appconfig.presentation.AppConfigSheetShell
 import com.dpis.module.appconfig.presentation.EditorDraftSession
 import com.dpis.module.appconfig.presentation.EditorDraftShell
 import com.dpis.module.applist.AppWorkspaceScrollStateStore
-import com.dpis.module.applist.presentation.AppListFilterSession
-import com.dpis.module.applist.presentation.AppListFilterShell
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.applist.presentation.InstalledAppsLoadShell
 import com.dpis.module.config.DpisConfigStore
@@ -79,7 +77,6 @@ class MainActivity :
     )
     internal val installedAppsLoadSession =
         InstalledAppsLoadSession(InstalledAppsLoadShell(this))
-    internal val appListFilterSession = AppListFilterSession(AppListFilterShell(this))
     internal val hostWiringSession = MainHostWiringSession(MainHostWiringShell(this))
     internal val mainWorkspaceSession = MainWorkspaceSession(this, hostWiringSession)
     internal val homeWorkspaceSession = HomeWorkspaceSession(HomeWorkspaceShell(this))
