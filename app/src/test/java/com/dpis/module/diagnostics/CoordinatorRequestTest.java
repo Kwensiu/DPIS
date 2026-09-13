@@ -11,6 +11,7 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 
 import com.dpis.module.applist.AppListItem;
+import com.dpis.module.appconfig.EditorDraft;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -20,6 +21,21 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 public final class CoordinatorRequestTest {
+
+    @Test
+    public void fromUsesEditorDraftScopeAndDpisWhenPresent() {
+        AppListItem item = app("com.tencent.mm", 600);
+        EditorDraft draft = EditorDraft.fromItem(item)
+                .withScopeSelected(false)
+                .withDpisEnabled(false);
+
+        Coordinator.Request request = Coordinator.Request.from(item, draft, "8.0.74");
+
+        assertFalse(request.inScope);
+        assertFalse(request.dpisEnabled);
+        assertEquals(item.packageName, request.packageName);
+        assertTrue(request.scopeKnown);
+    }
 
     @Test
     public void fromUsesItemWechatDpiValue() {

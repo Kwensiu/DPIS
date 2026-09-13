@@ -1,6 +1,5 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigEditorChip
 
@@ -153,29 +152,6 @@ class ComposeAppEditorControllerTest {
     }
 
     @Test
-    fun updateAdvancedDraftCopiesDialogOwnedFieldsIntoTheSession() {
-        val viewModel = MainViewModel(emptyState())
-        val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
-        controller.open(ITEM)
-        val dialogState = AppConfigDialogState.fromItem(ITEM)
-        dialogState.selectedTypefaceId = "serif"
-        dialogState.draftFontHookDomainsRaw = "resources_font"
-        dialogState.viewportApplyMode = ViewportApplyMode.SYSTEM
-        dialogState.fontHookDomainsResetRequested = true
-        dialogState.viewportApplyModeResetRequested = true
-
-        controller.updateAdvancedDraft(viewModel.editorSession!!.draft, dialogState)
-
-        val draft = viewModel.editorSession!!.draft
-        assertEquals("serif", draft.selectedTypefaceId)
-        assertEquals("resources_font", draft.draftFontHookDomainsRaw)
-        assertEquals(ViewportApplyMode.SYSTEM, draft.viewportApplyMode)
-        assertTrue(draft.fontHookDomainsResetRequested)
-        assertTrue(draft.viewportApplyModeResetRequested)
-    }
-
-    @Test
     fun refreshCloseAndSaveFeedbackFollowHostAndSessionBoundaries() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
@@ -276,12 +252,10 @@ class ComposeAppEditorControllerTest {
         override fun hasSavedPackageConfig(packageName: String) = hasSaved
         override fun resolveGlobalPrefill(): TemplateConfigValue? = PREFILL
         override fun resolvePackageVersionName(packageName: String) = "1.2.3"
-        override fun createDialogState(item: AppListItem, draft: EditorDraft) =
-            AppConfigDialogState.from(item, draft)
         override fun typefaceSelectorText(typefaceId: String?) = typefaceId ?: "default"
         override fun hookChainText(
             item: AppListItem,
-            state: AppConfigDialogState,
+            draft: EditorDraft,
         ) = "hook"
         override fun systemHooksEnabled() = true
         override fun automaticFontHookDomains() = setOf("android.widget.TextView")

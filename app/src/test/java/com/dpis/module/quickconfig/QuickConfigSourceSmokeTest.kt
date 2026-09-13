@@ -94,7 +94,7 @@ class QuickConfigSourceSmokeTest {
             read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigDiagnosticSession.kt")
 
         Assert.assertTrue(diagnostics.contains("Coordinator(createHost())"))
-        Assert.assertTrue(editor.contains("onStartDiagnostic(currentItem, AppConfigDialogState.from(currentItem, draft))"))
+        Assert.assertTrue(editor.contains("onStartDiagnostic(currentItem, draft)"))
         Assert.assertTrue(diagnostics.contains("Coordinator.Request.fromPersisted("))
         Assert.assertTrue(diagnostics.contains("QuickConfigDialog.FeedbackStart("))
         Assert.assertTrue(diagnostics.contains("QuickConfigDialog.EnableLogs"))

@@ -1,6 +1,5 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigEditorChip
 import com.dpis.module.appconfig.AppConfigEditorSession
 
@@ -78,27 +77,6 @@ class AppConfigEditorPresentationFactoryTest {
 
         assertEquals(AppConfigEditorChip.PREFILL, state.chip)
         assertFalse(state.dirty)
-    }
-
-    @Test
-    fun dialogStateProjectionUsesEveryEditorOwnedDraftValue() {
-        val draft = EditorDraft(
-            "com.example.app", "125", "640", "130", "absolute_dp", "110",
-            FontApplyMode.SYSTEM_EMULATION, "font-id", "domain-a,domain-b",
-            ViewportApplyMode.COMPAT, true, true, "420", true, false,
-        )
-
-        val state = AppConfigDialogState.from(app("Example", draft.packageName), draft)
-
-        assertEquals("font-id", state.selectedTypefaceId)
-        assertEquals("domain-a,domain-b", state.draftFontHookDomainsRaw)
-        assertEquals(ViewportApplyMode.COMPAT, state.viewportApplyMode)
-        assertTrue(state.fontHookDomainsResetRequested)
-        assertTrue(state.viewportApplyModeResetRequested)
-        assertEquals("640", state.viewportScaleInput)
-        assertEquals("130", state.viewportAbsoluteInput)
-        assertTrue(state.scopeSelected)
-        assertFalse(state.dpisEnabled)
     }
 
     private companion object {

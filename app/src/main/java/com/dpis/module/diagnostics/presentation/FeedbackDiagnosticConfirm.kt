@@ -5,7 +5,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogState
+import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.ComposeMessageDialog
 import com.dpis.module.ui.dialog.ConfirmDialog
@@ -20,33 +20,17 @@ class FeedbackDiagnosticConfirm(
     private val shell: Supplier<MainComposeShellHost?>,
     private val session: Supplier<Session>,
 ) {
-    fun startFromViewEditor(
-        item: AppListItem?,
-        state: AppConfigDialogState?,
-        persist: Supplier<AppListItem?>,
-        versionName: String,
-        store: DpisConfigStore,
-    ) {
-        if (item == null) return
-        whenLogsEnabled {
-            showStart(item.label) {
-                val diagnosticItem = persist.get() ?: return@showStart
-                startSession(diagnosticItem, state, versionName, store)
-            }
-        }
-    }
-
     fun startFromComposeEditor(
         item: AppListItem,
         persist: BooleanSupplier,
-        dialogState: AppConfigDialogState,
+        draft: EditorDraft,
         versionName: String,
         store: DpisConfigStore,
     ) {
         whenLogsEnabled {
             showStart(item.label) {
                 if (!persist.asBoolean) return@showStart
-                startSession(item, dialogState, versionName, store)
+                startSession(item, draft, versionName, store)
             }
         }
     }
@@ -141,12 +125,12 @@ class FeedbackDiagnosticConfirm(
 
     private fun startSession(
         item: AppListItem,
-        state: AppConfigDialogState?,
+        draft: EditorDraft?,
         versionName: String,
         store: DpisConfigStore,
     ) {
         val started = session.get().start(
-            Coordinator.Request.fromPersisted(item, state, versionName, store),
+            Coordinator.Request.fromPersisted(item, draft, versionName, store),
             false,
             30,
         )

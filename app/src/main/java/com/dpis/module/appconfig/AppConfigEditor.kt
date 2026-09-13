@@ -19,7 +19,7 @@ interface AppConfigEditorHost {
 
     fun getFontHookDomainsButtonText(
         item: AppListItem?,
-        state: AppConfigDialogState?,
+        draft: EditorDraft?,
     ): String?
 
     fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean

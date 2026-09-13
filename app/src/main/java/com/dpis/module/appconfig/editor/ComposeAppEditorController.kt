@@ -1,6 +1,5 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.EditorActions
@@ -29,11 +28,10 @@ class ComposeAppEditorController(
         fun hasSavedPackageConfig(packageName: String): Boolean
         fun resolveGlobalPrefill(): TemplateConfigValue?
         fun resolvePackageVersionName(packageName: String): String
-        fun createDialogState(item: AppListItem, draft: EditorDraft): AppConfigDialogState
         fun typefaceSelectorText(typefaceId: String?): String
         fun hookChainText(
             item: AppListItem,
-            state: AppConfigDialogState,
+            draft: EditorDraft,
         ): String
         fun systemHooksEnabled(): Boolean
         fun automaticFontHookDomains(): Set<String>
@@ -60,13 +58,12 @@ class ComposeAppEditorController(
         val editorSession = session.editorSession ?: return null
         if (editorSession.draft.packageName != item.packageName) return null
         val draft = editorSession.draft
-        val dialogState = host.createDialogState(item, draft)
         return EditorPresentationFactory.create(
             item,
             host.resolvePackageVersionName(item.packageName),
             draft,
             host.typefaceSelectorText(draft.selectedTypefaceId),
-            host.hookChainText(item, dialogState),
+            host.hookChainText(item, draft),
             editorSession.persistedBaseline,
             session.isEditingSaveFeedback,
             host.systemHooksEnabled(),
@@ -100,19 +97,6 @@ class ComposeAppEditorController(
         val current = session.editorSession ?: return
         session.editorSession = current.reset()
         host.refreshEditor()
-    }
-
-    fun updateAdvancedDraft(
-        draft: EditorDraft,
-        state: AppConfigDialogState,
-    ) {
-        updateDraft(draft.withAdvancedConfig(
-            state.selectedTypefaceId,
-            state.draftFontHookDomainsRaw,
-            state.viewportApplyMode,
-            state.fontHookDomainsResetRequested,
-            state.viewportApplyModeResetRequested,
-        ))
     }
 
     fun refresh() {

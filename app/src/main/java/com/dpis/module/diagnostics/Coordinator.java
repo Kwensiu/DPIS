@@ -6,8 +6,8 @@ import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.*;
 
-import com.dpis.module.appconfig.AppConfigDialogState;
 import com.dpis.module.appconfig.AppConfigInputValidation;
+import com.dpis.module.appconfig.EditorDraft;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -107,49 +107,49 @@ public final class Coordinator {
 
         public static Request from(
                 AppListItem item,
-                AppConfigDialogState state
+                EditorDraft draft
         ) {
-            return from(item, state, "");
+            return from(item, draft, "");
         }
 
         public static Request from(
                 AppListItem item,
-                AppConfigDialogState state,
+                EditorDraft draft,
                 String versionName
         ) {
-            boolean useState = state != null;
+            boolean useDraft = draft != null;
             return new Request(
-                    useState && !valueOrEmpty(state.packageName).isBlank()
-                            ? state.packageName
+                    useDraft && !valueOrEmpty(draft.packageName).isBlank()
+                            ? draft.packageName
                             : item.packageName,
                     item.label,
                     versionName,
-                    useState ? state.scopeKnown : item.scopeKnown,
-                    useState ? state.scopeSelected : item.inScope,
-                    useState ? state.dpisEnabled : item.dpisEnabled,
-                    useState ? state.previewFromGlobalPrefill : item.previewFromGlobalPrefill,
+                    item.scopeKnown,
+                    useDraft ? draft.scopeSelected : item.inScope,
+                    useDraft ? draft.dpisEnabled : item.dpisEnabled,
+                    item.previewFromGlobalPrefill,
                     item.viewportTargetSpec,
-                    useState ? state.viewportApplyMode : item.viewportMode,
+                    useDraft ? draft.viewportApplyMode : item.viewportMode,
                     item.fontScalePercent,
                     item.fontMode,
-                    useState ? state.selectedTypefaceId : item.typefaceId,
-                    useState ? state.draftFontHookDomainsRaw : item.effectiveFontHookDomainsRaw(),
+                    useDraft ? draft.selectedTypefaceId : item.typefaceId,
+                    useDraft ? draft.draftFontHookDomainsRaw : item.effectiveFontHookDomainsRaw(),
                     item.wechatDpi
             );
         }
 
         public static Request fromPersisted(
                 AppListItem item,
-                AppConfigDialogState state,
+                EditorDraft draft,
                 String versionName,
                 DpisConfigStore store
         ) {
-            String statePackageName = state != null ? valueOrEmpty(state.packageName) : "";
-            String packageName = !statePackageName.isBlank()
-                    ? statePackageName
+            String draftPackageName = draft != null ? valueOrEmpty(draft.packageName) : "";
+            String packageName = !draftPackageName.isBlank()
+                    ? draftPackageName
                     : (item != null ? item.packageName : "");
             if (store == null || packageName.isBlank() || item == null) {
-                return from(item, state, versionName);
+                return from(item, draft, versionName);
             }
             ViewportTargetSpec persistedViewportSpec = store.getTargetViewportSpec(packageName);
             String persistedViewportMode = store.getTargetViewportApplyMode(packageName);
@@ -164,8 +164,8 @@ public final class Coordinator {
                     packageName,
                     item.label,
                     versionName,
-                    state != null ? state.scopeKnown : item.scopeKnown,
-                    state != null ? state.scopeSelected : item.inScope,
+                    item.scopeKnown,
+                    draft != null ? draft.scopeSelected : item.inScope,
                     store.isTargetDpisEnabled(packageName),
                     false,
                     persistedViewportSpec,

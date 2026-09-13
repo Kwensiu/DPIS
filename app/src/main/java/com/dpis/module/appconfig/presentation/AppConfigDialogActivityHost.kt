@@ -1,8 +1,8 @@
 package com.dpis.module.appconfig.presentation
 
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigEditorHost
+import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
@@ -38,9 +38,9 @@ class AppConfigDialogActivityHost(
 
     override fun getFontHookDomainsButtonText(
         item: AppListItem?,
-        state: AppConfigDialogState?,
+        draft: EditorDraft?,
     ): String = FontHookDomainPresentation.forOverride(
-        resolveFontHookDomainsForDraft(item, state),
+        resolveFontHookDomainsForDraft(item, draft),
         FontHookDomainRegistry.automaticCustomizableDomains(),
     ).buttonText(activity)
 
@@ -49,20 +49,22 @@ class AppConfigDialogActivityHost(
 
     fun fontHookDomainsButtonText(
         item: AppListItem?,
-        state: AppConfigDialogState?,
-    ): String = getFontHookDomainsButtonText(item, state).orEmpty()
+        draft: EditorDraft?,
+    ): String = getFontHookDomainsButtonText(item, draft).orEmpty()
 
     private fun resolveFontHookDomainsForDraft(
         item: AppListItem?,
-        state: AppConfigDialogState?,
+        draft: EditorDraft?,
     ): HookDomainOverride {
-        if (state != null && state.fontHookDomainsResetRequested) {
+        if (draft != null && draft.fontHookDomainsResetRequested) {
             return HookDomainOverride.automatic()
         }
         val automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains()
-        if (state != null && (state.previewFromGlobalPrefill || state.draftFontHookDomainsRaw != null)) {
+        if (draft != null &&
+            (item?.previewFromGlobalPrefill == true || draft.draftFontHookDomainsRaw != null)
+        ) {
             return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
-                HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
+                HookDomainOverrideStore.fromRaw(draft.draftFontHookDomainsRaw),
                 automaticKnownDomains,
             )
         }

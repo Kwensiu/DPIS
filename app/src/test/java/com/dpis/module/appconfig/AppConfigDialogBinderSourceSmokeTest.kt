@@ -54,11 +54,11 @@ class AppConfigDialogBinderSourceSmokeTest {
     }
 
     @Test
-    fun dialogStateKeepsIndependentViewportInputs() {
-        val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogState.kt")
-        assertTrue(stateSource.contains("fun viewportInputFor(viewportTargetType: String?)"))
-        assertTrue(stateSource.contains("fun clearViewportInputs()"))
-        assertTrue(stateSource.contains("fun updateViewportInput("))
+    fun editorDraftKeepsIndependentViewportInputs() {
+        val draftSource = read("src/main/java/com/dpis/module/appconfig/editor/EditorDraft.kt")
+        assertTrue(draftSource.contains("fun viewportInputFor(targetType: String?)"))
+        assertTrue(draftSource.contains("fun withViewportInput(targetType: String?, value: String?)"))
+        assertTrue(draftSource.contains("fun withViewportMode(targetType: String?)"))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

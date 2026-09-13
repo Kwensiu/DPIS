@@ -63,7 +63,7 @@ class QuickConfigActivity : LocalizedActivity() {
             appConfigSaveHandler,
             systemScopeCoordinator,
             onProcessAction = { item, action -> executeDialogProcessAction(item, action) },
-            onStartDiagnostic = { item, state -> diagnostics.start(item, state) },
+            onStartDiagnostic = { item, draft -> diagnostics.start(item, draft) },
         )
 
         val retainedSession = lastCustomNonConfigurationInstance as QuickConfigEditorSession?

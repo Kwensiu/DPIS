@@ -2,7 +2,6 @@ package com.dpis.module.appconfig.presentation
 
 import android.content.Context
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigEditorHost
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigProcessAction
@@ -62,16 +61,13 @@ class ComposeAppEditorActivityGateway(
     override fun resolvePackageVersionName(packageName: String): String =
         activity.resolvePackageVersionName(packageName)
 
-    override fun createDialogState(item: AppListItem, draft: EditorDraft) =
-        AppConfigDialogState.from(item, draft)
-
     override fun typefaceSelectorText(typefaceId: String?): String =
         AppConfigTypefaceLabels.selectorText(activity, typefaceId)
 
     override fun hookChainText(
         item: AppListItem,
-        state: AppConfigDialogState,
-    ): String = dialogHost.getFontHookDomainsButtonText(item, state).orEmpty()
+        draft: EditorDraft,
+    ): String = dialogHost.getFontHookDomainsButtonText(item, draft).orEmpty()
 
     override fun systemHooksEnabled(): Boolean =
         activity.startupSession.isSystemHookEnabledFromStore

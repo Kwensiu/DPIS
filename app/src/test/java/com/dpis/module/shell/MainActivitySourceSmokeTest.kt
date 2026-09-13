@@ -975,7 +975,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(host.contains("fun getFontHookDomainsButtonText("))
         assertTrue(host.contains("fun fontHookDomainsButtonText("))
         assertFalse(host.contains("fun showFontHookDomains("))
-        assertTrue(host.contains("resolveFontHookDomainsForDraft(item, state)"))
+        assertTrue(host.contains("resolveFontHookDomainsForDraft(item, draft)"))
         assertTrue(host.contains("HookDomainOverrideStore(activity.hookConfigStore).read("))
         assertFalse(host.contains("FontHookDomainDialog.show("))
         val saveSource = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
@@ -1004,8 +1004,8 @@ class MainActivitySourceSmokeTest {
         val methodStart = source.indexOf("private fun resolveFontHookDomainsForDraft(")
         val method = source.substring(methodStart)
 
-        assertTrue(method.contains("state.fontHookDomainsResetRequested"))
-        assertTrue(method.contains("HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw)"))
+        assertTrue(method.contains("draft.fontHookDomainsResetRequested"))
+        assertTrue(method.contains("HookDomainOverrideStore.fromRaw(draft.draftFontHookDomainsRaw)"))
         assertTrue(method.contains("HookDomainOverrideStore(activity.hookConfigStore).read("))
         assertFalse(method.contains("saveCustomIfDifferentFromAutomatic("))
         assertFalse(method.contains("store.restoreRecommended("))
@@ -1030,8 +1030,8 @@ class MainActivitySourceSmokeTest {
 
         assertTrue(method.contains("FontHookDomainPresentation.forOverride("))
         assertTrue(source.contains("FontHookDomainPresentation"))
-        assertTrue(method.contains("AppConfigDialogState?"))
-        assertFalse(method.contains("item.previewFromGlobalPrefill"))
+        assertTrue(method.contains("EditorDraft?"))
+        assertTrue(source.contains("item?.previewFromGlobalPrefill"))
     }
 
     @Test

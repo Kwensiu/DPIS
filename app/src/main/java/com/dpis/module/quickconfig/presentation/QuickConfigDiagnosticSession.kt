@@ -17,7 +17,7 @@ import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.root.RootAccessProbe
 import java.io.IOException
 import java.util.concurrent.Executors
-import com.dpis.module.appconfig.AppConfigDialogState
+import com.dpis.module.appconfig.EditorDraft
 
 /**
  * Owns Quick Config feedback-diagnostic start, packaging, and result-file actions.
@@ -65,15 +65,15 @@ internal class QuickConfigDiagnosticSession(
         return true
     }
 
-    fun start(item: AppListItem, state: AppConfigDialogState?) {
+    fun start(item: AppListItem, draft: EditorDraft?) {
         if (LogGate.isEnabled(activity)) {
-            showStartConfirmation(item, state)
+            showStartConfirmation(item, draft)
             return
         }
         activity.presentation?.show(
             QuickConfigDialog.EnableLogs {
                 if (LogGate.enable(activity)) {
-                    showStartConfirmation(item, state)
+                    showStartConfirmation(item, draft)
                 } else {
                     activity.showToast(R.string.system_settings_save_failed)
                 }
@@ -81,7 +81,7 @@ internal class QuickConfigDiagnosticSession(
         )
     }
 
-    private fun showStartConfirmation(item: AppListItem, state: AppConfigDialogState?) {
+    private fun showStartConfirmation(item: AppListItem, draft: EditorDraft?) {
         activity.presentation?.show(
             QuickConfigDialog.FeedbackStart(
                 activity.getString(R.string.feedback_diagnostic_confirm_message, item.label),
@@ -91,7 +91,7 @@ internal class QuickConfigDiagnosticSession(
                 val started = coordinator.start(
                     Coordinator.Request.fromPersisted(
                         diagnosticItem,
-                        state,
+                        draft,
                         activity.resolvePackageVersionName(item.packageName),
                         activity.hookConfigStore,
                     ),

@@ -2,7 +2,6 @@ package com.dpis.module.quickconfig.presentation
 
 import android.content.Context
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigProcessAction
@@ -42,7 +41,7 @@ internal class QuickConfigComposeEditor(
     private val saveHandler: AppConfigSaveHandler,
     private val scopeCoordinator: SystemScopeCoordinator,
     private val onProcessAction: (AppListItem, AppConfigProcessAction) -> Unit,
-    private val onStartDiagnostic: (AppListItem, AppConfigDialogState) -> Unit,
+    private val onStartDiagnostic: (AppListItem, EditorDraft) -> Unit,
 ) {
     var item: AppListItem? = null
         private set
@@ -114,7 +113,6 @@ internal class QuickConfigComposeEditor(
         if (currentItem == null || currentDraft == null || presentation == null) {
             return
         }
-        val dialogState = AppConfigDialogState.from(currentItem, currentDraft)
         presentation.show(
             EditorPresentationFactory.create(
                 currentItem,
@@ -122,7 +120,7 @@ internal class QuickConfigComposeEditor(
                 currentDraft,
                 AppConfigTypefaceLabels.selectorText(activity, currentDraft.selectedTypefaceId),
                 forOverride(
-                    resolveFontHookDomains(currentItem, dialogState),
+                    resolveFontHookDomains(currentItem, currentDraft),
                     automaticCustomizableDomains(),
                 ).buttonText(activity),
                 savedDraft,
@@ -188,7 +186,7 @@ internal class QuickConfigComposeEditor(
             }
 
             override fun startFeedbackDiagnostic(draft: EditorDraft) {
-                onStartDiagnostic(currentItem, AppConfigDialogState.from(currentItem, draft))
+                onStartDiagnostic(currentItem, draft)
             }
 
             override fun save(draft: EditorDraft) {
@@ -340,17 +338,18 @@ internal class QuickConfigComposeEditor(
 
     private fun resolveFontHookDomains(
         currentItem: AppListItem?,
-        state: AppConfigDialogState?,
+        currentDraft: EditorDraft?,
     ): HookDomainOverride {
-        if (state != null && state.fontHookDomainsResetRequested) {
+        if (currentDraft != null && currentDraft.fontHookDomainsResetRequested) {
             return HookDomainOverride.automatic()
         }
         val automaticDomains = automaticCustomizableDomains()
-        if (state != null &&
-            (state.previewFromGlobalPrefill || state.draftFontHookDomainsRaw != null)
+        if (currentDraft != null &&
+            (currentItem?.previewFromGlobalPrefill == true ||
+                currentDraft.draftFontHookDomainsRaw != null)
         ) {
             return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
-                HookDomainOverrideStore.fromRaw(state.draftFontHookDomainsRaw),
+                HookDomainOverrideStore.fromRaw(currentDraft.draftFontHookDomainsRaw),
                 automaticDomains,
             )
         }
