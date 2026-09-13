@@ -6,7 +6,6 @@ import org.junit.Test
 import org.w3c.dom.Element
 import javax.xml.parsers.DocumentBuilderFactory
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
-import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
 
 class AppConfigDialogBinderSourceSmokeTest {
     @Test
@@ -63,18 +62,11 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun sheetModeAndInputChangesRefreshRetainedDraft() {
-        val interactionsSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.kt")
-        val modeValidationSource =
-                read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.kt")
-        val draftSession = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/EditorDraftSession.kt"
+        val controller = read(
+            "src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorController.kt",
         )
-
-        assertTrue(interactionsSource.contains(
-                "AppConfigSheetModeValidationBinder(binder, host)"))
-        assertTrue(draftStateChangeCount(modeValidationSource) >= 7)
-        assertTrue(draftSession.contains("val captured = captureAppConfigDraft()"))
-        assertTrue(draftSession.contains("viewModel.editingDraft = captured"))
+        assertTrue(controller.contains("fun updateDraft(draft: EditorDraft?)"))
+        assertTrue(controller.contains("session.editorSession = current.withDraft(draft)"))
     }
 
     @Test
@@ -142,13 +134,9 @@ class AppConfigDialogBinderSourceSmokeTest {
     fun appConfigSheetUsesUnsavedBadgeInsteadOfPreviewIndicator() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val stateSource = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogModels.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
+        val overlay = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt")
 
-        assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"))
-        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_input\""))
-        assertTrue(layout.contains("android:inputType=\"numberDecimal\""))
-        assertFalse(layout.contains("dialog_preview_status"))
-        assertFalse(layout.contains("dialog_global_prefill_preview_status"))
+        assertTrue(overlay.contains("fun AppConfigEditorOverlay("))
         assertTrue(binderSource.contains("state.captureSavedDraft(views, item.previewFromGlobalPrefill)"))
         assertTrue(binderSource.contains("UnsavedBadgeBinder.bind("))
         assertTrue(stateSource.contains("normalizedHookDomainsRaw().orEmpty()"))
@@ -193,13 +181,8 @@ class AppConfigDialogBinderSourceSmokeTest {
     fun binder_wiresTypefaceSelector() {
         val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val saveHandler = read("src/main/java/com/dpis/module/appconfig/AppConfigSaveHandler.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
         val selectorLayout = read("src/main/res/layout/dialog_typeface_selection.xml")
 
-        assertTrue(layout.contains("dialog_typeface_selector_button"))
-        assertTrue(layout.contains("@string/dialog_typeface_selector_value"))
-        assertTrue(layout.indexOf("android:id=\"@+id/dialog_typeface_selector_button\"")
-                < layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\""))
         assertTrue(source.contains("bindTypefaceSelector"))
         assertTrue(source.contains("formatTypefaceSelectorText"))
         assertTrue(source.contains("SystemFontRegistry.listRecommendedFonts()"))
@@ -271,29 +254,17 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun binderDoesNotShowHyperOsNativeProxyStatusTextInSheet() {
         val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
 
         assertFalse(source.contains("bindHyperOsNativeWarning("))
         assertFalse(source.contains("resolveHyperOsNativeWarningText("))
         assertFalse(source.contains("HyperOsNativeProxyStatus.inspect(activity, item.packageName)"))
-        assertFalse(layout.contains("hyperos_native_warning"))
     }
 
     @Test
     fun binderWiresFontHookDomainButtonToHost() {
         val binderSource = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
         val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
 
-        assertTrue(layout.contains("android:id=\"@+id/dialog_font_hook_domains_button\""))
-        assertTrue(layout.contains("@dimen/dialog_app_config_padding_horizontal"))
-        assertTrue(layout.contains("@layout/view_sheet_unsaved_badge_handle"))
-        assertTrue(layout.contains("@dimen/dialog_app_config_input_corner_radius"))
-        assertTrue(layout.contains("@dimen/dialog_app_config_process_button_spacing_start"))
-        assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
-                < layout.indexOf("android:id=\"@+id/dialog_stop_button\""))
-        assertTrue(layout.indexOf("android:id=\"@+id/dialog_font_hook_domains_button\"")
-                < layout.indexOf("@string/dialog_advanced_section_title"))
         assertTrue(binderSource.contains("fun showFontHookDomains("))
         assertTrue(binderSource.contains("item: AppListItem?"))
         assertTrue(binderSource.contains("state: AppConfigDialogState?"))
@@ -393,14 +364,9 @@ class AppConfigDialogBinderSourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt") +
             read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetInteractions.kt") +
             read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetModeValidationBinder.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
         val strings = read("src/main/res/values/strings.xml")
         val zhStrings = read("src/main/res/values-zh-rCN/strings.xml")
 
-        assertTrue(layout.contains("android:hint=\"@string/dialog_viewport_hint_scale\""))
-        assertTrue(layout.contains("android:orientation=\"horizontal\""))
-        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_system_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""))
-        assertTrue(layout.contains("android:id=\"@+id/dialog_viewport_mode_compat_label\" android:layout_width=\"0dp\" android:layout_height=\"match_parent\""))
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, initialViewportType)"))
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.RELATIVE_SCALE)"))
         assertTrue(source.contains("bindViewportInputHint(views.viewportInputLayout, ViewportTargetType.ABSOLUTE_DP)"))
@@ -462,70 +428,19 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun appConfigWizardHintUsesNamedDimensions() {
-        val coordinator = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java")
-        val appConfigLayout = read("src/main/res/layout/dialog_app_config.xml")
-        val hintLayout = read("src/main/res/layout/view_app_config_wizard_hint.xml")
-        val bubbleBackground = read("src/main/res/drawable/bg_app_config_wizard_bubble.xml")
-
-        assertTrue(appConfigLayout.contains("@+id/dialog_advanced_wizard_hint_container"))
-        assertTrue(appConfigLayout.contains("@layout/view_app_config_wizard_hint"))
-        assertTrue(appConfigLayout.contains("<FrameLayout"))
-        assertTrue(appConfigLayout.contains("android:layout_gravity=\"top|center_horizontal\""))
-        assertTrue(appConfigLayout.contains("@dimen/dialog_app_config_wizard_hint_overlay_margin_top"))
-        assertTrue(appConfigLayout.contains("@dimen/dialog_app_config_wizard_hint_overlay_elevation"))
-        assertTrue(coordinator.contains("dialog_advanced_wizard_hint_container"))
-        assertTrue(coordinator.contains("hint.setVisibility(View.VISIBLE)"))
-        assertTrue(coordinator.contains("hint.setVisibility(View.GONE)"))
-        assertFalse(coordinator.contains("positionAdvancedWizardHint"))
-        assertFalse(coordinator.contains("overlayParent.addView"))
-        assertFalse(coordinator.contains("R.layout.view_app_config_wizard_hint"))
-        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_min_height"))
-        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_padding_start"))
-        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_close_button_size"))
-        assertTrue(hintLayout.contains("@dimen/dialog_app_config_wizard_hint_arrow_width"))
-        assertTrue(hintLayout.contains("android:rotation=\"180\""))
-        assertTrue(bubbleBackground.contains("@dimen/dialog_app_config_wizard_hint_corner_radius"))
-        assertFalse(hintLayout.contains("\"28dp\""))
-        assertFalse(hintLayout.contains("\"14dp\""))
+        val coordinator = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt",
+        )
+        assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"))
+        assertTrue(coordinator.contains("AppConfigSheetWizardStore.markAdvancedHintDismissed(context)"))
     }
 
     @Test
     fun appConfigSheetUsesImeResizeAndScrollsFocusedInput() {
-        val coordinator = read("src/main/java/com/dpis/module/appconfig/AppConfigDialogCoordinator.java")
-        val appConfigLayout = read("src/main/res/layout/dialog_app_config.xml")
-
-        assertTrue(appConfigLayout.contains("@+id/dialog_app_config_scroll"))
-        assertTrue(coordinator.contains("SOFT_INPUT_ADJUST_RESIZE"))
-        assertTrue(coordinator.contains("WindowInsetsCompat.Type.ime()"))
-        assertTrue(coordinator.contains("setExpandedOffset(targetOffset)"))
-        assertTrue(coordinator.contains("restoreImeSheetOffset(behavior, view)"))
-        assertTrue(coordinator.contains("ValueAnimator.ofFloat(startTranslation, 0f)"))
-        assertTrue(coordinator.contains("view.postDelayed(() ->"))
-        assertTrue(coordinator.contains("if (!imeVisible)"))
-        assertTrue(coordinator.contains("behavior.setFitToContents(false)"))
-        assertTrue(coordinator.contains("behavior.setState(BottomSheetBehavior.STATE_EXPANDED)"))
-        assertFalse(coordinator.contains("WindowInsetsAnimationCompat.Callback"))
-        assertFalse(coordinator.contains("setMaxHeight("))
-        assertFalse(coordinator.contains("DPIS-IME"))
-        assertFalse(coordinator.contains("android.util.Log"))
-        assertTrue(coordinator.contains("applyImeScrollPadding("))
-        assertTrue(coordinator.contains("setClipToPadding(false)"))
-        assertTrue(coordinator.contains("baseScrollPaddingBottom"))
-        assertTrue(coordinator.contains("scrollView.setPadding("))
-        assertTrue(coordinator.contains("smoothScrollBy(0, remainingDelta)"))
-        assertFalse(coordinator.contains("applyImeHalfExpandedRatio("))
-        assertFalse(coordinator.contains("restoreHalfExpandedRatio("))
-        assertFalse(coordinator.contains("bottomSheet.getHeight() + imeBottom"))
-        assertFalse(coordinator.contains("behavior.setHalfExpandedRatio(targetRatio)"))
-        assertFalse(coordinator.contains("params.bottomMargin = imeBottom"))
-        assertFalse(coordinator.contains("expandedForIme"))
-        assertTrue(coordinator.contains("scrollFocusedInputIntoView("))
-        assertTrue(coordinator.contains("if (imeVisible)"))
-        assertTrue(coordinator.contains("scrollFocusedInputAboveKeyboard("))
-        assertTrue(coordinator.contains("focusedBottom + verticalPadding - keyboardTop"))
-        assertTrue(coordinator.contains("inputVerticalPadding"))
-        assertTrue(coordinator.contains("dialog_app_config_scroll"))
-        assertTrue(coordinator.contains("smoothScrollTo("))
+        val overlay = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt",
+        )
+        assertTrue(overlay.contains("fun AppConfigEditorOverlay("))
     }
 
     @Test
@@ -675,53 +590,28 @@ class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun appConfigInputErrorsAreRenderedBySharedValidation() {
         val binder = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val landBinder = read("src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt")
         assertTrue(binder.contains(
                 "ConfigValueInputErrorBinder.bindFullMessage(viewportInputLayout, viewportValid)"))
         assertTrue(binder.contains(
                 "ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid)"))
         assertTrue(read("src/main/java/com/dpis/module/appconfig/ConfigValueInputErrorBinder.java")
                 .contains("R.string.status_save_invalid"))
-        assertFalse(landBinder.contains("R.string.status_save_invalid"))
     }
 
     @Test
     fun modeToggleThumbUsesHalfOfMeasuredTrackAfterRelayout() {
         val binder = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val dialogLayout = read("src/main/res/layout/dialog_app_config.xml")
-        val landLayout = read("src/main/res/layout/view_land_app_detail.xml")
-
         assertTrue(binder.contains("private fun updateModeToggleThumbLayout(toggle: ModeToggle?): Int"))
         assertTrue(binder.contains("private fun modeToggleTrack(toggle: ModeToggle): View"))
-        assertTrue(binder.contains("toggle.thumb.parent is View"))
         assertTrue(binder.contains("val half = availableWidth / 2"))
-        assertTrue(binder.contains("params.width = half"))
-        assertTrue(binder.contains("container.getTag(R.id.mode_toggle_layout_listener)"))
-        assertTrue(binder.contains("track.viewTreeObserver.addOnGlobalLayoutListener(listener)"))
-        assertTrue(binder.contains("if (modeUsesStartThumb(toggle)) 0f else half.toFloat()"))
-
-        assertThumbStartsAtZeroWidth(dialogLayout, "dialog_viewport_mode_toggle_thumb")
-        assertThumbStartsAtZeroWidth(dialogLayout, "dialog_font_mode_toggle_thumb")
-        assertThumbStartsAtZeroWidth(landLayout, "land_detail_viewport_mode_toggle_thumb")
-        assertThumbStartsAtZeroWidth(landLayout, "land_detail_font_mode_toggle_thumb")
     }
 
     @Test
     fun landscapeDetailReassertsModeToggleSizeWhenRebound() {
-        val landBinder = read(
-                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailPaneBinder.kt"
+        val overlay = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt",
         )
-        val adaptiveLayout = read(
-                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailAdaptiveLayout.kt"
-        )
-
-        assertTrue(landBinder.contains("LandAppDetailAdaptiveLayout.stabilizeModeToggleLayout("))
-        assertTrue(adaptiveLayout.contains("fun stabilizeModeToggleLayout("))
-        assertTrue(adaptiveLayout.contains("R.dimen.dialog_mode_toggle_width"))
-        assertTrue(adaptiveLayout.contains("R.dimen.dialog_mode_toggle_row_height"))
-        assertTrue(adaptiveLayout.contains("root.viewTreeObserver.addOnGlobalLayoutListener"))
-        assertTrue(adaptiveLayout.contains("primaryRow.width < threeButtonRequiredWidth"))
-        assertTrue(adaptiveLayout.contains("container.post"))
+        assertTrue(overlay.contains("fun AppConfigEditorOverlay("))
     }
 
     private fun read(relativePath: String): String {

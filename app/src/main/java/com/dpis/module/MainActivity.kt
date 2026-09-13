@@ -5,10 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.landdetail.LandAppDetailSession
 import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost
-import com.dpis.module.appconfig.presentation.AppConfigSheetSession
-import com.dpis.module.appconfig.presentation.EditorDraftSession
 import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
@@ -55,22 +52,6 @@ class MainActivity :
         this,
         saveHandler,
         systemScopeCoordinator,
-    )
-    internal val landDetailSession = LandAppDetailSession(
-        this,
-        saveHandler,
-        systemScopeCoordinator,
-        dialogHost,
-    )
-    internal val sheetSession = AppConfigSheetSession(
-        this,
-        dialogHost,
-    )
-    internal val editorDraftSession = EditorDraftSession(
-        this,
-        dialogHost,
-        sheetSession,
-        landDetailSession,
     )
     internal val installedAppsLoadSession = InstalledAppsLoadSession(
         this,

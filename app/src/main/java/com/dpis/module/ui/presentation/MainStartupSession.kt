@@ -297,7 +297,7 @@ class MainStartupSession(
             requireUiState(),
             currentAppListPage.position(),
             activity.scrollStateStore.snapshot(),
-            activity.editorDraftSession.captureAppConfigDraft(),
+            null,
             viewModel,
             ensureWorkspaceSession().retainedState(),
             feedbackDiagnostic?.retainedState(),

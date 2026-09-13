@@ -7,25 +7,18 @@ import org.junit.Test
 
 class FeedbackDiagnosticSourceSmokeTest {
     @Test
-    fun appConfigSheetExposesFeedbackDiagnosticEntry() {
-        val binder =
-            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val actions =
-            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
+    fun composeEditorExposesFeedbackDiagnosticEntry() {
+        val gateway = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
+        )
+        val overlay = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt",
+        )
         val dimens = read("src/main/res/values/dimens.xml")
 
-        assertTrue(layout.contains("dialog_feedback_diagnostic_button"))
-        assertTrue(layout.contains("@string/feedback_diagnostic_action"))
-        assertTrue(layout.contains("@drawable/ic_bug_report_24"))
-        assertTrue(
-            layout.contains(
-                "android:layout_marginTop=\"@dimen/dialog_feedback_diagnostic_button_margin_top\""
-            )
-        )
-        assertTrue(binder.contains("startFeedbackDiagnostic("))
-        assertTrue(binder.contains("feedbackDiagnosticButton"))
-        assertTrue(actions.contains("host.startFeedbackDiagnostic(item, state)"))
+        assertTrue(gateway.contains("feedbackDiagnostic?.showPreparation("))
+        assertTrue(overlay.contains("AppConfigSheetUiTokens.FeedbackActionSize"))
+        assertTrue(overlay.contains("R.drawable.ic_bug_report_24") || overlay.contains("feedback_diagnostic"))
         assertTrue(
             dimens.contains(
                 "<dimen name=\"dialog_feedback_diagnostic_button_size\">32dp</dimen>"
@@ -97,11 +90,6 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
         assertTrue(startup.contains("FeedbackDiagnosticActivitySession("))
-        assertTrue(
-            read(
-                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailSession.kt"
-            ).contains("feedbackDiagnostic?.startFromViewEditor(")
-        )
         assertTrue(
             read(
                 "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"

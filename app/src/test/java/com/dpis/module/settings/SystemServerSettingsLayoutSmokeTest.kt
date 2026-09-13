@@ -125,14 +125,7 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun appConfigDialogUsesCompactProcessButtonStyles() {
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
         val styles = read("src/main/res/values/styles.xml")
-        layout.assertContainsAll(
-            "@style/Widget.Dpis.DialogActionButton.Process.Error", "@style/Widget.Dpis.DialogActionButton.Process.Warn",
-            "@style/Widget.Dpis.DialogActionButton.Process.Success", "@style/Widget.Dpis.AppIdentityTitle",
-            "@style/Widget.Dpis.AppIdentitySecondaryText", "@style/Widget.Dpis.AppIdentityStatusText",
-            "android:layout_marginStart=\"@dimen/dialog_app_config_process_button_spacing_start\"",
-        )
         styles.assertContainsAll(
             "name=\"Widget.Dpis.DialogActionButton.Process\"", "name=\"Widget.Dpis.AppIdentityTitle\"",
             "name=\"Widget.Dpis.AppIdentitySecondaryText\"", "name=\"Widget.Dpis.AppIdentityStatusText\"",

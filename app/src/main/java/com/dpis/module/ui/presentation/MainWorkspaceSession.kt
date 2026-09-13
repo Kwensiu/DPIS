@@ -138,32 +138,7 @@ class MainWorkspaceSession(
         ) {
             return
         }
-        // The Compose app workspace restores its editor directly from MainViewModel. Re-entering
-        // the legacy route here would stack a View BottomSheetDialog over the Compose sheet after
-        // any state render, including the catalog refresh triggered by a successful save.
-        val composeShellHost = composeShellHost
-        if (composeShellHost != null) {
-            composeShellHost.refreshApps()
-            return
-        }
-        val editingPackage = viewModel.editingPackageName
-        if (editingPackage.isNullOrBlank()) {
-            return
-        }
-        val landDetailContent = hostWiring.landDetailContent
-        if (isLandscapeDetailMode() && landDetailContent != null && landDetailContent.childCount > 0) {
-            return
-        }
-        for (appItem in activity.startupSession.requireUiState().visibleItems(activity.startupSession.currentAppListPage)) {
-            if (editingPackage == appItem.packageName) {
-                if (isLandscapeDetailMode()) {
-                    activity.landDetailSession.show(appItem)
-                } else {
-                    activity.sheetSession.show(appItem)
-                }
-                break
-            }
-        }
+        composeShellHost?.refreshApps()
     }
 
     fun bindForLifecycle(mode: MainUiState.WorkspaceMode?) {

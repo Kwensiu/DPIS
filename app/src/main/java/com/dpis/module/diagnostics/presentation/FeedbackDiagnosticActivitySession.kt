@@ -89,7 +89,7 @@ class FeedbackDiagnosticActivitySession(
         confirm.startFromViewEditor(
             item,
             state,
-            { activity.editorDraftSession.saveCurrentEditorConfigForDiagnostic(item, state) },
+            { item },
             activity.resolvePackageVersionName(item.packageName),
             requireHookConfigStore(),
         )
@@ -180,7 +180,7 @@ class FeedbackDiagnosticActivitySession(
             activity.runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName)
             val launched = launcher.restartForDiagnostic(packageName)
             if (launched) {
-                activity.sheetSession.dismiss()
+                activity.hostWiringSession.composeAppEditorController?.close()
             }
             return launched
         }

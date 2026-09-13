@@ -94,7 +94,7 @@ class ComposeAppEditorActivityGateway(
         currentlySelected: Boolean,
         onSelected: Runnable,
         onDeselected: Runnable,
-    ) = activity.landDetailSession.toggleScope(
+    ) = dialogHost.toggleScope(
         item,
         currentlySelected,
         onSelected,

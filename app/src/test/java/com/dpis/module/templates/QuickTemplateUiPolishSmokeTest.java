@@ -56,12 +56,9 @@ public class QuickTemplateUiPolishSmokeTest {
 
     @Test
     public void sharedModeToggleLayoutsKeepThumbBehindLabels() throws IOException {
-        String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(appConfigLayout.contains("@string/dialog_viewport_mode_toggle_description"));
-        assertTrue(appConfigLayout.contains("@string/dialog_font_mode_toggle_description"));
         assertTrue(strings.contains("dialog_viewport_mode_toggle_description"));
         assertTrue(strings.contains("dialog_font_mode_toggle_description"));
         assertTrue(zhStrings.contains("dialog_viewport_mode_toggle_description"));

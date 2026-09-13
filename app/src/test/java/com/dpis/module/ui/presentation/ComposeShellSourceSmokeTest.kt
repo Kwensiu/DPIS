@@ -322,11 +322,9 @@ class ComposeShellSourceSmokeTest {
         )
         val restore = workspace.substring(restoreStart, restoreEnd)
 
-        val composeGuard = restore.indexOf("if (composeShellHost != null)")
-        val legacySheet = restore.indexOf("activity.sheetSession.show(appItem)")
-        assertTrue(composeGuard >= 0)
-        assertTrue(legacySheet > composeGuard)
-        assertTrue(restore.substring(composeGuard, legacySheet).contains("return"))
+        assertTrue(restore.contains("composeShellHost?.refreshApps()"))
+        assertFalse(restore.contains("activity.sheetSession.show(appItem)"))
+        assertFalse(restore.contains("activity.landDetailSession.show(appItem)"))
     }
 
     @Test

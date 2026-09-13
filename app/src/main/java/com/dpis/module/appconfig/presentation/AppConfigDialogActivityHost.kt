@@ -17,7 +17,6 @@ import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textview.MaterialTextView
 
 /**
  * XML/legacy app-config editor host for [MainActivity].
@@ -92,7 +91,12 @@ class AppConfigDialogActivityHost(
         state: AppConfigDialogBinder.AppConfigDialogState?,
         onStateChanged: Runnable?,
     ) {
-        showFontHookDomains(item, state, onStateChanged, isFontHookDomainEditingEnabled())
+        showFontHookDomains(
+            item,
+            state,
+            onStateChanged,
+            FontApplyMode.FIELD_REWRITE == FontApplyMode.normalize(item?.fontMode),
+        )
     }
 
     fun showFontHookDomains(
@@ -238,7 +242,6 @@ class AppConfigDialogActivityHost(
     }
 
     override fun onDraftStateChanged(state: AppConfigDialogBinder.AppConfigDialogState?) {
-        activity.editorDraftSession.updateEditingDraft(state)
     }
 
     override fun showToast(messageResId: Int) {
@@ -249,12 +252,6 @@ class AppConfigDialogActivityHost(
         item: AppListItem?,
         state: AppConfigDialogBinder.AppConfigDialogState?,
     ): String = getFontHookDomainsButtonText(item, state).orEmpty()
-
-    private fun isFontHookDomainEditingEnabled(): Boolean {
-        val root = activity.editorDraftSession.currentEditorRoot() ?: return false
-        return FontApplyMode.FIELD_REWRITE ==
-            AppConfigDialogBinder.resolveFontMode(fontModeToggle(root))
-    }
 
     private fun resolveFontHookDomainsForDraft(
         item: AppListItem?,
@@ -273,24 +270,6 @@ class AppConfigDialogActivityHost(
         return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
             HookDomainOverrideStore(activity.hookConfigStore).read(item?.packageName),
             automaticKnownDomains,
-        )
-    }
-
-    private fun fontModeToggle(root: View): AppConfigDialogBinder.ModeToggle {
-        val landContainer = root.findViewById<View>(R.id.land_detail_font_mode_toggle_button)
-        if (landContainer != null) {
-            return AppConfigDialogBinder.ModeToggle(
-                landContainer,
-                root.findViewById(R.id.land_detail_font_mode_toggle_thumb),
-                root.findViewById<MaterialTextView>(R.id.land_detail_font_mode_system_label),
-                root.findViewById<MaterialTextView>(R.id.land_detail_font_mode_compat_label),
-            )
-        }
-        return AppConfigDialogBinder.ModeToggle(
-            root.findViewById(R.id.dialog_font_mode_toggle_button),
-            root.findViewById(R.id.dialog_font_mode_toggle_thumb),
-            root.findViewById<MaterialTextView>(R.id.dialog_font_mode_system_label),
-            root.findViewById<MaterialTextView>(R.id.dialog_font_mode_compat_label),
         )
     }
 }
