@@ -40,7 +40,7 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine() {
-        val main = read("src/main/java/com/dpis/module/MainActivity.java")
+        val main = read("src/main/java/com/dpis/module/MainActivity.kt")
         val pageController = read(
             "src/main/java/com/dpis/module/diagnostics/presentation/PageController.kt"
         )
@@ -100,11 +100,11 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         assertTrue(startup.contains("FeedbackDiagnosticActivitySession("))
         assertTrue(startup.contains("FeedbackDiagnosticShell(activity)"))
-        assertTrue(main.contains("getFeedbackDiagnostic().startFromViewEditor("))
-        assertTrue(main.contains("getFeedbackDiagnostic().showPreparation("))
+        assertTrue(main.contains("feedbackDiagnostic?.startFromViewEditor("))
+        assertTrue(main.contains("feedbackDiagnostic?.showPreparation("))
         assertTrue(startup.contains("feedbackDiagnostic.restorePage()"))
         assertTrue(startup.contains("feedbackDiagnostic.attachHost()"))
-        assertTrue(main.contains("getFeedbackDiagnostic().onDestroy(isChangingConfigurations())"))
+        assertTrue(main.contains("feedbackDiagnostic?.onDestroy(isChangingConfigurations)"))
         assertFalse(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
         assertFalse(main.contains("createDiagnosticPageControllerHost()"))
         assertTrue(confirm.contains("LogGate.isEnabled("))
@@ -338,7 +338,7 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticResultSupportsShareAndSaveZip() {
-        val main = read("src/main/java/com/dpis/module/MainActivity.java")
+        val main = read("src/main/java/com/dpis/module/MainActivity.kt")
         val packageActions = read(
             "src/main/java/com/dpis/module/diagnostics/PackageActions.kt"
         )
@@ -379,7 +379,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("const val SAVE_REQUEST = 10024")
         )
-        assertTrue(main.contains("getFeedbackDiagnostic().handleActivityResult("))
+        assertTrue(main.contains("feedbackDiagnostic?.handleActivityResult("))
         assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"))
         assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"))
         assertTrue(packageActions.contains("openOutputStream(uri)"))

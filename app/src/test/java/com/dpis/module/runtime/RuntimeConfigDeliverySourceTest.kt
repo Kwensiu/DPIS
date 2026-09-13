@@ -10,7 +10,7 @@ class RuntimeConfigDeliverySourceTest {
     @Test
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
         val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val runtimeLaunch = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
@@ -32,7 +32,7 @@ class RuntimeConfigDeliverySourceTest {
             read("src/main/java/com/dpis/module/DpisApplication.kt").contains(
                 "RuntimeConfigDelivery.setLocalSnapshotReloader(Runnable { reloadConfigStore() })",
         ))
-        assertTrue(mainActivity.contains("public void onRuntimeConfigSaved()"))
+        assertTrue(mainActivity.contains("fun onRuntimeConfigSaved()"))
         assertTrue(mainActivity.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))
         assertTrue(runtimeLaunch.contains("fun onRuntimeConfigSaved()"))
         assertTrue(runtimeLaunch.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))

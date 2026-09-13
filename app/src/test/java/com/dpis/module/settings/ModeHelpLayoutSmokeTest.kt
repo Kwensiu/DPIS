@@ -13,7 +13,7 @@ class ModeHelpLayoutSmokeTest {
         val compose = read("src/main/java/com/dpis/module/home/presentation/ModeHelpContent.kt")
         val cards = read("src/main/java/com/dpis/module/home/presentation/ModeGuideContent.kt")
         val manifest = read("src/main/AndroidManifest.xml")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val homeSession = read(
             "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceSession.kt"
         )

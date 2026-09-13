@@ -347,7 +347,7 @@ class ComposeShellSourceSmokeTest {
                 "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt")
         val typefacePicker = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/AppTypefacePickerPage.kt")
-        val activity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val activity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val editorController = read(
                 "src/main/java/com/dpis/module/appconfig/editor/EditorActions.kt")
         val editorSessionController = read(
@@ -433,7 +433,7 @@ class ComposeShellSourceSmokeTest {
         val coordinator = read(
                 "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val viewModel = read("src/main/java/com/dpis/module/ui/MainViewModel.kt")
-        val activity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val activity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val templates = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
         val templatePresentation = read(

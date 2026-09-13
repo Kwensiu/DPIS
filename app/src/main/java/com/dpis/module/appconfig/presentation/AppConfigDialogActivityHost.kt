@@ -154,7 +154,7 @@ class AppConfigDialogActivityHost(
             if (state != null) {
                 state.viewportApplyMode
             } else {
-                store.getTargetViewportApplyMode(target.packageName)
+                store?.getTargetViewportApplyMode(target.packageName)
             },
             fontDomainsEditable,
             onStateChanged,

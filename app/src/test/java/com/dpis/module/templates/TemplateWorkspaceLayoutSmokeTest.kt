@@ -79,8 +79,8 @@ class TemplateWorkspaceLayoutSmokeTest {
         read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceBinder.kt").assertContainsAll("quick_template_sort_button")
         read("src/main/java/com/dpis/module/templates/presentation/QuickTemplateSortDialog.kt").assertContainsAll("ModalDialog(onDismissRequest = onDismiss)", "fun QuickTemplateSortDialog(")
         read("src/main/java/com/dpis/module/ui/presentation/wear/WearWorkspaceContent.kt").assertContainsAll("var sortDialogVisible by rememberSaveable", "QuickTemplateSortDialog(", "enabled = state.sortItems.isNotEmpty()")
-        read("src/main/java/com/dpis/module/MainActivity.java").apply {
-            assertContainsAll("private TemplateWorkspaceActivitySession workspaceSession;", "ensureWorkspaceSession()")
+        read("src/main/java/com/dpis/module/MainActivity.kt").apply {
+            assertContainsAll("private var workspaceSession: TemplateWorkspaceActivitySession?", "ensureWorkspaceSession()")
             assertContainsAll("TemplateWorkspaceActivitySession.State", "attachLegacyViews(")
             assertNotContainsAll("ensureComposeTemplateWorkspacePresentation()", "new GlobalPrefillSaveHandler().save(", "new QuickTemplateSaveHandler().save(", "QuickTemplateSortDialog.show(")
         }

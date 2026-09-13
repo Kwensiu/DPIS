@@ -19,7 +19,7 @@ class DonateActivitySourceSmokeTest {
         val homeState = read("src/main/java/com/dpis/module/home/HomeWorkspaceState.kt")
         val settingsController =
             read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val homeSession = read(
             "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceSession.kt"
         )

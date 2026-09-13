@@ -23,7 +23,7 @@ internal class TemplateWorkspaceActivityHost(
 
     override fun appConfigDialogHost(): AppConfigDialogBinder.Host = activity.createAppConfigDialogHost()
 
-    override fun hookConfigStore(): DpisConfigStore = activity.hookConfigStore
+    override fun hookConfigStore(): DpisConfigStore = checkNotNull(activity.hookConfigStore)
 
     override fun isInstalledTemplateTargetPackage(packageName: String): Boolean {
         if (packageName.isBlank() || activity.packageName == packageName) return false

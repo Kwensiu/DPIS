@@ -77,7 +77,7 @@ public class MainActivityLayoutSmokeTest {
             throws IOException {
         String portraitLayout = read("src/main/res/layout/activity_status.xml");
         String landscapeLayout = read("src/main/res/layout-land/activity_status.xml");
-        String source = read("src/main/java/com/dpis/module/MainActivity.java");
+        String source = read("src/main/java/com/dpis/module/MainActivity.kt");
 
         assertTrue(portraitLayout.contains("android:id=\"@+id/workspace_switch\""));
         assertTrue(landscapeLayout.contains("android:id=\"@+id/workspace_switch\""));

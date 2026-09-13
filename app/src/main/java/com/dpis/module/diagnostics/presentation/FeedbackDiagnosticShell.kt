@@ -33,7 +33,7 @@ class FeedbackDiagnosticShell(
         state: AppConfigDialogBinder.AppConfigDialogState?,
     ): AppListItem? = activity.saveCurrentEditorConfigForDiagnostic(item, state)
 
-    override fun hookConfigStore(): DpisConfigStore = activity.hookConfigStore
+    override fun hookConfigStore(): DpisConfigStore = checkNotNull(activity.hookConfigStore)
 
     override fun packageVersionName(packageName: String): String =
         activity.resolvePackageVersionName(packageName)

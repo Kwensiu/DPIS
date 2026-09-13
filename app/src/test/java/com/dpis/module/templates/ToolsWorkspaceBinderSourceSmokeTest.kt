@@ -6,7 +6,7 @@ import org.junit.Test
 class ToolsWorkspaceBinderSourceSmokeTest {
     @Test
     fun mainActivityWiresToolsWorkspaceBinderLifecycle() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.java")
+        val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val workspaceSession = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
@@ -27,11 +27,11 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(workspace.contains("LogGate.ensureEnabled("))
         assertTrue(workspaceSession.contains("fun bindToolsWorkspace("))
         assertTrue(source.contains("mainWorkspaceSession.bindForLifecycle("))
-        assertTrue(source.contains("toolsWorkspace().onStart();"))
-        assertTrue(source.contains("toolsWorkspace().onResume();"))
-        assertTrue(source.contains("toolsWorkspace().onStop();"))
+        assertTrue(source.contains("toolsWorkspace()?.onStart()"))
+        assertTrue(source.contains("toolsWorkspace()?.onResume()"))
+        assertTrue(source.contains("toolsWorkspace()?.onStop()"))
         assertTrue(
-            source.contains("toolsWorkspace().onActivityResult(requestCode, resultCode, data);")
+            source.contains("toolsWorkspace()?.onActivityResult(requestCode, resultCode, data)")
         )
     }
 

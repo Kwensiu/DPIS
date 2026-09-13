@@ -37,7 +37,7 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt")
         val composeHost = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetActivityContent.kt")
-        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.java")
+        val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val binder = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceBinder.kt")
 
         assertTrue(manifest.contains("android:name=\".templates.QuickTemplateTargetSelectionActivity\""))
