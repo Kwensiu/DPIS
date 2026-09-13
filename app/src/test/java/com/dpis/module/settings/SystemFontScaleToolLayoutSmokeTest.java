@@ -1,76 +1,37 @@
 package com.dpis.module;
 
-import com.dpis.module.diagnostics.presentation.LogGate;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 import java.io.IOException;
 
 import org.junit.Test;
-import com.dpis.module.diagnostics.LogActivity;
 
 public class SystemFontScaleToolLayoutSmokeTest {
     @Test
-    public void toolsWorkspaceContainsSystemFontScaleToolSurface() throws IOException {
-        String layout = read("src/main/res/layout/tools_workspace.xml");
-        int fontCardIndex = layout.indexOf("android:id=\"@+id/system_font_scale_card\"");
-        int logCardIndex = layout.indexOf("android:id=\"@+id/tools_log_card\"");
+    public void composeToolsWorkspaceOwnsSystemFontScaleToolSurface() throws IOException {
+        String content = read(
+                "src/main/java/com/dpis/module/tools/presentation/ToolsWorkspaceContent.kt");
 
-        assertTrue(layout.contains("android:id=\"@+id/tools_toolbar\""));
-        assertTrue(layout.contains("android:text=\"@string/workspace_tools\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_card\""));
-        assertTrue(layout.contains("android:id=\"@+id/tools_log_card\""));
-        assertTrue(fontCardIndex >= 0 && logCardIndex > fontCardIndex);
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_apply_button\""));
-        assertTrue(layout.contains("android:background=\"@drawable/bg_round_button_surface\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_permission_overlay\""));
-        assertTrue(layout.contains("android:minHeight=\"@dimen/system_font_scale_permission_panel_height\""));
-        assertTrue(layout.contains("android:background=\"@drawable/bg_system_font_scale_permission_panel\""));
-        assertTrue(layout.contains("android:clickable=\"true\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_unavailable_overlay\""));
-        assertTrue(layout.contains("com.google.android.material.slider.Slider"));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_slider\""));
-        assertTrue(layout.contains("android:stepSize=\"1\""));
-        assertTrue(layout.contains("app:tickVisible=\"false\""));
-        assertTrue(!layout.contains("android:id=\"@+id/system_font_scale_seek_bar\""));
-        assertTrue(!layout.contains("bg_system_font_scale_seekbar"));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_decrement_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_pending_value\""));
-        assertTrue(layout.contains("android:minWidth=\"@dimen/system_font_scale_value_min_width\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_increment_button\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_preview_title\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_preview_body\""));
-        assertTrue(layout.contains("android:id=\"@+id/system_font_scale_restore_button\""));
-        assertTrue(layout.contains("android:minHeight=\"@dimen/template_workspace_action_button_height\""));
-        assertFalse(layout.contains("@drawable/ic_notes_24"));
-        assertTrue(!layout.contains(
-                "android:layout_height=\"@dimen/template_workspace_action_button_height\""));
-        assertTrue(!layout.contains(
-                "android:layout_height=\"@dimen/system_font_scale_permission_panel_height\""));
-        assertTrue(!layout.contains("android:id=\"@+id/system_font_scale_current_value\""));
+        assertTrue(content.contains("R.string.workspace_tools"));
+        assertTrue(content.contains("R.string.system_font_scale_title"));
+        assertTrue(content.contains("R.string.system_font_scale_subtitle"));
+        assertTrue(content.contains("R.string.system_font_scale_apply"));
+        assertTrue(content.contains("onRequestPermission"));
+        assertTrue(content.contains("onPendingChanged"));
+        assertFalse(content.contains("system_font_scale_seek_bar"));
     }
 
     @Test
-    public void toolsWorkspaceToolbarUsesSafeDrawingInsetsLikeSettingsPage()
-            throws IOException {
-        String binder = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspaceBinder.kt");
+    public void toolsWorkspaceRefreshIsOwnedByPresenter() throws IOException {
         String source = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt");
-        String settingsController = read(
-                "src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
 
-        assertTrue(binder.contains(
-                "val toolsToolbar = workspaceView.findViewById<View>(R.id.tools_toolbar)"));
-        assertTrue(binder.contains("WatchUiMode.shouldUseCompactUi(host.activity())"));
-        assertTrue(binder.contains("toolsToolbar.gravity = Gravity.CENTER"));
-        assertTrue(binder.contains("host.openLogsWhenDiagnosticLogsEnabled()"));
-        assertTrue(source.contains(
-                "WindowInsetsBinder.applySystemBarPadding(toolbar, false, true, false, false)"));
-        assertTrue(source.contains("LogGate.ensureEnabled("));
-        assertTrue(source.contains("Intent(activity, LogActivity::class.java)"));
-        assertTrue(settingsController.contains("val toolbar = findViewById<View?>(R.id.settings_toolbar)"));
-        assertTrue(settingsController.contains("baseTopPadding + safeDrawing.top"));
+        assertTrue(source.contains("SystemFontScaleToolPresenter("));
+        assertTrue(source.contains("fun onStart()"));
+        assertTrue(source.contains("fun onResume()"));
+        assertTrue(source.contains("presenter.refresh()"));
+        assertFalse(source.contains("ToolsWorkspaceBinder"));
+        assertFalse(source.contains("WindowInsetsBinder.applySystemBarPadding"));
     }
 
     @Test

@@ -25,6 +25,8 @@ class QuickConfigSourceSmokeTest {
     @Throws(IOException::class)
     fun quickConfigUsesAppConfigSheetForForegroundPackage() {
         val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
+        val editor: String =
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigComposeEditor.kt")
         val resolver: String =
             read("src/main/java/com/dpis/module/applist/ForegroundPackageResolver.java")
         val manifestTile: String = read("src/main/java/com/dpis/module/QuickConfigTileService.java")
@@ -35,8 +37,8 @@ class QuickConfigSourceSmokeTest {
             read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigContent.kt")
 
         Assert.assertTrue(activity.contains("EXTRA_PACKAGE_NAME"))
-        Assert.assertTrue(activity.contains("SupportActivityContent.installQuickConfig(this, presentation!!"))
-        Assert.assertTrue(activity.contains("import com.dpis.module.appconfig.EditorPresentationFactory.create"))
+        Assert.assertTrue(activity.contains("installQuickConfig(presentation!!)"))
+        Assert.assertTrue(editor.contains("EditorPresentationFactory.create("))
         Assert.assertTrue(content.contains("SheetVisualChrome()"))
         Assert.assertFalse(content.contains("extraTopPadding = 12.dp"))
         Assert.assertTrue(content.contains("AppHookChainEditorPage(state = state)"))
@@ -63,20 +65,20 @@ class QuickConfigSourceSmokeTest {
     @Throws(IOException::class)
     fun quickConfigRoutesSheetActionsToExistingRuntimeSemantics() {
         val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
+        val editor: String =
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigComposeEditor.kt")
 
-        Assert.assertTrue(activity.contains("appConfigSaveHandler.saveResolved("))
-        Assert.assertTrue(activity.contains("WechatDpiSheetBinder.save("))
-        Assert.assertTrue(
-            activity.contains(
-                "draft.wechatDpiInput, item.packageName, draft.dpisEnabled, this.hookConfigStore"
-            )
-        )
-        Assert.assertTrue(activity.contains("systemScopeCoordinator.requestScope("))
-        Assert.assertTrue(activity.contains("requestScopeAfterSuccessfulComposeSave(item)"))
-        Assert.assertTrue(activity.contains("editorSession = current.withScopeSelected(true)"))
-        Assert.assertTrue(activity.contains("executeHyperOsNativeProxyMount(item, true, onFinished)"))
+        Assert.assertTrue(editor.contains("saveHandler.saveResolved("))
+        Assert.assertTrue(editor.contains("WechatDpiEditor.save("))
+        Assert.assertTrue(editor.contains("currentDraft.wechatDpiInput"))
+        Assert.assertTrue(editor.contains("currentDraft.dpisEnabled"))
+        Assert.assertTrue(editor.contains("activity.hookConfigStore"))
+        Assert.assertTrue(editor.contains("scopeCoordinator.requestScope("))
+        Assert.assertTrue(editor.contains("requestScopeAfterSave(currentItem)"))
+        Assert.assertTrue(editor.contains("editorSession = current.withScopeSelected(true)"))
+        Assert.assertTrue(activity.contains("executeHyperOsNativeProxyMount("))
         Assert.assertTrue(activity.contains("executeDialogProcessAction(item, action)"))
-        Assert.assertTrue(activity.contains("FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)"))
+        Assert.assertTrue(editor.contains("FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)"))
         Assert.assertFalse(activity.contains("quick_config_open_main_for_advanced"))
         Assert.assertFalse(activity.contains("showMainAppToast"))
         Assert.assertFalse(activity.contains("publishAfterSave(item.packageName)\n                finish()"))
@@ -86,17 +88,21 @@ class QuickConfigSourceSmokeTest {
     @Throws(IOException::class)
     fun quickConfigKeepsFeedbackDiagnosticSemanticsAvailable() {
         val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
+        val editor: String =
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigComposeEditor.kt")
+        val diagnostics: String =
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigDiagnosticSession.kt")
 
-        Assert.assertTrue(activity.contains("Coordinator(createFeedbackDiagnosticHost())"))
-        Assert.assertTrue(activity.contains("this@QuickConfigActivity.startFeedbackDiagnostic("))
-        Assert.assertTrue(activity.contains("Coordinator.Request.fromPersisted("))
-        Assert.assertTrue(activity.contains("QuickConfigDialog.FeedbackStart("))
-        Assert.assertTrue(activity.contains("QuickConfigDialog.EnableLogs"))
-        Assert.assertTrue(activity.contains("QuickConfigDialog.Message("))
+        Assert.assertTrue(diagnostics.contains("Coordinator(createHost())"))
+        Assert.assertTrue(editor.contains("onStartDiagnostic(currentItem, draft)"))
+        Assert.assertTrue(diagnostics.contains("Coordinator.Request.fromPersisted("))
+        Assert.assertTrue(diagnostics.contains("QuickConfigDialog.FeedbackStart("))
+        Assert.assertTrue(diagnostics.contains("QuickConfigDialog.EnableLogs"))
+        Assert.assertTrue(editor.contains("QuickConfigDialog.Message("))
         Assert.assertFalse(activity.contains("MaterialAlertDialogBuilder"))
-        Assert.assertTrue(activity.contains("showPackagingDialog()"))
-        Assert.assertTrue(activity.contains("showDiagnosticResultSheet(finalBuilt)"))
-        Assert.assertTrue(activity.contains("saveComposeEditor(item, editingDraft!!"))
+        Assert.assertTrue(diagnostics.contains("showPackagingDialog()"))
+        Assert.assertTrue(diagnostics.contains("showResultSheet(built)"))
+        Assert.assertTrue(editor.contains("saveCurrentForDiagnostic"))
         Assert.assertFalse(activity.contains("dialog_feedback_diagnostic_button);\n        if (feedbackDiagnosticButton != null)"))
     }
 
@@ -113,7 +119,7 @@ class QuickConfigSourceSmokeTest {
     @Throws(IOException::class)
     fun quickConfigKeepsItsTranslucentActivityBackdropTransparent() {
         val content: String =
-            read("src/main/java/com/dpis/module/about/presentation/SupportActivityContent.kt")
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigContent.kt")
         val theme: String = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeDesignSystem.kt")
 
         Assert.assertTrue(content.contains("transparentWindowBackground = true"))

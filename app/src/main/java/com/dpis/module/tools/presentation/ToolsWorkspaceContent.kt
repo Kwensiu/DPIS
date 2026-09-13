@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.tools.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.derivedStateOf
+
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
 import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.ui.compose.*
 
 @Composable
 fun ToolsWorkspaceContent(
@@ -51,29 +52,16 @@ fun ToolsWorkspaceContent(
     scrollStore: PageScrollPositionStore,
 ) {
     val listState = rememberRestorableLazyListState("tools", scrollStore)
-    val contentCanScroll by remember {
-        derivedStateOf { listState.canScrollForward || listState.canScrollBackward }
-    }
     PageScaffold(
         pageBar = PageBarBehavior.Collapsing,
         onBack = null,
         titleRes = R.string.workspace_tools,
         scrollStore = scrollStore,
         scrollKey = "tools",
-        contentCanScroll = contentCanScroll,
-    ) { pagePadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(
-                start = pagePadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = pagePadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = pagePadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = pagePadding.calculateBottomPadding() + LocalSpacing.current.xl,
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        bodyInsets = padding,
+        listState = listState,
+        extraBottomPadding = LocalSpacing.current.xl,
+    ) {
             item {
                 Card(
                 onClick = rememberClickAction(onExpandedChanged),
@@ -165,7 +153,6 @@ fun ToolsWorkspaceContent(
                 }
             }
         }
-    }
     }
 }
 

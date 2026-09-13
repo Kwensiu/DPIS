@@ -7,25 +7,18 @@ import org.junit.Test
 
 class FeedbackDiagnosticSourceSmokeTest {
     @Test
-    fun appConfigSheetExposesFeedbackDiagnosticEntry() {
-        val binder =
-            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
-        val actions =
-            read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.kt")
-        val layout = read("src/main/res/layout/dialog_app_config.xml")
+    fun composeEditorExposesFeedbackDiagnosticEntry() {
+        val gateway = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
+        )
+        val overlay = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt",
+        )
         val dimens = read("src/main/res/values/dimens.xml")
 
-        assertTrue(layout.contains("dialog_feedback_diagnostic_button"))
-        assertTrue(layout.contains("@string/feedback_diagnostic_action"))
-        assertTrue(layout.contains("@drawable/ic_bug_report_24"))
-        assertTrue(
-            layout.contains(
-                "android:layout_marginTop=\"@dimen/dialog_feedback_diagnostic_button_margin_top\""
-            )
-        )
-        assertTrue(binder.contains("startFeedbackDiagnostic("))
-        assertTrue(binder.contains("feedbackDiagnosticButton"))
-        assertTrue(actions.contains("host.startFeedbackDiagnostic(item, state)"))
+        assertTrue(gateway.contains("feedbackDiagnostic?.showPreparation("))
+        assertTrue(overlay.contains("AppConfigSheetUiTokens.FeedbackActionSize"))
+        assertTrue(overlay.contains("R.drawable.ic_bug_report_24") || overlay.contains("feedback_diagnostic"))
         assertTrue(
             dimens.contains(
                 "<dimen name=\"dialog_feedback_diagnostic_button_size\">32dp</dimen>"
@@ -40,7 +33,7 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticUsesCoordinatorInsteadOfMainActivityStateMachine() {
-        val main = read("src/main/java/com/dpis/module/MainActivity.java")
+        val main = read("src/main/java/com/dpis/module/MainActivity.kt")
         val pageController = read(
             "src/main/java/com/dpis/module/diagnostics/presentation/PageController.kt"
         )
@@ -93,15 +86,18 @@ class FeedbackDiagnosticSourceSmokeTest {
         val duration = read(
             "src/main/java/com/dpis/module/diagnostics/FeedbackDiagnosticDuration.kt"
         )
-        val diagnosticShell = read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticShell.kt")
-
-        assertTrue(main.contains("new FeedbackDiagnosticActivitySession("))
-        assertTrue(main.contains("new FeedbackDiagnosticShell(this)"))
-        assertTrue(main.contains("feedbackDiagnostic.startFromViewEditor("))
-        assertTrue(main.contains("feedbackDiagnostic.showPreparation("))
-        assertTrue(main.contains("feedbackDiagnostic.restorePage()"))
-        assertTrue(main.contains("feedbackDiagnostic.attachHost()"))
-        assertTrue(main.contains("feedbackDiagnostic.onDestroy(isChangingConfigurations())"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("FeedbackDiagnosticActivitySession("))
+        assertTrue(
+            read(
+                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
+            ).contains("feedbackDiagnostic?.showPreparation(")
+        )
+        assertTrue(startup.contains("feedbackDiagnostic.restorePage()"))
+        assertTrue(startup.contains("feedbackDiagnostic.attachHost()"))
+        assertTrue(startup.contains("feedbackDiagnostic?.onDestroy(activity.isChangingConfigurations)"))
         assertFalse(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
         assertFalse(main.contains("createDiagnosticPageControllerHost()"))
         assertTrue(confirm.contains("LogGate.isEnabled("))
@@ -110,10 +106,11 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(confirm.contains("whenLogsEnabled"))
         assertTrue(confirm.contains("showStart(item.label)"))
         assertTrue(sessionOwner.contains("persistComposeEditor("))
-        assertTrue(sessionOwner.contains("EditorDialogStateFactory.create("))
-        assertTrue(diagnosticShell.contains("persistComposeEditor("))
+        assertTrue(sessionOwner.contains("Coordinator.Request.fromPersisted("))
+        assertTrue(sessionOwner.contains("item,\n                draft,"))
+        assertFalse(sessionOwner.contains("AppConfigDialogState"))
         assertTrue(confirm.contains("ConfirmDialog.showWithLabels("))
-        assertTrue(diagnosticShell.contains("activity.resolvePackageVersionName(packageName)"))
+        assertTrue(sessionOwner.contains("activity.resolvePackageVersionName(item.packageName)"))
         assertTrue(confirm.contains("session.get().start("))
         assertTrue(pageController.contains("selectedDurationSeconds()"))
         assertTrue(pageController.contains("isDurationEnabled()"))
@@ -335,7 +332,7 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticResultSupportsShareAndSaveZip() {
-        val main = read("src/main/java/com/dpis/module/MainActivity.java")
+        val main = read("src/main/java/com/dpis/module/MainActivity.kt")
         val packageActions = read(
             "src/main/java/com/dpis/module/diagnostics/PackageActions.kt"
         )
@@ -376,7 +373,10 @@ class FeedbackDiagnosticSourceSmokeTest {
             read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("const val SAVE_REQUEST = 10024")
         )
-        assertTrue(main.contains("feedbackDiagnostic.handleActivityResult("))
+        val startupResult = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startupResult.contains("feedbackDiagnostic?.handleActivityResult("))
         assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"))
         assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"))
         assertTrue(packageActions.contains("openOutputStream(uri)"))

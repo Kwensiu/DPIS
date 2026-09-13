@@ -196,6 +196,8 @@ public final class LegacyModuleManifestMetadataTest {
 
         assertTrue(manifest.contains("android:name=\".MainActivityLauncher\""));
         assertTrue(manifest.contains("android:targetActivity=\".MainActivity\""));
+        assertTrue(manifest.contains("android:launchMode=\"singleTask\""));
+        assertTrue(manifest.contains("android:alwaysRetainTaskState=\"true\""));
         assertTrue(manifest.contains("android.intent.category.LAUNCHER"));
         assertTrue(manifest.contains("de.robv.android.xposed.category.MODULE_SETTINGS"));
     }

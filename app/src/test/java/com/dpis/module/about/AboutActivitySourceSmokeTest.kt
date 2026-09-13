@@ -12,7 +12,7 @@ class AboutActivitySourceSmokeTest {
         val content = read("src/main/java/com/dpis/module/about/presentation/AboutContent.kt")
 
         source.assertContainsAll(
-            "SupportActivityContent.installAbout(",
+            "installAbout(",
             "Intent(this, OpenSourceLicenseActivity::class.java)",
         )
         content.assertContainsAll(
@@ -29,7 +29,8 @@ class AboutActivitySourceSmokeTest {
         val manifestFetcherSource = read("src/main/java/com/dpis/module/updates/UpdateManifestFetcher.java")
 
         source.assertContainsAll(
-            "UpdateManifestFetcher.fetch(",
+            "updateCheckCoordinator.checkForUpdates(forceShow)",
+            "StartupUpdateCheckCoordinator(",
             "updatePromptDialogCoordinator::showUpdateAvailableDialog",
             "updatePromptDialogCoordinator = UpdatePromptDialogCoordinator(",
             "UpdatePromptRequest.from(manifest)",
@@ -98,9 +99,10 @@ class AboutActivitySourceSmokeTest {
         val source = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
 
         content.assertContainsAll(
+            "package com.dpis.module.about.presentation",
             "fun AboutContent(", "SecondaryPageScaffold(", "SegmentedListItem(",
             "verticalAlignment = Alignment.CenterVertically", "dpisSegmentedShapes(index, total)",
-            "LazyColumn(", "rememberClickAction", "showDebugUpdateEntry", "AboutContentPreview",
+            "item {", "rememberClickAction", "showDebugUpdateEntry", "AboutContentPreview",
         )
         source.assertContainsAll("BuildConfig.DEBUG")
         source.assertNotContainsAll("setContentView(R.layout.activity_about)")

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.about.presentation
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,8 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseItem
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.WearOpenSourceLicenseContent
+import com.dpis.module.ui.compose.setFeatureContent
+import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.SecondaryPageScaffold
+
+import com.dpis.module.ui.compose.dpisSegmentedShapes
+import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.compose.rememberClickAction
 
 @Composable
 fun OpenSourceLicenseContent(
@@ -43,18 +53,8 @@ fun OpenSourceLicenseContent(
         modifier = modifier.fillMaxSize(),
         titleRes = R.string.open_source_license,
         onBack = onBack,
-    ) { contentPadding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = contentPadding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = contentPadding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = contentPadding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp)
-            ),
-            verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
-        ) {
+        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
+    ) {
             items(
                 count = items.size,
                 key = { index -> "${items[index].name}\u0000${items[index].website}" }
@@ -68,7 +68,6 @@ fun OpenSourceLicenseContent(
                     onClick = select
                 )
             }
-        }
     }
 }
 
@@ -109,5 +108,25 @@ private fun OpenSourceLicenseContentPreview() {
             onBack = {},
             onOpenUrl = {}
         )
+    }
+}
+
+fun ComponentActivity.installOpenSourceLicenses(
+    items: List<OpenSourceLicenseItem>,
+    onOpenUrl: (String) -> Unit,
+) {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installOpenSourceLicenses)) {
+            WearOpenSourceLicenseContent(
+                items = items,
+                onOpenUrl = onOpenUrl,
+            )
+        } else {
+            OpenSourceLicenseContent(
+                items = items,
+                onBack = ::finish,
+                onOpenUrl = onOpenUrl,
+            )
+        }
     }
 }

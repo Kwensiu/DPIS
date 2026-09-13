@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.settings.presentation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -9,7 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.activity.ComponentActivity
 import com.dpis.module.R
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.compose.WearExperimentalSettingsContent
+import com.dpis.module.ui.compose.setFeatureContent
 
 /**
  * Standalone empty-state page kept separate from SettingsWorkspaceContent because
@@ -23,19 +28,29 @@ fun ExperimentalSettingsContent(
     SecondaryPageScaffold(
         titleRes = R.string.settings_experimental_title,
         onBack = onBack,
-    ) { contentPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(modifier)
-                .padding(contentPadding),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.settings_experimental_empty),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        modifier = modifier,
+    ) {
+        item {
+            Box(
+                modifier = Modifier.fillParentMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_experimental_empty),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+fun ComponentActivity.installExperimentalSettings() {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installExperimentalSettings)) {
+            WearExperimentalSettingsContent()
+        } else {
+            ExperimentalSettingsContent(onBack = ::finish)
         }
     }
 }

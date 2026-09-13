@@ -35,11 +35,11 @@ public class ConfigBackupCodecSourceSmokeTest {
         String codec = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.kt");
         String packageRegistry = read("src/main/java/com/dpis/module/config/PackageConfigRegistry.kt");
         String backupPolicy = read("src/main/java/com/dpis/module/backup/BackupKeyPolicy.kt");
-        String settings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
+        String backupHost = read("src/main/java/com/dpis/module/backup/presentation/ConfigBackupHost.kt");
 
         assertTrue(packageRegistry.contains("font.$packageName.typeface_id"));
-        assertTrue(settings.contains("ConfigBackupCoordinator"));
-        assertTrue(settings.contains(".export(uri)"));
+        assertTrue(backupHost.contains("ConfigBackupCoordinator"));
+        assertTrue(backupHost.contains(".export(uri)"));
         assertTrue(codec.contains("putPackageConfigEntry"));
         assertTrue(codec.contains("putPackageOwnedConfigEntry"));
         assertTrue(codec.contains("putDefaultPrefillEntry"));
@@ -47,7 +47,7 @@ public class ConfigBackupCodecSourceSmokeTest {
         assertTrue(codec.contains("decodePackageConfigsInto"));
         assertTrue(codec.contains("decodePackageOwnedConfigsInto"));
         assertTrue(codec.contains("decodeTemplatesInto"));
-        assertTrue(settings.contains(".restore(uri)"));
+        assertTrue(backupHost.contains(".restore(uri)"));
         assertTrue(backupPolicy.contains("font.library."));
     }
 

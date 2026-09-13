@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.EditorActions
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
@@ -69,7 +69,7 @@ class AppConfigEditorPresentationControllerTest {
         actions.reset()
         actions.close()
 
-        assertEquals(AppConfigDialogBinder.ProcessAction.RESTART, host.processAction)
+        assertEquals(AppConfigProcessAction.RESTART, host.processAction)
         assertSame(draft, host.diagnosticDraft)
         assertSame(draft, host.savedDraft)
         assertTrue(host.resetCalled)
@@ -82,7 +82,7 @@ class AppConfigEditorPresentationControllerTest {
         var onScopeSelected: Runnable? = null
         var requestedDpisEnabled = false
         var dpisChangeSucceeds = true
-        var processAction: AppConfigDialogBinder.ProcessAction? = null
+        var processAction: AppConfigProcessAction? = null
         var diagnosticDraft: EditorDraft? = null
         var savedDraft: EditorDraft? = null
         var closed = false
@@ -114,7 +114,7 @@ class AppConfigEditorPresentationControllerTest {
             return dpisChangeSucceeds
         }
 
-        override fun executeProcessAction(action: AppConfigDialogBinder.ProcessAction) {
+        override fun executeProcessAction(action: AppConfigProcessAction) {
             processAction = action
         }
 

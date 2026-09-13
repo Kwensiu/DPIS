@@ -8,12 +8,13 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     fun settingsActivityWiresFontLibraryEntryToDedicatedPage() {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
+        val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
         val manifest = read("src/main/AndroidManifest.xml")
         val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
         val store = read("src/main/java/com/dpis/module/fonts/FontLibraryStore.java")
 
+        content.assertContainsAll("R.string.settings_font_library_label")
         source.assertContainsAll(
-            "row_font_library",
             "Intent(activity, FontLibraryActivity::class.java)",
         )
         source.assertNotContainsAll("showFontLibraryDialog", "REQUEST_IMPORT_FONT")
@@ -58,8 +59,8 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
 
     @Test
     fun settingsLayoutContainsFontLibraryRow() {
-        read("src/main/res/layout/view_system_server_settings_content.xml")
-            .assertContainsAll("android:id=\"@+id/row_font_library\"")
+        read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
+            .assertContainsAll("R.string.settings_font_library_label")
     }
 
     @Test
@@ -74,7 +75,7 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
             "LazyColumn",
             "font_library_empty",
         )
-        source.assertContainsAll("SupportActivityContent.installFontLibrary")
+        source.assertContainsAll("installFontLibrary")
         source.assertNotContainsAll("setContentView(R.layout.activity_font_library)")
     }
 

@@ -9,39 +9,14 @@ import java.io.IOException;
 
 public class QuickTemplateUiPolishSmokeTest {
     @Test
-    public void quickTemplateLayoutsUseStringAndSemanticDimensionResources() throws IOException {
-        String targetLayout = read("src/main/res/layout/activity_quick_template_targets.xml");
-        String targetItem = read("src/main/res/layout/item_quick_template_target_app.xml");
+    public void quickTemplateCopyUsesStringResources() throws IOException {
+        String content = read(
+                "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
-        String dimens = read("src/main/res/values/dimens.xml");
 
-        assertFalse(targetLayout.contains("android:text=\"Select"));
-        assertFalse(targetItem.contains("android:text=\"Configured"));
-        assertTrue(targetLayout.contains("@string/system_settings_back"));
-        assertTrue(targetLayout.contains("@string/search_hint"));
-        assertTrue(targetLayout.contains("@string/status_save_button"));
-        assertTrue(targetItem.contains("@string/quick_template_targets_configured_badge"));
-        assertTrue(targetLayout.contains("@dimen/template_target_content_padding_horizontal"));
-        assertTrue(targetLayout.contains("@dimen/main_search_icon_padding_start"));
-        assertTrue(targetLayout.contains("@dimen/main_search_icon_padding_end"));
-        assertTrue(targetLayout.contains("@dimen/main_search_action_icon_padding_start"));
-        assertTrue(targetLayout.contains("@dimen/main_search_action_icon_padding_end"));
-        assertTrue(targetLayout.contains("@dimen/main_search_action_icon_padding_vertical"));
-        assertTrue(targetLayout.contains("@dimen/template_target_list_container_spacing_top"));
-        assertTrue(targetLayout.contains("@dimen/template_target_save_button_height"));
-        assertTrue(targetLayout.contains("@dimen/template_target_save_button_margin_top"));
-        assertTrue(targetLayout.contains("@dimen/template_target_save_button_margin_bottom"));
-        assertFalse(targetLayout.contains("@dimen/main_workspace_"));
-        assertTrue(targetItem.contains("@dimen/template_target_row_min_height"));
-        assertTrue(targetItem.contains("@dimen/template_target_badge_padding_horizontal"));
-        assertTrue(dimens.contains("template_target_content_padding_horizontal"));
-        assertTrue(dimens.contains("template_target_list_container_spacing_top"));
-        assertTrue(dimens.contains("template_target_save_button_height"));
-        assertTrue(dimens.contains("template_target_save_button_margin_top"));
-        assertTrue(dimens.contains("template_target_save_button_margin_bottom"));
-        assertTrue(dimens.contains("template_target_row_padding_vertical"));
-        assertTrue(dimens.contains("template_target_badge_padding_horizontal"));
+        assertTrue(content.contains("R.string.quick_template_targets_configured_badge"));
+        assertTrue(content.contains("R.string.search_hint"));
         assertTrue(strings.contains("quick_template_apply_confirm_message"));
         assertTrue(strings.contains("quick_template_apply_confirm_message_overwrite"));
         assertTrue(zhStrings.contains("quick_template_apply_confirm_message"));
@@ -56,12 +31,9 @@ public class QuickTemplateUiPolishSmokeTest {
 
     @Test
     public void sharedModeToggleLayoutsKeepThumbBehindLabels() throws IOException {
-        String appConfigLayout = read("src/main/res/layout/dialog_app_config.xml");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(appConfigLayout.contains("@string/dialog_viewport_mode_toggle_description"));
-        assertTrue(appConfigLayout.contains("@string/dialog_font_mode_toggle_description"));
         assertTrue(strings.contains("dialog_viewport_mode_toggle_description"));
         assertTrue(strings.contains("dialog_font_mode_toggle_description"));
         assertTrue(zhStrings.contains("dialog_viewport_mode_toggle_description"));

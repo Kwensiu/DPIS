@@ -1,7 +1,7 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.AppConfigEditorSession
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.EditorActions
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorPresentation
@@ -28,11 +28,10 @@ class ComposeAppEditorController(
         fun hasSavedPackageConfig(packageName: String): Boolean
         fun resolveGlobalPrefill(): TemplateConfigValue?
         fun resolvePackageVersionName(packageName: String): String
-        fun createDialogState(item: AppListItem, draft: EditorDraft): AppConfigDialogBinder.AppConfigDialogState
         fun typefaceSelectorText(typefaceId: String?): String
         fun hookChainText(
             item: AppListItem,
-            state: AppConfigDialogBinder.AppConfigDialogState,
+            draft: EditorDraft,
         ): String
         fun systemHooksEnabled(): Boolean
         fun automaticFontHookDomains(): Set<String>
@@ -47,7 +46,7 @@ class ComposeAppEditorController(
             onDeselected: Runnable,
         )
         fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean
-        fun executeProcessAction(item: AppListItem, action: AppConfigDialogBinder.ProcessAction)
+        fun executeProcessAction(item: AppListItem, action: AppConfigProcessAction)
         fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft)
         fun save(item: AppListItem, draft: EditorDraft): Boolean
         fun postDelayed(delayMillis: Long, action: Runnable)
@@ -59,13 +58,12 @@ class ComposeAppEditorController(
         val editorSession = session.editorSession ?: return null
         if (editorSession.draft.packageName != item.packageName) return null
         val draft = editorSession.draft
-        val dialogState = host.createDialogState(item, draft)
         return EditorPresentationFactory.create(
             item,
             host.resolvePackageVersionName(item.packageName),
             draft,
             host.typefaceSelectorText(draft.selectedTypefaceId),
-            host.hookChainText(item, dialogState),
+            host.hookChainText(item, draft),
             editorSession.persistedBaseline,
             session.isEditingSaveFeedback,
             host.systemHooksEnabled(),
@@ -99,19 +97,6 @@ class ComposeAppEditorController(
         val current = session.editorSession ?: return
         session.editorSession = current.reset()
         host.refreshEditor()
-    }
-
-    fun updateAdvancedDraft(
-        draft: EditorDraft,
-        state: AppConfigDialogBinder.AppConfigDialogState,
-    ) {
-        updateDraft(draft.withAdvancedConfig(
-            state.selectedTypefaceId,
-            state.draftFontHookDomainsRaw,
-            state.viewportApplyMode,
-            state.fontHookDomainsResetRequested,
-            state.viewportApplyModeResetRequested,
-        ))
     }
 
     fun refresh() {
@@ -156,7 +141,7 @@ class ComposeAppEditorController(
                 host.toggleScope(item, currentlySelected, onSelected, onDeselected)
             override fun setDpisEnabled(enabled: Boolean): Boolean =
                 host.setDpisEnabled(item.packageName, enabled)
-            override fun executeProcessAction(action: AppConfigDialogBinder.ProcessAction) =
+            override fun executeProcessAction(action: AppConfigProcessAction) =
                 host.executeProcessAction(item, action)
             override fun startFeedbackDiagnostic(draft: EditorDraft) =
                 host.startFeedbackDiagnostic(item, draft)

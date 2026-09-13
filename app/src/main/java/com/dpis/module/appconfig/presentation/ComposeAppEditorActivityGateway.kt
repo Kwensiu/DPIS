@@ -1,39 +1,48 @@
 package com.dpis.module.appconfig.presentation
 
 import android.content.Context
+import com.dpis.module.MainActivity
+import com.dpis.module.appconfig.AppConfigEditorHost
 import com.dpis.module.appconfig.AppConfigPrefillPreview
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.PackageConfigRepository
+import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
+import com.dpis.module.quirks.WechatDpiEditor
+import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.TemplateConfigValue
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.quirks.presentation.WechatDpiHelp
-import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.viewport.ViewportTargetSpec
-import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 import com.dpis.module.appconfig.editor.ComposeAppEditorController
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
-import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 
-/** Android-facing capability bridge for the primary Compose app editor. */
+/**
+ * Compose editor capabilities for the primary workspace.
+ */
 class ComposeAppEditorActivityGateway(
     private val activity: MainActivity,
+    private val dialogHost: AppConfigEditorHost,
+    private val saveHandler: AppConfigSaveHandler,
     private val scopeCoordinator: ComposeEditorScopeRequestCoordinator,
     private val wechatDpiHelp: WechatDpiHelp,
 ) : ComposeAppEditorController.Host, ComposeAppEditorSaveWorkflow.Host {
+
     private lateinit var saveWorkflow: ComposeAppEditorSaveWorkflow
 
     fun setSaveWorkflow(workflow: ComposeAppEditorSaveWorkflow) {
         saveWorkflow = workflow
     }
+
     override fun resolveEditorItem(packageName: String): AppListItem? {
-        var item = EditorSessionResolver.findItem(activity.requireUiState().appsSnapshot(), packageName)
-            ?: return null
+        var item = EditorSessionResolver.findItem(
+            activity.startupSession.requireUiState().appsSnapshot(),
+            packageName,
+        ) ?: return null
         val store = activity.hookConfigStore
         if (store != null) item = item.withDpisEnabled(store.isTargetDpisEnabled(packageName))
         return AppConfigPrefillPreview.resolveForEditor(activity, item, store)
@@ -52,17 +61,16 @@ class ComposeAppEditorActivityGateway(
     override fun resolvePackageVersionName(packageName: String): String =
         activity.resolvePackageVersionName(packageName)
 
-    override fun createDialogState(item: AppListItem, draft: EditorDraft) =
-        EditorDialogStateFactory.create(item, draft)
-
     override fun typefaceSelectorText(typefaceId: String?): String =
-        AppConfigDialogBinder(activity, activity.createAppConfigDialogHost())
-            .typefaceSelectorText(typefaceId)
+        AppConfigTypefaceLabels.selectorText(activity, typefaceId)
 
-    override fun hookChainText(item: AppListItem, state: AppConfigDialogBinder.AppConfigDialogState): String =
-        activity.getFontHookDomainsButtonText(item, state)
+    override fun hookChainText(
+        item: AppListItem,
+        draft: EditorDraft,
+    ): String = dialogHost.getFontHookDomainsButtonText(item, draft).orEmpty()
 
-    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
+    override fun systemHooksEnabled(): Boolean =
+        activity.startupSession.isSystemHookEnabledFromStore
     override fun automaticFontHookDomains(): Set<String> =
         FontHookDomainRegistry.automaticCustomizableDomains()
 
@@ -70,12 +78,13 @@ class ComposeAppEditorActivityGateway(
         val store = activity.hookConfigStore
         return if (draft != null && store != null) {
             draft.withDpisEnabled(store.isTargetDpisEnabled(item.packageName))
-        } else draft
+        } else {
+            draft
+        }
     }
 
-    override fun refreshEditor() = activity.refreshComposeApps()
-    override fun requestAppsLoad() = activity.requestAppsLoad()
-
+    override fun refreshEditor() = activity.mainWorkspaceSession.refreshApps()
+    override fun requestAppsLoad() = activity.startupSession.requestAppsLoad()
     override fun showWechatDpiHelp() = wechatDpiHelp.show()
 
     override fun toggleScope(
@@ -83,20 +92,28 @@ class ComposeAppEditorActivityGateway(
         currentlySelected: Boolean,
         onSelected: Runnable,
         onDeselected: Runnable,
-    ) = activity.toggleLandDetailScope(item, currentlySelected, onSelected, onDeselected)
+    ) = dialogHost.toggleScope(
+        item,
+        currentlySelected,
+        onSelected,
+        onDeselected,
+    )
 
     override fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean {
-        if (!activity.setDpisEnabled(packageName, enabled)) return false
+        if (!activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)) return false
         WechatDpiEditor.publishForDpisState(packageName, enabled)
-        activity.requestAppsLoad()
+        activity.startupSession.requestAppsLoad()
         return true
     }
 
-    override fun executeProcessAction(item: AppListItem, action: AppConfigDialogBinder.ProcessAction) =
-        activity.executeDialogProcessAction(item, action)
+    override fun executeProcessAction(
+        item: AppListItem,
+        action: AppConfigProcessAction,
+    ) = activity.runtimeLaunchSession.executeDialogProcessAction(item, action)
 
-    override fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft) =
-        activity.showComposeFeedbackDiagnosticPreparation(item, draft)
+    override fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft) {
+        activity.startupSession.feedbackDiagnostic?.showPreparation(item, draft)
+    }
 
     override fun save(item: AppListItem, draft: EditorDraft): Boolean =
         saveWorkflow.save(item, draft)
@@ -118,10 +135,22 @@ class ComposeAppEditorActivityGateway(
         fontHookDomainsResetRequested: Boolean,
         viewportScaleInput: String,
         viewportAbsoluteInput: String,
-    ): AppConfigSaveHandler.Result = activity.saveLandDetailResolvedConfig(
-        item, viewport, viewportTargetType, viewportApplyMode, fontPercent, fontMode,
-        selectedTypefaceId, draftFontHookDomainsRaw, viewportApplyModeResetRequested,
-        fontHookDomainsResetRequested, viewportScaleInput, viewportAbsoluteInput,
+    ): AppConfigSaveHandler.Result = saveHandler.saveResolved(
+        item,
+        viewport,
+        viewportTargetType,
+        viewportApplyMode,
+        viewportApplyModeResetRequested,
+        fontPercent,
+        fontMode,
+        selectedTypefaceId,
+        draftFontHookDomainsRaw,
+        fontHookDomainsResetRequested,
+        viewportScaleInput,
+        viewportAbsoluteInput,
+        activity.startupSession.isSystemHookEnabledFromStore,
+        activity.hookConfigStore,
+        null,
     )
 
     override fun finalizeRuntimeSync(
@@ -129,11 +158,39 @@ class ComposeAppEditorActivityGateway(
         wechatDpiInput: String,
         packageName: String,
         dpisEnabled: Boolean,
-    ): AppConfigSaveHandler.Result = activity.finalizeAppConfigSaveWithRuntimeSync(
-        result, wechatDpiInput, packageName, dpisEnabled, activity.hookConfigStore,
-    )
+    ): AppConfigSaveHandler.Result =
+        activity.runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
+            result,
+            wechatDpiInput,
+            packageName,
+            dpisEnabled,
+            activity.hookConfigStore,
+        )
 
     override fun showMessage(messageResId: Int) = activity.showToast(messageResId)
-    override fun requestScopeAfterSave(item: AppListItem) = scopeCoordinator.requestAfterSuccessfulSave(item)
-    override fun syncHyperOsNativeProxy(item: AppListItem) = activity.syncComposeHyperOsNativeProxyAfterSave(item)
+    override fun requestScopeAfterSave(item: AppListItem) =
+        scopeCoordinator.requestAfterSuccessfulSave(item)
+
+    override fun syncHyperOsNativeProxy(item: AppListItem) {
+        if (!activity.runtimeLaunchSession.isHyperOsNativeProxyCandidate(item)) {
+            return
+        }
+        val apply = shouldPrepareHyperOsNativeProxyForRestart(item)
+        val onFinished: Runnable? = null
+        activity.runtimeLaunchSession.executeHyperOsNativeProxyMount(item, apply, onFinished)
+    }
+
+    private fun shouldPrepareHyperOsNativeProxyForRestart(item: AppListItem): Boolean {
+        val store = activity.hookConfigStore ?: return false
+        return store.isTargetDpisEnabled(item.packageName) &&
+            hasActiveStoredConfig(store, item.packageName)
+    }
+
+    private fun hasActiveStoredConfig(store: DpisConfigStore, packageName: String): Boolean {
+        val viewportTargetSpec = store.getTargetViewportSpec(packageName)
+        val fontScalePercent = store.getTargetFontScalePercent(packageName)
+        return viewportTargetSpec.isEnabled() ||
+            fontScalePercent != null ||
+            store.hasTargetAppSpecificConfig(packageName)
+    }
 }

@@ -244,6 +244,19 @@ class InstalledAppCatalogCoordinator(
             return configured
         }
 
+        @JvmStatic
+        fun countUserVisibleConfiguredPackages(
+            store: DpisConfigStore?,
+            scopeState: ScopeState?,
+        ): Int {
+            val safeScopeState = scopeState ?: ScopeState(emptySet(), false)
+            return userVisibleConfiguredPackages(
+                store,
+                safeScopeState.packages,
+                safeScopeState.known,
+            ).size
+        }
+
         /** An unconfigured row has no persisted package state to decode. */
         @JvmStatic
         fun createUnconfiguredAppListItem(

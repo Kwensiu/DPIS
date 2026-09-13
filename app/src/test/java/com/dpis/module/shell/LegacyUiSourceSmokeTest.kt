@@ -3,7 +3,6 @@ package com.dpis.module
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 
 class LegacyUiSourceSmokeTest {
     @Test
@@ -20,13 +19,12 @@ class LegacyUiSourceSmokeTest {
     @Test
     fun unknownScopeHidesInjectionStatusAndDisablesScopeAction() {
         val source = read("src/main/java/com/dpis/module/applist/AppStatusFormatter.java")
-        val dialogBinder = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogBinder.kt")
+        val editor = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorContent.kt")
         val strings = read("src/main/res/values-zh-rCN/strings.xml")
 
         assertTrue(source.contains("scopeKnown"))
         assertFalse(source.contains("labels.scopeUnknown"))
-        assertTrue(dialogBinder.contains("scopeButton.isEnabled = scopeKnown"))
-        assertTrue(dialogBinder.contains("scopeButton.alpha = if (scopeKnown) 1f else 0.6f"))
+        assertTrue(editor.contains("enabled = state.item.scopeKnown"))
         assertFalse(strings.contains("<string name=\"app_status_scope_unknown\">"))
         assertFalse(strings.contains("<string name=\"scope_manual_button\">"))
         assertTrue(strings.contains("LSPosed"))

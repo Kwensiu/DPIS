@@ -69,6 +69,7 @@ import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.applist.AppStatusFormatter
+import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType

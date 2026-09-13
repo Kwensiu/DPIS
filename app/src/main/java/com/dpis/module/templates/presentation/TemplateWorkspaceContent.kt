@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -251,36 +252,6 @@ internal fun TemplateWorkspaceContent(
         )
     }
 
-    val editorBody: @Composable () -> Unit = {
-        TemplateEditorSurface(
-            form = editorDraft.form,
-            draftRevision = draftRevision,
-            topSafePadding = topSafePadding,
-            bottomSafePadding = padding.calculateBottomPadding(),
-            onFormChanged = ::notifyEditorChanged,
-            onSelectTypeface = {
-                onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
-            },
-            onEditHookDomains = {
-                onEditorDestinationChanged(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)
-            },
-            onReset = { editorDraft.form.reset(); notifyEditorChanged() },
-            onDelete = if (editorDraft.form.quickTemplate && !editorDraft.form.newTemplate) {
-                { deleteConfirmationVisible = true }
-            } else null,
-            onSave = ::saveEditor,
-            destination = editorDestination,
-            hookContent = {
-                hookChainPage(
-                    padding.calculateBottomPadding(),
-                    Modifier.padding(top = topSafePadding)
-                )
-            },
-            typefaceContent = {
-                typefacePage(Modifier.padding(top = topSafePadding))
-            }
-        )
-    }
     val editorSheetBody: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit = {
             onContentBottomMeasured, _, onReturnFromChild ->
         TemplateEditorSurface(
@@ -366,31 +337,76 @@ internal fun TemplateWorkspaceContent(
                 ) {
                     when {
                         targetsTemplateId != null -> Box(
-                            Modifier.padding(bottom = padding.calculateBottomPadding())
-                        ) {
-                            EmbeddedQuickTemplateTargets(
-                                templateId = targetsTemplateId.orEmpty(),
-                                onClose = {
-                                    targetSessionDirty = false
-                                    val next = pendingTargetTemplateId
-                                    pendingTargetTemplateId = null
-                                    targetsTemplateId = next
-                                    if (next != null) {
-                                        state.actions.openEmbeddedTargets(next)
-                                    } else {
-                                        onEditorClosed()
-                                    }
-                                },
-                                onUnsavedChanged = { targetSessionDirty = it },
-                                saveRequest = targetSaveRequest
-                            )
-                        }
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(bottom = padding.calculateBottomPadding())
+                            ) {
+                                EmbeddedQuickTemplateTargets(
+                                    templateId = targetsTemplateId.orEmpty(),
+                                    onClose = {
+                                        targetSessionDirty = false
+                                        val next = pendingTargetTemplateId
+                                        pendingTargetTemplateId = null
+                                        targetsTemplateId = next
+                                        if (next != null) {
+                                            state.actions.openEmbeddedTargets(next)
+                                        } else {
+                                            onEditorClosed()
+                                        }
+                                    },
+                                    onUnsavedChanged = { targetSessionDirty = it },
+                                    saveRequest = targetSaveRequest
+                                )
+                            }
 
-                        editorKind != null -> editorBody()
-                        else -> TemplateDetailEmptyState(
-                            modifier = Modifier.padding(top = topSafePadding)
-                        )
-                    }
+                            editorKind != null -> {
+                                Box(Modifier.fillMaxSize()) {
+                                    TemplateEditorSurface(
+                                        form = editorDraft.form,
+                                        draftRevision = draftRevision,
+                                        topSafePadding = topSafePadding,
+                                        bottomSafePadding = padding.calculateBottomPadding(),
+                                        onFormChanged = ::notifyEditorChanged,
+                                        onSelectTypeface = {
+                                            onEditorDestinationChanged(ConfigEditorDestination.TYPEFACE)
+                                        },
+                                        onEditHookDomains = {
+                                            onEditorDestinationChanged(
+                                                ConfigEditorDestination.HOOK_CHAIN_INTERFACE
+                                            )
+                                        },
+                                        onReset = {
+                                            editorDraft.form.reset()
+                                            notifyEditorChanged()
+                                        },
+                                        onDelete = if (
+                                            editorDraft.form.quickTemplate && !editorDraft.form.newTemplate
+                                        ) {
+                                            { deleteConfirmationVisible = true }
+                                        } else {
+                                            null
+                                        },
+                                        onSave = ::saveEditor,
+                                        destination = editorDestination,
+                                        hookContent = {
+                                            hookChainPage(
+                                                padding.calculateBottomPadding(),
+                                                modifier = Modifier.padding(top = topSafePadding),
+                                            )
+                                        },
+                                        typefaceContent = {
+                                            typefacePage(
+                                                modifier = Modifier.padding(top = topSafePadding),
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                TemplateDetailEmptyState(Modifier.fillMaxSize())
+                            }
+                        }
                 }
             }
         } else {

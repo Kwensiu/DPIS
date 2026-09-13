@@ -3,6 +3,7 @@ package com.dpis.module.templates.presentation
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
+import com.dpis.module.ui.compose.PageChromeTokens
 
 /**
  * Template-workspace dimensions that intentionally mirror the established XML surface.
@@ -18,15 +19,14 @@ internal object TemplateUiTokens {
     val WorkspaceTopPadding = 14.dp
     val WorkspaceBottomReserve = 120.dp
 
-    // Both workspace pages use the same 64dp pinned MD3 top-app-bar slot.
-    val SearchTopPadding = 6.dp
-    val SearchBottomPadding = 6.dp
-    val SearchCardHeight = 52.dp
+    val SearchTopPadding = PageChromeTokens.SearchVerticalPadding
+    val SearchBottomPadding = PageChromeTokens.SearchVerticalPadding
+    val SearchCardHeight = PageChromeTokens.SearchCardHeight
     val SectionTopGap = 10.dp
 
     // The LazyColumn already owns the page gutter; header actions must align to it directly.
-    val SectionTitleInset = 12.dp
-    val SectionActionInset = 12.dp
+    val SectionTitleInset = PageChromeTokens.TitleInset
+    val SectionActionInset = PageChromeTokens.TitleInset
     val ListGap = 12.dp
     const val EMPTY_STATE_VIEWPORT_FRACTION = 0.5f
     val EmptyStateBottomBias = 32.dp

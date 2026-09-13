@@ -2,6 +2,13 @@
 
 此目录存放已不在当前主线执行路径上的历史规格、计划与报告。
 
+## 2026-09-13 归档
+
+页面顶栏/滚动合同已落地，从活文档 `docs/superpowers/` 迁入归档。实现以 `PageScaffold`、`PageChromeTokens` 和 `PageTopBar` 为准。
+
+- `docs/superpowers/specs/2026-09-12-page-chrome-contract.md` -> `docs/archive/specs/2026-09-12-page-chrome-contract.md`
+- `docs/superpowers/plans/2026-09-12-page-chrome-contract.md` -> `docs/archive/plans/2026-09-12-page-chrome-contract.md`
+
 ## 2026-04-16 归档
 
 - `superpowers/specs/2026-04-14-*`

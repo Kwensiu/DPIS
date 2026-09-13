@@ -23,7 +23,6 @@ class OpenSourceLicenseActivityParsingTest {
         val content = read("src/main/java/com/dpis/module/about/presentation/OpenSourceLicenseContent.kt")
 
         assertTrue(content.contains("fun OpenSourceLicenseContent("))
-        assertTrue(content.contains("LazyColumn("))
         assertTrue(content.contains("items("))
         assertTrue(content.contains("SecondaryPageScaffold("))
         assertTrue(content.contains("SegmentedListItem("))

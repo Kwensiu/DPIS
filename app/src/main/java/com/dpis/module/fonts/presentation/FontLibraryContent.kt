@@ -43,7 +43,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
+import com.dpis.module.fonts.FontDetailActivity
+import com.dpis.module.fonts.FontLibraryActivity
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.compose.WearFontLibraryContent
+import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
+import java.util.function.Consumer
 
 class FontLibraryUiItem(
     val id: String,
@@ -189,33 +195,25 @@ fun FontLibraryContent(
                     contentDescription = stringResource(R.string.font_library_import_action)
                 )
             }
-        }
-    ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
+        },
+        extraBottomPadding = edgeToEdgeContentBottomPadding(88.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
         val items = presentation.items
         if (items.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.font_library_empty),
-                    modifier = Modifier.padding(32.dp),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            item {
+                Box(Modifier.fillParentMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        stringResource(R.string.font_library_empty),
+                        modifier = Modifier.padding(32.dp),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                    top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                    end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                    bottom = edgeToEdgeContentBottomPadding(88.dp)
-                ),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                items(items, key = { it.id }) { item ->
-                    FontLibraryCard(item, rememberClickAction { onFontSelected(item.id) })
-                }
+            items(items, key = { it.id }) { item ->
+                FontLibraryCard(item, rememberClickAction { onFontSelected(item.id) })
             }
         }
     }
@@ -309,21 +307,11 @@ fun FontDetailContent(
                 onClick = onDelete,
             )
         },
-    ) { padding ->
-        val layoutDirection = LocalLayoutDirection.current
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = padding.calculateStartPadding(layoutDirection) + 16.dp,
-                top = padding.calculateTopPadding() + SecondaryPageContentTokens.TitleToContentGap,
-                end = padding.calculateEndPadding(layoutDirection) + 16.dp,
-                bottom = edgeToEdgeContentBottomPadding(24.dp),
-            ),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
+        extraBottomPadding = edgeToEdgeContentBottomPadding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
             item { FontDetailCard(state) }
             item { FontReferenceSection(state.references, onRemoveReference) }
-        }
     }
 }
 
@@ -477,6 +465,71 @@ private fun FontDetailContentPreview() {
     }
     ComposeDesignSystem(darkTheme = false) {
         FontDetailContent(presentation, {}, {}, {}, {}, {}, { true }, {}, {}, {})
+    }
+}
+
+fun FontLibraryActivity.installFontLibrary(
+    presentation: FontLibraryPresentation,
+    onImportFont: Runnable,
+    onExportArchive: Runnable,
+    onImportArchive: Runnable,
+    onFontSelected: Consumer<String>,
+    onNameSubmit: (String) -> Unit,
+    onLargeConfirm: Runnable,
+    onRepairConfirm: Runnable,
+) {
+    setFeatureContent {
+        if (WatchUiMode.shouldUseCompactUi(this@installFontLibrary)) {
+            WearFontLibraryContent(
+                presentation = presentation,
+                onImportFont = onImportFont::run,
+                onExportArchive = onExportArchive::run,
+                onImportArchive = onImportArchive::run,
+                onFontSelected = onFontSelected::accept,
+                onNameSubmit = onNameSubmit,
+                onLargeConfirm = onLargeConfirm::run,
+                onRepairConfirm = onRepairConfirm::run,
+            )
+        } else {
+            FontLibraryContent(
+                presentation = presentation,
+                onBack = ::finish,
+                onImportFont = onImportFont::run,
+                onExportArchive = onExportArchive::run,
+                onImportArchive = onImportArchive::run,
+                onFontSelected = onFontSelected::accept,
+                onNameSubmit = onNameSubmit,
+                onLargeConfirm = onLargeConfirm::run,
+                onRepairConfirm = onRepairConfirm::run,
+            )
+        }
+    }
+}
+
+fun FontDetailActivity.installFontDetail(
+    presentation: FontDetailPresentation,
+    onRetryPublication: Runnable,
+    onRename: Runnable,
+    onDelete: Runnable,
+    onRemoveReference: Consumer<String>,
+    onRenameSubmit: (String) -> Boolean,
+    onFallbackRetry: Runnable,
+    onDeleteConfirm: Runnable,
+    onRestoreConfirm: Runnable,
+) {
+    setFeatureContent {
+        FontDetailContent(
+            presentation = presentation,
+            onBack = ::finish,
+            onRetryPublication = onRetryPublication::run,
+            onRename = onRename::run,
+            onDelete = onDelete::run,
+            onRemoveReference = onRemoveReference::accept,
+            onRenameSubmit = onRenameSubmit,
+            onFallbackRetry = onFallbackRetry::run,
+            onDeleteConfirm = onDeleteConfirm::run,
+            onRestoreConfirm = onRestoreConfirm::run,
+        )
     }
 }
 

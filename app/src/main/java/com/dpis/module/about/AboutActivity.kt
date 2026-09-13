@@ -12,17 +12,17 @@ import com.dpis.module.BuildConfig
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.compose.SupportActivityContent
+import com.dpis.module.about.presentation.installAbout
 import com.dpis.module.updates.GitHubReleaseNotesFetcher
 import com.dpis.module.updates.ReleaseNotesCacheStore
 import com.dpis.module.updates.ReleaseNotesController
 import com.dpis.module.updates.StartupUpdateDownloadExecutor
+import com.dpis.module.updates.StartupUpdateCheckCoordinator
 import com.dpis.module.updates.StartupUpdateManifest
 import com.dpis.module.updates.presentation.StartupUpdatePackageHandler
 import com.dpis.module.updates.presentation.UpdateAvailableDialog
 import com.dpis.module.updates.UpdateCoordinator
 import com.dpis.module.updates.presentation.UpdateDownloadCoordinator
-import com.dpis.module.updates.UpdateManifestFetcher
 import com.dpis.module.updates.presentation.UpdatePromptDialogCoordinator
 import com.dpis.module.updates.UpdatePromptRequest
 import java.io.File
@@ -42,7 +42,10 @@ class AboutActivity : LocalizedActivity() {
 
     private lateinit var updateDownloadCoordinator: UpdateDownloadCoordinator
     private lateinit var updatePromptDialogCoordinator: UpdatePromptDialogCoordinator
-    @Volatile private var updateCheckInProgress = false
+    private lateinit var updateCheckCoordinator: StartupUpdateCheckCoordinator
+    @Volatile private var lastUpdateCheckTimestampMs = 0L
+    @Volatile private var lastUpdateCheckFailed = false
+    @Volatile private var startupCheckInProgress = false
     @Volatile private var updateDownloadInProgress = false
     @Volatile private var updateDownloadCancelRequested = false
 
@@ -71,9 +74,14 @@ class AboutActivity : LocalizedActivity() {
                 UPDATE_READ_TIMEOUT_MS,
             ),
         )
+        updateCheckCoordinator = StartupUpdateCheckCoordinator(
+            createUpdateCheckHost(),
+            updateCoordinator,
+            UPDATE_CONNECT_TIMEOUT_MS,
+            UPDATE_READ_TIMEOUT_MS,
+        )
 
-        SupportActivityContent.installAbout(
-            this,
+        installAbout(
             getString(R.string.about_version_format, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
             BuildConfig.DEBUG,
             { checkForUpdates(false) },
@@ -94,50 +102,11 @@ class AboutActivity : LocalizedActivity() {
     }
 
     private fun checkForUpdates(forceShow: Boolean) {
-        when {
-            updateDownloadCoordinator.isDownloadInProgress -> {
-                showToast(R.string.about_update_download_in_progress)
-                return
-            }
-            updateCheckInProgress -> {
-                showToast(R.string.about_update_checking)
-                return
-            }
-        }
-        updateCheckInProgress = true
-        showToast(R.string.about_update_checking)
-
-        val manifestUrl = getString(R.string.about_update_manifest_url)
-        updateExecutor.execute {
-            try {
-                val manifest = UpdateManifestFetcher.fetch(
-                    manifestUrl,
-                    UPDATE_CONNECT_TIMEOUT_MS,
-                    UPDATE_READ_TIMEOUT_MS,
-                )
-                runOnUiThread { onUpdateManifestLoaded(manifest, forceShow) }
-            } catch (_: Exception) {
-                runOnUiThread { showToast(R.string.about_update_check_failed) }
-            } finally {
-                runOnUiThread { updateCheckInProgress = false }
-            }
-        }
-    }
-
-    private fun onUpdateManifestLoaded(manifest: StartupUpdateManifest, forceShow: Boolean) {
-        if (isFinishing || isDestroyed) return
-        val hasUpdate = UpdateCoordinator.isRemoteVersionNewer(
-            manifest.versionCode,
-            manifest.versionName,
-            BuildConfig.VERSION_CODE,
-            BuildConfig.VERSION_NAME,
-        )
-        if (!forceShow && !hasUpdate) {
-            showToast(R.string.about_update_up_to_date)
+        if (updateDownloadCoordinator.isDownloadInProgress) {
+            showToast(R.string.about_update_download_in_progress)
             return
         }
-        updatePromptState.pendingRequest = UpdatePromptRequest.from(manifest)
-        showPendingUpdatePrompt()
+        updateCheckCoordinator.checkForUpdates(forceShow)
     }
 
     private fun showPendingUpdatePrompt() {
@@ -165,20 +134,71 @@ class AboutActivity : LocalizedActivity() {
             packageHandler.launchPackageInstaller(targetFile)
         }
 
-        override fun buildUpdateCoordinatorState() = UpdateCoordinator.State(
-            0L,
-            false,
-            0,
-            false,
-            updateDownloadInProgress,
-            updateDownloadCancelRequested,
-        )
+        override fun buildUpdateCoordinatorState() = currentUpdateState()
 
         override fun applyDownloadState(state: UpdateCoordinator.State?) {
             state ?: return
-            updateDownloadInProgress = state.downloadInProgress
-            updateDownloadCancelRequested = state.downloadCancelRequested
+            applyUpdateState(state)
         }
+    }
+
+    private fun createUpdateCheckHost() = object : StartupUpdateCheckCoordinator.Host {
+        override fun isActivityAlive(): Boolean = !isFinishing && !isDestroyed
+
+        override fun getManifestUrl(): String = getString(R.string.about_update_manifest_url)
+
+        override fun executeBackground(runnable: Runnable) {
+            updateExecutor.execute(runnable)
+        }
+
+        override fun runOnUiThread(runnable: Runnable) {
+            this@AboutActivity.runOnUiThread(runnable)
+        }
+
+        override fun buildUpdateCoordinatorState() = currentUpdateState()
+
+        override fun applyStartupCheckState(state: UpdateCoordinator.State) {
+            applyUpdateState(state)
+        }
+
+        override fun getLocalVersionCode(): Int = BuildConfig.VERSION_CODE
+
+        override fun getLocalVersionName(): String = BuildConfig.VERSION_NAME
+
+        override fun onStartupUpdateCheckStarted() {
+            showToast(R.string.about_update_checking)
+        }
+
+        override fun onStartupUpdateAvailable(manifest: StartupUpdateManifest) {
+            if (isFinishing || isDestroyed) return
+            updatePromptState.pendingRequest = UpdatePromptRequest.from(manifest)
+            showPendingUpdatePrompt()
+        }
+
+        override fun onStartupUpdateUpToDate() {
+            showToast(R.string.about_update_up_to_date)
+        }
+
+        override fun onStartupUpdateCheckFailed() {
+            showToast(R.string.about_update_check_failed)
+        }
+    }
+
+    private fun currentUpdateState() = UpdateCoordinator.State(
+        lastUpdateCheckTimestampMs,
+        lastUpdateCheckFailed,
+        0,
+        startupCheckInProgress,
+        updateDownloadInProgress,
+        updateDownloadCancelRequested,
+    )
+
+    private fun applyUpdateState(state: UpdateCoordinator.State) {
+        lastUpdateCheckTimestampMs = state.lastUpdateCheckTimestampMs
+        lastUpdateCheckFailed = state.lastUpdateCheckFailed
+        startupCheckInProgress = state.startupCheckInProgress
+        updateDownloadInProgress = state.downloadInProgress
+        updateDownloadCancelRequested = state.downloadCancelRequested
     }
 
     private fun createUpdatePromptDialogHost() = object : UpdatePromptDialogCoordinator.Host {

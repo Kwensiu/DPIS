@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.settings.presentation
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.dialog.DialogColumn
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.dpis.module.R
+import com.dpis.module.ui.compose.*
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.google.android.material.dialog.MaterialAlertDialogBuilder

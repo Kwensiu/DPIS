@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
@@ -121,4 +123,18 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+/** Shared Activity shell for standalone Compose pages. Feature screens own their content. */
+fun ComponentActivity.setFeatureContent(
+    transparentWindowBackground: Boolean = false,
+    content: @Composable () -> Unit,
+) {
+    setContent {
+        ComposeDesignSystem(
+            darkTheme = resolveDarkTheme(),
+            transparentWindowBackground = transparentWindowBackground,
+            content = content,
+        )
+    }
 }

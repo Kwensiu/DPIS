@@ -4,7 +4,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 
 /**
  * Android-platform adapter for the template module.
@@ -21,9 +20,7 @@ internal class TemplateWorkspaceActivityHost(
     override fun showToast(messageResId: Int, vararg formatArgs: Any?) =
         activity.showToast(messageResId, *formatArgs)
 
-    override fun appConfigDialogHost(): AppConfigDialogBinder.Host = activity.createAppConfigDialogHost()
-
-    override fun hookConfigStore(): DpisConfigStore = activity.hookConfigStore
+    override fun hookConfigStore(): DpisConfigStore = checkNotNull(activity.hookConfigStore)
 
     override fun isInstalledTemplateTargetPackage(packageName: String): Boolean {
         if (packageName.isBlank() || activity.packageName == packageName) return false
@@ -43,9 +40,10 @@ internal class TemplateWorkspaceActivityHost(
         }
     }
 
-    override fun onTemplateRuntimeConfigSaved() = activity.onRuntimeConfigSaved()
+    override fun onTemplateRuntimeConfigSaved() =
+        activity.runtimeLaunchSession.onRuntimeConfigSaved()
 
-    override fun requestAppsLoad() = activity.requestAppsLoad()
+    override fun requestAppsLoad() = activity.startupSession.requestAppsLoad()
 
     override fun runOnUiThread(runnable: Runnable) = activity.runOnUiThread(runnable)
 }

@@ -75,14 +75,14 @@ public class FontDebugStatsProviderSourceSmokeTest {
 
     @Test
     public void settingsExposeSafeCacheCleanup() throws IOException {
-        String layout = read("src/main/res/layout/view_system_server_settings_content.xml");
+        String content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt");
         String source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
 
-        assertTrue(layout.contains("android:id=\"@+id/row_clear_cache\""));
-        assertTrue(layout.indexOf("android:id=\"@+id/row_language\"")
-                < layout.indexOf("android:id=\"@+id/row_clear_cache\""));
-        assertTrue(layout.indexOf("android:id=\"@+id/row_clear_cache\"")
-                < layout.indexOf("android:id=\"@+id/row_hide_launcher_icon\""));
+        assertTrue(content.contains("R.string.settings_clear_cache_label"));
+        assertTrue(content.indexOf("R.string.settings_language_label")
+                < content.indexOf("R.string.settings_clear_cache_label"));
+        assertTrue(content.indexOf("R.string.settings_clear_cache_label")
+                < content.indexOf("R.string.settings_hide_launcher_icon_label"));
         assertTrue(source.contains("SafeCacheCleaner.formatCacheUsage("));
         assertTrue(source.contains("SafeCacheCleaner.clearAll("));
     }

@@ -11,16 +11,14 @@ import com.dpis.module.config.DpisConfigStore;
 public class QuickTemplateApplySourceSmokeTest {
     @Test
     public void templateWorkspaceCoordinatorOwnsApplyConfirmationAndResultCopy() throws IOException {
-        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.java");
+        String mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt");
         String workspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt");
-        String binder = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceBinder.kt");
         String coordinator = read(
                 "src/main/java/com/dpis/module/templates/QuickTemplateApplyCoordinator.kt");
         String adapters = read("src/main/java/com/dpis/module/templates/QuickTemplateApplyAdapters.java");
         String strings = read("src/main/res/values/strings.xml");
         String zhStrings = read("src/main/res/values-zh-rCN/strings.xml");
 
-        assertTrue(binder.contains("fun apply(templateId: String)"));
         assertFalse(mainActivity.contains("private void applyQuickTemplate("));
         assertFalse(mainActivity.contains("finishQuickTemplateApply("));
         assertTrue(workspace.contains("fun applyQuickTemplate(templateId: String)"));
@@ -37,8 +35,8 @@ public class QuickTemplateApplySourceSmokeTest {
         assertTrue(content.contains("ConfirmAlertDialog("));
         assertTrue(workspace.contains("QuickTemplateApplyCoordinator<TemplateConfigValue>"));
         assertTrue(workspace.contains("QuickTemplateApplyAdapters.from(host.hookConfigStore())"));
-        assertTrue(mainActivity.contains("getHookConfigStore()"));
-        assertTrue(mainActivity.contains("return DpisApplication.getActiveHookConfigStore(this);"));
+        assertTrue(mainActivity.contains("val hookConfigStore: DpisConfigStore?"));
+        assertTrue(mainActivity.contains("DpisApplication.getActiveHookConfigStore(this)"));
         assertTrue(workspace.contains("host.isInstalledTemplateTargetPackage"));
         String activityHost = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt");
         assertTrue(activityHost.contains("packageManager.getApplicationInfo("));

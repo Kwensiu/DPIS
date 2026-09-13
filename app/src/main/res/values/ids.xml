@@ -3,4 +3,39 @@
     <!-- Stores the single layout listener shared by each mode toggle view instance. -->
     <item name="mode_toggle_layout_listener" type="id" />
     <item name="land_detail_editor_session" type="id" />
+    <item name="dialog_save_button" type="id" />
+    <item name="dialog_font_hook_domains_button" type="id" />
+    <item name="dialog_app_icon" type="id" />
+    <item name="dialog_title" type="id" />
+    <item name="dialog_package" type="id" />
+    <item name="dialog_status" type="id" />
+    <item name="dialog_viewport_input_layout" type="id" />
+    <item name="dialog_viewport_input" type="id" />
+    <item name="dialog_font_scale_input_layout" type="id" />
+    <item name="dialog_font_scale_input" type="id" />
+    <item name="dialog_viewport_mode_toggle_button" type="id" />
+    <item name="dialog_viewport_mode_toggle_thumb" type="id" />
+    <item name="dialog_viewport_mode_system_label" type="id" />
+    <item name="dialog_viewport_mode_compat_label" type="id" />
+    <item name="dialog_font_mode_toggle_button" type="id" />
+    <item name="dialog_font_mode_toggle_thumb" type="id" />
+    <item name="dialog_font_mode_system_label" type="id" />
+    <item name="dialog_font_mode_compat_label" type="id" />
+    <item name="dialog_typeface_selector_button" type="id" />
+    <item name="dialog_scope_button" type="id" />
+    <item name="dialog_start_button" type="id" />
+    <item name="dialog_restart_button" type="id" />
+    <item name="dialog_stop_button" type="id" />
+    <item name="dialog_dpis_toggle_button" type="id" />
+    <item name="dialog_disable_button" type="id" />
+    <item name="dialog_feedback_diagnostic_button" type="id" />
+    <item name="dialog_app_config_scroll" type="id" />
+    <item name="dialog_wechat_dpi_row" type="id" />
+    <item name="dialog_wechat_dpi_input_layout" type="id" />
+    <item name="dialog_wechat_dpi_input" type="id" />
+    <item name="dialog_wechat_dpi_help_button" type="id" />
+    <item name="sheet_unsaved_badge_container" type="id" />
+    <item name="sheet_drag_handle" type="id" />
+    <item name="sheet_unsaved_badge" type="id" />
+    <item name="sheet_unsaved_inline_badge" type="id" />
 </resources>

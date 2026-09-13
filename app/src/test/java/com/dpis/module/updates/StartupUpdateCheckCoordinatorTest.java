@@ -125,6 +125,23 @@ public class StartupUpdateCheckCoordinatorTest {
     }
 
     @Test
+    public void forceShowPromptsEvenWhenRemoteIsNotNewer() {
+        long now = SUCCESS_INTERVAL + 1;
+        FakeHost host = hostWithState(0L, false, 0, false);
+        host.localVersionCode = 5;
+        host.localVersionName = "5.0.0";
+        StartupUpdateManifest remoteManifest = new StartupUpdateManifest("5.0.0", 5, "", "", "");
+        StartupUpdateCheckCoordinator coordinator = buildCoordinator(host, now, remoteManifest);
+
+        coordinator.checkForUpdates(true);
+        runBackground(host);
+
+        assertEquals(1, host.availableCount);
+        assertEquals(0, host.upToDateCount);
+        assertEquals(remoteManifest, host.availableManifest);
+    }
+
+    @Test
     public void activityNotAlive_doesNothing() {
         FakeHost host = hostWithState(0L, false, 0, false);
         host.alive = false;

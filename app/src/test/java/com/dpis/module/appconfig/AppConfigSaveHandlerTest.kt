@@ -1,7 +1,7 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
 import com.dpis.module.appconfig.AppConfigPrefillPreview
+import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
@@ -196,32 +196,6 @@ class AppConfigSaveHandlerTest {
     }
 
     @Test
-    fun resetClearsPreviewOnlyHookDomainsAndViewportApplyMode() {
-        val state =
-            AppConfigDialogState(
-                false,
-                true,
-                true,
-                true,
-                "com.example.app",
-                "resources_font",
-                ViewportApplyMode.COMPAT,
-                null,
-                ViewportTargetType.RELATIVE_SCALE,
-                "",
-                "",
-                ""
-            )
-
-        state.clearHookChainStateForReset()
-
-        assertNull(state.draftFontHookDomainsRaw)
-        assertEquals(ViewportApplyMode.OFF, state.viewportApplyMode)
-        assertTrue(state.fontHookDomainsResetRequested)
-        assertTrue(state.viewportApplyModeResetRequested)
-    }
-
-    @Test
     fun resetThenSaveDoesNotPersistHiddenPreviewHookDomains() {
         val store = DpisConfigStore(FakePrefs())
         val item: AppListItem = app("com.example.app").withGlobalPrefillPreview(
@@ -234,28 +208,12 @@ class AppConfigSaveHandlerTest {
                 "resources_font"
             )
         )
-        val state =
-            AppConfigDialogState(
-                false,
-                true,
-                true,
-                true,
-                item.packageName,
-                item.previewFontHookDomainsRaw,
-                item.viewportMode,
-                null,
-                ViewportTargetType.RELATIVE_SCALE,
-                "",
-                "",
-                ""
-            )
-
-        state.clearHookChainStateForReset()
+        val draft = EditorDraft.fromItem(item).cleared()
 
         assertTrue(
             AppConfigSaveHandler.persistPreviewOnlyConfig(
-                store, item, state.draftFontHookDomainsRaw,
-                state.fontHookDomainsResetRequested
+                store, item, draft.draftFontHookDomainsRaw,
+                draft.fontHookDomainsResetRequested
             )
         )
         assertFalse(store.hasRealPackageConfig(item.packageName))

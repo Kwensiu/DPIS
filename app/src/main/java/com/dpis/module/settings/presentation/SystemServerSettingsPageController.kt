@@ -1,24 +1,15 @@
 package com.dpis.module.settings.presentation
 
-import android.app.Activity
-import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
-import android.view.HapticFeedbackConstants
-import android.view.View
-import android.widget.CompoundButton
-import android.widget.ImageView
 import android.widget.Toast
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
 import com.dpis.module.config.DpisConfigStore
@@ -29,7 +20,7 @@ import com.dpis.module.R
 import com.dpis.module.settings.SettingsPresentationController
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.about.AboutActivity
-import com.dpis.module.backup.presentation.ConfigBackupCoordinator
+import com.dpis.module.backup.presentation.ConfigBackupHost
 import com.dpis.module.fonts.FontDebugDataDiagnostics
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
 import com.dpis.module.fonts.FontDebugOverlayService
@@ -40,7 +31,6 @@ import com.dpis.module.home.DonateActivity
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.RuntimeDebugPropertySyncer
 import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ExperimentalSettingsActivity
 import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.LauncherIconVisibilityStore
@@ -50,53 +40,27 @@ import com.dpis.module.settings.SystemHookState
 import com.dpis.module.settings.SystemHooksToggleController
 import com.dpis.module.settings.SystemHooksToggleController.ScopeGateway
 import com.dpis.module.settings.ThemeSettingsActivity
-import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.settings.presentation.SettingsComposeDialogs.showBackupActions
 import com.dpis.module.ui.compose.FontDebugComposeSheet
 import com.dpis.module.ui.compose.FontDebugComposeSheet.show
-import com.dpis.module.ui.compose.LanguageDialogOption
-import com.dpis.module.ui.compose.SettingsComposeDialogs
-import com.dpis.module.ui.compose.SettingsComposeDialogs.showBackupActions
-import com.dpis.module.ui.compose.SettingsComposeDialogs.showInterfaceScale
-import com.dpis.module.ui.dialog.ConfirmDialog.show
-import com.google.android.material.materialswitch.MaterialSwitch
-import com.google.android.material.slider.Slider
-import com.google.android.material.textview.MaterialTextView
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
-/** Java-facing settings workflow controller shared by the legacy and Compose presentations. */
+/** Java-facing settings workflow controller used by the Compose presentation. */
 class SystemServerSettingsPageController(
     private val activity: LocalizedActivity,
-    private val root: View?
 ) : DpisApplication.ServiceStateListener {
     private val launcherIconVisibilityStore: LauncherIconVisibilityStore
     private val interfaceScaleStore: InterfaceScaleStore
     private val presentationController: SettingsPresentationController
     private var store: DpisConfigStore? = null
-    private var hooksEnabledSwitch: MaterialSwitch? = null
-    private var safeModeSwitch: MaterialSwitch? = null
-    private var globalLogSwitch: MaterialSwitch? = null
-    private var hideLauncherIconSwitch: MaterialSwitch? = null
-    private var primarySwitchCard: View? = null
-    private var languageEntryRow: View? = null
-    private var clearCacheEntryRow: View? = null
-    private var fontDebugEntryRow: View? = null
-    private var experimentalSettingsEntryRow: View? = null
-    private var fontLibraryEntryRow: View? = null
-    private var backupConfigEntryRow: View? = null
-    private var interfaceScaleRow: View? = null
-    private var interfaceScaleSlider: Slider? = null
-    private var interfaceScaleValueView: MaterialTextView? = null
-    private var lastInterfaceScaleFeedbackPercent = AppUiScaleManager.DEFAULT_SCALE_PERCENT
-    private var suppressInterfaceScaleSliderChange = false
 
     @Volatile
     private var clearCacheInProgress = false
     private var lastCacheUsage = "0 B"
-    private var pendingImportUri: Uri? = null
     private var statsPreferences: SharedPreferences? = null
     private var selectedMode = FontDebugStatsStore.MODE_CHAIN
     private var selectedWindow = FontDebugStatsStore.WINDOW_ALL
@@ -104,6 +68,25 @@ class SystemServerSettingsPageController(
     private var fontDebugDialog: FontDebugComposeSheet.Handle? = null
     private var hooksToggleController: SystemHooksToggleController? = null
     private var composePresentationListener: SettingsPresentationController.Listener? = null
+    private val backupHost = ConfigBackupHost(
+        activity,
+        object : ConfigBackupHost.Port {
+            override fun configStore(): DpisConfigStore? = store
+            override fun isComposeSurface(): Boolean = true
+            override fun showToast(messageResId: Int) {
+                this@SystemServerSettingsPageController.showToast(messageResId)
+            }
+            override fun publishPresentationState() {
+                this@SystemServerSettingsPageController.publishPresentationState()
+            }
+            override fun onRestoreSucceeded() {
+                relaunchDpisTask()
+            }
+            override fun runOnUiThread(action: Runnable) {
+                this@SystemServerSettingsPageController.runOnUiThread(action)
+            }
+        },
+    )
 
     private val statsHandler = Handler(Looper.getMainLooper())
     private val statsRefreshRunnable: Runnable = object : Runnable {
@@ -135,11 +118,7 @@ class SystemServerSettingsPageController(
                 }
 
                 override fun refresh() {
-                    if (root == null) {
-                        refreshComposeStoreState()
-                    } else {
-                        refreshStoreState(false)
-                    }
+                    refreshComposeStoreState()
                     publishPresentationState()
                 }
             })
@@ -155,139 +134,12 @@ class SystemServerSettingsPageController(
             launcherIconVisibilityStore.isHidden(), interfaceScaleStore.getPercent(),
             clearCacheInProgress, lastCacheUsage,
             getString(AppLocaleManager.selectedLabelResId(activity)),
-            pendingImportUri,
+            backupHost.pendingImportUri,
         )
     }
 
     private fun publishPresentationState() {
         presentationController.publishState()
-    }
-
-    fun bind() {
-        applyInsets()
-
-        primarySwitchCard = findViewById(R.id.settings_primary_switch_card)
-        primarySwitchCard!!.visibility = View.GONE
-        hooksEnabledSwitch = bindSwitchRow(
-            R.id.row_system_hooks,
-            R.drawable.ic_android_24,
-            R.string.system_hooks_enabled_label,
-            R.string.system_hooks_enabled_hint
-        )
-        applySystemHooksRowVisibility()
-        safeModeSwitch = bindSwitchRow(
-            R.id.row_safe_mode,
-            R.drawable.ic_shield_24,
-            R.string.system_safe_mode_label,
-            R.string.system_safe_mode_hint
-        )
-        globalLogSwitch = bindSwitchRow(
-            R.id.row_global_log,
-            R.drawable.ic_view_kanban_24,
-            R.string.global_log_enabled_label,
-            R.string.global_log_enabled_hint
-        )
-        fontDebugEntryRow = bindEntryRow(
-            R.id.row_font_debug_overlay,
-            R.drawable.ic_bug_report_24,
-            R.string.font_debug_overlay_label,
-            R.string.font_debug_entry_hint
-        ) { anchor: View? -> this.showFontDebugDialog(anchor) }
-        experimentalSettingsEntryRow = bindEntryRow(
-            R.id.row_experimental_settings,
-            R.drawable.ic_experiment_24,
-            R.string.settings_experimental_title,
-            R.string.settings_experimental_hint
-        ) { v: View? ->
-            startActivity(
-                Intent(
-                    activity,
-                    ExperimentalSettingsActivity::class.java
-                )
-            )
-        }
-        fontLibraryEntryRow = bindEntryRow(
-            R.id.row_font_library,
-            R.drawable.ic_upload_file_24,
-            R.string.settings_font_library_label,
-            R.string.settings_font_library_hint
-        ) { v: View? ->
-            startActivity(
-                Intent(
-                    activity,
-                    FontLibraryActivity::class.java
-                )
-            )
-        }
-        bindInterfaceScaleRow()
-        backupConfigEntryRow = bindEntryRow(
-            R.id.row_config_backup,
-            R.drawable.ic_upload_file_24,
-            R.string.settings_config_backup_label,
-            R.string.settings_config_backup_hint
-        ) { anchor: View? -> this.showConfigBackupDialog(anchor) }
-        bindLanguageRow()
-        clearCacheEntryRow = bindEntryRow(
-            R.id.row_clear_cache,
-            R.drawable.ic_mop_24,
-            R.string.settings_clear_cache_label,
-            R.string.settings_clear_cache_size
-        ) { anchor: View? -> this.clearCache(anchor) }
-        setCacheEntrySubtitle("0 B")
-        updateCacheEntrySubtitle()
-        bindEntryRow(
-            R.id.row_about,
-            R.drawable.ic_info_24,
-            R.string.settings_about_label,
-            R.string.settings_about_hint
-        ) { v: View? ->
-            startActivity(
-                Intent(
-                    activity,
-                    AboutActivity::class.java
-                )
-            )
-        }
-        bindEntryRow(
-            R.id.row_donate,
-            R.drawable.ic_volunteer_24,
-            R.string.settings_donate_label,
-            R.string.settings_donate_hint
-        ) { v: View? -> startActivity(DonateActivity.createIntent(activity)) }
-        hideLauncherIconSwitch = bindSwitchRow(
-            R.id.row_hide_launcher_icon,
-            R.drawable.ic_hide_image_24,
-            R.string.settings_hide_launcher_icon_label,
-            R.string.settings_hide_launcher_icon_hint
-        )
-
-        statsPreferences = FontDebugStatsStore.getPreferences(activity)
-        hooksEnabledSwitch!!.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onHooksEnabledChanged(
-                buttonView,
-                isChecked
-            )
-        }
-        safeModeSwitch!!.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onSafeModeChanged(
-                buttonView,
-                isChecked
-            )
-        }
-        globalLogSwitch!!.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onGlobalLogChanged(
-                buttonView,
-                isChecked
-            )
-        }
-        hideLauncherIconSwitch!!.setOnCheckedChangeListener { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onHideLauncherIconChanged(
-                buttonView,
-                isChecked
-            )
-        }
-        refreshStoreState(true)
-        publishPresentationState()
     }
 
     /** Initializes the same Java-owned workflows when Settings is Compose-native.  */
@@ -308,7 +160,7 @@ class SystemServerSettingsPageController(
     }
 
     fun setHooksEnabledFromPresentation(enabled: Boolean) {
-        onHooksEnabledChanged(null, enabled)
+        onHooksEnabledChanged(enabled)
     }
 
     fun setSafeModeFromPresentation(enabled: Boolean) {
@@ -352,15 +204,11 @@ class SystemServerSettingsPageController(
     }
 
     fun confirmImportFromPresentation() {
-        val uri = pendingImportUri
-        pendingImportUri = null
-        importConfigBackup(uri)
-        publishPresentationState()
+        backupHost.confirmPendingImport()
     }
 
     fun dismissImportFromPresentation() {
-        pendingImportUri = null
-        publishPresentationState()
+        backupHost.dismissPendingImport()
     }
 
     fun clearCacheFromPresentation() {
@@ -382,7 +230,7 @@ class SystemServerSettingsPageController(
 
     fun onResume() {
         syncHooksSwitchWithScope()
-        syncLauncherIconSwitch()
+        syncLauncherIconHiddenState()
         if (store != null && store!!.isFontDebugOverlayEnabled && canDrawOverlays()) {
             startFontDebugOverlayService()
         }
@@ -397,74 +245,14 @@ class SystemServerSettingsPageController(
 
     override fun onServiceStateChanged() {
         runOnUiThread {
-            if (root == null) {
-                refreshComposeStoreState()
-            } else {
-                refreshStoreState(false)
-            }
+            refreshComposeStoreState()
             publishPresentationState()
         }
     }
 
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode != Activity.RESULT_OK || data == null || data.data == null) {
-            return
-        }
-        val uri = data.data
-        if (requestCode == REQUEST_EXPORT_CONFIG_BACKUP) {
-            exportConfigBackup(uri)
-            publishPresentationState()
-            return
-        }
-        if (requestCode == REQUEST_IMPORT_CONFIG_BACKUP) {
-            if (root == null) {
-                pendingImportUri = uri
-                publishPresentationState()
-            } else {
-                showImportBackupConfirmDialog(uri)
-            }
-            return
-        }
+        backupHost.onActivityResult(requestCode, resultCode, data)
     }
-
-    private fun applyInsets() {
-        val toolbar = findViewById<View?>(R.id.settings_toolbar)
-        if (root == null || toolbar == null) {
-            return
-        }
-        val baseRootPaddingLeft = root.paddingLeft
-        val baseRootPaddingRight = root.paddingRight
-        val baseTopPadding = toolbar.paddingTop
-        val baseToolbarPaddingLeft = toolbar.paddingLeft
-        val baseToolbarPaddingRight = toolbar.paddingRight
-        ViewCompat.setOnApplyWindowInsetsListener(
-            root
-        ) { view: View?, insets: WindowInsetsCompat? ->
-            val safeDrawing = insets!!.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            view!!.setPadding(
-                baseRootPaddingLeft + safeDrawing.left, view.paddingTop,
-                baseRootPaddingRight + safeDrawing.right, view.paddingBottom
-            )
-            toolbar.setPadding(
-                baseToolbarPaddingLeft, baseTopPadding + safeDrawing.top,
-                baseToolbarPaddingRight, toolbar.paddingBottom
-            )
-            insets
-        }
-        ViewCompat.requestApplyInsets(root)
-    }
-
-    private fun <T : View?> findViewById(id: Int): T? {
-        if (id == android.R.id.content) {
-            return activity.findViewById<T?>(id)
-        }
-        return root!!.findViewById<T?>(id)
-    }
-
-    private val resources: Resources
-        get() = activity.resources
 
     private fun getString(resId: Int): String {
         return activity.getString(resId)
@@ -472,10 +260,6 @@ class SystemServerSettingsPageController(
 
     private fun getString(resId: Int, vararg formatArgs: Any?): String {
         return activity.getString(resId, *formatArgs)
-    }
-
-    private fun <T> getSystemService(serviceClass: Class<T?>): T? {
-        return activity.getSystemService<T?>(serviceClass)
     }
 
     private val applicationContext: Context?
@@ -489,10 +273,6 @@ class SystemServerSettingsPageController(
 
     private fun startActivity(intent: Intent?) {
         activity.startActivity(intent)
-    }
-
-    private fun startActivityForResult(intent: Intent, requestCode: Int) {
-        activity.startActivityForResult(intent, requestCode)
     }
 
     private fun startService(intent: Intent?) {
@@ -521,173 +301,7 @@ class SystemServerSettingsPageController(
         activity.finishAffinity()
     }
 
-    private fun dp(value: Int): Int {
-        return Math.round(value * resources.displayMetrics.density)
-    }
-
-    private fun bindSwitchRow(
-        rowId: Int,
-        iconRes: Int,
-        titleRes: Int,
-        subtitleRes: Int
-    ): MaterialSwitch {
-        val row = findViewById<View>(rowId)!!
-        val iconView = row.findViewById<ImageView>(R.id.setting_icon)
-        val titleView = row.findViewById<MaterialTextView>(R.id.setting_title)
-        val subtitleView = row.findViewById<MaterialTextView>(R.id.setting_subtitle)
-        val switchView = row.findViewById<MaterialSwitch>(R.id.setting_switch)
-
-        iconView.setImageResource(iconRes)
-        titleView.setText(titleRes)
-        subtitleView.setText(subtitleRes)
-        row.setOnClickListener { v: View? ->
-            if (switchView.isEnabled) {
-                switchView.toggle()
-            }
-        }
-        return switchView
-    }
-
-    private fun bindEntryRow(
-        rowId: Int,
-        iconRes: Int,
-        titleRes: Int,
-        subtitleRes: Int,
-        clickListener: View.OnClickListener?
-    ): View {
-        val row = findViewById<View>(rowId)!!
-        val iconView = row.findViewById<ImageView>(R.id.setting_icon)
-        val titleView = row.findViewById<MaterialTextView>(R.id.setting_title)
-        val subtitleView = row.findViewById<MaterialTextView>(R.id.setting_subtitle)
-        iconView.setImageResource(iconRes)
-        titleView.setText(titleRes)
-        subtitleView.setText(subtitleRes)
-        row.setOnClickListener(clickListener)
-        return row
-    }
-
-    private fun bindLanguageRow() {
-        languageEntryRow = findViewById(R.id.row_language)
-        val iconView = languageEntryRow!!.findViewById<ImageView>(R.id.setting_icon)
-        val titleView = languageEntryRow!!.findViewById<MaterialTextView>(R.id.setting_title)
-        iconView.setImageResource(R.drawable.ic_language_24)
-        titleView.setText(R.string.settings_language_label)
-        updateLanguageEntrySubtitle()
-        languageEntryRow!!.setOnClickListener { anchor: View? ->
-            this.showLanguageDialog(
-                anchor
-            )
-        }
-    }
-
-    private fun bindInterfaceScaleRow() {
-        interfaceScaleRow = findViewById<View>(R.id.row_interface_scale)
-        val iconView = interfaceScaleRow!!.findViewById<ImageView>(R.id.setting_icon)
-        val titleView = interfaceScaleRow!!.findViewById<MaterialTextView>(R.id.setting_title)
-        val subtitleView = interfaceScaleRow!!.findViewById<MaterialTextView>(R.id.setting_subtitle)
-        interfaceScaleValueView =
-            interfaceScaleRow!!.findViewById(R.id.setting_value)
-        interfaceScaleSlider = interfaceScaleRow!!.findViewById(R.id.setting_slider)
-
-        iconView.setImageResource(R.drawable.ic_fit_width_24)
-        titleView.setText(R.string.settings_interface_scale_label)
-        subtitleView.setText(R.string.settings_interface_scale_hint)
-        interfaceScaleSlider!!.valueFrom = AppUiScaleManager.MIN_SCALE_PERCENT.toFloat()
-        interfaceScaleSlider!!.valueTo = AppUiScaleManager.MAX_SCALE_PERCENT.toFloat()
-        interfaceScaleSlider!!.stepSize = 10f
-        interfaceScaleRow!!.setOnClickListener { v: View? -> showInterfaceScaleDialog() }
-        interfaceScaleSlider!!.addOnChangeListener { slider: Slider?, value: Float, fromUser: Boolean ->
-            if (fromUser && !suppressInterfaceScaleSliderChange) {
-                val percent = normalizeInterfaceScaleSliderPercent(Math.round(value))
-                updateInterfaceScaleValue(percent)
-                performInterfaceScaleStepFeedback(percent)
-            }
-        }
-        interfaceScaleSlider!!.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
-            override fun onStartTrackingTouch(slider: Slider) {
-                val percent = AppUiScaleManager.normalizeScalePercent(Math.round(slider.value))
-                lastInterfaceScaleFeedbackPercent = percent
-                updateInterfaceScaleValue(percent)
-            }
-
-            override fun onStopTrackingTouch(slider: Slider) {
-                saveInterfaceScalePercent(Math.round(slider.value))
-            }
-        })
-        setInterfaceScalePercentSilently(AppUiScaleManager.getEffectiveScalePercent(activity))
-    }
-
-    private fun setInterfaceScalePercentSilently(percent: Int) {
-        if (interfaceScaleSlider == null) {
-            return
-        }
-        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
-        val sliderPercent = nearestInterfaceScaleSliderPercent(normalized)
-        suppressInterfaceScaleSliderChange = true
-        interfaceScaleSlider!!.value = sliderPercent.toFloat()
-        suppressInterfaceScaleSliderChange = false
-        lastInterfaceScaleFeedbackPercent = sliderPercent
-        updateInterfaceScaleValue(normalized)
-    }
-
-    private fun updateInterfaceScaleValue(percent: Int) {
-        if (interfaceScaleValueView != null) {
-            interfaceScaleValueView!!.text = getString(
-                R.string.settings_interface_scale_value,
-                AppUiScaleManager.normalizeScalePercent(percent)
-            )
-        }
-    }
-
-    private fun saveInterfaceScalePercent(percent: Int) {
-        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
-        if (normalized == interfaceScaleStore.getPercent()
-            && interfaceScaleStore.hasExplicitPercent()
-        ) {
-            setInterfaceScalePercentSilently(normalized)
-            return
-        }
-        if (!interfaceScaleStore.setPercent(normalized)) {
-            setInterfaceScalePercentSilently(interfaceScaleStore.getPercent())
-            showToast(R.string.system_settings_save_failed)
-            return
-        }
-        setInterfaceScalePercentSilently(normalized)
-        publishPresentationState()
-        recreate()
-    }
-
-    private fun showInterfaceScaleDialog() {
-        showInterfaceScale(
-            activity,
-            AppUiScaleManager.getEffectiveScalePercent(activity),
-            AppUiScaleManager.MIN_SCALE_PERCENT,
-            AppUiScaleManager.MAX_SCALE_PERCENT
-        ) { percent: Int -> this.saveInterfaceScalePercent(percent) }
-    }
-
-    private fun performInterfaceScaleStepFeedback(percent: Int) {
-        if (percent == lastInterfaceScaleFeedbackPercent || interfaceScaleSlider == null) {
-            return
-        }
-        lastInterfaceScaleFeedbackPercent = percent
-        interfaceScaleSlider!!.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-    }
-
-    private fun normalizeInterfaceScaleSliderPercent(percent: Int): Int {
-        return nearestInterfaceScaleSliderPercent(
-            AppUiScaleManager.normalizeScalePercent(percent)
-        )
-    }
-
-    private fun nearestInterfaceScaleSliderPercent(percent: Int): Int {
-        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
-        val min = AppUiScaleManager.MIN_SCALE_PERCENT
-        val rounded = Math.round((normalized - min) / 10f) * 10 + min
-        return AppUiScaleManager.normalizeScalePercent(rounded)
-    }
-
-    private fun showLanguageDialog(anchor: View?) {
+    private fun showLanguageDialog(anchor: Any?) {
         val languageOptions = AppLocaleManager.supportedLanguages()
         val options = languageOptions.map { option ->
             LanguageDialogOption(option.tag, getString(option.labelResId))
@@ -705,18 +319,9 @@ class SystemServerSettingsPageController(
             showToast(R.string.system_settings_save_failed)
             return
         }
-        updateLanguageEntrySubtitle()
         if (selectedTag != previousTag) {
             recreate()
         }
-    }
-
-    private fun updateLanguageEntrySubtitle() {
-        if (languageEntryRow == null) {
-            return
-        }
-        val subtitleView = languageEntryRow!!.findViewById<MaterialTextView>(R.id.setting_subtitle)
-        subtitleView.setText(AppLocaleManager.selectedLabelResId(activity))
     }
 
     private fun updateCacheEntrySubtitle() {
@@ -732,12 +337,11 @@ class SystemServerSettingsPageController(
         }, "dpis-cache-size").start()
     }
 
-    private fun clearCache(anchor: View?) {
+    private fun clearCache(anchor: Any?) {
         if (clearCacheInProgress) {
             return
         }
         clearCacheInProgress = true
-        setRowEnabled(clearCacheEntryRow, false)
         setCacheEntrySubtitle(getString(R.string.settings_clear_cache_cleaning))
         publishPresentationState()
         val appContext = this.applicationContext
@@ -760,7 +364,6 @@ class SystemServerSettingsPageController(
                         return@runOnUiThread
                     }
                     clearCacheInProgress = false
-                    setRowEnabled(clearCacheEntryRow, true)
                     updateCacheEntrySubtitle()
                     publishPresentationState()
                     if (finalLegacyCacheStillNeedsManualDelete) {
@@ -780,116 +383,18 @@ class SystemServerSettingsPageController(
 
     private fun setCacheEntrySubtitle(usage: String?) {
         lastCacheUsage = usage ?: ""
-        if (clearCacheEntryRow == null) {
-            return
-        }
-        val subtitleView =
-            clearCacheEntryRow!!.findViewById<MaterialTextView>(R.id.setting_subtitle)
-        subtitleView.text = getString(R.string.settings_clear_cache_size, usage)
     }
 
-    private fun showConfigBackupDialog(anchor: View?) {
+    private fun showConfigBackupDialog(anchor: Any?) {
         if (store == null) {
             showToast(R.string.status_save_requires_init)
             return
         }
         showBackupActions(
             activity,
-            { this.launchExportBackupPicker() },
-            { this.launchImportBackupPicker() })
-    }
-
-    private fun launchExportBackupPicker() {
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-            .addCategory(Intent.CATEGORY_OPENABLE)
-            .setType("application/json")
-            .putExtra(Intent.EXTRA_TITLE, buildBackupFileName())
-        try {
-            startActivityForResult(intent, REQUEST_EXPORT_CONFIG_BACKUP)
-        } catch (error: ActivityNotFoundException) {
-            showToast(R.string.config_backup_picker_failed)
-        }
-    }
-
-    private fun launchImportBackupPicker() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-            .addCategory(Intent.CATEGORY_OPENABLE)
-            .setType("*/*")
-            .putExtra(
-                Intent.EXTRA_MIME_TYPES, arrayOf(
-                    "application/json",
-                    "text/plain"
-                )
-            )
-        try {
-            startActivityForResult(intent, REQUEST_IMPORT_CONFIG_BACKUP)
-        } catch (error: ActivityNotFoundException) {
-            showToast(R.string.config_backup_picker_failed)
-        }
-    }
-
-    private fun showImportBackupConfirmDialog(uri: Uri?) {
-        show(
-            activity,
-            getString(R.string.config_backup_import_confirm_title),
-            getString(R.string.config_backup_import_confirm_message),
-            {
-                importConfigBackup(uri)
-                publishPresentationState()
-            },
-            { this.publishPresentationState() })
-    }
-
-    private fun exportConfigBackup(uri: Uri?) {
-        val localStore = store
-        if (localStore == null) {
-            showToast(R.string.status_save_requires_init)
-            return
-        }
-        Thread({
-            val result = ConfigBackupCoordinator(
-                activity.contentResolver, localStore, QuickTemplateStore(activity)
-            )
-                .export(uri)
-            runOnUiThread {
-                if (result.isSuccess()) {
-                    showToast(R.string.config_backup_export_success)
-                    publishPresentationState()
-                    return@runOnUiThread
-                }
-                showToast(R.string.config_backup_export_failed)
-                publishPresentationState()
-            }
-        }, "dpis-config-backup-export").start()
-    }
-
-    private fun importConfigBackup(uri: Uri?) {
-        val localStore = store
-        if (localStore == null) {
-            showToast(R.string.status_save_requires_init)
-            return
-        }
-        Thread({
-            val result = ConfigBackupCoordinator(
-                activity.contentResolver, localStore, QuickTemplateStore(activity)
-            )
-                .restore(uri)
-            runOnUiThread {
-                if (!result.isSuccess()) {
-                    showToast(
-                        if (result.code == ConfigBackupCoordinator.Code.INVALID_FILE)
-                            R.string.config_backup_import_invalid
-                        else
-                            R.string.config_backup_import_failed
-                    )
-                    publishPresentationState()
-                    return@runOnUiThread
-                }
-                showToast(R.string.config_backup_import_success)
-                publishPresentationState()
-                relaunchDpisTask()
-            }
-        }, "dpis-config-backup-import").start()
+            { backupHost.launchExportPicker() },
+            { backupHost.launchImportPicker() },
+        )
     }
 
     private fun relaunchDpisTask() {
@@ -898,55 +403,6 @@ class SystemServerSettingsPageController(
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
         finishAffinity()
-    }
-
-    private fun applyRestoredStoreState() {
-        if (store == null) {
-            return
-        }
-        selectedMode = store!!.fontDebugSelectedMode
-        selectedWindow = store!!.fontDebugSelectedWindow
-
-        setCheckedSilently(
-            safeModeSwitch,
-            store!!.isSystemServerSafeModeEnabled()
-        ) { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onSafeModeChanged(
-                buttonView,
-                isChecked
-            )
-        }
-        setCheckedSilently(
-            globalLogSwitch,
-            store!!.isGlobalLogEnabled()
-        ) { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onGlobalLogChanged(
-                buttonView,
-                isChecked
-            )
-        }
-        DpisLog.setLoggingEnabled(store!!.isGlobalLogEnabled())
-        setInterfaceScalePercentSilently(AppUiScaleManager.getEffectiveScalePercent(activity))
-
-        applyLauncherIconVisibilityFromStore()
-        syncHooksSwitchWithScope()
-
-        if (store!!.isFontDebugOverlayEnabled && canDrawOverlays()) {
-            startFontDebugOverlayService()
-        } else if (!store!!.isFontDebugOverlayEnabled) {
-            stopService(Intent(activity, FontDebugOverlayService::class.java))
-        }
-        updateDialogButtons()
-        refreshStatsPanel()
-    }
-
-    private fun refreshStoreState(showInitToast: Boolean) {
-        store = DpisApplication.getConfigStore()
-        if (store == null) {
-            applyUnavailableStoreState(showInitToast)
-            return
-        }
-        applyAvailableStoreState()
     }
 
     private fun refreshComposeStoreState() {
@@ -964,81 +420,7 @@ class SystemServerSettingsPageController(
         ) { this.publishPresentationState() }
     }
 
-    private fun applyAvailableStoreState() {
-        hooksEnabledSwitch!!.isEnabled = true
-        safeModeSwitch!!.isEnabled = true
-        globalLogSwitch!!.isEnabled = true
-        hideLauncherIconSwitch!!.isEnabled = true
-        interfaceScaleSlider!!.isEnabled = true
-        setRowEnabled(fontDebugEntryRow, true)
-        setRowEnabled(experimentalSettingsEntryRow, true)
-        setRowEnabled(fontLibraryEntryRow, true)
-        setRowEnabled(backupConfigEntryRow, true)
-        setRowEnabled(interfaceScaleRow, true)
-        hooksToggleController = SystemHooksToggleController(
-            store,
-            ActivitySystemScopeGateway(),
-            ActivitySystemHooksToggleView()
-        ) { this.publishPresentationState() }
-        applyRestoredStoreState()
-        setPrimarySwitchRowsVisible(true)
-    }
-
-    private fun applyUnavailableStoreState(showInitToast: Boolean) {
-        hooksToggleController = null
-        setPrimarySwitchRowsVisible(true)
-        hooksEnabledSwitch!!.isEnabled = false
-        safeModeSwitch!!.isEnabled = false
-        globalLogSwitch!!.isEnabled = false
-        hideLauncherIconSwitch!!.isEnabled = false
-        interfaceScaleSlider!!.isEnabled = false
-        setRowEnabled(fontDebugEntryRow, false)
-        setRowEnabled(experimentalSettingsEntryRow, false)
-        setRowEnabled(fontLibraryEntryRow, false)
-        setRowEnabled(backupConfigEntryRow, false)
-        setRowEnabled(interfaceScaleRow, false)
-        setRowEnabled(languageEntryRow, false)
-        if (showInitToast) {
-            showToast(R.string.status_save_requires_init)
-        }
-    }
-
-    private fun setPrimarySwitchRowsVisible(visible: Boolean) {
-        if (primarySwitchCard == null) {
-            return
-        }
-        primarySwitchCard!!.visibility = if (visible) View.VISIBLE else View.GONE
-    }
-
-    private fun applyLauncherIconVisibilityFromStore() {
-        if (hideLauncherIconSwitch == null) {
-            return
-        }
-        val storedHidden = launcherIconVisibilityStore.isHidden()
-        val actualHidden = resolveLauncherIconHiddenState(storedHidden)
-        if (actualHidden != storedHidden) {
-            launcherIconVisibilityStore.isHidden = actualHidden
-        }
-        setCheckedSilently(
-            hideLauncherIconSwitch,
-            actualHidden
-        ) { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onHideLauncherIconChanged(
-                buttonView,
-                isChecked
-            )
-        }
-    }
-
-    private fun buildBackupFileName(): String {
-        return String.format(
-            Locale.US,
-            $$"dpis-backup-%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS.json",
-            Date()
-        )
-    }
-
-    private fun showFontDebugDialog(anchor: View?) {
+    private fun showFontDebugDialog(anchor: Any?) {
         if (store == null) {
             return
         }
@@ -1199,7 +581,7 @@ class SystemServerSettingsPageController(
         refreshStatsPanel()
     }
 
-    private fun onHooksEnabledChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+    private fun onHooksEnabledChanged(isChecked: Boolean) {
         if (!BuildConfig.DEBUG) {
             return
         }
@@ -1210,22 +592,11 @@ class SystemServerSettingsPageController(
         publishPresentationState()
     }
 
-    private fun applySystemHooksRowVisibility() {
-        val row = findViewById<View?>(R.id.row_system_hooks) ?: return
-        row.visibility = if (BuildConfig.DEBUG) View.VISIBLE else View.GONE
-    }
-
     private fun persistSafeMode(enabled: Boolean) {
         if (store == null) {
             return
         }
         if (!store!!.setSystemServerSafeModeEnabled(enabled)) {
-            setCheckedSilently(
-                safeModeSwitch,
-                !enabled
-            ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                this.onSafeModeChanged(buttonView, isChecked)
-            }
             showToast(R.string.system_settings_save_failed)
             publishPresentationState()
             return
@@ -1235,74 +606,17 @@ class SystemServerSettingsPageController(
     }
 
     private fun persistLauncherHidden(hidden: Boolean) {
-        if (hidden) {
-            if (!persistLauncherIconState(true)) {
-                setCheckedSilently(
-                    hideLauncherIconSwitch, false
-                ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                    this.onHideLauncherIconChanged(buttonView, isChecked)
-                }
-            }
-            publishPresentationState()
-            return
-        }
-        if (!persistLauncherIconState(false)) {
-            setCheckedSilently(
-                hideLauncherIconSwitch,
-                true
-            ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                this.onHideLauncherIconChanged(buttonView, isChecked)
-            }
-        }
+        persistLauncherIconState(hidden)
         publishPresentationState()
     }
 
-    private fun onSafeModeChanged(buttonView: CompoundButton?, isChecked: Boolean) {
-        if (store == null) {
-            return
-        }
-        if (!isChecked) {
-            showDisableSafeModeConfirmationDialog()
-            return
-        }
-        persistSafeMode(true)
-    }
-
-    private fun showDisableSafeModeConfirmationDialog() {
-        show(
-            activity,
-            activity.getString(R.string.system_safe_mode_disable_confirm_title),
-            activity.getString(R.string.system_safe_mode_disable_confirm_message),
-            { persistSafeMode(false) },
-            {
-                setCheckedSilently(
-                    safeModeSwitch,
-                    true
-                ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                    this.onSafeModeChanged(
-                        buttonView,
-                        isChecked
-                    )
-                }
-                publishPresentationState()
-            })
-    }
-
-    private fun onGlobalLogChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+    private fun onGlobalLogChanged(buttonView: Any?, isChecked: Boolean) {
         if (store == null) {
             return
         }
         if (!store!!.setGlobalLogEnabled(isChecked)) {
-            setCheckedSilently(
-                globalLogSwitch,
-                !isChecked
-            ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                this.onGlobalLogChanged(
-                    buttonView,
-                    isChecked
-                )
-            }
             showToast(R.string.system_settings_save_failed)
+            publishPresentationState()
             return
         }
         DpisLog.setLoggingEnabled(isChecked)
@@ -1312,33 +626,6 @@ class SystemServerSettingsPageController(
         )
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
         publishPresentationState()
-    }
-
-    private fun onHideLauncherIconChanged(buttonView: CompoundButton?, isChecked: Boolean) {
-        if (isChecked) {
-            showHideLauncherIconConfirmationDialog()
-            return
-        }
-        persistLauncherHidden(false)
-    }
-
-    private fun showHideLauncherIconConfirmationDialog() {
-        show(
-            activity,
-            activity.getString(R.string.settings_hide_launcher_icon_confirm_title),
-            activity.getString(R.string.settings_hide_launcher_icon_confirm_message),
-            { persistLauncherHidden(true) },
-            {
-                setCheckedSilently(
-                    hideLauncherIconSwitch, false
-                ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                    this.onHideLauncherIconChanged(
-                        buttonView,
-                        isChecked
-                    )
-                }
-                publishPresentationState()
-            })
     }
 
     private fun canDrawOverlays(): Boolean {
@@ -1374,19 +661,6 @@ class SystemServerSettingsPageController(
         Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun setCheckedSilently(
-        switchView: CompoundButton?,
-        checked: Boolean,
-        listener: CompoundButton.OnCheckedChangeListener?
-    ) {
-        if (switchView == null) {
-            return
-        }
-        switchView.setOnCheckedChangeListener(null)
-        switchView.isChecked = checked
-        switchView.setOnCheckedChangeListener(listener)
-    }
-
     private fun syncHooksSwitchWithScope() {
         if (!BuildConfig.DEBUG) {
             return
@@ -1397,23 +671,11 @@ class SystemServerSettingsPageController(
         hooksToggleController!!.syncFromStore()
     }
 
-    private fun syncLauncherIconSwitch() {
-        if (hideLauncherIconSwitch == null) {
-            return
-        }
+    private fun syncLauncherIconHiddenState() {
         val storedHidden = launcherIconVisibilityStore.isHidden()
         val hidden = resolveLauncherIconHiddenState(storedHidden)
         if (hidden != storedHidden) {
             launcherIconVisibilityStore.isHidden = hidden
-        }
-        setCheckedSilently(
-            hideLauncherIconSwitch,
-            hidden
-        ) { buttonView: CompoundButton?, isChecked: Boolean ->
-            this.onHideLauncherIconChanged(
-                buttonView,
-                isChecked
-            )
         }
     }
 
@@ -1468,20 +730,7 @@ class SystemServerSettingsPageController(
         get() = ComponentName(activity, MainActivity::class.java.name + "Launcher")
 
     private inner class ActivitySystemHooksToggleView : SystemHooksToggleController.View {
-        override fun render(state: SystemHookState) {
-            if (hooksEnabledSwitch == null) {
-                return
-            }
-            setCheckedSilently(
-                hooksEnabledSwitch, state.switchChecked
-            ) { buttonView: CompoundButton?, isChecked: Boolean ->
-                this@SystemServerSettingsPageController.onHooksEnabledChanged(
-                    buttonView,
-                    isChecked
-                )
-            }
-            hooksEnabledSwitch!!.isEnabled = state.switchEnabled
-        }
+        override fun render(state: SystemHookState) = Unit
 
         override fun showInitRequired() {
             showToast(R.string.status_save_requires_init)
@@ -1514,8 +763,6 @@ class SystemServerSettingsPageController(
 
     companion object {
         private const val STATS_REFRESH_INTERVAL_MS = 500L
-        private const val REQUEST_EXPORT_CONFIG_BACKUP = 1001
-        private const val REQUEST_IMPORT_CONFIG_BACKUP = 1002
         private const val CLEAR_CACHE_MIN_DISABLED_MS = 300L
 
         private fun sleepUntilMinDisabledElapsed(startedAt: Long) {
@@ -1529,14 +776,6 @@ class SystemServerSettingsPageController(
             } catch (exception: InterruptedException) {
                 Thread.currentThread().interrupt()
             }
-        }
-
-        private fun setRowEnabled(row: View?, enabled: Boolean) {
-            if (row == null) {
-                return
-            }
-            row.isEnabled = enabled
-            row.alpha = if (enabled) 1f else 0.5f
         }
     }
 }

@@ -89,7 +89,7 @@ import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
 import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.compose.inputFocusFeedback
 import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.rememberInstalledAppIcon
+import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
 

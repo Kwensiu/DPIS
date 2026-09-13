@@ -14,7 +14,7 @@ import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.ui.compose.FontLibraryDialog
 import com.dpis.module.ui.compose.FontLibraryPresentation
 import com.dpis.module.ui.compose.FontLibraryUiItem
-import com.dpis.module.ui.compose.SupportActivityContent
+import com.dpis.module.ui.compose.installFontLibrary
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -36,8 +36,7 @@ class FontLibraryActivity : LocalizedActivity() {
             DpisApplication.xposedService,
         )
         presentation = FontLibraryPresentation()
-        SupportActivityContent.installFontLibrary(
-            this,
+        installFontLibrary(
             presentation,
             ::openFontImportPicker,
             ::openFontLibraryExportPicker,

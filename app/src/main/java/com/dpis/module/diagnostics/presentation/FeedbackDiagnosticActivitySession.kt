@@ -3,11 +3,8 @@ package com.dpis.module.diagnostics.presentation
 import android.content.Intent
 import android.text.format.Formatter
 import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.ui.presentation.MainComposeShellHost
+import com.dpis.module.MainActivity
 import com.dpis.module.R
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
-import com.dpis.module.appconfig.EditorDialogStateFactory
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
@@ -25,10 +22,9 @@ import com.dpis.module.diagnostics.Coordinator
  * Sole Activity-facing owner for feedback diagnostics.
  *
  * Recording, preparation UI, confirms, and package file actions stay in this module.
- * The app shell only supplies platform capabilities through [Shell] and forwards lifecycle.
  */
 class FeedbackDiagnosticActivitySession(
-    private val shell: Shell,
+    private val activity: MainActivity,
     retained: State? = null,
 ) {
     class State internal constructor(
@@ -37,31 +33,13 @@ class FeedbackDiagnosticActivitySession(
         internal val presentation: FeedbackDiagnosticPreparationPresentation.State?,
     )
 
-    interface Shell {
-        fun activity(): LocalizedActivity
-        fun composeShell(): MainComposeShellHost?
-        fun showToast(messageResId: Int)
-        fun runOnUiThread(action: Runnable)
-        fun persistComposeEditor(item: AppListItem, draft: EditorDraft): Boolean
-        fun persistViewEditor(
-            item: AppListItem,
-            state: AppConfigDialogBinder.AppConfigDialogState?,
-        ): AppListItem?
-        fun hookConfigStore(): DpisConfigStore
-        fun packageVersionName(packageName: String): String
-        fun systemHooksEnabled(): Boolean
-        fun syncRuntimeForLaunch(packageName: String)
-        fun dismissActiveEditorDialog()
-    }
-
-    private val activity = shell.activity()
     private val exportExecutor = Executors.newSingleThreadExecutor()
     private val session = retained?.session ?: Session(activity.applicationContext)
     private val launcher = AppLauncher(activity)
     private val packageActions = PackageActions(activity, exportExecutor, SAVE_REQUEST)
     private val confirm = FeedbackDiagnosticConfirm(
         activity,
-        { shell.composeShell() },
+        { activity.mainWorkspaceSession.composeShell() },
         { session },
     )
     private val host = Host()
@@ -89,7 +67,7 @@ class FeedbackDiagnosticActivitySession(
         pageRequest = FeedbackDiagnosticPageRequest(
             item,
             draft,
-            shell.packageVersionName(item.packageName),
+            activity.resolvePackageVersionName(item.packageName),
         )
         val shown = pageController.show(
             item,
@@ -99,20 +77,6 @@ class FeedbackDiagnosticActivitySession(
         if (shown == null) {
             pageRequest = null
         }
-    }
-
-    fun startFromViewEditor(
-        item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
-    ) {
-        if (item == null) return
-        confirm.startFromViewEditor(
-            item,
-            state,
-            { shell.persistViewEditor(item, state) },
-            shell.packageVersionName(item.packageName),
-            shell.hookConfigStore(),
-        )
     }
 
     fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -142,13 +106,25 @@ class FeedbackDiagnosticActivitySession(
         pageController.presentation()?.state,
     )
 
+    private fun requireHookConfigStore(): DpisConfigStore =
+        checkNotNull(activity.hookConfigStore)
+
+    private fun persistComposeEditor(item: AppListItem, draft: EditorDraft): Boolean {
+        val workflow = activity.hostWiringSession.composeAppEditorSaveWorkflow ?: return false
+        if (!workflow.save(item, draft)) {
+            return false
+        }
+        activity.hostWiringSession.composeAppEditorController?.markSaved(draft)
+        return true
+    }
+
     private fun hasStateToClear(): Boolean =
         session.isRunning() || session.hasPageState() || session.diagnosticPackage() != null
 
     private fun dismissPage() {
         pageController.clear()
         pageRequest = null
-        shell.composeShell()?.dismissDiagnosticPreparation()
+        activity.mainWorkspaceSession.composeShell()?.dismissDiagnosticPreparation()
     }
 
     private fun showReady(diagnosticPackage: ExportBuilder.DiagnosticPackage?) {
@@ -185,24 +161,25 @@ class FeedbackDiagnosticActivitySession(
 
     private inner class Host : Session.Host, PageController.Host, ResultSheet.Host {
         override fun restartTargetAppForDiagnostic(packageName: String): Boolean {
-            shell.syncRuntimeForLaunch(packageName)
+            activity.runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName)
             val launched = launcher.restartForDiagnostic(packageName)
             if (launched) {
-                shell.dismissActiveEditorDialog()
+                activity.hostWiringSession.composeAppEditorController?.close()
             }
             return launched
         }
 
-        override fun systemHooksEnabled(): Boolean = shell.systemHooksEnabled()
+        override fun systemHooksEnabled(): Boolean =
+            activity.startupSession.isSystemHookEnabledFromStore
 
         override fun onRecordingStarted() {
             pageController.presentation()?.markRecording()
-            shell.showToast(R.string.feedback_diagnostic_started)
+            activity.showToast(R.string.feedback_diagnostic_started)
         }
 
         override fun onStartUnavailable(rootRequired: Boolean) {
             pageController.presentation()?.markStartFailed()
-            shell.showToast(
+            activity.showToast(
                 if (rootRequired) {
                     R.string.feedback_diagnostic_root_required
                 } else {
@@ -221,28 +198,29 @@ class FeedbackDiagnosticActivitySession(
 
         override fun onPackagingFailed() {
             pageController.presentation()?.showPackagingFailed()
-            shell.showToast(R.string.feedback_diagnostic_save_failed)
+            activity.showToast(R.string.feedback_diagnostic_save_failed)
         }
 
         override fun onAutoFinished() {
-            shell.showToast(R.string.feedback_diagnostic_auto_finished)
+            activity.showToast(R.string.feedback_diagnostic_auto_finished)
         }
 
-        override fun canShowDiagnosticPage(): Boolean = shell.composeShell() != null
+        override fun canShowDiagnosticPage(): Boolean =
+            activity.mainWorkspaceSession.composeShell() != null
 
         override fun showDiagnosticPreparation(
             presentation: FeedbackDiagnosticPreparationPresentation,
         ) {
-            shell.composeShell()?.showDiagnosticPreparation(presentation)
+            activity.mainWorkspaceSession.composeShell()?.showDiagnosticPreparation(presentation)
         }
 
         override fun showFallbackConfirmation(item: AppListItem, draft: EditorDraft) {
             confirm.startFromComposeEditor(
                 item,
-                { shell.persistComposeEditor(item, draft) },
-                EditorDialogStateFactory.create(item, draft),
-                shell.packageVersionName(item.packageName),
-                shell.hookConfigStore(),
+                { persistComposeEditor(item, draft) },
+                draft,
+                activity.resolvePackageVersionName(item.packageName),
+                requireHookConfigStore(),
             )
         }
 
@@ -255,7 +233,7 @@ class FeedbackDiagnosticActivitySession(
         }
 
         override fun saveAppConfig(item: AppListItem, draft: EditorDraft): Boolean =
-            shell.persistComposeEditor(item, draft)
+            persistComposeEditor(item, draft)
 
         override fun startDiagnostic(
             item: AppListItem,
@@ -266,9 +244,9 @@ class FeedbackDiagnosticActivitySession(
         ): Boolean = session.start(
             Coordinator.Request.fromPersisted(
                 item,
-                EditorDialogStateFactory.create(item, draft),
+                draft,
                 versionName,
-                shell.hookConfigStore(),
+                requireHookConfigStore(),
             ),
             durationEnabled,
             durationSeconds,
@@ -301,9 +279,9 @@ class FeedbackDiagnosticActivitySession(
             packageActions.copyFeedbackDiagnosticPath(path)
         }
 
-        override fun runOnUiThread(action: Runnable) = shell.runOnUiThread(action)
+        override fun runOnUiThread(action: Runnable) = activity.runOnUiThread(action)
 
-        override fun showToast(messageResId: Int) = shell.showToast(messageResId)
+        override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 
         override fun shareFeedbackDiagnostic(
             diagnosticPackage: ExportBuilder.DiagnosticPackage,
