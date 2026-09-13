@@ -3,11 +3,9 @@ package com.dpis.module
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
 import com.dpis.module.appconfig.landdetail.LandAppDetailSession
 import com.dpis.module.appconfig.landdetail.LandAppDetailShell
@@ -30,7 +28,6 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.home.presentation.HomeWorkspaceSession
 import com.dpis.module.home.presentation.HomeWorkspaceShell
 import com.dpis.module.quirks.presentation.WechatDpiHelp
-import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
 import com.dpis.module.runtime.presentation.RuntimeLaunchShell
@@ -44,7 +41,6 @@ import com.dpis.module.ui.presentation.MainHostWiringSession
 import com.dpis.module.ui.presentation.MainHostWiringShell
 import com.dpis.module.ui.presentation.MainStartupSession
 import com.dpis.module.ui.presentation.MainWorkspaceSession
-import com.dpis.module.ui.presentation.MainWorkspaceShell
 import com.dpis.module.updates.presentation.MainUpdateSession
 import com.dpis.module.viewport.ViewportPropertySyncer
 
@@ -54,7 +50,7 @@ class MainActivity :
 
     internal val updateSession = MainUpdateSession(this, ::bindHomeWorkspaceIfVisible)
     internal val wechatHelp = WechatDpiHelp(this) { mainWorkspaceSession.composeShell() }
-    private val runtimeLaunchSession = RuntimeLaunchSession(RuntimeLaunchShell(this))
+    internal val runtimeLaunchSession = RuntimeLaunchSession(RuntimeLaunchShell(this))
     internal val saveHandler = AppConfigSaveHandler()
     private val systemScopeCoordinator = SystemScopeCoordinator(
         object : SystemScopeCoordinator.Host {
@@ -93,9 +89,9 @@ class MainActivity :
     internal val installedAppsLoadSession =
         InstalledAppsLoadSession(InstalledAppsLoadShell(this))
     private val appListFilterSession = AppListFilterSession(AppListFilterShell(this))
-    internal val mainWorkspaceSession = MainWorkspaceSession(MainWorkspaceShell(this))
-    internal val homeWorkspaceSession = HomeWorkspaceSession(HomeWorkspaceShell(this))
     internal val hostWiringSession = MainHostWiringSession(MainHostWiringShell(this))
+    internal val mainWorkspaceSession = MainWorkspaceSession(this, hostWiringSession)
+    internal val homeWorkspaceSession = HomeWorkspaceSession(HomeWorkspaceShell(this))
     internal val startupSession = MainStartupSession(
         this,
         updateSession,
@@ -118,80 +114,37 @@ class MainActivity :
 
     override fun onStart() {
         super.onStart()
-        refreshSystemHookEffectiveEnabled()
-        mainWorkspaceSession.bindForLifecycle(requireUiState().workspaceMode)
-        hostWiringSession.toolsWorkspace?.onStart()
-        hostWiringSession.settingsWorkspaceSession?.onStart()
-        DpisApplication.addServiceStateListener(this, true)
+        startupSession.onStart()
     }
 
     override fun onResume() {
         super.onResume()
-        maybeStartRootAccessProbe()
-        hostWiringSession.toolsWorkspace?.onResume()
-        hostWiringSession.settingsWorkspaceSession?.onResume()
+        startupSession.onResume()
     }
 
     override fun onStop() {
-        hostWiringSession.toolsWorkspace?.onStop()
-        hostWiringSession.settingsWorkspaceSession?.onStop()
-        DpisApplication.removeServiceStateListener(this)
+        startupSession.onStop()
         super.onStop()
     }
 
     override fun onDestroy() {
-        startupSession.feedbackDiagnostic?.onDestroy(isChangingConfigurations)
-        updateSession.shutdown()
-        ensureWorkspaceSession().onDestroy()
-        hostWiringSession.settingsWorkspaceSession?.onDestroy()
-        installedAppsLoadSession.shutdown()
+        startupSession.onDestroy()
         super.onDestroy()
     }
 
     override fun onServiceStateChanged() {
-        runOnUiThread {
-            refreshSystemHookEffectiveEnabled()
-            if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                mainWorkspaceSession.bindHomeWorkspace()
-            }
-            hostWiringSession.settingsWorkspaceSession?.onServiceStateChanged()
-            if (startupSession.consumeSkipNextImmediateServiceReload()) {
-                return@runOnUiThread
-            }
-            requestAppsLoad()
-        }
+        runOnUiThread { startupSession.onServiceStateChanged() }
     }
 
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        hostWiringSession.settingsWorkspaceSession?.onActivityResult(
-            requestCode,
-            resultCode,
-            data,
-        )
-        hostWiringSession.toolsWorkspace?.onActivityResult(requestCode, resultCode, data)
-        if (ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
-            return
-        }
-        if (startupSession.feedbackDiagnostic?.handleActivityResult(
-                requestCode,
-                resultCode,
-                data,
-            ) == true
-        ) {
-            return
-        }
+        startupSession.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        startupSession.saveInstanceState(
-            outState,
-            requireUiState(),
-            currentAppListPage.position(),
-        )
-        ensureWorkspaceSession().saveState(outState)
+        startupSession.onSaveInstanceState(outState)
     }
 
     @Deprecated("Deprecated in Java")
@@ -201,20 +154,11 @@ class MainActivity :
         grantResults: IntArray,
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        installedAppsLoadSession.onRequestPermissionsResult(requestCode)
+        startupSession.onRequestPermissionsResult(requestCode)
     }
 
     override fun onRetainCustomNonConfigurationInstance(): Any {
-        return startupSession.retain(
-            requireUiState(),
-            currentAppListPage.position(),
-            scrollStateStore.snapshot(),
-            editorDraftSession.captureAppConfigDraft(),
-            startupSession.viewModel,
-            ensureWorkspaceSession().retainedState(),
-            startupSession.feedbackDiagnostic?.retainedState(),
-            updateSession.pendingUpdatePrompt,
-        )
+        return startupSession.retainNonConfigurationInstance()
     }
 
     fun onPageRefreshRequested(page: AppListPage?) {
@@ -278,7 +222,7 @@ class MainActivity :
                 R.string.dialog_dpis_disabled_status
             },
         )
-        onRuntimeConfigSaved()
+        runtimeLaunchSession.onRuntimeConfigSaved()
         return true
     }
 
@@ -297,22 +241,6 @@ class MainActivity :
         val requests = viewModel.dispatch(action)
         mainWorkspaceSession.render(viewModel.state)
         handleAppsLoadRequests(requests)
-    }
-
-    fun saveComposeEditorForDiagnostic(item: AppListItem?, draft: EditorDraft?): Boolean {
-        val workflow = hostWiringSession.composeAppEditorSaveWorkflow ?: return false
-        return item != null && draft != null && workflow.save(item, draft)
-    }
-
-    fun markComposeEditorSaved(draft: EditorDraft?) {
-        hostWiringSession.composeAppEditorController?.markSaved(draft)
-    }
-
-    fun showComposeFeedbackDiagnosticPreparation(item: AppListItem?, draft: EditorDraft?) {
-        if (item == null || draft == null) {
-            return
-        }
-        startupSession.feedbackDiagnostic?.showPreparation(item, draft)
     }
 
     fun initializeWorkspaceSession(
@@ -360,61 +288,6 @@ class MainActivity :
         }
     }
 
-    private fun maybeStartRootAccessProbe() {
-        RootAccessProbe.refreshAsync {
-            runOnUiThread {
-                if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                    mainWorkspaceSession.bindHomeWorkspace()
-                }
-            }
-        }
-    }
-
-    fun finalizeAppConfigSaveWithRuntimeSync(
-        saveResult: AppConfigSaveHandler.Result?,
-        configRoot: View?,
-        packageName: String?,
-        dpisEnabled: Boolean,
-        store: DpisConfigStore?,
-    ): AppConfigSaveHandler.Result =
-        runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
-            saveResult,
-            configRoot,
-            packageName,
-            dpisEnabled,
-            store,
-        )
-
-    fun finalizeAppConfigSaveWithRuntimeSync(
-        saveResult: AppConfigSaveHandler.Result?,
-        wechatDpiInput: String?,
-        packageName: String?,
-        dpisEnabled: Boolean,
-        store: DpisConfigStore?,
-    ): AppConfigSaveHandler.Result =
-        runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
-            saveResult,
-            wechatDpiInput,
-            packageName,
-            dpisEnabled,
-            store,
-        )
-
-    fun onRuntimeConfigSaved() {
-        runtimeLaunchSession.onRuntimeConfigSaved()
-    }
-
-    fun syncRuntimePropertiesForTargetLaunch(packageName: String?) {
-        runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName)
-    }
-
-    fun startFeedbackDiagnostic(
-        item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
-    ) {
-        startupSession.feedbackDiagnostic?.startFromViewEditor(item, state)
-    }
-
     fun saveCurrentEditorConfigForDiagnostic(
         item: AppListItem?,
         state: AppConfigDialogBinder.AppConfigDialogState?,
@@ -445,25 +318,6 @@ class MainActivity :
             ""
         }
     }
-
-    fun executeHyperOsNativeProxyMount(
-        item: AppListItem?,
-        apply: Boolean,
-        onFinished: Runnable?,
-    ) {
-        runtimeLaunchSession.executeHyperOsNativeProxyMount(item, apply, onFinished)
-    }
-
-    fun executeDialogProcessAction(
-        item: AppListItem?,
-        action: AppConfigDialogBinder.ProcessAction?,
-    ) {
-        runtimeLaunchSession.executeDialogProcessAction(item, action)
-    }
-
-    /** The catalogue intentionally does not preload metadata for every installed package. */
-    fun isHyperOsNativeProxyCandidate(item: AppListItem?): Boolean =
-        runtimeLaunchSession.isHyperOsNativeProxyCandidate(item)
 
     val isSystemHookEnabledFromStore: Boolean
         get() = cachedSystemHookEffectiveEnabled

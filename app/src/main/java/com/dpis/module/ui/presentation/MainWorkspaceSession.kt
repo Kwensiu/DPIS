@@ -1,89 +1,32 @@
 package com.dpis.module.ui.presentation
 
-import android.app.Activity
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
-import android.widget.FrameLayout
 import androidx.compose.ui.platform.ComposeView
+import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.EditorPresentation
-import com.dpis.module.appconfig.editor.ComposeAppEditorController
-import com.dpis.module.appconfig.landdetail.LandAppDetailSession
-import com.dpis.module.appconfig.presentation.AppConfigSheetSession
-import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.AppWorkspace
 import com.dpis.module.applist.AppWorkspacePresentation
-import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.home.HomeWorkspaceState
-import com.dpis.module.settings.presentation.SettingsWorkspaceSession
-import com.dpis.module.settings.presentation.ToolsWorkspace
-import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.MainViewModel
 import com.dpis.module.ui.WatchUiMode
 
 /**
  * Owns Compose workspace-shell install, workspace-mode visibility, and
- * editor restore for the current workspace. [com.dpis.module.MainActivity]
- * keeps startup wiring and remaining domain hosts.
+ * editor restore for the current workspace. View hosts come from
+ * [MainHostWiringSession]; [MainStartupSession] owns Activity lifecycle.
  */
 class MainWorkspaceSession(
-    private val shell: Shell,
+    private val activity: MainActivity,
+    private val hostWiring: MainHostWiringSession,
 ) {
-    interface Shell {
-        fun activity(): Activity
-
-        fun requireUiState(): MainUiState
-
-        fun dispatch(action: MainUiAction)
-
-        fun editorViewModel(): MainViewModel?
-
-        fun composeAppEditorController(): ComposeAppEditorController?
-
-        fun appWorkspace(): AppWorkspace?
-
-        fun toolsWorkspace(): ToolsWorkspace?
-
-        fun settingsWorkspaceSession(): SettingsWorkspaceSession?
-
-        fun landCurrentPage(): AppListPage
-
-        fun appWorkspaceScrollStateStore(): AppWorkspaceScrollStateStore
-
-        fun systemHooksEnabled(): Boolean
-
-        fun homeState(): HomeWorkspaceState
-
-        fun ensureTemplateWorkspace(): TemplateWorkspaceActivitySession
-
-        fun landAppDetailSession(): LandAppDetailSession
-
-        fun appConfigSheetSession(): AppConfigSheetSession
-
-        fun topContainer(): View?
-
-        fun toolsWorkspaceContainer(): View?
-
-        fun settingsWorkspaceContainer(): View?
-
-        fun landDetailPane(): View?
-
-        fun landDetailDivider(): View?
-
-        fun landDetailEmptyView(): View?
-
-        fun landDetailContent(): FrameLayout?
-    }
-
     private var composeShellHost: MainComposeShellHost? = null
     private var renderedWorkspaceMode: MainUiState.WorkspaceMode? = null
 
     fun composeShell(): MainComposeShellHost? = composeShellHost
 
     fun installComposeWorkspaceShell() {
-        val activity = shell.activity()
         val activityContent = activity.findViewById<ViewGroup>(android.R.id.content)
         if (activityContent == null || activityContent.childCount == 0) {
             return
@@ -100,53 +43,54 @@ class MainWorkspaceSession(
         )
         val workspacePresentationCoordinator = MainWorkspacePresentationCoordinator(
             object : MainWorkspacePresentationCoordinator.Content {
-                override fun homeState(): HomeWorkspaceState = shell.homeState()
+                override fun homeState(): HomeWorkspaceState =
+                    activity.homeWorkspaceSession.createState()
 
                 override fun appState(): AppWorkspacePresentation.State =
                     AppWorkspacePresentation.create(
-                        shell.requireUiState(),
-                        shell.landCurrentPage(),
-                        shell.systemHooksEnabled(),
-                        shell.appWorkspaceScrollStateStore(),
-                        shell.appWorkspace()!!.actions(),
+                        activity.requireUiState(),
+                        activity.currentAppListPage,
+                        activity.isSystemHookEnabledFromStore,
+                        activity.scrollStateStore,
+                        checkNotNull(hostWiring.appWorkspace).actions(),
                     )
 
                 override fun appEditorState(): EditorPresentation.State? =
-                    shell.composeAppEditorController()?.createState()
+                    hostWiring.composeAppEditorController?.createState()
 
-                override fun toolsState() = shell.toolsWorkspace()?.state()
+                override fun toolsState() = hostWiring.toolsWorkspace?.state()
 
                 override fun changeToolsPending(percent: Int) {
-                    shell.toolsWorkspace()?.changePending(percent)
+                    hostWiring.toolsWorkspace?.changePending(percent)
                 }
 
                 override fun applyTools() {
-                    shell.toolsWorkspace()?.apply()
+                    hostWiring.toolsWorkspace?.apply()
                 }
 
                 override fun restoreTools() {
-                    shell.toolsWorkspace()?.restore()
+                    hostWiring.toolsWorkspace?.restore()
                 }
 
                 override fun requestToolsPermission() {
-                    shell.toolsWorkspace()?.requestPermission()
+                    hostWiring.toolsWorkspace?.requestPermission()
                 }
 
-                override fun settings() = checkNotNull(shell.settingsWorkspaceSession())
+                override fun settings() = checkNotNull(hostWiring.settingsWorkspaceSession)
 
                 override fun templateWorkspace() =
-                    shell.ensureTemplateWorkspace().presentationSource { query ->
-                        shell.dispatch(MainUiAction.queryChanged(query))
+                    activity.ensureWorkspaceSession().presentationSource { query ->
+                        activity.dispatchMainUiAction(MainUiAction.queryChanged(query))
                     }
             },
         )
         composeShellHost = MainComposeShellHost(
             composeRoot,
-            shell.requireUiState(),
+            activity.requireUiState(),
             WatchUiMode.shouldUseCompactUi(activity),
             workspacePresentationCoordinator,
         ) { action ->
-            shell.dispatch(action)
+            activity.dispatchMainUiAction(action)
         }
     }
 
@@ -167,11 +111,11 @@ class MainWorkspaceSession(
         val templateWorkspace = mode == MainUiState.WorkspaceMode.TEMPLATE
         val toolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
         val settingsWorkspace = mode == MainUiState.WorkspaceMode.SETTINGS
-        setVisible(shell.topContainer(), appWorkspace || templateWorkspace)
+        setVisible(hostWiring.topContainer, appWorkspace || templateWorkspace)
         val animateWorkspace = renderedWorkspaceMode != null && renderedWorkspaceMode != mode
         renderedWorkspaceMode = mode
-        setVisible(shell.toolsWorkspaceContainer(), toolsWorkspace)
-        setVisible(shell.settingsWorkspaceContainer(), settingsWorkspace)
+        setVisible(hostWiring.toolsWorkspaceContainer, toolsWorkspace)
+        setVisible(hostWiring.settingsWorkspaceContainer, settingsWorkspace)
         resetHiddenWorkspacePresentation(mode)
         if (animateWorkspace) {
             animateVisibleWorkspaceContent(mode)
@@ -188,9 +132,9 @@ class MainWorkspaceSession(
     }
 
     fun restoreAppEditorForCurrentWorkspace() {
-        val viewModel = shell.editorViewModel()
+        val viewModel = activity.startupSession.viewModel
         if (viewModel == null
-            || shell.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP
+            || activity.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP
         ) {
             return
         }
@@ -206,16 +150,16 @@ class MainWorkspaceSession(
         if (editingPackage.isNullOrBlank()) {
             return
         }
-        val landDetailContent = shell.landDetailContent()
+        val landDetailContent = hostWiring.landDetailContent
         if (isLandscapeDetailMode() && landDetailContent != null && landDetailContent.childCount > 0) {
             return
         }
-        for (appItem in shell.requireUiState().visibleItems(shell.landCurrentPage())) {
+        for (appItem in activity.requireUiState().visibleItems(activity.currentAppListPage)) {
             if (editingPackage == appItem.packageName) {
                 if (isLandscapeDetailMode()) {
-                    shell.landAppDetailSession().show(appItem)
+                    activity.landDetailSession.show(appItem)
                 } else {
-                    shell.appConfigSheetSession().show(appItem)
+                    activity.sheetSession.show(appItem)
                 }
                 break
             }
@@ -237,15 +181,15 @@ class MainWorkspaceSession(
     }
 
     fun bindWorkspaceSession() {
-        shell.ensureTemplateWorkspace().present(
-            shell.requireUiState().currentQuery(),
+        activity.ensureWorkspaceSession().present(
+            activity.requireUiState().currentQuery(),
             composeShellHost != null,
         )
     }
 
     @JvmOverloads
     fun bindToolsWorkspace(resetExpandedState: Boolean = false) {
-        val toolsWorkspace = shell.toolsWorkspace()
+        val toolsWorkspace = hostWiring.toolsWorkspace
         val composeShellHost = composeShellHost
         if (composeShellHost != null && toolsWorkspace != null) {
             toolsWorkspace.onResume()
@@ -253,7 +197,7 @@ class MainWorkspaceSession(
             return
         }
         if (toolsWorkspace != null) {
-            toolsWorkspace.bind(shell.toolsWorkspaceContainer())
+            toolsWorkspace.bind(hostWiring.toolsWorkspaceContainer)
             if (resetExpandedState) {
                 toolsWorkspace.onShown()
             }
@@ -261,12 +205,12 @@ class MainWorkspaceSession(
     }
 
     fun bindSettingsWorkspace() {
-        val settingsWorkspaceSession = shell.settingsWorkspaceSession()
+        val settingsWorkspaceSession = hostWiring.settingsWorkspaceSession
         if (composeShellHost != null) {
             settingsWorkspaceSession?.ensureComposeController()
             return
         }
-        val settingsWorkspaceContainer = shell.settingsWorkspaceContainer()
+        val settingsWorkspaceContainer = hostWiring.settingsWorkspaceContainer
         if (settingsWorkspaceContainer == null || settingsWorkspaceSession == null) {
             return
         }
@@ -274,9 +218,9 @@ class MainWorkspaceSession(
     }
 
     fun restoreWorkspaceEditorForCurrentConfiguration() {
-        if (shell.requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            shell.ensureTemplateWorkspace().restoreForConfiguration(
-                shell.requireUiState().currentQuery(),
+        if (activity.requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
+            activity.ensureWorkspaceSession().restoreForConfiguration(
+                activity.requireUiState().currentQuery(),
                 composeShellHost != null,
             )
         }
@@ -299,35 +243,35 @@ class MainWorkspaceSession(
     }
 
     fun isLandscapeDetailMode(): Boolean =
-        shell.landDetailContent() != null && shell.landDetailEmptyView() != null
+        hostWiring.landDetailContent != null && hostWiring.landDetailEmptyView != null
 
     private fun applyLandscapeDetailVisibility(
         appWorkspace: Boolean,
         templateWorkspace: Boolean,
     ) {
-        val landDetailContent = shell.landDetailContent()
+        val landDetailContent = hostWiring.landDetailContent
         val showDetailPane = isLandscapeDetailMode() && (appWorkspace || templateWorkspace)
-        setVisible(shell.landDetailPane(), showDetailPane)
-        setVisible(shell.landDetailDivider(), showDetailPane)
+        setVisible(hostWiring.landDetailPane, showDetailPane)
+        setVisible(hostWiring.landDetailDivider, showDetailPane)
         setVisible(
-            shell.landDetailEmptyView(),
+            hostWiring.landDetailEmptyView,
             appWorkspace && landDetailContent != null && landDetailContent.childCount == 0,
         )
         setVisible(
             landDetailContent,
             appWorkspace && landDetailContent != null && landDetailContent.childCount > 0,
         )
-        shell.ensureTemplateWorkspace().updateLegacyDetailVisibility(templateWorkspace)
+        activity.ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace)
     }
 
     private fun resetHiddenWorkspacePresentation(visibleMode: MainUiState.WorkspaceMode) {
         resetWorkspacePresentationUnlessMode(
-            shell.toolsWorkspaceContainer(),
+            hostWiring.toolsWorkspaceContainer,
             visibleMode,
             MainUiState.WorkspaceMode.TOOLS,
         )
         resetWorkspacePresentationUnlessMode(
-            shell.settingsWorkspaceContainer(),
+            hostWiring.settingsWorkspaceContainer,
             visibleMode,
             MainUiState.WorkspaceMode.SETTINGS,
         )
@@ -354,8 +298,8 @@ class MainWorkspaceSession(
     }
 
     private fun workspaceViewForMode(mode: MainUiState.WorkspaceMode): View? = when (mode) {
-        MainUiState.WorkspaceMode.TOOLS -> shell.toolsWorkspaceContainer()
-        MainUiState.WorkspaceMode.SETTINGS -> shell.settingsWorkspaceContainer()
+        MainUiState.WorkspaceMode.TOOLS -> hostWiring.toolsWorkspaceContainer
+        MainUiState.WorkspaceMode.SETTINGS -> hostWiring.settingsWorkspaceContainer
         else -> null
     }
 

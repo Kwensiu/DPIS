@@ -1,6 +1,8 @@
 package com.dpis.module.ui.presentation
 
+import android.content.Intent
 import android.os.Bundle
+import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListFilterState
@@ -9,6 +11,7 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticShell
+import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession
@@ -20,9 +23,8 @@ import com.dpis.module.updates.presentation.MainUpdateSession
 import java.util.EnumSet
 
 /**
- * Owns MainActivity launch, retained-state capture, bundle restore, and the
- * initial shell snapshot. Filter store, ViewModel, and feedback session live
- * here so the Activity does not grow setter forwards.
+ * Owns MainActivity launch, lifecycle forwarding after attach, retained-state
+ * capture, and the initial shell snapshot.
  */
 class MainStartupSession(
     private val activity: MainActivity,
@@ -131,6 +133,95 @@ class MainStartupSession(
     fun continueStartupDialogs() {
         if (!updateSession.maybeShowStartupDisclaimerDialog()) {
             updateSession.maybeCheckForUpdatesOnStartup()
+        }
+    }
+
+    fun onStart() {
+        activity.refreshSystemHookEffectiveEnabled()
+        mainWorkspaceSession.bindForLifecycle(activity.requireUiState().workspaceMode)
+        hostWiringSession.toolsWorkspace?.onStart()
+        hostWiringSession.settingsWorkspaceSession?.onStart()
+        DpisApplication.addServiceStateListener(activity, true)
+    }
+
+    fun onResume() {
+        maybeStartRootAccessProbe()
+        hostWiringSession.toolsWorkspace?.onResume()
+        hostWiringSession.settingsWorkspaceSession?.onResume()
+    }
+
+    fun onStop() {
+        hostWiringSession.toolsWorkspace?.onStop()
+        hostWiringSession.settingsWorkspaceSession?.onStop()
+        DpisApplication.removeServiceStateListener(activity)
+    }
+
+    fun onDestroy() {
+        feedbackDiagnostic?.onDestroy(activity.isChangingConfigurations)
+        updateSession.shutdown()
+        activity.ensureWorkspaceSession().onDestroy()
+        hostWiringSession.settingsWorkspaceSession?.onDestroy()
+        activity.installedAppsLoadSession.shutdown()
+    }
+
+    fun onServiceStateChanged() {
+        activity.refreshSystemHookEffectiveEnabled()
+        if (activity.requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
+            mainWorkspaceSession.bindHomeWorkspace()
+        }
+        hostWiringSession.settingsWorkspaceSession?.onServiceStateChanged()
+        if (consumeSkipNextImmediateServiceReload()) {
+            return
+        }
+        activity.requestAppsLoad()
+    }
+
+    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        hostWiringSession.settingsWorkspaceSession?.onActivityResult(
+            requestCode,
+            resultCode,
+            data,
+        )
+        hostWiringSession.toolsWorkspace?.onActivityResult(requestCode, resultCode, data)
+        if (activity.ensureWorkspaceSession().handleActivityResult(requestCode, data)) {
+            return
+        }
+        feedbackDiagnostic?.handleActivityResult(requestCode, resultCode, data)
+    }
+
+    fun onSaveInstanceState(outState: Bundle) {
+        saveInstanceState(
+            outState,
+            activity.requireUiState(),
+            activity.currentAppListPage.position(),
+        )
+        activity.ensureWorkspaceSession().saveState(outState)
+    }
+
+    fun onRequestPermissionsResult(requestCode: Int) {
+        activity.installedAppsLoadSession.onRequestPermissionsResult(requestCode)
+    }
+
+    fun retainNonConfigurationInstance(): MainRetainedState {
+        return retain(
+            activity.requireUiState(),
+            activity.currentAppListPage.position(),
+            activity.scrollStateStore.snapshot(),
+            activity.editorDraftSession.captureAppConfigDraft(),
+            viewModel,
+            activity.ensureWorkspaceSession().retainedState(),
+            feedbackDiagnostic?.retainedState(),
+            updateSession.pendingUpdatePrompt,
+        )
+    }
+
+    private fun maybeStartRootAccessProbe() {
+        RootAccessProbe.refreshAsync {
+            activity.runOnUiThread {
+                if (activity.requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
+                    mainWorkspaceSession.bindHomeWorkspace()
+                }
+            }
         }
     }
 

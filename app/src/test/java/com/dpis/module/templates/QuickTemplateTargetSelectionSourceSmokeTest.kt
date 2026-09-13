@@ -158,7 +158,10 @@ class QuickTemplateTargetSelectionSourceSmokeTest {
         assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"))
         assertTrue(workspaceCoordinator.contains("!composePresentation && legacyDetailContent != null"))
         assertTrue(workspaceCoordinator.contains("startPortraitTargetSelection(templateId)"))
-        assertTrue(mainActivity.contains("handleActivityResult(requestCode, data)"))
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startup.contains("handleActivityResult(requestCode, data)"))
         assertTrue(workspaceCoordinator.contains("activity.startActivityForResult("))
         val loadSession = read(
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"

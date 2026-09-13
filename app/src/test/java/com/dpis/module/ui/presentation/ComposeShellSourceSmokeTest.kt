@@ -323,7 +323,7 @@ class ComposeShellSourceSmokeTest {
         val restore = workspace.substring(restoreStart, restoreEnd)
 
         val composeGuard = restore.indexOf("if (composeShellHost != null)")
-        val legacySheet = restore.indexOf("shell.appConfigSheetSession().show(appItem)")
+        val legacySheet = restore.indexOf("activity.sheetSession.show(appItem)")
         assertTrue(composeGuard >= 0)
         assertTrue(legacySheet > composeGuard)
         assertTrue(restore.substring(composeGuard, legacySheet).contains("return"))
@@ -492,7 +492,7 @@ class ComposeShellSourceSmokeTest {
                 "val editorDestination: ConfigEditorDestination"))
         assertTrue(startup.contains("retained.workspaceSessionState"))
         assertTrue(templatePresentation.contains("val editorDestination: ConfigEditorDestination"))
-        assertTrue(activity.contains("ensureWorkspaceSession().saveState(outState)"))
+        assertTrue(startup.contains("ensureWorkspaceSession().saveState(outState)"))
         assertTrue(templates.contains("HookChainEditorPage("))
         assertTrue(templates.contains("AppTypefacePickerPage("))
         assertTrue(templates.contains("destination = editorDestination"))

@@ -6,7 +6,9 @@ import org.junit.Test
 class ToolsWorkspaceBinderSourceSmokeTest {
     @Test
     fun mainActivityWiresToolsWorkspaceBinderLifecycle() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.kt")
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
         val workspaceSession = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
         )
@@ -26,12 +28,12 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         assertTrue(workspace.contains("TouchFeedbackBinder.bindPressHaptic(view)"))
         assertTrue(workspace.contains("LogGate.ensureEnabled("))
         assertTrue(workspaceSession.contains("fun bindToolsWorkspace("))
-        assertTrue(source.contains("mainWorkspaceSession.bindForLifecycle("))
-        assertTrue(source.contains("hostWiringSession.toolsWorkspace?.onStart()"))
-        assertTrue(source.contains("hostWiringSession.toolsWorkspace?.onResume()"))
-        assertTrue(source.contains("hostWiringSession.toolsWorkspace?.onStop()"))
+        assertTrue(startup.contains("mainWorkspaceSession.bindForLifecycle("))
+        assertTrue(startup.contains("hostWiringSession.toolsWorkspace?.onStart()"))
+        assertTrue(startup.contains("hostWiringSession.toolsWorkspace?.onResume()"))
+        assertTrue(startup.contains("hostWiringSession.toolsWorkspace?.onStop()"))
         assertTrue(
-            source.contains(
+            startup.contains(
                 "hostWiringSession.toolsWorkspace?.onActivityResult(requestCode, resultCode, data)",
             )
         )

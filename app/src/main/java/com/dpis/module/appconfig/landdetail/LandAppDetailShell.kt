@@ -34,13 +34,14 @@ class LandAppDetailShell(
         configRoot: View?,
         packageName: String?,
         dpisEnabled: Boolean,
-    ): AppConfigSaveHandler.Result = activity.finalizeAppConfigSaveWithRuntimeSync(
-        result,
-        configRoot,
-        packageName,
-        dpisEnabled,
-        activity.hookConfigStore,
-    )
+    ): AppConfigSaveHandler.Result =
+        activity.runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
+            result,
+            configRoot,
+            packageName,
+            dpisEnabled,
+            activity.hookConfigStore,
+        )
 
     override fun editingDraft(): EditorDraft? = activity.editorDraftSession.currentEditingDraft()
 
@@ -62,14 +63,14 @@ class LandAppDetailShell(
         if (item == null || action == null) {
             return
         }
-        activity.executeDialogProcessAction(item, action)
+        activity.runtimeLaunchSession.executeDialogProcessAction(item, action)
     }
 
     override fun startFeedbackDiagnostic(
         item: AppListItem?,
         state: AppConfigDialogBinder.AppConfigDialogState?,
     ) {
-        activity.startFeedbackDiagnostic(item, state)
+        activity.startupSession.feedbackDiagnostic?.startFromViewEditor(item, state)
     }
 
     override fun updateEditingDraft(state: AppConfigDialogBinder.AppConfigDialogState?) {

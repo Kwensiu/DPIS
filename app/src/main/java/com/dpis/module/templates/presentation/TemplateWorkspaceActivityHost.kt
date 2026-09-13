@@ -43,7 +43,8 @@ internal class TemplateWorkspaceActivityHost(
         }
     }
 
-    override fun onTemplateRuntimeConfigSaved() = activity.onRuntimeConfigSaved()
+    override fun onTemplateRuntimeConfigSaved() =
+        activity.runtimeLaunchSession.onRuntimeConfigSaved()
 
     override fun requestAppsLoad() = activity.requestAppsLoad()
 

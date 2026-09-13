@@ -24,8 +24,11 @@ class FeedbackDiagnosticShell(
     }
 
     override fun persistComposeEditor(item: AppListItem, draft: EditorDraft): Boolean {
-        if (!activity.saveComposeEditorForDiagnostic(item, draft)) return false
-        activity.markComposeEditorSaved(draft)
+        val workflow = activity.hostWiringSession.composeAppEditorSaveWorkflow ?: return false
+        if (!workflow.save(item, draft)) {
+            return false
+        }
+        activity.hostWiringSession.composeAppEditorController?.markSaved(draft)
         return true
     }
 
@@ -42,7 +45,7 @@ class FeedbackDiagnosticShell(
     override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
 
     override fun syncRuntimeForLaunch(packageName: String) {
-        activity.syncRuntimePropertiesForTargetLaunch(packageName)
+        activity.runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName)
     }
 
     override fun dismissActiveEditorDialog() {

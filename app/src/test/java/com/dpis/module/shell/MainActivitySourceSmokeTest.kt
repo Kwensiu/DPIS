@@ -31,10 +31,13 @@ class MainActivitySourceSmokeTest {
         val session = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivitySession.kt")
 
+        val startup = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
         assertTrue(source.contains("private var workspaceSession: TemplateWorkspaceActivitySession?"))
-        assertTrue(source.contains(".handleActivityResult(requestCode, data)"))
-        assertTrue(source.contains(".saveState(outState)"))
-        assertTrue(source.contains(".onDestroy()"))
+        assertTrue(startup.contains(".handleActivityResult(requestCode, data)"))
+        assertTrue(startup.contains(".saveState(outState)"))
+        assertTrue(startup.contains(".onDestroy()"))
         assertFalse(source.contains("TemplateWorkspaceBinder"))
         assertFalse(source.contains("TemplateDetailPaneController"))
         assertFalse(source.contains("QuickTemplateTargetsBinder"))
@@ -176,8 +179,8 @@ class MainActivitySourceSmokeTest {
             )
         )
         assertFalse(source.contains("private void updateWatchFilterTabsScrollOffset(int dy)"))
-        assertTrue(workspace.contains("setVisible(shell.toolsWorkspaceContainer(), toolsWorkspace)"))
-        assertTrue(workspace.contains("setVisible(shell.settingsWorkspaceContainer(), settingsWorkspace)"))
+        assertTrue(workspace.contains("setVisible(hostWiring.toolsWorkspaceContainer, toolsWorkspace)"))
+        assertTrue(workspace.contains("setVisible(hostWiring.settingsWorkspaceContainer, settingsWorkspace)"))
         assertFalse(source.contains("setSearchFocusFabVisible("))
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
@@ -191,7 +194,7 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("GlobalPrefillActionsAdapter"))
         assertFalse(source.contains("QuickTemplateActionsAdapter"))
         assertTrue(workspace.contains("fun bindWorkspaceSession()"))
-        assertTrue(workspace.contains("shell.ensureTemplateWorkspace().present("))
+        assertTrue(workspace.contains("activity.ensureWorkspaceSession().present("))
         assertTrue(startup.contains("STATE_TEMPLATE_QUERY"))
         assertFalse(source.contains("searchFilterButton.setEnabled(appWorkspace)"))
         assertFalse(source.contains("applySearchClearButtonPosition(appWorkspace)"))
@@ -232,7 +235,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(hostWiring.contains("var appWorkspace: AppWorkspace?"))
         assertTrue(hostWiring.contains("appWorkspace = AppWorkspace("))
-        assertTrue(workspace.contains("shell.appWorkspace()!!.actions()"))
+        assertTrue(workspace.contains("checkNotNull(hostWiring.appWorkspace).actions()"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
         assertTrue(appWorkspace.contains("interface Host"))
         assertTrue(appWorkspace.contains("fun actions(): AppWorkspacePresentation.Actions"))
@@ -319,9 +322,9 @@ class MainActivitySourceSmokeTest {
 
         assertTrue(startup.contains("restoreAppEditorForCurrentWorkspace()"))
         assertTrue(workspace.contains("fun restoreAppEditorForCurrentWorkspace()"))
-        assertTrue(workspace.contains("shell.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
-        assertTrue(workspace.contains("shell.appConfigSheetSession().show(appItem)"))
-        assertTrue(workspace.contains("shell.landAppDetailSession().show(appItem)"))
+        assertTrue(workspace.contains("activity.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP"))
+        assertTrue(workspace.contains("activity.sheetSession.show(appItem)"))
+        assertTrue(workspace.contains("activity.landDetailSession.show(appItem)"))
         val sheetSession = read(
             "src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetSession.kt",
         )
@@ -425,7 +428,14 @@ class MainActivitySourceSmokeTest {
         assertTrue(loadSession.contains("activity.requestPermissions("))
         assertTrue(loadSession.contains("REQUEST_XIAOMI_GET_INSTALLED_APPS"))
         assertTrue(source.contains("onRequestPermissionsResult("))
-        assertTrue(source.contains("installedAppsLoadSession.onRequestPermissionsResult(requestCode)"))
+        val startupPermissions = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(
+            startupPermissions.contains(
+                "installedAppsLoadSession.onRequestPermissionsResult(requestCode)",
+            )
+        )
         assertTrue(loadSession.contains("permissionRequestCompleted"))
         assertTrue(
             loadSession.contains("isXiaomiPermissionDeclared()")
@@ -466,7 +476,7 @@ class MainActivitySourceSmokeTest {
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
-        assertTrue(source.contains("scrollStateStore.snapshot()"))
+        assertTrue(startup.contains("scrollStateStore.snapshot()"))
         assertTrue(startup.contains("scrollStateStore.restore("))
         assertFalse(source.contains("STATE_APP_LIST_SCROLL_POSITIONS"))
         assertFalse(source.contains("putIntArray(\n                STATE_APP_LIST_SCROLL_POSITIONS"))
@@ -774,11 +784,11 @@ class MainActivitySourceSmokeTest {
             )
         )
         assertTrue(
-            source.contains(
-                "DpisApplication.addServiceStateListener(this, true)"
+            startup.contains(
+                "DpisApplication.addServiceStateListener(activity, true)"
             )
         )
-        assertTrue(source.contains("consumeSkipNextImmediateServiceReload()"))
+        assertTrue(startup.contains("fun consumeSkipNextImmediateServiceReload()"))
     }
 
     @Test
@@ -823,14 +833,14 @@ class MainActivitySourceSmokeTest {
             sheetSession.contains("binder.bind(dialogView, sheetItem, systemHooksEnabled)")
                 || landSession.contains("dialogView, sheetItem, systemHooksEnabled")
         )
-        assertTrue(workspace.contains("shell.appConfigSheetSession().show(appItem)"))
+        assertTrue(workspace.contains("activity.sheetSession.show(appItem)"))
         assertTrue(sheetSession.contains("AppConfigDialogBinder(activity, dialogHost)"))
         assertTrue(source.contains("internal val dialogHost"))
         assertTrue(sheetSession.contains("binder.bind("))
         assertTrue(
             sheetSession.contains("AppConfigDialogCoordinator(activity).show(dialogView)")
         )
-        assertTrue(workspace.contains("shell.landAppDetailSession().show(appItem)"))
+        assertTrue(workspace.contains("activity.landDetailSession.show(appItem)"))
         assertTrue(landSession.contains("R.layout.view_land_app_detail"))
         assertTrue(landSession.contains("LandAppDetailPaneBinder(activity, this)"))
         assertTrue(landSession.contains("fun saveDraft("))

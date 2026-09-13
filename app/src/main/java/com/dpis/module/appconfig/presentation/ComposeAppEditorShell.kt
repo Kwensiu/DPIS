@@ -44,10 +44,11 @@ class ComposeAppEditorShell(
     override fun executeProcessAction(
         item: AppListItem,
         action: AppConfigDialogBinder.ProcessAction,
-    ) = activity.executeDialogProcessAction(item, action)
+    ) = activity.runtimeLaunchSession.executeDialogProcessAction(item, action)
 
-    override fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft) =
-        activity.showComposeFeedbackDiagnosticPreparation(item, draft)
+    override fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft) {
+        activity.startupSession.feedbackDiagnostic?.showPreparation(item, draft)
+    }
 
     override fun postDelayed(delayMillis: Long, action: Runnable) {
         activity.window.decorView.postDelayed(action, delayMillis)
@@ -58,22 +59,23 @@ class ComposeAppEditorShell(
         wechatDpiInput: String,
         packageName: String,
         dpisEnabled: Boolean,
-    ): AppConfigSaveHandler.Result = activity.finalizeAppConfigSaveWithRuntimeSync(
-        result,
-        wechatDpiInput,
-        packageName,
-        dpisEnabled,
-        activity.hookConfigStore,
-    )
+    ): AppConfigSaveHandler.Result =
+        activity.runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
+            result,
+            wechatDpiInput,
+            packageName,
+            dpisEnabled,
+            activity.hookConfigStore,
+        )
 
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 
     override fun isHyperOsNativeProxyCandidate(item: AppListItem?): Boolean =
-        activity.isHyperOsNativeProxyCandidate(item)
+        activity.runtimeLaunchSession.isHyperOsNativeProxyCandidate(item)
 
     override fun executeHyperOsNativeProxyMount(
         item: AppListItem?,
         apply: Boolean,
         onFinished: Runnable?,
-    ) = activity.executeHyperOsNativeProxyMount(item, apply, onFinished)
+    ) = activity.runtimeLaunchSession.executeHyperOsNativeProxyMount(item, apply, onFinished)
 }

@@ -70,19 +70,19 @@ class AppConfigDialogActivityHost(
         if (action == null) {
             return
         }
-        activity.executeDialogProcessAction(item, action)
+        activity.runtimeLaunchSession.executeDialogProcessAction(item, action)
     }
 
     override fun applyHyperOsNativeProxy(item: AppListItem?, onFinished: Runnable?) {
-        activity.executeHyperOsNativeProxyMount(item, true, onFinished)
+        activity.runtimeLaunchSession.executeHyperOsNativeProxyMount(item, true, onFinished)
     }
 
     override fun unmountHyperOsNativeProxy(item: AppListItem?, onFinished: Runnable?) {
-        activity.executeHyperOsNativeProxyMount(item, false, onFinished)
+        activity.runtimeLaunchSession.executeHyperOsNativeProxyMount(item, false, onFinished)
     }
 
     override fun isHyperOsNativeProxyCandidate(item: AppListItem?): Boolean =
-        activity.isHyperOsNativeProxyCandidate(item)
+        activity.runtimeLaunchSession.isHyperOsNativeProxyCandidate(item)
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean =
         activity.setDpisEnabled(packageName, enabled)
@@ -177,7 +177,7 @@ class AppConfigDialogActivityHost(
         item: AppListItem?,
         state: AppConfigDialogBinder.AppConfigDialogState?,
     ) {
-        activity.startFeedbackDiagnostic(item, state)
+        activity.startupSession.feedbackDiagnostic?.startFromViewEditor(item, state)
     }
 
     override fun saveAppConfig(
@@ -217,7 +217,7 @@ class AppConfigDialogActivityHost(
             activity.hookConfigStore,
             null,
         )
-        return activity.finalizeAppConfigSaveWithRuntimeSync(
+        return activity.runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
             result,
             dialogView,
             item.packageName,
@@ -234,7 +234,7 @@ class AppConfigDialogActivityHost(
     }
 
     override fun onRuntimeConfigSaved() {
-        activity.onRuntimeConfigSaved()
+        activity.runtimeLaunchSession.onRuntimeConfigSaved()
     }
 
     override fun onDraftStateChanged(state: AppConfigDialogBinder.AppConfigDialogState?) {

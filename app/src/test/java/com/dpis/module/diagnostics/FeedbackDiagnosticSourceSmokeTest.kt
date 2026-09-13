@@ -100,11 +100,19 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         assertTrue(startup.contains("FeedbackDiagnosticActivitySession("))
         assertTrue(startup.contains("FeedbackDiagnosticShell(activity)"))
-        assertTrue(main.contains("feedbackDiagnostic?.startFromViewEditor("))
-        assertTrue(main.contains("feedbackDiagnostic?.showPreparation("))
+        assertTrue(
+            read(
+                "src/main/java/com/dpis/module/appconfig/landdetail/LandAppDetailShell.kt"
+            ).contains("feedbackDiagnostic?.startFromViewEditor(")
+        )
+        assertTrue(
+            read(
+                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorShell.kt"
+            ).contains("feedbackDiagnostic?.showPreparation(")
+        )
         assertTrue(startup.contains("feedbackDiagnostic.restorePage()"))
         assertTrue(startup.contains("feedbackDiagnostic.attachHost()"))
-        assertTrue(main.contains("feedbackDiagnostic?.onDestroy(isChangingConfigurations)"))
+        assertTrue(startup.contains("feedbackDiagnostic?.onDestroy(activity.isChangingConfigurations)"))
         assertFalse(main.contains("private Session.Host createFeedbackDiagnosticHost()"))
         assertFalse(main.contains("createDiagnosticPageControllerHost()"))
         assertTrue(confirm.contains("LogGate.isEnabled("))
@@ -379,7 +387,10 @@ class FeedbackDiagnosticSourceSmokeTest {
             read("src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt")
                 .contains("const val SAVE_REQUEST = 10024")
         )
-        assertTrue(main.contains("feedbackDiagnostic?.handleActivityResult("))
+        val startupResult = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+        )
+        assertTrue(startupResult.contains("feedbackDiagnostic?.handleActivityResult("))
         assertTrue(packageActions.contains("Intent.ACTION_CREATE_DOCUMENT"))
         assertTrue(packageActions.contains("ExportBuilder.MIME_TYPE"))
         assertTrue(packageActions.contains("openOutputStream(uri)"))
