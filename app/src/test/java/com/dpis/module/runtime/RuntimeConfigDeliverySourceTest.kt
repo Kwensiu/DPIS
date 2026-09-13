@@ -35,7 +35,7 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(runtimeLaunch.contains("onRuntimeConfigSaved()"))
         assertTrue(runtimeLaunch.contains("fun onRuntimeConfigSaved()"))
         assertTrue(runtimeLaunch.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
-        assertTrue(runtimeLaunch.contains("private fun finalizeAppConfigSaveWithWechatDpi("))
+        assertTrue(runtimeLaunch.contains("WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)"))
         assertTrue(runtimeLaunch.contains("fun finalizeAppConfigSaveWithRuntimeSync("))
         assertTrue(appConfigHost.contains("runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync("))
         assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))

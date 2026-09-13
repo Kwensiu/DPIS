@@ -65,7 +65,7 @@ class QuickConfigSourceSmokeTest {
         val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
 
         Assert.assertTrue(activity.contains("appConfigSaveHandler.saveResolved("))
-        Assert.assertTrue(activity.contains("WechatDpiSheetBinder.save("))
+        Assert.assertTrue(activity.contains("WechatDpiEditor.save("))
         Assert.assertTrue(
             activity.contains(
                 "draft.wechatDpiInput, item.packageName, draft.dpisEnabled, this.hookConfigStore"

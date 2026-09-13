@@ -25,7 +25,7 @@ import com.dpis.module.fonts.FontLibraryEntry
 import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.fonts.SystemFontEntry
 import com.dpis.module.fonts.SystemFontRegistry
-import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
+
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
@@ -88,7 +88,7 @@ class AppConfigDialogBinder @JvmOverloads constructor(
         }
 
         fun saveAppConfig(
-            dialogView: View?,
+            wechatDpiInput: String?,
             item: AppListItem?,
             dpisEnabled: Boolean,
             viewportInput: TextInputEditText?,
@@ -406,21 +406,6 @@ class AppConfigDialogBinder @JvmOverloads constructor(
             ConfigValueInputErrorBinder.bindFullMessage(fontInputLayout, fontValid)
             val valid = viewportValid && fontValid
             saveButton.isEnabled = valid
-            return valid
-        }
-
-        @JvmStatic
-        fun updateSaveButtonState(dialogView: View?, views: AppConfigDialogViews): Boolean {
-            val genericValid: Boolean = updateSaveButtonState(
-                views.viewportInputLayout,
-                views.viewportInputView,
-                views.viewportModeToggle,
-                views.fontInputLayout,
-                views.fontInputView,
-                views.saveButton
-            )
-            val valid = genericValid && WechatDpiSheetBinder.isInputValid(dialogView)
-            views.saveButton.isEnabled = valid
             return valid
         }
 

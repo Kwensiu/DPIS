@@ -1,7 +1,6 @@
 package com.dpis.module.appconfig.presentation
 
 import android.content.Intent
-import android.view.View
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
@@ -103,7 +102,7 @@ class AppConfigDialogActivityHost(
     }
 
     override fun saveAppConfig(
-        dialogView: View?,
+        wechatDpiInput: String?,
         item: AppListItem?,
         dpisEnabled: Boolean,
         viewportInput: TextInputEditText?,
@@ -141,7 +140,7 @@ class AppConfigDialogActivityHost(
         )
         return activity.runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync(
             result,
-            dialogView,
+            wechatDpiInput,
             item.packageName,
             dpisEnabled,
             activity.hookConfigStore,

@@ -61,7 +61,6 @@ import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.quickconfig.QuickConfigTargetDecision
 import com.dpis.module.quirks.WechatDpiEditor
-import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
@@ -565,7 +564,7 @@ class QuickConfigActivity : LocalizedActivity() {
             }
 
             override fun saveAppConfig(
-                dialogView: View?,
+                wechatDpiInput: String?,
                 item: AppListItem?,
                 dpisEnabled: Boolean,
                 viewportInput: TextInputEditText?,
@@ -598,7 +597,7 @@ class QuickConfigActivity : LocalizedActivity() {
                     this@QuickConfigActivity.hookConfigStore,
                     null
                 )
-                return finalizeSave(result, dialogView, target.packageName, dpisEnabled)
+                return finalizeSave(result, wechatDpiInput, target.packageName, dpisEnabled)
             }
 
             override val configStore: DpisConfigStore?
@@ -703,7 +702,7 @@ class QuickConfigActivity : LocalizedActivity() {
 
     private fun finalizeSave(
         result: AppConfigSaveHandler.Result?,
-        dialogView: View?,
+        wechatDpiInput: String?,
         packageName: String?,
         dpisEnabled: Boolean
     ): AppConfigSaveHandler.Result {
@@ -714,9 +713,9 @@ class QuickConfigActivity : LocalizedActivity() {
             return result
         }
         val store = this.hookConfigStore
-        if (!WechatDpiSheetBinder.save(dialogView, packageName, dpisEnabled, store)) {
+        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
             return failure(
-                if (WechatDpiSheetBinder.isInputValid(dialogView))
+                if (WechatDpiEditor.isInputValid(wechatDpiInput))
                     R.string.system_settings_save_failed
                 else
                     R.string.status_save_invalid

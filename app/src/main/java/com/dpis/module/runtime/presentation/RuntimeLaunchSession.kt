@@ -1,6 +1,5 @@
 package com.dpis.module.runtime.presentation
 
-import android.view.View
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
@@ -14,7 +13,6 @@ import com.dpis.module.process.presentation.ProcessActionConfirm
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.quirks.WechatDpiEditor
-import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
@@ -68,27 +66,6 @@ class RuntimeLaunchSession(
         },
         ProcessActionConfirm(activity) { composeShell() },
     )
-
-    fun finalizeAppConfigSaveWithRuntimeSync(
-        saveResult: AppConfigSaveHandler.Result?,
-        configRoot: View?,
-        packageName: String?,
-        dpisEnabled: Boolean,
-        store: DpisConfigStore?,
-    ): AppConfigSaveHandler.Result {
-        val result = finalizeAppConfigSaveWithWechatDpi(
-            saveResult,
-            configRoot,
-            packageName,
-            dpisEnabled,
-            store,
-        )
-        if (!result.success) {
-            return result
-        }
-        scheduleRuntimePropertiesForTargetLaunch(packageName)
-        return result
-    }
 
     fun finalizeAppConfigSaveWithRuntimeSync(
         saveResult: AppConfigSaveHandler.Result?,
@@ -217,32 +194,6 @@ class RuntimeLaunchSession(
                 activity.packageManager,
                 item.packageName,
             ))
-    }
-
-    private fun finalizeAppConfigSaveWithWechatDpi(
-        saveResult: AppConfigSaveHandler.Result?,
-        configRoot: View?,
-        packageName: String?,
-        dpisEnabled: Boolean,
-        store: DpisConfigStore?,
-    ): AppConfigSaveHandler.Result {
-        if (saveResult == null) {
-            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed)
-        }
-        if (!saveResult.success) {
-            return saveResult
-        }
-        if (!WechatDpiSheetBinder.save(configRoot, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                if (WechatDpiSheetBinder.isInputValid(configRoot)) {
-                    R.string.system_settings_save_failed
-                } else {
-                    R.string.status_save_invalid
-                },
-            )
-        }
-        onRuntimeConfigSaved()
-        return saveResult
     }
 
     private fun scheduleRuntimePropertiesForTargetLaunch(packageName: String?) {
