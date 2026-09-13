@@ -13,6 +13,7 @@ import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.runtime.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.viewport.ViewportPropertySyncer
@@ -39,6 +40,32 @@ class RuntimeLaunchSession(
 
     fun interface HyperOsNativeProxyMountCallback {
         fun onFinished(success: Boolean)
+    }
+
+    fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
+        val store = shell.hookConfigStore()
+        if (store == null || packageName == null) {
+            shell.showToast(R.string.status_save_requires_init)
+            return false
+        }
+        if (!store.setTargetDpisEnabled(packageName, enabled)) {
+            shell.showToast(R.string.system_settings_save_failed)
+            return false
+        }
+        if (!enabled) {
+            FontRuntimePropertySyncer.clearTargetAsync(packageName)
+            FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+            ViewportPropertySyncer.clearTargetAsync(packageName)
+        }
+        shell.showToast(
+            if (enabled) {
+                R.string.dialog_dpis_enabled_status
+            } else {
+                R.string.dialog_dpis_disabled_status
+            },
+        )
+        onRuntimeConfigSaved()
+        return true
     }
 
     private val pendingRuntimePropertyGenerations = HashMap<String, Int>()

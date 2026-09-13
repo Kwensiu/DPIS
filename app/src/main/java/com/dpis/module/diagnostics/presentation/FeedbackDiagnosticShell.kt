@@ -35,14 +35,16 @@ class FeedbackDiagnosticShell(
     override fun persistViewEditor(
         item: AppListItem,
         state: AppConfigDialogBinder.AppConfigDialogState?,
-    ): AppListItem? = activity.saveCurrentEditorConfigForDiagnostic(item, state)
+    ): AppListItem? =
+        activity.editorDraftSession.saveCurrentEditorConfigForDiagnostic(item, state)
 
     override fun hookConfigStore(): DpisConfigStore = checkNotNull(activity.hookConfigStore)
 
     override fun packageVersionName(packageName: String): String =
         activity.resolvePackageVersionName(packageName)
 
-    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
+    override fun systemHooksEnabled(): Boolean =
+        activity.startupSession.isSystemHookEnabledFromStore
 
     override fun syncRuntimeForLaunch(packageName: String) {
         activity.runtimeLaunchSession.syncRuntimePropertiesForTargetLaunch(packageName)

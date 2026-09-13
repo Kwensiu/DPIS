@@ -634,7 +634,9 @@ class AppConfigDialogBinderSourceSmokeTest {
 
     @Test
     fun disablingDpisClearsRuntimePropertiesForAllCompatPaths() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.kt")
+        val source = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
+        )
         val disableStart = source.indexOf("if (!enabled) {")
         val disableEnd = source.indexOf("}", disableStart)
         val disableBlock = source.substring(disableStart, disableEnd)

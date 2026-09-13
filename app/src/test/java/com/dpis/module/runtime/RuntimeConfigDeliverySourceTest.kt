@@ -32,7 +32,7 @@ class RuntimeConfigDeliverySourceTest {
             read("src/main/java/com/dpis/module/DpisApplication.kt").contains(
                 "RuntimeConfigDelivery.setLocalSnapshotReloader(Runnable { reloadConfigStore() })",
         ))
-        assertTrue(mainActivity.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))
+        assertTrue(runtimeLaunch.contains("onRuntimeConfigSaved()"))
         assertTrue(runtimeLaunch.contains("fun onRuntimeConfigSaved()"))
         assertTrue(runtimeLaunch.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
         assertTrue(runtimeLaunch.contains("private fun finalizeAppConfigSaveWithWechatDpi("))

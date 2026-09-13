@@ -12,11 +12,11 @@ class AppListFilterShell(
 ) : AppListFilterSession.Shell {
     override fun activity(): Activity = activity
 
-    override fun requireUiState(): MainUiState = activity.requireUiState()
+    override fun requireUiState(): MainUiState = activity.startupSession.requireUiState()
 
     override fun saveFilterState(filterState: AppListFilterState) {
         activity.startupSession.filterStore?.save(filterState)
     }
 
-    override fun dispatch(action: MainUiAction) = activity.dispatchMainUiAction(action)
+    override fun dispatch(action: MainUiAction) = activity.startupSession.dispatch(action)
 }

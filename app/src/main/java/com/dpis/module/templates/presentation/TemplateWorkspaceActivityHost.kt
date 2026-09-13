@@ -46,7 +46,7 @@ internal class TemplateWorkspaceActivityHost(
     override fun onTemplateRuntimeConfigSaved() =
         activity.runtimeLaunchSession.onRuntimeConfigSaved()
 
-    override fun requestAppsLoad() = activity.requestAppsLoad()
+    override fun requestAppsLoad() = activity.startupSession.requestAppsLoad()
 
     override fun runOnUiThread(runnable: Runnable) = activity.runOnUiThread(runnable)
 }

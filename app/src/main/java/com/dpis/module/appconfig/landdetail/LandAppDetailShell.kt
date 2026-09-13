@@ -23,11 +23,12 @@ class LandAppDetailShell(
 
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
-    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
+    override fun systemHooksEnabled(): Boolean =
+        activity.startupSession.isSystemHookEnabledFromStore
 
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 
-    override fun requestAppsLoad() = activity.requestAppsLoad()
+    override fun requestAppsLoad() = activity.startupSession.requestAppsLoad()
 
     override fun finalizeRuntimeSync(
         result: AppConfigSaveHandler.Result,
@@ -54,7 +55,7 @@ class LandAppDetailShell(
     }
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean =
-        activity.setDpisEnabled(packageName, enabled)
+        activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)
 
     override fun executeProcessAction(
         item: AppListItem?,

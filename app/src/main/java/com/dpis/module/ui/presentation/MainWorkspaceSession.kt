@@ -48,9 +48,9 @@ class MainWorkspaceSession(
 
                 override fun appState(): AppWorkspacePresentation.State =
                     AppWorkspacePresentation.create(
-                        activity.requireUiState(),
-                        activity.currentAppListPage,
-                        activity.isSystemHookEnabledFromStore,
+                        activity.startupSession.requireUiState(),
+                        activity.startupSession.currentAppListPage,
+                        activity.startupSession.isSystemHookEnabledFromStore,
                         activity.scrollStateStore,
                         checkNotNull(hostWiring.appWorkspace).actions(),
                     )
@@ -79,18 +79,18 @@ class MainWorkspaceSession(
                 override fun settings() = checkNotNull(hostWiring.settingsWorkspaceSession)
 
                 override fun templateWorkspace() =
-                    activity.ensureWorkspaceSession().presentationSource { query ->
-                        activity.dispatchMainUiAction(MainUiAction.queryChanged(query))
+                    activity.startupSession.ensureWorkspaceSession().presentationSource { query ->
+                        activity.startupSession.dispatch(MainUiAction.queryChanged(query))
                     }
             },
         )
         composeShellHost = MainComposeShellHost(
             composeRoot,
-            activity.requireUiState(),
+            activity.startupSession.requireUiState(),
             WatchUiMode.shouldUseCompactUi(activity),
             workspacePresentationCoordinator,
         ) { action ->
-            activity.dispatchMainUiAction(action)
+            activity.startupSession.dispatch(action)
         }
     }
 
@@ -134,7 +134,7 @@ class MainWorkspaceSession(
     fun restoreAppEditorForCurrentWorkspace() {
         val viewModel = activity.startupSession.viewModel
         if (viewModel == null
-            || activity.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP
+            || activity.startupSession.requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP
         ) {
             return
         }
@@ -154,7 +154,7 @@ class MainWorkspaceSession(
         if (isLandscapeDetailMode() && landDetailContent != null && landDetailContent.childCount > 0) {
             return
         }
-        for (appItem in activity.requireUiState().visibleItems(activity.currentAppListPage)) {
+        for (appItem in activity.startupSession.requireUiState().visibleItems(activity.startupSession.currentAppListPage)) {
             if (editingPackage == appItem.packageName) {
                 if (isLandscapeDetailMode()) {
                     activity.landDetailSession.show(appItem)
@@ -181,8 +181,8 @@ class MainWorkspaceSession(
     }
 
     fun bindWorkspaceSession() {
-        activity.ensureWorkspaceSession().present(
-            activity.requireUiState().currentQuery(),
+        activity.startupSession.ensureWorkspaceSession().present(
+            activity.startupSession.requireUiState().currentQuery(),
             composeShellHost != null,
         )
     }
@@ -218,9 +218,9 @@ class MainWorkspaceSession(
     }
 
     fun restoreWorkspaceEditorForCurrentConfiguration() {
-        if (activity.requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
-            activity.ensureWorkspaceSession().restoreForConfiguration(
-                activity.requireUiState().currentQuery(),
+        if (activity.startupSession.requireUiState().workspaceMode == MainUiState.WorkspaceMode.TEMPLATE) {
+            activity.startupSession.ensureWorkspaceSession().restoreForConfiguration(
+                activity.startupSession.requireUiState().currentQuery(),
                 composeShellHost != null,
             )
         }
@@ -261,7 +261,7 @@ class MainWorkspaceSession(
             landDetailContent,
             appWorkspace && landDetailContent != null && landDetailContent.childCount > 0,
         )
-        activity.ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace)
+        activity.startupSession.ensureWorkspaceSession().updateLegacyDetailVisibility(templateWorkspace)
     }
 
     private fun resetHiddenWorkspacePresentation(visibleMode: MainUiState.WorkspaceMode) {

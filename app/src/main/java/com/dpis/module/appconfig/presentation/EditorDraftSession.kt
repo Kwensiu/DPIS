@@ -5,7 +5,9 @@ import android.view.View
 import android.widget.FrameLayout
 import com.dpis.module.R
 import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.applist.AppListItem
 import com.dpis.module.appconfig.landdetail.LandAppDetailPaneBinder
+import com.dpis.module.appconfig.landdetail.LandAppDetailSession
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.quirks.presentation.WechatDpiSheetBinder
 import com.dpis.module.ui.MainViewModel
@@ -22,6 +24,8 @@ import com.google.android.material.textfield.TextInputLayout
 class EditorDraftSession(
     private val shell: Shell,
     private val dialogHost: AppConfigDialogBinder.Host,
+    private val sheetSession: AppConfigSheetSession,
+    private val landDetailSession: LandAppDetailSession,
 ) {
     interface Shell {
         fun activity(): Activity
@@ -56,6 +60,26 @@ class EditorDraftSession(
     fun activeEditorRoot(): View? = activeEditorRoot
 
     fun activeEditorPackageName(): String? = activeEditorPackageName
+
+    fun saveCurrentEditorConfigForDiagnostic(
+        item: AppListItem?,
+        state: AppConfigDialogBinder.AppConfigDialogState?,
+    ): AppListItem? {
+        if (item == null) {
+            return null
+        }
+        val root = activeEditorRoot
+        if (root == null || item.packageName != activeEditorPackageName) {
+            return item
+        }
+        if (AppConfigDialogBinder.viewsFor(root) != null) {
+            return sheetSession.saveForDiagnostic(item, root)
+        }
+        if (LandAppDetailPaneBinder.stateFor(root) != null) {
+            return landDetailSession.saveForDiagnostic(item, state, root)
+        }
+        return item
+    }
 
     fun clearEditingSession() {
         val viewModel = shell.viewModel() ?: return

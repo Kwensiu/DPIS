@@ -85,7 +85,7 @@ class AppConfigDialogActivityHost(
         activity.runtimeLaunchSession.isHyperOsNativeProxyCandidate(item)
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean =
-        activity.setDpisEnabled(packageName, enabled)
+        activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)
 
     override fun showFontHookDomains(
         item: AppListItem?,
@@ -199,7 +199,7 @@ class AppConfigDialogActivityHost(
         if (item == null || viewportInput == null || fontScaleInput == null) {
             return null
         }
-        activity.refreshSystemHookEffectiveEnabled()
+        activity.startupSession.refreshSystemHookEffectiveEnabled()
         val result = saveHandler.save(
             item,
             viewportInput,
@@ -213,7 +213,7 @@ class AppConfigDialogActivityHost(
             fontHookDomainsResetRequested,
             viewportScaleInput,
             viewportAbsoluteInput,
-            activity.isSystemHookEnabledFromStore,
+            activity.startupSession.isSystemHookEnabledFromStore,
             activity.hookConfigStore,
             null,
         )
@@ -230,7 +230,7 @@ class AppConfigDialogActivityHost(
         get() = activity.hookConfigStore
 
     override fun requestAppsLoad() {
-        activity.requestAppsLoad()
+        activity.startupSession.requestAppsLoad()
     }
 
     override fun onRuntimeConfigSaved() {

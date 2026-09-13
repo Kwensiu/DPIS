@@ -417,7 +417,11 @@ class ComposeShellSourceSmokeTest {
         assertTrue(sheet.contains("internal fun EditorSheetChildPageHeader("))
         assertTrue(sheet.contains("ChildPageHeaderHeight"))
         assertTrue(editorSessionController.contains("EditorActions.create("))
-        assertTrue(activity.contains("requestAppsLoad()"));
+        assertTrue(
+            read(
+                "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
+            ).contains("fun requestAppsLoad()")
+        )
         assertTrue(editorController.contains("host.setDpisEnabled(enabled)"))
         assertTrue(editorController.contains("draft.withDpisEnabled(enabled)"))
     }

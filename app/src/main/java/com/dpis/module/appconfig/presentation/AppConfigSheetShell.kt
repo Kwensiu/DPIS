@@ -14,7 +14,8 @@ class AppConfigSheetShell(
 
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
-    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
+    override fun systemHooksEnabled(): Boolean =
+        activity.startupSession.isSystemHookEnabledFromStore
 
     override fun editingDraft(): EditorDraft? = activity.editorDraftSession.currentEditingDraft()
 

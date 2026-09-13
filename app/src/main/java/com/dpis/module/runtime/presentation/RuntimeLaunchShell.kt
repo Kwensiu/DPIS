@@ -14,7 +14,7 @@ class RuntimeLaunchShell(
 
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
-    override fun requestAppsLoad() = activity.requestAppsLoad()
+    override fun requestAppsLoad() = activity.startupSession.requestAppsLoad()
 
     override fun showToast(messageResId: Int) = activity.showToast(messageResId)
 

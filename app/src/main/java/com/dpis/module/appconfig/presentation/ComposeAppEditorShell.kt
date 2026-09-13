@@ -13,18 +13,20 @@ class ComposeAppEditorShell(
 ) : ComposeAppEditorActivityGateway.Shell {
     override fun activity(): Activity = activity
 
-    override fun appsSnapshot(): List<AppListItem> = activity.requireUiState().appsSnapshot()
+    override fun appsSnapshot(): List<AppListItem> =
+        activity.startupSession.requireUiState().appsSnapshot()
 
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
     override fun resolvePackageVersionName(packageName: String): String =
         activity.resolvePackageVersionName(packageName)
 
-    override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabledFromStore
+    override fun systemHooksEnabled(): Boolean =
+        activity.startupSession.isSystemHookEnabledFromStore
 
     override fun refreshEditor() = activity.mainWorkspaceSession.refreshApps()
 
-    override fun requestAppsLoad() = activity.requestAppsLoad()
+    override fun requestAppsLoad() = activity.startupSession.requestAppsLoad()
 
     override fun toggleScope(
         item: AppListItem,
@@ -39,7 +41,7 @@ class ComposeAppEditorShell(
     )
 
     override fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean =
-        activity.setDpisEnabled(packageName, enabled)
+        activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)
 
     override fun executeProcessAction(
         item: AppListItem,

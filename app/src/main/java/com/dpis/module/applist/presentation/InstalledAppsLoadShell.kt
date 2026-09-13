@@ -14,8 +14,8 @@ class InstalledAppsLoadShell(
     override fun hookConfigStore(): DpisConfigStore? = activity.hookConfigStore
 
     override fun dispatchRequestAppsLoad(forceReload: Boolean) =
-        activity.dispatchInstalledAppsLoad(forceReload)
+        activity.startupSession.dispatchInstalledAppsLoad(forceReload)
 
     override fun dispatchAppsLoadFinished(requestId: Int, loaded: List<AppListItem>?) =
-        activity.dispatchInstalledAppsLoadFinished(requestId, loaded)
+        activity.startupSession.dispatchInstalledAppsLoadFinished(requestId, loaded)
 }

@@ -20,7 +20,13 @@ class MainHostWiringShell(
     override fun activity(): MainActivity = activity
 
     override fun requestEditorScope(item: AppListItem, onApproved: Runnable): Boolean =
-        activity.requestEditorScope(item, onApproved)
+        activity.systemScopeCoordinator.requestScope(
+            item.packageName,
+            item.label,
+            onApproved,
+            null,
+            false,
+        )
 
     override fun refreshApps() = activity.mainWorkspaceSession.refreshApps()
 
@@ -36,16 +42,17 @@ class MainHostWiringShell(
 
     override fun wechatDpiHelp(): WechatDpiHelp = activity.wechatHelp
 
-    override fun dispatch(action: MainUiAction) = activity.dispatchMainUiAction(action)
+    override fun dispatch(action: MainUiAction) = activity.startupSession.dispatch(action)
 
     override fun setCurrentAppListPage(page: AppListPage, submit: Boolean) =
-        activity.setCurrentAppListPage(page, submit)
+        activity.startupSession.setCurrentAppListPage(page, submit)
 
-    override fun saveFilterState(filterState: AppListFilterState) =
-        activity.applyAppListFilter(filterState)
+    override fun saveFilterState(filterState: AppListFilterState) {
+        activity.appListFilterSession.apply(filterState)
+    }
 
     override fun onPageRefreshRequested(page: AppListPage) =
-        activity.onPageRefreshRequested(page)
+        activity.startupSession.onPageRefreshRequested(page)
 
     override fun updateScrollPosition(
         page: AppListPage,
@@ -57,7 +64,7 @@ class MainHostWiringShell(
         workspaceContainer: View?,
         detailEmpty: View?,
         detailContent: FrameLayout?,
-    ) = activity.ensureWorkspaceSession().attachLegacyViews(
+    ) = activity.startupSession.ensureWorkspaceSession().attachLegacyViews(
         workspaceContainer,
         detailEmpty,
         detailContent,
