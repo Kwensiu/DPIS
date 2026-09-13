@@ -70,7 +70,6 @@ open class AppConfigDialogStateModel(
     @JvmField var viewportApplyModeResetRequested: Boolean = false
     @JvmField var viewportScaleInput: String = initialViewportScaleInput.orEmpty()
     @JvmField var viewportAbsoluteInput: String = initialViewportAbsoluteInput.orEmpty()
-    private var unsavedBadgeBinder: UnsavedBadgeBinder? = null
     private var savedDraftSignature = ""
 
     init {
@@ -102,17 +101,12 @@ open class AppConfigDialogStateModel(
         viewportApplyModeResetRequested = true
     }
 
-    fun bindUnsavedBadge(binder: UnsavedBadgeBinder?) { unsavedBadgeBinder = binder; refreshUnsavedBadge() }
-
     fun captureSavedDraft(views: AppConfigDialogBinder.AppConfigDialogViews, previewBaseline: Boolean) {
         savedDraftSignature = if (previewBaseline) emptyDraftSignature() else currentDraftSignature(views)
-        refreshUnsavedBadge()
     }
 
     fun hasUnsavedChanges(views: AppConfigDialogBinder.AppConfigDialogViews): Boolean =
         savedDraftSignature != currentDraftSignature(views)
-
-    fun refreshUnsavedBadge() { unsavedBadgeBinder?.refresh() }
 
     private fun currentDraftSignature(views: AppConfigDialogBinder.AppConfigDialogViews) = listOf(
         views.viewportInputView.text?.toString().orEmpty(),

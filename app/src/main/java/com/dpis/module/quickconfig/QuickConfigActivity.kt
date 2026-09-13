@@ -17,13 +17,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.AppConfigDialogState
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.captureDialogActionStyle
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.resolveFontMode
+
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.resolveViewportMode
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.showSaveButtonFeedback
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.stateFor
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.updateSaveButtonState
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.Companion.viewsFor
+
+
+
+
 import com.dpis.module.appconfig.presentation.AppConfigDialogBinder.ProcessAction
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
@@ -53,7 +52,7 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.HyperOsNativeAppDetector
 import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
+
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation.Companion.forOverride
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry.automaticCustomizableDomains
@@ -102,7 +101,6 @@ class QuickConfigActivity : LocalizedActivity() {
             : ExecutorService = Executors.newSingleThreadExecutor()
     private val appConfigDialogHost: AppConfigDialogBinder.Host = createHost()
     private val feedbackDiagnosticCoordinator = Coordinator(createFeedbackDiagnosticHost())
-    private val activeEditorRoot: View? = null
     private var activityResumed = false
     private var pendingFeedbackDiagnosticResult: Coordinator.Result? = null
     private var pendingFeedbackDiagnosticPackage: DiagnosticPackage? = null
@@ -544,14 +542,6 @@ class QuickConfigActivity : LocalizedActivity() {
                 return true
             }
 
-            override fun showFontHookDomains(
-                item: AppListItem?,
-                state: AppConfigDialogState?,
-                onStateChanged: Runnable?
-            ) {
-                this@QuickConfigActivity.showFontHookDomains(item, state, onStateChanged)
-            }
-
             override fun getFontHookDomainsButtonText(
                 item: AppListItem?,
                 state: AppConfigDialogState?
@@ -796,53 +786,7 @@ class QuickConfigActivity : LocalizedActivity() {
             }
             return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName))
         }
-        val root = activeEditorRoot
-        val views = viewsFor(root)
-        val state = stateFor(root)
-        if (root == null || views == null || state == null) {
-            return item
-        }
-        if (!updateSaveButtonState(root, views)) {
-            showToast(R.string.status_save_invalid)
-            return null
-        }
-        val result = appConfigDialogHost.saveAppConfig(
-            root,
-            item,
-            state.dpisEnabled,
-            views.viewportInputView,
-            views.fontInputView,
-            resolveViewportMode(views.viewportModeToggle),
-            state.viewportApplyMode,
-            state.viewportApplyModeResetRequested,
-            resolveFontMode(views.fontModeToggle),
-            state.selectedTypefaceId,
-            state.draftFontHookDomainsRaw,
-            state.fontHookDomainsResetRequested,
-            state.viewportScaleInput,
-            state.viewportAbsoluteInput
-        )
-        if (result!!.messageResId != 0) {
-            showToast(result.messageResId)
-        }
-        if (!result.success) {
-            return null
-        }
-        state.previewFromGlobalPrefill = false
-        state.draftFontHookDomainsRaw = null
-        state.fontHookDomainsResetRequested = false
-        state.viewportApplyModeResetRequested = false
-        state.captureSavedDraft(views, false)
-        showSaveButtonFeedback(views.saveButton)
-        val binder = AppConfigDialogBinder(this, appConfigDialogHost)
-        val style = captureDialogActionStyle(views.scopeButton)
-        binder.refreshDialogState(views, state, style, this.isSystemHookEnabled, item)
-        binder.syncHyperOsNativeProxyAfterSave(item, views, state)
-        binder.requestScopeAfterSuccessfulSave(
-            root, item, views, state, style,
-            this.isSystemHookEnabled
-        )
-        return item.withWechatDpi(readPersistedWechatDpiForDiagnostic(item.packageName))
+        return item
     }
 
     private fun readPersistedWechatDpiForDiagnostic(packageName: String?): Int? {
@@ -1052,77 +996,6 @@ class QuickConfigActivity : LocalizedActivity() {
             ""
         }
     }
-
-    private fun showFontHookDomains(
-        item: AppListItem?,
-        state: AppConfigDialogState?,
-        onStateChanged: Runnable?
-    ) {
-        if (item == null || item.packageName == null || item.packageName.isBlank()) {
-            return
-        }
-        val store = this.hookConfigStore
-        val automaticKnownDomains: MutableSet<String?> = HashSet(automaticCustomizableDomains())
-        val currentOverride = resolveFontHookDomainsForDraft(item, state)
-        FontHookDomainDialog.show(
-            this,
-            object : FontHookDomainDialog.Host {
-                override fun saveCustom(
-                    packageName: String?,
-                    selectedKnownDomains: MutableSet<String?>?,
-                    automaticKnownDomains: MutableSet<String?>?,
-                    unknownDomains: MutableSet<String?>?
-                ): Boolean {
-                    if (state != null) {
-                        state.draftFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection(
-                            selectedKnownDomains,
-                            automaticKnownDomains,
-                            unknownDomains
-                        )
-                        state.fontHookDomainsResetRequested = state.draftFontHookDomainsRaw == null
-                    }
-                    onStateChanged?.run()
-                    return true
-                }
-
-                override fun restoreRecommended(packageName: String?): Boolean {
-                    if (state != null) {
-                        state.draftFontHookDomainsRaw = null
-                        state.fontHookDomainsResetRequested = true
-                    }
-                    onStateChanged?.run()
-                    return true
-                }
-
-                override fun saveViewportApplyMode(packageName: String?, mode: String?): Boolean {
-                    if (state != null) {
-                        state.viewportApplyMode = ViewportApplyMode.normalize(mode)
-                        state.viewportApplyModeResetRequested = ViewportApplyMode.OFF == state.viewportApplyMode
-                    }
-                    onStateChanged?.run()
-                    return true
-                }
-            },
-            item.packageName,
-            automaticKnownDomains,
-            currentOverride,
-            state?.viewportApplyMode ?: store!!.getTargetViewportApplyMode(item.packageName),
-            this.isFontHookDomainEditingEnabled,
-            onStateChanged
-        )
-    }
-
-    private val isFontHookDomainEditingEnabled: Boolean
-        get() {
-            if (activeEditorRoot == null) {
-                return false
-            }
-            val views =
-                viewsFor(activeEditorRoot)
-            return views != null && FontApplyMode.FIELD_REWRITE == resolveFontMode(
-                views.fontModeToggle
-            )
-        }
 
     private fun resolveFontHookDomainsForDraft(
         item: AppListItem?,

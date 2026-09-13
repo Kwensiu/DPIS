@@ -7,20 +7,17 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.FontLibraryActivity
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.settings.SystemScopeCoordinator
-import com.dpis.module.viewport.ViewportApplyMode
 import com.google.android.material.textfield.TextInputEditText
 
 /**
- * XML/legacy app-config editor host for [MainActivity].
- * Compose editor capabilities stay on [ComposeAppEditorActivityGateway].
+ * Activity-owned app-config capabilities for [MainActivity].
+ * Compose editor session wiring stays on [ComposeAppEditorActivityGateway].
  */
 class AppConfigDialogActivityHost(
     private val activity: MainActivity,
@@ -85,85 +82,6 @@ class AppConfigDialogActivityHost(
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean =
         activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)
-
-    override fun showFontHookDomains(
-        item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
-        onStateChanged: Runnable?,
-    ) {
-        showFontHookDomains(
-            item,
-            state,
-            onStateChanged,
-            FontApplyMode.FIELD_REWRITE == FontApplyMode.normalize(item?.fontMode),
-        )
-    }
-
-    fun showFontHookDomains(
-        item: AppListItem?,
-        state: AppConfigDialogBinder.AppConfigDialogState?,
-        onStateChanged: Runnable?,
-        fontDomainsEditable: Boolean,
-    ) {
-        val target = item ?: return
-        if (target.packageName.isNullOrBlank()) {
-            return
-        }
-        val store = activity.hookConfigStore
-        val automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains()
-        val currentOverride = resolveFontHookDomainsForDraft(target, state)
-        FontHookDomainDialog.show(
-            activity,
-            object : FontHookDomainDialog.Host {
-                override fun saveCustom(
-                    packageName: String?,
-                    selectedKnownDomains: MutableSet<String>?,
-                    automaticKnownDomains: MutableSet<String>?,
-                    unknownDomains: MutableSet<String>?,
-                ): Boolean {
-                    if (state != null) {
-                        state.draftFontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection(
-                            selectedKnownDomains,
-                            automaticKnownDomains,
-                            unknownDomains,
-                        )
-                        state.fontHookDomainsResetRequested = state.draftFontHookDomainsRaw == null
-                    }
-                    onStateChanged?.run()
-                    return true
-                }
-
-                override fun restoreRecommended(packageName: String?): Boolean {
-                    if (state != null) {
-                        state.draftFontHookDomainsRaw = null
-                        state.fontHookDomainsResetRequested = true
-                    }
-                    onStateChanged?.run()
-                    return true
-                }
-
-                override fun saveViewportApplyMode(packageName: String?, mode: String?): Boolean {
-                    if (state != null) {
-                        state.viewportApplyMode = ViewportApplyMode.normalize(mode)
-                        state.viewportApplyModeResetRequested =
-                            ViewportApplyMode.OFF == state.viewportApplyMode
-                    }
-                    onStateChanged?.run()
-                    return true
-                }
-            },
-            target.packageName,
-            automaticKnownDomains,
-            currentOverride,
-            if (state != null) {
-                state.viewportApplyMode
-            } else {
-                store?.getTargetViewportApplyMode(target.packageName)
-            },
-            fontDomainsEditable,
-            onStateChanged,
-        )
-    }
 
     override fun getFontHookDomainsButtonText(
         item: AppListItem?,

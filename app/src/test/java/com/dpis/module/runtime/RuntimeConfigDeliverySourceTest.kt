@@ -19,7 +19,7 @@ class RuntimeConfigDeliverySourceTest {
         val appConfigHost = read(
             "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
         )
-        val sheetActions = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigSheetActionBinder.kt")
+        val saveWorkflow = read("src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorSaveWorkflow.kt")
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
@@ -46,7 +46,7 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(appConfigHost.contains("override fun onRuntimeConfigSaved()"))
         assertTrue(appConfigHost.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))
-        assertTrue(sheetActions.contains("val result = host.saveAppConfig("))
+        assertTrue(saveWorkflow.contains("host.saveResolvedConfig("))
         assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
         assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
         assertTrue(templateHost.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))

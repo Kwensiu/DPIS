@@ -7,11 +7,6 @@ import android.os.Bundle
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
-import com.dpis.module.appconfig.presentation.AppConfigDialogBinder
-import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.fonts.hookdomain.FontHookDomainDialog
-import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.templates.BatchScopeRequestCoordinator
 import com.dpis.module.templates.GlobalPrefillSaveHandler
 import com.dpis.module.templates.GlobalPrefillStore
@@ -30,8 +25,6 @@ import com.dpis.module.templates.TemplateEditorDraft
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.TemplateWorkspaceStateCodec
-import com.dpis.module.viewport.ViewportApplyMode
-import com.google.android.material.button.MaterialButton
 
 /**
  * Owns template-workspace presentation, mutations, and the retained editor route.
@@ -152,7 +145,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
     interface Host {
         fun refreshTemplateWorkspace()
         fun showToast(messageResId: Int, vararg formatArgs: Any?)
-        fun appConfigDialogHost(): AppConfigDialogBinder.Host
         fun hookConfigStore(): DpisConfigStore
         fun isInstalledTemplateTargetPackage(packageName: String): Boolean
         fun onTemplateRuntimeConfigSaved()
@@ -271,70 +263,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
                 publish()
             }
             return TemplateWorkspacePresentation.EditorResult(deleted, messageResId, id)
-        }
-
-        override fun selectTypeface(form: TemplateEditorForm, onChanged: Runnable) {
-            val state = AppConfigDialogBinder.AppConfigDialogState(
-                false,
-                true,
-                true,
-                false,
-                templatePackageName(form),
-                form.fontHookDomainsRaw,
-                form.viewportApplyMode,
-                form.selectedTypefaceId,
-                form.viewportMode,
-                form.viewportInput,
-                form.viewportScaleInput,
-                form.viewportAbsoluteInput,
-            )
-            AppConfigDialogBinder(activity, host.appConfigDialogHost()).showTypefaceSelector(
-                MaterialButton(activity),
-                state,
-            ) {
-                form.selectedTypefaceId = state.selectedTypefaceId
-                onChanged.run()
-            }
-        }
-
-        override fun editHookDomains(form: TemplateEditorForm, onChanged: Runnable) {
-            FontHookDomainDialog.show(
-                activity,
-                object : FontHookDomainDialog.Host {
-                    override fun saveCustom(
-                        packageName: String,
-                        selectedKnownDomains: Set<String>,
-                        automaticKnownDomains: Set<String>,
-                        unknownDomains: Set<String>,
-                    ): Boolean {
-                        form.fontHookDomainsRaw = HookDomainOverrideStore.rawValueForSelection(
-                            selectedKnownDomains,
-                            automaticKnownDomains,
-                            unknownDomains,
-                        )
-                        onChanged.run()
-                        return true
-                    }
-
-                    override fun restoreRecommended(packageName: String): Boolean {
-                        form.fontHookDomainsRaw = null
-                        onChanged.run()
-                        return true
-                    }
-
-                    override fun saveViewportApplyMode(packageName: String, mode: String): Boolean {
-                        form.viewportApplyMode = ViewportApplyMode.normalize(mode)
-                        onChanged.run()
-                        return true
-                    }
-                },
-                templatePackageName(form),
-                FontHookDomainRegistry.automaticCustomizableDomains(),
-                HookDomainOverrideStore.fromRaw(form.fontHookDomainsRaw),
-                form.viewportApplyMode,
-                FontApplyMode.FIELD_REWRITE == form.fontMode,
-                onChanged,
-            )
         }
     }
 
@@ -568,9 +496,6 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             data?.getStringExtra(QuickTemplateTargetSelectionContract.EXTRA_CLOSE_REASON),
         )
 
-    private fun templatePackageName(form: TemplateEditorForm) =
-        if (form.quickTemplate) QUICK_TEMPLATE_PACKAGE else GLOBAL_PREFILL_PACKAGE
-
     private fun openGlobalPrefill() {
         routeState.openGlobalPrefill()
         publish()
@@ -624,7 +549,5 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
         const val STATE_TARGET_ACTIVITY_STARTED = "state.quick_template.targets_activity_started"
         const val STATE_GLOBAL_DRAFT = "state.global_prefill.draft"
         const val STATE_QUICK_DRAFT = "state.quick_template.draft"
-        const val QUICK_TEMPLATE_PACKAGE = "__quick_template__"
-        const val GLOBAL_PREFILL_PACKAGE = "__global_prefill__"
     }
 }

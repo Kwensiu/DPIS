@@ -57,8 +57,6 @@ class TemplateWorkspaceLayoutSmokeTest {
                 "override fun saveGlobalPrefill",
                 "override fun saveQuickTemplate",
                 "override fun deleteQuickTemplate",
-                "override fun selectTypeface",
-                "override fun editHookDomains",
                 "host.refreshTemplateWorkspace()",
             )
         strings.assertContainsAll(

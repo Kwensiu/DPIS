@@ -76,8 +76,6 @@ object TemplateWorkspacePresentation {
         fun saveGlobalPrefill(form: TemplateEditorForm): EditorResult
         fun saveQuickTemplate(form: TemplateEditorForm): EditorResult
         fun deleteQuickTemplate(id: String): EditorResult
-        fun selectTypeface(form: TemplateEditorForm, onChanged: Runnable)
-        fun editHookDomains(form: TemplateEditorForm, onChanged: Runnable)
     }
 
     @JvmStatic
