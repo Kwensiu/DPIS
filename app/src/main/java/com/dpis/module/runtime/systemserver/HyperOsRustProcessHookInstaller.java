@@ -1,5 +1,6 @@
 package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.hyperos.HyperOsRustProcessArgPolicy;
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
 
 import com.dpis.module.diagnostics.DpisLog;
@@ -10,21 +11,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.io.File;
 import java.util.List;
-import java.util.Locale;
-import java.util.StringJoiner;
 
 import io.github.libxposed.api.XposedInterface;
 
 public final class HyperOsRustProcessHookInstaller {
     private static final String RUST_PROCESS_IMPL = "android.os.RustProcessImpl";
     private static final String START_RUST_PROCESS = "startRustProcess";
-    private static final int ARG_PACKAGE_NAME = 1;
-    private static final int ARG_ENVIRONMENTS = 21;
-    private static final int ARG_BINARY_PATH = 20;
-    private static final String MODULE_PACKAGE = "io.github.kwensiu.dpis";
     private static final String NATIVE_LIBRARY_NAME = "libdpis_native.so";
-    private static final String WEATHER_PACKAGE = "com.miui.weather2";
-    private static final String GALLERY_PACKAGE = "com.miui.gallery";
     private HyperOsRustProcessHookInstaller() {
     }
 
@@ -66,19 +59,8 @@ public final class HyperOsRustProcessHookInstaller {
         return hooked;
     }
 
-    public static String appendEnvironmentForTest(String existing,
-                                                  String packageName,
-                                                  int targetFontScalePercent,
-                                                  String binaryPath) {
-        return appendEnvironment(existing, packageName, targetFontScalePercent, binaryPath);
-    }
-
     public static String resolveProxyLibraryPathForTest(String originalBinaryPath) {
         return resolveProxyLibraryPath(originalBinaryPath);
-    }
-
-    public static String buildArgumentProbeSummaryForTest(List<Object> args) {
-        return buildArgumentProbeSummary(args);
     }
 
     public static Object[] applyEnvironmentArgsForLegacy(
@@ -92,94 +74,47 @@ public final class HyperOsRustProcessHookInstaller {
     }
 
     private static Object[] applyEnvironmentArgs(PerAppDisplayConfigSource source, List<Object> args) {
-        if (source == null || args == null || args.size() <= ARG_ENVIRONMENTS) {
+        if (source == null) {
             return null;
         }
-        Object packageValue = args.get(ARG_PACKAGE_NAME);
-        if (!(packageValue instanceof String)) {
+        HyperOsRustProcessArgPolicy.StartArgs parsed = HyperOsRustProcessArgPolicy.parse(args);
+        if (parsed == null) {
             return null;
         }
-        String packageName = (String) packageValue;
-        PerAppDisplayConfig config = source.get(packageName);
-        if (config == null
-                || config.targetFontScalePercent == null
-                || config.targetFontScalePercent <= 0
-                || !config.hyperOsFlutterFontHookEnabled) {
+        PerAppDisplayConfig config = source.get(parsed.packageName);
+        Integer fontScalePercent = config == null ? null : config.targetFontScalePercent;
+        boolean hookEnabled = config != null && config.hyperOsFlutterFontHookEnabled;
+        if (!HyperOsRustProcessArgPolicy.shouldRewrite(fontScalePercent, hookEnabled)) {
             return null;
         }
-        Object existingValue = args.get(ARG_ENVIRONMENTS);
-        String existing = existingValue instanceof String ? (String) existingValue : "";
-        Object binaryValue = args.size() > ARG_BINARY_PATH ? args.get(ARG_BINARY_PATH) : null;
-        String binaryPath = binaryValue instanceof String ? (String) binaryValue : "";
-        String updated = appendEnvironment(existing, packageName,
-                config.targetFontScalePercent, binaryPath);
+        String updated = HyperOsRustProcessArgPolicy.appendEnvironment(
+                parsed.existingEnvironments,
+                parsed.packageName,
+                fontScalePercent.intValue(),
+                parsed.binaryPath);
         // This property is a diagnostic/fallback path only. Full /data/app/... Rust
         // binary paths can exceed Android's system property value limit, while the
         // environment value remains available to the native proxy at process start.
-        HyperOsFlutterFontBridge.publishRustBinaryPath(packageName, binaryPath);
-        HyperOsFlutterFontBridge.publishRustProxyTarget(packageName, config);
-        String proxyLibraryPath = resolveProxyLibraryPath(binaryPath);
+        HyperOsFlutterFontBridge.publishRustBinaryPath(parsed.packageName, parsed.binaryPath);
+        HyperOsFlutterFontBridge.publishRustProxyTarget(parsed.packageName, config);
+        String proxyLibraryPath = resolveProxyLibraryPath(parsed.binaryPath);
         if (proxyLibraryPath == null || proxyLibraryPath.isEmpty()) {
-            DpisLog.i("DPIS_FONT HyperOS Rust process proxy missing: package=" + packageName);
+            DpisLog.i("DPIS_FONT HyperOS Rust process proxy missing: package=" + parsed.packageName);
             return null;
         }
-        DpisLog.i("DPIS_FONT HyperOS Rust process env apply: package=" + packageName
-                + ", binary=" + binaryPath
+        DpisLog.i("DPIS_FONT HyperOS Rust process env apply: package=" + parsed.packageName
+                + ", binary=" + parsed.binaryPath
                 + ", proxy=" + proxyLibraryPath
                 + ", envs=" + updated);
-        Object[] updatedArgs = args.toArray();
-        updatedArgs[ARG_BINARY_PATH] = proxyLibraryPath;
-        updatedArgs[ARG_ENVIRONMENTS] = updated;
-        return updatedArgs;
+        return HyperOsRustProcessArgPolicy.withProxyAndEnvironment(
+                args, proxyLibraryPath, updated);
     }
 
     private static void logTargetArgumentProbe(List<Object> args) {
-        String summary = buildArgumentProbeSummary(args);
+        String summary = HyperOsRustProcessArgPolicy.buildArgumentProbeSummary(args);
         if (summary != null) {
             DpisLog.i(summary);
         }
-    }
-
-    private static String buildArgumentProbeSummary(List<Object> args) {
-        if (args == null || args.isEmpty()) {
-            return null;
-        }
-        boolean hasTargetPackage = false;
-        StringJoiner strings = new StringJoiner(", ");
-        for (int index = 0; index < args.size(); index++) {
-            Object value = args.get(index);
-            if (!(value instanceof String stringValue) || stringValue.isEmpty()) {
-                continue;
-            }
-            if (stringValue.contains(WEATHER_PACKAGE) || stringValue.contains(GALLERY_PACKAGE)) {
-                hasTargetPackage = true;
-            }
-            if (isInterestingArgumentString(stringValue)) {
-                strings.add(index + "=" + shorten(stringValue));
-            }
-        }
-        if (!hasTargetPackage) {
-            return null;
-        }
-        return "DPIS_FONT HyperOS Rust process args probe: size=" + args.size()
-                + ", strings={" + strings + "}";
-    }
-
-    private static boolean isInterestingArgumentString(String value) {
-        return value.contains(WEATHER_PACKAGE)
-                || value.contains(GALLERY_PACKAGE)
-                || value.contains(".so")
-                || value.contains("DPIS_")
-                || value.contains("--envs=")
-                || value.contains("hyperos");
-    }
-
-    private static String shorten(String value) {
-        String sanitized = sanitize(value);
-        if (sanitized.length() <= 240) {
-            return sanitized;
-        }
-        return sanitized.substring(0, 237) + "...";
     }
 
     private static String resolveProxyLibraryPath(String originalBinaryPath) {
@@ -196,42 +131,6 @@ public final class HyperOsRustProcessHookInstaller {
         }
         File proxy = new File(parent, NATIVE_LIBRARY_NAME);
         return proxy.isFile() && proxy.length() > 0 ? proxy.getAbsolutePath() : null;
-    }
-
-    private static String appendEnvironment(String existing,
-                                            String packageName,
-                                            int targetFontScalePercent,
-                                            String binaryPath) {
-        StringBuilder builder = new StringBuilder();
-        if (existing != null && !existing.trim().isEmpty()) {
-            builder.append(existing.trim());
-            if (builder.charAt(builder.length() - 1) != ',') {
-                builder.append(',');
-            }
-        }
-        appendPair(builder, "DPIS_PACKAGE", packageName);
-        appendPair(builder, "DPIS_FONT_SCALE_PERCENT",
-                String.format(Locale.US, "%d", targetFontScalePercent));
-        appendPair(builder, "DPIS_RUST_BINARY", binaryPath == null ? "" : binaryPath);
-        builder.append(" --cold-boot-speed");
-        return builder.toString();
-    }
-
-    private static void appendPair(StringBuilder builder, String key, String value) {
-        if (builder.length() > 0) {
-            builder.append(" --envs=");
-        }
-        builder.append(key).append('=').append(sanitize(value));
-    }
-
-    private static String sanitize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replace(',', '_')
-                .replace('\n', '_')
-                .replace('\r', '_')
-                .replace(' ', '_');
     }
 
     private static Class<?> resolveClass(String className) {

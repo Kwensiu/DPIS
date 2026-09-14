@@ -1,4 +1,4 @@
-package com.dpis.module.fonts;
+package com.dpis.module.runtime.hyperos;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,7 +8,6 @@ import java.io.File;
 import java.nio.file.Files;
 
 import org.junit.Test;
-import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
 
 public class HyperOsNativeProxyBindMounterTest {
     @Test

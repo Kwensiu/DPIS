@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import com.dpis.module.diagnostics.DpisLog.AppLogSink
 import com.dpis.module.diagnostics.DpisAppLogStore
-import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter
+import com.dpis.module.runtime.hyperos.HyperOsNativeProxyAssetExporter
 import com.dpis.module.fonts.TypefaceCatalogCache.preload
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.RuntimeConfigDelivery

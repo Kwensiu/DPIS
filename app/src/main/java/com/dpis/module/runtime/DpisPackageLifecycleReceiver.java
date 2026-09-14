@@ -4,7 +4,7 @@ import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.DpisApplication;
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
-import com.dpis.module.fonts.HyperOsNativeProxyAssetExporter;
+import com.dpis.module.runtime.hyperos.HyperOsNativeProxyAssetExporter;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

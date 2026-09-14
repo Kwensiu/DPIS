@@ -156,8 +156,10 @@ public class LegacyModuleHookSourceTest {
         assertTrue(compatRustSource.contains("param.args = updatedArgs"));
         String rustSource = read("src/main/java/com/dpis/module/runtime/systemserver/HyperOsRustProcessHookInstaller.java");
         assertTrue(rustSource.contains("applyEnvironmentArgsForLegacy"));
-        assertTrue(rustSource.indexOf("return null;")
-                < rustSource.indexOf("Object existingValue = args.get(ARG_ENVIRONMENTS);"));
+        assertTrue(rustSource.contains("HyperOsRustProcessArgPolicy.parse("));
+        assertTrue(rustSource.contains("HyperOsRustProcessArgPolicy.shouldRewrite("));
+        assertTrue(rustSource.contains("HyperOsRustProcessArgPolicy.appendEnvironment("));
+        assertTrue(rustSource.contains("HyperOsRustProcessArgPolicy.withProxyAndEnvironment("));
         assertFalse(rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"));
 
         String resourcesReadSource = read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.kt");

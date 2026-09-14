@@ -3,7 +3,6 @@ package com.dpis.module.appconfig.editor
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.templates.TemplateConfigValue
-import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.MainViewModel
 
@@ -12,11 +11,13 @@ import com.dpis.module.ui.MainViewModel
  *
  * The Activity supplies Android-bound capabilities; this controller owns editor-session
  * transitions so opening, saving, closing, and asynchronous presentation feedback do not grow
- * another feature workflow inside the app shell.
+ * another feature workflow inside the app shell. Persist and post-save effects belong to
+ * [ComposeAppEditorSaveWorkflow], not the Activity host.
  */
 class ComposeAppEditorController(
     private val session: MainViewModel,
     private val host: Host,
+    private val saveWorkflow: ComposeAppEditorSaveWorkflow,
 ) {
     interface Host {
         fun resolveEditorItem(packageName: String): AppListItem?
@@ -43,7 +44,6 @@ class ComposeAppEditorController(
         fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean
         fun executeProcessAction(item: AppListItem, action: AppConfigProcessAction)
         fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft)
-        fun save(item: AppListItem, draft: EditorDraft): Boolean
         fun postDelayed(delayMillis: Long, action: Runnable)
     }
 
@@ -141,7 +141,7 @@ class ComposeAppEditorController(
             override fun startFeedbackDiagnostic(draft: EditorDraft) =
                 host.startFeedbackDiagnostic(item, draft)
             override fun save(draft: EditorDraft) {
-                if (host.save(item, draft)) markSaved(draft)
+                if (saveWorkflow.save(item, draft)) markSaved(draft)
             }
             override fun close() {
                 this@ComposeAppEditorController.close()

@@ -1,7 +1,9 @@
 package com.dpis.module
 
 import com.dpis.module.appconfig.AppConfigProcessAction
+import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.editor.AppConfigEditorChip
+import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
 import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
@@ -17,7 +19,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.MainViewModel
@@ -28,7 +29,7 @@ class ComposeAppEditorControllerTest {
     fun createStateRequiresMatchingPackageItemAndSession() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
 
         assertNull(controller.createState())
 
@@ -48,7 +49,7 @@ class ComposeAppEditorControllerTest {
     fun createStateProjectsPrefillSessionAndWiresActions() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
 
         controller.open(ITEM)
 
@@ -68,7 +69,7 @@ class ComposeAppEditorControllerTest {
     fun openIgnoresNullAndReusesSessionForTheSamePackage() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
 
         controller.open(null)
         assertNull(viewModel.editorSession)
@@ -88,7 +89,7 @@ class ComposeAppEditorControllerTest {
     fun openReplacesSessionWhenPackageChangesAndFallsBackWhenHostHasNoItem() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
 
         controller.open(ITEM)
         host.item = null
@@ -105,7 +106,7 @@ class ComposeAppEditorControllerTest {
         val host = RecordingHost(hasSaved = true)
         val restored = editorDraft(ITEM.packageName, "140")
         host.restoredDraft = restored
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
 
         controller.open(ITEM)
 
@@ -119,7 +120,7 @@ class ComposeAppEditorControllerTest {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost(hasSaved = true)
         host.restoredDraft = null
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
 
         controller.open(ITEM)
 
@@ -132,7 +133,7 @@ class ComposeAppEditorControllerTest {
     fun updateAndResetDraftNoOpWithoutSessionThenMutateWhenOpen() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
         val next = editorDraft(ITEM.packageName, "140")
 
         controller.updateDraft(null)
@@ -154,7 +155,7 @@ class ComposeAppEditorControllerTest {
     fun refreshCloseAndSaveFeedbackFollowHostAndSessionBoundaries() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
         controller.open(ITEM)
 
         controller.refresh()
@@ -186,7 +187,7 @@ class ComposeAppEditorControllerTest {
     fun presentationActionsDelegateSaveCloseNavigateAndSideEffects() {
         val viewModel = MainViewModel(emptyState())
         val host = RecordingHost()
-        val controller = ComposeAppEditorController(viewModel, host)
+        val controller = controller(viewModel, host)
         controller.open(ITEM)
         val presented = controller.createState()!!
         val actions = presented.actions
@@ -224,13 +225,39 @@ class ComposeAppEditorControllerTest {
     @Test
     fun markSavedNoOpsWhenThereIsNoSession() {
         val viewModel = MainViewModel(emptyState())
-        val controller = ComposeAppEditorController(viewModel, RecordingHost())
+        val controller = controller(viewModel, RecordingHost())
 
         controller.markSaved(editorDraft(ITEM.packageName, "125"))
 
         assertNull(viewModel.editorSession)
         assertFalse(viewModel.isEditingSaveFeedback)
     }
+
+    private fun controller(
+        viewModel: MainViewModel,
+        host: RecordingHost,
+    ) = ComposeAppEditorController(
+        viewModel,
+        host,
+        ComposeAppEditorSaveWorkflow(
+            persister = { _, _, _, _ ->
+                if (host.saveSucceeds) {
+                    AppConfigSaveHandler.Result.success(0)
+                } else {
+                    AppConfigSaveHandler.Result.failure(0)
+                }
+            },
+            effects = object : ComposeAppEditorSaveWorkflow.PostSaveEffects {
+                override fun afterPersist(
+                    result: AppConfigSaveHandler.Result,
+                    item: AppListItem,
+                    draft: EditorDraft,
+                ) = result
+                override fun showMessage(messageResId: Int) = Unit
+                override fun afterSuccessfulSave(item: AppListItem, draft: EditorDraft) = Unit
+            },
+        ),
+    )
 
     private class RecordingHost(
         var hasSaved: Boolean = false,
@@ -283,7 +310,6 @@ class ComposeAppEditorControllerTest {
         override fun startFeedbackDiagnostic(item: AppListItem, draft: EditorDraft) {
             diagnosticDraft = draft
         }
-        override fun save(item: AppListItem, draft: EditorDraft) = saveSucceeds
         override fun postDelayed(delayMillis: Long, action: Runnable) {
             delayed += action
         }

@@ -16,7 +16,12 @@ class RuntimeConfigDeliverySourceTest {
         )
         val templateWorkspace = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt")
         val templateHost = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt")
-        val saveWorkflow = read("src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorSaveWorkflow.kt")
+        val saveEffects = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/MainWorkspaceEditorPostSaveEffects.kt",
+        )
+        val persister = read(
+            "src/main/java/com/dpis/module/appconfig/editor/AppConfigEditorPersister.kt",
+        )
         val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
         val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
@@ -34,10 +39,7 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(runtimeLaunch.contains("RuntimeConfigDelivery.publishLocalSnapshotAfterSave()"))
         assertTrue(runtimeLaunch.contains("WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)"))
         assertTrue(runtimeLaunch.contains("fun finalizeAppConfigSaveWithRuntimeSync("))
-        assertTrue(
-            read("src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt")
-                .contains("runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync("),
-        )
+        assertTrue(saveEffects.contains("runtimeLaunchSession.finalizeAppConfigSaveWithRuntimeSync("))
         assertTrue(runtimeLaunch.contains("scheduleRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(runtimeLaunch.contains("fun syncRuntimePropertiesForTargetLaunch(packageName: String?)"))
         assertTrue(runtimeLaunch.contains("ViewportPropertySyncer.syncTarget(packageName, store)"))
@@ -45,7 +47,8 @@ class RuntimeConfigDeliverySourceTest {
         assertTrue(runtimeLaunch.contains("ProcessActionHandler("))
         assertTrue(runtimeLaunch.contains("syncRuntimePropertiesForTargetLaunch(packageName)"))
         assertTrue(runtimeLaunch.contains("fun onRuntimeConfigSaved()"))
-        assertTrue(saveWorkflow.contains("host.saveResolvedConfig("))
+        assertTrue(persister.contains("saveHandler.saveResolved("))
+        assertTrue(saveEffects.contains("syncHyperOsNativeProxyAfterSave(item)"))
         assertTrue(templateWorkspace.contains("if (result.successCount() > 0)"))
         assertTrue(templateWorkspace.contains("host.onTemplateRuntimeConfigSaved()"))
         assertTrue(templateHost.contains("runtimeLaunchSession.onRuntimeConfigSaved()"))

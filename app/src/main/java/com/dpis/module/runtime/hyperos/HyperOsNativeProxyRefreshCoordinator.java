@@ -1,4 +1,4 @@
-package com.dpis.module.fonts;
+package com.dpis.module.runtime.hyperos;
 
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
@@ -7,7 +7,6 @@ import com.dpis.module.fonts.FontApplyMode;
 import android.content.Context;
 
 import java.util.LinkedHashSet;
-import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter;
 
 public final class HyperOsNativeProxyRefreshCoordinator {
     private HyperOsNativeProxyRefreshCoordinator() {

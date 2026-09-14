@@ -1,4 +1,4 @@
-package com.dpis.module.fonts.device
+package com.dpis.module.runtime.hyperos
 
 import android.content.Context
 import android.content.pm.PackageManager

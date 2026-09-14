@@ -2,12 +2,13 @@ package com.dpis.module.quickconfig.presentation
 
 import android.content.Context
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.AppConfigSaveHandler.Result.Companion.failure
+import com.dpis.module.appconfig.editor.AppConfigEditorPersister
 import com.dpis.module.appconfig.editor.AppConfigEditorSession
+import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
 import com.dpis.module.appconfig.editor.EditorActions
 import com.dpis.module.appconfig.editor.EditorActions.create
 import com.dpis.module.appconfig.editor.EditorDraft
@@ -48,6 +49,16 @@ internal class QuickConfigComposeEditor(
     private var editorSession: AppConfigEditorSession? = null
     private var draft: EditorDraft? = null
     private var savedDraft: EditorDraft? = null
+    private val saveWorkflow = ComposeAppEditorSaveWorkflow(
+        AppConfigEditorPersister(
+            saveHandler,
+            object : AppConfigEditorPersister.PersistContext {
+                override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabled
+                override fun configStore(): DpisConfigStore? = activity.hookConfigStore
+            },
+        ),
+        QuickConfigPostSaveEffects(),
+    )
     private var destination: ConfigEditorDestination? = ConfigEditorDestination.MAIN
     private var saveFeedback = false
     private var scopeRequestPending = false
@@ -208,65 +219,51 @@ internal class QuickConfigComposeEditor(
         refresh()
     }
 
-    private fun save(currentItem: AppListItem, currentDraft: EditorDraft): Boolean {
-        val viewport = AppConfigInputValidation.parseViewportTargetSpec(
-            currentDraft.viewportInputFor(currentDraft.viewportMode),
-            currentDraft.viewportMode,
-        )
-        val fontScale = AppConfigInputValidation.parseFontScalePercentOrNull(currentDraft.fontInput)
-        var result = saveHandler.saveResolved(
-            currentItem,
-            viewport,
-            currentDraft.viewportMode,
-            currentDraft.viewportApplyMode,
-            currentDraft.viewportApplyModeResetRequested,
-            fontScale,
-            currentDraft.fontMode,
-            currentDraft.selectedTypefaceId,
-            currentDraft.draftFontHookDomainsRaw,
-            currentDraft.fontHookDomainsResetRequested,
-            currentDraft.viewportScaleInput,
-            currentDraft.viewportAbsoluteInput,
-            activity.isSystemHookEnabled,
-            activity.hookConfigStore,
-            null,
-        )
-        if (result.success && !WechatDpiEditor.save(
-                currentDraft.wechatDpiInput,
-                currentItem.packageName,
-                currentDraft.dpisEnabled,
-                activity.hookConfigStore,
-            )
-        ) {
-            result = failure(
-                if (WechatDpiEditor.isInputValid(currentDraft.wechatDpiInput)) {
-                    R.string.system_settings_save_failed
-                } else {
-                    R.string.status_save_invalid
-                },
-            )
+    private fun save(currentItem: AppListItem, currentDraft: EditorDraft): Boolean =
+        saveWorkflow.save(currentItem, currentDraft)
+
+    private inner class QuickConfigPostSaveEffects : ComposeAppEditorSaveWorkflow.PostSaveEffects {
+        override fun afterPersist(
+            result: AppConfigSaveHandler.Result,
+            item: AppListItem,
+            draft: EditorDraft,
+        ): AppConfigSaveHandler.Result {
+            if (!WechatDpiEditor.save(
+                    draft.wechatDpiInput,
+                    item.packageName,
+                    draft.dpisEnabled,
+                    activity.hookConfigStore,
+                )
+            ) {
+                return failure(
+                    if (WechatDpiEditor.isInputValid(draft.wechatDpiInput)) {
+                        R.string.system_settings_save_failed
+                    } else {
+                        R.string.status_save_invalid
+                    },
+                )
+            }
+            return result
         }
-        if (result.messageResId != 0) {
-            activity.showToast(result.messageResId)
-        }
-        if (!result.success) {
-            return false
-        }
-        activity.publishAfterSave(currentItem.packageName)
-        editorSession = (
-            editorSession?.withDraft(currentDraft)
-                ?: AppConfigEditorSession(currentDraft, null, currentDraft, false)
-            ).afterSave()
-        savedDraft = editorSession!!.persistedBaseline
-        draft = editorSession!!.draft
-        saveFeedback = true
-        requestScopeAfterSave(currentItem)
-        refresh()
-        activity.window.decorView.postDelayed({
-            saveFeedback = false
+
+        override fun showMessage(messageResId: Int) = activity.showToast(messageResId)
+
+        override fun afterSuccessfulSave(item: AppListItem, draft: EditorDraft) {
+            activity.publishAfterSave(item.packageName)
+            editorSession = (
+                editorSession?.withDraft(draft)
+                    ?: AppConfigEditorSession(draft, null, draft, false)
+                ).afterSave()
+            savedDraft = editorSession!!.persistedBaseline
+            this@QuickConfigComposeEditor.draft = editorSession!!.draft
+            saveFeedback = true
+            requestScopeAfterSave(item)
             refresh()
-        }, 1500L)
-        return true
+            activity.window.decorView.postDelayed({
+                saveFeedback = false
+                refresh()
+            }, 1500L)
+        }
     }
 
     private fun requestScopeAfterSave(currentItem: AppListItem?) {

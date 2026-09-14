@@ -3,10 +3,12 @@ package com.dpis.module.ui.presentation
 import android.content.Intent
 import com.dpis.module.MainActivity
 import com.dpis.module.R
+import com.dpis.module.appconfig.editor.AppConfigEditorPersister
 import com.dpis.module.appconfig.editor.ComposeAppEditorController
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
 import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
+import com.dpis.module.appconfig.presentation.MainWorkspaceEditorPostSaveEffects
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
@@ -52,14 +54,14 @@ class MainHostWiringSession(
         )
         val gateway = ComposeAppEditorActivityGateway(
             activity,
-            activity.saveHandler,
-            scopeCoordinator,
             activity.wechatHelp,
         )
-        val saveWorkflow = ComposeAppEditorSaveWorkflow(gateway)
-        gateway.setSaveWorkflow(saveWorkflow)
+        val saveWorkflow = ComposeAppEditorSaveWorkflow(
+            AppConfigEditorPersister(activity.saveHandler, gateway),
+            MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator),
+        )
         composeAppEditorSaveWorkflow = saveWorkflow
-        composeAppEditorController = ComposeAppEditorController(viewModel, gateway)
+        composeAppEditorController = ComposeAppEditorController(viewModel, gateway, saveWorkflow)
 
         settingsWorkspaceSession = SettingsWorkspaceSession.create(
             activity,
