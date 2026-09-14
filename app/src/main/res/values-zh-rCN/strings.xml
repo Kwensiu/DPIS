@@ -224,7 +224,6 @@
     <string name="system_font_scale_preview_body">正文会跟随目标字体大小显示</string>
     <string name="system_font_scale_restore_default">恢复 100%</string>
     <string name="system_font_scale_write_failed">系统拒绝了字体应用</string>
-    <string name="home_workspace_subtitle">单应用调整 DPI 与字体大小</string>
     <string name="home_workspace_status_enabled">已启用</string>
     <string name="home_workspace_status_check_updates">检查更新</string>
     <string name="home_update_checking">正在检查更新...</string>

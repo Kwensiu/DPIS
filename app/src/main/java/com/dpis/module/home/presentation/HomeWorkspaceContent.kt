@@ -134,8 +134,7 @@ fun HomeWorkspaceContent(
             )
             }
         } else ({}),
-        title = { Text(stringResource(R.string.app_name)) },
-        subtitle = { Text(stringResource(R.string.home_workspace_subtitle)) },
+        titleRes = R.string.app_name,
     ) {
             item { HomePrimaryStatus(state) }
             if (visibleCountItems.isNotEmpty()) item {

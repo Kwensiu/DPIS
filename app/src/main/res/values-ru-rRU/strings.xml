@@ -124,7 +124,6 @@
     <string name="system_font_scale_preview_body">Основной текст соответствует заданному размеру шрифта.</string>
     <string name="system_font_scale_restore_default">Восстановить 100%</string>
     <string name="system_font_scale_write_failed">Система отклонила изменение шрифта</string>
-    <string name="home_workspace_subtitle">Настройка DPI &amp; размера текста для отдельных приложений</string>
     <string name="home_workspace_status_enabled">Включено</string>
     <string name="home_update_checking">Проверка обновлений...</string>
     <string name="home_update_up_to_date">Вы обновили программу. Нажмите, чтобы проверить еще раз</string>

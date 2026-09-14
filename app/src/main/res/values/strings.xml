@@ -234,7 +234,6 @@ Mini Programs are not supported yet.</string>
     <string name="system_font_scale_restore_default">Restore 100%</string>
     <string name="system_font_scale_write_failed">System rejected the font change</string>
     <string name="home_workspace_title" translatable="false">DPIS</string>
-    <string name="home_workspace_subtitle">Per-app DPI &amp; text size adjustment</string>
     <string name="home_workspace_status_enabled">Enabled</string>
     <string name="home_workspace_status_check_updates">Check for updates</string>
     <string name="home_update_checking">Checking for updates...</string>

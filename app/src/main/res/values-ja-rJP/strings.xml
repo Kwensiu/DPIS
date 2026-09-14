@@ -173,7 +173,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="system_font_scale_preview_body">本文は目標フォントサイズに従います。</string>
     <string name="system_font_scale_restore_default">100% に戻す</string>
     <string name="system_font_scale_write_failed">システムがフォント変更を拒否しました</string>
-    <string name="home_workspace_subtitle">アプリ別 DPI &amp; 文字サイズ調整</string>
     <string name="home_workspace_status_enabled">有効</string>
     <string name="home_workspace_status_enable_in_lsposed">LSPosed でモジュールを有効化</string>
     <string name="home_workspace_status_configured_apps">設定済みアプリ</string>
