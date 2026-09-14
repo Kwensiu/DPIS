@@ -2,7 +2,6 @@ package com.dpis.module.appconfig.presentation
 
 import android.content.Context
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.AppConfigEditorHost
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
@@ -11,7 +10,10 @@ import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.PackageConfigRepository
+import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
+import com.dpis.module.hooks.HookDomainOverride
+import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.templates.GlobalPrefillStore
@@ -26,7 +28,6 @@ import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
  */
 class ComposeAppEditorActivityGateway(
     private val activity: MainActivity,
-    private val dialogHost: AppConfigEditorHost,
     private val saveHandler: AppConfigSaveHandler,
     private val scopeCoordinator: ComposeEditorScopeRequestCoordinator,
     private val wechatDpiHelp: WechatDpiHelp,
@@ -67,7 +68,10 @@ class ComposeAppEditorActivityGateway(
     override fun hookChainText(
         item: AppListItem,
         draft: EditorDraft,
-    ): String = dialogHost.getFontHookDomainsButtonText(item, draft).orEmpty()
+    ): String = FontHookDomainPresentation.forOverride(
+        resolveFontHookDomainsForDraft(item, draft),
+        FontHookDomainRegistry.automaticCustomizableDomains(),
+    ).buttonText(activity)
 
     override fun systemHooksEnabled(): Boolean =
         activity.startupSession.isSystemHookEnabledFromStore
@@ -92,12 +96,15 @@ class ComposeAppEditorActivityGateway(
         currentlySelected: Boolean,
         onSelected: Runnable,
         onDeselected: Runnable,
-    ) = dialogHost.toggleScope(
-        item,
-        currentlySelected,
-        onSelected,
-        onDeselected,
-    )
+    ) {
+        activity.systemScopeCoordinator.toggleScope(
+            item.packageName,
+            item.label,
+            currentlySelected,
+            onSelected,
+            onDeselected,
+        )
+    }
 
     override fun setDpisEnabled(packageName: String, enabled: Boolean): Boolean {
         if (!activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)) return false
@@ -192,5 +199,27 @@ class ComposeAppEditorActivityGateway(
         return viewportTargetSpec.isEnabled() ||
             fontScalePercent != null ||
             store.hasTargetAppSpecificConfig(packageName)
+    }
+
+    private fun resolveFontHookDomainsForDraft(
+        item: AppListItem?,
+        draft: EditorDraft?,
+    ): HookDomainOverride {
+        if (draft != null && draft.fontHookDomainsResetRequested) {
+            return HookDomainOverride.automatic()
+        }
+        val automaticKnownDomains = FontHookDomainRegistry.automaticCustomizableDomains()
+        if (draft != null &&
+            (item?.previewFromGlobalPrefill == true || draft.draftFontHookDomainsRaw != null)
+        ) {
+            return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+                HookDomainOverrideStore.fromRaw(draft.draftFontHookDomainsRaw),
+                automaticKnownDomains,
+            )
+        }
+        return HookDomainOverrideStore.automaticIfSelectionMatchesAutomatic(
+            HookDomainOverrideStore(activity.hookConfigStore).read(item?.packageName),
+            automaticKnownDomains,
+        )
     }
 }

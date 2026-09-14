@@ -7,17 +7,21 @@ import org.junit.Test
 class AppConfigDialogBinderSourceSmokeTest {
     @Test
     fun composeEditorOwnsTypefaceAndHookChainDestinations() {
-        val host = read("src/main/java/com/dpis/module/appconfig/AppConfigEditor.kt")
+        val process = read("src/main/java/com/dpis/module/appconfig/AppConfigEditor.kt")
+        val gateway = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
+        )
         val content = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorContent.kt")
         val overlay = read("src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt")
         val typefacePage = read("src/main/java/com/dpis/module/appconfig/presentation/AppTypefacePickerPage.kt")
         val hookPage = read("src/main/java/com/dpis/module/fonts/presentation/HookChainEditorPage.kt")
         val templates = read("src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
 
-        assertTrue(host.contains("interface AppConfigEditorHost"))
-        assertTrue(host.contains("fun toggleScope("))
-        assertTrue(host.contains("fun getFontHookDomainsButtonText("))
-        assertFalse(host.contains("fun bind(dialogView: View"))
+        assertTrue(process.contains("enum class AppConfigProcessAction"))
+        assertFalse(process.contains("interface AppConfigEditorHost"))
+        assertTrue(gateway.contains("fun toggleScope("))
+        assertTrue(gateway.contains("fun hookChainText("))
+        assertFalse(gateway.contains("fun bind(dialogView: View"))
         assertTrue(content.contains("state.actions.navigate(ConfigEditorDestination.TYPEFACE)"))
         assertTrue(content.contains("state.actions.navigate(ConfigEditorDestination.HOOK_CHAIN_INTERFACE)"))
         assertTrue(overlay.contains("fun AppConfigEditorOverlay("))

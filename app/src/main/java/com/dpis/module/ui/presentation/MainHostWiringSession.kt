@@ -52,7 +52,6 @@ class MainHostWiringSession(
         )
         val gateway = ComposeAppEditorActivityGateway(
             activity,
-            activity.dialogHost,
             activity.saveHandler,
             scopeCoordinator,
             activity.wechatHelp,

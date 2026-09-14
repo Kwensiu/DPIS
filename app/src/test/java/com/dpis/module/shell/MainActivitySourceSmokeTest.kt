@@ -744,7 +744,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(hostWiring.contains("composeAppEditorController?.open(item)"))
         assertTrue(gateway.contains("AppConfigPrefillPreview.resolveForEditor(activity, item, store)"))
         assertTrue(overlay.contains("fun AppConfigEditorOverlay("))
-        assertTrue(source.contains("internal val dialogHost"))
+        assertFalse(source.contains("internal val dialogHost"))
+        assertFalse(source.contains("AppConfigDialogActivityHost("))
         assertFalse(source.contains("AppConfigSheetSession("))
         assertFalse(source.contains("LandAppDetailSession("))
         assertFalse(source.contains("EditorDraftSession("))
@@ -867,7 +868,7 @@ class MainActivitySourceSmokeTest {
         val gateway = read(
             "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
         )
-        assertTrue(gateway.contains("dialogHost.toggleScope("))
+        assertTrue(gateway.contains("activity.systemScopeCoordinator.toggleScope("))
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
@@ -965,14 +966,15 @@ class MainActivitySourceSmokeTest {
     fun appConfigHostWiresFontHookDomainEditor() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val host = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
 
         val templateHost = read(
             "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt"
         )
         assertFalse(templateHost.contains("activity.dialogHost"))
-        assertTrue(host.contains("fun getFontHookDomainsButtonText("))
+        assertTrue(host.contains("fun hookChainText("))
+        assertFalse(host.contains("fun getFontHookDomainsButtonText("))
         assertFalse(host.contains("fun fontHookDomainsButtonText("))
         assertFalse(host.contains("fun showFontHookDomains("))
         assertTrue(host.contains("resolveFontHookDomainsForDraft(item, draft)"))
@@ -998,7 +1000,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun fontHookDomainEditorUsesDraftStateOnly() {
         val source = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
         val hookPage = read("src/main/java/com/dpis/module/fonts/presentation/HookChainEditorPage.kt")
         val methodStart = source.indexOf("private fun resolveFontHookDomainsForDraft(")
@@ -1017,20 +1019,20 @@ class MainActivitySourceSmokeTest {
     @Test
     fun fontHookDomainButtonTextUsesMutablePreviewStateFlag() {
         val source = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
         val methodStart = source.indexOf(
-            "override fun getFontHookDomainsButtonText("
+            "override fun hookChainText("
         )
         val methodEnd = source.indexOf(
-            "override fun setDpisEnabled(",
+            "override fun systemHooksEnabled(",
             methodStart
         )
         val method = source.substring(methodStart, methodEnd)
 
         assertTrue(method.contains("FontHookDomainPresentation.forOverride("))
         assertTrue(source.contains("FontHookDomainPresentation"))
-        assertTrue(method.contains("EditorDraft?"))
+        assertTrue(method.contains("EditorDraft"))
         assertTrue(source.contains("item?.previewFromGlobalPrefill"))
     }
 
