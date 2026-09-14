@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.appconfig.presentation
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CircleShape

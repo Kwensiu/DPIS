@@ -5,7 +5,7 @@ import android.text.format.Formatter
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.MainActivity
 import com.dpis.module.R
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.Executors

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
 
 /**
  * Stable interaction frame shared by app and template editor sheets.

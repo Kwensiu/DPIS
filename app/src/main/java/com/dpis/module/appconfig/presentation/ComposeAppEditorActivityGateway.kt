@@ -6,7 +6,7 @@ import com.dpis.module.appconfig.AppConfigEditorHost
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore

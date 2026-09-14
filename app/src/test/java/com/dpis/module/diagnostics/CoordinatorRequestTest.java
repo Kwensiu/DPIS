@@ -11,7 +11,7 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 import com.dpis.module.viewport.ViewportTargetType;
 
 import com.dpis.module.applist.AppListItem;
-import com.dpis.module.appconfig.EditorDraft;
+import com.dpis.module.appconfig.editor.EditorDraft;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

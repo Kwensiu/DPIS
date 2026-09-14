@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.appconfig.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -45,6 +45,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.compose.ComposeMotionTokens
+import com.dpis.module.ui.compose.EditorSheetScaffoldFrame
+import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
+import com.dpis.module.ui.compose.TextInputFocusBoundary
+import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

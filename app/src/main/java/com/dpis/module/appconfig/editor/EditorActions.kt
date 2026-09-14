@@ -1,7 +1,8 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.editor
 
-import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.ui.ConfigEditorDestination
 
 /** Builds immutable-draft actions without owning Activity state or side effects. */
 object EditorActions {

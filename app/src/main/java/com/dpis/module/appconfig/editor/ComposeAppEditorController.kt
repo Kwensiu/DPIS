@@ -1,11 +1,6 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.AppConfigEditorSession
 import com.dpis.module.appconfig.AppConfigProcessAction
-import com.dpis.module.appconfig.EditorActions
-import com.dpis.module.appconfig.EditorDraft
-import com.dpis.module.appconfig.EditorPresentation
-import com.dpis.module.appconfig.EditorPresentationFactory
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.templates.TemplateConfigValue
 import com.dpis.module.quirks.presentation.WechatDpiHelp

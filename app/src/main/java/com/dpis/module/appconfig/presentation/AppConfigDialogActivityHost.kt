@@ -2,7 +2,7 @@ package com.dpis.module.appconfig.presentation
 
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.AppConfigEditorHost
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
@@ -46,11 +46,6 @@ class AppConfigDialogActivityHost(
 
     override fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean =
         activity.runtimeLaunchSession.setDpisEnabled(packageName, enabled)
-
-    fun fontHookDomainsButtonText(
-        item: AppListItem?,
-        draft: EditorDraft?,
-    ): String = getFontHookDomainsButtonText(item, draft).orEmpty()
 
     private fun resolveFontHookDomainsForDraft(
         item: AppListItem?,

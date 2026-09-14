@@ -2,7 +2,7 @@ package com.dpis.module.diagnostics.presentation
 
 import android.content.Context
 import com.dpis.module.R
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.settings.AppLocaleManager

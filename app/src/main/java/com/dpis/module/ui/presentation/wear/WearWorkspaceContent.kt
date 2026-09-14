@@ -70,7 +70,7 @@ import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
-import com.dpis.module.appconfig.EditorPresentation
+import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.fonts.FontApplyMode

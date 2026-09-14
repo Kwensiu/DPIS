@@ -1,7 +1,7 @@
 package com.dpis.module.ui
 
-import com.dpis.module.appconfig.AppConfigEditorSession
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.AppConfigEditorSession
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage

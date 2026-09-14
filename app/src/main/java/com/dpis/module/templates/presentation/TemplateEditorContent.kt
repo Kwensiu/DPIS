@@ -53,7 +53,7 @@ import com.dpis.module.R
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.templates.TemplateEditorForm
-import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.AppIdentityMarqueeText
 import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.compose.ConfigEditorAnimatedContent

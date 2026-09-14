@@ -23,7 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.appconfig.EditorPresentation
+import com.dpis.module.appconfig.editor.EditorPresentation
+import com.dpis.module.appconfig.presentation.AppConfigEditorContent
 import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.ui.compose.*
 import com.dpis.module.ui.ConfigEditorDestination

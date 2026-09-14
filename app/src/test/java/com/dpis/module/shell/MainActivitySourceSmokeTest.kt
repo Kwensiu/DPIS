@@ -973,7 +973,7 @@ class MainActivitySourceSmokeTest {
         )
         assertFalse(templateHost.contains("activity.dialogHost"))
         assertTrue(host.contains("fun getFontHookDomainsButtonText("))
-        assertTrue(host.contains("fun fontHookDomainsButtonText("))
+        assertFalse(host.contains("fun fontHookDomainsButtonText("))
         assertFalse(host.contains("fun showFontHookDomains("))
         assertTrue(host.contains("resolveFontHookDomainsForDraft(item, draft)"))
         assertTrue(host.contains("HookDomainOverrideStore(activity.hookConfigStore).read("))

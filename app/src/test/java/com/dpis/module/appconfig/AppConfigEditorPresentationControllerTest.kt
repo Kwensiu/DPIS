@@ -1,8 +1,8 @@
 package com.dpis.module
 
 import com.dpis.module.appconfig.AppConfigProcessAction
-import com.dpis.module.appconfig.EditorActions
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorActions
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode

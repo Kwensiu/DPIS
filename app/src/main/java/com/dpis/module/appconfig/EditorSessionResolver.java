@@ -1,6 +1,6 @@
 package com.dpis.module.appconfig;
 
-import com.dpis.module.appconfig.EditorDraft;
+import com.dpis.module.appconfig.editor.EditorDraft;
 import com.dpis.module.applist.AppListItem;
 
 import java.util.List;

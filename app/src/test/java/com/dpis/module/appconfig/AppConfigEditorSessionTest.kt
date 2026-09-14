@@ -1,8 +1,8 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigEditorChip
-import com.dpis.module.appconfig.AppConfigEditorSession
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.AppConfigEditorChip
+import com.dpis.module.appconfig.editor.AppConfigEditorSession
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.templates.TemplateConfigValue

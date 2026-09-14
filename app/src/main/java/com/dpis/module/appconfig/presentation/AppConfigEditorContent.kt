@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.appconfig.presentation
 
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -63,19 +63,31 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.dpis.module.appconfig.AppConfigEditorChip
-import com.dpis.module.appconfig.EditorPresentation
-import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
-import com.dpis.module.fonts.FontApplyMode
+import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.editor.AppConfigEditorChip
+import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppStatusFormatter
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
-import com.dpis.module.appconfig.AppConfigInputValidation
-import com.dpis.module.viewport.ViewportApplyMode
-import com.dpis.module.viewport.ViewportTargetType
+import com.dpis.module.fonts.FontApplyMode
+import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.compose.AppIdentityMarqueeText
+import com.dpis.module.ui.compose.CompactEditorTextField
+import com.dpis.module.ui.compose.EditorClearButton
+import com.dpis.module.ui.compose.EditorTypefaceHookRow
+import com.dpis.module.ui.compose.EditorValueModeRow
 import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackOutlinedButton
-import com.dpis.module.quirks.presentation.WechatDpiHelp
+import com.dpis.module.ui.compose.LocalSpacing
+import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
+import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.compose.rememberEditorControlHeight
+import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
+import com.dpis.module.ui.compose.reportTextInputFocusBounds
+import com.dpis.module.viewport.ViewportApplyMode
+import com.dpis.module.viewport.ViewportTargetType
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable

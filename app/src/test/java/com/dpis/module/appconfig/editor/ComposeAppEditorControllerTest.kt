@@ -1,9 +1,8 @@
 package com.dpis.module
 
 import com.dpis.module.appconfig.AppConfigProcessAction
-import com.dpis.module.appconfig.AppConfigEditorChip
-
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.AppConfigEditorChip
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
@@ -316,7 +315,7 @@ class ComposeAppEditorControllerTest {
         )
 
         fun session(item: AppListItem, saved: Boolean) =
-            com.dpis.module.appconfig.AppConfigEditorSession.open(item, saved, PREFILL)
+            com.dpis.module.appconfig.editor.AppConfigEditorSession.open(item, saved, PREFILL)
 
         fun app(label: String, packageName: String) = AppListItem(
             label,

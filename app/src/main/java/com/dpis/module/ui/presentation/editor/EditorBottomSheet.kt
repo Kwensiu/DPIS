@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.R
+import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
 
 /** Shared portrait editor frame. Editor-specific fields and actions stay with each workflow. */
 @OptIn(ExperimentalMaterial3Api::class)

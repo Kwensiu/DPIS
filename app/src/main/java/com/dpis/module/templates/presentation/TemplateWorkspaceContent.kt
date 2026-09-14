@@ -60,7 +60,7 @@ import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.WorkspaceTwoPaneMinWidth
-import com.dpis.module.ui.compose.AppTypefacePickerPage
+import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.HookChainEditorPage
 import com.dpis.module.ui.dialog.ConfirmAlertDialog

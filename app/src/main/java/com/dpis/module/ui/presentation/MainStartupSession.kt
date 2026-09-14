@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListFilterStateStore
 import com.dpis.module.applist.AppListItem
