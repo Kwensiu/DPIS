@@ -9,7 +9,7 @@ import com.dpis.module.config.DpisConfigStore
 class RuntimeConfigDeliverySourceTest {
     @Test
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
-        val delivery = read("src/main/java/com/dpis/module/runtime/RuntimeConfigDelivery.java")
+        val delivery = read("src/main/java/com/dpis/module/runtime/delivery/RuntimeConfigDelivery.java")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val runtimeLaunch = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"

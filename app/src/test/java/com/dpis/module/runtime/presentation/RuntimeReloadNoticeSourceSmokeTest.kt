@@ -9,7 +9,7 @@ class RuntimeReloadNoticeSourceSmokeTest {
     fun noticeIsPersistedWhenShownAndCanStillBeDismissedFreely() {
         val advisor = read("src/main/java/com/dpis/module/runtime/ModuleRuntimeReloadAdvisor.kt")
         val coordinator = read(
-            "src/main/java/com/dpis/module/runtime/ModuleRuntimeReloadNoticeCoordinator.kt",
+            "src/main/java/com/dpis/module/runtime/presentation/ModuleRuntimeReloadNoticeCoordinator.kt",
         )
         val dialog = read("src/main/java/com/dpis/module/tools/presentation/LocalToolDialogs.kt")
 

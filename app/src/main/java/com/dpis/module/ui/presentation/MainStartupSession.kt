@@ -12,7 +12,7 @@ import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
 
 import com.dpis.module.root.RootAccessProbe
-import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator
+import com.dpis.module.runtime.presentation.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession

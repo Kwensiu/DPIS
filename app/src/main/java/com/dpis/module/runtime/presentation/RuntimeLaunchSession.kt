@@ -12,7 +12,7 @@ import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
-import com.dpis.module.runtime.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.viewport.ViewportPropertySyncer
 

@@ -1,4 +1,4 @@
-package com.dpis.module.runtime;
+package com.dpis.module.quirks;
 
 import com.dpis.module.viewport.DpiConfig;
 

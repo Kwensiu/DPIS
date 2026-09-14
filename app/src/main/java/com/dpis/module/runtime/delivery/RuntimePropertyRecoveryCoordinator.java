@@ -1,4 +1,4 @@
-package com.dpis.module.runtime;
+package com.dpis.module.runtime.delivery;
 
 import com.dpis.module.config.DpisConfigStore;
 
@@ -12,7 +12,7 @@ import com.dpis.module.viewport.ViewportPropertySyncer;
 
 import com.dpis.module.quirks.WechatDpiPropertySyncer;
 
-import com.dpis.module.runtime.RuntimeDebugPropertySyncer;
+
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

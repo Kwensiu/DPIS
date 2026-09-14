@@ -1,4 +1,4 @@
-package com.dpis.module.runtime;
+package com.dpis.module.runtime.delivery;
 
 public final class RuntimeConfigDelivery {
     private static volatile Runnable localSnapshotReloader = () -> {

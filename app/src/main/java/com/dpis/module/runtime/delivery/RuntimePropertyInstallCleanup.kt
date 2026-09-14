@@ -1,6 +1,7 @@
-package com.dpis.module.runtime
+package com.dpis.module.runtime.delivery
 
 import android.content.Context
+import com.dpis.module.runtime.RootCommandRunner
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 

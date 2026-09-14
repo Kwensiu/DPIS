@@ -1,4 +1,4 @@
-package com.dpis.module.runtime;
+package com.dpis.module.runtime.delivery;
 
 import static org.junit.Assert.assertEquals;
 

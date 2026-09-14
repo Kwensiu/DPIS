@@ -7,9 +7,9 @@ import com.dpis.module.diagnostics.DpisAppLogStore
 import com.dpis.module.runtime.hyperos.HyperOsNativeProxyAssetExporter
 import com.dpis.module.fonts.TypefaceCatalogCache.preload
 import com.dpis.module.root.RootAccessProbe
-import com.dpis.module.runtime.RuntimeConfigDelivery
-import com.dpis.module.runtime.RuntimePropertyRecoveryCoordinator
-import com.dpis.module.runtime.RuntimePropertyInstallCleanup
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimePropertyInstallCleanup
+import com.dpis.module.runtime.delivery.RuntimePropertyRecoveryCoordinator
 import com.dpis.module.updates.presentation.UpdatePackageInstaller
 import com.google.android.material.color.DynamicColors
 import io.github.libxposed.service.XposedService

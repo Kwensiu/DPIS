@@ -27,7 +27,7 @@ import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.quickconfig.QuickConfigEditorSession
 import com.dpis.module.quirks.WechatDpiEditor
-import com.dpis.module.runtime.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.templates.GlobalPrefillStore

@@ -9,7 +9,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.quirks.WechatDpiRecoveryPolicy
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.quirks.WechatDpiRuntime
-import com.dpis.module.runtime.WechatDpiPropertyBridge
+import com.dpis.module.quirks.WechatDpiPropertyBridge
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import io.github.libxposed.api.XposedInterface
 import java.util.concurrent.atomic.AtomicBoolean

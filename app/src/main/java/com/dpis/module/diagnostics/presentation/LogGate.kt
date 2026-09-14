@@ -4,8 +4,8 @@ import android.widget.Toast
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
-import com.dpis.module.runtime.RuntimeConfigDelivery
-import com.dpis.module.runtime.RuntimeDebugPropertySyncer
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimeDebugPropertySyncer
 import com.dpis.module.ui.dialog.ConfirmDialog
 
 object LogGate {
