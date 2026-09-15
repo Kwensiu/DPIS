@@ -229,16 +229,13 @@ class QuickConfigActivity : LocalizedActivity() {
         action: AppConfigProcessAction,
     ) {
         // Re-prepare before restart because APK updates can stale the bind mount.
-        if (action == AppConfigProcessAction.RESTART &&
-            hyperOsNativeProxy.prepareForRestart(item, hookConfigStore) { success ->
-                if (success) {
-                    executeDialogProcessActionAfterHyperOsProxyReady(item, action)
-                }
-            }
+        hyperOsNativeProxy.runAfterOptionalRestartPrepare(
+            item,
+            hookConfigStore,
+            action == AppConfigProcessAction.RESTART,
         ) {
-            return
+            executeDialogProcessActionAfterHyperOsProxyReady(item, action)
         }
-        executeDialogProcessActionAfterHyperOsProxyReady(item, action)
     }
 
     private fun executeDialogProcessActionAfterHyperOsProxyReady(

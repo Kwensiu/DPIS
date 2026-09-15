@@ -5,7 +5,6 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.AppConfigSaveHandler.Result.Companion.failure
 import com.dpis.module.appconfig.editor.AppConfigEditorPersister
 import com.dpis.module.appconfig.editor.AppConfigEditorSession
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
@@ -52,10 +51,8 @@ internal class QuickConfigComposeEditor(
     private val saveWorkflow = ComposeAppEditorSaveWorkflow(
         AppConfigEditorPersister(
             saveHandler,
-            object : AppConfigEditorPersister.PersistContext {
-                override fun systemHooksEnabled(): Boolean = activity.isSystemHookEnabled
-                override fun configStore(): DpisConfigStore? = activity.hookConfigStore
-            },
+            { activity.isSystemHookEnabled },
+            { activity.hookConfigStore },
         ),
         QuickConfigPostSaveEffects(),
     )
@@ -227,24 +224,13 @@ internal class QuickConfigComposeEditor(
             result: AppConfigSaveHandler.Result,
             item: AppListItem,
             draft: EditorDraft,
-        ): AppConfigSaveHandler.Result {
-            if (!WechatDpiEditor.save(
-                    draft.wechatDpiInput,
-                    item.packageName,
-                    draft.dpisEnabled,
-                    activity.hookConfigStore,
-                )
-            ) {
-                return failure(
-                    if (WechatDpiEditor.isInputValid(draft.wechatDpiInput)) {
-                        R.string.system_settings_save_failed
-                    } else {
-                        R.string.status_save_invalid
-                    },
-                )
-            }
-            return result
-        }
+        ): AppConfigSaveHandler.Result = WechatDpiEditor.applyAfterPersist(
+            result,
+            draft.wechatDpiInput,
+            item.packageName,
+            draft.dpisEnabled,
+            activity.hookConfigStore,
+        )
 
         override fun showMessage(messageResId: Int) = activity.showToast(messageResId)
 

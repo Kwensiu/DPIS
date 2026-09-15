@@ -76,21 +76,19 @@ class RuntimeLaunchSession(
         if (saveResult == null) {
             return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed)
         }
-        if (!saveResult.success) {
-            return saveResult
-        }
-        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                if (WechatDpiEditor.isInputValid(wechatDpiInput)) {
-                    R.string.system_settings_save_failed
-                } else {
-                    R.string.status_save_invalid
-                },
-            )
+        val result = WechatDpiEditor.applyAfterPersist(
+            saveResult,
+            wechatDpiInput,
+            packageName,
+            dpisEnabled,
+            store,
+        )
+        if (!result.success) {
+            return result
         }
         onRuntimeConfigSaved()
         scheduleRuntimePropertiesForTargetLaunch(packageName)
-        return saveResult
+        return result
     }
 
     fun onRuntimeConfigSaved() {
@@ -125,16 +123,13 @@ class RuntimeLaunchSession(
         }
         // Re-prepare before restart because APK updates can leave an old bind mount
         // pointing at a deleted module native library.
-        if (action == AppConfigProcessAction.RESTART &&
-            hyperOsNativeProxy.prepareForRestart(item, activity.hookConfigStore) { success ->
-                if (success) {
-                    executeDialogProcessActionAfterHyperOsProxyReady(item, action)
-                }
-            }
+        hyperOsNativeProxy.runAfterOptionalRestartPrepare(
+            item,
+            activity.hookConfigStore,
+            action == AppConfigProcessAction.RESTART,
         ) {
-            return
+            executeDialogProcessActionAfterHyperOsProxyReady(item, action)
         }
-        executeDialogProcessActionAfterHyperOsProxyReady(item, action)
     }
 
     private fun scheduleRuntimePropertiesForTargetLaunch(packageName: String?) {

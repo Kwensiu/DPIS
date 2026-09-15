@@ -5,7 +5,7 @@ import android.util.DisplayMetrics
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate
+import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver

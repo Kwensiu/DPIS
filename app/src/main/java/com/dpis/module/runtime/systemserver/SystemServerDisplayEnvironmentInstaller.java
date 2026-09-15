@@ -42,7 +42,7 @@ import com.dpis.module.hooks.HookRuntimePolicy;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 
 import com.dpis.module.runtime.probe.DebugPackageOverride;
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
 import com.dpis.module.runtime.probe.RuntimeClock;
 import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 

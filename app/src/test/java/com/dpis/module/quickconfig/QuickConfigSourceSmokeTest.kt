@@ -70,7 +70,7 @@ class QuickConfigSourceSmokeTest {
 
         Assert.assertTrue(editor.contains("ComposeAppEditorSaveWorkflow("))
         Assert.assertTrue(editor.contains("AppConfigEditorPersister("))
-        Assert.assertTrue(editor.contains("WechatDpiEditor.save("))
+        Assert.assertTrue(editor.contains("WechatDpiEditor.applyAfterPersist("))
         Assert.assertTrue(editor.contains("draft.wechatDpiInput"))
         Assert.assertTrue(editor.contains("draft.dpisEnabled"))
         Assert.assertTrue(editor.contains("activity.hookConfigStore"))
@@ -79,7 +79,7 @@ class QuickConfigSourceSmokeTest {
         Assert.assertTrue(editor.contains("scopeCoordinator.requestScope("))
         Assert.assertTrue(editor.contains("requestScopeAfterSave(item)"))
         Assert.assertTrue(editor.contains("editorSession = current.withScopeSelected(true)"))
-        Assert.assertTrue(activity.contains("hyperOsNativeProxy.prepareForRestart(item, hookConfigStore)"))
+        Assert.assertTrue(activity.contains("hyperOsNativeProxy.runAfterOptionalRestartPrepare("))
         Assert.assertFalse(activity.contains("HyperOsNativeProxyBindMounter.createPlan"))
         Assert.assertFalse(activity.contains("executeHyperOsNativeProxyMount("))
         Assert.assertTrue(activity.contains("executeDialogProcessAction(item, action)"))

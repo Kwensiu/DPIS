@@ -17,7 +17,7 @@ import android.content.res.Configuration;
 import android.util.DisplayMetrics;
 
 import com.dpis.module.runtime.probe.CallerTrace;
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;

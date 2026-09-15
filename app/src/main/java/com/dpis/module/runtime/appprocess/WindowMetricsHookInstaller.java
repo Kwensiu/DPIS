@@ -13,7 +13,7 @@ import android.graphics.Rect;
 
 import java.lang.reflect.Method;
 
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint;
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler;
 

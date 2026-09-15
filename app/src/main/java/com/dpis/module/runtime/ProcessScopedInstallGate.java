@@ -1,4 +1,4 @@
-package com.dpis.module.runtime.lifecycle;
+package com.dpis.module.runtime;
 
 import android.os.Process;
 

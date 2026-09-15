@@ -15,7 +15,7 @@ import com.dpis.module.fonts.FontProviderTypefaceLoader
 import com.dpis.module.fonts.FontTypefaceLoader
 import com.dpis.module.fonts.PublishedFontFileResolver
 import com.dpis.module.fonts.SystemFontRegistry
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate
+import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder

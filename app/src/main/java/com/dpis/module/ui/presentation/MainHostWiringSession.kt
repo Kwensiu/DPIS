@@ -57,7 +57,11 @@ class MainHostWiringSession(
             activity.wechatHelp,
         )
         val saveWorkflow = ComposeAppEditorSaveWorkflow(
-            AppConfigEditorPersister(activity.saveHandler, gateway),
+            AppConfigEditorPersister(
+                activity.saveHandler,
+                gateway::systemHooksEnabled,
+                activity::hookConfigStore,
+            ),
             MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator),
         )
         composeAppEditorSaveWorkflow = saveWorkflow

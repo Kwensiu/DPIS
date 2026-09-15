@@ -4,7 +4,7 @@ import com.dpis.module.*;
 import android.graphics.Rect;
 
 import com.dpis.module.runtime.probe.CallerTrace;
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

@@ -4,7 +4,6 @@ import android.content.Context
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.AppConfigPrefillPreview
 import com.dpis.module.appconfig.AppConfigProcessAction
-import com.dpis.module.appconfig.editor.AppConfigEditorPersister
 import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.appconfig.EditorSessionResolver
 import com.dpis.module.applist.AppListItem
@@ -26,7 +25,7 @@ import com.dpis.module.appconfig.editor.ComposeAppEditorController
 class ComposeAppEditorActivityGateway(
     private val activity: MainActivity,
     private val wechatDpiHelp: WechatDpiHelp,
-) : ComposeAppEditorController.Host, AppConfigEditorPersister.PersistContext {
+) : ComposeAppEditorController.Host {
 
     override fun resolveEditorItem(packageName: String): AppListItem? {
         var item = EditorSessionResolver.findItem(
@@ -64,8 +63,6 @@ class ComposeAppEditorActivityGateway(
 
     override fun systemHooksEnabled(): Boolean =
         activity.startupSession.isSystemHookEnabledFromStore
-
-    override fun configStore(): DpisConfigStore? = activity.hookConfigStore
 
     override fun automaticFontHookDomains(): Set<String> =
         FontHookDomainRegistry.automaticCustomizableDomains()

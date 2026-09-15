@@ -7,7 +7,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate
+import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder

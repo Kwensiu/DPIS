@@ -27,7 +27,7 @@ import com.dpis.module.fonts.TextViewFontProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker.UnitKind
 import com.dpis.module.fonts.hookdomain.FontHookArbitration
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate
+import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.runtime.font.FontScaleOverride.resolve
 import com.dpis.module.runtime.font.FontScaleOverride.toPx
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller.resolveFieldRewriteFactor

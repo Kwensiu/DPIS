@@ -43,6 +43,22 @@ class HyperOsNativeProxyFacade(
         return true
     }
 
+    fun runAfterOptionalRestartPrepare(
+        item: AppListItem?,
+        store: DpisConfigStore?,
+        prepareRestart: Boolean,
+        onReady: () -> Unit,
+    ) {
+        if (prepareRestart &&
+            prepareForRestart(item, store) { success ->
+                if (success) onReady()
+            }
+        ) {
+            return
+        }
+        onReady()
+    }
+
     private fun lookupMetadataCandidate(packageName: String): Boolean =
         HyperOsNativeAppDetector.isNativeProxyCandidate(context.packageManager, packageName)
 

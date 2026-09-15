@@ -746,7 +746,9 @@ class MainActivitySourceSmokeTest {
 
         assertTrue(hostWiring.contains("composeAppEditorController?.open(item)"))
         assertTrue(hostWiring.contains("ComposeAppEditorController(viewModel, gateway, saveWorkflow)"))
-        assertTrue(hostWiring.contains("AppConfigEditorPersister(activity.saveHandler, gateway)"))
+        assertTrue(hostWiring.contains("AppConfigEditorPersister("))
+        assertTrue(hostWiring.contains("gateway::systemHooksEnabled"))
+        assertTrue(hostWiring.contains("activity::hookConfigStore"))
         assertTrue(hostWiring.contains("MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator)"))
         assertFalse(hostWiring.contains("setSaveWorkflow"))
         assertFalse(gateway.contains("setSaveWorkflow"))
@@ -1156,8 +1158,10 @@ class MainActivitySourceSmokeTest {
         )
         assertFalse(activity.contains("ViewportTargetSpec.relativeScale(viewportValue * 10)"))
         assertTrue(
-            source.contains("hyperOsNativeProxy.prepareForRestart(item, activity.hookConfigStore)")
+            source.contains("hyperOsNativeProxy.runAfterOptionalRestartPrepare(")
         )
+        assertTrue(facade.contains("prepareForRestart(item, store)"))
+        assertTrue(facade.contains("if (success) onReady()"))
         assertTrue(policy.contains("store.isTargetDpisEnabled(packageName)"))
         assertTrue(policy.contains("hasActiveStoredConfig(store, packageName)"))
         assertFalse(policy.contains("store.getTargetTypefaceId(packageName)"))
@@ -1165,7 +1169,6 @@ class MainActivitySourceSmokeTest {
         assertFalse(policy.contains("item.fontScalePercent"))
         assertFalse(policy.contains("FontApplyMode.isEnabled"))
         assertTrue(facade.contains("executeMount(current.packageName, apply = true, onFinished)"))
-        assertTrue(source.contains("if (success)"))
         assertTrue(
             source.contains("processActionHandler.execute(item, mappedAction)")
         )

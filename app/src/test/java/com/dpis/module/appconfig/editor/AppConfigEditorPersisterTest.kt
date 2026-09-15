@@ -34,10 +34,8 @@ class AppConfigEditorPersisterTest {
         )
         val persister = AppConfigEditorPersister(
             AppConfigSaveHandler(),
-            object : AppConfigEditorPersister.PersistContext {
-                override fun systemHooksEnabled() = true
-                override fun configStore() = store
-            },
+            { true },
+            { store },
         )
         val draft = EditorDraft(
             item.packageName,

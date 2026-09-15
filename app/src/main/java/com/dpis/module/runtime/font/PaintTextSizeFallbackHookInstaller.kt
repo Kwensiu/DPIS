@@ -6,7 +6,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.PaintProvenanceTracker
-import com.dpis.module.runtime.lifecycle.ProcessScopedInstallGate
+import com.dpis.module.runtime.ProcessScopedInstallGate
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.Hooker
 import java.util.concurrent.ConcurrentHashMap

@@ -8,18 +8,14 @@ import com.dpis.module.viewport.ViewportTargetSpec
 /**
  * Maps a parsed editor draft onto [AppConfigSaveHandler.saveResolved].
  *
- * Store and system-hook availability stay on [PersistContext] so main workspace and
+ * Store and system-hook availability stay on the caller so main workspace and
  * Quick Config can share persist without sharing post-save effects.
  */
 class AppConfigEditorPersister(
     private val saveHandler: AppConfigSaveHandler,
-    private val persistContext: PersistContext,
+    private val systemHooksEnabled: () -> Boolean,
+    private val configStore: () -> DpisConfigStore?,
 ) : ComposeAppEditorSaveWorkflow.Persister {
-    interface PersistContext {
-        fun systemHooksEnabled(): Boolean
-        fun configStore(): DpisConfigStore?
-    }
-
     override fun persist(
         item: AppListItem,
         draft: EditorDraft,
@@ -38,8 +34,8 @@ class AppConfigEditorPersister(
         draft.fontHookDomainsResetRequested,
         draft.viewportScaleInput,
         draft.viewportAbsoluteInput,
-        persistContext.systemHooksEnabled(),
-        persistContext.configStore(),
+        systemHooksEnabled(),
+        configStore(),
         null,
     )
 }
