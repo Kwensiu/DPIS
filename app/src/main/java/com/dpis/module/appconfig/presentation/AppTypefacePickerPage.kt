@@ -243,7 +243,7 @@ private fun TypefaceOptionList(
             .nestedScroll(listScrollConnection)
             .dialogListContentFade(
             state = listState,
-            edgeColor = MaterialTheme.colorScheme.surfaceContainer,
+            owningSurfaceColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
         state = listState,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(top = 8.dp),

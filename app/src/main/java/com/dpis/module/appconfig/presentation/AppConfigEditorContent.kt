@@ -383,7 +383,7 @@ fun AppConfigEditorContent(
                         style = MaterialTheme.typography.labelLarge,
                         centerWhenStatic = true,
                         textHorizontalInset = LocalSpacing.current.lg,
-                        edgeFadeColor = MaterialTheme.colorScheme.surfaceContainer,
+                        owningSurfaceColor = MaterialTheme.colorScheme.surfaceContainer,
                     )
                 }
             },
@@ -406,7 +406,7 @@ fun AppConfigEditorContent(
                         style = MaterialTheme.typography.labelLarge,
                         centerWhenStatic = true,
                         textHorizontalInset = LocalSpacing.current.md,
-                        edgeFadeColor = MaterialTheme.colorScheme.surfaceContainer,
+                        owningSurfaceColor = MaterialTheme.colorScheme.surfaceContainer,
                     )
                 }
             }

@@ -213,7 +213,7 @@ internal fun LanguageDialogContent(
                 .heightIn(max = maxListHeight)
                 .dialogListContentFade(
                     state = listState,
-                    edgeColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    owningSurfaceColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 )
                 .testTag(LanguageDialogOptionsTestTag),
             state = listState,

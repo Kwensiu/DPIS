@@ -288,7 +288,7 @@ fun QuickTemplateTargetsContent(
                                         .fillMaxSize()
                                         .dialogListContentFade(
                                             state = listState,
-                                            edgeColor = MaterialTheme.colorScheme.surfaceContainer,
+                                            owningSurfaceColor = MaterialTheme.colorScheme.surfaceContainer,
                                             edgeHeight = 4.dp
                                         ),
                                     state = listState,
@@ -343,7 +343,9 @@ fun QuickTemplateTargetsContent(
                     text = stringResource(R.string.quick_template_targets_filter_list_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.offset(x = FilterSheetUiTokens.HeaderTitleOffset),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset(x = FilterSheetUiTokens.HeaderTitleOffset),
                 )
             },
             trailingContent = {

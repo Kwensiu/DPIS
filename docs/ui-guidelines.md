@@ -134,6 +134,23 @@ Dialog 必须先按内容和操作归类。
 
 按钮文本应清楚表达结果。高风险操作不要只写“确定”，应写出动作，例如停止、覆盖、导入或清除。
 
+## Scroll edge fades
+
+Overflow fades are two different treatments. Do not mix them.
+
+| 类型 | 语义 | 代码落点 | 颜色规则 |
+| --- | --- | --- | --- |
+| 内容溶入表面 | 被裁掉的内容溶进它所在容器的背景 | `HorizontalScrollWithEdgeFade`、`FilterSheetScrollChipRow`、`dialogListContentFade`、`AppIdentityMarqueeText` | 必须传 `owningSurfaceColor`，使用 `MaterialTheme.colorScheme` 里该容器的表面色。筛选 sheet 用 `FilterSheetScrollChipRow`，不要在功能页自选渐隐色。 |
+| 列表边界遮罩 | 列表与 chrome 交界处的浅阴影，用来提示边界 | `edgeOcclusionFade` | 主题无关的黑色低透明，留在 `EdgeOcclusionFadeTokens`。 |
+
+内容溶入表面时：
+
+- 颜色必须是所属容器的表面色，例如 filter sheet 的 `surfaceContainer`、主题色条所在区域的 `surfaceBright`。
+- 可见度只缩放该表面色自己的 alpha，见 `owningSurfaceFadeColor`。不要把可见度写成独立的 `Color.Black`。
+- 新增横向滚动芯片行时，先复用 `HorizontalScrollWithEdgeFade` 并显式传入所属表面色；在筛选 sheet 内则复用 `FilterSheetScrollChipRow`。
+
+对应测试：`OwningSurfaceFadePolicyTest`。改渐隐颜色、参数名或新增调用点时同步更新。
+
 ## Compose 点击与触觉
 
 Compose 页面中的离散成功操作应使用
@@ -157,6 +174,7 @@ UI 变更至少要考虑资源 smoke test。影响 layout id、字符串、debug
 | 更新弹窗布局和 release notes 容器 | `AboutActivitySourceSmokeTest` |
 | 启动免责声明、运行时重载提示、主界面入口 | `MainActivitySourceSmokeTest`、`MainActivityLayoutSmokeTest` |
 | 筛选底部面板 | `FilterSheetLayoutSmokeTest` |
+| 滚动边缘溶入表面 | `OwningSurfaceFadePolicyTest` |
 | 帮助教程 dialog | `HelpTutorialDialogLayoutSmokeTest` |
 
 推荐验证顺序：

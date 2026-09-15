@@ -14,12 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.BuildConfig
 import com.dpis.module.applist.AppListFilterState
-import com.dpis.module.ui.compose.EdgeFadeTokens
 import com.dpis.module.ui.compose.FeedbackFilterChip
 import com.dpis.module.ui.compose.FilterSheetResetButton
 import com.dpis.module.ui.compose.FilterSheetScaffold
+import com.dpis.module.ui.compose.FilterSheetScrollChipRow
 import com.dpis.module.ui.compose.FilterSheetUiTokens
-import com.dpis.module.ui.compose.HorizontalScrollWithEdgeFade
 
 /** App catalogue filters. Visual grouping mirrors the template target picker, state remains local. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +31,13 @@ internal fun AppFilterSheet(
     FilterSheetScaffold(
         onDismissRequest = onDismissRequest,
         title = {
-            Text(stringResource(R.string.app_filter_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.offset(x = FilterSheetUiTokens.HeaderTitleOffset))
+            Text(
+                text = stringResource(R.string.app_filter_title),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(x = FilterSheetUiTokens.HeaderTitleOffset),
+            )
         },
         trailingContent = {
             FeedbackFilterChip(shape = FilterSheetUiTokens.PillShape, selected = filterState.reverseOrder(), onClick = { onFilterChanged(filterState.withReverseOrder(!filterState.reverseOrder())) }, label = { Text(stringResource(R.string.app_filter_reverse)) })
@@ -73,11 +78,7 @@ internal fun AppFilterSheet(
 @Composable private fun ChipRow(content: @Composable FlowRowScope.() -> Unit) = FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp), content = content)
 @Composable
 private fun ConfigurationChipRow(content: @Composable RowScope.() -> Unit) =
-    HorizontalScrollWithEdgeFade(
-        edgeWidth = EdgeFadeTokens.Width,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        content = content,
-    )
+    FilterSheetScrollChipRow(content = content)
 @Composable private fun AppTypeChip(state: AppListFilterState, type: AppListFilterState.AppType, label: Int, onChanged: (AppListFilterState) -> Unit) = FeedbackFilterChip(selected = state.appType() == type, onClick = { onChanged(state.withAppType(type)) }, label = { Text(stringResource(label)) })
 @Composable private fun BooleanChip(selected: Boolean, label: Int, onClick: () -> Unit) = FeedbackFilterChip(selected = selected, onClick = onClick, label = { Text(stringResource(label)) })
 @Composable private fun SortChip(state: AppListFilterState, sort: AppListFilterState.SortOrder, label: Int, onChanged: (AppListFilterState) -> Unit) = FeedbackFilterChip(selected = state.sortOrder() == sort, onClick = { onChanged(state.withSortOrder(sort)) }, label = { Text(stringResource(label)) })

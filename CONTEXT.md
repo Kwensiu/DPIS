@@ -33,6 +33,12 @@ padding so the final item can still settle fully above the gesture handle. Do
 not put that inset on the outer editor viewport, which creates a hard clipping
 edge above the system area.
 
+Horizontal chip rows, dialog option lists, and marquee labels dissolve overflow
+into the owning surface color (`owningSurfaceColor`). Pass the color of the
+surface behind the content, such as `surfaceContainer` on a filter sheet. Do
+not reuse the list-boundary occlusion shadow (`edgeOcclusionFade`), which is a
+theme-independent dark edge. See `docs/ui-guidelines.md`.
+
 Editor destination transitions inside a bottom Sheet must not clip outgoing
 content to the incoming page's animated bounds; controls that were fully visible
 before navigation remain drawable until their horizontal exit completes. A

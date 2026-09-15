@@ -22,21 +22,21 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /**
  * A horizontally scrollable row whose edge fades reflect the current scroll position.
  *
- * The fade is only present while content remains hidden on that side, so a fully visible row
- * and either terminal scroll position do not retain misleading decoration.
+ * Overflow dissolves into [owningSurfaceColor]. Pass the color of the surface behind this
+ * row. Do not use a black occlusion shadow; that belongs to [edgeOcclusionFade]. The fade is
+ * only present while content remains hidden on that side, so a fully visible row and either
+ * terminal scroll position do not retain misleading decoration.
  */
 @Composable
 internal fun HorizontalScrollWithEdgeFade(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    // The edge is an occlusion shadow, so it stays dark in both light and dark themes.
-    edgeColor: Color = Color.Black.copy(alpha = 0.12f),
+    owningSurfaceColor: Color,
     edgeWidth: Dp = EdgeFadeTokens.Width,
     content: @Composable RowScope.() -> Unit,
 ) {
@@ -58,7 +58,7 @@ internal fun HorizontalScrollWithEdgeFade(
             .horizontalEdgeFade(
                 startVisibility = startFadeVisibility,
                 endVisibility = endFadeVisibility,
-                edgeColor = edgeColor,
+                owningSurfaceColor = owningSurfaceColor,
                 edgeWidth = edgeWidth,
             ),
     ) {
@@ -73,31 +73,31 @@ internal fun HorizontalScrollWithEdgeFade(
     }
 }
 
-/** Applies the shared horizontal occlusion treatment inside the receiving node's bounds. */
+/** Draws start/end surface fades inside the receiving node's bounds. */
 internal fun Modifier.horizontalEdgeFade(
     startVisibility: Float,
     endVisibility: Float,
-    edgeColor: Color,
+    owningSurfaceColor: Color,
     edgeWidth: Dp = EdgeFadeTokens.Width,
 ): Modifier = drawWithContent {
     drawContent()
-    drawHorizontalEdgeFade(startVisibility, endVisibility, edgeColor, edgeWidth)
+    drawHorizontalEdgeFade(startVisibility, endVisibility, owningSurfaceColor, edgeWidth)
 }
 
 private fun DrawScope.drawHorizontalEdgeFade(
     startVisibility: Float,
     endVisibility: Float,
-    edgeColor: Color,
+    owningSurfaceColor: Color,
     edgeWidth: Dp,
 ) {
     val edgePx = edgeWidth.toPx().coerceAtMost(size.width / 2f)
     if (edgePx <= 0f) return
-    val startAlpha = startVisibility.coerceIn(0f, 1f)
-    val endAlpha = endVisibility.coerceIn(0f, 1f)
-    if (startAlpha > 0f) {
+    val startColor = owningSurfaceFadeColor(owningSurfaceColor, startVisibility)
+    val endColor = owningSurfaceFadeColor(owningSurfaceColor, endVisibility)
+    if (startColor.alpha > 0f) {
         drawRect(
             brush = Brush.horizontalGradient(
-                colors = listOf(edgeColor.copy(alpha = startAlpha), Color.Transparent),
+                colors = listOf(startColor, Color.Transparent),
                 startX = 0f,
                 endX = edgePx,
             ),
@@ -105,10 +105,10 @@ private fun DrawScope.drawHorizontalEdgeFade(
             size = Size(edgePx, size.height),
         )
     }
-    if (endAlpha > 0f) {
+    if (endColor.alpha > 0f) {
         drawRect(
             brush = Brush.horizontalGradient(
-                colors = listOf(Color.Transparent, edgeColor.copy(alpha = endAlpha)),
+                colors = listOf(Color.Transparent, endColor),
                 startX = size.width - edgePx,
                 endX = size.width,
             ),

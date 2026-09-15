@@ -590,7 +590,7 @@ private fun DurationChipSelector(
     val customSelected = selectedSeconds !in presets.map { it.first }
 
     HorizontalScrollWithEdgeFade(
-        edgeColor = MaterialTheme.colorScheme.surfaceBright,
+        owningSurfaceColor = MaterialTheme.colorScheme.surfaceBright,
         contentPadding = PaddingValues(horizontal = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {

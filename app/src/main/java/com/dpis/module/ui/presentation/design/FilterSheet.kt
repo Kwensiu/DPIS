@@ -4,22 +4,22 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,13 +81,37 @@ internal fun FilterSheetScaffold(
                         contentDescription = stringResource(R.string.dialog_close),
                     )
                 }
-                title()
-                Spacer(Modifier.weight(1f))
-                trailingContent()
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = FilterSheetUiTokens.HeaderActionSpacing),
+                ) {
+                    title()
+                }
+                Row(
+                    modifier = Modifier.wrapContentWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start,
+                ) {
+                    trailingContent()
+                }
             }
             content()
         }
     }
+}
+
+/** Horizontal chip row that dissolves overflow into the filter-sheet container. */
+@Composable
+internal fun FilterSheetScrollChipRow(
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(8.dp),
+    content: @Composable RowScope.() -> Unit,
+) {
+    HorizontalScrollWithEdgeFade(
+        owningSurfaceColor = MaterialTheme.colorScheme.surfaceContainer,
+        horizontalArrangement = horizontalArrangement,
+        content = content,
+    )
 }
 
 @Composable
@@ -95,7 +119,7 @@ internal fun FilterSheetResetButton(
     onClick: () -> Unit,
     contentDescription: String,
 ) {
-    androidx.compose.foundation.layout.Box(
+    Box(
         modifier = Modifier
             .size(FilterSheetUiTokens.ResetActionSize)
             .clip(FilterSheetUiTokens.PillShape)

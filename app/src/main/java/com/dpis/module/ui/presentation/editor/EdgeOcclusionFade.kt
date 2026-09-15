@@ -83,10 +83,10 @@ internal object EdgeOcclusionFadeTokens {
     const val MaxAlpha = 0.12f
 }
 
-/** Fades scrollable dialog content into its owning surface, like horizontal chip fades. */
+/** Fades scrollable dialog content into [owningSurfaceColor], like horizontal chip fades. */
 internal fun Modifier.dialogListContentFade(
     state: LazyListState,
-    edgeColor: Color,
+    owningSurfaceColor: Color,
     edgeHeight: Dp = EdgeFadeTokens.Width,
 ): Modifier = drawWithContent {
     drawContent()
@@ -96,7 +96,7 @@ internal fun Modifier.dialogListContentFade(
     if (hasHiddenTop) {
         drawRect(
             brush = Brush.verticalGradient(
-                colors = listOf(edgeColor, Color.Transparent),
+                colors = listOf(owningSurfaceColor, Color.Transparent),
                 startY = 0f,
                 endY = edgePx,
             ),
@@ -107,7 +107,7 @@ internal fun Modifier.dialogListContentFade(
     if (hasHiddenBottom) {
         drawRect(
             brush = Brush.verticalGradient(
-                colors = listOf(Color.Transparent, edgeColor),
+                colors = listOf(Color.Transparent, owningSurfaceColor),
                 startY = size.height - edgePx,
                 endY = size.height,
             ),

@@ -431,7 +431,7 @@ internal fun AppIdentityMarqueeText(
     color: Color = style.color,
     centerWhenStatic: Boolean = false,
     textHorizontalInset: androidx.compose.ui.unit.Dp = LocalSpacing.current.none,
-    edgeFadeColor: Color? = null,
+    owningSurfaceColor: Color? = null,
     edgeFadeEnabled: Boolean = true,
 ) {
     var containerWidth by remember { mutableIntStateOf(0) }
@@ -442,12 +442,12 @@ internal fun AppIdentityMarqueeText(
     }.coerceAtMost(containerWidth / 2)
     val scrollDistance = (textWidth - containerWidth + insetPx * 2).coerceAtLeast(0)
     val animatedStartFadeVisibility by animateFloatAsState(
-        targetValue = if (edgeFadeColor != null && scrollDistance > 0 && offset.value < -0.5f) 1f else 0f,
+        targetValue = if (owningSurfaceColor != null && scrollDistance > 0 && offset.value < -0.5f) 1f else 0f,
         animationSpec = tween(HorizontalEdgeFadeTokens.VisibilityAnimationDurationMillis),
         label = "marquee-edge-fade-start",
     )
     val animatedEndFadeVisibility by animateFloatAsState(
-        targetValue = if (edgeFadeColor != null && scrollDistance > 0 && offset.value > -scrollDistance + 0.5f) 1f else 0f,
+        targetValue = if (owningSurfaceColor != null && scrollDistance > 0 && offset.value > -scrollDistance + 0.5f) 1f else 0f,
         animationSpec = tween(HorizontalEdgeFadeTokens.VisibilityAnimationDurationMillis),
         label = "marquee-edge-fade-end",
     )
@@ -470,7 +470,7 @@ internal fun AppIdentityMarqueeText(
             .horizontalEdgeFade(
                 startVisibility = if (edgeFadeEnabled) animatedStartFadeVisibility else 0f,
                 endVisibility = if (edgeFadeEnabled) animatedEndFadeVisibility else 0f,
-                edgeColor = edgeFadeColor ?: Color.Transparent,
+                owningSurfaceColor = owningSurfaceColor ?: Color.Transparent,
                 edgeWidth = textHorizontalInset,
             )
             .onSizeChanged { containerWidth = it.width },
@@ -754,7 +754,7 @@ private fun ModeLabel(
             centerWhenStatic = true,
             textHorizontalInset = LocalSpacing.current.xs,
             edgeFadeEnabled = edgeFadeEnabled,
-            edgeFadeColor = if (selected) {
+            owningSurfaceColor = if (selected) {
                 MaterialTheme.colorScheme.secondaryContainer
             } else {
                 MaterialTheme.colorScheme.surfaceVariant

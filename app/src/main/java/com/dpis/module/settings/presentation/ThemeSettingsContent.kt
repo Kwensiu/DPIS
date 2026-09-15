@@ -493,7 +493,7 @@ private fun ThemeColorRow(
                     .padding(top = 8.dp),
             ) {
                 HorizontalScrollWithEdgeFade(
-                    edgeColor = MaterialTheme.colorScheme.surfaceBright,
+                    owningSurfaceColor = MaterialTheme.colorScheme.surfaceBright,
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {

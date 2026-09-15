@@ -9,12 +9,19 @@ class FilterSheetLayoutSmokeTest {
         val catalogue = read(
             "src/main/java/com/dpis/module/applist/presentation/AppFilterSheet.kt"
         )
+        val scaffold = read(
+            "src/main/java/com/dpis/module/ui/presentation/design/FilterSheet.kt"
+        )
         val wear = read(
             "src/main/java/com/dpis/module/ui/presentation/wear/WearWorkspaceContent.kt"
         )
         val strings = read("src/main/res/values/strings.xml")
 
         assertTrue(catalogue.contains("internal fun AppFilterSheet("))
+        assertTrue(scaffold.contains("Box("))
+        assertTrue(scaffold.contains(".weight(1f)"))
+        assertTrue(!scaffold.contains("Spacer(Modifier.weight(1f))"))
+        assertTrue(catalogue.contains("FilterSheetScrollChipRow("))
         assertTrue(wear.contains("fun WearAppFilterPage("))
         assertTrue(wear.contains("R.string.filter_show_system_apps"))
         assertTrue(wear.contains("R.string.filter_scoped_only"))
