@@ -1,0 +1,99 @@
+package com.dpis.module.quirks;
+
+import com.dpis.module.viewport.DpiConfig;
+
+import com.dpis.module.appconfig.WechatDpiConfig;
+
+import java.lang.reflect.Method;
+import java.util.Locale;
+
+public final class WechatDpiPropertyBridge {
+    private static final String PROPERTY_PREFIX = "debug.dpis.wechat.dpi.";
+    private static final String PERSIST_PROPERTY_PREFIX = "persist.debug.dpis.wechat.dpi.";
+
+    private WechatDpiPropertyBridge() {
+    }
+
+    public static String propertyNameForPackage(String packageName) {
+        return PROPERTY_PREFIX + suffixForPackage(packageName);
+    }
+
+    public static String persistentPropertyNameForPackage(String packageName) {
+        return PERSIST_PROPERTY_PREFIX + suffixForPackage(packageName);
+    }
+
+    public static int readDpi(String packageName) {
+        return readDpi(packageName, WechatDpiPropertyBridge::readSystemProperty);
+    }
+
+    public static int readDpiForTest(
+            String packageName,
+            String volatileValue,
+            String persistValue) {
+        return readDpi(packageName, name -> {
+            if (propertyNameForPackage(packageName).equals(name)) {
+                return volatileValue;
+            }
+            if (persistentPropertyNameForPackage(packageName).equals(name)) {
+                return persistValue;
+            }
+            return "";
+        });
+    }
+
+    private static int readDpi(String packageName, PropertyReader reader) {
+        if (packageName == null || packageName.isBlank()) {
+            return 0;
+        }
+        String suffix = suffixForPackage(packageName);
+        String value = readFirstProperty(
+                reader,
+                PROPERTY_PREFIX + suffix,
+                PERSIST_PROPERTY_PREFIX + suffix);
+        return parseDpi(value);
+    }
+
+    private static String suffixForPackage(String packageName) {
+        return String.format(Locale.US, "%08x", packageName.hashCode());
+    }
+
+    private static String readFirstProperty(PropertyReader reader, String... propertyNames) {
+        for (String propertyName : propertyNames) {
+            String value = reader.read(propertyName);
+            if (value != null && !value.trim().isEmpty()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
+    private static String readSystemProperty(String propertyName) {
+        if (propertyName == null || propertyName.isBlank()) {
+            return "";
+        }
+        try {
+            Class<?> systemProperties = Class.forName("android.os.SystemProperties");
+            Method get = systemProperties.getDeclaredMethod("get", String.class, String.class);
+            Object value = get.invoke(null, propertyName, "");
+            return value instanceof String ? (String) value : "";
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
+    private static int parseDpi(String value) {
+        try {
+            if (value == null || value.trim().isEmpty()) {
+                return 0;
+            }
+            int parsed = Integer.parseInt(value.trim());
+            return WechatDpiConfig.normalize(parsed) != null ? parsed : 0;
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
+
+    private interface PropertyReader {
+        String read(String propertyName);
+    }
+}

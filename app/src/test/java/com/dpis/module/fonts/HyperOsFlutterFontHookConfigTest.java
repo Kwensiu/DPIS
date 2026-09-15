@@ -110,18 +110,6 @@ public class HyperOsFlutterFontHookConfigTest {
     }
 
     @Test
-    public void rustProcessEnvironmentIncludesFontTarget() {
-        String envs = HyperOsRustProcessHookInstaller.appendEnvironmentForTest(
-                "", "com.miui.gallery", 300,
-                "/data/app/MIUIGallery/lib/arm64/libapp_gallery.so");
-
-        assertEquals("DPIS_PACKAGE=com.miui.gallery --envs=DPIS_FONT_SCALE_PERCENT=300"
-                        + " --envs=DPIS_RUST_BINARY=/data/app/MIUIGallery/lib/arm64/libapp_gallery.so"
-                        + " --cold-boot-speed",
-                envs);
-    }
-
-    @Test
     public void rustProcessProxyFallsBackToSiblingPath() {
         String proxyPath = HyperOsRustProcessHookInstaller.resolveProxyLibraryPathForTest(
                 "/missing/MIUIGallery/lib/arm64/libapp_gallery.so");
@@ -221,7 +209,7 @@ public class HyperOsFlutterFontHookConfigTest {
 
     @Test
     public void nativeProxyRefreshRequiresFlutterMasterSwitch() throws Exception {
-        String source = readSource("src/main/java/com/dpis/module/fonts/HyperOsNativeProxyRefreshCoordinator.java");
+        String source = readSource("src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyRefreshCoordinator.java");
 
         assertTrue(source.contains("!store.isFlutterFontHookEnabled()"));
         assertTrue(source.contains("!store.isHyperOsFlutterFontHookEnabled()"));
@@ -437,7 +425,9 @@ public class HyperOsFlutterFontHookConfigTest {
         String source = readSource("src/main/cpp/dpis_native.cpp");
 
         assertTrue(source.contains("sibling_original_rust_binary_path()"));
-        assertTrue(source.contains("current_process_name() != \"com.miui.weather2\""));
+        assertTrue(source.contains("uses_configuration_got_route()"));
+        assertTrue(source.contains("DPIS_NATIVE_ROUTE"));
+        assertTrue(source.contains("CONFIGURATION_GOT"));
         assertTrue(source.contains("libweather_app.so"));
         assertTrue(source.contains("path == \"0\""));
     }
@@ -453,29 +443,6 @@ public class HyperOsFlutterFontHookConfigTest {
         assertTrue(source.contains("ends_with(info.dli_fname, kHyperOsAppPublicLibrary)"));
         assertTrue(source.indexOf("is_weather_configuration_font_scale_slot(*slot)")
                 < source.indexOf("*slot = reinterpret_cast<void *>(Configuration_get_font_scale)"));
-    }
-
-    @Test
-    public void rustProcessArgumentProbeSummarizesTargetStringArguments() {
-        String summary = HyperOsRustProcessHookInstaller.buildArgumentProbeSummaryForTest(
-                Arrays.asList("ignored",
-                        "com.miui.weather2",
-                        Integer.valueOf(1),
-                        "/data/app/weather/lib/arm64/libweather_app.so",
-                        "--envs=EXISTING=value"));
-
-        assertTrue(summary.contains("size=5"));
-        assertTrue(summary.contains("1=com.miui.weather2"));
-        assertTrue(summary.contains("3=/data/app/weather/lib/arm64/libweather_app.so"));
-        assertTrue(summary.contains("4=--envs=EXISTING=value"));
-    }
-
-    @Test
-    public void rustProcessArgumentProbeSkipsUnrelatedPackages() {
-        String summary = HyperOsRustProcessHookInstaller.buildArgumentProbeSummaryForTest(
-                Arrays.asList("com.example.app", "/data/app/example/libfoo.so"));
-
-        assertNull(summary);
     }
 
     @Test

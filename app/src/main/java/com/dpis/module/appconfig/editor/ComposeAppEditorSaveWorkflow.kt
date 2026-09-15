@@ -1,44 +1,41 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.EditorDraft
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 
 /**
- * Persists a Compose editor draft and performs only the post-save effects belonging to that
- * surface. Legacy land-detail continues to call its existing save entry point.
+ * Parses a Compose editor draft, persists it through [AppConfigSaveHandler], and delegates
+ * surface-specific post-save effects.
+ *
+ * Persist is shared. Main workspace and Quick Config supply different [PostSaveEffects]:
+ * the main path finalizes runtime sync and HyperOS proxy work; Quick Config publishes
+ * local runtime properties and must not run HyperOS mount.
  */
-class ComposeAppEditorSaveWorkflow(private val host: Host) {
-    interface Host {
-        fun saveResolvedConfig(
+class ComposeAppEditorSaveWorkflow(
+    private val persister: Persister,
+    private val effects: PostSaveEffects,
+) {
+    fun interface Persister {
+        fun persist(
             item: AppListItem,
+            draft: EditorDraft,
             viewport: ViewportTargetSpec,
-            viewportTargetType: String,
-            viewportApplyMode: String,
             fontPercent: Int?,
-            fontMode: String,
-            selectedTypefaceId: String?,
-            draftFontHookDomainsRaw: String?,
-            viewportApplyModeResetRequested: Boolean,
-            fontHookDomainsResetRequested: Boolean,
-            viewportScaleInput: String,
-            viewportAbsoluteInput: String,
         ): AppConfigSaveHandler.Result
-        fun finalizeRuntimeSync(
+    }
+
+    interface PostSaveEffects {
+        fun afterPersist(
             result: AppConfigSaveHandler.Result,
-            wechatDpiInput: String,
-            packageName: String,
-            dpisEnabled: Boolean,
+            item: AppListItem,
+            draft: EditorDraft,
         ): AppConfigSaveHandler.Result
+
         fun showMessage(messageResId: Int)
-        fun requestScopeAfterSave(item: AppListItem)
-        fun syncHyperOsNativeProxy(item: AppListItem)
-        fun refreshEditor()
+
+        fun afterSuccessfulSave(item: AppListItem, draft: EditorDraft)
     }
 
     fun save(item: AppListItem?, draft: EditorDraft?): Boolean {
@@ -48,33 +45,13 @@ class ComposeAppEditorSaveWorkflow(private val host: Host) {
             draft.viewportMode,
         )
         val fontPercent = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput)
-        var result = host.saveResolvedConfig(
-            item,
-            viewport,
-            draft.viewportMode,
-            draft.viewportApplyMode,
-            fontPercent,
-            draft.fontMode,
-            draft.selectedTypefaceId,
-            draft.draftFontHookDomainsRaw,
-            draft.viewportApplyModeResetRequested,
-            draft.fontHookDomainsResetRequested,
-            draft.viewportScaleInput,
-            draft.viewportAbsoluteInput,
-        )
-        result = host.finalizeRuntimeSync(
-            result,
-            draft.wechatDpiInput,
-            item.packageName,
-            draft.dpisEnabled,
-        )
-        if (result.messageResId != 0) host.showMessage(result.messageResId)
+        var result = persister.persist(item, draft, viewport, fontPercent)
+        if (result.success) {
+            result = effects.afterPersist(result, item, draft)
+        }
+        if (result.messageResId != 0) effects.showMessage(result.messageResId)
         if (!result.success) return false
-
-        host.showMessage(R.string.status_save_success_inline)
-        host.requestScopeAfterSave(item)
-        host.syncHyperOsNativeProxy(item)
-        host.refreshEditor()
+        effects.afterSuccessfulSave(item, draft)
         return true
     }
 }

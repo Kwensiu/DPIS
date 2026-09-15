@@ -3,7 +3,7 @@ package com.dpis.module.runtime.appprocess;
 import com.dpis.module.*;
 import android.graphics.Rect;
 
-import com.dpis.module.runtime.CallerTrace;
+import com.dpis.module.runtime.probe.CallerTrace;
 import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import java.lang.reflect.InvocationTargetException;

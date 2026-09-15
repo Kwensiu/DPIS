@@ -10,7 +10,7 @@ import com.dpis.module.quirks.WechatDpiRoutes;
 import com.dpis.module.quirks.WechatDpiRuntime;
 
 import com.dpis.module.appconfig.WechatDpiConfig;
-import com.dpis.module.runtime.WechatDpiPropertyBridge;
+import com.dpis.module.quirks.WechatDpiPropertyBridge;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 
 import android.content.Context;

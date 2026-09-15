@@ -5,9 +5,7 @@ import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.viewport.DpiConfig;
 
 import com.dpis.module.appconfig.WechatDpiConfig;
-import com.dpis.module.runtime.WechatDpiPropertyBridge;
-
-import com.dpis.module.runtime.RootCommandRunner;
+import com.dpis.module.runtime.transport.RootCommandRunner;
 
 public final class WechatDpiPropertySyncer {
     private WechatDpiPropertySyncer() {

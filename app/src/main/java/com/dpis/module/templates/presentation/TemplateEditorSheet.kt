@@ -49,7 +49,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.res.stringResource
-import com.dpis.module.ui.compose.AppConfigSheetUiTokens
+import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
 import com.dpis.module.ui.compose.ComposeMotionTokens
 import com.dpis.module.ui.compose.EditorSheetScaffoldFrame
 import com.dpis.module.ui.compose.LocalTextInputFocusBoundary

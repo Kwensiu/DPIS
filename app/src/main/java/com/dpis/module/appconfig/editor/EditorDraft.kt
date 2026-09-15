@@ -1,5 +1,6 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.editor
 
+import com.dpis.module.appconfig.AppConfigInputValidation
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode

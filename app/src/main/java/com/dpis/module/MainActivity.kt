@@ -5,7 +5,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.appconfig.presentation.AppConfigDialogActivityHost
 import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
@@ -47,10 +46,6 @@ class MainActivity :
                 this@MainActivity.runOnUiThread(runnable)
             }
         },
-    )
-    internal val dialogHost = AppConfigDialogActivityHost(
-        this,
-        systemScopeCoordinator,
     )
     internal val installedAppsLoadSession = InstalledAppsLoadSession(
         this,

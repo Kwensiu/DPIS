@@ -1,16 +1,18 @@
 package com.dpis.module
 
-import com.dpis.module.appconfig.AppConfigEditorChip
-import com.dpis.module.appconfig.AppConfigEditorSession
+import com.dpis.module.appconfig.editor.AppConfigEditorChip
+import com.dpis.module.appconfig.editor.AppConfigEditorSession
 
-import com.dpis.module.appconfig.EditorDraft
-import com.dpis.module.appconfig.EditorPresentation
-import com.dpis.module.appconfig.EditorPresentationFactory
+import com.dpis.module.appconfig.editor.EditorDraft
+import com.dpis.module.appconfig.editor.EditorPresentation
+import com.dpis.module.appconfig.editor.EditorPresentationFactory
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.templates.TemplateConfigValueAdapters
+import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
+import com.dpis.module.viewport.ViewportTargetType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
@@ -42,6 +44,70 @@ class AppConfigEditorPresentationFactoryTest {
 
         assertTrue(state.dirty)
         assertEquals(AppConfigEditorChip.UNSAVED, state.chip)
+    }
+
+    @Test
+    fun reportsViewportFontAndWechatPresentationFlags() {
+        val relative = EditorPresentationFactory.create(
+            app("Example", "com.example.app"),
+            null,
+            draft("com.example.app", "125"),
+            null,
+            null,
+            draft("com.example.app", "125"),
+            false,
+            true,
+            setOf("android.widget.TextView"),
+            null,
+            actions(),
+        )
+        assertEquals("", relative.versionName)
+        assertEquals("", relative.typefaceSelectorText)
+        assertEquals("", relative.hookChainText)
+        assertEquals(ConfigEditorDestination.MAIN, relative.destination)
+        assertFalse(relative.usesAbsoluteViewport())
+        assertTrue(relative.usesSystemFontMode())
+        assertFalse(relative.showsWechatDpi())
+        assertTrue(relative.isDpisEnabled)
+        assertTrue(relative.isScopeSelected)
+        assertTrue(relative.saveEnabled)
+
+        val absoluteDraft = EditorDraft(
+            "com.example.app",
+            "360",
+            "100",
+            "360",
+            ViewportTargetType.ABSOLUTE_DP,
+            "125",
+            FontApplyMode.FIELD_REWRITE,
+            null,
+            null,
+            ViewportApplyMode.OFF,
+            false,
+            false,
+            "",
+            true,
+            true,
+        )
+        val absolute = presentation(absoluteDraft, absoluteDraft, actions())
+        assertTrue(absolute.usesAbsoluteViewport())
+        assertFalse(absolute.usesSystemFontMode())
+
+        val wechat = presentation(
+            draft(WechatDpiConfig.PACKAGE_NAME, "125").withWechatDpiInput("360"),
+            draft(WechatDpiConfig.PACKAGE_NAME, "125").withWechatDpiInput("360"),
+            actions(),
+        )
+        assertTrue(wechat.showsWechatDpi())
+        assertTrue(wechat.wechatDpiInputValid)
+
+        val invalidWechat = presentation(
+            draft(WechatDpiConfig.PACKAGE_NAME, "125").withWechatDpiInput("nope"),
+            draft(WechatDpiConfig.PACKAGE_NAME, "125"),
+            actions(),
+        )
+        assertFalse(invalidWechat.wechatDpiInputValid)
+        assertFalse(invalidWechat.saveEnabled)
     }
 
     @Test

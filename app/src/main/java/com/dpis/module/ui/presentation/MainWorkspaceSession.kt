@@ -3,7 +3,7 @@ package com.dpis.module.ui.presentation
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.EditorPresentation
+import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.ui.MainUiAction

@@ -29,8 +29,13 @@ import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
+import com.dpis.module.appconfig.presentation.AppConfigEditorOverlay
+import com.dpis.module.appconfig.presentation.AppConfigSheetScrimTestTag
+import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
+import com.dpis.module.appconfig.presentation.TypefacePickerManageTestTag
+import com.dpis.module.appconfig.presentation.TypefacePickerSystemListTestTag
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.viewport.ViewportApplyMode
 import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertEquals

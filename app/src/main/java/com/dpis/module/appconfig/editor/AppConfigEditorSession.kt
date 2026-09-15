@@ -1,4 +1,4 @@
-package com.dpis.module.appconfig
+package com.dpis.module.appconfig.editor
 
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.templates.TemplateConfigValue

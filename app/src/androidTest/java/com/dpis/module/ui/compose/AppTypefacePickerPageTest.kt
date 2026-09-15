@@ -11,6 +11,11 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
+import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
+import com.dpis.module.appconfig.presentation.TypefacePickerManageTestTag
+import com.dpis.module.appconfig.presentation.TypefacePickerPagerTestTag
+import com.dpis.module.appconfig.presentation.TypefacePickerSystemListTestTag
+import com.dpis.module.appconfig.presentation.TypefacePickerTabRowTestTag
 import org.junit.Rule
 import org.junit.Assert.assertTrue
 import org.junit.Test

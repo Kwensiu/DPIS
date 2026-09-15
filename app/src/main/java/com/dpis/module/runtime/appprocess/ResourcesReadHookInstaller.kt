@@ -8,7 +8,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.font.ResourcesFontScheduler
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities

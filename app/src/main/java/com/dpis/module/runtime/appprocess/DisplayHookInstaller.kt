@@ -6,8 +6,8 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.runtime.ProcessScopedInstallGate
-import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint
-import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler
+import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
 import com.dpis.module.viewport.DensityOverride
 import com.dpis.module.viewport.ViewportPropertyBridge

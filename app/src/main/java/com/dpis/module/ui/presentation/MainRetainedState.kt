@@ -1,6 +1,6 @@
 package com.dpis.module.ui.presentation
 
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession

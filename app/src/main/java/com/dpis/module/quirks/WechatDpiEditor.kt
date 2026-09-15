@@ -1,6 +1,8 @@
 package com.dpis.module.quirks
 
 import com.dpis.module.DpisApplication
+import com.dpis.module.R
+import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.config.DpisConfigStore
 
@@ -24,6 +26,25 @@ object WechatDpiEditor {
             WechatDpiPropertySyncer.publishDpiAsync(packageName, if (dpisEnabled) dpi else null)
         }
         return saved
+    }
+
+    @JvmStatic
+    fun applyAfterPersist(
+        result: AppConfigSaveHandler.Result,
+        rawValue: String?,
+        packageName: String?,
+        dpisEnabled: Boolean,
+        store: DpisConfigStore?,
+    ): AppConfigSaveHandler.Result {
+        if (!result.success) return result
+        if (save(rawValue, packageName, dpisEnabled, store)) return result
+        return AppConfigSaveHandler.Result.failure(
+            if (isInputValid(rawValue)) {
+                R.string.system_settings_save_failed
+            } else {
+                R.string.status_save_invalid
+            },
+        )
     }
 
     @JvmStatic

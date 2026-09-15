@@ -9,7 +9,7 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.dpis.module.runtime.RuntimeClock;
+import com.dpis.module.runtime.probe.RuntimeClock;
 
 public final class VirtualDisplayState {
     private static final int MAX_RECORDS = 24;

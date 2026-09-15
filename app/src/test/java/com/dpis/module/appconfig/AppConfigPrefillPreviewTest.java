@@ -1,5 +1,5 @@
 package com.dpis.module;
-import com.dpis.module.appconfig.EditorDraft;
+import com.dpis.module.appconfig.editor.EditorDraft;
 
 import com.dpis.module.config.PackageConfigRepository;
 

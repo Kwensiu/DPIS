@@ -8,7 +8,7 @@ import com.dpis.module.DpisApplication
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
-import com.dpis.module.runtime.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.ui.compose.FontDetailDialog
 import com.dpis.module.ui.compose.FontDetailPresentation

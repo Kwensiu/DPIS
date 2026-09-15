@@ -2,7 +2,7 @@ package com.dpis.module.diagnostics.device
 
 import com.dpis.module.diagnostics.ProcessPerformance.RouteSnapshot
 import com.dpis.module.root.RootAppProcessLauncher.ShellResult
-import com.dpis.module.runtime.SecureProcessLauncher
+import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.BufferedReader
 import java.io.File
 import java.io.IOException

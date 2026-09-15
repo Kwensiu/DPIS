@@ -6,15 +6,13 @@ import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.diagnostics.DpisLog
-import com.dpis.module.fonts.HyperOsNativeAppDetector
-import com.dpis.module.fonts.device.HyperOsNativeProxyBindMounter
+import com.dpis.module.runtime.hyperos.HyperOsNativeProxyFacade
 import com.dpis.module.process.presentation.ProcessActionConfirm
 import com.dpis.module.process.presentation.ProcessActionHandler
 import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
-import com.dpis.module.runtime.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.viewport.ViewportPropertySyncer
 
@@ -27,10 +25,11 @@ class RuntimeLaunchSession(
     private val requestAppsLoad: () -> Unit,
     private val composeShell: () -> MainComposeShellHost?,
 ) {
-
-    fun interface HyperOsNativeProxyMountCallback {
-        fun onFinished(success: Boolean)
-    }
+    private val hyperOsNativeProxy = HyperOsNativeProxyFacade(
+        activity,
+        { activity.showToast(it) },
+        { activity.runOnUiThread(it) },
+    )
 
     fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
         val store = activity.hookConfigStore
@@ -77,21 +76,19 @@ class RuntimeLaunchSession(
         if (saveResult == null) {
             return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed)
         }
-        if (!saveResult.success) {
-            return saveResult
-        }
-        if (!WechatDpiEditor.save(wechatDpiInput, packageName, dpisEnabled, store)) {
-            return AppConfigSaveHandler.Result.failure(
-                if (WechatDpiEditor.isInputValid(wechatDpiInput)) {
-                    R.string.system_settings_save_failed
-                } else {
-                    R.string.status_save_invalid
-                },
-            )
+        val result = WechatDpiEditor.applyAfterPersist(
+            saveResult,
+            wechatDpiInput,
+            packageName,
+            dpisEnabled,
+            store,
+        )
+        if (!result.success) {
+            return result
         }
         onRuntimeConfigSaved()
         scheduleRuntimePropertiesForTargetLaunch(packageName)
-        return saveResult
+        return result
     }
 
     fun onRuntimeConfigSaved() {
@@ -113,57 +110,8 @@ class RuntimeLaunchSession(
         syncRuntimePropertiesForTargetLaunch(packageName, generation)
     }
 
-    fun executeHyperOsNativeProxyMount(
-        item: AppListItem?,
-        apply: Boolean,
-        onFinished: Runnable?,
-    ) {
-        executeHyperOsNativeProxyMount(item, apply) {
-            onFinished?.run()
-        }
-    }
-
-    fun executeHyperOsNativeProxyMount(
-        item: AppListItem?,
-        apply: Boolean,
-        onFinished: HyperOsNativeProxyMountCallback?,
-    ) {
-        if (item == null) {
-            onFinished?.onFinished(false)
-            return
-        }
-        Thread({
-            val plan = HyperOsNativeProxyBindMounter.createPlan(
-                activity,
-                item.packageName,
-            )
-            val result = if (apply) {
-                HyperOsNativeProxyBindMounter.apply(plan)
-            } else {
-                HyperOsNativeProxyBindMounter.unmount(plan)
-            }
-            DpisLog.i(
-                "HyperOS Native Proxy "
-                    + (if (apply) "apply" else "rollback")
-                    + " package="
-                    + item.packageName
-                    + " success="
-                    + result.success()
-                    + " output="
-                    + result.output(),
-            )
-            val messageResId = if (apply) {
-                R.string.dialog_hyperos_native_proxy_apply_failed
-            } else {
-                R.string.dialog_hyperos_native_proxy_unmount_failed
-            }
-            activity.runOnUiThread {
-                if (!result.success()) {
-                    activity.showToast(messageResId)
-                }
-                onFinished?.onFinished(result.success())
-            }
-        }, "DPIS-HyperOsNativeProxyMount").start()
+    fun syncHyperOsNativeProxyAfterSave(item: AppListItem) {
+        hyperOsNativeProxy.syncAfterSave(item, activity.hookConfigStore)
     }
 
     fun executeDialogProcessAction(
@@ -173,27 +121,15 @@ class RuntimeLaunchSession(
         if (action == null) {
             return
         }
-        if (action == AppConfigProcessAction.RESTART
-            && shouldPrepareHyperOsNativeProxyForRestart(item)
+        // Re-prepare before restart because APK updates can leave an old bind mount
+        // pointing at a deleted module native library.
+        hyperOsNativeProxy.runAfterOptionalRestartPrepare(
+            item,
+            activity.hookConfigStore,
+            action == AppConfigProcessAction.RESTART,
         ) {
-            // Re-prepare before restart because APK updates can leave an old bind mount
-            // pointing at a deleted module native library.
-            executeHyperOsNativeProxyMount(item, true) { success ->
-                if (success) {
-                    executeDialogProcessActionAfterHyperOsProxyReady(item, action)
-                }
-            }
-            return
+            executeDialogProcessActionAfterHyperOsProxyReady(item, action)
         }
-        executeDialogProcessActionAfterHyperOsProxyReady(item, action)
-    }
-
-    fun isHyperOsNativeProxyCandidate(item: AppListItem?): Boolean {
-        return item != null && (item.hyperOsNativeProxyCandidate
-            || HyperOsNativeAppDetector.isNativeProxyCandidate(
-                activity.packageManager,
-                item.packageName,
-            ))
     }
 
     private fun scheduleRuntimePropertiesForTargetLaunch(packageName: String?) {
@@ -226,15 +162,6 @@ class RuntimeLaunchSession(
         }
     }
 
-    private fun shouldPrepareHyperOsNativeProxyForRestart(item: AppListItem?): Boolean {
-        if (!isHyperOsNativeProxyCandidate(item)) {
-            return false
-        }
-        val store = activity.hookConfigStore ?: return false
-        return (store.isTargetDpisEnabled(item!!.packageName)
-            && hasActiveStoredConfig(store, item.packageName))
-    }
-
     private fun executeDialogProcessActionAfterHyperOsProxyReady(
         item: AppListItem?,
         action: AppConfigProcessAction,
@@ -246,19 +173,6 @@ class RuntimeLaunchSession(
         }
         if (item != null) {
             processActionHandler.execute(item, mappedAction)
-        }
-    }
-
-    companion object {
-        private fun hasActiveStoredConfig(
-            store: DpisConfigStore,
-            packageName: String,
-        ): Boolean {
-            val viewportTargetSpec = store.getTargetViewportSpec(packageName)
-            val fontScalePercent = store.getTargetFontScalePercent(packageName)
-            return (viewportTargetSpec.isEnabled
-                || fontScalePercent != null
-                || store.hasTargetAppSpecificConfig(packageName))
         }
     }
 }

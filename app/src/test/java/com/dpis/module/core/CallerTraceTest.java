@@ -2,7 +2,7 @@ package com.dpis.module;
 
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
 
-import com.dpis.module.runtime.CallerTrace;
+import com.dpis.module.runtime.probe.CallerTrace;
 
 import org.junit.Test;
 

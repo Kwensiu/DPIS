@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
+import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint;
 
 import org.junit.Test;
 

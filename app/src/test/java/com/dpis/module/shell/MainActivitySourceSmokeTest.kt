@@ -103,11 +103,11 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
             "src/main/java/com/dpis/module/appconfig/editor/ComposeEditorScopeRequestCoordinator.kt",
         )
-        val gateway = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
+        val effects = read(
+            "src/main/java/com/dpis/module/appconfig/presentation/MainWorkspaceEditorPostSaveEffects.kt",
         )
 
-        assertTrue(gateway.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
+        assertTrue(effects.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
         assertTrue(coordinator.contains("fun requestAfterSuccessfulSave("))
         assertTrue(coordinator.contains("scopeRequester.requestScope("))
     }
@@ -118,8 +118,8 @@ class MainActivitySourceSmokeTest {
         val coordinator = read(
                 "src/main/java/com/dpis/module/appconfig/editor/ComposeEditorScopeRequestCoordinator.kt"
         )
-        val gateway = read(
-                "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
+        val effects = read(
+                "src/main/java/com/dpis/module/appconfig/presentation/MainWorkspaceEditorPostSaveEffects.kt"
         )
 
         val hostWiring = read(
@@ -127,8 +127,8 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(hostWiring.contains("ComposeEditorScopeRequestCoordinator("))
         assertTrue(hostWiring.contains("ComposeAppEditorActivityGateway("))
-        assertTrue(gateway.contains("import com.dpis.module.MainActivity"))
-        assertTrue(gateway.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
+        assertTrue(hostWiring.contains("MainWorkspaceEditorPostSaveEffects("))
+        assertTrue(effects.contains("scopeCoordinator.requestAfterSuccessfulSave(item)"))
         assertTrue(coordinator.contains("mainViewModel.markEditingScopeSelected(packageName)"))
     }
 
@@ -371,7 +371,10 @@ class MainActivitySourceSmokeTest {
         assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"))
         assertTrue(coordinatorSource.contains("getInstalledApplications(0)"))
         assertFalse(coordinatorSource.contains("GET_META_DATA"))
-        assertTrue(runtimeLaunch.contains("HyperOsNativeAppDetector.isNativeProxyCandidate("))
+        assertTrue(
+            read("src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyFacade.kt")
+                .contains("HyperOsNativeAppDetector.isNativeProxyCandidate("),
+        )
         assertTrue(iconSource.contains("InstalledAppIconCache.loadBitmap"))
         assertTrue(workspaceSource.contains("rememberInstalledAppIconBitmap("))
         assertTrue(workspaceSource.contains("PrefetchVisibleAppIcons("))
@@ -742,9 +745,19 @@ class MainActivitySourceSmokeTest {
         )
 
         assertTrue(hostWiring.contains("composeAppEditorController?.open(item)"))
+        assertTrue(hostWiring.contains("ComposeAppEditorController(viewModel, gateway, saveWorkflow)"))
+        assertTrue(hostWiring.contains("AppConfigEditorPersister("))
+        assertTrue(hostWiring.contains("gateway::systemHooksEnabled"))
+        assertTrue(hostWiring.contains("activity::hookConfigStore"))
+        assertTrue(hostWiring.contains("MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator)"))
+        assertFalse(hostWiring.contains("setSaveWorkflow"))
+        assertFalse(gateway.contains("setSaveWorkflow"))
+        assertFalse(gateway.contains("fun save(item: AppListItem, draft: EditorDraft)"))
+        assertFalse(gateway.contains("syncHyperOsNativeProxy"))
         assertTrue(gateway.contains("AppConfigPrefillPreview.resolveForEditor(activity, item, store)"))
         assertTrue(overlay.contains("fun AppConfigEditorOverlay("))
-        assertTrue(source.contains("internal val dialogHost"))
+        assertFalse(source.contains("internal val dialogHost"))
+        assertFalse(source.contains("AppConfigDialogActivityHost("))
         assertFalse(source.contains("AppConfigSheetSession("))
         assertFalse(source.contains("LandAppDetailSession("))
         assertFalse(source.contains("EditorDraftSession("))
@@ -821,7 +834,7 @@ class MainActivitySourceSmokeTest {
             runtimeLaunch.contains("processActionHandler.execute(item, mappedAction)")
         )
         assertTrue(
-            read("src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt")
+            read("src/main/java/com/dpis/module/appconfig/editor/AppConfigEditorPersister.kt")
                 .contains("saveHandler.saveResolved(")
         )
         assertTrue(
@@ -867,7 +880,7 @@ class MainActivitySourceSmokeTest {
         val gateway = read(
             "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
         )
-        assertTrue(gateway.contains("dialogHost.toggleScope("))
+        assertTrue(gateway.contains("activity.systemScopeCoordinator.toggleScope("))
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
@@ -936,10 +949,10 @@ class MainActivitySourceSmokeTest {
     fun appReceivesPackageReplacementWithoutAutoMountingHyperOsNativeProxy() {
         val manifest = read("src/main/AndroidManifest.xml")
         val receiver = read(
-            "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java"
+            "src/main/java/com/dpis/module/runtime/lifecycle/DpisPackageLifecycleReceiver.java"
         )
 
-        assertTrue(manifest.contains(".runtime.DpisPackageLifecycleReceiver"))
+        assertTrue(manifest.contains(".runtime.lifecycle.DpisPackageLifecycleReceiver"))
         assertTrue(
             manifest.contains("android.intent.action.MY_PACKAGE_REPLACED")
         )
@@ -965,15 +978,16 @@ class MainActivitySourceSmokeTest {
     fun appConfigHostWiresFontHookDomainEditor() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val host = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
 
         val templateHost = read(
             "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceActivityHost.kt"
         )
         assertFalse(templateHost.contains("activity.dialogHost"))
-        assertTrue(host.contains("fun getFontHookDomainsButtonText("))
-        assertTrue(host.contains("fun fontHookDomainsButtonText("))
+        assertTrue(host.contains("fun hookChainText("))
+        assertFalse(host.contains("fun getFontHookDomainsButtonText("))
+        assertFalse(host.contains("fun fontHookDomainsButtonText("))
         assertFalse(host.contains("fun showFontHookDomains("))
         assertTrue(host.contains("resolveFontHookDomainsForDraft(item, draft)"))
         assertTrue(host.contains("HookDomainOverrideStore(activity.hookConfigStore).read("))
@@ -998,7 +1012,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun fontHookDomainEditorUsesDraftStateOnly() {
         val source = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
         val hookPage = read("src/main/java/com/dpis/module/fonts/presentation/HookChainEditorPage.kt")
         val methodStart = source.indexOf("private fun resolveFontHookDomainsForDraft(")
@@ -1017,20 +1031,20 @@ class MainActivitySourceSmokeTest {
     @Test
     fun fontHookDomainButtonTextUsesMutablePreviewStateFlag() {
         val source = read(
-            "src/main/java/com/dpis/module/appconfig/presentation/AppConfigDialogActivityHost.kt"
+            "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt"
         )
         val methodStart = source.indexOf(
-            "override fun getFontHookDomainsButtonText("
+            "override fun hookChainText("
         )
         val methodEnd = source.indexOf(
-            "override fun setDpisEnabled(",
+            "override fun systemHooksEnabled(",
             methodStart
         )
         val method = source.substring(methodStart, methodEnd)
 
         assertTrue(method.contains("FontHookDomainPresentation.forOverride("))
         assertTrue(source.contains("FontHookDomainPresentation"))
-        assertTrue(method.contains("EditorDraft?"))
+        assertTrue(method.contains("EditorDraft"))
         assertTrue(source.contains("item?.previewFromGlobalPrefill"))
     }
 
@@ -1132,54 +1146,29 @@ class MainActivitySourceSmokeTest {
         val source = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
-        val methodStart = source.indexOf(
-            "private fun shouldPrepareHyperOsNativeProxyForRestart"
+        val policy = read(
+            "src/main/java/com/dpis/module/hyperos/HyperOsNativeProxyApplyPolicy.kt",
         )
-        val methodEnd = source.indexOf(
-            "private fun executeDialogProcessActionAfterHyperOsProxyReady",
-            methodStart
+        val facade = read(
+            "src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyFacade.kt",
         )
-        assertTrue(methodStart >= 0)
-        assertTrue(methodEnd > methodStart)
-        val methodBody = source.substring(methodStart, methodEnd)
-
         val activity = read("src/main/java/com/dpis/module/MainActivity.kt")
         assertTrue(
             source.contains("executeDialogProcessActionAfterHyperOsProxyReady")
         )
         assertFalse(activity.contains("ViewportTargetSpec.relativeScale(viewportValue * 10)"))
         assertTrue(
-            source.contains("shouldPrepareHyperOsNativeProxyForRestart(item)")
+            source.contains("hyperOsNativeProxy.runAfterOptionalRestartPrepare(")
         )
-        assertTrue(
-            methodBody.contains("val store = activity.hookConfigStore")
-        )
-        assertTrue(
-            methodBody.contains("store.isTargetDpisEnabled(item!!.packageName)")
-        )
-        assertTrue(
-            methodBody.contains(
-                "hasActiveStoredConfig(store, item.packageName)"
-            )
-        )
-        assertFalse(
-            methodBody.contains("store.getTargetTypefaceId(packageName)")
-        )
-        assertFalse(
-            methodBody.contains("typefaceId != null && !typefaceId.isBlank()")
-        )
-        assertFalse(
-            methodBody.contains(
-                "item.fontScalePercent != null\n                && item.fontScalePercent > 0"
-            )
-        )
-        assertFalse(methodBody.contains("FontApplyMode.isEnabled"))
-        assertTrue(
-            source.contains(
-                "executeHyperOsNativeProxyMount(item, true) { success ->"
-            )
-        )
-        assertTrue(source.contains("if (success)"))
+        assertTrue(facade.contains("prepareForRestart(item, store)"))
+        assertTrue(facade.contains("if (success) onReady()"))
+        assertTrue(policy.contains("store.isTargetDpisEnabled(packageName)"))
+        assertTrue(policy.contains("hasActiveStoredConfig(store, packageName)"))
+        assertFalse(policy.contains("store.getTargetTypefaceId(packageName)"))
+        assertFalse(policy.contains("typefaceId != null && !typefaceId.isBlank()"))
+        assertFalse(policy.contains("item.fontScalePercent"))
+        assertFalse(policy.contains("FontApplyMode.isEnabled"))
+        assertTrue(facade.contains("executeMount(current.packageName, apply = true, onFinished)"))
         assertTrue(
             source.contains("processActionHandler.execute(item, mappedAction)")
         )

@@ -890,6 +890,34 @@ std::string read_environment(const char *key) {
     return std::string(value);
 }
 
+constexpr const char *kNativeRouteEnv = "DPIS_NATIVE_ROUTE";
+constexpr const char *kNativeRouteParagraphBuilder = "PARAGRAPH_BUILDER";
+constexpr const char *kNativeRouteConfigurationGot = "CONFIGURATION_GOT";
+
+// Java HyperOsNativeRoutePolicy is the source of truth. Process-name fallback is
+// last-resort when RustProcess did not inject DPIS_NATIVE_ROUTE.
+std::string resolve_native_route() {
+    std::string route = read_environment(kNativeRouteEnv);
+    if (route.empty()) {
+        route = read_proc_cmdline_value(kNativeRouteEnv);
+    }
+    if (!route.empty()) {
+        return route;
+    }
+    std::string process = current_process_name();
+    if (process == "com.miui.weather2") {
+        return kNativeRouteConfigurationGot;
+    }
+    if (process == "com.miui.gallery") {
+        return kNativeRouteParagraphBuilder;
+    }
+    return {};
+}
+
+bool uses_configuration_got_route() {
+    return resolve_native_route() == kNativeRouteConfigurationGot;
+}
+
 bool is_generic_flutter_font_hook_experiment_enabled() {
     if (!is_debug_build()) {
         return false;
@@ -900,7 +928,7 @@ bool is_generic_flutter_font_hook_experiment_enabled() {
 
 std::string sibling_original_rust_binary_path() {
 #if defined(__aarch64__)
-    if (current_process_name() != "com.miui.weather2") {
+    if (!uses_configuration_got_route()) {
         return {};
     }
     Dl_info info = {};
@@ -1030,7 +1058,7 @@ extern "C" double dpis_create_multiplier(double d0, double d1, double d2) {
 extern "C" double dpis_create_scaled_d0(double original_d0,
                                         double original_d2,
                                         double multiplier) {
-    if (current_process_name() == "com.miui.weather2"
+    if (uses_configuration_got_route()
             && original_d0 <= 0.0
             && original_d2 > 0.0
             && std::isfinite(original_d2)) {
@@ -1197,7 +1225,7 @@ extern "C" [[gnu::visibility("default")]] float Configuration_get_font_scale(voi
 
 void try_hook_weather_configuration_font_scale() {
 #if defined(__aarch64__)
-    if (current_process_name() != "com.miui.weather2") {
+    if (!uses_configuration_got_route()) {
         return;
     }
     if (g_weather_configuration_font_scale_hooked.load(std::memory_order_acquire)) {

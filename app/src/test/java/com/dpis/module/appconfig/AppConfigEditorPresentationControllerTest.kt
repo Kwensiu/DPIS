@@ -1,8 +1,8 @@
 package com.dpis.module
 
 import com.dpis.module.appconfig.AppConfigProcessAction
-import com.dpis.module.appconfig.EditorActions
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorActions
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode
@@ -63,17 +63,52 @@ class AppConfigEditorPresentationControllerTest {
         val item = app()
         val actions = EditorActions.create(host, item, draft)
 
+        actions.startProcess()
         actions.restartProcess()
+        actions.stopProcess()
         actions.startFeedbackDiagnostic()
         actions.save()
         actions.reset()
         actions.close()
 
-        assertEquals(AppConfigProcessAction.RESTART, host.processAction)
+        assertEquals(AppConfigProcessAction.STOP, host.processAction)
         assertSame(draft, host.diagnosticDraft)
         assertSame(draft, host.savedDraft)
         assertTrue(host.resetCalled)
         assertTrue(host.closed)
+    }
+
+    @Test
+    fun remainingDraftActionsRewriteTheCurrentSnapshotThroughTheHost() {
+        val host = RecordingHost()
+        val draft = draft(true)
+        val actions = EditorActions.create(host, app(), draft)
+
+        actions.changeViewportMode("absolute_dp")
+        assertEquals("absolute_dp", host.updatedDraft!!.viewportMode)
+
+        actions.updateFontInput("125")
+        assertEquals("125", host.updatedDraft!!.fontInput)
+
+        actions.changeFontMode(FontApplyMode.FIELD_REWRITE)
+        assertEquals(FontApplyMode.FIELD_REWRITE, host.updatedDraft!!.fontMode)
+
+        actions.updateWechatDpiInput("360")
+        assertEquals("360", host.updatedDraft!!.wechatDpiInput)
+
+        actions.updateTypeface("serif")
+        assertEquals("serif", host.updatedDraft!!.selectedTypefaceId)
+
+        actions.updateHookChain("resources_font", true, ViewportApplyMode.AUTO, true)
+        assertEquals("resources_font", host.updatedDraft!!.draftFontHookDomainsRaw)
+        assertTrue(host.updatedDraft!!.fontHookDomainsResetRequested)
+        assertEquals(ViewportApplyMode.AUTO, host.updatedDraft!!.viewportApplyMode)
+        assertTrue(host.updatedDraft!!.viewportApplyModeResetRequested)
+
+        actions.showWechatDpiHelp()
+        assertTrue(host.wechatDpiHelpShown)
+        actions.navigate(ConfigEditorDestination.TYPEFACE)
+        assertEquals(ConfigEditorDestination.TYPEFACE, host.navigatedTo)
     }
 
     private class RecordingHost : EditorActions.Host {
@@ -87,6 +122,8 @@ class AppConfigEditorPresentationControllerTest {
         var savedDraft: EditorDraft? = null
         var closed = false
         var resetCalled = false
+        var wechatDpiHelpShown = false
+        var navigatedTo: ConfigEditorDestination? = null
 
         override fun updateDraft(draft: EditorDraft) {
             updatedDraft = draft
@@ -97,8 +134,13 @@ class AppConfigEditorPresentationControllerTest {
             updatedDraft = draft(false).cleared()
         }
 
-        override fun showWechatDpiHelp() {}
-        override fun navigate(destination: ConfigEditorDestination) {}
+        override fun showWechatDpiHelp() {
+            wechatDpiHelpShown = true
+        }
+
+        override fun navigate(destination: ConfigEditorDestination) {
+            navigatedTo = destination
+        }
 
         override fun toggleScope(
             currentlySelected: Boolean,

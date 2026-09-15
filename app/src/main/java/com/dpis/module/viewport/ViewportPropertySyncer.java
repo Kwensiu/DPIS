@@ -6,7 +6,7 @@ import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
-import com.dpis.module.runtime.RootCommandRunner;
+import com.dpis.module.runtime.transport.RootCommandRunner;
 
 import java.util.LinkedHashSet;
 

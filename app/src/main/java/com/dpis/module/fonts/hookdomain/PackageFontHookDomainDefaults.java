@@ -1,5 +1,7 @@
 package com.dpis.module.fonts.hookdomain;
 
+import com.dpis.module.hyperos.HyperOsNativeRoutePolicy;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,8 +27,9 @@ public final class PackageFontHookDomainDefaults {
         // a target app; scheduler policy owns those fallbacks globally.
         LinkedHashMap<String, Set<String>> table = new LinkedHashMap<>();
         Set<String> hyperOsNativeFlutter = Set.of(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER);
-        table.put("com.miui.gallery", hyperOsNativeFlutter);
-        table.put("com.miui.weather2", hyperOsNativeFlutter);
+        for (String packageName : HyperOsNativeRoutePolicy.knownPackages()) {
+            table.put(packageName, hyperOsNativeFlutter);
+        }
         return Collections.unmodifiableMap(table);
     }
 

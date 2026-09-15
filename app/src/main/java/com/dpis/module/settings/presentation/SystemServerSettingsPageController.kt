@@ -28,8 +28,8 @@ import com.dpis.module.fonts.FontDebugStatsSchema
 import com.dpis.module.fonts.FontDebugStatsStore
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.home.DonateActivity
-import com.dpis.module.runtime.RuntimeConfigDelivery
-import com.dpis.module.runtime.RuntimeDebugPropertySyncer
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
+import com.dpis.module.runtime.delivery.RuntimeDebugPropertySyncer
 import com.dpis.module.settings.AppLocaleManager
 import com.dpis.module.settings.ExperimentalSettingsActivity
 import com.dpis.module.settings.InterfaceScaleStore

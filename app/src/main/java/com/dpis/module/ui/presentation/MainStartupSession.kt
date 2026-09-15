@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListFilterStateStore
 import com.dpis.module.applist.AppListItem
@@ -12,7 +12,7 @@ import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
 
 import com.dpis.module.root.RootAccessProbe
-import com.dpis.module.runtime.ModuleRuntimeReloadNoticeCoordinator
+import com.dpis.module.runtime.presentation.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.SystemScopeCoordinator
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession

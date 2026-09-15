@@ -13,8 +13,8 @@ import com.dpis.module.diagnostics.RuntimeHotPathEvents;
 
 import com.dpis.module.diagnostics.RuntimeEvents;
 
-import com.dpis.module.runtime.ModuleRuntimeStateReporter;
-import com.dpis.module.runtime.XposedSelfActivation;
+import com.dpis.module.runtime.lifecycle.ModuleRuntimeStateReporter;
+import com.dpis.module.runtime.lifecycle.XposedSelfActivation;
 import com.dpis.module.runtime.systemserver.SystemServerDisplayDiagnostics;
 import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
 import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;
@@ -40,7 +40,7 @@ import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 
 import com.dpis.module.fonts.FontDebugStatsTransport;
 
-import com.dpis.module.runtime.DebugPackageOverride;
+import com.dpis.module.runtime.probe.DebugPackageOverride;
 
 import android.app.Application;
 import android.content.pm.ApplicationInfo;

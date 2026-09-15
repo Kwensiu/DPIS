@@ -1,6 +1,6 @@
 package com.dpis.module.diagnostics
 
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode

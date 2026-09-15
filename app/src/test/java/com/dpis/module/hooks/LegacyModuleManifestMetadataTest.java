@@ -215,7 +215,7 @@ public final class LegacyModuleManifestMetadataTest {
         String manifest = readProjectFile("src/main/AndroidManifest.xml");
         String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.kt");
         String receiver = readProjectFile(
-                "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java");
+                "src/main/java/com/dpis/module/runtime/lifecycle/DpisPackageLifecycleReceiver.java");
 
         assertTrue(manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED"));
         assertTrue(manifest.contains("android.intent.action.BOOT_COMPLETED"));

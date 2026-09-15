@@ -1,7 +1,7 @@
 package com.dpis.module.settings;
 
 import com.dpis.module.config.DpisConfigStore;
-import com.dpis.module.runtime.RuntimeConfigDelivery;
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery;
 
 public final class SystemHooksToggleController {
     public interface View {

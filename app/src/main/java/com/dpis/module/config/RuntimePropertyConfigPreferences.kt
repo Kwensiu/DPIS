@@ -5,7 +5,7 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverride
-import com.dpis.module.runtime.RuntimeDebugPropertyBridge
+import com.dpis.module.runtime.delivery.RuntimeDebugPropertyBridge
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertyBridge

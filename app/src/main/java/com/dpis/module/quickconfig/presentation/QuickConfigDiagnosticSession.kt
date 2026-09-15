@@ -17,7 +17,7 @@ import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.root.RootAccessProbe
 import java.io.IOException
 import java.util.concurrent.Executors
-import com.dpis.module.appconfig.EditorDraft
+import com.dpis.module.appconfig.editor.EditorDraft
 
 /**
  * Owns Quick Config feedback-diagnostic start, packaging, and result-file actions.
