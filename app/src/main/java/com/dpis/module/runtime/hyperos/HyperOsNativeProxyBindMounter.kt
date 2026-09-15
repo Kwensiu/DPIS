@@ -2,7 +2,7 @@ package com.dpis.module.runtime.hyperos
 
 import android.content.Context
 import android.content.pm.PackageManager
-import com.dpis.module.runtime.SecureProcessLauncher
+import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.BufferedReader
 import java.io.File
 import java.io.IOException

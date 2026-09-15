@@ -34,8 +34,8 @@ import com.dpis.module.hooks.FontMode;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 
-import com.dpis.module.runtime.DebugPackageOverride;
-import com.dpis.module.runtime.RuntimeDiagnosticLogFingerprint;
+import com.dpis.module.runtime.probe.DebugPackageOverride;
+import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint;
 
 import io.github.libxposed.api.XposedInterface;
 import com.dpis.module.runtime.ConfigStoreFactory;

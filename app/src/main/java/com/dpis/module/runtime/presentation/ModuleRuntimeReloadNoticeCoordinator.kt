@@ -1,7 +1,7 @@
 package com.dpis.module.runtime.presentation
 
 import android.app.Activity
-import com.dpis.module.runtime.ModuleRuntimeReloadAdvisor
+import com.dpis.module.runtime.lifecycle.ModuleRuntimeReloadAdvisor
 import com.dpis.module.tools.presentation.ModuleRuntimeReloadComposeDialog
 
 /** Coordinates the one-time reload notice with the host Activity lifecycle. */

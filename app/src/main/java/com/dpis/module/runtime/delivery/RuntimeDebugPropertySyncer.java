@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.delivery;
 
-import com.dpis.module.runtime.RootCommandRunner;
+import com.dpis.module.runtime.transport.RootCommandRunner;
 
 public final class RuntimeDebugPropertySyncer {
     private RuntimeDebugPropertySyncer() {

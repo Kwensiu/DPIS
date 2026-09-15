@@ -947,10 +947,10 @@ class MainActivitySourceSmokeTest {
     fun appReceivesPackageReplacementWithoutAutoMountingHyperOsNativeProxy() {
         val manifest = read("src/main/AndroidManifest.xml")
         val receiver = read(
-            "src/main/java/com/dpis/module/runtime/DpisPackageLifecycleReceiver.java"
+            "src/main/java/com/dpis/module/runtime/lifecycle/DpisPackageLifecycleReceiver.java"
         )
 
-        assertTrue(manifest.contains(".runtime.DpisPackageLifecycleReceiver"))
+        assertTrue(manifest.contains(".runtime.lifecycle.DpisPackageLifecycleReceiver"))
         assertTrue(
             manifest.contains("android.intent.action.MY_PACKAGE_REPLACED")
         )

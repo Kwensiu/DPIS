@@ -82,9 +82,13 @@ public final class HyperOsRustProcessHookInstaller {
             return null;
         }
         PerAppDisplayConfig config = source.get(parsed.packageName);
-        Integer fontScalePercent = config == null ? null : config.targetFontScalePercent;
-        boolean hookEnabled = config != null && config.hyperOsFlutterFontHookEnabled;
-        if (!HyperOsRustProcessArgPolicy.shouldRewrite(fontScalePercent, hookEnabled)) {
+        if (config == null) {
+            return null;
+        }
+        Integer fontScalePercent = config.targetFontScalePercent;
+        if (fontScalePercent == null
+                || !HyperOsRustProcessArgPolicy.shouldRewrite(
+                        fontScalePercent, config.hyperOsFlutterFontHookEnabled)) {
             return null;
         }
         String updated = HyperOsRustProcessArgPolicy.appendEnvironment(

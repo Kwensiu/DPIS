@@ -1,6 +1,4 @@
-package com.dpis.module;
-
-import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler;
+package com.dpis.module.runtime.probe;
 
 import org.junit.Test;
 

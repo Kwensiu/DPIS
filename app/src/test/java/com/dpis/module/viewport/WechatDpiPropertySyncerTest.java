@@ -9,6 +9,14 @@ import com.dpis.module.config.DpisConfigStore;
 
 public class WechatDpiPropertySyncerTest {
     @Test
+    public void publishAndSyncNoOpWhenPackageOrStoreCannotApply() {
+        WechatDpiPropertySyncer.publishDpiAsync("com.example.app", 360);
+        WechatDpiPropertySyncer.syncConfiguredTargetsAsync(null);
+
+        assertEquals("", WechatDpiPropertySyncer.buildSyncCommandForTest(null));
+    }
+
+    @Test
     public void wechatDpiCommandWritesVolatileAndPersistentTarget() {
         assertEquals("setprop 'debug.dpis.wechat.dpi.c5fe9776' '360'; "
                         + "setprop 'persist.debug.dpis.wechat.dpi.c5fe9776' '360'",

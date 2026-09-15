@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.runtime.XposedSelfActivation;
+import com.dpis.module.runtime.lifecycle.XposedSelfActivation;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

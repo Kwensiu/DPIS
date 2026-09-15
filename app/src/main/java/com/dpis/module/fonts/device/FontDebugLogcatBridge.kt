@@ -2,7 +2,7 @@ package com.dpis.module.fonts.device
 
 import android.content.Context
 import android.os.Bundle
-import com.dpis.module.runtime.SecureProcessLauncher
+import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader

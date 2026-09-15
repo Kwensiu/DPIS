@@ -114,7 +114,7 @@
         </receiver>
 
         <receiver
-            android:name=".runtime.DpisPackageLifecycleReceiver"
+            android:name=".runtime.lifecycle.DpisPackageLifecycleReceiver"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

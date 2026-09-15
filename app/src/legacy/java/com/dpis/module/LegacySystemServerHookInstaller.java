@@ -18,7 +18,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.util.Log;
 
-import com.dpis.module.runtime.RuntimeClock;
+import com.dpis.module.runtime.probe.RuntimeClock;
 import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
 import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
 

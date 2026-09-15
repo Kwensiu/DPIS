@@ -1,4 +1,4 @@
-package com.dpis.module.runtime;
+package com.dpis.module.runtime.lifecycle;
 
 import com.dpis.module.runtime.ConfigStoreFactory;
 import com.dpis.module.DpisApplication;

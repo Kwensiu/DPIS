@@ -15,7 +15,7 @@ import android.content.res.Configuration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.dpis.module.runtime.RuntimeClock;
+import com.dpis.module.runtime.probe.RuntimeClock;
 
 public final class ViewportRuntimeMarkerProbe {
     private static final long LOG_MIN_INTERVAL_MILLIS = 2_000L;

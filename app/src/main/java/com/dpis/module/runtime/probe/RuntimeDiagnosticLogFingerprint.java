@@ -1,4 +1,4 @@
-package com.dpis.module.runtime;
+package com.dpis.module.runtime.probe;
 
 public final class RuntimeDiagnosticLogFingerprint {
     public static final String VALUE = "diag-log-2026-06-21-counted-hotpath-v1";

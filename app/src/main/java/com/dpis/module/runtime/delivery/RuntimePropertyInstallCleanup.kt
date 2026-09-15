@@ -1,7 +1,7 @@
 package com.dpis.module.runtime.delivery
 
 import android.content.Context
-import com.dpis.module.runtime.RootCommandRunner
+import com.dpis.module.runtime.transport.RootCommandRunner
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 

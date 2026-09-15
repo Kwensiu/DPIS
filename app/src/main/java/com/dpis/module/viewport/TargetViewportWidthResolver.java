@@ -8,7 +8,7 @@ import com.dpis.module.viewport.ViewportSourceSnapshot;
 import com.dpis.module.viewport.ViewportTargetResolution;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
-import com.dpis.module.runtime.RuntimeClock;
+import com.dpis.module.runtime.probe.RuntimeClock;
 
 public final class TargetViewportWidthResolver {
 

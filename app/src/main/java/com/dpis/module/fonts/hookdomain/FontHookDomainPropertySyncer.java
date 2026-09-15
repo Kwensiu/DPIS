@@ -6,7 +6,7 @@ import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.hooks.HookDomainOverrideStore;
 
-import com.dpis.module.runtime.RootCommandRunner;
+import com.dpis.module.runtime.transport.RootCommandRunner;
 
 import java.util.LinkedHashSet;
 import java.util.Set;

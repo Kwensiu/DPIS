@@ -55,6 +55,7 @@ class HyperOsNativeProxyApplyPolicyTest {
 
         assertFalse(HyperOsNativeProxyApplyPolicy.shouldApply(null, packageName))
         assertFalse(HyperOsNativeProxyApplyPolicy.shouldApply(store, null))
+        assertFalse(HyperOsNativeProxyApplyPolicy.shouldApply(store, "  "))
         assertFalse(HyperOsNativeProxyApplyPolicy.shouldApply(store, packageName))
 
         assertTrue(store.setTargetDpisEnabled(packageName, true))
@@ -68,6 +69,12 @@ class HyperOsNativeProxyApplyPolicyTest {
         assertTrue(store.setTargetFontScalePercent(packageName, 140))
         assertTrue(store.setTargetDpisEnabled(packageName, true))
 
+        assertFalse(
+            HyperOsNativeProxyApplyPolicy.shouldPrepareForRestart(
+                null,
+                store,
+            ) { true },
+        )
         assertFalse(
             HyperOsNativeProxyApplyPolicy.shouldPrepareForRestart(
                 item(candidate = false),

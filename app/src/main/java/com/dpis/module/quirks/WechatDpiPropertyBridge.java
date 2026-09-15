@@ -23,11 +23,31 @@ public final class WechatDpiPropertyBridge {
     }
 
     public static int readDpi(String packageName) {
+        return readDpi(packageName, WechatDpiPropertyBridge::readSystemProperty);
+    }
+
+    public static int readDpiForTest(
+            String packageName,
+            String volatileValue,
+            String persistValue) {
+        return readDpi(packageName, name -> {
+            if (propertyNameForPackage(packageName).equals(name)) {
+                return volatileValue;
+            }
+            if (persistentPropertyNameForPackage(packageName).equals(name)) {
+                return persistValue;
+            }
+            return "";
+        });
+    }
+
+    private static int readDpi(String packageName, PropertyReader reader) {
         if (packageName == null || packageName.isBlank()) {
             return 0;
         }
         String suffix = suffixForPackage(packageName);
         String value = readFirstProperty(
+                reader,
                 PROPERTY_PREFIX + suffix,
                 PERSIST_PROPERTY_PREFIX + suffix);
         return parseDpi(value);
@@ -37,9 +57,9 @@ public final class WechatDpiPropertyBridge {
         return String.format(Locale.US, "%08x", packageName.hashCode());
     }
 
-    private static String readFirstProperty(String... propertyNames) {
+    private static String readFirstProperty(PropertyReader reader, String... propertyNames) {
         for (String propertyName : propertyNames) {
-            String value = readSystemProperty(propertyName);
+            String value = reader.read(propertyName);
             if (value != null && !value.trim().isEmpty()) {
                 return value;
             }
@@ -71,5 +91,9 @@ public final class WechatDpiPropertyBridge {
         } catch (NumberFormatException ignored) {
             return 0;
         }
+    }
+
+    private interface PropertyReader {
+        String read(String propertyName);
     }
 }

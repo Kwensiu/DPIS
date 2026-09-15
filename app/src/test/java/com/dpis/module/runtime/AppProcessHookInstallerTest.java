@@ -31,7 +31,7 @@ import com.dpis.module.hooks.HookRuntimePolicy;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 
-import com.dpis.module.runtime.DebugPackageOverride;
+import com.dpis.module.runtime.probe.DebugPackageOverride;
 
 import org.junit.Test;
 
@@ -527,7 +527,7 @@ public class AppProcessHookInstallerTest {
         assertTrue(source.contains("debug.dpis.viewport.disable_resources_impl_package"));
         assertTrue(source.contains("debug.dpis.viewport.disable_resources_read_package"));
         assertTrue(source.contains("DebugPackageOverride.matches("));
-        assertTrue(readSource("src/main/java/com/dpis/module/runtime/DebugPackageOverride.java")
+        assertTrue(readSource("src/main/java/com/dpis/module/runtime/probe/DebugPackageOverride.java")
                 .contains("if (!BuildConfig.DEBUG || packageName == null"));
         assertTrue(source.contains("DebugFontOverride.of("));
         assertTrue(source.contains("packagePlan.buildExecutionPlan("));

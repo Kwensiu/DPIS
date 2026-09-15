@@ -117,6 +117,34 @@ class HyperOsRustProcessArgPolicyTest {
     }
 
     @Test
+    fun appendEnvironmentKeepsExistingCommaAndDropsNullBinary() {
+        val joined = HyperOsRustProcessArgPolicy.appendEnvironment(
+            "FOO=bar,",
+            "com.example.app",
+            200,
+            null,
+        )
+        assertTrue(joined.startsWith("FOO=bar, --envs=DPIS_PACKAGE=com.example.app"))
+        assertTrue(joined.contains("DPIS_RUST_BINARY="))
+        assertFalse(joined.contains("DPIS_NATIVE_ROUTE"))
+    }
+
+    @Test
+    fun argumentProbeTruncatesLongStringsAndIgnoresEmptyArgs() {
+        assertNull(HyperOsRustProcessArgPolicy.buildArgumentProbeSummary(null))
+        assertNull(HyperOsRustProcessArgPolicy.buildArgumentProbeSummary(emptyList<Any>()))
+
+        val longSo = "a".repeat(250) + ".so"
+        val summary = HyperOsRustProcessArgPolicy.buildArgumentProbeSummary(
+            listOf("ignored", "com.miui.gallery", longSo, "DPIS_PACKAGE=gallery", "hyperos-flag"),
+        )
+        assertNotNull(summary)
+        assertTrue(summary!!.contains("..."))
+        assertTrue(summary.contains("DPIS_PACKAGE=gallery"))
+        assertTrue(summary.contains("hyperos-flag"))
+    }
+
+    @Test
     fun argumentProbeSummarizesGalleryOrWeatherAndSkipsOthers() {
         val weather = HyperOsRustProcessArgPolicy.buildArgumentProbeSummary(
             listOf(

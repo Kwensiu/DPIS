@@ -1,7 +1,7 @@
 package com.dpis.module.diagnostics
 
 import com.dpis.module.root.RootAppProcessLauncher.ShellResult
-import com.dpis.module.runtime.SecureProcessLauncher
+import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.Base64

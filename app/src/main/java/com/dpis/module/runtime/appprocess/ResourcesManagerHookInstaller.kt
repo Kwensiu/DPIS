@@ -6,8 +6,8 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.DebugPackageOverride
-import com.dpis.module.runtime.RuntimeHotPathEvidenceSampler
+import com.dpis.module.runtime.probe.DebugPackageOverride
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.viewport.TargetViewportWidthResolver
