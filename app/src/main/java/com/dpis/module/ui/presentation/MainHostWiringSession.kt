@@ -24,6 +24,7 @@ import com.dpis.module.ui.SecondaryDestination
  */
 class MainHostWiringSession(
     private val activity: MainActivity,
+    private val secondaryNavigation: SecondaryNavigation,
 ) {
     var composeAppEditorController: ComposeAppEditorController? = null
         private set
@@ -69,10 +70,7 @@ class MainHostWiringSession(
         settingsWorkspaceSession = SettingsWorkspaceSession.create(
             activity,
             { activity.mainWorkspaceSession.refreshSettings() },
-            {
-                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.Logs)
-            },
-            { destination -> activity.mainWorkspaceSession.openSecondary(destination) },
+            secondaryNavigation,
             { activity.mainWorkspaceSession.applyConfigurationInPlace() },
         )
         toolsWorkspace = ToolsWorkspace(

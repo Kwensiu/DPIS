@@ -55,18 +55,22 @@ class ComposeShellSourceSmokeTest {
         val secondaryHost = read(
             "src/main/java/com/dpis/module/ui/presentation/SecondaryPageHost.kt"
         )
+        val secondaryNavigator = read(
+            "src/main/java/com/dpis/module/navigation/SecondaryActivityNavigator.kt"
+        )
         val mainShellHost = read(
             "src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt"
         )
-        assertTrue(secondaryHost.contains("class SecondaryPageHost("))
-        assertTrue(secondaryHost.contains("activity.startActivity(intentFor(destination))"))
-        assertTrue(secondaryHost.contains("ThemeSettingsActivity::class.java"))
-        assertTrue(secondaryHost.contains("FontDetailActivity.EXTRA_FONT_ID"))
+        assertTrue(secondaryHost.contains("fun interface SecondaryNavigation"))
+        assertTrue(secondaryNavigator.contains("class SecondaryActivityNavigator("))
+        assertTrue(secondaryNavigator.contains("activity.startActivity(intentFor(destination))"))
+        assertTrue(secondaryNavigator.contains("ThemeSettingsActivity::class.java"))
+        assertTrue(secondaryNavigator.contains("FontDetailActivity.EXTRA_FONT_ID"))
         assertFalse(secondaryHost.contains("NavDisplay("))
         assertFalse(secondaryHost.contains("OverlayIdle"))
         assertFalse(secondaryHost.contains("AppUiScaleManager.wrap"))
         assertFalse(secondaryHost.contains("configurationEpoch"))
-        assertTrue(mainShellHost.contains("ProvideSecondaryNavigation(secondaryPages)"))
+        assertTrue(mainShellHost.contains("ProvideSecondaryNavigation(secondaryNavigation)"))
         assertTrue(mainShellHost.contains("AppUiScaleManager.wrap(AppLocaleManager.wrap(activity))"))
         assertTrue(mainShellHost.contains("fun applyConfigurationInPlace()"))
         assertTrue(mainShellHost.contains("fun applyAppearanceInPlace()"))
@@ -162,7 +166,7 @@ class ComposeShellSourceSmokeTest {
         assertFalse(topBar.contains("drawEdgeOcclusionFade("))
         assertTrue(scaffold.contains("exitUntilCollapsedScrollBehavior("))
         assertTrue(scaffold.contains("nestedScroll(scrollBehavior.nestedScrollConnection)"))
-        assertTrue(scaffold.contains("collapsingBarOwnsNestedScroll("))
+        assertTrue(scaffold.contains("modifier = if (collapsing)"))
         assertFalse(scaffold.contains("CollapsingBarBodyScrollConnection"))
         assertFalse(scaffold.contains("PAGE_EXPANDED_TITLE_KEY"))
         assertFalse(scaffold.contains("PageCollapseScrollConnection"))

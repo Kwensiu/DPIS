@@ -8,7 +8,6 @@ import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.ui.WatchUiMode
 
 /**
@@ -24,10 +23,6 @@ class MainWorkspaceSession(
     private var renderedWorkspaceMode: MainUiState.WorkspaceMode? = null
 
     fun composeShell(): MainComposeShellHost? = composeShellHost
-
-    fun openSecondary(destination: SecondaryDestination) {
-        composeShellHost?.openSecondary(destination)
-    }
 
     fun applyConfigurationInPlace() {
         composeShellHost?.applyConfigurationInPlace()
@@ -90,7 +85,7 @@ class MainWorkspaceSession(
             activity.startupSession.requireUiState(),
             WatchUiMode.shouldUseCompactUi(activity),
             workspacePresentationCoordinator,
-            SecondaryPageHost(activity),
+            activity.secondaryNavigation,
             activity,
         ) { action ->
             activity.startupSession.dispatch(action)

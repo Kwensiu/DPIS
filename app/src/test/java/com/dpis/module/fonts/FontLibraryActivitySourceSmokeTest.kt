@@ -134,6 +134,7 @@ class FontLibraryActivitySourceSmokeTest {
     @Test
     fun fontLibraryImportsAndExportsSeparateArchives() {
         val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
+        val archive = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryArchiveWorkflow.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
 
         content.assertContainsAll(
@@ -144,12 +145,14 @@ class FontLibraryActivitySourceSmokeTest {
         source.assertContainsAll(
             "openFontLibraryExportPicker",
             "openFontLibraryImportPicker",
-            "FontLibraryArchiveCodec.writeArchive",
-            "FontLibraryArchiveCodec.restoreArchive",
             "REQUEST_EXPORT_FONT_LIBRARY",
             "REQUEST_IMPORT_FONT_LIBRARY",
             "recoverMissingFontCatalogAsync",
             "recoverMissingCatalogEntries",
+        )
+        archive.assertContainsAll(
+            "FontLibraryArchiveCodec.writeArchive",
+            "FontLibraryArchiveCodec.restoreArchive",
         )
     }
 

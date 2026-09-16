@@ -6,7 +6,7 @@ import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SettingsActions
 import com.dpis.module.ui.SecondaryDestination
-import java.util.function.Consumer
+import com.dpis.module.ui.presentation.SecondaryNavigation
 
 /**
  * Java-facing adapter that owns the settings controller's Activity session while MainActivity
@@ -15,8 +15,7 @@ import java.util.function.Consumer
 class SettingsWorkspaceSession(
     private val activity: LocalizedActivity,
     private val onComposeStateChanged: Runnable,
-    private val onOpenLogs: Runnable,
-    private val onOpenSecondary: Consumer<SecondaryDestination>,
+    private val secondaryNavigation: SecondaryNavigation,
     private val onConfigurationChanged: Runnable,
 ) : SettingsActions {
     companion object {
@@ -25,15 +24,13 @@ class SettingsWorkspaceSession(
         fun create(
             activity: Activity,
             onComposeStateChanged: Runnable,
-            onOpenLogs: Runnable,
-            onOpenSecondary: Consumer<SecondaryDestination>,
+            secondaryNavigation: SecondaryNavigation,
             onConfigurationChanged: Runnable,
         ): SettingsWorkspaceSession {
             return SettingsWorkspaceSession(
                 activity as LocalizedActivity,
                 onComposeStateChanged,
-                onOpenLogs,
-                onOpenSecondary,
+                secondaryNavigation,
                 onConfigurationChanged,
             )
         }
@@ -71,7 +68,7 @@ class SettingsWorkspaceSession(
     }
 
     override fun openLogs() {
-        onOpenLogs.run()
+        secondaryNavigation.open(SecondaryDestination.Logs)
     }
 
     override fun setLauncherHidden(hidden: Boolean) {
@@ -83,15 +80,15 @@ class SettingsWorkspaceSession(
     }
 
     override fun openFontLibrary() {
-        onOpenSecondary.accept(SecondaryDestination.FontLibrary)
+        secondaryNavigation.open(SecondaryDestination.FontLibrary)
     }
 
     override fun openExperimental() {
-        onOpenSecondary.accept(SecondaryDestination.Experimental)
+        secondaryNavigation.open(SecondaryDestination.Experimental)
     }
 
     override fun openTheme() {
-        onOpenSecondary.accept(SecondaryDestination.Theme)
+        secondaryNavigation.open(SecondaryDestination.Theme)
     }
 
     override fun setLanguage(tag: String) {
@@ -119,11 +116,11 @@ class SettingsWorkspaceSession(
     }
 
     override fun openAbout() {
-        onOpenSecondary.accept(SecondaryDestination.About)
+        secondaryNavigation.open(SecondaryDestination.About)
     }
 
     override fun openDonate() {
-        onOpenSecondary.accept(SecondaryDestination.Donate)
+        secondaryNavigation.open(SecondaryDestination.Donate)
     }
 
     fun onStart() {

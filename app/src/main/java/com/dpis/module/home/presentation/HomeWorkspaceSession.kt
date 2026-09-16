@@ -18,6 +18,7 @@ import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.SecondaryDestination
+import com.dpis.module.ui.presentation.SecondaryNavigation
 
 /**
  * Owns Home workspace snapshots and navigation actions.
@@ -31,6 +32,7 @@ class HomeWorkspaceSession(
     private val setCurrentAppListPage: (AppListPage, Boolean) -> Unit,
     private val dispatch: (MainUiAction) -> Unit,
     private val bindHomeWorkspace: () -> Unit,
+    private val secondaryNavigation: SecondaryNavigation,
 ) {
     fun createState(): HomeWorkspaceState {
         val configStore = activity.hookConfigStore
@@ -85,7 +87,7 @@ class HomeWorkspaceSession(
             }
 
             override fun openFontLibrary() {
-                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.FontLibrary)
+                secondaryNavigation.open(SecondaryDestination.FontLibrary)
             }
 
             override fun openTemplateWorkspace() {
@@ -95,11 +97,11 @@ class HomeWorkspaceSession(
             }
 
             override fun openModeHelp() {
-                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.ModeHelp)
+                secondaryNavigation.open(SecondaryDestination.ModeHelp)
             }
 
             override fun openDonate() {
-                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.Donate)
+                secondaryNavigation.open(SecondaryDestination.Donate)
             }
 
             override fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout) {

@@ -22,8 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -180,19 +178,10 @@ internal fun PageScaffold(
         initialHeightOffset = collapsedOffsetPx,
     )
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
-    val collapsingBarOwnsScroll by remember(collapsing, topAppBarState, resolvedListState) {
-        derivedStateOf {
-            collapsing && collapsingBarOwnsNestedScroll(
-                collapsedFraction = topAppBarState.collapsedFraction,
-                firstVisibleItemIndex = resolvedListState.firstVisibleItemIndex,
-                firstVisibleItemScrollOffset = resolvedListState.firstVisibleItemScrollOffset,
-            )
-        }
-    }
     val layoutDirection = LocalLayoutDirection.current
     val horizontalSafe = pageHorizontalSafePadding(onBack != null)
     Scaffold(
-        modifier = if (collapsingBarOwnsScroll) {
+        modifier = if (collapsing) {
             modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         } else {
             modifier
@@ -316,14 +305,3 @@ internal fun PageScaffold(
     title = { Text(stringResource(titleRes)) },
     body = body,
 )
-
-/** M3 settleAppBar uses exact 1f; treat near-collapsed as collapsed so body flings skip it. */
-private const val COLLAPSED_FRACTION_EPSILON = 0.001f
-
-internal fun collapsingBarOwnsNestedScroll(
-    collapsedFraction: Float,
-    firstVisibleItemIndex: Int,
-    firstVisibleItemScrollOffset: Int,
-): Boolean =
-    collapsedFraction < 1f - COLLAPSED_FRACTION_EPSILON ||
-        (firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0)

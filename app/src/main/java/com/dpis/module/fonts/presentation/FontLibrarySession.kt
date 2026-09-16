@@ -37,6 +37,8 @@ class FontLibrarySession(
 ) {
     private lateinit var fontLibraryStore: FontLibraryStore
     private lateinit var configStore: FontLibraryConfigStore
+    private lateinit var archiveWorkflow: FontLibraryArchiveWorkflow
+    private lateinit var healthWorkflow: FontLibraryHealthWorkflow
     val presentation = FontLibraryPresentation()
 
     fun start() {
@@ -48,6 +50,18 @@ class FontLibrarySession(
         configStore = ConfigStoreFactory.createFontLibraryConfigStore(
             activity,
             DpisApplication.xposedService,
+        )
+        archiveWorkflow = FontLibraryArchiveWorkflow(
+            activity,
+            fontLibraryStore,
+            ::onArchiveExported,
+            ::onArchiveImported,
+        )
+        healthWorkflow = FontLibraryHealthWorkflow(
+            activity,
+            fontLibraryStore,
+            ::showPublishedFallbackRepairPrompt,
+            ::onRepairFinished,
         )
         refreshFontList()
         recoverMissingFontCatalogAsync()
@@ -196,67 +210,38 @@ class FontLibrarySession(
     }
 
     private fun exportFontLibrary(uri: Uri) {
-        Thread({
-            var result: FontLibraryArchiveCodec.ExportResult? = null
-            try {
-                activity.contentResolver.openOutputStream(uri)?.use { output ->
-                    result = FontLibraryArchiveCodec.writeArchive(output, fontLibraryStore)
-                }
-            } catch (_: IOException) {
-                result = null
-            } catch (_: RuntimeException) {
-                result = null
-            }
-            val finalResult = result
-            activity.runOnUiThread {
-                when {
-                    finalResult == null -> showToast(R.string.font_library_archive_export_failed)
-                    finalResult.skippedCollectionCount > 0 -> showToast(
-                        R.string.font_library_archive_export_partial,
-                        finalResult.collectionCount,
-                        finalResult.skippedCollectionCount,
-                    )
-                    else -> showToast(R.string.font_library_archive_export_success)
-                }
-            }
-        }, "dpis-font-library-export").start()
+        archiveWorkflow.export(uri)
     }
 
     private fun importFontLibrary(uri: Uri) {
-        Thread({
-            var result: FontLibraryArchiveCodec.RestoreResult? = null
-            try {
-                activity.contentResolver.openInputStream(uri)?.use { input ->
-                    result = FontLibraryArchiveCodec.restoreArchive(input, fontLibraryStore, activity.cacheDir)
-                }
-            } catch (_: IOException) {
-                result = null
-            } catch (_: RuntimeException) {
-                result = null
-            }
-            val finalResult = result
-            activity.runOnUiThread {
-                if (finalResult == null) {
-                    showToast(R.string.font_library_archive_import_failed)
-                    return@runOnUiThread
-                }
-                RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-                TypefaceCatalogCache.invalidate(activity)
-                refreshFontList()
-                if (finalResult.failureCount > 0) {
-                    showToast(
-                        R.string.font_library_archive_import_partial,
-                        finalResult.collectionCount,
-                        finalResult.failureCount,
-                    )
-                } else {
-                    showToast(
-                        R.string.font_library_archive_import_success,
-                        finalResult.collectionCount,
-                    )
-                }
-            }
-        }, "dpis-font-library-import").start()
+        archiveWorkflow.import(uri)
+    }
+
+    private fun onArchiveExported(result: FontLibraryArchiveCodec.ExportResult?) {
+        when {
+            result == null -> showToast(R.string.font_library_archive_export_failed)
+            result.skippedCollectionCount > 0 -> showToast(
+                R.string.font_library_archive_export_partial,
+                result.collectionCount,
+                result.skippedCollectionCount,
+            )
+            else -> showToast(R.string.font_library_archive_export_success)
+        }
+    }
+
+    private fun onArchiveImported(result: FontLibraryArchiveCodec.RestoreResult?) {
+        if (result == null) {
+            showToast(R.string.font_library_archive_import_failed)
+            return
+        }
+        RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
+        TypefaceCatalogCache.invalidate(activity)
+        refreshFontList()
+        if (result.failureCount > 0) {
+            showToast(R.string.font_library_archive_import_partial, result.collectionCount, result.failureCount)
+        } else {
+            showToast(R.string.font_library_archive_import_success, result.collectionCount)
+        }
     }
 
     private fun confirmLargeFontImport(
@@ -390,13 +375,7 @@ class FontLibrarySession(
     }
 
     private fun runFontHealthScan() {
-        Thread({
-            val report = fontLibraryStore.inspectHealth()
-            if (report.missingPublishedFallbackCount <= 0 || activity.isFinishing) {
-                return@Thread
-            }
-            activity.runOnUiThread { showPublishedFallbackRepairPrompt(report) }
-        }, "dpis-font-library-health").start()
+        healthWorkflow.scan()
     }
 
     private fun showPublishedFallbackRepairPrompt(report: FontLibraryStore.HealthReport) {
@@ -409,22 +388,21 @@ class FontLibrarySession(
     }
 
     private fun retryPublishedFallbacks() {
-        Thread({
-            val result = fontLibraryStore.retryPublishedFallbacks()
-            activity.runOnUiThread {
-                if (result.catalogUpdated) {
-                    TypefaceCatalogCache.invalidate(activity)
-                }
-                refreshFontList()
-                showToast(
-                    if (result.catalogUpdated && result.publishedCollectionCount > 0) {
-                        R.string.font_library_publication_retry_success
-                    } else {
-                        R.string.font_library_publication_retry_failed
-                    },
-                )
-            }
-        }, "dpis-font-library-publish-retry").start()
+        healthWorkflow.repair()
+    }
+
+    private fun onRepairFinished(result: FontLibraryStore.RepairResult) {
+        if (result.catalogUpdated) {
+            TypefaceCatalogCache.invalidate(activity)
+        }
+        refreshFontList()
+        showToast(
+            if (result.catalogUpdated && result.publishedCollectionCount > 0) {
+                R.string.font_library_publication_retry_success
+            } else {
+                R.string.font_library_publication_retry_failed
+            },
+        )
     }
 
     private fun isCollectionInUse(selected: FontLibraryEntry): Boolean {

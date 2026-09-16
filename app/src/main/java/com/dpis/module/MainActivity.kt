@@ -9,6 +9,7 @@ import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.home.presentation.HomeWorkspaceSession
+import com.dpis.module.navigation.SecondaryActivityNavigator
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
 import com.dpis.module.settings.LocalizedActivity
@@ -54,7 +55,8 @@ class MainActivity :
             startupSession.dispatchInstalledAppsLoadFinished(requestId, loaded)
         },
     )
-    internal val hostWiringSession = MainHostWiringSession(this)
+    internal val secondaryNavigation = SecondaryActivityNavigator(this)
+    internal val hostWiringSession = MainHostWiringSession(this, secondaryNavigation)
     internal val mainWorkspaceSession = MainWorkspaceSession(this, hostWiringSession)
     internal val homeWorkspaceSession = HomeWorkspaceSession(
         this,
@@ -67,6 +69,7 @@ class MainActivity :
         },
         dispatch = { startupSession.dispatch(it) },
         bindHomeWorkspace = { mainWorkspaceSession.bindHomeWorkspace() },
+        secondaryNavigation = secondaryNavigation,
     )
     internal val startupSession: MainStartupSession = MainStartupSession(
         this,

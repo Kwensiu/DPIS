@@ -55,7 +55,7 @@ class MainComposeShellHost(
     initialState: MainUiState,
     private val isCompactUi: Boolean,
     private val workspacePresentation: MainWorkspacePresentationCoordinator,
-    private val secondaryPages: SecondaryPageHost,
+    private val secondaryNavigation: SecondaryNavigation,
     private val activity: MainActivity,
     private val dispatch: (MainUiAction) -> Unit
 ) {
@@ -107,7 +107,7 @@ class MainComposeShellHost(
                 paletteStyle = appearance.paletteStyle,
                 colorSpecification = appearance.colorSpecification,
             ) {
-                ProvideSecondaryNavigation(secondaryPages) {
+                ProvideSecondaryNavigation(secondaryNavigation) {
                 androidx.compose.runtime.DisposableEffect(composeView, inputFocusBoundary) {
                     ViewCompat.setWindowInsetsAnimationCallback(
                         composeView,
@@ -204,10 +204,6 @@ class MainComposeShellHost(
             }
             }
         }
-    }
-
-    fun openSecondary(destination: SecondaryDestination) {
-        secondaryPages.open(destination)
     }
 
     fun applyConfigurationInPlace() {
