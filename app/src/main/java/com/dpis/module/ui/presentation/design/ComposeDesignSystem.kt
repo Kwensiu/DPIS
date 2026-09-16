@@ -37,10 +37,11 @@ fun resolveDarkTheme(): Boolean {
 }
 
 /**
- * The Compose counterpart to the existing Material3 XML theme.
+ * Applies the runtime appearance: [ColorSchemeFactory] → Material 3 Expressive,
+ * window paint from that scheme, and [LocalSemanticColors].
  *
- * Explicit dynamicColor values keep previews deterministic. Runtime roots use
- * the stored appearance preference by default.
+ * XML `Theme.Dpis` is window chrome only. Explicit dynamicColor values keep
+ * previews deterministic; runtime roots use the stored preference by default.
  */
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -119,14 +120,13 @@ fun ComposeDesignSystem(
 
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
+        LocalSemanticColors provides colors.toSemanticColors(),
         LocalClickHapticsEnabled provides clickHapticsEnabled,
     ) {
         MaterialExpressiveTheme(
             colorScheme = colors,
             motionScheme = MotionScheme.expressive(),
-            typography = AppTypography,
-            shapes = AppShapes,
-            content = content
+            content = content,
         )
     }
 }

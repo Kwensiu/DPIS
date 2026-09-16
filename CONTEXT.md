@@ -97,8 +97,8 @@ Keep token depth shallow:
   lives in `PageChromeTokens` only.
 - Measured feature geometry (editor sheet peek, drag handle) stays in that
   feature. Do not copy it into `ui/` as another 16.dp bag.
-- `AppTypography` and `AppShapes` are Material 3 defaults, not a second
-  design system.
+- Typography and shapes are Material 3 Expressive defaults from
+  `MaterialExpressiveTheme`. Do not add alias wrappers for the stock values.
 
 Shared chrome belongs in `ui/` under short names (`SegmentedRow`,
 `FeedbackButton`, `ModalDialog`, `SecondaryPageScaffold`). Do not nest

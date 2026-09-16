@@ -33,8 +33,11 @@ class ComposeShellSourceSmokeTest {
         // asserted here.
         assertTrue(theme.contains("fun ComposeDesignSystem("))
         assertTrue(theme.contains("ColorSchemeFactory.create("))
+        assertTrue(theme.contains("LocalSemanticColors provides"))
         assertTrue(theme.contains("AppWindowBackground.update("))
         assertTrue(theme.contains("fun Activity.applyComposeWindowBackground("))
+        assertFalse(theme.contains("AppTypography"))
+        assertFalse(theme.contains("AppShapes"))
         assertFalse(theme.contains("setComposeContentAfterFirstDraw("))
         assertFalse(theme.contains("animateColorSchemeAsState"))
         val localized = read("src/main/java/com/dpis/module/settings/LocalizedActivity.kt")

@@ -13,9 +13,9 @@ dialog、编辑器 sheet。
 必须先说明控件属于哪一类：设置开关、设置入口、普通确认、危险确认、选项列表、
 长文本，或调试入口。归类不清时不要新开一套圆角和颜色。
 
-颜色只来自 `MaterialTheme.colorScheme`（由 `ComposeDesignSystem` 注入）。不要为
-Compose 新增 `R.color.dpis_*`，不要导出 Theme Builder 静态色板，不要再引一套
-Material 3 组件库。
+颜色只来自 `MaterialTheme.colorScheme`（由 `ComposeDesignSystem` 注入）。成功/
+警告用 `LocalSemanticColors`，不要为 Compose 新增 `R.color.dpis_*`，不要导出
+Theme Builder 静态色板，不要再引一套 Material 3 组件库。
 
 间距优先 `LocalSpacing`（4/8/12/16/24/32）。不要建 `space_16` 或新的
 `*UiTokens` 去包一个 16.dp。多个工作区共用的页面 chrome 只放

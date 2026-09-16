@@ -81,4 +81,43 @@ class ColorSchemeFactoryTest {
         )
         assertSame(first, second)
     }
+
+    @Test
+    fun semanticColorsFollowTheGeneratedSchemeLightOrDark() {
+        val light = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
+            darkTheme = false,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        ).toSemanticColors()
+        val dark = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
+            darkTheme = true,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        ).toSemanticColors()
+
+        assertNotEquals(light.successContainer, dark.successContainer)
+        assertNotEquals(light.warningContainer, dark.warningContainer)
+        assertNotEquals(light.successContainer, light.warningContainer)
+        assertNotEquals(light.successContainer, light.onSuccessContainer)
+        assertNotEquals(dark.successContainer, dark.onSuccessContainer)
+    }
+
+    @Test
+    fun wearMappingCopiesPhoneSchemeRoles() {
+        val phone = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_GREEN),
+            darkTheme = true,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        )
+        val wear = phone.toWearColorScheme(androidx.wear.compose.material3.ColorScheme())
+
+        assertEquals(phone.primary, wear.primary)
+        assertEquals(phone.surfaceContainer, wear.surfaceContainer)
+        assertEquals(phone.background, wear.background)
+        assertEquals(phone.error, wear.error)
+        assertEquals(phone.onPrimary, wear.onPrimary)
+    }
 }
