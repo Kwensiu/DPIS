@@ -113,6 +113,7 @@ class MainStartupSession(
         feedbackDiagnostic.attachHost()
         // The service state callback is not guaranteed to fire on every Wear image.
         // Request the catalog explicitly; MainViewModel coalesces any later service reload.
+        activity.installedAppsLoadSession.attachPackageCatalogMonitor()
         requestAppsLoad()
         if (restoreEditingSession(viewModel, retainedState)) {
             mainWorkspaceSession.restoreAppEditorForCurrentWorkspace()
@@ -171,12 +172,18 @@ class MainStartupSession(
         dispatch(MainUiAction.requestAppsLoad(forceReload))
     }
 
+    fun dispatchInstalledAppsLoadSnapshot(requestId: Int, loaded: List<AppListItem>?) {
+        dispatch(MainUiAction.appsLoadSnapshot(requestId, loaded))
+    }
+
     fun dispatchInstalledAppsLoadFinished(requestId: Int, loaded: List<AppListItem>?) {
         dispatch(MainUiAction.appsLoadFinished(requestId, loaded))
     }
 
     fun onPageRefreshRequested(page: AppListPage?) {
-        dispatch(MainUiAction.markPageRefreshing(page))
+        if (page != null) {
+            dispatch(MainUiAction.markPageRefreshing(page))
+        }
         activity.installedAppsLoadSession.requestLoad(true)
     }
 

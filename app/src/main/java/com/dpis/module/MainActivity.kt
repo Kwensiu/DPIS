@@ -51,6 +51,9 @@ class MainActivity :
     internal val installedAppsLoadSession = InstalledAppsLoadSession(
         this,
         dispatchInstalledAppsLoad = { startupSession.dispatchInstalledAppsLoad(it) },
+        dispatchInstalledAppsLoadSnapshot = { requestId, loaded ->
+            startupSession.dispatchInstalledAppsLoadSnapshot(requestId, loaded)
+        },
         dispatchInstalledAppsLoadFinished = { requestId, loaded ->
             startupSession.dispatchInstalledAppsLoadFinished(requestId, loaded)
         },

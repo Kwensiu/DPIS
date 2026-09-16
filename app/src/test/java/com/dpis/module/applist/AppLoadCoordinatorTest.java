@@ -54,4 +54,25 @@ public class AppLoadCoordinatorTest {
         assertTrue(secondCompletion.shouldApplyResult);
         assertEquals(AppLoadCoordinator.NO_REQUEST, secondCompletion.nextRequestId);
     }
+
+    @Test
+    public void inFlightSnapshot_appliesOnlyForCurrentRequest() {
+        AppLoadCoordinator coordinator = new AppLoadCoordinator();
+        int first = coordinator.onLoadRequested();
+
+        assertTrue(coordinator.shouldApplyInFlightResult(first));
+
+        coordinator.onLoadRequested();
+        assertFalse(coordinator.shouldApplyInFlightResult(first));
+        assertFalse(coordinator.shouldApplyInFlightResult(2));
+    }
+
+    @Test
+    public void inFlightSnapshot_stopsAfterSettledFinish() {
+        AppLoadCoordinator coordinator = new AppLoadCoordinator();
+        int first = coordinator.onLoadRequested();
+
+        coordinator.onLoadFinished(first);
+        assertFalse(coordinator.shouldApplyInFlightResult(first));
+    }
 }

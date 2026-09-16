@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.config.DpisConfigStore
 import org.junit.Assert.assertEquals
@@ -17,7 +17,7 @@ class MainActivityConfiguredCountTest {
 
         assertEquals(
             2,
-            InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
+            InstalledAppCatalogPolicy.countUserVisibleConfiguredPackages(
                 store,
                 ScopeState(
                     setOf("com.example.injected", "com.example.saved"),
@@ -31,7 +31,7 @@ class MainActivityConfiguredCountTest {
     fun configuredCountDoesNotInferUnknownLegacyScope() {
         assertEquals(
             0,
-            InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
+            InstalledAppCatalogPolicy.countUserVisibleConfiguredPackages(
                 null,
                 ScopeState(setOf("com.example.legacy"), false),
             ),
@@ -42,7 +42,7 @@ class MainActivityConfiguredCountTest {
     fun configuredCountExcludesSystemFrameworkScopeAliases() {
         assertEquals(
             1,
-            InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
+            InstalledAppCatalogPolicy.countUserVisibleConfiguredPackages(
                 null,
                 ScopeState(
                     setOf("system", "android", "com.example.injected"),
@@ -56,7 +56,7 @@ class MainActivityConfiguredCountTest {
     fun configuredCountMatchesKnownScopeOnlyPackage() {
         assertEquals(
             1,
-            InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
+            InstalledAppCatalogPolicy.countUserVisibleConfiguredPackages(
                 null,
                 ScopeState(setOf("com.example.injected"), true),
             ),

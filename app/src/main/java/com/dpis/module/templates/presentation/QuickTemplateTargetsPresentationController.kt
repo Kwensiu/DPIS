@@ -6,7 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import com.dpis.module.DpisApplication
 import com.dpis.module.R
-import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.presentation.InstalledAppCatalogCoordinator
 import com.dpis.module.config.PackageConfigRepository
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.templates.QuickTemplateStore
@@ -70,11 +70,8 @@ class QuickTemplateTargetsPresentationController(private val context: Context) {
     private val packageConfigs = PackageConfigRepository(DpisApplication.getActiveHookConfigStore(context))
     private val loader = Executors.newSingleThreadExecutor()
     private val catalog = InstalledAppCatalogCoordinator(
-        object : InstalledAppCatalogCoordinator.Host {
-            override fun getPackageManager() = context.packageManager
-            override fun getSelfPackageName() = context.packageName
-        },
-        60_000L,
+        InstalledAppCatalogCoordinator.ContextHost(context),
+        InstalledAppCatalogCoordinator.labelStore(context),
     )
     private val listeners = LinkedHashSet<Listener>()
     private val allApps = ArrayList<RawTargetApp>()
@@ -177,7 +174,6 @@ class QuickTemplateTargetsPresentationController(private val context: Context) {
     fun dispose() {
         disposed = true
         loader.shutdownNow()
-        catalog.shutdown()
     }
 
     private fun reloadApps() {
