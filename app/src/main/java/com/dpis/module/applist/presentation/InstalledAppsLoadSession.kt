@@ -12,6 +12,7 @@ import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.InstalledAppCatalogLabelStore
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.ui.MainViewModel
@@ -26,15 +27,18 @@ class InstalledAppsLoadSession(
     private val dispatchInstalledAppsLoadSnapshot: (Int, List<AppListItem>?) -> Unit,
     private val dispatchInstalledAppsLoadFinished: (Int, List<AppListItem>?) -> Unit,
 ) {
-    private val catalogCoordinator = InstalledAppCatalogCoordinator(
-        object : InstalledAppCatalogCoordinator.Host {
-            override fun getPackageManager(): PackageManager =
-                activity.packageManager
+    private val catalogCoordinator by lazy {
+        InstalledAppCatalogCoordinator(
+            object : InstalledAppCatalogCoordinator.Host {
+                override fun getPackageManager(): PackageManager =
+                    activity.packageManager
 
-            override fun getSelfPackageName(): String =
-                activity.packageName
-        },
-    )
+                override fun getSelfPackageName(): String =
+                    activity.packageName
+            },
+            InstalledAppCatalogLabelStore.from(activity),
+        )
+    }
 
     private var permissionRequestInFlight = false
     private var pendingLoadAfterPermission = false
@@ -43,7 +47,7 @@ class InstalledAppsLoadSession(
 
     private val packageCatalogReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (!InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(intent?.action)) {
+            if (!InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(intent?.action)) {
                 return
             }
             catalogCoordinator.invalidate()
@@ -245,6 +249,7 @@ class InstalledAppsLoadSession(
         private fun externalCatalogFilter(): IntentFilter = IntentFilter().apply {
             addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE)
             addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)
+            addAction(Intent.ACTION_LOCALE_CHANGED)
         }
     }
 }

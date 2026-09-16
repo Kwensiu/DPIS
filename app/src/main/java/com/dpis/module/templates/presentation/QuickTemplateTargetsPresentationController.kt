@@ -7,6 +7,7 @@ import android.os.Looper
 import com.dpis.module.DpisApplication
 import com.dpis.module.R
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.InstalledAppCatalogLabelStore
 import com.dpis.module.config.PackageConfigRepository
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.templates.QuickTemplateStore
@@ -74,6 +75,7 @@ class QuickTemplateTargetsPresentationController(private val context: Context) {
             override fun getPackageManager() = context.packageManager
             override fun getSelfPackageName() = context.packageName
         },
+        InstalledAppCatalogLabelStore.from(context),
     )
     private val listeners = LinkedHashSet<Listener>()
     private val allApps = ArrayList<RawTargetApp>()

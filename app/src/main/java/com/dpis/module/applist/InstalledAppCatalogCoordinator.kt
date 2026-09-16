@@ -18,6 +18,7 @@ import java.util.Locale
 
 class InstalledAppCatalogCoordinator(
     private val host: Host,
+    private val labelStore: InstalledAppCatalogLabelStore? = null,
 ) {
     interface Host {
         fun getPackageManager(): PackageManager
@@ -128,22 +129,33 @@ class InstalledAppCatalogCoordinator(
                 DpisLog.i("launcher visibility fallback returned: size=${installedPackages.size}")
             }
 
+            val cachedLabels = labelStore?.load() ?: CatalogLabelCacheSnapshot.EMPTY
+            val localeTag = currentLocaleTag()
+            var reusedLabels = 0
             val snapshot = installedPackages.mapNotNull { packageInfo ->
+                val unresolved = unresolvedCatalogLabel(
+                    packageInfo.applicationInfo,
+                    packageInfo.packageName,
+                )
+                val cached = cachedLabels.resolvedLabel(
+                    localeTag,
+                    packageInfo.packageName,
+                    packageInfo.lastUpdateTime,
+                )
+                if (cached != null) reusedLabels++
                 createCatalogItem(
                     packageInfo,
                     selfPackageName,
-                    unresolvedCatalogLabel(
-                        packageInfo.applicationInfo,
-                        packageInfo.packageName,
-                    ),
-                    labelResolved = false,
+                    cached ?: unresolved,
+                    labelResolved = cached != null,
                 )
             }.sortedWith(
                 compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
                     .thenBy { it.packageName },
             )
             DpisLog.i(
-                "installed app catalog rebuilt: raw=${installedPackages.size}, catalog=${snapshot.size}",
+                "installed app catalog rebuilt: raw=${installedPackages.size}, " +
+                    "catalog=${snapshot.size}, reusedLabels=$reusedLabels",
             )
             synchronized(installedAppCatalogLock) {
                 installedAppCatalog = snapshot
@@ -179,10 +191,25 @@ class InstalledAppCatalogCoordinator(
                     return current
                 }
                 installedAppCatalog = resolved
-                return installedAppCatalog
             }
+            persistResolvedLabels(resolved)
+            return resolved
         }
     }
+
+    private fun persistResolvedLabels(catalog: List<InstalledAppCatalogItem>) {
+        val store = labelStore ?: return
+        val records = LinkedHashMap<String, CatalogLabelRecord>()
+        for (item in catalog) {
+            if (!item.labelResolved) continue
+            val label = item.label.trim()
+            if (label.isEmpty()) continue
+            records[item.packageName] = CatalogLabelRecord(label, item.lastUpdateTime)
+        }
+        store.replace(currentLocaleTag(), records)
+    }
+
+    private fun currentLocaleTag(): String = Locale.getDefault().toLanguageTag()
 
     private fun isCatalogCacheFresh(): Boolean =
         !catalogInvalidated && installedAppCatalog.isNotEmpty()
@@ -462,6 +489,10 @@ class InstalledAppCatalogCoordinator(
             -> true
             else -> false
         }
+
+        @JvmStatic
+        fun shouldInvalidateInstalledCatalog(action: String?): Boolean =
+            isInstalledCatalogChangeAction(action) || action == Intent.ACTION_LOCALE_CHANGED
 
         private fun queryInstalledPackages(packageManager: PackageManager): List<PackageInfo> =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

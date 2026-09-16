@@ -704,6 +704,10 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
         )
         assertTrue(loadSession.contains("attachPackageCatalogMonitor()"))
+        assertTrue(loadSession.contains("private val catalogCoordinator by lazy"))
+        assertTrue(loadSession.contains("InstalledAppCatalogLabelStore.from(activity)"))
+        assertTrue(coordinatorSource.contains("labelStore?.load()"))
+        assertTrue(coordinatorSource.contains("persistResolvedLabels("))
         assertTrue(
             read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
                 .contains("installedAppsLoadSession.attachPackageCatalogMonitor()"),

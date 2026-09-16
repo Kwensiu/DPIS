@@ -206,5 +206,13 @@ public class InstalledAppCatalogCoordinatorTest {
                 Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE));
         assertFalse(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
                 Intent.ACTION_BOOT_COMPLETED));
+        assertFalse(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+                Intent.ACTION_LOCALE_CHANGED));
+        assertTrue(InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(
+                Intent.ACTION_LOCALE_CHANGED));
+        assertTrue(InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(
+                Intent.ACTION_PACKAGE_CHANGED));
+        assertFalse(InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(
+                Intent.ACTION_BOOT_COMPLETED));
     }
 }
