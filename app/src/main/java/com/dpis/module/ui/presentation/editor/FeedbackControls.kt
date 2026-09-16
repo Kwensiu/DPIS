@@ -2,13 +2,16 @@ package com.dpis.module.ui.compose
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableChipColors
 import androidx.compose.material3.SelectableChipElevation
@@ -19,6 +22,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.res.painterResource
+import com.dpis.module.R
 
 /** Material button with the product's discrete confirmation feedback. */
 @Composable
@@ -101,10 +106,10 @@ fun FeedbackSwitch(
     onCheckedChange: ((Boolean) -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: SwitchColors = SwitchDefaults.colors(),
+    colors: SwitchColors? = null,
 ) {
     val feedbackCallback = onCheckedChange?.let { rememberClickValueAction<Boolean>(it) }
-    Switch(
+    DpisSwitch(
         checked = checked,
         onCheckedChange = feedbackCallback,
         modifier = modifier,
@@ -112,6 +117,37 @@ fun FeedbackSwitch(
         colors = colors,
     )
 }
+
+/** Thumb glyphs keep checked and unchecked readable at a glance. */
+@Composable
+fun DpisSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: SwitchColors? = null,
+) {
+    Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        enabled = enabled,
+        colors = colors ?: dpisSwitchColors(),
+        thumbContent = {
+            Icon(
+                painter = painterResource(if (checked) R.drawable.ic_check_24 else R.drawable.ic_close_24),
+                contentDescription = null,
+                modifier = Modifier.size(SwitchDefaults.IconSize),
+            )
+        },
+    )
+}
+
+@Composable
+private fun dpisSwitchColors(): SwitchColors = SwitchDefaults.colors(
+    checkedIconColor = MaterialTheme.colorScheme.primary,
+    uncheckedIconColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+)
 
 @Composable
 fun FeedbackFilterChip(

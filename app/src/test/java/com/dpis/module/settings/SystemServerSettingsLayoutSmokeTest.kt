@@ -67,11 +67,14 @@ class SystemServerSettingsLayoutSmokeTest {
         content.assertContainsAll(
             "R.drawable.ic_experiment_24",
             "R.drawable.ic_volunteer_24",
+            "R.drawable.ic_save_24",
             "R.drawable.ic_upload_file_24",
             "R.drawable.ic_language_24",
             "R.drawable.ic_hide_image_24",
             "R.string.settings_home_activation_detection_label",
+            "if (systemHooksVisible)",
             "if (debugSettingsVisible)",
+            "DpisSwitch(",
         )
         read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt").apply {
             assertContainsAll("R.string.settings_hide_launcher_icon_confirm_title", "R.string.settings_hide_launcher_icon_confirm_message")

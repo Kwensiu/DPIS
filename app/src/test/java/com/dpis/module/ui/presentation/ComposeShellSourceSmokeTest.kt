@@ -228,6 +228,8 @@ class ComposeShellSourceSmokeTest {
         assertFalse(theme.contains("ThemeColorOption(\"default\")"))
         assertTrue(theme.contains("private fun ThemeSegmentedSurfaceRow("))
         assertTrue(theme.contains("ThemePredictiveBackRow("))
+        assertTrue(theme.contains("DpisSwitch("))
+        assertFalse(theme.contains("import androidx.compose.material3.Switch"))
         assertTrue(theme.contains("R.string.settings_page_predictive_back"))
         assertTrue(theme.contains("R.string.settings_theme_section_page"))
         assertTrue(theme.contains("val pageItemCount = if (predictiveBackAvailable) 3 else 2"))

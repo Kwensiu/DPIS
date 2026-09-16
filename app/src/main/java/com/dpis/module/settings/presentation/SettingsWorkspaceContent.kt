@@ -24,7 +24,6 @@ import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -119,8 +118,12 @@ fun SettingsWorkspaceContent(
         AppLocaleManager.getLanguageTag(context)
     )
     val debugSettingsVisible = BuildConfig.DEBUG
-    val generalItemCount = 5 + (if (debugSettingsVisible) 1 else 0) +
+    val systemHooksVisible = debugSettingsVisible
+    val generalItemCount = 4 + (if (systemHooksVisible) 1 else 0) +
+        (if (debugSettingsVisible) 1 else 0) +
         (if (state?.globalLogEnabled == true) 1 else 0)
+    val systemHooksOffset = if (systemHooksVisible) 1 else 0
+    val safeModeOffset = if (debugSettingsVisible) 1 else 0
     val listState = rememberRestorableLazyListState("settings", scrollStore)
     PageScaffold(
         pageBar = PageBarBehavior.Collapsing,
@@ -134,15 +137,17 @@ fun SettingsWorkspaceContent(
     ) {
             item {
                 SettingsGroup(R.string.system_settings_section_general) {
-                SettingsSwitchRow(
-                    R.drawable.ic_android_24,
-                    R.string.system_hooks_enabled_label,
-                    R.string.system_hooks_enabled_hint,
-                    state?.systemHooksEnabled == true,
-                    state?.storeAvailable == true,
-                    index = 0, total = generalItemCount,
-                    onHooksChanged
-                )
+                if (systemHooksVisible) {
+                    SettingsSwitchRow(
+                        R.drawable.ic_android_24,
+                        R.string.system_hooks_enabled_label,
+                        R.string.system_hooks_enabled_hint,
+                        state?.systemHooksEnabled == true,
+                        state?.storeAvailable == true,
+                        index = 0, total = generalItemCount,
+                        onHooksChanged
+                    )
+                }
                 if (debugSettingsVisible) {
                     SettingsSwitchRow(
                         R.drawable.ic_shield_24,
@@ -150,17 +155,17 @@ fun SettingsWorkspaceContent(
                         R.string.system_safe_mode_hint,
                         state?.safeModeEnabled == true,
                         state?.storeAvailable == true,
-                        index = 1, total = generalItemCount,
+                        index = systemHooksOffset, total = generalItemCount,
                         onSafeModeChanged,
                     )
                 }
                 SettingsSwitchRow(
-                    R.drawable.ic_check_24,
+                    R.drawable.ic_check_circle_24,
                     R.string.settings_home_activation_detection_label,
                     R.string.settings_home_activation_detection_hint,
                     state?.homeActivationDetectionEnabled == true,
                     state?.storeAvailable == true,
-                    index = if (debugSettingsVisible) 2 else 1,
+                    index = systemHooksOffset + safeModeOffset,
                     total = generalItemCount,
                     onHomeActivationDetectionChanged,
                 )
@@ -170,7 +175,7 @@ fun SettingsWorkspaceContent(
                     R.string.global_log_enabled_hint,
                     state?.globalLogEnabled == true,
                     state?.storeAvailable == true,
-                    index = if (debugSettingsVisible) 3 else 2, total = generalItemCount,
+                    index = systemHooksOffset + safeModeOffset + 1, total = generalItemCount,
                     onGlobalLogChanged
                 )
                 AnimatedConditionalItem(visible = state?.globalLogEnabled == true) {
@@ -179,7 +184,7 @@ fun SettingsWorkspaceContent(
                         R.string.tools_log_title,
                         R.string.tools_log_subtitle,
                         state?.storeAvailable == true,
-                        index = if (debugSettingsVisible) 4 else 3, total = generalItemCount,
+                        index = systemHooksOffset + safeModeOffset + 2, total = generalItemCount,
                         onOpenLogs
                     )
                 }
@@ -188,8 +193,8 @@ fun SettingsWorkspaceContent(
                     R.string.settings_font_library_label,
                     R.string.settings_font_library_hint,
                     state?.storeAvailable == true,
-                    index = (if (debugSettingsVisible) 3 else 2) +
-                        (if (state?.globalLogEnabled == true) 2 else 1),
+                    index = systemHooksOffset + safeModeOffset + 2 +
+                        (if (state?.globalLogEnabled == true) 1 else 0),
                     total = generalItemCount,
                     onFontLibrary
                 )
@@ -198,8 +203,8 @@ fun SettingsWorkspaceContent(
                     R.string.settings_experimental_title,
                     R.string.settings_experimental_hint,
                     state?.storeAvailable == true,
-                    index = (if (debugSettingsVisible) 4 else 3) +
-                        (if (state?.globalLogEnabled == true) 2 else 1),
+                    index = systemHooksOffset + safeModeOffset + 3 +
+                        (if (state?.globalLogEnabled == true) 1 else 0),
                     total = generalItemCount,
                     onExperimental
                 )
@@ -265,7 +270,7 @@ fun SettingsWorkspaceContent(
         item {
             SettingsGroup(R.string.settings_section_other) {
                 SettingsEntry(
-                    R.drawable.ic_upload_file_24,
+                    R.drawable.ic_save_24,
                     R.string.settings_config_backup_label,
                     R.string.settings_config_backup_hint,
                     state?.storeAvailable == true,
@@ -361,7 +366,7 @@ private fun SettingsSwitchRow(
             { Text(stringResource(summaryRes)) }
         },
         trailingContent = {
-            Switch(
+            DpisSwitch(
                 checked = checked,
                 onCheckedChange = hapticChanged,
                 enabled = enabled

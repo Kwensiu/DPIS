@@ -43,7 +43,6 @@ import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -220,13 +219,19 @@ fun ThemeSettingsContent(
                             total = pageItemCount,
                         )
                     }
+                    val changeHomeEditButton = rememberClickValueAction(onShowHomeEditButtonChanged)
                     ThemeSegmentedSurfaceRow(
-                        onClick = { onShowHomeEditButtonChanged(!showHomeEditButton) },
+                        onClick = { changeHomeEditButton(!showHomeEditButton) },
                         index = if (predictiveBackAvailable) 1 else 0,
                         total = pageItemCount,
                         leadingContent = { Icon(painterResource(R.drawable.ic_edit_24), null) },
                         content = { Text(stringResource(R.string.settings_page_home_edit_button), style = MaterialTheme.typography.titleMedium) },
-                        trailingContent = { Switch(checked = showHomeEditButton, onCheckedChange = onShowHomeEditButtonChanged) },
+                        trailingContent = {
+                            DpisSwitch(
+                                checked = showHomeEditButton,
+                                onCheckedChange = changeHomeEditButton,
+                            )
+                        },
                     )
                     ThemeSegmentedSurfaceRow(
                         onClick = { showStartupPageDialog = true },
@@ -388,7 +393,7 @@ private fun ThemePredictiveBackRow(
         total = total,
         leadingContent = {
             Icon(
-                painterResource(R.drawable.ic_arrow_back_24),
+                painterResource(R.drawable.ic_transition_push_24),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -406,7 +411,7 @@ private fun ThemePredictiveBackRow(
             )
         },
         trailingContent = {
-            Switch(checked = checked, onCheckedChange = changePredictiveBack)
+            DpisSwitch(checked = checked, onCheckedChange = changePredictiveBack)
         },
     )
 }
@@ -444,7 +449,7 @@ private fun ThemeDynamicColorRow(
             )
         },
         trailingContent = {
-            Switch(checked = checked, onCheckedChange = changeDynamicColor)
+            DpisSwitch(checked = checked, onCheckedChange = changeDynamicColor)
         },
     )
 }
@@ -821,7 +826,7 @@ private fun ThemeInterfaceScaleRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    painterResource(R.drawable.ic_fit_width_24),
+                    painterResource(R.drawable.ic_aspect_ratio_24),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -693,8 +693,8 @@ internal fun WearSettingsWorkspaceContent(
     var hideLauncherVisible by rememberSaveable { mutableStateOf(false) }
     WearWorkspaceList(title = R.string.workspace_settings) {
         wearSectionHeader(R.string.system_settings_section_general)
-        wearSwitch("hooks", R.string.system_hooks_enabled_label, state?.systemHooksEnabled == true, state?.storeAvailable == true, onHooksChanged)
         if (BuildConfig.DEBUG) {
+            wearSwitch("hooks", R.string.system_hooks_enabled_label, state?.systemHooksEnabled == true, state?.storeAvailable == true, onHooksChanged)
             wearSwitch(
                 "safe",
                 R.string.system_safe_mode_label,
@@ -727,7 +727,7 @@ internal fun WearSettingsWorkspaceContent(
         )
         wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
         wearSectionHeader(R.string.settings_section_other)
-        wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onBackup)
+        wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_save_24, enabled = state?.storeAvailable == true, onClick = onBackup)
         wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24,
             state?.storeAvailable == true && !state.cacheClearInProgress, onClearCache)
         wearSectionHeader(R.string.settings_section_about)

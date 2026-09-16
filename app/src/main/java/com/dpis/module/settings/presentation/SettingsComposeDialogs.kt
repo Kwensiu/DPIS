@@ -295,7 +295,7 @@ internal fun BackupActionsDialogContent(
         ) {
             BackupActionTile(
                 label = stringResource(R.string.config_backup_export_action),
-                iconRes = R.drawable.ic_save_24,
+                iconRes = R.drawable.ic_upload_file_24,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 onClick = onExport,
@@ -303,7 +303,7 @@ internal fun BackupActionsDialogContent(
             )
             BackupActionTile(
                 label = stringResource(R.string.config_backup_import_action),
-                iconRes = R.drawable.ic_upload_file_24,
+                iconRes = R.drawable.ic_settings_backup_restore_24,
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                 onClick = onImport,
