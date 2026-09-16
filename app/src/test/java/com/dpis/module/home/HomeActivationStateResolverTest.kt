@@ -46,8 +46,25 @@ class HomeActivationStateResolverTest {
     }
 
     @Test
+    fun enabledDetectionActivatesWhenLibXposedServiceIsPresent() {
+        assertTrue(HomeActivationStateResolver.isActivatedForHome(true, true, false))
+    }
+
+    @Test
+    fun enabledDetectionActivatesWhenSelfLoaded() {
+        assertTrue(HomeActivationStateResolver.isActivatedForHome(true, false, true))
+    }
+
+    @Test
     fun missingLibXposedServiceIsNotModern() {
         assertFalse(HomeActivationStateResolver.hasModernLibXposedService(null))
+    }
+
+    @Test
+    fun libXposedServiceApiVersionDecidesModernPresence() {
+        assertFalse(HomeActivationStateResolver.hasModernLibXposedService { 100 })
+        assertTrue(HomeActivationStateResolver.hasModernLibXposedService { 101 })
+        assertFalse(HomeActivationStateResolver.hasModernLibXposedService { throw RuntimeException("dead service") })
     }
 
     @Test

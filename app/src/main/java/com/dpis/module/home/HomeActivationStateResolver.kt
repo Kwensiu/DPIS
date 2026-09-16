@@ -1,7 +1,5 @@
 package com.dpis.module.home
 
-import io.github.libxposed.service.XposedService
-
 object HomeActivationStateResolver {
     @JvmStatic
     fun isActivatedForHome(
@@ -17,9 +15,8 @@ object HomeActivationStateResolver {
         selfLoaded: Boolean,
     ): Boolean = !detectionEnabled || isActivatedForHome(hasModernLibXposedService, selfLoaded)
 
-    @JvmStatic
-    fun hasModernLibXposedService(service: XposedService?): Boolean =
-        service != null && isModernLibXposedServiceApi { service.apiVersion }
+    fun hasModernLibXposedService(readApiVersion: (() -> Int)?): Boolean =
+        readApiVersion != null && isModernLibXposedServiceApi(readApiVersion)
 
     internal fun isModernLibXposedServiceApi(readApiVersion: () -> Int): Boolean = try {
         isModernLibXposedServiceApi(readApiVersion())

@@ -1,17 +1,11 @@
 package com.dpis.module.settings
 
-import android.content.Context
 import android.content.SharedPreferences
 
 class InterfaceScaleStore(
     private val preferences: SharedPreferences,
     private val legacyPreferences: SharedPreferences?,
 ) {
-    constructor(context: Context) : this(
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE),
-        context.getSharedPreferences(LegacyUiPreferenceKeys.GROUP, Context.MODE_PRIVATE),
-    )
-
     val percent: Int
         get() {
             if (preferences.contains(KEY_PERCENT)) {
@@ -44,8 +38,8 @@ class InterfaceScaleStore(
             .putInt(KEY_PERCENT, AppUiScaleManager.normalizeScalePercent(percent))
             .commit()
 
-    private companion object {
+    internal companion object {
         const val PREFS_NAME = "dpis.interface_scale"
-        const val KEY_PERCENT = "percent"
+        private const val KEY_PERCENT = "percent"
     }
 }

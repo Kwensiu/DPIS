@@ -534,7 +534,7 @@ class MainActivitySourceSmokeTest {
                 "object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance"
             )
         )
-        assertTrue(updateSession.contains("StartupDisclaimerStore(activity)"))
+        assertTrue(updateSession.contains("startupDisclaimerStore(activity)"))
         assertTrue(updateSession.contains("store.isAccepted"))
         assertTrue(updateSession.contains("store.setAccepted(true)"))
         assertTrue(updateSession.contains("fun applyLargeDialogWidth("))

@@ -15,6 +15,8 @@ import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.settings.PageSettingsStore
+import com.dpis.module.settings.presentation.isHomeActivationDetectionEnabled
+import com.dpis.module.settings.presentation.isHomeEditButtonVisible
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.SecondaryDestination
@@ -59,8 +61,9 @@ class HomeWorkspaceSession(
 
     private fun isActivatedForHome(): Boolean {
         val detectionEnabled = PageSettingsStore.isHomeActivationDetectionEnabled(activity)
-        val libXposedService = HomeActivationStateResolver
-            .hasModernLibXposedService(DpisApplication.xposedService)
+        val libXposedService = HomeActivationStateResolver.hasModernLibXposedService(
+            DpisApplication.xposedService?.let { service -> { service.apiVersion } },
+        )
         val selfLoaded = DpisApplication.isXposedSelfLoaded()
         val activated = HomeActivationStateResolver.isActivatedForHome(
             detectionEnabled,

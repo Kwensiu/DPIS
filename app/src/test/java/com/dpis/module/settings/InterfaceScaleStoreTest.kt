@@ -43,6 +43,13 @@ class InterfaceScaleStoreTest {
     }
 
     @Test
+    fun emptyLegacyPreferencesFallBackToDefault() {
+        val store = InterfaceScaleStore(FakePrefs(), FakePrefs())
+        assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, store.percent)
+        assertEquals(false, store.hasExplicitPercent)
+    }
+
+    @Test
     fun treatsLegacyValueAsExplicitUntilDedicatedPreferenceExists() {
         val legacyPreferences = FakePrefs()
         legacyPreferences.edit()

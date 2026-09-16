@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import com.dpis.module.settings.AppUiScaleManager
-import com.dpis.module.settings.InterfaceScaleStore
+import com.dpis.module.settings.presentation.interfaceScaleStore
 import com.dpis.module.ui.WatchUiMode
 
 fun wrapInterfaceScaleContext(context: Context): Context {
@@ -12,7 +12,7 @@ fun wrapInterfaceScaleContext(context: Context): Context {
     if (unscaledDensityDpi <= 0) {
         return context
     }
-    val store = InterfaceScaleStore(context)
+    val store = interfaceScaleStore(context)
     val target = AppUiScaleManager.targetDensityDpi(
         unscaledDensityDpi,
         AppUiScaleManager.effectiveScalePercent(

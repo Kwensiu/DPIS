@@ -34,6 +34,13 @@ public final class StartupDisclaimerStoreTest {
     }
 
     @Test
+    public void missingLegacyConsentStaysUnaccepted() {
+        StartupDisclaimerStore store = new StartupDisclaimerStore(new FakePrefs(), null);
+
+        assertFalse(store.isAccepted());
+    }
+
+    @Test
     public void dedicatedStateOverridesLegacyConsent() {
         FakePrefs preferences = new FakePrefs();
         FakePrefs legacyPreferences = new FakePrefs();

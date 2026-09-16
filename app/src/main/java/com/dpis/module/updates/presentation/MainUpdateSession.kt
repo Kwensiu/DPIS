@@ -9,7 +9,6 @@ import com.dpis.module.BuildConfig
 import com.dpis.module.R
 import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.updates.StartupDisclaimerStore
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.updates.GitHubReleaseNotesFetcher
 import com.dpis.module.updates.ReleaseNotesCacheStore
@@ -103,7 +102,7 @@ class MainUpdateSession(
     }
 
     fun maybeShowStartupDisclaimerDialog(): Boolean {
-        val store = StartupDisclaimerStore(activity)
+        val store = startupDisclaimerStore(activity)
         return promptCoordinator.maybeShowStartupDisclaimerDialog(
             object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance {
                 override fun isAccepted(): Boolean = store.isAccepted

@@ -74,7 +74,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.ui.compose.*
 import com.dpis.module.settings.AppUiScaleManager
-import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.settings.PageSettingsStore
@@ -933,7 +932,7 @@ fun ThemeSettingsRoute(
             themeColor = themeColor,
             paletteStyle = paletteStyle,
             colorSpecification = colorSpecification,
-            interfaceScalePercent = InterfaceScaleStore(context).percent,
+            interfaceScalePercent = interfaceScaleStore(context).percent,
             onModeSelected = { selectedMode ->
                 ThemeModeStore.setMode(context, selectedMode)
                 mode = selectedMode
@@ -960,7 +959,7 @@ fun ThemeSettingsRoute(
                 persistAppearance()
             },
             onInterfaceScaleChanged = { percent ->
-                val store = InterfaceScaleStore(context)
+                val store = interfaceScaleStore(context)
                 val normalized = AppUiScaleManager.normalizeScalePercent(percent)
                 if (normalized != store.percent || !store.hasExplicitPercent) {
                     if (store.setPercent(normalized)) {
@@ -978,7 +977,7 @@ fun ThemeSettingsRoute(
             themeColor = themeColor,
             paletteStyle = paletteStyle,
             colorSpecification = colorSpecification,
-            interfaceScalePercent = InterfaceScaleStore(context).percent,
+            interfaceScalePercent = interfaceScaleStore(context).percent,
             onModeSelected = { selectedMode ->
                 ThemeModeStore.setMode(context, selectedMode)
                 mode = selectedMode
@@ -1005,7 +1004,7 @@ fun ThemeSettingsRoute(
                 persistAppearance()
             },
             onInterfaceScaleChanged = { percent ->
-                val store = InterfaceScaleStore(context)
+                val store = interfaceScaleStore(context)
                 val normalized = AppUiScaleManager.normalizeScalePercent(percent)
                 if (normalized != store.percent || !store.hasExplicitPercent) {
                     if (store.setPercent(normalized)) {

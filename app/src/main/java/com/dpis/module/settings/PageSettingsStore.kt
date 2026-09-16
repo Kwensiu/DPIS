@@ -1,12 +1,11 @@
 package com.dpis.module.settings
 
-import android.content.Context
 import android.content.SharedPreferences
 
 /** Persists page navigation and home presentation preferences independently of theme settings. */
 object PageSettingsStore {
     const val HOME = "HOME"
-    private const val NAME = "dpis_page"
+    internal const val PREFS_NAME = "dpis_page"
     private const val SHOW_EDIT = "show_home_edit_button"
     private const val START_PAGE = "default_startup_page"
     private const val PREDICTIVE_BACK = "predictive_back_enabled"
@@ -15,37 +14,26 @@ object PageSettingsStore {
     private const val HIDDEN = "workspace_hidden"
     private val validPages = setOf("APP", HOME, "TEMPLATE", "TOOLS", "SETTINGS")
 
-    @JvmStatic
-    fun isHomeEditButtonVisible(context: Context): Boolean = context
-        .getSharedPreferences(NAME, 0).getBoolean(SHOW_EDIT, true)
+    fun isHomeEditButtonVisible(prefs: SharedPreferences): Boolean =
+        prefs.getBoolean(SHOW_EDIT, true)
 
-    @JvmStatic
-    fun setHomeEditButtonVisible(context: Context, value: Boolean) {
-        context.getSharedPreferences(NAME, 0).edit().putBoolean(SHOW_EDIT, value).apply()
+    fun setHomeEditButtonVisible(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit().putBoolean(SHOW_EDIT, value).apply()
     }
 
-    @JvmStatic
-    fun getDefaultStartupPage(context: Context): String = context
-        .getSharedPreferences(NAME, 0).getString(START_PAGE, HOME)
-        ?.uppercase()?.takeIf(validPages::contains) ?: HOME
+    fun getDefaultStartupPage(prefs: SharedPreferences): String = prefs
+        .getString(START_PAGE, HOME)
+        ?.uppercase()
+        ?.takeIf(validPages::contains)
+        ?: HOME
 
-    @JvmStatic
-    fun setDefaultStartupPage(context: Context, value: String) {
+    fun setDefaultStartupPage(prefs: SharedPreferences, value: String) {
         require(value in validPages)
-        context.getSharedPreferences(NAME, 0).edit().putString(START_PAGE, value).apply()
+        prefs.edit().putString(START_PAGE, value).apply()
     }
-
-    @JvmStatic
-    fun isPredictiveBackEnabled(context: Context): Boolean =
-        isPredictiveBackEnabled(context.getSharedPreferences(NAME, 0))
 
     fun isPredictiveBackEnabled(prefs: SharedPreferences): Boolean =
         resolvePredictiveBackEnabled(storedFlag(prefs, PREDICTIVE_BACK))
-
-    @JvmStatic
-    fun setPredictiveBackEnabled(context: Context, value: Boolean) {
-        setPredictiveBackEnabled(context.getSharedPreferences(NAME, 0), value)
-    }
 
     fun setPredictiveBackEnabled(prefs: SharedPreferences, value: Boolean) {
         prefs.edit().putBoolean(PREDICTIVE_BACK, value).commit()
@@ -54,18 +42,8 @@ object PageSettingsStore {
     @JvmStatic
     fun resolvePredictiveBackEnabled(stored: Boolean?): Boolean = stored ?: true
 
-    /** Controls whether Home derives activation from the currently observable module signals. */
-    @JvmStatic
-    fun isHomeActivationDetectionEnabled(context: Context): Boolean =
-        isHomeActivationDetectionEnabled(context.getSharedPreferences(NAME, 0))
-
     fun isHomeActivationDetectionEnabled(prefs: SharedPreferences): Boolean =
         resolveHomeActivationDetectionEnabled(storedFlag(prefs, HOME_ACTIVATION_DETECTION))
-
-    @JvmStatic
-    fun setHomeActivationDetectionEnabled(context: Context, value: Boolean) {
-        setHomeActivationDetectionEnabled(context.getSharedPreferences(NAME, 0), value)
-    }
 
     fun setHomeActivationDetectionEnabled(prefs: SharedPreferences, value: Boolean) {
         prefs.edit().putBoolean(HOME_ACTIVATION_DETECTION, value).apply()
@@ -74,29 +52,32 @@ object PageSettingsStore {
     @JvmStatic
     fun resolveHomeActivationDetectionEnabled(stored: Boolean?): Boolean = stored ?: true
 
-    private fun storedFlag(prefs: SharedPreferences, key: String): Boolean? =
-        if (prefs.contains(key)) prefs.getBoolean(key, true) else null
-
-    @JvmStatic fun getWorkspaceOrder(context: Context): List<String> = context.getSharedPreferences(NAME, 0)
-        .getString(ORDER, null)?.split(',')?.filter(validPages::contains)?.distinct().orEmpty()
+    fun getWorkspaceOrder(prefs: SharedPreferences): List<String> = prefs.getString(ORDER, null)
+        ?.split(',')
+        ?.filter(validPages::contains)
+        ?.distinct()
+        .orEmpty()
         .let { stored -> (stored + listOf("APP", "TEMPLATE", HOME, "TOOLS", "SETTINGS")).distinct() }
-    @JvmStatic
-    fun setWorkspaceOrder(context: Context, order: List<String>) {
-        context.getSharedPreferences(NAME, 0).edit()
+
+    fun setWorkspaceOrder(prefs: SharedPreferences, order: List<String>) {
+        prefs.edit()
             .putString(ORDER, order.filter(validPages::contains).distinct().joinToString(","))
             .apply()
     }
 
-    @JvmStatic
-    fun getHiddenWorkspaces(context: Context): Set<String> = context
-        .getSharedPreferences(NAME, 0).getStringSet(HIDDEN, emptySet()).orEmpty()
-        .filter(validPages::contains).toSet()
+    fun getHiddenWorkspaces(prefs: SharedPreferences): Set<String> = prefs
+        .getStringSet(HIDDEN, emptySet())
+        .orEmpty()
+        .filter(validPages::contains)
+        .toSet()
 
-    @JvmStatic
-    fun setWorkspaceVisible(context: Context, page: String, visible: Boolean) {
+    fun setWorkspaceVisible(prefs: SharedPreferences, page: String, visible: Boolean) {
         if (page == "SETTINGS") return
-        val hidden = getHiddenWorkspaces(context).toMutableSet()
+        val hidden = getHiddenWorkspaces(prefs).toMutableSet()
         if (visible) hidden.remove(page) else hidden.add(page)
-        context.getSharedPreferences(NAME, 0).edit().putStringSet(HIDDEN, hidden).apply()
+        prefs.edit().putStringSet(HIDDEN, hidden).apply()
     }
+
+    private fun storedFlag(prefs: SharedPreferences, key: String): Boolean? =
+        if (prefs.contains(key)) prefs.getBoolean(key, true) else null
 }

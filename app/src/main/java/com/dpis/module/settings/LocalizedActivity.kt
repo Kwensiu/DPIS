@@ -11,6 +11,8 @@ import com.dpis.module.settings.AppLocaleManager
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.settings.presentation.interfaceScaleStore
+import com.dpis.module.settings.presentation.isPredictiveBackEnabled
 import com.dpis.module.ui.presentation.wrapInterfaceScaleContext
 import com.dpis.module.ui.compose.applyComposeWindowBackground
 
@@ -121,7 +123,7 @@ abstract class LocalizedActivity : ComponentActivity() {
     }
 
     private fun currentInterfaceScalePercent(): Int {
-        val store = InterfaceScaleStore(this)
+        val store = interfaceScaleStore(this)
         return AppUiScaleManager.effectiveScalePercent(
             store,
             WatchUiMode.shouldUseCompactUi(this),

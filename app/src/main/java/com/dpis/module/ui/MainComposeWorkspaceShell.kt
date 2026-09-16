@@ -7,6 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.dpis.module.ui.compose.WorkspaceShell
 import com.dpis.module.settings.PageSettingsStore
+import com.dpis.module.settings.presentation.getDefaultStartupPage
+import com.dpis.module.settings.presentation.getHiddenWorkspaces
+import com.dpis.module.settings.presentation.getWorkspaceOrder
 import com.dpis.module.ui.compose.WorkspaceDestination
 
 /**

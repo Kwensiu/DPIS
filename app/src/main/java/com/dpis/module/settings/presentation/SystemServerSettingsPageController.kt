@@ -99,7 +99,7 @@ class SystemServerSettingsPageController(
 
     init {
         this.launcherIconVisibilityStore = LauncherIconVisibilityStore(activity)
-        this.interfaceScaleStore = InterfaceScaleStore(activity)
+        this.interfaceScaleStore = interfaceScaleStore(activity)
         this.presentationController = SettingsPresentationController(
             object : SettingsPresentationController.Port {
                 override fun snapshot(): SettingsUiState {
