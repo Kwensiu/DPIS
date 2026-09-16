@@ -3,6 +3,7 @@ package com.dpis.module.ui.dialog
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.compose.warningButtonColors
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -171,10 +170,7 @@ internal fun ConfirmDialogContent(
                 onClick = confirmAction,
                 modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = colorResource(R.color.dpis_warn_container),
-                    contentColor = colorResource(R.color.dpis_on_warn_container)
-                ),
+                colors = warningButtonColors(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 Text(text = confirmLabel ?: androidx.compose.ui.res.stringResource(

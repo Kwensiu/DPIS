@@ -34,6 +34,17 @@ class ComposeShellSourceSmokeTest {
         assertTrue(theme.contains("fun ComposeDesignSystem("))
         assertTrue(theme.contains("ColorSchemeFactory.create("))
         assertTrue(theme.contains("LocalSemanticColors provides"))
+        val segmented = read(
+            "src/main/java/com/dpis/module/ui/presentation/workspace/SegmentedListItemPolicy.kt",
+        )
+        val feedback = read(
+            "src/main/java/com/dpis/module/ui/presentation/editor/FeedbackControls.kt",
+        )
+        assertTrue(segmented.contains("fun segmentedRowColors("))
+        assertTrue(segmented.contains("MaterialTheme.colorScheme.surfaceBright"))
+        assertTrue(feedback.contains("fun successButtonColors("))
+        assertTrue(feedback.contains("fun warningButtonColors("))
+        assertTrue(feedback.contains("LocalSemanticColors.current"))
         assertTrue(theme.contains("AppWindowBackground.update("))
         assertTrue(theme.contains("fun Activity.applyComposeWindowBackground("))
         assertFalse(theme.contains("AppTypography"))

@@ -52,8 +52,8 @@ Java 宿主若仍通过 `ConfirmDialog.show` 调确认框，保持该 Java 表�
 | --- | --- | --- |
 | 二级页 | `SecondaryPageScaffold` | 标题、返回、inset、折叠顶栏。不要手写普通 `TopAppBar`。 |
 | 工作区页 | `PageScaffold` | Home / Tools / Settings / App / Template。 |
-| 分段列表行 | 现有 `SegmentedListItem` + `dpisSegmentedShapes` | 容器色用 `surfaceBright`。新代码不要再复制一份 `segmentedColors`。 |
-| 按钮 | `FeedbackButton` / `FeedbackOutlinedButton` | 触感走这里。形状和色用 Material 默认或共享 success/danger，不要每页传 `RoundedCornerShape(16)`。 |
+| 分段列表行 | `SegmentedListItem` + `dpisSegmentedShapes` + `segmentedRowColors()` | 新代码不要再手写 `surfaceBright` 的 `segmentedColors`。 |
+| 按钮 | `FeedbackButton` / `FeedbackOutlinedButton` | 触感走这里。成功/警告用 `successButtonColors()` / `warningButtonColors()`。 |
 | 普通确认 | `ConfirmAlertDialog`、`ModalDialog` | Compose state 拥有可见性。 |
 | 筛选 sheet | `FilterSheet` | 不等于普通 dialog。横向芯片溶入 `owningSurfaceColor`。 |
 | 应用配置 sheet | `AppConfigEditorContent`、`AppConfigSheetUiTokens` | 复杂主流程。只保留测过的 peek/手势数字。 |

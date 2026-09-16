@@ -1,8 +1,10 @@
 package com.dpis.module.ui.compose
 
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -33,6 +35,18 @@ internal fun dpisSegmentedShapes(index: Int, count: Int): ListItemShapes {
         shapes
     }
 }
+
+/** Workspace list rows sit on surfaceBright so they stay visible on surfaceContainer. */
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal fun segmentedRowColors(): ListItemColors = ListItemDefaults.segmentedColors(
+    containerColor = MaterialTheme.colorScheme.surfaceBright,
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
+    contentColor = MaterialTheme.colorScheme.onSurface,
+    leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    trailingContentColor = MaterialTheme.colorScheme.primary,
+)
 
 /**
  * Applies the press shape from Material's segmented-list policy to custom segmented surfaces.

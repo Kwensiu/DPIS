@@ -25,6 +25,24 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import com.dpis.module.R
 
+@Composable
+internal fun successButtonColors(): ButtonColors {
+    val semantic = LocalSemanticColors.current
+    return ButtonDefaults.buttonColors(
+        containerColor = semantic.successContainer,
+        contentColor = semantic.onSuccessContainer,
+    )
+}
+
+@Composable
+internal fun warningButtonColors(): ButtonColors {
+    val semantic = LocalSemanticColors.current
+    return ButtonDefaults.outlinedButtonColors(
+        containerColor = semantic.warningContainer,
+        contentColor = semantic.onWarningContainer,
+    )
+}
+
 /** Material button with the product's discrete confirmation feedback. */
 @Composable
 fun FeedbackButton(
