@@ -55,9 +55,10 @@ Use the default Matt Pocock skill label roles unless the repository labels are i
 
 DPIS currently uses a single-context documentation layout. See
 `docs/agents/domain.md`.
-Read `CONTEXT.md` for DPIS domain language, product semantics, and file-role
-boundaries before changing package state rules, runtime-route meaning, app-list
-status semantics, log page behavior, or feedback diagnostic packaging.
+Read `CONTEXT.md` for DPIS domain language, product semantics, file-role
+boundaries, and appearance before changing package state rules, runtime-route
+meaning, app-list status semantics, log page behavior, feedback diagnostic
+packaging, or UI colors and shared chrome.
 
 ### CodeGraph
 

@@ -7,8 +7,8 @@ DPIS currently uses a single-context documentation layout.
 Agents should read these files first when they need project context:
 
 - `AGENTS.md` for repository workflow, testing, and runtime debugging rules.
-- `CONTEXT.md` for DPIS domain language, route boundaries, and presentation
-  ownership rules.
+- `CONTEXT.md` for DPIS domain language, route boundaries, appearance
+  (runtime color scheme), and presentation ownership rules.
 - `docs/architecture-ownership.md` for presentation ownership constraints
   and remaining-host migration order.
 - `docs/font-routing.md` for font mode, custom hook-chain, and internal
@@ -27,7 +27,8 @@ Agents should read these files first when they need project context:
   used when diagnosing hook installation and callback evidence.
 - `README.md` for user-facing product behavior and supported configuration modes.
 - `docs/README.md` for the active documentation index.
-- `docs/ui-guidelines.md` for UI change rules and resource naming expectations.
+- `docs/ui-guidelines.md` for Compose-first UI change rules. XML samples
+  there are leftover, not the default.
 
 ## Agent Tooling
 
@@ -48,4 +49,7 @@ deleting them.
 
 ## Architecture Notes
 
-There is no `docs/adr/` directory yet. Until ADRs exist, use `CONTEXT.md`, the active docs above, and nearby production code/tests as the authoritative source.
+ADRs live in `docs/adr/` when a durable decision needs a numbered record.
+Appearance, viewport, and presentation ownership stay in `CONTEXT.md` unless
+an ADR is required to record a rejected alternative. Do not add a nested
+design-system doc tree for theme tokens.

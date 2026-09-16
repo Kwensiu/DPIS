@@ -2,6 +2,15 @@
 
 此目录存放已不在当前主线执行路径上的历史规格、计划与报告。
 
+## 2026-09-16 归档
+
+Compose 主工作区切页和系统字体大小工具页设计已落地，从 `docs/` 根目录迁出，避免把完成基线误读成待办或当前外观契约。
+
+- `docs/compose-workspace-migration.md` -> `docs/archive/specs/compose-workspace-migration.md`
+- `docs/system-font-scale-tool-ui.md` -> `docs/archive/specs/system-font-scale-tool-ui.md`
+
+仍有效的约束已收到 `CONTEXT.md`（外观、inset、Wear、系统 `font_scale` 工具）和 `docs/font-routing.md`（该工具不在字体 mode tree 内）。
+
 ## 2026-09-13 归档
 
 页面顶栏/滚动合同已落地，从活文档 `docs/superpowers/` 迁入归档。实现以 `PageScaffold`、`PageChromeTokens` 和 `PageTopBar` 为准。

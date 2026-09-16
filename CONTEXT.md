@@ -11,9 +11,12 @@ route installation, runtime property recovery, or debug tooling.
 
 ## Compose Workspace Baseline
 
-Themes 1-3 established the Compose-first shell plus native Home, Tools, and
-Settings workspaces. The shell remains the only workspace-navigation owner;
+The Compose-first shell plus native Home, Tools, and Settings workspaces are
+the current product. Historical cutover notes live in
+`docs/archive/specs/compose-workspace-migration.md`; those slice names are not
+Material palette styles. The shell remains the only workspace-navigation owner;
 `MainUiState` / `MainUiAction` remain authoritative for destination selection.
+
 Compose presentation must call focused Java/Kotlin controller or presenter
 boundaries for persistence, permissions, system operations, activity results,
 and runtime-facing work. Do not recreate a hidden View tree only to render a
@@ -23,8 +26,6 @@ Compact watch and round layouts use the dedicated Wear Compose presentation
 selected by `WatchUiMode`. Wear screens preserve one inset owner per surface,
 reuse the same Java/Kotlin domain actions as phone/tablet, and map the active
 DPIS light/dark scheme into Wear Material3 instead of hard-coding black.
-See `docs/compose-workspace-migration.md` for the migration and interaction
-baseline.
 
 Scrollable content in App and Template right-side editor panes may draw through
 the bottom gesture-navigation area while scrolling. The scroll viewport must
@@ -61,6 +62,54 @@ Continuous controls keep their domain-specific feedback: the interface-scale
 slider snaps to whole percentages and emits a clock tick only when crossing a
 percentage. Do not replace slider step feedback with generic click feedback.
 
+The Tools card for system font scale writes `Settings.System.font_scale`. It is
+not an Xposed or per-app font route. Preview must not multiply the device's
+current font scale into the pending target. Permission, unavailable, pending,
+apply, restore, one-percent steps, and log-gate stay with that tool. Do not
+fold it into `system` / `compat` / `off` in `docs/font-routing.md`.
+
+## Appearance
+
+The on-screen palette is generated at runtime. XML `Theme.Dpis` and a Theme
+Builder export are not the UI color source.
+
+- Preferences live in `ThemeModeStore`: light/dark/follow-system, dynamic
+  color, seed color, palette style, and 2021/2025 color spec.
+- `ColorSchemeFactory` is the only scheme builder (MaterialKolor). Theme-page
+  swatches must use this factory, not a parallel HCT path.
+- `ComposeDesignSystem` applies `MaterialExpressiveTheme` and paints the
+  window from that scheme so AppCompat night mode cannot show behind dialogs.
+- Wear maps the same generated scheme into Wear Material3. Do not hard-code
+  black.
+- XML `Theme.Dpis` (`Theme.Material3.DayNight.NoActionBar`) is window chrome
+  only: transparent system bars and the Activity background. New UI colors
+  come from `MaterialTheme.colorScheme`. Roles Material 3 does not have
+  (success, warning) belong in one CompositionLocal derived from that scheme,
+  not new `R.color.dpis_*` reads from Compose.
+
+Do not add another Material 3 component library or freeze a static `Color.kt`.
+
+Keep token depth shallow:
+
+- Shared spacing is `LocalSpacing` (4/8/12/16/24/32). Do not add numeric
+  aliases such as `space_16`.
+- Page chrome that several workspaces share (search height, content inset)
+  lives in `PageChromeTokens` only.
+- Measured feature geometry (editor sheet peek, drag handle) stays in that
+  feature. Do not copy it into `ui/` as another 16.dp bag.
+- `AppTypography` and `AppShapes` are Material 3 defaults, not a second
+  design system.
+
+Shared chrome belongs in `ui/` under short names (`SegmentedRow`,
+`FeedbackButton`, `ModalDialog`, `SecondaryPageScaffold`). Do not nest
+`theme/contract/tokens` packages. Keep `com.dpis.module.ui.compose` as the
+public package until a dedicated rename; do not mix a rename with an
+appearance change.
+
+Appearance work is bottom-up: lock this contract first, then shared chrome in
+`ui/`, then feature screens. Do not restyle Settings or the editor to
+"introduce" the contract. How-to for new UI is `docs/ui-guidelines.md`.
+
 ## Presentation And Code Ownership
 
 These rules are binding for new work and for any change that already touches
@@ -87,7 +136,7 @@ rules and remaining migration slices.
    change when this task already materially edits it, unless reflection, JNI,
    a flavor Xposed entry, or an externally observed JVM signature makes that
    unsafe.
-5. `ui/` is shell, tokens, scaffold, and shared chrome only. Feature screens
+5. `ui/` is shell, appearance, scaffold, and shared chrome only. Feature screens
    belong in the feature package (`about/presentation`, `settings/presentation`,
    `applist`, `templates/presentation`, and so on). Do not add a new About,
    Settings, or editor screen under `ui/`. Physical directory and Kotlin

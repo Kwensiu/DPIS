@@ -1,16 +1,17 @@
-# Compose Workspace Migration Baseline
+# Compose Workspace Migration Baseline (archived)
 
-Themes 1-5 establish the baseline for the DPIS phone and tablet main-workspace
-migration to Compose Material3. This document defines the boundary for later
-standalone and compact-device work; it is not a new product design proposal.
+Completed phone/tablet Compose Material3 cutover. Slice names Theme 1-5 in
+this file are historical migration batches, not appearance styles. Live
+appearance, inset, Wear mapping, and haptic rules are in `CONTEXT.md`. Do not
+treat this file as a current checklist.
 
 ## Completed Scope
 
-- Theme 1: DPIS Compose design system and adaptive shell.
-- Theme 2: standalone support pages and shared support-sheet presentation.
-- Theme 3: Home, Tools, and Settings workspaces.
-- Theme 4: App workspace list/detail presentation.
-- Theme 5: App configuration plus Template and global-prefill editors.
+- Slice 1: DPIS Compose appearance wrapper and adaptive shell.
+- Slice 2: standalone support pages and shared support-sheet presentation.
+- Slice 3: Home, Tools, and Settings workspaces.
+- Slice 4: App workspace list/detail presentation.
+- Slice 5: App configuration plus Template and global-prefill editors.
 - Standalone About and open-source-license pages, with update and license
   workflows still owned by their existing Java coordinators.
 - Standalone font library and font-detail pages, including Compose-native font

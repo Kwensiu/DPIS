@@ -1,6 +1,10 @@
-# 系统字体大小工具页设计
+# 系统字体大小工具页设计（已归档）
 
-本文记录将“字体缩放器”类能力加入 DPIS 工具页时的产品语义、界面结构和边界行为。该功能的本质是写入 Android 系统设置 `Settings.System.font_scale`，属于系统全局字体大小工具，不属于 DPIS 的按应用字体 Hook 链路。
+已落地的产品边界在 `CONTEXT.md` 与 `docs/font-routing.md`：本工具写
+`Settings.System.font_scale`，不是按应用字体 route。下文是第一版界面设计
+（含 XML 控件样板），只作追溯，不要当当前 Compose 实现清单。
+
+该功能的本质是写入 Android 系统设置 `Settings.System.font_scale`，属于系统全局字体大小工具，不属于 DPIS 的按应用字体 Hook 链路。
 
 ## 产品语义
 

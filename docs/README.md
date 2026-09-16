@@ -19,8 +19,12 @@
 - [lsposed-diagnostics.md](./lsposed-diagnostics.md)：LSPosed 模块日志拉取、过滤和判断方式。
 - [font-routing.md](./font-routing.md)：字体模式、自定义 Hook 链路和内部调度边界。
 - [java-toolchain-policy.md](./java-toolchain-policy.md)：JDK、Java 兼容级别和 Android API 使用边界。
-- [ui-guidelines.md](./ui-guidelines.md)：DPIS UI 修改约定。
+- [CONTEXT.md](../CONTEXT.md)：领域语言。外观（运行时配色、Wear 映射、token 深度）在 **Appearance**。
+- [ui-guidelines.md](./ui-guidelines.md)：Compose 优先的 UI 修改约定。XML 样板是遗留，不是默认落点。
 - [architecture-ownership.md](./architecture-ownership.md)：Activity / `ui/` / policy 所有权约束，以及后续 host 迁移顺序。
+- [package-classification-plan.md](./package-classification-plan.md)：按特征增量迁包的账本，不是一次做完的迁移计划。
+- [diagnostic-performance-architecture.md](./diagnostic-performance-architecture.md)：反馈诊断证据模型。
+- [feedback-diagnostic-perfetto.md](./feedback-diagnostic-perfetto.md)：诊断 ZIP 里 Perfetto trace 的分析用法。
 - [agents/](./agents/)：Agent 协作配置、issue tracker 信息和运行时排查流程。
 - [sonarqube.md](./sonarqube.md)：CI 扫描配置，以及用 SonarQube MCP 读质量门和覆盖率。
 
@@ -28,6 +32,8 @@
 
 已完成的执行计划和设计在 [archive/](./archive/)。近期归档：
 
+- [compose-workspace-migration.md](./archive/specs/compose-workspace-migration.md)
+- [system-font-scale-tool-ui.md](./archive/specs/system-font-scale-tool-ui.md)
 - [2026-09-12-page-chrome-contract.md](./archive/specs/2026-09-12-page-chrome-contract.md)
 - [2026-09-08-app-config-prefill-session.md](./archive/plans/2026-09-08-app-config-prefill-session.md)
 - [2026-09-08-app-config-prefill-session-design.md](./archive/specs/2026-09-08-app-config-prefill-session-design.md)

@@ -38,6 +38,9 @@ requested font mode
 - `system_server_font` and `activity_thread_font` are internal scheduler
   domains. They are not user-customizable hook-chain switches and are not saved
   in custom hook-chain overrides.
+- The Tools workspace "系统字体大小" card writes Android
+  `Settings.System.font_scale`. That is a global system setting, not a DPIS
+  font route, and it is outside this mode tree.
 - Restoring the custom hook-chain defaults returns to the compat recommended
   template. It must not rewrite the system-mode internal scheduler state.
 
