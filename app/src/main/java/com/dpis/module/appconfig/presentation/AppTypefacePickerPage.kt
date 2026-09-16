@@ -1,6 +1,5 @@
 package com.dpis.module.appconfig.presentation
 
-import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -35,7 +34,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Velocity
 import com.dpis.module.R
-import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.TypefaceCatalogCache
 import com.dpis.module.ui.compose.EditorSheetChildPageHeader
@@ -43,6 +41,8 @@ import com.dpis.module.ui.compose.FeedbackButton
 import com.dpis.module.ui.compose.FeedbackOutlinedButton
 import com.dpis.module.ui.compose.TypefacePickerUiTokens
 import com.dpis.module.ui.compose.dialogListContentFade
+import com.dpis.module.ui.SecondaryDestination
+import com.dpis.module.ui.presentation.LocalSecondaryNavigation
 import com.dpis.module.ui.compose.rememberClickValueAction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -78,6 +78,7 @@ private fun TypefacePickerContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val secondaryNavigation = LocalSecondaryNavigation.current
     val defaultTypefaceLabel = stringResource(R.string.dialog_typeface_default)
     // Match the legacy editor: an already selected imported font opens its own catalogue.
     val initialPage = if (!selectedTypefaceId.isNullOrBlank()
@@ -190,7 +191,7 @@ private fun TypefacePickerContent(
         FeedbackOutlinedButton(
             onClick = {
                 onBack()
-                context.startActivity(Intent(context, FontLibraryActivity::class.java))
+                secondaryNavigation?.open(SecondaryDestination.FontLibrary)
             },
             modifier = Modifier.padding(
                     horizontal = TypefacePickerUiTokens.HorizontalContentPadding

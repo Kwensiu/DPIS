@@ -50,7 +50,7 @@ import com.dpis.module.appconfig.editor.AppConfigEditorChip
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.home.HomeWorkspaceState
-import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.tools.SystemFontScaleToolState
 import com.dpis.module.settings.SettingsActions
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
@@ -175,6 +175,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                         settings::setHooks,
                         settings::setSafeMode,
                         settings::setGlobalLog,
+                        settings::setHomeActivationDetection,
                         settings::openLogs,
                         settings::setLauncherHidden,
                         settings::openFontDebug,
@@ -233,6 +234,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                 settings::setHooks,
                 settings::setSafeMode,
                 settings::setGlobalLog,
+                settings::setHomeActivationDetection,
                 settings::openLogs,
                 settings::setLauncherHidden,
                 settings::openFontLibrary,

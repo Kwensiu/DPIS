@@ -7,7 +7,7 @@ import com.dpis.module.runtime.ConfigStoreFactory
 class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     fun settingsActivityWiresFontLibraryEntryToDedicatedPage() {
-        val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
+        val source = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceSession.kt")
         val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
         val manifest = read("src/main/AndroidManifest.xml")
         val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
@@ -15,7 +15,7 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
 
         content.assertContainsAll("R.string.settings_font_library_label")
         source.assertContainsAll(
-            "Intent(activity, FontLibraryActivity::class.java)",
+            "SecondaryDestination.FontLibrary",
         )
         source.assertNotContainsAll("showFontLibraryDialog", "REQUEST_IMPORT_FONT")
         manifest.assertContainsAll("android:name=\".fonts.FontLibraryActivity\"")
@@ -29,18 +29,18 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
 
     @Test
     fun fontLibraryAndDetailActivitiesOwnTheirSeparateWorkflows() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
-        val detail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
+        val detail = read("src/main/java/com/dpis/module/fonts/presentation/FontDetailSession.kt")
         val importMethod = source.substring(
             source.indexOf("private fun promptImportName(uri: Uri)"),
-            source.indexOf("private fun onNameSubmit(name: String)"),
+            source.indexOf("fun onNameSubmit(name: String)"),
         )
 
         source.assertContainsAll(
             "Intent.ACTION_OPEN_DOCUMENT",
             "font/ttf",
             "font/otf",
-            "FontDetailActivity.EXTRA_FONT_ID",
+            "onOpenFontDetails(fontId)",
         )
         source.assertNotContainsAll("showFontDetails(")
         detail.assertContainsAll(
@@ -66,7 +66,7 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
     @Test
     fun fontLibraryPageUsesComposeToolbarListAndImportFab() {
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
-        val source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
 
         content.assertContainsAll(
             "font_library_page_title",
@@ -75,7 +75,8 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
             "LazyColumn",
             "font_library_empty",
         )
-        source.assertContainsAll("installFontLibrary")
+        read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+            .assertContainsAll("installFontLibrary")
         source.assertNotContainsAll("setContentView(R.layout.activity_font_library)")
     }
 

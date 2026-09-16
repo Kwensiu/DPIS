@@ -7,6 +7,7 @@
             name="android:navigationBarColor"
         >@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
     </style>
 
     <style name="Theme.Dpis.QuickConfig" parent="Theme.Material3.DayNight.NoActionBar">

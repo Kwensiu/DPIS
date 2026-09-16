@@ -96,16 +96,12 @@ Compose rewrite, and do not grow `MainActivity` while extracting a host.
    `package com.dpis.module.ui.compose`. Shared scaffolds under `ui/` may keep
    the historical `ui.compose` package until that tree is renamed as its own
    cut. Prefer one feature tree per PR so the rename is complete.
-2. **Move Settings backup picker/thread** out of
-   `SystemServerSettingsPageController` into a backup presentation host.
-   Policy and I/O already live in `ConfigBackupRestorePolicy` and
-   `backup/presentation/ConfigBackupCoordinator`.
-3. **Move About update check** out of `AboutActivity` methods into the
+2. **Move About update check** out of `AboutActivity` methods into the
    existing prompt/download coordinators (partially `AboutUpdatePromptState`).
-4. **Peel `MainActivity` Host implementations** (update, disclaimer, download,
+3. **Peel `MainActivity` Host implementations** (update, disclaimer, download,
    workspace `Content`) into those hosts. Keep the Activity as lifecycle and
    dispatch wiring only.
-5. **Replace remaining XML View binders with Compose** only when that surface
+4. **Replace remaining XML View binders with Compose** only when that surface
    is already the change. Do not convert the whole editor in one PR.
-6. **Drop `activity_status` as a coordinator assembly source** once no Java
+5. **Drop `activity_status` as a coordinator assembly source** once no Java
    host still reads that inflated tree (`docs/compose-workspace-migration.md`).

@@ -210,7 +210,7 @@ class MainActivitySourceSmokeTest {
     @Test
     fun appAndToolsWorkspacesOwnPresentationActionBlocks() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
-        val toolsWorkspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
+        val toolsWorkspace = read("src/main/java/com/dpis/module/tools/presentation/ToolsWorkspace.kt")
 
         val workspace = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspaceSession.kt"
@@ -534,7 +534,7 @@ class MainActivitySourceSmokeTest {
                 "object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance"
             )
         )
-        assertTrue(updateSession.contains("StartupDisclaimerStore(activity)"))
+        assertTrue(updateSession.contains("startupDisclaimerStore(activity)"))
         assertTrue(updateSession.contains("store.isAccepted"))
         assertTrue(updateSession.contains("store.setAccepted(true)"))
         assertTrue(updateSession.contains("fun applyLargeDialogWidth("))

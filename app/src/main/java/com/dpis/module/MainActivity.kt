@@ -9,10 +9,11 @@ import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.home.presentation.HomeWorkspaceSession
+import com.dpis.module.ui.presentation.SecondaryActivityNavigator
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.SystemScopeCoordinator
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.ui.presentation.MainHostWiringSession
 import com.dpis.module.ui.presentation.MainStartupSession
 import com.dpis.module.ui.presentation.MainWorkspaceSession
@@ -54,7 +55,8 @@ class MainActivity :
             startupSession.dispatchInstalledAppsLoadFinished(requestId, loaded)
         },
     )
-    internal val hostWiringSession = MainHostWiringSession(this)
+    internal val secondaryNavigation = SecondaryActivityNavigator(this)
+    internal val hostWiringSession = MainHostWiringSession(this, secondaryNavigation)
     internal val mainWorkspaceSession = MainWorkspaceSession(this, hostWiringSession)
     internal val homeWorkspaceSession = HomeWorkspaceSession(
         this,
@@ -67,6 +69,7 @@ class MainActivity :
         },
         dispatch = { startupSession.dispatch(it) },
         bindHomeWorkspace = { mainWorkspaceSession.bindHomeWorkspace() },
+        secondaryNavigation = secondaryNavigation,
     )
     internal val startupSession: MainStartupSession = MainStartupSession(
         this,
@@ -75,6 +78,10 @@ class MainActivity :
         mainWorkspaceSession,
     )
     internal val scrollStateStore = AppWorkspaceScrollStateStore()
+
+    override fun onUnhandledTaskRootBack() {
+        moveTaskToBack(true)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +96,12 @@ class MainActivity :
     override fun onResume() {
         super.onResume()
         startupSession.onResume()
+    }
+
+    override fun handleAppearanceChangeOnResume(): Boolean {
+        val shell = mainWorkspaceSession.composeShell() ?: return false
+        shell.applyAppearanceInPlace()
+        return true
     }
 
     override fun onStop() {

@@ -5,6 +5,8 @@ import android.content.Intent
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SettingsActions
+import com.dpis.module.ui.SecondaryDestination
+import com.dpis.module.ui.presentation.SecondaryNavigation
 
 /**
  * Java-facing adapter that owns the settings controller's Activity session while MainActivity
@@ -13,7 +15,8 @@ import com.dpis.module.settings.SettingsActions
 class SettingsWorkspaceSession(
     private val activity: LocalizedActivity,
     private val onComposeStateChanged: Runnable,
-    private val onOpenLogs: Runnable,
+    private val secondaryNavigation: SecondaryNavigation,
+    private val onConfigurationChanged: Runnable,
 ) : SettingsActions {
     companion object {
         /** Stable Java entry point that avoids exposing Kotlin function types or internal classes. */
@@ -21,12 +24,14 @@ class SettingsWorkspaceSession(
         fun create(
             activity: Activity,
             onComposeStateChanged: Runnable,
-            onOpenLogs: Runnable,
+            secondaryNavigation: SecondaryNavigation,
+            onConfigurationChanged: Runnable,
         ): SettingsWorkspaceSession {
             return SettingsWorkspaceSession(
                 activity as LocalizedActivity,
                 onComposeStateChanged,
-                onOpenLogs,
+                secondaryNavigation,
+                onConfigurationChanged,
             )
         }
     }
@@ -35,7 +40,10 @@ class SettingsWorkspaceSession(
     private var composePresentationStarted = false
 
     fun ensureComposeController(): SystemServerSettingsPageController {
-        val current = controller ?: SystemServerSettingsPageController(activity).also {
+        val current = controller ?: SystemServerSettingsPageController(
+            activity,
+            onConfigurationChanged,
+        ).also {
             controller = it
         }
         if (!composePresentationStarted) {
@@ -59,8 +67,12 @@ class SettingsWorkspaceSession(
         ensureComposeController().setGlobalLogFromPresentation(enabled)
     }
 
+    override fun setHomeActivationDetection(enabled: Boolean) {
+        ensureComposeController().setHomeActivationDetectionFromPresentation(enabled)
+    }
+
     override fun openLogs() {
-        onOpenLogs.run()
+        secondaryNavigation.open(SecondaryDestination.Logs)
     }
 
     override fun setLauncherHidden(hidden: Boolean) {
@@ -72,15 +84,15 @@ class SettingsWorkspaceSession(
     }
 
     override fun openFontLibrary() {
-        ensureComposeController().showFontLibraryFromPresentation()
+        secondaryNavigation.open(SecondaryDestination.FontLibrary)
     }
 
     override fun openExperimental() {
-        ensureComposeController().showExperimentalSettingsFromPresentation()
+        secondaryNavigation.open(SecondaryDestination.Experimental)
     }
 
     override fun openTheme() {
-        ensureComposeController().showThemeSettingsFromPresentation()
+        secondaryNavigation.open(SecondaryDestination.Theme)
     }
 
     override fun setLanguage(tag: String) {
@@ -108,11 +120,11 @@ class SettingsWorkspaceSession(
     }
 
     override fun openAbout() {
-        ensureComposeController().showAboutFromPresentation()
+        secondaryNavigation.open(SecondaryDestination.About)
     }
 
     override fun openDonate() {
-        ensureComposeController().showDonateFromPresentation()
+        secondaryNavigation.open(SecondaryDestination.Donate)
     }
 
     fun onStart() {

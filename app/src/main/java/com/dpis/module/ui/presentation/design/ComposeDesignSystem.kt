@@ -3,6 +3,7 @@ package com.dpis.module.ui.compose
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -64,7 +65,14 @@ fun ComposeDesignSystem(
     } else {
         ColorSchemeFactory.seedColor(resolvedThemeColor)
     }
-    val targetColors = remember(seedColor, darkTheme, resolvedPaletteStyle, resolvedColorSpecification) {
+    val colors = remember(
+        seedColor,
+        darkTheme,
+        resolvedDynamicColor,
+        resolvedThemeColor,
+        resolvedPaletteStyle,
+        resolvedColorSpecification,
+    ) {
         ColorSchemeFactory.create(
             seedColor = seedColor,
             darkTheme = darkTheme,
@@ -72,7 +80,6 @@ fun ComposeDesignSystem(
             requestedSpecification = resolvedColorSpecification,
         )
     }
-    val colors = targetColors.animateColorSchemeAsState()
 
     SideEffect {
         val activity = context.findActivity()
@@ -94,6 +101,11 @@ fun ComposeDesignSystem(
         view.setBackgroundColor(rootColor)
         if (isSeparateDialogWindow) {
             view.rootView.background?.mutate()?.setTint(rootColor)
+        } else if (!drawsTransparentActivityBackground) {
+            AppWindowBackground.update(rootColor)
+            activity?.let { host ->
+                host.window.setBackgroundDrawable(ColorDrawable(rootColor))
+            }
         }
         activity?.window?.let { window ->
             WindowCompat.getInsetsController(window, view).apply {
@@ -107,7 +119,7 @@ fun ComposeDesignSystem(
 
     CompositionLocalProvider(
         LocalSpacing provides Spacing(),
-        LocalClickHapticsEnabled provides clickHapticsEnabled
+        LocalClickHapticsEnabled provides clickHapticsEnabled,
     ) {
         MaterialExpressiveTheme(
             colorScheme = colors,
@@ -119,10 +131,47 @@ fun ComposeDesignSystem(
     }
 }
 
-private tailrec fun Context.findActivity(): Activity? = when (this) {
+internal tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+internal object AppWindowBackground {
+    @Volatile
+    var surfaceContainerArgb: Int? = null
+        private set
+
+    fun update(surfaceContainerArgb: Int) {
+        this.surfaceContainerArgb = surfaceContainerArgb
+    }
+}
+
+/**
+ * Paints the window before Compose's first frame so the system can start the
+ * Activity transition against an opaque destination instead of waiting.
+ */
+fun Activity.applyComposeWindowBackground() {
+    val translucentAttrs = theme.obtainStyledAttributes(
+        intArrayOf(android.R.attr.windowIsTranslucent),
+    )
+    val translucent = translucentAttrs.getBoolean(0, false)
+    translucentAttrs.recycle()
+    if (translucent) {
+        return
+    }
+    val cached = AppWindowBackground.surfaceContainerArgb
+    val color = if (cached != null) {
+        cached
+    } else {
+        val backgroundAttrs = theme.obtainStyledAttributes(
+            intArrayOf(android.R.attr.colorBackground),
+        )
+        val fallback = backgroundAttrs.getColor(0, android.graphics.Color.BLACK)
+        backgroundAttrs.recycle()
+        fallback
+    }
+    window.setBackgroundDrawable(ColorDrawable(color))
 }
 
 /** Shared Activity shell for standalone Compose pages. Feature screens own their content. */

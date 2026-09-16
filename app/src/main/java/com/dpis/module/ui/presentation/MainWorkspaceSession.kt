@@ -24,6 +24,10 @@ class MainWorkspaceSession(
 
     fun composeShell(): MainComposeShellHost? = composeShellHost
 
+    fun applyConfigurationInPlace() {
+        composeShellHost?.applyConfigurationInPlace()
+    }
+
     fun installComposeWorkspaceShell() {
         val composeRoot = ComposeView(activity)
         activity.setContentView(
@@ -81,6 +85,8 @@ class MainWorkspaceSession(
             activity.startupSession.requireUiState(),
             WatchUiMode.shouldUseCompactUi(activity),
             workspacePresentationCoordinator,
+            activity.secondaryNavigation,
+            activity,
         ) { action ->
             activity.startupSession.dispatch(action)
         }

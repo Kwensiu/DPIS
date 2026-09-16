@@ -10,7 +10,7 @@ import android.os.SystemClock
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.settings.SystemFrameworkScope
+import com.dpis.module.hooks.SystemFrameworkScope
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType

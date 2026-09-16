@@ -2,7 +2,7 @@ package com.dpis.module;
 
 import com.dpis.module.viewport.DpiConfig;
 
-import com.dpis.module.settings.StartupDisclaimerStore;
+import com.dpis.module.updates.StartupDisclaimerStore;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -31,6 +31,13 @@ public final class StartupDisclaimerStoreTest {
         StartupDisclaimerStore store = new StartupDisclaimerStore(new FakePrefs(), legacyPreferences);
 
         assertTrue(store.isAccepted());
+    }
+
+    @Test
+    public void missingLegacyConsentStaysUnaccepted() {
+        StartupDisclaimerStore store = new StartupDisclaimerStore(new FakePrefs(), null);
+
+        assertFalse(store.isAccepted());
     }
 
     @Test

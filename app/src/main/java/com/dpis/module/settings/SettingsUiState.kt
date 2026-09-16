@@ -8,6 +8,7 @@ class SettingsUiState(
     @JvmField val systemHooksEnabled: Boolean,
     @JvmField val safeModeEnabled: Boolean,
     @JvmField val globalLogEnabled: Boolean,
+    @JvmField val homeActivationDetectionEnabled: Boolean,
     @JvmField val launcherIconHidden: Boolean,
     @JvmField val interfaceScalePercent: Int,
     @JvmField val cacheClearInProgress: Boolean,

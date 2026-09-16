@@ -426,6 +426,8 @@
     <string name="settings_theme_settings_hint">自定义应用外观</string>
     <string name="settings_theme_section_appearance">风格</string>
     <string name="settings_theme_section_page">页面</string>
+    <string name="settings_page_predictive_back">预测性返回</string>
+    <string name="settings_page_predictive_back_hint">侧滑返回时预览目标页面</string>
     <string name="settings_page_home_edit_button">主页编辑按钮</string>
     <string name="settings_page_default_startup">页面调整</string>
     <string name="settings_page_default_startup_hint">调整底栏入口与默认启动页</string>
@@ -480,10 +482,10 @@
     <string name="system_mode_requires_system_scope_hint">系统层 Hook 未开启，系统模式将不生效</string>
     <string name="system_safe_mode_label">安全模式</string>
     <string name="system_safe_mode_hint">限制高风险路径防止卡顿</string>
-    <string name="system_safe_mode_disable_confirm_title">确认关闭安全模式</string>
-    <string name="system_safe_mode_disable_confirm_message">关闭后将启用全部 system_server Hook 目标，会增加卡顿、闪屏等风险。是否继续？</string>
     <string name="global_log_enabled_label">日志输出</string>
     <string name="global_log_enabled_hint">关闭后停止输出日志</string>
+    <string name="settings_home_activation_detection_label">启用状态检测</string>
+    <string name="settings_home_activation_detection_hint">仅在首页卡片误报时关闭</string>
     <string name="font_debug_overlay_label">调试悬浮窗</string>
     <string name="font_debug_entry_hint">使用悬浮窗查看字体生效链路</string>
     <string name="font_debug_dialog_title">字体调试面板</string>
@@ -585,7 +587,6 @@
     <string name="config_backup_import_invalid">备份文件无效或版本不支持</string>
     <string name="config_backup_picker_failed">无法打开文件选择器</string>
     <string name="settings_hide_launcher_icon_label">隐藏桌面图标</string>
-    <string name="settings_hide_launcher_icon_hint">可从 LSPosed 模块设置入口进入</string>
     <string name="settings_hide_launcher_icon_confirm_title">隐藏桌面图标</string>
     <string name="settings_hide_launcher_icon_confirm_message">开启后将隐藏桌面图标，可从 LSPosed 的模块设置入口进入，确认继续？</string>
     <string name="settings_hide_launcher_icon_apply_failed">更新桌面图标状态失败，请重试</string>

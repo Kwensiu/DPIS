@@ -6,11 +6,11 @@ import org.junit.Test
 class OpenSourceLicenseActivityParsingTest {
     @Test
     fun licensePageIncludesDpisProjectLicense() {
-        val source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.kt")
+        val source = read("src/main/java/com/dpis/module/about/presentation/OpenSourceLicenseItems.kt")
         val catalog = read("src/main/java/com/dpis/module/about/OpenSourceLicenseCatalog.kt")
         val strings = read("src/main/res/values/strings.xml")
 
-        assertTrue(source.contains("createProjectLicenseItem()"))
+        assertTrue(source.contains("createProjectLicenseItem("))
         assertTrue(source.contains("R.raw.gpl_3_0"))
         assertTrue(source.contains("OpenSourceLicenseCatalog.parseLibraryItems("))
         assertTrue(catalog.contains("fun parseLibraryItems("))
@@ -55,7 +55,7 @@ class OpenSourceLicenseActivityParsingTest {
 
     @Test
     fun notFoundPathShowsMissingThirdPartyLicenseIndicator() {
-        val source = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.kt")
+        val source = read("src/main/java/com/dpis/module/about/presentation/OpenSourceLicenseItems.kt")
             .replace("\r\n", "\n")
         val notFoundCatch = source.indexOf("} catch (_: Resources.NotFoundException) {")
         val throwableCatch = source.indexOf("} catch (_: Throwable) {", notFoundCatch)

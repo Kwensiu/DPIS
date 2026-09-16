@@ -2,11 +2,17 @@ package com.dpis.module.ui.compose
 
 import com.dpis.module.settings.ThemeModeStore
 import com.materialkolor.dynamiccolor.ColorSpec
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class ColorSchemeFactoryTest {
+    @After
+    fun resetCache() {
+        ColorSchemeFactory.clear()
+    }
     @Test
     fun expressiveSupports2025Specification() {
         assertEquals(
@@ -57,5 +63,22 @@ class ColorSchemeFactoryTest {
             ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
             ColorSchemeFactory.seedColor(ThemeModeStore.DEFAULT_STATIC_THEME_COLOR),
         )
+    }
+
+    @Test
+    fun createReusesTheSchemeForTheSameInputs() {
+        val first = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_GREEN),
+            darkTheme = true,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        )
+        val second = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_GREEN),
+            darkTheme = true,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        )
+        assertSame(first, second)
     }
 }

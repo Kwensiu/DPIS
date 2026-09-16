@@ -3,7 +3,6 @@
 package com.dpis.module.ui.presentation
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.activity.compose.BackHandler
@@ -66,20 +65,21 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.R
+import com.dpis.module.BuildConfig
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.tools.SystemFontScaleToolState
 import com.dpis.module.templates.presentation.QuickTemplateSortDialog
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.TemplateEditorForm
@@ -297,6 +297,7 @@ private fun WearTypefacePickerPage(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val secondaryNavigation = LocalSecondaryNavigation.current
     BackHandler(onBack = onBack)
     val systemFonts = SystemFontRegistry.listRecommendedFonts()
     val library = ConfigStoreFactory.createLocalUiFontLibraryStore(context, null)
@@ -315,7 +316,7 @@ private fun WearTypefacePickerPage(
                 onClick = { onTypefaceSelected(font.id) })
         }
         wearButton("manage", context.getString(R.string.dialog_typeface_manage_action), icon = R.drawable.ic_settings_24, onClick = {
-            context.startActivity(Intent(context, FontLibraryActivity::class.java))
+            secondaryNavigation?.open(SecondaryDestination.FontLibrary)
         })
     }
 }
@@ -675,6 +676,7 @@ internal fun WearSettingsWorkspaceContent(
     onHooksChanged: (Boolean) -> Unit,
     onSafeModeChanged: (Boolean) -> Unit,
     onGlobalLogChanged: (Boolean) -> Unit,
+    onHomeActivationDetectionChanged: (Boolean) -> Unit,
     onOpenLogs: () -> Unit,
     onLauncherHiddenChanged: (Boolean) -> Unit,
     onFontLibrary: () -> Unit,
@@ -688,19 +690,25 @@ internal fun WearSettingsWorkspaceContent(
     onAbout: () -> Unit
 ) {
     val context = LocalContext.current
-    var disableSafeModeVisible by rememberSaveable { mutableStateOf(false) }
     var hideLauncherVisible by rememberSaveable { mutableStateOf(false) }
     WearWorkspaceList(title = R.string.workspace_settings) {
         wearSectionHeader(R.string.system_settings_section_general)
         wearSwitch("hooks", R.string.system_hooks_enabled_label, state?.systemHooksEnabled == true, state?.storeAvailable == true, onHooksChanged)
+        if (BuildConfig.DEBUG) {
+            wearSwitch(
+                "safe",
+                R.string.system_safe_mode_label,
+                state?.safeModeEnabled == true,
+                state?.storeAvailable == true,
+                onSafeModeChanged,
+            )
+        }
         wearSwitch(
-            "safe",
-            R.string.system_safe_mode_label,
-            state?.safeModeEnabled == true,
+            "home-activation-detection",
+            R.string.settings_home_activation_detection_label,
+            state?.homeActivationDetectionEnabled == true,
             state?.storeAvailable == true,
-            { enabled ->
-                if (enabled) onSafeModeChanged(true) else disableSafeModeVisible = true
-            },
+            onHomeActivationDetectionChanged,
         )
         wearSwitch("logs", R.string.global_log_enabled_label, state?.globalLogEnabled == true, state?.storeAvailable == true, onGlobalLogChanged)
         if (state?.globalLogEnabled == true) wearButton("logs-page", context.getString(R.string.tools_log_title), context.getString(R.string.tools_log_subtitle), R.drawable.ic_overview_24, enabled = state.storeAvailable, onClick = onOpenLogs)
@@ -708,11 +716,6 @@ internal fun WearSettingsWorkspaceContent(
         wearButton("experimental", context.getString(R.string.settings_experimental_title), icon = R.drawable.ic_experiment_24, enabled = state?.storeAvailable == true, onClick = onExperimental)
         wearSectionHeader(R.string.settings_section_theme)
         wearButton("theme-settings", context.getString(R.string.settings_theme_settings_title), context.getString(R.string.settings_theme_settings_hint), R.drawable.ic_format_paint_24, onClick = onThemeSettings)
-        wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
-        wearSectionHeader(R.string.settings_section_other)
-        wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onBackup)
-        wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24,
-            state?.storeAvailable == true && !state.cacheClearInProgress, onClearCache)
         wearSwitch(
             "launcher",
             R.string.settings_hide_launcher_icon_label,
@@ -722,18 +725,17 @@ internal fun WearSettingsWorkspaceContent(
                 if (hidden) hideLauncherVisible = true else onLauncherHiddenChanged(false)
             },
         )
+        wearButton("language", context.getString(R.string.settings_language_label), state?.languageLabel, R.drawable.ic_language_24, state?.storeAvailable == true, onLanguage)
+        wearSectionHeader(R.string.settings_section_other)
+        wearButton("backup", context.getString(R.string.settings_config_backup_label), icon = R.drawable.ic_upload_file_24, enabled = state?.storeAvailable == true, onClick = onBackup)
+        wearButton("cache", context.getString(R.string.settings_clear_cache_label), state?.cacheUsage, R.drawable.ic_mop_24,
+            state?.storeAvailable == true && !state.cacheClearInProgress, onClearCache)
         wearSectionHeader(R.string.settings_section_about)
         wearButton("about", context.getString(R.string.settings_about_label), icon = R.drawable.ic_info_24, onClick = onAbout)
     }
     SettingsWorkspaceConfirmDialogs(
-        disableSafeModeVisible = disableSafeModeVisible,
         hideLauncherVisible = hideLauncherVisible,
         pendingImport = state?.pendingImportUri != null,
-        onDismissSafeMode = { disableSafeModeVisible = false },
-        onConfirmDisableSafeMode = {
-            disableSafeModeVisible = false
-            onSafeModeChanged(false)
-        },
         onDismissHideLauncher = { hideLauncherVisible = false },
         onConfirmHideLauncher = {
             hideLauncherVisible = false

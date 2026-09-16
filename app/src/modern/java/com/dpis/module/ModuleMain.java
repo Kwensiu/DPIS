@@ -1,6 +1,6 @@
 package com.dpis.module;
 
-import com.dpis.module.settings.SystemScopeCoordinator;
+import com.dpis.module.hooks.SystemScopeCoordinator;
 
 import com.dpis.module.config.ConfigSnapshot;
 import com.dpis.module.config.ConfigSnapshotLoader;

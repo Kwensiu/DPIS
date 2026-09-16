@@ -38,7 +38,7 @@ class ModeHelpLayoutSmokeTest {
         assertTrue(compose.contains("R.string.help_tutorial_typeface_summary") || cards.contains("R.string.help_tutorial_typeface_summary"))
         assertTrue(manifest.contains("android:name=\".home.ModeHelpActivity\""))
         assertTrue(manifest.contains("android:name=\".home.ModeGuideActivity\""))
-        assertTrue(homeSession.contains("Intent(activity, ModeHelpActivity::class.java)"))
+        assertTrue(homeSession.contains("SecondaryDestination.ModeHelp"))
         assertFalse(mainActivity.contains("MainStandaloneRoute"))
     }
 

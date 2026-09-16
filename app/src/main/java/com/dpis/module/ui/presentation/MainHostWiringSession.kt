@@ -1,6 +1,5 @@
 package com.dpis.module.ui.presentation
 
-import android.content.Intent
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.editor.AppConfigEditorPersister
@@ -13,11 +12,11 @@ import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.AppWorkspacePresentation
-import com.dpis.module.diagnostics.LogActivity
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession
-import com.dpis.module.settings.presentation.ToolsWorkspace
+import com.dpis.module.tools.presentation.ToolsWorkspace
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainViewModel
+import com.dpis.module.ui.SecondaryDestination
 
 /**
  * Owns onCreate host construction for the Compose editor, catalogue, tools,
@@ -25,6 +24,7 @@ import com.dpis.module.ui.MainViewModel
  */
 class MainHostWiringSession(
     private val activity: MainActivity,
+    private val secondaryNavigation: SecondaryNavigation,
 ) {
     var composeAppEditorController: ComposeAppEditorController? = null
         private set
@@ -70,9 +70,8 @@ class MainHostWiringSession(
         settingsWorkspaceSession = SettingsWorkspaceSession.create(
             activity,
             { activity.mainWorkspaceSession.refreshSettings() },
-            {
-                activity.startActivity(Intent(activity, LogActivity::class.java))
-            },
+            secondaryNavigation,
+            { activity.mainWorkspaceSession.applyConfigurationInPlace() },
         )
         toolsWorkspace = ToolsWorkspace(
             activity,
