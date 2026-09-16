@@ -11,6 +11,40 @@ It is a project workflow, not a replacement for `AGENTS.md`, `CONTEXT.md`, or
 the runtime/localization playbooks. Read those documents first when their
 scope applies.
 
+## Commit-path decision
+
+Run this decision once for each logical change, after the local review and
+required validation are complete and before pushing the commit. Do not ask the
+user again for every intermediate commit in the same change.
+
+Ask the user to choose one of these paths:
+
+- **Pull request**: push the current branch and create or update a PR. Let the
+  PR workflows provide the authoritative PR checks and Sonar PR analysis.
+- **Sonar-only validation**: push the current branch without opening a PR,
+  manually run the Sonar workflow for that branch, and inspect the uploaded
+  branch analysis through SonarQube MCP. Use this path for small changes when
+  the user wants Sonar feedback but does not need PR review or merge blocking.
+
+Cloud Sonar cannot analyze uncommitted local files. The Sonar-only path
+therefore still requires a commit and push before analysis. It does not grant
+permission to merge or push `main`; those actions still require an explicit
+user request. If the user chooses neither path, finish the local review and
+report that cloud Sonar was not run.
+
+For the Sonar-only path, after the commit is pushed:
+
+```powershell
+gh workflow run sonarqube.yml --ref <current-branch>
+```
+
+Wait for the workflow to finish, then query SonarQube MCP using the branch
+name. Use `list_branches` and pass `branch`, not `pullRequest`, to the measures,
+issue, coverage, and quality-gate queries described below. Report the New Code
+issues, new-code coverage, and any actionable Bugs, Vulnerabilities, or Code
+Smells. A Sonar-only result is feedback for code improvement, not a merge
+blocker, unless the user explicitly asks for a gate.
+
 ## Review order
 
 1. Establish the change boundary.
@@ -158,5 +192,6 @@ End with a concise record of:
 - files and behavior changed;
 - tests/builds/Android CLI/device checks run and their result;
 - SonarQube MCP quality-gate / new-code measures, plus any exclusion changes;
+- the selected commit path (PR, Sonar-only validation, or local-only review);
 - commit hash and push/PR/check status, if those actions were requested;
 - anything not run and why.
