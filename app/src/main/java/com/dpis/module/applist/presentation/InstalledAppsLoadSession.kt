@@ -1,8 +1,13 @@
 package com.dpis.module.applist.presentation
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
+import androidx.core.content.ContextCompat
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListItem
@@ -18,8 +23,8 @@ import com.dpis.module.ui.MainViewModel
 class InstalledAppsLoadSession(
     private val activity: MainActivity,
     private val dispatchInstalledAppsLoad: (Boolean) -> Unit,
+    private val dispatchInstalledAppsLoadSnapshot: (Int, List<AppListItem>?) -> Unit,
     private val dispatchInstalledAppsLoadFinished: (Int, List<AppListItem>?) -> Unit,
-    catalogTtlMs: Long = INSTALLED_APP_CATALOG_TTL_MS,
 ) {
     private val catalogCoordinator = InstalledAppCatalogCoordinator(
         object : InstalledAppCatalogCoordinator.Host {
@@ -29,12 +34,40 @@ class InstalledAppsLoadSession(
             override fun getSelfPackageName(): String =
                 activity.packageName
         },
-        catalogTtlMs,
     )
 
     private var permissionRequestInFlight = false
     private var pendingLoadAfterPermission = false
     private var permissionRequestCompleted = false
+    private var packageChangesRegistered = false
+
+    private val packageCatalogReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (!InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(intent?.action)) {
+                return
+            }
+            catalogCoordinator.invalidate()
+            requestLoad(true)
+        }
+    }
+
+    fun attachPackageCatalogMonitor() {
+        if (packageChangesRegistered) return
+        val applicationContext = activity.applicationContext
+        ContextCompat.registerReceiver(
+            applicationContext,
+            packageCatalogReceiver,
+            packageCatalogFilter(),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
+        ContextCompat.registerReceiver(
+            applicationContext,
+            packageCatalogReceiver,
+            externalCatalogFilter(),
+            ContextCompat.RECEIVER_EXPORTED,
+        )
+        packageChangesRegistered = true
+    }
 
     fun requestLoad(forceInstalledAppCatalogReload: Boolean) {
         val permissionReady = ensurePermissionBeforeLoad()
@@ -67,13 +100,23 @@ class InstalledAppsLoadSession(
         val requestId = request.requestId
         val forceInstalledAppCatalogReload = request.forceInstalledAppCatalogReload
         Thread({
-            var loaded: List<AppListItem>? = null
+            var snapshot: List<AppListItem>? = null
+            var settled: List<AppListItem>? = null
             try {
-                loaded = loadInstalledApps(forceInstalledAppCatalogReload)
+                snapshot = loadInstalledApps(forceInstalledAppCatalogReload)
+                if (catalogCoordinator.labelsResolved()) {
+                    settled = snapshot
+                    snapshot = null
+                } else {
+                    activity.runOnUiThread {
+                        dispatchInstalledAppsLoadSnapshot(requestId, snapshot)
+                    }
+                    settled = resolveInstalledAppLabels()
+                }
             } catch (throwable: Throwable) {
                 DpisLog.e("list load failed", throwable)
             }
-            val finalLoaded = loaded
+            val finalLoaded = settled
             DpisLog.i(
                 "app list load finished: requestId=" + requestId
                     + ", loaded=" + (finalLoaded?.size ?: "null")
@@ -101,6 +144,14 @@ class InstalledAppsLoadSession(
     }
 
     fun shutdown() {
+        if (packageChangesRegistered) {
+            try {
+                activity.applicationContext.unregisterReceiver(packageCatalogReceiver)
+            } catch (_: IllegalArgumentException) {
+                // Already unregistered with the application context.
+            }
+            packageChangesRegistered = false
+        }
         catalogCoordinator.shutdown()
     }
 
@@ -108,6 +159,15 @@ class InstalledAppsLoadSession(
         val scopeState = loadScopeState()
         return catalogCoordinator.loadInstalledApps(
             forceInstalledAppCatalogReload,
+            activity.hookConfigStore,
+            scopeState.packages,
+            scopeState.known,
+        )
+    }
+
+    private fun resolveInstalledAppLabels(): List<AppListItem> {
+        val scopeState = loadScopeState()
+        return catalogCoordinator.resolveInstalledAppLabels(
             activity.hookConfigStore,
             scopeState.packages,
             scopeState.known,
@@ -170,9 +230,21 @@ class InstalledAppsLoadSession(
     }
 
     companion object {
-        const val INSTALLED_APP_CATALOG_TTL_MS = 60_000L
         const val XIAOMI_GET_INSTALLED_APPS_PERMISSION =
             "com.android.permission.GET_INSTALLED_APPS"
         const val REQUEST_XIAOMI_GET_INSTALLED_APPS = 10022
+
+        private fun packageCatalogFilter(): IntentFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addDataScheme("package")
+        }
+
+        private fun externalCatalogFilter(): IntentFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE)
+            addAction(Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE)
+        }
     }
 }

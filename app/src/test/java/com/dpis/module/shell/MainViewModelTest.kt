@@ -295,6 +295,47 @@ class MainViewModelTest {
         assertFalse(viewModel.state.isRefreshing(AppListPage.ALL_APPS))
     }
 
+    @Test
+    fun snapshotPublishesRowsBeforeSettledLabels() {
+        val viewModel = MainViewModel(emptyState())
+        val request = viewModel.dispatch(MainUiAction.requestAppsLoad(false)).single()
+        assertTrue(viewModel.state.isRefreshing(AppListPage.ALL_APPS))
+
+        viewModel.dispatch(
+            MainUiAction.appsLoadSnapshot(
+                request.requestId,
+                listOf(app("com.example.camera", "com.example.camera", true, false)),
+            ),
+        )
+        assertEquals("com.example.camera", viewModel.state.appsSnapshot()[0].label)
+        assertFalse(viewModel.state.isRefreshing(AppListPage.ALL_APPS))
+
+        assertTrue(
+            viewModel.dispatch(
+                MainUiAction.appsLoadFinished(
+                    request.requestId,
+                    listOf(app("Camera", "com.example.camera", true, false)),
+                ),
+            ).isEmpty(),
+        )
+        assertEquals("Camera", viewModel.state.appsSnapshot()[0].label)
+    }
+
+    @Test
+    fun snapshotIsIgnoredWhenNewerRequestIsQueued() {
+        val viewModel = MainViewModel(emptyState())
+        val firstRequest = viewModel.dispatch(MainUiAction.requestAppsLoad(false)).single()
+        assertTrue(viewModel.dispatch(MainUiAction.requestAppsLoad(true)).isEmpty())
+
+        viewModel.dispatch(
+            MainUiAction.appsLoadSnapshot(
+                firstRequest.requestId,
+                listOf(app("Stale", "com.example.stale", true, false)),
+            ),
+        )
+        assertTrue(viewModel.state.appsSnapshot().isEmpty())
+    }
+
     private fun editorDraft(packageName: String, viewportInput: String) = EditorDraft(
         packageName, viewportInput, viewportInput, "", "relative_scale", "",
         FontApplyMode.SYSTEM_EMULATION, null, null, ViewportApplyMode.OFF, false, false, "", true, true,

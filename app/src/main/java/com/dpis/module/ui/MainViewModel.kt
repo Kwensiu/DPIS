@@ -149,7 +149,14 @@ class MainViewModel(initialState: MainUiState?) {
             emptyList()
         }
         is MainUiAction.RequestAppsLoad -> requestAppsLoad(action.forceInstalledAppCatalogReload)
-        is MainUiAction.AppsLoadFinished -> onAppsLoadFinished(action.requestId, action.loadedApps)
+        is MainUiAction.AppsLoadFinished -> {
+            if (!action.settled) {
+                applyInFlightSnapshot(action.requestId, action.loadedApps)
+                emptyList()
+            } else {
+                onAppsLoadFinished(action.requestId, action.loadedApps)
+            }
+        }
         else -> emptyList()
     }
 
@@ -165,6 +172,16 @@ class MainViewModel(initialState: MainUiState?) {
                 .withRefreshingPage(AppListPage.CONFIGURED_APPS, true)
         }
         return listOf(createAppsLoadRequest(requestId))
+    }
+
+    private fun applyInFlightSnapshot(
+        requestId: Int,
+        loadedApps: List<AppListItem>?,
+    ) {
+        if (!loadCoordinator.shouldApplyInFlightResult(requestId) || loadedApps == null) {
+            return
+        }
+        state = state.withApps(loadedApps).clearRefreshingPages()
     }
 
     private fun onAppsLoadFinished(

@@ -1,6 +1,8 @@
 package com.dpis.module.applist;
 
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 
 import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.FakePrefs;
@@ -12,7 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class InstalledAppCatalogCoordinatorTest {
@@ -129,23 +133,78 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void launcherFallbackIsUsedWhenPackageManagerReturnsOnlySelf() {
-        ApplicationInfo self = new ApplicationInfo();
-        self.packageName = "io.github.kwensiu.dpis";
-
         assertTrue(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
-                Collections.singletonList(self), self.packageName));
+                Collections.singletonList("io.github.kwensiu.dpis"),
+                "io.github.kwensiu.dpis"));
         assertTrue(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
-                Collections.emptyList(), self.packageName));
+                Collections.emptyList(), "io.github.kwensiu.dpis"));
     }
 
     @Test
     public void launcherFallbackIsNotUsedWhenPackageManagerReturnsAnotherApp() {
-        ApplicationInfo self = new ApplicationInfo();
-        self.packageName = "io.github.kwensiu.dpis";
-        ApplicationInfo other = new ApplicationInfo();
-        other.packageName = "com.example.launcher";
-
         assertFalse(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
-                Arrays.asList(self, other), self.packageName));
+                Arrays.asList("io.github.kwensiu.dpis", "com.example.launcher"),
+                "io.github.kwensiu.dpis"));
+    }
+
+    @Test
+    public void unresolvedCatalogLabelPrefersNonLocalizedLabel() {
+        ApplicationInfo info = new ApplicationInfo();
+        info.nonLocalizedLabel = "Camera";
+        assertEquals(
+                "Camera",
+                InstalledAppCatalogCoordinator.unresolvedCatalogLabel(info, "com.android.camera"));
+    }
+
+    @Test
+    public void unresolvedCatalogLabelFallsBackToPackageName() {
+        assertEquals(
+                "com.example.app",
+                InstalledAppCatalogCoordinator.unresolvedCatalogLabel(null, "com.example.app"));
+        ApplicationInfo info = new ApplicationInfo();
+        assertEquals(
+                "com.example.app",
+                InstalledAppCatalogCoordinator.unresolvedCatalogLabel(info, "com.example.app"));
+    }
+
+    @Test
+    public void catalogItemCopiesPackageInfoTimestamps() {
+        PackageInfo packageInfo = new PackageInfo();
+        packageInfo.packageName = "com.example.app";
+        packageInfo.firstInstallTime = 11L;
+        packageInfo.lastUpdateTime = 22L;
+        ApplicationInfo applicationInfo = new ApplicationInfo();
+        applicationInfo.packageName = "com.example.app";
+        packageInfo.applicationInfo = applicationInfo;
+
+        InstalledAppCatalogItem item = InstalledAppCatalogCoordinator.createCatalogItem(
+                packageInfo, "io.github.kwensiu.dpis", "com.example.app", false);
+
+        assertEquals("com.example.app", item.packageName);
+        assertEquals(11L, item.firstInstallTime);
+        assertEquals(22L, item.lastUpdateTime);
+        assertFalse(item.labelResolved);
+    }
+
+    @Test
+    public void catalogItemSkipsSelfPackage() {
+        PackageInfo packageInfo = new PackageInfo();
+        packageInfo.packageName = "io.github.kwensiu.dpis";
+        assertNull(InstalledAppCatalogCoordinator.createCatalogItem(
+                packageInfo, "io.github.kwensiu.dpis", "DPIS", false));
+    }
+
+    @Test
+    public void installedCatalogChangeActionsMatchPackageLifecycle() {
+        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+                Intent.ACTION_PACKAGE_ADDED));
+        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+                Intent.ACTION_PACKAGE_REMOVED));
+        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+                Intent.ACTION_PACKAGE_CHANGED));
+        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+                Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE));
+        assertFalse(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+                Intent.ACTION_BOOT_COMPLETED));
     }
 }

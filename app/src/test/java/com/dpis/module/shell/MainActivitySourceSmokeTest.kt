@@ -368,8 +368,10 @@ class MainActivitySourceSmokeTest {
             loadSession.contains("catalogCoordinator.loadInstalledApps(")
         )
         assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate,"))
-        assertTrue(coordinatorSource.contains("ApplicationInfoFlags.of(0L)"))
-        assertTrue(coordinatorSource.contains("getInstalledApplications(0)"))
+        assertTrue(coordinatorSource.contains("PackageInfoFlags.of(0L)"))
+        assertTrue(coordinatorSource.contains("getInstalledPackages(0)"))
+        assertFalse(coordinatorSource.contains("getInstalledApplications("))
+        assertFalse(coordinatorSource.contains("getPackageInfo(applicationInfo.packageName"))
         assertFalse(coordinatorSource.contains("GET_META_DATA"))
         assertTrue(
             read("src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyFacade.kt")
@@ -701,13 +703,19 @@ class MainActivitySourceSmokeTest {
         val loadSession = read(
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
         )
-        assertTrue(loadSession.contains("INSTALLED_APP_CATALOG_TTL_MS"))
+        assertTrue(loadSession.contains("attachPackageCatalogMonitor()"))
+        assertTrue(
+            read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
+                .contains("installedAppsLoadSession.attachPackageCatalogMonitor()"),
+        )
         assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
         assertTrue(coordinatorSource.contains("getInstalledAppCatalog("))
+        assertTrue(coordinatorSource.contains("fun invalidate()"))
         assertTrue(
             viewModelSource.contains("forceInstalledAppCatalogReloadRequested")
         )
         assertTrue(coordinatorSource.contains("isCatalogCacheFresh"))
+        assertFalse(loadSession.contains("INSTALLED_APP_CATALOG_TTL_MS"))
     }
 
     @Test
@@ -861,7 +869,8 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
         )
         assertTrue(loadSession.contains("loadInstalledApps(forceInstalledAppCatalogReload)"))
-        assertTrue(coordinatorSource.contains("val catalog = loadInstalledAppCatalog("))
+        assertTrue(loadSession.contains("dispatchInstalledAppsLoadSnapshot(requestId, snapshot)"))
+        assertTrue(coordinatorSource.contains("getInstalledAppCatalog("))
         assertTrue(coordinatorSource.contains("applicationInfo.loadIcon(packageManager)"))
         assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo)"))
         assertFalse(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("))

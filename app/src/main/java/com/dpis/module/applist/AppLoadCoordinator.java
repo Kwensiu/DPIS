@@ -31,6 +31,14 @@ public final class AppLoadCoordinator {
         return new LoadCompletion(shouldApply, NO_REQUEST);
     }
 
+    /**
+     * Cheap catalog snapshots may publish before labels resolve. Apply them only while this
+     * request is still the in-flight load and no newer request has been queued.
+     */
+    public synchronized boolean shouldApplyInFlightResult(int requestId) {
+        return loading && requestId == activeVersion && requestId == requestedVersion;
+    }
+
     public static final class LoadCompletion {
         public final boolean shouldApplyResult;
         public final int nextRequestId;

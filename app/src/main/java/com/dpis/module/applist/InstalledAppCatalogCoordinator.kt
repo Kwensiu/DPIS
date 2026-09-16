@@ -2,11 +2,11 @@ package com.dpis.module.applist
 
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
 import android.os.Build
-import android.os.SystemClock
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontApplyMode
@@ -18,7 +18,6 @@ import java.util.Locale
 
 class InstalledAppCatalogCoordinator(
     private val host: Host,
-    private val installedAppCatalogTtlMs: Long,
 ) {
     interface Host {
         fun getPackageManager(): PackageManager
@@ -30,7 +29,7 @@ class InstalledAppCatalogCoordinator(
     private val installedAppCatalogBuildLock = Any()
 
     private var installedAppCatalog: List<InstalledAppCatalogItem> = emptyList()
-    private var installedAppCatalogLoadedAtMs = 0L
+    private var catalogInvalidated = true
 
     /** Kept for legacy View binders that still notify visible icon rows. */
     fun onIconLoadRequested(packageName: String) = Unit
@@ -38,12 +37,27 @@ class InstalledAppCatalogCoordinator(
     /** No executor remains after moving icon resolution into the catalog build. */
     fun shutdown() = Unit
 
-    fun loadInstalledAppCatalog(forceInstalledAppCatalogReload: Boolean): List<InstalledAppCatalogItem> =
+    fun invalidate() {
+        synchronized(installedAppCatalogLock) {
+            catalogInvalidated = true
+        }
+    }
+
+    fun labelsResolved(): Boolean = synchronized(installedAppCatalogLock) {
+        installedAppCatalog.isNotEmpty() && installedAppCatalog.all { it.labelResolved }
+    }
+
+    /**
+     * Complete catalog with resolved labels. Target pickers keep showing one finished list.
+     */
+    fun loadInstalledAppCatalog(forceInstalledAppCatalogReload: Boolean): List<InstalledAppCatalogItem> {
         getInstalledAppCatalog(
             host.getPackageManager(),
             host.getSelfPackageName(),
             forceInstalledAppCatalogReload,
         )
+        return resolveCatalogLabels(host.getPackageManager())
+    }
 
     /**
      * Legacy target pickers display the full list at once. Keep their rows complete while
@@ -64,7 +78,122 @@ class InstalledAppCatalogCoordinator(
         scopePackages: Set<String>?,
         scopeKnown: Boolean,
     ): List<AppListItem> {
-        val catalog = loadInstalledAppCatalog(forceInstalledAppCatalogReload)
+        val catalog = getInstalledAppCatalog(
+            host.getPackageManager(),
+            host.getSelfPackageName(),
+            forceInstalledAppCatalogReload,
+        )
+        return toAppListItems(catalog, store, scopePackages, scopeKnown, forceInstalledAppCatalogReload)
+    }
+
+    fun resolveInstalledAppLabels(
+        store: DpisConfigStore?,
+        scopePackages: Set<String>?,
+        scopeKnown: Boolean,
+    ): List<AppListItem> {
+        resolveCatalogLabels(host.getPackageManager())
+        return loadInstalledApps(false, store, scopePackages, scopeKnown)
+    }
+
+    private fun getInstalledAppCatalog(
+        packageManager: PackageManager,
+        selfPackageName: String,
+        forceReload: Boolean,
+    ): List<InstalledAppCatalogItem> {
+        synchronized(installedAppCatalogLock) {
+            if (!forceReload && isCatalogCacheFresh()) {
+                DpisLog.i("installed app catalog cache hit: size=${installedAppCatalog.size}")
+                return installedAppCatalog
+            }
+        }
+        synchronized(installedAppCatalogBuildLock) {
+            synchronized(installedAppCatalogLock) {
+                if (!forceReload && isCatalogCacheFresh()) {
+                    return installedAppCatalog
+                }
+            }
+
+            var installedPackages = queryInstalledPackages(packageManager)
+            DpisLog.i(
+                "installed packages query returned: size=${installedPackages.size}, " +
+                    "sdk=${Build.VERSION.SDK_INT}, forceReload=$forceReload",
+            )
+
+            if (shouldUseLauncherVisibilityFallback(
+                    installedPackages.map { it.packageName },
+                    selfPackageName,
+                )
+            ) {
+                installedPackages = mergeLauncherPackages(packageManager, installedPackages)
+                DpisLog.i("launcher visibility fallback returned: size=${installedPackages.size}")
+            }
+
+            val snapshot = installedPackages.mapNotNull { packageInfo ->
+                createCatalogItem(
+                    packageInfo,
+                    selfPackageName,
+                    unresolvedCatalogLabel(
+                        packageInfo.applicationInfo,
+                        packageInfo.packageName,
+                    ),
+                    labelResolved = false,
+                )
+            }.sortedWith(
+                compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
+                    .thenBy { it.packageName },
+            )
+            DpisLog.i(
+                "installed app catalog rebuilt: raw=${installedPackages.size}, catalog=${snapshot.size}",
+            )
+            synchronized(installedAppCatalogLock) {
+                installedAppCatalog = snapshot
+                catalogInvalidated = false
+                return installedAppCatalog
+            }
+        }
+    }
+
+    private fun resolveCatalogLabels(packageManager: PackageManager): List<InstalledAppCatalogItem> {
+        synchronized(installedAppCatalogBuildLock) {
+            val current = synchronized(installedAppCatalogLock) { installedAppCatalog }
+            if (current.isEmpty() || current.all { it.labelResolved }) {
+                return current
+            }
+            val resolved = current.map { item ->
+                if (item.labelResolved) {
+                    item
+                } else {
+                    val label = try {
+                        packageManager.getApplicationLabel(item.applicationInfo).toString()
+                    } catch (_: RuntimeException) {
+                        item.label
+                    }
+                    item.withResolvedLabel(label)
+                }
+            }.sortedWith(
+                compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
+                    .thenBy { it.packageName },
+            )
+            synchronized(installedAppCatalogLock) {
+                if (catalogInvalidated) {
+                    return current
+                }
+                installedAppCatalog = resolved
+                return installedAppCatalog
+            }
+        }
+    }
+
+    private fun isCatalogCacheFresh(): Boolean =
+        !catalogInvalidated && installedAppCatalog.isNotEmpty()
+
+    private fun toAppListItems(
+        catalog: List<InstalledAppCatalogItem>,
+        store: DpisConfigStore?,
+        scopePackages: Set<String>?,
+        scopeKnown: Boolean,
+        forceInstalledAppCatalogReload: Boolean,
+    ): List<AppListItem> {
         val configuredPackages = userVisibleConfiguredPackages(
             store,
             scopePackages,
@@ -124,84 +253,37 @@ class InstalledAppCatalogCoordinator(
         return result
     }
 
-    private fun getInstalledAppCatalog(
-        packageManager: PackageManager,
-        selfPackageName: String,
-        forceReload: Boolean,
-    ): List<InstalledAppCatalogItem> {
-        var now = SystemClock.elapsedRealtime()
-        synchronized(installedAppCatalogLock) {
-            if (!forceReload && isCatalogCacheFresh(now)) {
-                DpisLog.i("installed app catalog cache hit: size=${installedAppCatalog.size}")
-                return installedAppCatalog
-            }
-        }
-        synchronized(installedAppCatalogBuildLock) {
-            now = SystemClock.elapsedRealtime()
-            synchronized(installedAppCatalogLock) {
-                if (!forceReload && isCatalogCacheFresh(now)) {
-                    return installedAppCatalog
-                }
-            }
-
-            var installedApps = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                packageManager.getInstalledApplications(
-                    PackageManager.ApplicationInfoFlags.of(0L),
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                packageManager.getInstalledApplications(0)
-            }
-            DpisLog.i(
-                "installed applications query returned: size=${installedApps.size}, " +
-                    "sdk=${Build.VERSION.SDK_INT}, forceReload=$forceReload",
-            )
-
-            if (shouldUseLauncherVisibilityFallback(installedApps, selfPackageName)) {
-                installedApps = mergeLauncherApplications(packageManager, installedApps)
-                DpisLog.i("launcher visibility fallback returned: size=${installedApps.size}")
-            }
-
-            val snapshot = installedApps
-                .asSequence()
-                .filter { it.packageName != selfPackageName }
-                .map { applicationInfo ->
-                    InstalledAppCatalogItem(
-                        packageManager.getApplicationLabel(applicationInfo).toString(),
-                        applicationInfo.packageName,
-                        isSystemApp(applicationInfo),
-                        false,
-                        applicationInfo,
-                        null,
-                        runCatching {
-                            packageManager.getPackageInfo(applicationInfo.packageName, 0).firstInstallTime
-                        }.getOrDefault(0L),
-                        runCatching {
-                            packageManager.getPackageInfo(applicationInfo.packageName, 0).lastUpdateTime
-                        }.getOrDefault(0L),
-                    )
-                }
-                .sortedWith(
-                    compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
-                        .thenBy { it.packageName },
-                )
-                .toList()
-            DpisLog.i(
-                "installed app catalog rebuilt: raw=${installedApps.size}, catalog=${snapshot.size}",
-            )
-            synchronized(installedAppCatalogLock) {
-                installedAppCatalog = snapshot
-                installedAppCatalogLoadedAtMs = now
-                return installedAppCatalog
-            }
-        }
-    }
-
-    private fun isCatalogCacheFresh(now: Long): Boolean =
-        installedAppCatalog.isNotEmpty() &&
-            now - installedAppCatalogLoadedAtMs <= installedAppCatalogTtlMs
-
     companion object {
+        @JvmStatic
+        fun unresolvedCatalogLabel(applicationInfo: ApplicationInfo?, packageName: String): String {
+            val nonLocalized = applicationInfo?.nonLocalizedLabel?.toString()?.trim()
+            return if (!nonLocalized.isNullOrEmpty()) nonLocalized else packageName
+        }
+
+        @JvmStatic
+        fun createCatalogItem(
+            packageInfo: PackageInfo,
+            selfPackageName: String,
+            label: String,
+            labelResolved: Boolean,
+        ): InstalledAppCatalogItem? {
+            val packageName = packageInfo.packageName
+            if (packageName.isBlank() || packageName == selfPackageName) return null
+            val applicationInfo = packageInfo.applicationInfo
+                ?: ApplicationInfo().also { it.packageName = packageName }
+            return InstalledAppCatalogItem(
+                label,
+                packageName,
+                isSystemApp(applicationInfo),
+                false,
+                applicationInfo,
+                null,
+                packageInfo.firstInstallTime,
+                packageInfo.lastUpdateTime,
+                labelResolved,
+            )
+        }
+
         private fun configuredPackagesMissingFromCatalog(
             configuredPackages: Set<String>,
             catalog: List<InstalledAppCatalogItem>,
@@ -363,18 +445,40 @@ class InstalledAppCatalogCoordinator(
 
         @JvmStatic
         fun shouldUseLauncherVisibilityFallback(
-            applications: List<ApplicationInfo>?,
+            packageNames: Collection<String>?,
             selfPackageName: String,
-        ): Boolean = applications.isNullOrEmpty() || applications.none {
-            it.packageName != selfPackageName
+        ): Boolean = packageNames.isNullOrEmpty() || packageNames.none {
+            it != selfPackageName
         }
 
-        private fun mergeLauncherApplications(
+        @JvmStatic
+        fun isInstalledCatalogChangeAction(action: String?): Boolean = when (action) {
+            Intent.ACTION_PACKAGE_ADDED,
+            Intent.ACTION_PACKAGE_REMOVED,
+            Intent.ACTION_PACKAGE_CHANGED,
+            Intent.ACTION_PACKAGE_REPLACED,
+            Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE,
+            Intent.ACTION_EXTERNAL_APPLICATIONS_UNAVAILABLE,
+            -> true
+            else -> false
+        }
+
+        private fun queryInstalledPackages(packageManager: PackageManager): List<PackageInfo> =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getInstalledPackages(PackageManager.PackageInfoFlags.of(0L))
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getInstalledPackages(0)
+            }
+
+        private fun mergeLauncherPackages(
             packageManager: PackageManager,
-            installedApplications: List<ApplicationInfo>,
-        ): List<ApplicationInfo> {
-            val merged = LinkedHashMap<String, ApplicationInfo>()
-            installedApplications.forEach { merged[it.packageName] = it }
+            installedPackages: List<PackageInfo>,
+        ): List<PackageInfo> {
+            val merged = LinkedHashMap<String, PackageInfo>()
+            installedPackages.forEach { packageInfo ->
+                merged[packageInfo.packageName] = packageInfo
+            }
             val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
             val launcherActivities: List<ResolveInfo> =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -387,11 +491,36 @@ class InstalledAppCatalogCoordinator(
                     packageManager.queryIntentActivities(launcherIntent, 0)
                 }
             launcherActivities.forEach { resolveInfo ->
-                resolveInfo.activityInfo?.applicationInfo?.let { application ->
-                    merged[application.packageName] = application
-                }
+                val application = resolveInfo.activityInfo?.applicationInfo ?: return@forEach
+                if (merged.containsKey(application.packageName)) return@forEach
+                merged[application.packageName] = packageInfoForLauncherFallback(
+                    packageManager,
+                    application,
+                )
             }
             return merged.values.toList()
+        }
+
+        private fun packageInfoForLauncherFallback(
+            packageManager: PackageManager,
+            application: ApplicationInfo,
+        ): PackageInfo {
+            val queried = runCatching {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    packageManager.getPackageInfo(
+                        application.packageName,
+                        PackageManager.PackageInfoFlags.of(0L),
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageManager.getPackageInfo(application.packageName, 0)
+                }
+            }.getOrNull()
+            if (queried != null) return queried
+            return PackageInfo().also {
+                it.packageName = application.packageName
+                it.applicationInfo = application
+            }
         }
 
         private fun loadApplicationIcon(

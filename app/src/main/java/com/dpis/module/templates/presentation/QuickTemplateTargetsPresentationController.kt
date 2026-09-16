@@ -74,7 +74,6 @@ class QuickTemplateTargetsPresentationController(private val context: Context) {
             override fun getPackageManager() = context.packageManager
             override fun getSelfPackageName() = context.packageName
         },
-        60_000L,
     )
     private val listeners = LinkedHashSet<Listener>()
     private val allApps = ArrayList<RawTargetApp>()

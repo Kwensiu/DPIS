@@ -25,7 +25,11 @@ public abstract class MainUiAction {
     }
 
     public static MainUiAction appsLoadFinished(int requestId, List<AppListItem> loadedApps) {
-        return new AppsLoadFinished(requestId, loadedApps);
+        return new AppsLoadFinished(requestId, loadedApps, true);
+    }
+
+    public static MainUiAction appsLoadSnapshot(int requestId, List<AppListItem> loadedApps) {
+        return new AppsLoadFinished(requestId, loadedApps, false);
     }
 
     public static MainUiAction markPageRefreshing(AppListPage page) {
@@ -63,10 +67,12 @@ public abstract class MainUiAction {
     public static final class AppsLoadFinished extends MainUiAction {
         final int requestId;
         final List<AppListItem> loadedApps;
+        final boolean settled;
 
-        AppsLoadFinished(int requestId, List<AppListItem> loadedApps) {
+        AppsLoadFinished(int requestId, List<AppListItem> loadedApps, boolean settled) {
             this.requestId = requestId;
             this.loadedApps = loadedApps;
+            this.settled = settled;
         }
     }
 
