@@ -353,7 +353,7 @@ class MainActivitySourceSmokeTest {
     fun loadInstalledApps_publishesRowsBeforeIcons() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val coordinatorSource = read(
-            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppCatalogCoordinator.kt"
         )
         val iconSource = read("src/main/java/com/dpis/module/applist/presentation/InstalledAppIcon.kt")
         val workspaceSource = read("src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
@@ -856,7 +856,7 @@ class MainActivitySourceSmokeTest {
     fun installedCatalog_defersIconsUntilRowsAreVisible() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val coordinatorSource = read(
-            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppCatalogCoordinator.kt"
         )
 
         val loadSession = read(

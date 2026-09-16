@@ -2,6 +2,7 @@ package com.dpis.module.applist
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
@@ -21,6 +22,7 @@ class InstalledAppCatalogLabelStoreTest {
         assertNull(snapshot.resolvedLabel("zh-CN", "com.example.camera", 23L))
         assertNull(snapshot.resolvedLabel("en-US", "com.example.camera", 22L))
         assertNull(snapshot.resolvedLabel("zh-CN", "com.example.other", 22L))
+        assertNull(snapshot.resolvedLabel(" ", "com.example.camera", 22L))
     }
 
     @Test
@@ -46,6 +48,33 @@ class InstalledAppCatalogLabelStoreTest {
         assertNull(InstalledAppCatalogLabelStore.decode("{not json"))
         assertNull(InstalledAppCatalogLabelStore.decode(""))
         assertNull(InstalledAppCatalogLabelStore.decode(null))
+    }
+
+    @Test
+    fun decodeMissingRecordsObjectYieldsEmptyMap() {
+        val snapshot = InstalledAppCatalogLabelStore.decode("""{"locale":"zh-CN"}""")
+        assertEquals("zh-CN", snapshot!!.localeTag)
+        assertTrue(snapshot.records.isEmpty())
+    }
+
+    @Test
+    fun decodeSkipsBlankPackageNamesAndLabels() {
+        val snapshot = InstalledAppCatalogLabelStore.decode(
+            """{"locale":"en-US","records":{" " :{"label":"Camera","lastUpdateTime":1},"com.example.maps":{"label":"  ","lastUpdateTime":2}}}""",
+        )
+        assertTrue(snapshot!!.records.isEmpty())
+    }
+
+    @Test
+    fun sharedStoreReusesTheFirstFile() {
+        val first = File.createTempFile("installed-app-catalog-labels-shared-a", ".json")
+        val second = File.createTempFile("installed-app-catalog-labels-shared-b", ".json")
+        first.deleteOnExit()
+        second.deleteOnExit()
+
+        val a = InstalledAppCatalogLabelStore.shared(first)
+        val b = InstalledAppCatalogLabelStore.shared(second)
+        assertSame(a, b)
     }
 
     @Test

@@ -1,7 +1,5 @@
 package com.dpis.module.applist
 
-import android.content.Context
-import android.content.ContextWrapper
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
@@ -61,29 +59,14 @@ class InstalledAppCatalogLabelStore(private val file: File) {
         private val sharedLock = Any()
 
         @JvmStatic
-        fun from(context: Context): InstalledAppCatalogLabelStore {
+        fun shared(file: File): InstalledAppCatalogLabelStore {
             shared?.let { return it }
             synchronized(sharedLock) {
                 shared?.let { return it }
-                val created = InstalledAppCatalogLabelStore(File(attachedFilesDir(context), FILE_NAME))
+                val created = InstalledAppCatalogLabelStore(file)
                 shared = created
                 return created
             }
-        }
-
-        /**
-         * Activity field initializers run before attach. Prefer [Context.getApplicationContext]
-         * only when the wrapper already has a base context.
-         */
-        @JvmStatic
-        fun attachedFilesDir(context: Context): File {
-            val applicationContext =
-                if (context is ContextWrapper && context.baseContext == null) {
-                    null
-                } else {
-                    context.applicationContext
-                }
-            return (applicationContext ?: context).filesDir
         }
 
         @JvmStatic

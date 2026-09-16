@@ -122,6 +122,42 @@ class InstalledAppCatalogCoordinatorPolicyTest {
     }
 
     @Test
+    fun resolveCatalogItemLabelsAppliesSuccessfulLoads() {
+        val item = catalogItem("com.example.camera", "com.example.camera", resolved = false)
+
+        val resolved = InstalledAppCatalogCoordinator.resolveCatalogItemLabels(listOf(item)) {
+            "相机"
+        }
+
+        assertEquals("相机", resolved[0].label)
+        assertTrue(resolved[0].labelResolved)
+    }
+
+    @Test
+    fun persistableLabelRecordsSkipBlankResolvedLabels() {
+        val records = InstalledAppCatalogCoordinator.persistableLabelRecords(
+            listOf(catalogItem("   ", "com.example.camera", resolved = true)),
+        )
+
+        assertTrue(records.isEmpty())
+    }
+
+    @Test
+    fun createCatalogItemUsesApplicationInfoFallback() {
+        val packageInfo = PackageInfo()
+        packageInfo.packageName = "com.example.camera"
+
+        val item = InstalledAppCatalogCoordinator.createCatalogItem(
+            packageInfo,
+            "io.github.kwensiu.dpis",
+            "Camera",
+            true,
+        )!!
+
+        assertEquals("com.example.camera", item.applicationInfo.packageName)
+    }
+
+    @Test
     fun catalogLocaleTagFallsBackToDefault() {
         assertEquals("zh-CN", InstalledAppCatalogCoordinator.catalogLocaleTag(Locale.SIMPLIFIED_CHINESE))
         assertEquals(

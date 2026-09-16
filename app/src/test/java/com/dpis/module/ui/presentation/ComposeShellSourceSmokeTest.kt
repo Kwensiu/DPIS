@@ -400,7 +400,7 @@ class ComposeShellSourceSmokeTest {
         val controls = read(
                 "src/main/java/com/dpis/module/ui/presentation/editor/EditorControls.kt")
         val catalog = read(
-                "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt")
+                "src/main/java/com/dpis/module/applist/presentation/InstalledAppCatalogCoordinator.kt")
         val typefacePicker = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/AppTypefacePickerPage.kt")
         val activity = read("src/main/java/com/dpis/module/MainActivity.kt")

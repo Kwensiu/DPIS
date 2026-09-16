@@ -11,8 +11,8 @@ import androidx.core.content.ContextCompat
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.applist.InstalledAppCatalogCoordinator
-import com.dpis.module.applist.InstalledAppCatalogLabelStore
+import com.dpis.module.applist.InstalledAppCatalogCoordinator as CatalogPolicy
+import com.dpis.module.applist.presentation.InstalledAppCatalogCoordinator
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.ui.MainViewModel
@@ -30,7 +30,7 @@ class InstalledAppsLoadSession(
     private val catalogCoordinator by lazy {
         InstalledAppCatalogCoordinator(
             InstalledAppCatalogCoordinator.ContextHost(activity),
-            InstalledAppCatalogLabelStore.from(activity),
+            InstalledAppCatalogCoordinator.labelStore(activity),
         )
     }
 
@@ -41,7 +41,7 @@ class InstalledAppsLoadSession(
 
     private val packageCatalogReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (!InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(intent?.action)) {
+            if (!CatalogPolicy.shouldInvalidateInstalledCatalog(intent?.action)) {
                 return
             }
             catalogCoordinator.invalidate()
