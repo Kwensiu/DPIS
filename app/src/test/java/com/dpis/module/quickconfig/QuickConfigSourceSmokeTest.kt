@@ -45,7 +45,7 @@ class QuickConfigSourceSmokeTest {
         Assert.assertFalse(content.contains("startFeedbackDiagnostic"))
         Assert.assertTrue(content.contains("contentAlignment = Alignment.BottomCenter"))
         Assert.assertTrue(content.contains("RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)"))
-        Assert.assertTrue(activity.contains("InstalledAppCatalogCoordinator.createAppListItem("))
+        Assert.assertTrue(activity.contains("InstalledAppCatalogPolicy.createAppListItem("))
         Assert.assertTrue(styles.contains("Theme.Dpis.QuickConfig"))
         Assert.assertTrue(styles.contains("android:windowIsTranslucent"))
         Assert.assertTrue(resolver.contains("UsageStatsManager"))

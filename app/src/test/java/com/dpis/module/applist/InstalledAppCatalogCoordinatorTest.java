@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 public class InstalledAppCatalogCoordinatorTest {
     @Test
     public void inScopePackageIsUserVisibleConfiguredEvenWithoutSavedValues() {
-        assertTrue(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+        assertTrue(InstalledAppCatalogPolicy.isUserVisibleConfiguredPackage(
                 null,
                 "com.example.injected",
                 true,
@@ -31,7 +31,7 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void unknownScopeDoesNotMakePackageUserVisibleConfigured() {
-        assertFalse(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+        assertFalse(InstalledAppCatalogPolicy.isUserVisibleConfiguredPackage(
                 null,
                 "com.example.legacy",
                 false,
@@ -40,7 +40,7 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void plainPackageWithoutSavedValuesIsNotUserVisibleConfigured() {
-        assertFalse(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+        assertFalse(InstalledAppCatalogPolicy.isUserVisibleConfiguredPackage(
                 null,
                 "com.example.plain",
                 true,
@@ -53,7 +53,7 @@ public class InstalledAppCatalogCoordinatorTest {
         DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetFontScalePercent("com.example.saved", 125);
 
-        Set<String> configured = InstalledAppCatalogCoordinator
+        Set<String> configured = InstalledAppCatalogPolicy
                 .userVisibleConfiguredPackages(store);
 
         assertTrue(configured.contains("com.example.saved"));
@@ -66,7 +66,7 @@ public class InstalledAppCatalogCoordinatorTest {
         DpisConfigStore store = new DpisConfigStore(prefs);
         store.setTargetFontScalePercent("com.example.saved", 125);
 
-        Set<String> configured = InstalledAppCatalogCoordinator
+        Set<String> configured = InstalledAppCatalogPolicy
                 .userVisibleConfiguredPackages(
                         store,
                         Set.of("com.example.injected"),
@@ -85,7 +85,7 @@ public class InstalledAppCatalogCoordinatorTest {
         store.setTargetFontScalePercent("android", 125);
         store.setTargetFontScalePercent("com.example.saved", 125);
 
-        Set<String> configured = InstalledAppCatalogCoordinator
+        Set<String> configured = InstalledAppCatalogPolicy
                 .userVisibleConfiguredPackages(store);
 
         assertTrue(configured.contains("com.example.saved"));
@@ -95,7 +95,7 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void userVisibleConfiguredPackagesExcludesSystemFrameworkScopeAliases() {
-        Set<String> configured = InstalledAppCatalogCoordinator
+        Set<String> configured = InstalledAppCatalogPolicy
                 .userVisibleConfiguredPackages(
                         null,
                         Set.of("system", "android", "com.example.injected"),
@@ -108,12 +108,12 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void systemFrameworkScopeAliasesAreNotConfiguredByScopeOnlyState() {
-        assertFalse(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+        assertFalse(InstalledAppCatalogPolicy.isUserVisibleConfiguredPackage(
                 null,
                 "system",
                 true,
                 true));
-        assertFalse(InstalledAppCatalogCoordinator.isUserVisibleConfiguredPackage(
+        assertFalse(InstalledAppCatalogPolicy.isUserVisibleConfiguredPackage(
                 null,
                 "android",
                 true,
@@ -122,7 +122,7 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void unconfiguredItemUsesTheSameDefaultStatusWithoutStoreReads() {
-        AppListItem item = InstalledAppCatalogCoordinator.createUnconfiguredAppListItem(
+        AppListItem item = InstalledAppCatalogPolicy.createUnconfiguredAppListItem(
                 "Plain", "com.example.plain", false, true, false, false, true);
 
         assertFalse(item.configured);
@@ -133,16 +133,16 @@ public class InstalledAppCatalogCoordinatorTest {
 
     @Test
     public void launcherFallbackIsUsedWhenPackageManagerReturnsOnlySelf() {
-        assertTrue(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
+        assertTrue(InstalledAppCatalogPolicy.shouldUseLauncherVisibilityFallback(
                 Collections.singletonList("io.github.kwensiu.dpis"),
                 "io.github.kwensiu.dpis"));
-        assertTrue(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
+        assertTrue(InstalledAppCatalogPolicy.shouldUseLauncherVisibilityFallback(
                 Collections.emptyList(), "io.github.kwensiu.dpis"));
     }
 
     @Test
     public void launcherFallbackIsNotUsedWhenPackageManagerReturnsAnotherApp() {
-        assertFalse(InstalledAppCatalogCoordinator.shouldUseLauncherVisibilityFallback(
+        assertFalse(InstalledAppCatalogPolicy.shouldUseLauncherVisibilityFallback(
                 Arrays.asList("io.github.kwensiu.dpis", "com.example.launcher"),
                 "io.github.kwensiu.dpis"));
     }
@@ -153,18 +153,18 @@ public class InstalledAppCatalogCoordinatorTest {
         info.nonLocalizedLabel = "Camera";
         assertEquals(
                 "Camera",
-                InstalledAppCatalogCoordinator.unresolvedCatalogLabel(info, "com.android.camera"));
+                InstalledAppCatalogPolicy.unresolvedCatalogLabel(info, "com.android.camera"));
     }
 
     @Test
     public void unresolvedCatalogLabelFallsBackToPackageName() {
         assertEquals(
                 "com.example.app",
-                InstalledAppCatalogCoordinator.unresolvedCatalogLabel(null, "com.example.app"));
+                InstalledAppCatalogPolicy.unresolvedCatalogLabel(null, "com.example.app"));
         ApplicationInfo info = new ApplicationInfo();
         assertEquals(
                 "com.example.app",
-                InstalledAppCatalogCoordinator.unresolvedCatalogLabel(info, "com.example.app"));
+                InstalledAppCatalogPolicy.unresolvedCatalogLabel(info, "com.example.app"));
     }
 
     @Test
@@ -177,7 +177,7 @@ public class InstalledAppCatalogCoordinatorTest {
         applicationInfo.packageName = "com.example.app";
         packageInfo.applicationInfo = applicationInfo;
 
-        InstalledAppCatalogItem item = InstalledAppCatalogCoordinator.createCatalogItem(
+        InstalledAppCatalogItem item = InstalledAppCatalogPolicy.createCatalogItem(
                 packageInfo, "io.github.kwensiu.dpis", "com.example.app", false);
 
         assertEquals("com.example.app", item.packageName);
@@ -190,29 +190,29 @@ public class InstalledAppCatalogCoordinatorTest {
     public void catalogItemSkipsSelfPackage() {
         PackageInfo packageInfo = new PackageInfo();
         packageInfo.packageName = "io.github.kwensiu.dpis";
-        assertNull(InstalledAppCatalogCoordinator.createCatalogItem(
+        assertNull(InstalledAppCatalogPolicy.createCatalogItem(
                 packageInfo, "io.github.kwensiu.dpis", "DPIS", false));
     }
 
     @Test
     public void installedCatalogChangeActionsMatchPackageLifecycle() {
-        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+        assertTrue(InstalledAppCatalogPolicy.isInstalledCatalogChangeAction(
                 Intent.ACTION_PACKAGE_ADDED));
-        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+        assertTrue(InstalledAppCatalogPolicy.isInstalledCatalogChangeAction(
                 Intent.ACTION_PACKAGE_REMOVED));
-        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+        assertTrue(InstalledAppCatalogPolicy.isInstalledCatalogChangeAction(
                 Intent.ACTION_PACKAGE_CHANGED));
-        assertTrue(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+        assertTrue(InstalledAppCatalogPolicy.isInstalledCatalogChangeAction(
                 Intent.ACTION_EXTERNAL_APPLICATIONS_AVAILABLE));
-        assertFalse(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+        assertFalse(InstalledAppCatalogPolicy.isInstalledCatalogChangeAction(
                 Intent.ACTION_BOOT_COMPLETED));
-        assertFalse(InstalledAppCatalogCoordinator.isInstalledCatalogChangeAction(
+        assertFalse(InstalledAppCatalogPolicy.isInstalledCatalogChangeAction(
                 Intent.ACTION_LOCALE_CHANGED));
-        assertTrue(InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(
+        assertTrue(InstalledAppCatalogPolicy.shouldInvalidateInstalledCatalog(
                 Intent.ACTION_LOCALE_CHANGED));
-        assertTrue(InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(
+        assertTrue(InstalledAppCatalogPolicy.shouldInvalidateInstalledCatalog(
                 Intent.ACTION_PACKAGE_CHANGED));
-        assertFalse(InstalledAppCatalogCoordinator.shouldInvalidateInstalledCatalog(
+        assertFalse(InstalledAppCatalogPolicy.shouldInvalidateInstalledCatalog(
                 Intent.ACTION_BOOT_COMPLETED));
     }
 }

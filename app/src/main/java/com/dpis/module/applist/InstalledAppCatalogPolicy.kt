@@ -12,9 +12,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
 import java.util.Locale
 
-/** Catalog snapshot, label, and AppListItem policy. PackageManager I/O lives in presentation. */
-class InstalledAppCatalogCoordinator private constructor() {
-    companion object {
+object InstalledAppCatalogPolicy {
         @JvmStatic
         fun unresolvedCatalogLabel(applicationInfo: ApplicationInfo?, packageName: String): String {
             val nonLocalized = applicationInfo?.nonLocalizedLabel?.toString()?.trim()
@@ -281,6 +279,64 @@ class InstalledAppCatalogCoordinator private constructor() {
         }
 
         @JvmStatic
+        fun toAppListItems(
+            catalog: List<InstalledAppCatalogItem>,
+            store: DpisConfigStore?,
+            scopePackages: Set<String>?,
+            scopeKnown: Boolean,
+        ): List<AppListItem> {
+            val configuredPackages = userVisibleConfiguredPackages(
+                store,
+                scopePackages,
+                scopeKnown,
+            )
+            val result = ArrayList<AppListItem>(catalog.size)
+            for (item in catalog) {
+                val inScope = scopePackages?.contains(item.packageName) == true
+                val listItem = if (item.packageName in configuredPackages) {
+                    createAppListItem(
+                        store,
+                        scopePackages,
+                        scopeKnown,
+                        item.label,
+                        item.packageName,
+                        item.systemApp,
+                        item.hyperOsNativeProxyCandidate,
+                        true,
+                        null,
+                    )
+                } else {
+                    createUnconfiguredAppListItem(
+                        item.label,
+                        item.packageName,
+                        inScope,
+                        scopeKnown,
+                        item.systemApp,
+                        item.hyperOsNativeProxyCandidate,
+                        true,
+                    )
+                }
+                listItem.firstInstallTime = item.firstInstallTime
+                listItem.lastUpdateTime = item.lastUpdateTime
+                result += listItem
+            }
+            for (packageName in configuredPackagesMissingFromCatalog(configuredPackages, catalog)) {
+                result += createAppListItem(
+                    store,
+                    scopePackages,
+                    scopeKnown,
+                    packageName,
+                    packageName,
+                    false,
+                    false,
+                    false,
+                    null,
+                )
+            }
+            return result
+        }
+
+        @JvmStatic
         fun isUserVisibleConfiguredPackage(
             store: DpisConfigStore?,
             packageName: String,
@@ -317,5 +373,4 @@ class InstalledAppCatalogCoordinator private constructor() {
         private fun isSystemApp(applicationInfo: ApplicationInfo): Boolean =
             applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0 &&
                 applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP == 0
-    }
 }

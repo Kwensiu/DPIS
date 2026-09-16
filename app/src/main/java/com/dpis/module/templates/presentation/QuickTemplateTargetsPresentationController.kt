@@ -174,7 +174,6 @@ class QuickTemplateTargetsPresentationController(private val context: Context) {
     fun dispose() {
         disposed = true
         loader.shutdownNow()
-        catalog.shutdown()
     }
 
     private fun reloadApps() {

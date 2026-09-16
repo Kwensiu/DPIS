@@ -181,7 +181,9 @@ class MainStartupSession(
     }
 
     fun onPageRefreshRequested(page: AppListPage?) {
-        dispatch(MainUiAction.markPageRefreshing(page))
+        if (page != null) {
+            dispatch(MainUiAction.markPageRefreshing(page))
+        }
         activity.installedAppsLoadSession.requestLoad(true)
     }
 

@@ -3,7 +3,7 @@ package com.dpis.module.home.presentation
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.home.HomeActivationStateResolver
@@ -39,7 +39,7 @@ class HomeWorkspaceSession(
     fun createState(): HomeWorkspaceState {
         val configStore = activity.hookConfigStore
         val visibleConfiguredAppCount =
-            InstalledAppCatalogCoordinator.countUserVisibleConfiguredPackages(
+            InstalledAppCatalogPolicy.countUserVisibleConfiguredPackages(
                 configStore,
                 loadScopeState(),
             )

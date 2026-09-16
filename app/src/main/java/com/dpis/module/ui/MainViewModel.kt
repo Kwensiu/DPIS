@@ -157,7 +157,6 @@ class MainViewModel(initialState: MainUiState?) {
                 onAppsLoadFinished(action.requestId, action.loadedApps)
             }
         }
-        else -> emptyList()
     }
 
     private fun requestAppsLoad(forceInstalledAppCatalogReload: Boolean): List<AppsLoadRequest> {

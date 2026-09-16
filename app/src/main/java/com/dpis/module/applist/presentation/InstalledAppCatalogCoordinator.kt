@@ -1,7 +1,6 @@
 package com.dpis.module.applist.presentation
 
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
@@ -11,17 +10,13 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.CatalogLabelCacheSnapshot
-import com.dpis.module.applist.InstalledAppCatalogCoordinator as CatalogPolicy
 import com.dpis.module.applist.InstalledAppCatalogItem
+import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.applist.InstalledAppCatalogLabelStore
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import java.io.File
 
-/**
- * PackageManager-bound catalog host. Snapshot, label, and persist policy lives on
- * [CatalogPolicy].
- */
 class InstalledAppCatalogCoordinator(
     private val host: Host,
     private val labelStore: InstalledAppCatalogLabelStore? = null,
@@ -41,7 +36,9 @@ class InstalledAppCatalogCoordinator(
 
         override fun getCatalogLocaleTag(): String {
             val locales = context.resources.configuration.locales
-            return CatalogPolicy.catalogLocaleTag(if (locales.isEmpty) null else locales[0])
+            return InstalledAppCatalogPolicy.catalogLocaleTag(
+                if (locales.isEmpty) null else locales[0],
+            )
         }
     }
 
@@ -50,12 +47,6 @@ class InstalledAppCatalogCoordinator(
 
     private var installedAppCatalog: List<InstalledAppCatalogItem> = emptyList()
     private var catalogInvalidated = true
-
-    /** Kept for legacy View binders that still notify visible icon rows. */
-    fun onIconLoadRequested(packageName: String) = Unit
-
-    /** No executor remains after moving icon resolution into the catalog build. */
-    fun shutdown() = Unit
 
     fun invalidate() {
         synchronized(installedAppCatalogLock) {
@@ -103,7 +94,17 @@ class InstalledAppCatalogCoordinator(
             host.getSelfPackageName(),
             forceInstalledAppCatalogReload,
         )
-        return toAppListItems(catalog, store, scopePackages, scopeKnown, forceInstalledAppCatalogReload)
+        val items = InstalledAppCatalogPolicy.toAppListItems(
+            catalog,
+            store,
+            scopePackages,
+            scopeKnown,
+        )
+        DpisLog.i(
+            "app list items built: catalog=${catalog.size}, result=${items.size}, " +
+                "forceReload=$forceInstalledAppCatalogReload, scopeKnown=$scopeKnown",
+        )
+        return items
     }
 
     fun resolveInstalledAppLabels(
@@ -139,7 +140,7 @@ class InstalledAppCatalogCoordinator(
                     "sdk=${Build.VERSION.SDK_INT}, forceReload=$forceReload",
             )
 
-            if (CatalogPolicy.shouldUseLauncherVisibilityFallback(
+            if (InstalledAppCatalogPolicy.shouldUseLauncherVisibilityFallback(
                     installedPackages.map { it.packageName },
                     selfPackageName,
                 )
@@ -149,7 +150,7 @@ class InstalledAppCatalogCoordinator(
             }
 
             val cachedLabels = labelStore?.load() ?: CatalogLabelCacheSnapshot.EMPTY
-            val snapshot = CatalogPolicy.buildCatalogSnapshot(
+            val snapshot = InstalledAppCatalogPolicy.buildCatalogSnapshot(
                 installedPackages,
                 selfPackageName,
                 cachedLabels,
@@ -174,7 +175,7 @@ class InstalledAppCatalogCoordinator(
             if (current.isEmpty() || current.all { it.labelResolved }) {
                 return current
             }
-            val resolved = CatalogPolicy.resolveCatalogItemLabels(
+            val resolved = InstalledAppCatalogPolicy.resolveCatalogItemLabels(
                 current,
             ) { applicationInfo ->
                 try {
@@ -196,113 +197,23 @@ class InstalledAppCatalogCoordinator(
 
     private fun persistResolvedLabels(catalog: List<InstalledAppCatalogItem>) {
         val store = labelStore ?: return
-        val localeTag = host.getCatalogLocaleTag()
-        val merged = CatalogPolicy.mergePersistedLabelRecords(
-            store.load(),
-            localeTag,
+        store.mergeReplace(
+            host.getCatalogLocaleTag(),
             catalog.mapTo(HashSet()) { it.packageName },
-            CatalogPolicy.persistableLabelRecords(catalog),
+            InstalledAppCatalogPolicy.persistableLabelRecords(catalog),
         )
-        store.replace(localeTag, merged)
     }
 
     private fun isCatalogCacheFresh(): Boolean =
         !catalogInvalidated && installedAppCatalog.isNotEmpty()
 
-    private fun toAppListItems(
-        catalog: List<InstalledAppCatalogItem>,
-        store: DpisConfigStore?,
-        scopePackages: Set<String>?,
-        scopeKnown: Boolean,
-        forceInstalledAppCatalogReload: Boolean,
-    ): List<AppListItem> {
-        val configuredPackages = CatalogPolicy.userVisibleConfiguredPackages(
-            store,
-            scopePackages,
-            scopeKnown,
-        )
-        val result = ArrayList<AppListItem>(catalog.size)
-        for (item in catalog) {
-            val inScope = scopePackages?.contains(item.packageName) == true
-            if (item.packageName in configuredPackages) {
-                val listItem = CatalogPolicy.createAppListItem(
-                    store,
-                    scopePackages,
-                    scopeKnown,
-                    item.label,
-                    item.packageName,
-                    item.systemApp,
-                    item.hyperOsNativeProxyCandidate,
-                    true,
-                    null,
-                )
-                listItem.firstInstallTime = item.firstInstallTime
-                listItem.lastUpdateTime = item.lastUpdateTime
-                result += listItem
-            } else {
-                val listItem = CatalogPolicy.createUnconfiguredAppListItem(
-                    item.label,
-                    item.packageName,
-                    inScope,
-                    scopeKnown,
-                    item.systemApp,
-                    item.hyperOsNativeProxyCandidate,
-                    true,
-                )
-                listItem.firstInstallTime = item.firstInstallTime
-                listItem.lastUpdateTime = item.lastUpdateTime
-                result += listItem
-            }
-        }
-        for (packageName in configuredPackagesMissingFromCatalog(configuredPackages, catalog)) {
-            result += CatalogPolicy.createAppListItem(
-                store,
-                scopePackages,
-                scopeKnown,
-                packageName,
-                packageName,
-                false,
-                false,
-                false,
-                null,
-            )
-        }
-        DpisLog.i(
-            "app list items built: catalog=${catalog.size}, result=${result.size}, " +
-                "forceReload=$forceInstalledAppCatalogReload, scopeKnown=$scopeKnown",
-        )
-        return result
-    }
-
     companion object {
         @JvmStatic
-        fun labelStore(context: Context): InstalledAppCatalogLabelStore =
-            InstalledAppCatalogLabelStore.shared(
-                File(attachedFilesDir(context), InstalledAppCatalogLabelStore.FILE_NAME),
+        fun labelStore(context: Context): InstalledAppCatalogLabelStore {
+            val filesDir = context.applicationContext?.filesDir ?: context.filesDir
+            return InstalledAppCatalogLabelStore.shared(
+                File(filesDir, InstalledAppCatalogLabelStore.FILE_NAME),
             )
-
-        /**
-         * Activity field initializers run before attach. Prefer [Context.getApplicationContext]
-         * only when the wrapper already has a base context.
-         */
-        @JvmStatic
-        fun attachedFilesDir(context: Context): File {
-            val applicationContext =
-                if (context is ContextWrapper && context.baseContext == null) {
-                    null
-                } else {
-                    context.applicationContext
-                }
-            return (applicationContext ?: context).filesDir
-        }
-
-        private fun configuredPackagesMissingFromCatalog(
-            configuredPackages: Set<String>,
-            catalog: List<InstalledAppCatalogItem>,
-        ): List<String> {
-            if (configuredPackages.isEmpty()) return emptyList()
-            val installedPackages = catalog.mapTo(HashSet()) { it.packageName }
-            return configuredPackages.filterNotTo(ArrayList()) { it in installedPackages }.sorted()
         }
 
         private fun queryInstalledPackages(packageManager: PackageManager): List<PackageInfo> =

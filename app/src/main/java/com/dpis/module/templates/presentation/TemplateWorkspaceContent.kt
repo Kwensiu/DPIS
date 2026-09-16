@@ -551,7 +551,7 @@ private fun EmbeddedQuickTemplateTargets(
 ) {
     val context = LocalContext.current
     val controller = remember(templateId) {
-        QuickTemplateTargetsPresentationController(context.applicationContext)
+        QuickTemplateTargetsPresentationController(context)
     }
     var targetState by remember(templateId) {
         mutableStateOf<QuickTemplateTargetsPresentationController.State?>(null)

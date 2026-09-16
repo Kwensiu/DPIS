@@ -66,6 +66,31 @@ class InstalledAppCatalogLabelStoreTest {
     }
 
     @Test
+    fun mergeReplaceKeepsSameLocaleHitsAndDropsRemovedPackages() {
+        val file = File.createTempFile("installed-app-catalog-labels-merge", ".json")
+        file.deleteOnExit()
+        val store = InstalledAppCatalogLabelStore(file)
+        store.replace(
+            "zh-CN",
+            mapOf(
+                "com.example.camera" to CatalogLabelRecord("相机", 22L),
+                "com.removed" to CatalogLabelRecord("旧", 1L),
+            ),
+        )
+
+        store.mergeReplace(
+            "zh-CN",
+            setOf("com.example.camera", "com.example.maps"),
+            mapOf("com.example.maps" to CatalogLabelRecord("地图", 3L)),
+        )
+
+        val snapshot = store.load()
+        assertEquals("相机", snapshot.resolvedLabel("zh-CN", "com.example.camera", 22L))
+        assertEquals("地图", snapshot.resolvedLabel("zh-CN", "com.example.maps", 3L))
+        assertNull(snapshot.resolvedLabel("zh-CN", "com.removed", 1L))
+    }
+
+    @Test
     fun sharedStoreReusesTheFirstFile() {
         val first = File.createTempFile("installed-app-catalog-labels-shared-a", ".json")
         val second = File.createTempFile("installed-app-catalog-labels-shared-b", ".json")

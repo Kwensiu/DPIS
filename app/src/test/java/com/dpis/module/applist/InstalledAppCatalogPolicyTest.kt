@@ -9,7 +9,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Locale
 
-class InstalledAppCatalogCoordinatorPolicyTest {
+class InstalledAppCatalogPolicyTest {
     @Test
     fun buildCatalogSnapshotReusesMatchingCachedLabel() {
         val packageInfo = PackageInfo()
@@ -21,7 +21,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
             mapOf("com.example.camera" to CatalogLabelRecord("相机", 22L)),
         )
 
-        val snapshot = InstalledAppCatalogCoordinator.buildCatalogSnapshot(
+        val snapshot = InstalledAppCatalogPolicy.buildCatalogSnapshot(
             listOf(packageInfo),
             "io.github.kwensiu.dpis",
             cache,
@@ -44,7 +44,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
             mapOf("com.example.camera" to CatalogLabelRecord("相机", 22L)),
         )
 
-        val snapshot = InstalledAppCatalogCoordinator.buildCatalogSnapshot(
+        val snapshot = InstalledAppCatalogPolicy.buildCatalogSnapshot(
             listOf(packageInfo),
             "io.github.kwensiu.dpis",
             cache,
@@ -59,7 +59,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
     fun resolveCatalogItemLabelsLeavesFailedLoadsUnresolved() {
         val item = catalogItem("com.example.camera", "com.example.camera", resolved = false)
 
-        val resolved = InstalledAppCatalogCoordinator.resolveCatalogItemLabels(listOf(item)) { null }
+        val resolved = InstalledAppCatalogPolicy.resolveCatalogItemLabels(listOf(item)) { null }
 
         assertEquals(1, resolved.size)
         assertFalse(resolved[0].labelResolved)
@@ -68,7 +68,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
 
     @Test
     fun persistableLabelRecordsSkipUnresolvedRows() {
-        val records = InstalledAppCatalogCoordinator.persistableLabelRecords(
+        val records = InstalledAppCatalogPolicy.persistableLabelRecords(
             listOf(
                 catalogItem("相机", "com.example.camera", resolved = true, lastUpdateTime = 22L),
                 catalogItem("com.example.maps", "com.example.maps", resolved = false),
@@ -91,7 +91,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
             ),
         )
 
-        val merged = InstalledAppCatalogCoordinator.mergePersistedLabelRecords(
+        val merged = InstalledAppCatalogPolicy.mergePersistedLabelRecords(
             existing,
             "zh-CN",
             setOf("com.example.camera", "com.example.maps"),
@@ -110,7 +110,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
             mapOf("com.example.camera" to CatalogLabelRecord("Camera", 22L)),
         )
 
-        val merged = InstalledAppCatalogCoordinator.mergePersistedLabelRecords(
+        val merged = InstalledAppCatalogPolicy.mergePersistedLabelRecords(
             existing,
             "zh-CN",
             setOf("com.example.camera"),
@@ -125,7 +125,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
     fun resolveCatalogItemLabelsAppliesSuccessfulLoads() {
         val item = catalogItem("com.example.camera", "com.example.camera", resolved = false)
 
-        val resolved = InstalledAppCatalogCoordinator.resolveCatalogItemLabels(listOf(item)) {
+        val resolved = InstalledAppCatalogPolicy.resolveCatalogItemLabels(listOf(item)) {
             "相机"
         }
 
@@ -135,7 +135,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
 
     @Test
     fun persistableLabelRecordsSkipBlankResolvedLabels() {
-        val records = InstalledAppCatalogCoordinator.persistableLabelRecords(
+        val records = InstalledAppCatalogPolicy.persistableLabelRecords(
             listOf(catalogItem("   ", "com.example.camera", resolved = true)),
         )
 
@@ -147,7 +147,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
         val packageInfo = PackageInfo()
         packageInfo.packageName = "com.example.camera"
 
-        val item = InstalledAppCatalogCoordinator.createCatalogItem(
+        val item = InstalledAppCatalogPolicy.createCatalogItem(
             packageInfo,
             "io.github.kwensiu.dpis",
             "Camera",
@@ -159,10 +159,10 @@ class InstalledAppCatalogCoordinatorPolicyTest {
 
     @Test
     fun catalogLocaleTagFallsBackToDefault() {
-        assertEquals("zh-CN", InstalledAppCatalogCoordinator.catalogLocaleTag(Locale.SIMPLIFIED_CHINESE))
+        assertEquals("zh-CN", InstalledAppCatalogPolicy.catalogLocaleTag(Locale.SIMPLIFIED_CHINESE))
         assertEquals(
             Locale.getDefault().toLanguageTag(),
-            InstalledAppCatalogCoordinator.catalogLocaleTag(null),
+            InstalledAppCatalogPolicy.catalogLocaleTag(null),
         )
     }
 
@@ -182,7 +182,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
             mapOf("com.example.camera" to CatalogLabelRecord("相机", 22L)),
         )
 
-        val snapshot = InstalledAppCatalogCoordinator.buildCatalogSnapshot(
+        val snapshot = InstalledAppCatalogPolicy.buildCatalogSnapshot(
             listOf(maps, camera),
             "io.github.kwensiu.dpis",
             cache,
@@ -190,6 +190,25 @@ class InstalledAppCatalogCoordinatorPolicyTest {
         )
 
         assertEquals(listOf("com.example.maps", "com.example.camera"), snapshot.map { it.packageName })
+    }
+
+    @Test
+    fun toAppListItemsAddsConfiguredPackagesMissingFromCatalog() {
+        val catalog = listOf(catalogItem("Maps", "com.example.maps", resolved = true))
+        val prefs = com.dpis.module.FakePrefs()
+        val store = com.dpis.module.config.DpisConfigStore(prefs)
+        store.setTargetFontScalePercent("com.example.saved", 125)
+
+        val items = InstalledAppCatalogPolicy.toAppListItems(
+            catalog,
+            store,
+            emptySet(),
+            true,
+        )
+
+        assertEquals(listOf("com.example.maps", "com.example.saved"), items.map { it.packageName })
+        assertTrue(items[1].configured)
+        assertFalse(items[1].installed)
     }
 
     private fun catalogItem(
@@ -203,7 +222,7 @@ class InstalledAppCatalogCoordinatorPolicyTest {
         packageInfo.packageName = packageName
         packageInfo.lastUpdateTime = lastUpdateTime
         packageInfo.applicationInfo = applicationInfo
-        return InstalledAppCatalogCoordinator.createCatalogItem(
+        return InstalledAppCatalogPolicy.createCatalogItem(
             packageInfo,
             "io.github.kwensiu.dpis",
             label,

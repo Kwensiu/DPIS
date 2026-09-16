@@ -11,8 +11,7 @@ import androidx.core.content.ContextCompat
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.applist.InstalledAppCatalogCoordinator as CatalogPolicy
-import com.dpis.module.applist.presentation.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.ui.MainViewModel
@@ -41,7 +40,7 @@ class InstalledAppsLoadSession(
 
     private val packageCatalogReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (!CatalogPolicy.shouldInvalidateInstalledCatalog(intent?.action)) {
+            if (!InstalledAppCatalogPolicy.shouldInvalidateInstalledCatalog(intent?.action)) {
                 return
             }
             catalogCoordinator.invalidate()
@@ -150,7 +149,6 @@ class InstalledAppsLoadSession(
             }
             packageChangesRegistered = false
         }
-        catalogCoordinator.shutdown()
     }
 
     private fun loadInstalledApps(forceInstalledAppCatalogReload: Boolean): List<AppListItem> {

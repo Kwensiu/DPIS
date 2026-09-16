@@ -15,7 +15,7 @@ import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.ForegroundPackageResolver
-import com.dpis.module.applist.InstalledAppCatalogCoordinator
+import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.runtime.hyperos.HyperOsNativeAppDetector
 import com.dpis.module.runtime.hyperos.HyperOsNativeProxyFacade
@@ -148,7 +148,7 @@ class QuickConfigActivity : LocalizedActivity() {
             val icon = applicationInfo.loadIcon(packageManager)
             val systemApp = (applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0 &&
                 (applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0
-            return InstalledAppCatalogCoordinator.createAppListItem(
+            return InstalledAppCatalogPolicy.createAppListItem(
                 hookConfigStore,
                 loadScopePackages(),
                 DpisApplication.xposedService != null,

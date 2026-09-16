@@ -367,11 +367,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             loadSession.contains("catalogCoordinator.loadInstalledApps(")
         )
-        assertTrue(coordinatorSource.contains("item.hyperOsNativeProxyCandidate,"))
-        assertTrue(coordinatorSource.contains("PackageInfoFlags.of(0L)"))
         assertTrue(coordinatorSource.contains("getInstalledPackages(0)"))
         assertFalse(coordinatorSource.contains("getInstalledApplications("))
-        assertFalse(coordinatorSource.contains("getPackageInfo(applicationInfo.packageName"))
         assertFalse(coordinatorSource.contains("GET_META_DATA"))
         assertTrue(
             read("src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyFacade.kt")
@@ -699,17 +696,13 @@ class MainActivitySourceSmokeTest {
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
         )
         assertTrue(loadSession.contains("attachPackageCatalogMonitor()"))
-        assertTrue(loadSession.contains("private val catalogCoordinator by lazy"))
-        assertTrue(loadSession.contains("InstalledAppCatalogCoordinator.ContextHost(activity)"))
         assertTrue(
             read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
                 .contains("installedAppsLoadSession.attachPackageCatalogMonitor()"),
         )
-        assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
         assertTrue(
             viewModelSource.contains("forceInstalledAppCatalogReloadRequested")
         )
-        assertFalse(loadSession.contains("INSTALLED_APP_CATALOG_TTL_MS"))
     }
 
     @Test
@@ -864,7 +857,6 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(loadSession.contains("loadInstalledApps(forceInstalledAppCatalogReload)"))
         assertTrue(loadSession.contains("dispatchInstalledAppsLoadSnapshot(requestId, snapshot)"))
-        assertTrue(coordinatorSource.contains("getInstalledAppCatalog("))
         assertTrue(coordinatorSource.contains("applicationInfo.loadIcon(packageManager)"))
         assertFalse(coordinatorSource.contains("icon = loadApplicationIcon(packageManager, applicationInfo)"))
         assertFalse(coordinatorSource.contains("maybeScheduleFirstScreenIconWarmup("))

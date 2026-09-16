@@ -21,20 +21,44 @@ class InstalledAppCatalogLabelStore(private val file: File) {
     }
 
     fun replace(localeTag: String, records: Map<String, CatalogLabelRecord>) {
-        val snapshot = CatalogLabelCacheSnapshot(localeTag, records)
         synchronized(lock) {
-            file.parentFile?.mkdirs()
-            val tmp = File(file.parentFile, file.name + ".tmp")
-            tmp.writeText(encode(snapshot), StandardCharsets.UTF_8)
-            if (file.exists() && !file.delete()) {
-                file.writeText(encode(snapshot), StandardCharsets.UTF_8)
-                tmp.delete()
-            } else if (!tmp.renameTo(file)) {
-                file.writeText(encode(snapshot), StandardCharsets.UTF_8)
-                tmp.delete()
-            }
-            memory = snapshot
+            writeSnapshot(CatalogLabelCacheSnapshot(localeTag, records))
         }
+    }
+
+    fun mergeReplace(
+        localeTag: String,
+        installedPackages: Set<String>,
+        updates: Map<String, CatalogLabelRecord>,
+    ) {
+        synchronized(lock) {
+            val existing = memory ?: decode(readFile()) ?: CatalogLabelCacheSnapshot.EMPTY
+            writeSnapshot(
+                CatalogLabelCacheSnapshot(
+                    localeTag,
+                    InstalledAppCatalogPolicy.mergePersistedLabelRecords(
+                        existing,
+                        localeTag,
+                        installedPackages,
+                        updates,
+                    ),
+                ),
+            )
+        }
+    }
+
+    private fun writeSnapshot(snapshot: CatalogLabelCacheSnapshot) {
+        file.parentFile?.mkdirs()
+        val tmp = File(file.parentFile, file.name + ".tmp")
+        tmp.writeText(encode(snapshot), StandardCharsets.UTF_8)
+        if (file.exists() && !file.delete()) {
+            file.writeText(encode(snapshot), StandardCharsets.UTF_8)
+            tmp.delete()
+        } else if (!tmp.renameTo(file)) {
+            file.writeText(encode(snapshot), StandardCharsets.UTF_8)
+            tmp.delete()
+        }
+        memory = snapshot
     }
 
     private fun readFile(): String? {
@@ -60,10 +84,14 @@ class InstalledAppCatalogLabelStore(private val file: File) {
 
         @JvmStatic
         fun shared(file: File): InstalledAppCatalogLabelStore {
-            shared?.let { return it }
+            val canonical = try {
+                file.canonicalFile
+            } catch (_: Exception) {
+                file.absoluteFile
+            }
             synchronized(sharedLock) {
                 shared?.let { return it }
-                val created = InstalledAppCatalogLabelStore(file)
+                val created = InstalledAppCatalogLabelStore(canonical)
                 shared = created
                 return created
             }
