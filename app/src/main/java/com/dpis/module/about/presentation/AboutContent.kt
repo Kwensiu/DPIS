@@ -36,6 +36,7 @@ import com.dpis.module.ui.compose.setFeatureContent
 import com.dpis.module.ui.compose.SecondaryPageScaffold
 
 import com.dpis.module.ui.compose.dpisSegmentedShapes
+import com.dpis.module.ui.compose.segmentedRowColors
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
 import com.dpis.module.ui.compose.rememberClickAction
 
@@ -152,11 +153,7 @@ private fun AboutEntry(
         // supporting line may increase row height without pulling the icon upward.
         verticalAlignment = Alignment.CenterVertically,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
+        colors = segmentedRowColors(),
         supportingContent = { Text(stringResource(descriptionRes)) },
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         trailingContent = {

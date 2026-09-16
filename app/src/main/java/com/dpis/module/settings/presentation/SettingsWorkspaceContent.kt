@@ -351,14 +351,7 @@ private fun SettingsSwitchRow(
         onClick = { hapticChanged(!checked) },
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            // Disabled settings remain on the same surface; only their content
-            // should receive Material's disabled emphasis.
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },
@@ -391,13 +384,7 @@ private fun SettingsChoiceRow(
         onClick = hapticClick,
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            trailingContentColor = MaterialTheme.colorScheme.primary,
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },
@@ -428,14 +415,7 @@ private fun SettingsEntry(
         onClick = hapticClick,
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            // Keep unavailable actions from falling back to the darker default
-            // disabled container while preserving disabled content treatment.
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },

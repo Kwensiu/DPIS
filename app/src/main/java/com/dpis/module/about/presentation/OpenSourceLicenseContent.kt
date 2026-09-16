@@ -31,6 +31,7 @@ import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.SecondaryPageScaffold
 
 import com.dpis.module.ui.compose.dpisSegmentedShapes
+import com.dpis.module.ui.compose.segmentedRowColors
 import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
 import com.dpis.module.ui.compose.rememberClickAction
 
@@ -83,10 +84,7 @@ private fun LicenseEntry(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
+        colors = segmentedRowColors(),
         supportingContent = { Text(item.summary) },
         content = { Text(item.name) }
     )

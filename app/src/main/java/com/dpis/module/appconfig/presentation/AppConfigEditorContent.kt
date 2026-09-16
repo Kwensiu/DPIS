@@ -49,7 +49,6 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.PlatformTextStyle
@@ -78,6 +77,9 @@ import com.dpis.module.ui.compose.EditorClearButton
 import com.dpis.module.ui.compose.EditorTypefaceHookRow
 import com.dpis.module.ui.compose.EditorValueModeRow
 import com.dpis.module.ui.compose.FeedbackButton
+import com.dpis.module.ui.compose.dangerButtonColors
+import com.dpis.module.ui.compose.successButtonColors
+import com.dpis.module.ui.compose.warningButtonColors
 import com.dpis.module.ui.compose.FeedbackOutlinedButton
 import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
@@ -423,10 +425,7 @@ fun AppConfigEditorContent(
                 },
                 modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(R.color.dpis_stop_container),
-                    contentColor = colorResource(R.color.dpis_on_stop_container)
-                ),
+                colors = dangerButtonColors(),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.dialog_stop_button), style = MaterialTheme.typography.labelLarge,
@@ -439,10 +438,7 @@ fun AppConfigEditorContent(
                 },
                 modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(R.color.dpis_warn_container),
-                    contentColor = colorResource(R.color.dpis_on_warn_container)
-                ),
+                colors = warningButtonColors(),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.dialog_restart_button), style = MaterialTheme.typography.labelLarge,
@@ -455,10 +451,7 @@ fun AppConfigEditorContent(
                 },
                 modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(R.color.dpis_success_container),
-                    contentColor = colorResource(R.color.dpis_on_success_container)
-                ),
+                colors = successButtonColors(),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.dialog_start_button), style = MaterialTheme.typography.labelLarge,
@@ -584,17 +577,17 @@ fun AppConfigEditorSessionChip(
     }
     val prefill = visibleChip == AppConfigEditorChip.PREFILL
     val container = if (prefill) {
-        colorResource(R.color.dpis_info_container)
+        MaterialTheme.colorScheme.secondaryContainer
     } else {
         MaterialTheme.colorScheme.primaryContainer
     }
     val content = if (prefill) {
-        colorResource(R.color.dpis_on_info_container)
+        MaterialTheme.colorScheme.onSecondaryContainer
     } else {
         MaterialTheme.colorScheme.onPrimaryContainer
     }
     val outline = if (prefill) {
-        colorResource(R.color.dpis_info)
+        MaterialTheme.colorScheme.secondary
     } else {
         MaterialTheme.colorScheme.primary
     }

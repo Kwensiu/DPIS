@@ -398,10 +398,7 @@ private fun FontReferenceSection(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = restore,
                         shapes = dpisSegmentedShapes(index, references.size),
-                        colors = ListItemDefaults.segmentedColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceBright,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
+                        colors = segmentedRowColors(),
                         supportingContent = { Text(reference.packageName) },
                         content = { Text(reference.label) },
                     )

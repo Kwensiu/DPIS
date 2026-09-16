@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -61,6 +60,7 @@ import com.dpis.module.ui.compose.PageScrollPositionStore
 import com.dpis.module.ui.compose.WorkspaceSearchCard
 import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
 import com.dpis.module.ui.compose.edgeOcclusionFade
+import com.dpis.module.ui.compose.LocalSemanticColors
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.dpisClickable
 import com.dpis.module.ui.compose.rememberRestorableLazyListState
@@ -391,8 +391,8 @@ private fun SummaryPills(
                     R.string.template_workspace_missing_font,
                     typefaceStatus.typefaceId.orEmpty()
                 ),
-                containerColor = colorResource(R.color.dpis_warn_container),
-                contentColor = colorResource(R.color.dpis_on_warn_container)
+                containerColor = LocalSemanticColors.current.warningContainer,
+                contentColor = LocalSemanticColors.current.onWarningContainer
             )
         }
     }

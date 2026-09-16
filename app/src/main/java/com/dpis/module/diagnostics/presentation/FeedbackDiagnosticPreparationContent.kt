@@ -394,7 +394,7 @@ private fun TargetRow(
     SegmentedListItem(
         onClick = {},
         shapes = dpisSegmentedShapes(0, 1),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { DiagnosticTargetAppIcon(appIcon) },
         content = { Text(state.appLabel, fontWeight = FontWeight.SemiBold) },
@@ -460,7 +460,7 @@ private fun DiagnosticRootPermissionRow(
     SegmentedListItem(
         onClick = presentation::refreshRootPermission,
         shapes = dpisSegmentedShapes(0, 3),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_shield_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_root_status)) },
@@ -474,7 +474,7 @@ private fun DiagnosticLogOutputRow(status: String) {
     SegmentedListItem(
         onClick = {},
         shapes = dpisSegmentedShapes(1, 3),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_view_kanban_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_log_status)) },
@@ -503,7 +503,7 @@ private fun DiagnosticLsposedRow(
     SegmentedListItem(
         onClick = rememberClickAction(presentation::refreshLsposedAvailability),
         shapes = dpisSegmentedShapes(2, 3),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_healing_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_lsposed_status)) },
@@ -547,7 +547,7 @@ private fun DiagnosticSessionSection(
         SegmentedListItem(
             onClick = rememberClickAction { presentation.setDurationEnabled(!state.durationEnabled) },
             shapes = dpisSegmentedShapes(0, durationItemCount),
-            colors = diagnosticItemColors(),
+            colors = segmentedRowColors(),
             verticalAlignment = Alignment.CenterVertically,
             leadingContent = { Icon(painterResource(R.drawable.ic_hourglass_check_24), null) },
             content = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_title)) },
@@ -563,7 +563,7 @@ private fun DiagnosticSessionSection(
             SegmentedListItem(
                 onClick = {},
                 shapes = dpisSegmentedShapes(1, durationItemCount),
-                colors = diagnosticItemColors(),
+                colors = segmentedRowColors(),
                 content = {
                     DurationChipSelector(
                         selectedSeconds = state.durationSeconds,
@@ -693,7 +693,7 @@ private fun DiagnosticPhaseSection(
                 SegmentedListItem(
                     onClick = {},
                     shapes = dpisSegmentedShapes(0, 1),
-                    colors = diagnosticItemColors(),
+                    colors = segmentedRowColors(),
                     content = { Text(stringResource(R.string.feedback_diagnostic_recording_title)) },
                 )
             }
@@ -701,7 +701,7 @@ private fun DiagnosticPhaseSection(
                 SegmentedListItem(
                     onClick = {},
                     shapes = dpisSegmentedShapes(0, 1),
-                    colors = diagnosticItemColors(),
+                    colors = segmentedRowColors(),
                     leadingContent = { Icon(painterResource(R.drawable.ic_overview_24), null) },
                     content = { Text(stringResource(R.string.feedback_diagnostic_packaging_message)) },
                     trailingContent = {
@@ -840,7 +840,7 @@ private fun DiagnosticStatusRow(
     SegmentedListItem(
         onClick = {},
         shapes = dpisSegmentedShapes(index, total),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), null) },
         content = { Text(stringResource(titleRes)) },
@@ -848,17 +848,3 @@ private fun DiagnosticStatusRow(
     )
 }
 
-@Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun diagnosticItemColors(enabled: Boolean = true) = ListItemDefaults.segmentedColors(
-    containerColor = MaterialTheme.colorScheme.surfaceBright,
-    contentColor = MaterialTheme.colorScheme.onSurface,
-    leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledContainerColor = if (enabled) {
-        MaterialTheme.colorScheme.surfaceBright
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    },
-    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledLeadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)

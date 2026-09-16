@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Interpolatable
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
@@ -39,9 +40,11 @@ internal fun dpisSegmentedShapes(index: Int, count: Int): ListItemShapes {
 /** Workspace list rows sit on surfaceBright so they stay visible on surfaceContainer. */
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-internal fun segmentedRowColors(): ListItemColors = ListItemDefaults.segmentedColors(
+internal fun segmentedRowColors(
+    disabledContainerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+): ListItemColors = ListItemDefaults.segmentedColors(
     containerColor = MaterialTheme.colorScheme.surfaceBright,
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
+    disabledContainerColor = disabledContainerColor,
     contentColor = MaterialTheme.colorScheme.onSurface,
     leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
     supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,

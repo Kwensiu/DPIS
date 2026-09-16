@@ -37,11 +37,26 @@ internal fun successButtonColors(): ButtonColors {
 @Composable
 internal fun warningButtonColors(): ButtonColors {
     val semantic = LocalSemanticColors.current
+    return ButtonDefaults.buttonColors(
+        containerColor = semantic.warningContainer,
+        contentColor = semantic.onWarningContainer,
+    )
+}
+
+@Composable
+internal fun outlinedWarningButtonColors(): ButtonColors {
+    val semantic = LocalSemanticColors.current
     return ButtonDefaults.outlinedButtonColors(
         containerColor = semantic.warningContainer,
         contentColor = semantic.onWarningContainer,
     )
 }
+
+@Composable
+internal fun dangerButtonColors(): ButtonColors = ButtonDefaults.buttonColors(
+    containerColor = MaterialTheme.colorScheme.errorContainer,
+    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+)
 
 /** Material button with the product's discrete confirmation feedback. */
 @Composable

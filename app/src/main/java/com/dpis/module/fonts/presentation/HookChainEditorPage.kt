@@ -406,13 +406,13 @@ private fun FontDomainsPage(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = HookChainPageTokens.NoticeShape,
-                    color = colorResource(R.color.font_hook_domain_notice_container)
+                    color = LocalSemanticColors.current.warningContainer
                 ) {
                     Text(
                         stringResource(R.string.dialog_font_hook_domains_font_disabled_hint),
                         modifier = Modifier.padding(HookChainPageTokens.NoticePadding),
                         style = MaterialTheme.typography.bodySmall,
-                        color = colorResource(R.color.font_hook_domain_notice_text)
+                        color = LocalSemanticColors.current.onWarningContainer
                     )
                 }
             }
@@ -512,14 +512,12 @@ private fun HookDomainOptionRow(
                 if (!enabled) drawRect(disabledScrim)
             },
         shapes = shapes,
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ).copy(
+        colors = segmentedRowColors(
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ).copy(
             disabledContentColor = MaterialTheme.colorScheme.onSurface,
             disabledSupportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledTrailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            disabledTrailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
         verticalAlignment = Alignment.CenterVertically,
         content = { Text(title) },

@@ -3,7 +3,7 @@ package com.dpis.module.ui.dialog
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.warningButtonColors
+import com.dpis.module.ui.compose.outlinedWarningButtonColors
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -170,7 +170,7 @@ internal fun ConfirmDialogContent(
                 onClick = confirmAction,
                 modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape,
-                colors = warningButtonColors(),
+                colors = outlinedWarningButtonColors(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 Text(text = confirmLabel ?: androidx.compose.ui.res.stringResource(

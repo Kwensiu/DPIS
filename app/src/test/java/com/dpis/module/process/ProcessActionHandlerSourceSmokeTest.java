@@ -96,7 +96,7 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertTrue(dialog.contains("R.dimen.dialog_body_spacing"));
         assertTrue(dialog.contains("R.dimen.dialog_action_spacing_top"));
         assertTrue(dialog.contains("R.dimen.dialog_action_spacing_between"));
-        assertTrue(dialog.contains("warningButtonColors()"));
+        assertTrue(dialog.contains("outlinedWarningButtonColors()"));
         assertFalse(dialog.contains("R.color.dpis_warn_container"));
     }
 

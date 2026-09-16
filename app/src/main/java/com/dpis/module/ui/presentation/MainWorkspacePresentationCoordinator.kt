@@ -40,7 +40,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -433,8 +432,8 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                         )
                         Surface(
                             shape = AppConfigSheetUiTokens.WizardHintShape,
-                            color = colorResource(R.color.app_config_wizard_bubble_container),
-                            contentColor = colorResource(R.color.app_config_wizard_bubble_text)
+                            color = MaterialTheme.colorScheme.inverseSurface,
+                            contentColor = MaterialTheme.colorScheme.inverseOnSurface
                         ) {
                             Row(
                                 modifier = androidx.compose.ui.Modifier.padding(
