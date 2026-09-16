@@ -5,13 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.dpis.module.BuildConfig
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.about.presentation.installAbout
 import com.dpis.module.updates.GitHubReleaseNotesFetcher
 import com.dpis.module.updates.ReleaseNotesCacheStore
@@ -224,10 +222,6 @@ class AboutActivity : LocalizedActivity() {
 
         override fun showToast(messageResId: Int) {
             this@AboutActivity.showToast(messageResId)
-        }
-
-        override fun applyLargeDialogWidth(dialog: AlertDialog) {
-            DialogWindowSizer.applyLargeWidth(dialog, this@AboutActivity)
         }
 
         override fun onUpdatePromptDismissed() {

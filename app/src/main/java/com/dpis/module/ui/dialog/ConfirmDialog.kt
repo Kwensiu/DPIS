@@ -1,7 +1,6 @@
 package com.dpis.module.ui.dialog
 
 import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.rememberClickAction
 import com.dpis.module.ui.compose.outlinedWarningButtonColors
 
@@ -23,19 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** Visual contract shared by ordinary phone/tablet dialogs with cancel/confirm actions. */
 internal object ConfirmDialogUiTokens {
@@ -53,7 +45,7 @@ object ConfirmDialog {
         message: CharSequence,
         onConfirm: Runnable,
         onCancel: Runnable
-    ): AlertDialog = showWithLabels(
+    ): ComposeOverlay = showWithLabels(
         activity, title, message,
         activity.getString(R.string.dialog_process_action_confirm_negative),
         activity.getString(R.string.dialog_process_action_confirm_positive),
@@ -69,45 +61,30 @@ object ConfirmDialog {
         confirmLabel: CharSequence,
         onConfirm: Runnable,
         onCancel: Runnable
-    ): AlertDialog {
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity)
-            .setView(composeView)
-            .create()
+    ): ComposeOverlay {
         var actionHandled = false
-
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                ConfirmDialogContent(
-                    title = title.toString(),
-                    message = message.toString(),
-                    cancelLabel = cancelLabel.toString(),
-                    confirmLabel = confirmLabel.toString(),
-                    onConfirm = {
+        return ComposeOverlay.show(activity) { dismiss ->
+            ConfirmAlertDialog(
+                onDismissRequest = {
+                    if (!actionHandled) {
                         actionHandled = true
-                        dialog.dismiss()
-                        onConfirm.run()
-                    },
-                    onCancel = {
-                        actionHandled = true
-                        dialog.dismiss()
+                        dismiss()
                         onCancel.run()
                     }
-                )
-            }
+                },
+                title = title.toString(),
+                message = message.toString(),
+                cancelLabel = cancelLabel.toString(),
+                confirmLabel = confirmLabel.toString(),
+                onConfirm = {
+                    if (!actionHandled) {
+                        actionHandled = true
+                        dismiss()
+                        onConfirm.run()
+                    }
+                },
+            )
         }
-        dialog.setOnCancelListener {
-            if (!actionHandled) {
-                actionHandled = true
-                onCancel.run()
-            }
-        }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        DialogWindowSizer.applyStandardWidth(dialog, activity)
-        return dialog
     }
 }
 

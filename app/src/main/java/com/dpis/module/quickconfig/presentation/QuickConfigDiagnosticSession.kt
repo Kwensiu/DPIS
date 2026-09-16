@@ -2,7 +2,6 @@ package com.dpis.module.quickconfig.presentation
 
 import android.app.Activity
 import android.content.Intent
-import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.diagnostics.AppLauncher
@@ -10,6 +9,7 @@ import com.dpis.module.diagnostics.Coordinator
 import com.dpis.module.diagnostics.ExportBuilder
 import com.dpis.module.diagnostics.ExportBuilder.DiagnosticPackage
 import com.dpis.module.diagnostics.PackagingDialog
+import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.diagnostics.PackageActions
 import com.dpis.module.diagnostics.ResultSheet
 import com.dpis.module.diagnostics.presentation.LogGate
@@ -35,7 +35,7 @@ internal class QuickConfigDiagnosticSession(
     private var resumed = false
     private var pendingResult: Coordinator.Result? = null
     private var pendingPackage: DiagnosticPackage? = null
-    private var packagingDialog: AlertDialog? = null
+    private var packagingDialog: ComposeOverlay? = null
 
     fun onResume() {
         resumed = true

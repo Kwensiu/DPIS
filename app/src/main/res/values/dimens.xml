@@ -359,11 +359,6 @@
     <dimen name="dialog_action_spacing_between">8dp</dimen>
     <dimen name="dialog_footer_spacing_top">12dp</dimen>
     <dimen name="dialog_text_line_spacing">2dp</dimen>
-    <dimen name="dialog_window_margin_horizontal">16dp</dimen>
-    <dimen name="dialog_window_compact_max_width">360dp</dimen>
-    <dimen name="dialog_window_standard_max_width">420dp</dimen>
-    <dimen name="dialog_window_large_max_width">560dp</dimen>
-    <dimen name="dialog_window_configuration_max_width">520dp</dimen>
     <dimen name="dialog_status_icon_size">36dp</dimen>
     <dimen name="dialog_status_icon_padding">8dp</dimen>
     <dimen name="dialog_button_corner_radius">18dp</dimen>

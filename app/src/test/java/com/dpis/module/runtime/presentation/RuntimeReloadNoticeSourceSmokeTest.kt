@@ -16,9 +16,9 @@ class RuntimeReloadNoticeSourceSmokeTest {
         assertTrue(advisor.contains(".commit()"))
         assertTrue(coordinator.contains("ModuleRuntimeReloadAdvisor.markReloadAdviceShown(host)"))
         assertTrue(coordinator.contains("if (!host.isChangingConfigurations)"))
-        assertTrue(dialog.contains("dialog.setOnDismissListener { onDismissed.run() }"))
-        assertTrue(dialog.contains("dialog.setCancelable(true)"))
-        assertTrue(dialog.contains("dialog.setCanceledOnTouchOutside(true)"))
+        assertTrue(dialog.contains("overlay.setOnDismissListener(onDismissed)"))
+        assertTrue(dialog.contains("ComposeOverlay.show(activity)"))
+        assertTrue(dialog.contains("ModalDialog(onDismissRequest = dismiss)"))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

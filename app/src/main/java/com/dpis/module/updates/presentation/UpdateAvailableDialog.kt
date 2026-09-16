@@ -1,7 +1,7 @@
 package com.dpis.module.updates.presentation
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -37,8 +37,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -47,9 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.ModalDialog
+import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.updates.toReleaseNotesAnnotatedString
 import com.dpis.module.updates.RELEASE_NOTES_QUOTE_TAG
 
@@ -68,25 +66,40 @@ object UpdateAvailableDialog {
     // TODO: Migrate after download progress is lifted from the mutable DialogHandle API.
     @JvmStatic
     fun create(activity: Activity, title: CharSequence, message: CharSequence): DialogHandle {
-        val view = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
-        val handle = DialogHandle(dialog)
-        view.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                UpdateDialogContent(title.toString(), message.toString(), handle.state,
-                    { handle.primaryAction.run() }, { handle.cancelAction.run() })
-            }
-        }
-        dialog.setCanceledOnTouchOutside(true)
-        return handle
+        return DialogHandle(activity, title.toString(), message.toString())
     }
 
-    class DialogHandle internal constructor(val dialog: AlertDialog) {
+    class DialogHandle internal constructor(
+        activity: Activity,
+        title: String,
+        message: String,
+    ) {
+        val context: Context = activity
         internal var state by mutableStateOf(UpdateDialogState())
         internal var primaryAction: Runnable = Runnable {}
-        internal var cancelAction: Runnable = Runnable { dialog.dismiss() }
+        internal var cancelAction: Runnable = Runnable { dismiss() }
+        private var visible by mutableStateOf(false)
+        private var allowCancel by mutableStateOf(true)
+        private val overlay = ComposeOverlay.show(activity) { dismiss ->
+            if (visible) {
+                ModalDialog(
+                    onDismissRequest = { if (allowCancel) dismiss() },
+                    properties = DialogProperties(
+                        usePlatformDefaultWidth = false,
+                        dismissOnBackPress = allowCancel,
+                        dismissOnClickOutside = allowCancel,
+                    ),
+                ) {
+                    UpdateDialogContent(
+                        title,
+                        message,
+                        state,
+                        { primaryAction.run() },
+                        { cancelAction.run() },
+                    )
+                }
+            }
+        }
 
         fun setReleaseNotes(value: CharSequence?) {
             state = state.copy(releaseNotes = (value ?: "").toReleaseNotesAnnotatedString())
@@ -112,15 +125,16 @@ object UpdateAvailableDialog {
             state = state.copy(progressVisible = true, progressIndeterminate = indeterminate,
                 progress = progress, progressText = text.toString())
         }
-        fun show() = dialog.show()
-        fun dismiss() = dialog.dismiss()
-        fun isShowing(): Boolean = dialog.isShowing
+        fun show() {
+            visible = true
+        }
+        fun dismiss() = overlay.dismiss()
+        fun isShowing(): Boolean = visible && overlay.isShowing()
         fun setCancelable(cancelable: Boolean) {
-            dialog.setCancelable(cancelable)
-            dialog.setCanceledOnTouchOutside(cancelable)
+            allowCancel = cancelable
         }
         fun setOnDismissListener(listener: Runnable) {
-            dialog.setOnDismissListener { listener.run() }
+            overlay.setOnDismissListener(listener)
         }
     }
 }

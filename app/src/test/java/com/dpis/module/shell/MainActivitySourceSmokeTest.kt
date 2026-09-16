@@ -1,7 +1,6 @@
 package com.dpis.module.shell
 
 import com.dpis.module.SourceSmokeTestPaths
-import com.dpis.module.ui.DialogWindowSizer
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -484,7 +483,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(launch.contains("fun maybeShowModuleRuntimeReloadAdvice(): Boolean"))
         assertTrue(launch.contains("ModuleRuntimeReloadNoticeCoordinator(activity)"))
         assertTrue(launch.contains("maybeShow { continueStartupDialogs() }"))
-        assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"))
+        assertTrue(runtimeLayout.contains("ComposeOverlay.show(activity)"))
+        assertTrue(runtimeLayout.contains("ModalDialog(onDismissRequest = dismiss)"))
         assertFalse(source.contains("ModuleRuntimeReloader.softReloadAsync("))
         assertFalse(source.contains("module_runtime_reload_now_button"))
         assertFalse(source.contains("module_runtime_reload_later_button"))
@@ -536,10 +536,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(updateSession.contains("startupDisclaimerStore(activity)"))
         assertTrue(updateSession.contains("store.isAccepted"))
         assertTrue(updateSession.contains("store.setAccepted(true)"))
-        assertTrue(updateSession.contains("fun applyLargeDialogWidth("))
-        assertTrue(
-            updateSession.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)")
-        )
+        assertFalse(updateSession.contains("fun applyLargeDialogWidth("))
+        assertFalse(updateSession.contains("DialogWindowSizer"))
         val disclaimerBlock = updateSession.substring(
             updateSession.indexOf("fun maybeShowStartupDisclaimerDialog(): Boolean"),
             updateSession.indexOf("fun maybeCheckForUpdatesOnStartup()")
@@ -548,69 +546,23 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun dialogWindowSizerUsesResponsivePresetConstraints() {
-        val source = read(
-            "src/main/java/com/dpis/module/ui/DialogWindowSizer.java"
-        )
-        val dimens = read("src/main/res/values/dimens.xml")
-        val integers = read("src/main/res/values/integers.xml")
+    fun javaDialogHostsUseComposeOverlayAndModalDialogWidth() {
+        val overlay = read("src/main/java/com/dpis/module/ui/dialog/ComposeOverlay.kt")
+        val modal = read("src/main/java/com/dpis/module/ui/dialog/ModalDialog.kt")
+        val confirm = read("src/main/java/com/dpis/module/ui/dialog/ConfirmDialog.kt")
+        val styles = read("src/main/res/values/styles.xml")
 
-        assertTrue(
-            source.contains(
-                "applyCompactWidth(AlertDialog dialog, Context context)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "applyStandardWidth(AlertDialog dialog, Context context)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "applyLargeWidth(AlertDialog dialog, Context context)"
-            )
-        )
-        assertTrue(source.contains("dialog_window_margin_horizontal"))
-        assertTrue(source.contains("resolvePreset(context, preset)"))
-        assertTrue(
-            source.contains("R.integer.dialog_window_large_min_width_dp")
-        )
-        assertTrue(source.contains("? Preset.STANDARD"))
-        assertTrue(source.contains("calculateWindowWidth(screenWidth"))
-        assertTrue(source.contains("screenWidth - horizontalMargin * 2"))
-        assertTrue(
-            source.contains(
-                "COMPACT(R.dimen.dialog_window_compact_max_width, 0.88f)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "STANDARD(R.dimen.dialog_window_standard_max_width, 0.90f)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "LARGE(R.dimen.dialog_window_large_max_width, 0.92f)"
-            )
-        )
-        assertTrue(dimens.contains("dialog_window_margin_horizontal\">16dp"))
-        assertTrue(dimens.contains("dialog_window_compact_max_width\">360dp"))
-        assertTrue(dimens.contains("dialog_window_standard_max_width\">420dp"))
-        assertTrue(dimens.contains("dialog_window_large_max_width\">560dp"))
-        assertTrue(integers.contains("dialog_window_large_min_width_dp\">600"))
-    }
-
-    @Test
-    fun dialogWindowSizerTreatsHorizontalMarginAsPerSideInset() {
-        assertTrue(
-            DialogWindowSizer.calculateWindowWidth(360, 16, 420, 0.90f) == 324
-        )
-        assertTrue(
-            DialogWindowSizer.calculateWindowWidth(1000, 16, 560, 0.92f) == 560
-        )
-        assertTrue(
-            DialogWindowSizer.calculateWindowWidth(24, 16, 420, 0.90f) == 0
-        )
+        assertTrue(overlay.contains("class ComposeOverlay"))
+        assertTrue(overlay.contains("ComposeDesignSystem(darkTheme = resolveDarkTheme())"))
+        assertTrue(modal.contains("usePlatformDefaultWidth = false"))
+        assertTrue(modal.contains(".widthIn(max = 560.dp)"))
+        assertTrue(confirm.contains("ComposeOverlay.show(activity)"))
+        assertTrue(confirm.contains("ConfirmAlertDialog("))
+        assertFalse(confirm.contains("MaterialAlertDialogBuilder"))
+        assertFalse(styles.contains("Widget.Dpis"))
+        assertTrue(styles.contains("name=\"Theme.Dpis\""))
+        assertTrue(styles.contains("name=\"Theme.Dpis.QuickConfig\""))
+        assertTrue(styles.contains("name=\"Theme.Dpis.Ingest\""))
     }
 
     @Test

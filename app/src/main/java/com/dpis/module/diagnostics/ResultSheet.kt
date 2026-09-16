@@ -2,7 +2,6 @@ package com.dpis.module.diagnostics
 
 import android.app.Activity
 import android.text.format.Formatter
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,14 +28,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
+import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.ModalDialog
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 /** Compose-owned diagnostic result sheet; package creation and file actions remain host-owned. */
 class ResultSheet(
@@ -205,24 +205,17 @@ internal fun FeedbackDiagnosticResultContent(
 
 /** Shared Compose progress dialog used while the diagnostic ZIP is being built. */
 object PackagingDialog {
-    // TODO: Migrate after packaging progress no longer requires an externally mutable AlertDialog.
-    fun show(activity: Activity): AlertDialog {
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+    fun show(activity: Activity): ComposeOverlay = ComposeOverlay.show(activity) { _ ->
+        ModalDialog(
+            onDismissRequest = {},
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+            ),
+        ) {
+            FeedbackDiagnosticPackagingContent()
         }
-        val dialog = MaterialAlertDialogBuilder(activity)
-            .setView(composeView)
-            .setCancelable(false)
-            .create()
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                FeedbackDiagnosticPackagingContent()
-            }
-        }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        DialogWindowSizer.applyStandardWidth(dialog, activity)
-        return dialog
     }
 }
 

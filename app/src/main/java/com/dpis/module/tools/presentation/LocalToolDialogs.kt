@@ -1,7 +1,6 @@
 package com.dpis.module.tools.presentation
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,8 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -27,28 +24,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.compose.*
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.ModalDialog
 
 object ModuleRuntimeReloadComposeDialog {
-    fun show(activity: Activity, onDismissed: Runnable): AlertDialog {
-        val view = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
-        view.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                RuntimeReloadNoticeContent(dialog::dismiss)
+    fun show(activity: Activity, onDismissed: Runnable): ComposeOverlay {
+        val overlay = ComposeOverlay.show(activity) { dismiss ->
+            ModalDialog(onDismissRequest = dismiss) {
+                RuntimeReloadNoticeContent(dismiss)
             }
         }
-        dialog.setOnDismissListener { onDismissed.run() }
-        dialog.setCancelable(true)
-        dialog.setCanceledOnTouchOutside(true)
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        DialogWindowSizer.applyStandardWidth(dialog, activity)
-        return dialog
+        overlay.setOnDismissListener(onDismissed)
+        return overlay
     }
 }
 

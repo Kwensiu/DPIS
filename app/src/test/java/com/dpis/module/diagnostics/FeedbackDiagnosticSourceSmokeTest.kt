@@ -448,6 +448,8 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(resultSheet.contains("R.string.feedback_diagnostic_save_action"))
         assertTrue(resultSheet.contains("R.string.feedback_diagnostic_share_action"))
         assertTrue(resultSheet.contains("PackagingDialog"))
+        assertTrue(resultSheet.contains("ComposeOverlay.show(activity)"))
+        assertFalse(resultSheet.contains("MaterialAlertDialogBuilder"))
     }
 
     companion object {

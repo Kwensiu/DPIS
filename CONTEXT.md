@@ -82,10 +82,14 @@ Builder export are not the UI color source.
 - Wear maps the same generated scheme into Wear Material3. Do not hard-code
   black.
 - XML `Theme.Dpis` (`Theme.Material3.DayNight.NoActionBar`) is window chrome
-  only: transparent system bars and the Activity background. New UI colors
-  come from `MaterialTheme.colorScheme`. Roles Material 3 does not have
-  (success, warning) belong in one CompositionLocal derived from that scheme,
-  not new `R.color.dpis_*` reads from Compose.
+  only: transparent system bars and the Activity background. `Theme.Dpis.QuickConfig`
+  and `Theme.Dpis.Ingest` stay as Activity window themes. New UI colors come
+  from `MaterialTheme.colorScheme`. Roles Material 3 does not have (success,
+  warning) belong in one CompositionLocal derived from that scheme, not
+  `R.color.dpis_*` resources.
+- Java `show()` dialogs attach a `ComposeOverlay` composition owner and render
+  through `ModalDialog`. Do not add `MaterialAlertDialogBuilder` or
+  `DialogWindowSizer`. Bottom sheets may still use `BottomSheetDialog`.
 
 Do not add another Material 3 component library or freeze a static `Color.kt`.
 

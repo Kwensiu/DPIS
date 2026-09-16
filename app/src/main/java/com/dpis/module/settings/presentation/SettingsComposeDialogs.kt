@@ -6,7 +6,6 @@ import com.dpis.module.ui.dialog.DialogDoneButton
 import com.dpis.module.ui.dialog.DialogTitle
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,8 +40,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -53,9 +50,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.dpis.module.R
 import com.dpis.module.ui.compose.*
-import com.dpis.module.ui.DialogWindowSizer
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.ModalDialog
 import java.util.function.Consumer
 import java.util.function.IntConsumer
 
@@ -74,14 +70,18 @@ object SettingsComposeDialogs {
         minimumPercent: Int,
         maximumPercent: Int,
         onSave: IntConsumer
-    ): AlertDialog = showDialog(activity) { dismiss ->
-        InterfaceScaleDialogContent(
-            initialPercent = initialPercent,
-            minimumPercent = minimumPercent,
-            maximumPercent = maximumPercent,
-            onCancel = dismiss,
-            onSave = { dismiss(); onSave.accept(it) }
-        )
+    ): ComposeOverlay = ComposeOverlay.show(activity) { dismiss ->
+        val boundary = rememberTextInputFocusBoundary()
+        ModalDialog(onDismissRequest = dismiss, imeFocusBoundary = boundary) {
+            InterfaceScaleDialogContent(
+                initialPercent = initialPercent,
+                minimumPercent = minimumPercent,
+                maximumPercent = maximumPercent,
+                inputFocusBoundary = boundary,
+                onCancel = dismiss,
+                onSave = { dismiss(); onSave.accept(it) }
+            )
+        }
     }
 
     @JvmStatic
@@ -90,7 +90,7 @@ object SettingsComposeDialogs {
         options: List<LanguageDialogOption>,
         selectedTag: String,
         onSelected: Consumer<String>
-    ): AlertDialog = showLanguage(activity, options, selectedTag, true, onSelected)
+    ): ComposeOverlay = showLanguage(activity, options, selectedTag, true, onSelected)
 
     /** Keeps haptic policy injectable for the planned click-feedback preference. */
     @JvmStatic
@@ -100,7 +100,7 @@ object SettingsComposeDialogs {
         selectedTag: String,
         hapticFeedbackEnabled: Boolean,
         onSelected: Consumer<String>
-    ): AlertDialog = showDialog(activity) { dismiss ->
+    ): ComposeOverlay = showDialog(activity) { dismiss ->
         LanguageDialogContent(
             options = options,
             selectedTag = selectedTag,
@@ -119,7 +119,7 @@ object SettingsComposeDialogs {
         activity: Activity,
         onExport: Runnable,
         onImport: Runnable
-    ): AlertDialog = showDialog(activity) { dismiss ->
+    ): ComposeOverlay = showDialog(activity) { dismiss ->
         BackupActionsDialogContent(
             onExport = { dismiss(); onExport.run() },
             onImport = { dismiss(); onImport.run() },
@@ -129,20 +129,11 @@ object SettingsComposeDialogs {
 
     private fun showDialog(
         activity: Activity,
-        content: @Composable ((() -> Unit) -> Unit)
-    ): AlertDialog {
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
+        content: @Composable (dismiss: () -> Unit) -> Unit,
+    ): ComposeOverlay = ComposeOverlay.show(activity) { dismiss ->
+        ModalDialog(onDismissRequest = dismiss) {
+            content(dismiss)
         }
-        val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) { content { dialog.dismiss() } }
-        }
-        dialog.setCanceledOnTouchOutside(true)
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        DialogWindowSizer.applyLargeWidth(dialog, activity)
-        return dialog
     }
 }
 

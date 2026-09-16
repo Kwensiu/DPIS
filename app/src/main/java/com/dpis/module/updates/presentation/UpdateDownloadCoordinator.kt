@@ -248,14 +248,14 @@ class UpdateDownloadCoordinator(
     companion object {
         fun showDialogIdleState(dialogHandle: DialogHandle) {
             dialogHandle.showIdle(
-                dialogHandle.dialog.context.getString(R.string.about_update_action_download),
-                dialogHandle.dialog.context
+                dialogHandle.context.getString(R.string.about_update_action_download),
+                dialogHandle.context
                     .getString(R.string.about_update_action_cancel_dialog)
             )
         }
 
         fun showDownloadingState(dialogHandle: DialogHandle) {
-            val context = dialogHandle.dialog.context
+            val context = dialogHandle.context
             dialogHandle.showDownloading(
                 context.getString(R.string.about_update_action_cancel_download),
                 context.getString(R.string.about_update_download_progress_preparing)
@@ -277,7 +277,7 @@ class UpdateDownloadCoordinator(
             totalBytes: Long
         ) {
             dialogHandle.showProgress(
-                false, progress, dialogHandle.dialog.context.getString(
+                false, progress, dialogHandle.context.getString(
                     R.string.about_update_download_progress_with_percent,
                     progress,
                     UpdateByteFormatter.format(downloadedBytes),
@@ -291,7 +291,7 @@ class UpdateDownloadCoordinator(
             downloadedBytes: Long
         ) {
             dialogHandle.showProgress(
-                true, 0, dialogHandle.dialog.context.getString(
+                true, 0, dialogHandle.context.getString(
                     R.string.about_update_download_progress_without_total,
                     UpdateByteFormatter.format(downloadedBytes)
                 )

@@ -99,9 +99,10 @@ Do these as separate, complete cuts. Do not mix a package rename with a
 Compose rewrite, and do not grow `MainActivity` while extracting a host.
 
 1. **Appearance chrome, bottom-up.** Lock `CONTEXT.md` **Appearance**, then
-   shared chrome in `ui/`, then feature screens. Do not restyle Settings or
-   the editor to introduce the contract. Do not mix this with a package
-   rename.
+   shared chrome in `ui/`, then feature screens. Java `show()` dialogs use
+   `ComposeOverlay` + `ModalDialog`. XML `Theme.Dpis*` is window chrome only.
+   Do not restyle Settings or the editor to introduce the contract. Do not
+   mix this with a package rename.
 2. **Align feature Compose packages with their directories.** Files under
    `about/presentation`, `settings/presentation`, `applist/presentation`,
    `appconfig/presentation`, `fonts/presentation`, `diagnostics/presentation`,

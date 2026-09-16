@@ -91,7 +91,9 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertTrue(confirm.contains("R.string.dialog_process_action_confirm_message"));
         assertFalse(source.contains("R.layout.dialog_process_action_confirm"));
         assertTrue(dialog.contains("fun ConfirmDialogContent("));
-        assertTrue(dialog.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"));
+        assertTrue(dialog.contains("ComposeOverlay.show(activity)"));
+        assertTrue(dialog.contains("ConfirmAlertDialog("));
+        assertFalse(dialog.contains("MaterialAlertDialogBuilder"));
         assertTrue(dialog.contains("R.dimen.dialog_surface_padding_horizontal"));
         assertTrue(dialog.contains("R.dimen.dialog_body_spacing"));
         assertTrue(dialog.contains("R.dimen.dialog_action_spacing_top"));

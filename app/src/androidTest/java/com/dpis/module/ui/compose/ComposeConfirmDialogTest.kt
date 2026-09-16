@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.AnnotatedString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ConfirmDialog
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -58,7 +59,7 @@ class ComposeConfirmDialogTest {
         var confirmed = false
         composeRule.activityRule.scenario.onActivity { activity ->
             activity.setTheme(R.style.Theme_Dpis)
-            ComposeConfirmDialog.show(
+            ConfirmDialog.show(
                 activity = activity,
                 title = "Confirm host",
                 message = "Hosted Compose content",

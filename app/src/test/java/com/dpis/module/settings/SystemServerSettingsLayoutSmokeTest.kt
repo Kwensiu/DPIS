@@ -130,7 +130,7 @@ class SystemServerSettingsLayoutSmokeTest {
             "onConfirmImport = onConfirmImport",
         )
         source.assertNotContainsAll("android.os.Process.killProcess(android.os.Process.myPid())", "RootCommandRunner.run(\"reboot\")")
-        dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "DialogWindowSizer.applyLargeWidth(dialog, activity)")
+        dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "ComposeOverlay.show(activity)", "ModalDialog(onDismissRequest = dismiss)")
         dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", ".weight(1f, fill = false)", "R.dimen.dialog_footer_spacing_top")
         read("src/main/java/com/dpis/module/DpisApplication.kt").assertContainsAll(
             "fun reloadConfigStore()",
@@ -145,16 +145,14 @@ class SystemServerSettingsLayoutSmokeTest {
     }
 
     @Test
-    fun appConfigDialogUsesCompactProcessButtonStyles() {
+    fun xmlThemeCatalogIsWindowChromeOnly() {
         val styles = read("src/main/res/values/styles.xml")
         styles.assertContainsAll(
-            "name=\"Widget.Dpis.DialogActionButton.Process\"", "name=\"Widget.Dpis.AppIdentityTitle\"",
-            "name=\"Widget.Dpis.AppIdentitySecondaryText\"", "name=\"Widget.Dpis.AppIdentityStatusText\"",
-            "@dimen/dialog_button_corner_radius", "@dimen/dialog_option_button_min_height",
-            "@dimen/dialog_option_button_corner_radius", "<item name=\"android:paddingStart\">4dp</item>",
-            "<item name=\"android:minWidth\">0dp</item>", "<item name=\"android:singleLine\">true</item>",
-            "<item name=\"android:letterSpacing\">0</item>",
+            "name=\"Theme.Dpis\"",
+            "name=\"Theme.Dpis.QuickConfig\"",
+            "name=\"Theme.Dpis.Ingest\"",
         )
+        styles.assertNotContainsAll("Widget.Dpis", "dpis_stop_container", "dpis_warn_container")
         read("src/main/res/values/strings.xml").assertContainsAll("<string name=\"scope_remove_button\">Remove</string>")
     }
 
