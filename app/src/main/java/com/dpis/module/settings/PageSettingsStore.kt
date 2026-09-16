@@ -1,6 +1,7 @@
 package com.dpis.module.settings
 
 import android.content.Context
+import android.content.SharedPreferences
 
 /** Persists page navigation and home presentation preferences independently of theme settings. */
 object PageSettingsStore {
@@ -35,15 +36,19 @@ object PageSettingsStore {
     }
 
     @JvmStatic
-    fun isPredictiveBackEnabled(context: Context): Boolean = resolvePredictiveBackEnabled(
-        context.getSharedPreferences(NAME, 0).let { prefs ->
-            if (prefs.contains(PREDICTIVE_BACK)) prefs.getBoolean(PREDICTIVE_BACK, true) else null
-        },
-    )
+    fun isPredictiveBackEnabled(context: Context): Boolean =
+        isPredictiveBackEnabled(context.getSharedPreferences(NAME, 0))
+
+    fun isPredictiveBackEnabled(prefs: SharedPreferences): Boolean =
+        resolvePredictiveBackEnabled(storedFlag(prefs, PREDICTIVE_BACK))
 
     @JvmStatic
     fun setPredictiveBackEnabled(context: Context, value: Boolean) {
-        context.getSharedPreferences(NAME, 0).edit().putBoolean(PREDICTIVE_BACK, value).commit()
+        setPredictiveBackEnabled(context.getSharedPreferences(NAME, 0), value)
+    }
+
+    fun setPredictiveBackEnabled(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit().putBoolean(PREDICTIVE_BACK, value).commit()
     }
 
     @JvmStatic
@@ -51,25 +56,26 @@ object PageSettingsStore {
 
     /** Controls whether Home derives activation from the currently observable module signals. */
     @JvmStatic
-    fun isHomeActivationDetectionEnabled(context: Context): Boolean = resolveHomeActivationDetectionEnabled(
-        context.getSharedPreferences(NAME, 0).let { prefs ->
-            if (prefs.contains(HOME_ACTIVATION_DETECTION)) {
-                prefs.getBoolean(HOME_ACTIVATION_DETECTION, true)
-            } else {
-                null
-            }
-        },
-    )
+    fun isHomeActivationDetectionEnabled(context: Context): Boolean =
+        isHomeActivationDetectionEnabled(context.getSharedPreferences(NAME, 0))
+
+    fun isHomeActivationDetectionEnabled(prefs: SharedPreferences): Boolean =
+        resolveHomeActivationDetectionEnabled(storedFlag(prefs, HOME_ACTIVATION_DETECTION))
 
     @JvmStatic
     fun setHomeActivationDetectionEnabled(context: Context, value: Boolean) {
-        context.getSharedPreferences(NAME, 0).edit()
-            .putBoolean(HOME_ACTIVATION_DETECTION, value)
-            .apply()
+        setHomeActivationDetectionEnabled(context.getSharedPreferences(NAME, 0), value)
+    }
+
+    fun setHomeActivationDetectionEnabled(prefs: SharedPreferences, value: Boolean) {
+        prefs.edit().putBoolean(HOME_ACTIVATION_DETECTION, value).apply()
     }
 
     @JvmStatic
     fun resolveHomeActivationDetectionEnabled(stored: Boolean?): Boolean = stored ?: true
+
+    private fun storedFlag(prefs: SharedPreferences, key: String): Boolean? =
+        if (prefs.contains(key)) prefs.getBoolean(key, true) else null
 
     @JvmStatic fun getWorkspaceOrder(context: Context): List<String> = context.getSharedPreferences(NAME, 0)
         .getString(ORDER, null)?.split(',')?.filter(validPages::contains)?.distinct().orEmpty()

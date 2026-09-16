@@ -91,6 +91,27 @@ class SystemFontScaleToolPresenterTest {
         assertEquals(0, gateway.writes)
     }
 
+    @Test
+    fun applyAndRestoreDoNothingUntilStateExists() {
+        val gateway = FakeGateway(percent = 115)
+        val presenter = SystemFontScaleToolPresenter(gateway, null)
+        presenter.apply()
+        presenter.restoreDefault()
+        assertEquals(0, gateway.writes)
+        assertEquals(null, presenter.state)
+    }
+
+    @Test
+    fun failedWriteWithNoListenerDoesNotThrow() {
+        val gateway = FakeGateway(percent = 100, writeSucceeds = false)
+        val presenter = SystemFontScaleToolPresenter(gateway, null)
+        presenter.refresh()
+        presenter.selectPendingPercent(140)
+        presenter.apply()
+        assertEquals(1, gateway.writes)
+        assertEquals(140, presenter.state?.pendingPercent)
+    }
+
     private class FakeGateway(
         var canWriteValue: Boolean = true,
         var percent: Int? = 100,

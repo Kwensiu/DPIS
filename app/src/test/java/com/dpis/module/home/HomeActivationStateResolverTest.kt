@@ -49,4 +49,11 @@ class HomeActivationStateResolverTest {
     fun missingLibXposedServiceIsNotModern() {
         assertFalse(HomeActivationStateResolver.hasModernLibXposedService(null))
     }
+
+    @Test
+    fun libXposedApiReadTreatsRuntimeFailureAsMissing() {
+        assertFalse(HomeActivationStateResolver.isModernLibXposedServiceApi { throw RuntimeException("dead service") })
+        assertFalse(HomeActivationStateResolver.isModernLibXposedServiceApi { 100 })
+        assertTrue(HomeActivationStateResolver.isModernLibXposedServiceApi { 101 })
+    }
 }

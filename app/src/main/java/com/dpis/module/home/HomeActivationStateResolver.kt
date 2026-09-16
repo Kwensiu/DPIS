@@ -18,15 +18,13 @@ object HomeActivationStateResolver {
     ): Boolean = !detectionEnabled || isActivatedForHome(hasModernLibXposedService, selfLoaded)
 
     @JvmStatic
-    fun hasModernLibXposedService(service: XposedService?): Boolean {
-        if (service == null) {
-            return false
-        }
-        return try {
-            isModernLibXposedServiceApi(service.apiVersion)
-        } catch (_: RuntimeException) {
-            false
-        }
+    fun hasModernLibXposedService(service: XposedService?): Boolean =
+        service != null && isModernLibXposedServiceApi { service.apiVersion }
+
+    internal fun isModernLibXposedServiceApi(readApiVersion: () -> Int): Boolean = try {
+        isModernLibXposedServiceApi(readApiVersion())
+    } catch (_: RuntimeException) {
+        false
     }
 
     @JvmStatic
