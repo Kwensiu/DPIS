@@ -33,6 +33,7 @@ import com.dpis.module.settings.AppLocaleManager
 
 import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.LauncherIconVisibilityStore
+import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.SafeCacheCleaner
 import com.dpis.module.hooks.SystemFrameworkScope
 import com.dpis.module.hooks.SystemHookState
@@ -131,6 +132,7 @@ class SystemServerSettingsPageController(
             available && store!!.isSystemServerHooksEnabled(),
             available && store!!.isSystemServerSafeModeEnabled(),
             available && store!!.isGlobalLogEnabled(),
+            PageSettingsStore.isHomeActivationDetectionEnabled(activity),
             launcherIconVisibilityStore.isHidden(), interfaceScaleStore.percent,
             clearCacheInProgress, lastCacheUsage,
             getString(AppLocaleManager.selectedLabelResId(activity)),
@@ -169,6 +171,11 @@ class SystemServerSettingsPageController(
 
     fun setGlobalLogFromPresentation(enabled: Boolean) {
         onGlobalLogChanged(null, enabled)
+    }
+
+    fun setHomeActivationDetectionFromPresentation(enabled: Boolean) {
+        PageSettingsStore.setHomeActivationDetectionEnabled(activity, enabled)
+        publishPresentationState()
     }
 
     fun setLauncherHiddenFromPresentation(hidden: Boolean) {

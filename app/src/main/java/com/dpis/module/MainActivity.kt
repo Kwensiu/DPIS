@@ -9,7 +9,7 @@ import com.dpis.module.applist.AppWorkspaceScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.home.presentation.HomeWorkspaceSession
-import com.dpis.module.navigation.SecondaryActivityNavigator
+import com.dpis.module.ui.presentation.SecondaryActivityNavigator
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
 import com.dpis.module.settings.LocalizedActivity

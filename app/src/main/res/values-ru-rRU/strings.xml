@@ -354,8 +354,6 @@
     <string name="system_mode_requires_system_scope_hint">Системный режим отключен без системного хука</string>
     <string name="system_safe_mode_label">Безопасный режим</string>
     <string name="system_safe_mode_hint">Ограничивает выполнение операций с высоким уровнем риска для уменьшения задержек и мерцания.</string>
-    <string name="system_safe_mode_disable_confirm_title">Отключить безопасный режим</string>
-    <string name="system_safe_mode_disable_confirm_message">Отключение безопасного режима включает все цели обработчика system_server. Это может увеличить задержку, мерцание или нестабильность. Продолжить?</string>
     <string name="global_log_enabled_label">Журналы диагностики</string>
     <string name="global_log_enabled_hint">Ведите диагностические журналы для отладки.</string>
     <string name="font_debug_overlay_label">Отладка наложения</string>
@@ -438,7 +436,6 @@
     <string name="config_backup_import_invalid">Файл резервной копии недействителен или не поддерживается</string>
     <string name="config_backup_picker_failed">Не удается открыть окно выбора файлов</string>
     <string name="settings_hide_launcher_icon_label">Скрыть значок программы запуска</string>
-    <string name="settings_hide_launcher_icon_hint">Вместо этого воспользуйтесь настройками модуля LSPosed.</string>
     <string name="settings_hide_launcher_icon_confirm_title">Скрыть значок программы запуска?</string>
     <string name="settings_hide_launcher_icon_confirm_message">Значок скрыт, но по-прежнему доступен через LSPosed. Продолжить?</string>
     <string name="settings_hide_launcher_icon_apply_failed">Не удалось скрыть значок панели запуска.</string>

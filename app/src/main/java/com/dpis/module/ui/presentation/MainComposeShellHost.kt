@@ -27,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
 import com.dpis.module.MainActivity
 import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
 import com.dpis.module.ui.SecondaryDestination
 import androidx.core.view.ViewCompat
@@ -300,7 +299,7 @@ class MainComposeShellHost(
     )
 
     private fun wrappedConfigurationContext(): android.content.Context {
-        return AppUiScaleManager.wrap(AppLocaleManager.wrap(activity))
+        return wrapInterfaceScaleContext(AppLocaleManager.wrap(activity))
     }
 }
 

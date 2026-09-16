@@ -56,7 +56,7 @@ class ComposeShellSourceSmokeTest {
             "src/main/java/com/dpis/module/ui/presentation/SecondaryPageHost.kt"
         )
         val secondaryNavigator = read(
-            "src/main/java/com/dpis/module/navigation/SecondaryActivityNavigator.kt"
+            "src/main/java/com/dpis/module/ui/presentation/SecondaryActivityNavigator.kt"
         )
         val mainShellHost = read(
             "src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt"
@@ -71,7 +71,7 @@ class ComposeShellSourceSmokeTest {
         assertFalse(secondaryHost.contains("AppUiScaleManager.wrap"))
         assertFalse(secondaryHost.contains("configurationEpoch"))
         assertTrue(mainShellHost.contains("ProvideSecondaryNavigation(secondaryNavigation)"))
-        assertTrue(mainShellHost.contains("AppUiScaleManager.wrap(AppLocaleManager.wrap(activity))"))
+        assertTrue(mainShellHost.contains("wrapInterfaceScaleContext(AppLocaleManager.wrap(activity))"))
         assertTrue(mainShellHost.contains("fun applyConfigurationInPlace()"))
         assertTrue(mainShellHost.contains("fun applyAppearanceInPlace()"))
         assertFalse(mainShellHost.contains("secondaryPages.Overlay()"))

@@ -933,7 +933,7 @@ fun ThemeSettingsRoute(
             themeColor = themeColor,
             paletteStyle = paletteStyle,
             colorSpecification = colorSpecification,
-            interfaceScalePercent = AppUiScaleManager.getScalePercent(context),
+            interfaceScalePercent = InterfaceScaleStore(context).percent,
             onModeSelected = { selectedMode ->
                 ThemeModeStore.setMode(context, selectedMode)
                 mode = selectedMode
@@ -978,7 +978,7 @@ fun ThemeSettingsRoute(
             themeColor = themeColor,
             paletteStyle = paletteStyle,
             colorSpecification = colorSpecification,
-            interfaceScalePercent = AppUiScaleManager.getScalePercent(context),
+            interfaceScalePercent = InterfaceScaleStore(context).percent,
             onModeSelected = { selectedMode ->
                 ThemeModeStore.setMode(context, selectedMode)
                 mode = selectedMode

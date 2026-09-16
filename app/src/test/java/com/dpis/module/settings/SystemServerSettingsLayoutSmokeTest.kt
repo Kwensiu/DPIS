@@ -16,7 +16,7 @@ class SystemServerSettingsLayoutSmokeTest {
             "R.string.settings_section_other",
             "R.string.settings_section_about",
         )
-        assertInOrder(content, "R.string.settings_section_theme", "R.string.settings_language_label")
+        assertInOrder(content, "R.string.settings_theme_settings_title", "R.string.settings_hide_launcher_icon_label", "R.string.settings_language_label")
         assertInOrder(content, "R.string.settings_section_other", "R.string.settings_config_backup_label")
         assertInOrder(content, "R.string.settings_section_about", "R.string.settings_about_label", "R.string.settings_donate_label")
     }
@@ -42,7 +42,6 @@ class SystemServerSettingsLayoutSmokeTest {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val session = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceSession.kt")
         val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
-        val confirms = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt")
         session.assertContainsAll(
             "SecondaryDestination.Experimental",
             "SecondaryDestination.Donate",
@@ -62,6 +61,7 @@ class SystemServerSettingsLayoutSmokeTest {
             "ComponentName(",
             "MainActivity::class.java.name + \"Launcher\"",
             "RuntimeDebugPropertySyncer.publishAsync(",
+            "PageSettingsStore.setHomeActivationDetectionEnabled(activity, enabled)",
             "handle.update(",
         )
         content.assertContainsAll(
@@ -70,16 +70,19 @@ class SystemServerSettingsLayoutSmokeTest {
             "R.drawable.ic_upload_file_24",
             "R.drawable.ic_language_24",
             "R.drawable.ic_hide_image_24",
+            "R.string.settings_home_activation_detection_label",
+            "if (debugSettingsVisible)",
         )
-        confirms.assertContainsAll(
-            "R.string.system_safe_mode_disable_confirm_title",
-            "R.string.system_safe_mode_disable_confirm_message",
-            "R.string.settings_hide_launcher_icon_confirm_title",
-            "R.string.settings_hide_launcher_icon_confirm_message",
-        )
+        read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt").apply {
+            assertContainsAll("R.string.settings_hide_launcher_icon_confirm_title", "R.string.settings_hide_launcher_icon_confirm_message")
+            assertNotContainsAll("system_safe_mode_disable_confirm")
+        }
         source.assertNotContainsAll("if (!setLauncherAliasHidden(requestedHidden))", "getPackageName() + \".MainActivityLauncher\"", "R.layout.dialog_process_action_confirm", "new AlertDialog.Builder(this)")
         read("src/main/java/com/dpis/module/config/GlobalConfigStore.kt").assertContainsAll("!BuildConfig.DEBUG", "SYSTEM_SERVER_HOOKS_ENABLED, true")
-        read("src/main/res/values/strings.xml").assertContainsAll("system_safe_mode_disable_confirm_title", "system_safe_mode_disable_confirm_message")
+        read("src/main/res/values/strings.xml").apply {
+            assertContainsAll("settings_home_activation_detection_label", "settings_home_activation_detection_hint")
+            assertNotContainsAll("system_safe_mode_disable_confirm")
+        }
     }
 
     @Test
@@ -111,7 +114,6 @@ class SystemServerSettingsLayoutSmokeTest {
         )
         read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt").assertContainsAll(
             "R.string.config_backup_import_confirm_title",
-            "R.string.system_safe_mode_disable_confirm_title",
             "R.string.settings_hide_launcher_icon_confirm_title",
         )
         read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt").assertContainsAll(

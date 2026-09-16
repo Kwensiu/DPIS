@@ -33,11 +33,11 @@ public final class SystemFontScaleToolState {
         this.unavailable = unavailable;
     }
 
-    static int percentFromScale(float scale) {
+    public static int percentFromScale(float scale) {
         return Math.round(scale * 100f);
     }
 
-    static float scaleFromPercent(int percent) {
+    public static float scaleFromPercent(int percent) {
         return percent / 100f;
     }
 

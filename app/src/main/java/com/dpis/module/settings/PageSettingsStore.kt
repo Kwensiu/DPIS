@@ -9,6 +9,7 @@ object PageSettingsStore {
     private const val SHOW_EDIT = "show_home_edit_button"
     private const val START_PAGE = "default_startup_page"
     private const val PREDICTIVE_BACK = "predictive_back_enabled"
+    private const val HOME_ACTIVATION_DETECTION = "home_activation_detection_enabled"
     private const val ORDER = "workspace_order"
     private const val HIDDEN = "workspace_hidden"
     private val validPages = setOf("APP", HOME, "TEMPLATE", "TOOLS", "SETTINGS")
@@ -47,6 +48,28 @@ object PageSettingsStore {
 
     @JvmStatic
     fun resolvePredictiveBackEnabled(stored: Boolean?): Boolean = stored ?: true
+
+    /** Controls whether Home derives activation from the currently observable module signals. */
+    @JvmStatic
+    fun isHomeActivationDetectionEnabled(context: Context): Boolean = resolveHomeActivationDetectionEnabled(
+        context.getSharedPreferences(NAME, 0).let { prefs ->
+            if (prefs.contains(HOME_ACTIVATION_DETECTION)) {
+                prefs.getBoolean(HOME_ACTIVATION_DETECTION, true)
+            } else {
+                null
+            }
+        },
+    )
+
+    @JvmStatic
+    fun setHomeActivationDetectionEnabled(context: Context, value: Boolean) {
+        context.getSharedPreferences(NAME, 0).edit()
+            .putBoolean(HOME_ACTIVATION_DETECTION, value)
+            .apply()
+    }
+
+    @JvmStatic
+    fun resolveHomeActivationDetectionEnabled(stored: Boolean?): Boolean = stored ?: true
 
     @JvmStatic fun getWorkspaceOrder(context: Context): List<String> = context.getSharedPreferences(NAME, 0)
         .getString(ORDER, null)?.split(',')?.filter(validPages::contains)?.distinct().orEmpty()

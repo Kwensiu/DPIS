@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.R
+import com.dpis.module.about.presentation.OpenSourceLicenseItems
 import com.dpis.module.about.presentation.installOpenSourceLicenses
 import com.dpis.module.settings.LocalizedActivity
 

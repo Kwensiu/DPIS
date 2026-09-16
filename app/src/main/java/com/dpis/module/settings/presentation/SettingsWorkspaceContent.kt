@@ -52,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.BuildConfig
 import com.dpis.module.ui.compose.*
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.AppUiScaleManager
@@ -69,6 +70,7 @@ fun SettingsWorkspaceContent(
     onHooksChanged: (Boolean) -> Unit,
     onSafeModeChanged: (Boolean) -> Unit,
     onGlobalLogChanged: (Boolean) -> Unit,
+    onHomeActivationDetectionChanged: (Boolean) -> Unit,
     onOpenLogs: () -> Unit,
     onLauncherHiddenChanged: (Boolean) -> Unit,
     onFontDebug: () -> Unit,
@@ -85,7 +87,6 @@ fun SettingsWorkspaceContent(
     scrollStore: PageScrollPositionStore,
 ) {
     var showLanguageMenu by rememberSaveable { mutableStateOf(false) }
-    var disableSafeModeVisible by rememberSaveable { mutableStateOf(false) }
     var hideLauncherVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -117,7 +118,9 @@ fun SettingsWorkspaceContent(
     val translationContributors = TranslationContributorCatalog.forLanguage(
         AppLocaleManager.getLanguageTag(context)
     )
-    val generalItemCount = if (state?.globalLogEnabled == true) 6 else 5
+    val debugSettingsVisible = BuildConfig.DEBUG
+    val generalItemCount = 5 + (if (debugSettingsVisible) 1 else 0) +
+        (if (state?.globalLogEnabled == true) 1 else 0)
     val listState = rememberRestorableLazyListState("settings", scrollStore)
     PageScaffold(
         pageBar = PageBarBehavior.Collapsing,
@@ -140,16 +143,26 @@ fun SettingsWorkspaceContent(
                     index = 0, total = generalItemCount,
                     onHooksChanged
                 )
+                if (debugSettingsVisible) {
+                    SettingsSwitchRow(
+                        R.drawable.ic_shield_24,
+                        R.string.system_safe_mode_label,
+                        R.string.system_safe_mode_hint,
+                        state?.safeModeEnabled == true,
+                        state?.storeAvailable == true,
+                        index = 1, total = generalItemCount,
+                        onSafeModeChanged,
+                    )
+                }
                 SettingsSwitchRow(
-                    R.drawable.ic_shield_24,
-                    R.string.system_safe_mode_label,
-                    R.string.system_safe_mode_hint,
-                    state?.safeModeEnabled == true,
+                    R.drawable.ic_check_24,
+                    R.string.settings_home_activation_detection_label,
+                    R.string.settings_home_activation_detection_hint,
+                    state?.homeActivationDetectionEnabled == true,
                     state?.storeAvailable == true,
-                    index = 1, total = generalItemCount,
-                    { enabled ->
-                        if (enabled) onSafeModeChanged(true) else disableSafeModeVisible = true
-                    }
+                    index = if (debugSettingsVisible) 2 else 1,
+                    total = generalItemCount,
+                    onHomeActivationDetectionChanged,
                 )
                 SettingsSwitchRow(
                     R.drawable.ic_view_kanban_24,
@@ -157,7 +170,7 @@ fun SettingsWorkspaceContent(
                     R.string.global_log_enabled_hint,
                     state?.globalLogEnabled == true,
                     state?.storeAvailable == true,
-                    index = 2, total = generalItemCount,
+                    index = if (debugSettingsVisible) 3 else 2, total = generalItemCount,
                     onGlobalLogChanged
                 )
                 AnimatedConditionalItem(visible = state?.globalLogEnabled == true) {
@@ -166,7 +179,7 @@ fun SettingsWorkspaceContent(
                         R.string.tools_log_title,
                         R.string.tools_log_subtitle,
                         state?.storeAvailable == true,
-                        index = 3, total = generalItemCount,
+                        index = if (debugSettingsVisible) 4 else 3, total = generalItemCount,
                         onOpenLogs
                     )
                 }
@@ -175,7 +188,8 @@ fun SettingsWorkspaceContent(
                     R.string.settings_font_library_label,
                     R.string.settings_font_library_hint,
                     state?.storeAvailable == true,
-                    index = if (state?.globalLogEnabled == true) 4 else 3,
+                    index = (if (debugSettingsVisible) 3 else 2) +
+                        (if (state?.globalLogEnabled == true) 2 else 1),
                     total = generalItemCount,
                     onFontLibrary
                 )
@@ -184,7 +198,8 @@ fun SettingsWorkspaceContent(
                     R.string.settings_experimental_title,
                     R.string.settings_experimental_hint,
                     state?.storeAvailable == true,
-                    index = if (state?.globalLogEnabled == true) 5 else 4,
+                    index = (if (debugSettingsVisible) 4 else 3) +
+                        (if (state?.globalLogEnabled == true) 2 else 1),
                     total = generalItemCount,
                     onExperimental
                 )
@@ -192,7 +207,7 @@ fun SettingsWorkspaceContent(
         }
         item {
             SettingsGroup(R.string.settings_section_theme) {
-                val themeItemCount = 2 + translationContributors.size
+                val themeItemCount = 3 + translationContributors.size
                 SettingsEntry(
                     R.drawable.ic_format_paint_24,
                     R.string.settings_theme_settings_title,
@@ -200,6 +215,18 @@ fun SettingsWorkspaceContent(
                     enabled = true,
                     index = 0, total = themeItemCount,
                     onThemeSettings
+                )
+                SettingsSwitchRow(
+                    R.drawable.ic_hide_image_24,
+                    R.string.settings_hide_launcher_icon_label,
+                    null,
+                    state?.launcherIconHidden == true,
+                    state?.storeAvailable == true,
+                    index = 1,
+                    total = themeItemCount,
+                    { hidden ->
+                        if (hidden) hideLauncherVisible = true else onLauncherHiddenChanged(false)
+                    },
                 )
                 SettingsChoiceMenu(
                     expanded = showLanguageMenu,
@@ -217,7 +244,7 @@ fun SettingsWorkspaceContent(
                         title = R.string.settings_language_label,
                         value = selectedLanguageLabel,
                         enabled = state?.storeAvailable == true,
-                        index = 1,
+                        index = 2,
                         total = themeItemCount,
                         onClick = { showLanguageMenu = true },
                     )
@@ -228,7 +255,7 @@ fun SettingsWorkspaceContent(
                         contributor.labelRes,
                         contributor.nameRes,
                         enabled = true,
-                        index = index + 2, total = themeItemCount,
+                        index = index + 3, total = themeItemCount,
                         onClick = {},
                         showTrailingIcon = false,
                     )
@@ -242,7 +269,7 @@ fun SettingsWorkspaceContent(
                     R.string.settings_config_backup_label,
                     R.string.settings_config_backup_hint,
                     state?.storeAvailable == true,
-                    index = 0, total = 3,
+                    index = 0, total = 2,
                     onBackup
                 )
                 SettingsEntry(
@@ -250,19 +277,8 @@ fun SettingsWorkspaceContent(
                     R.string.settings_clear_cache_label,
                     state?.cacheUsage ?: stringResource(R.string.settings_clear_cache_size, "0 B"),
                     enabled = state?.storeAvailable == true && state.cacheClearInProgress != true,
-                    index = 1, total = 3,
+                    index = 1, total = 2,
                     onClearCache
-                )
-                SettingsSwitchRow(
-                    R.drawable.ic_hide_image_24,
-                    R.string.settings_hide_launcher_icon_label,
-                    R.string.settings_hide_launcher_icon_hint,
-                    state?.launcherIconHidden == true,
-                    state?.storeAvailable == true,
-                    index = 2, total = 3,
-                    { hidden ->
-                        if (hidden) hideLauncherVisible = true else onLauncherHiddenChanged(false)
-                    }
                 )
             }
         }
@@ -288,14 +304,8 @@ fun SettingsWorkspaceContent(
         }
     }
     SettingsWorkspaceConfirmDialogs(
-        disableSafeModeVisible = disableSafeModeVisible,
         hideLauncherVisible = hideLauncherVisible,
         pendingImport = state?.pendingImportUri != null,
-        onDismissSafeMode = { disableSafeModeVisible = false },
-        onConfirmDisableSafeMode = {
-            disableSafeModeVisible = false
-            onSafeModeChanged(false)
-        },
         onDismissHideLauncher = { hideLauncherVisible = false },
         onConfirmHideLauncher = {
             hideLauncherVisible = false
@@ -324,7 +334,7 @@ private fun SettingsGroup(title: Int, content: @Composable ColumnScope.() -> Uni
 private fun SettingsSwitchRow(
     @androidx.annotation.DrawableRes iconRes: Int,
     title: Int,
-    summary: Int,
+    @androidx.annotation.StringRes summary: Int?,
     checked: Boolean,
     enabled: Boolean,
     index: Int,
@@ -347,7 +357,9 @@ private fun SettingsSwitchRow(
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },
-        supportingContent = { Text(stringResource(summary)) },
+        supportingContent = summary?.let { summaryRes ->
+            { Text(stringResource(summaryRes)) }
+        },
         trailingContent = {
             Switch(
                 checked = checked,

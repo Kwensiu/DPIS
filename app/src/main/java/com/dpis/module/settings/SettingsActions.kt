@@ -8,6 +8,7 @@ interface SettingsActions {
     fun setHooks(enabled: Boolean)
     fun setSafeMode(enabled: Boolean)
     fun setGlobalLog(enabled: Boolean)
+    fun setHomeActivationDetection(enabled: Boolean)
     fun openLogs()
     fun setLauncherHidden(hidden: Boolean)
     fun openFontDebug()

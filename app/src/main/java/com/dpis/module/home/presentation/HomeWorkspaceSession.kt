@@ -58,15 +58,18 @@ class HomeWorkspaceSession(
     }
 
     private fun isActivatedForHome(): Boolean {
+        val detectionEnabled = PageSettingsStore.isHomeActivationDetectionEnabled(activity)
         val libXposedService = HomeActivationStateResolver
             .hasModernLibXposedService(DpisApplication.xposedService)
         val selfLoaded = DpisApplication.isXposedSelfLoaded()
         val activated = HomeActivationStateResolver.isActivatedForHome(
+            detectionEnabled,
             libXposedService,
             selfLoaded,
         )
         DpisLog.i(
-            "home activation resolved: libxposedService=" + libXposedService
+            "home activation resolved: detectionEnabled=" + detectionEnabled
+                + ", libxposedService=" + libXposedService
                 + ", selfLoaded=" + selfLoaded
                 + ", activated=" + activated,
         )

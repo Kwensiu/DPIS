@@ -14,9 +14,9 @@ class ToolsWorkspace(
     private val onWriteFailed: Runnable,
 ) {
     private val presenter = SystemFontScaleToolPresenter(
-        activity,
+        SystemFontScaleSettingsGateway(activity),
         object : SystemFontScaleToolPresenter.Listener {
-            override fun onStateChanged(state: SystemFontScaleToolState?) {
+            override fun onStateChanged(state: SystemFontScaleToolState) {
                 onComposeStateChanged.run()
             }
 
@@ -26,7 +26,7 @@ class ToolsWorkspace(
         },
     )
 
-    fun state(): SystemFontScaleToolState? = presenter.state()
+    fun state(): SystemFontScaleToolState? = presenter.state
 
     fun changePending(percent: Int) {
         presenter.selectPendingPercent(percent)

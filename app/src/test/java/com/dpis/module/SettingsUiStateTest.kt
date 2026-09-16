@@ -12,6 +12,7 @@ class SettingsUiStateTest {
             true,
             false,
             false,
+            true,
             false,
             false,
             100,
@@ -28,6 +29,7 @@ class SettingsUiStateTest {
     @Test
     fun preservesProvidedLabels() {
         val state = SettingsUiState(
+            true,
             true,
             true,
             true,

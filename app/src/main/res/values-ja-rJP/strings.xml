@@ -344,8 +344,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="system_mode_requires_system_scope_hint">システム層 Hook がないため System モードは無効です</string>
     <string name="system_safe_mode_label">セーフモード</string>
     <string name="system_safe_mode_hint">高リスク hook を制限し、ラグやちらつきを減らします。</string>
-    <string name="system_safe_mode_disable_confirm_title">セーフモードを無効化</string>
-    <string name="system_safe_mode_disable_confirm_message">セーフモードを無効にすると、すべての system_server hook 対象が有効になります。ラグ、ちらつき、不安定化が増える可能性があります。続行しますか?</string>
     <string name="global_log_enabled_label">診断ログ</string>
     <string name="global_log_enabled_hint">デバッグ用の診断ログを書き込みます。</string>
     <string name="font_debug_overlay_label">デバッグオーバーレイ</string>
@@ -422,7 +420,6 @@ Mini Programs はまだサポートされていません。</string>
     <string name="config_backup_import_invalid">バックアップファイルが無効、またはサポートされていません</string>
     <string name="config_backup_picker_failed">ファイルピッカーを開けません</string>
     <string name="settings_hide_launcher_icon_label">ランチャーアイコンを非表示</string>
-    <string name="settings_hide_launcher_icon_hint">代わりに LSPosed モジュール設定からアクセスします。</string>
     <string name="settings_hide_launcher_icon_confirm_title">ランチャーアイコンを非表示</string>
     <string name="settings_hide_launcher_icon_confirm_message">アイコンは非表示になりますが、LSPosed から引き続きアクセスできます。続行しますか?</string>
     <string name="settings_hide_launcher_icon_apply_failed">ランチャーアイコンの非表示に失敗しました。</string>

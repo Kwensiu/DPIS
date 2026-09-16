@@ -1,4 +1,8 @@
-package com.dpis.module.about
+package com.dpis.module.about.presentation
+
+import com.dpis.module.about.OpenSourceLicenseCatalog
+import com.dpis.module.about.OpenSourceLicenseCatalogLabels
+import com.dpis.module.about.OpenSourceLicenseItem
 
 import android.content.Context
 import android.content.res.Resources

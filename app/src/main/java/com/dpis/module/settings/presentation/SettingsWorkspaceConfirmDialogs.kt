@@ -6,26 +6,16 @@ import androidx.compose.ui.res.stringResource
 import com.dpis.module.R
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 
-/** Shared phone/Wear confirms for settings danger actions. */
+/** Shared phone/Wear confirms for launcher visibility and irreversible backup import. */
 @Composable
 internal fun SettingsWorkspaceConfirmDialogs(
-    disableSafeModeVisible: Boolean,
     hideLauncherVisible: Boolean,
     pendingImport: Boolean,
-    onDismissSafeMode: () -> Unit,
-    onConfirmDisableSafeMode: () -> Unit,
     onDismissHideLauncher: () -> Unit,
     onConfirmHideLauncher: () -> Unit,
     onDismissImport: () -> Unit,
     onConfirmImport: () -> Unit,
 ) {
-    SettingsDangerConfirm(
-        visible = disableSafeModeVisible,
-        title = R.string.system_safe_mode_disable_confirm_title,
-        message = R.string.system_safe_mode_disable_confirm_message,
-        onDismiss = onDismissSafeMode,
-        onConfirm = onConfirmDisableSafeMode,
-    )
     SettingsDangerConfirm(
         visible = hideLauncherVisible,
         title = R.string.settings_hide_launcher_icon_confirm_title,

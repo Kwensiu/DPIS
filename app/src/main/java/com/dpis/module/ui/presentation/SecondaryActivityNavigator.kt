@@ -1,4 +1,4 @@
-package com.dpis.module.navigation
+package com.dpis.module.ui.presentation
 
 import android.app.Activity
 import android.content.Intent
@@ -13,7 +13,6 @@ import com.dpis.module.home.ModeHelpActivity
 import com.dpis.module.settings.ExperimentalSettingsActivity
 import com.dpis.module.settings.ThemeSettingsActivity
 import com.dpis.module.ui.SecondaryDestination
-import com.dpis.module.ui.presentation.SecondaryNavigation
 
 /** App-shell adapter that resolves secondary destinations to concrete Activities. */
 class SecondaryActivityNavigator(

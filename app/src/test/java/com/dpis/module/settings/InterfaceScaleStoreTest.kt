@@ -34,4 +34,23 @@ class InterfaceScaleStoreTest {
         store.setPercent(500)
         assertEquals(AppUiScaleManager.MAX_SCALE_PERCENT, store.percent)
     }
+
+    @Test
+    fun defaultsWhenNeitherPreferenceExists() {
+        val store = InterfaceScaleStore(FakePrefs(), null)
+        assertEquals(AppUiScaleManager.DEFAULT_SCALE_PERCENT, store.percent)
+        assertEquals(false, store.hasExplicitPercent)
+    }
+
+    @Test
+    fun treatsLegacyValueAsExplicitUntilDedicatedPreferenceExists() {
+        val legacyPreferences = FakePrefs()
+        legacyPreferences.edit()
+            .putInt(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT, 80)
+            .commit()
+        val store = InterfaceScaleStore(FakePrefs(), legacyPreferences)
+
+        assertEquals(true, store.hasExplicitPercent)
+        assertEquals(80, store.percent)
+    }
 }

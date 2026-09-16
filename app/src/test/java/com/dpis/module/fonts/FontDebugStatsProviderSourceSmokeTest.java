@@ -79,10 +79,10 @@ public class FontDebugStatsProviderSourceSmokeTest {
         String source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt");
 
         assertTrue(content.contains("R.string.settings_clear_cache_label"));
+        assertTrue(content.indexOf("R.string.settings_hide_launcher_icon_label")
+                < content.indexOf("R.string.settings_language_label"));
         assertTrue(content.indexOf("R.string.settings_language_label")
                 < content.indexOf("R.string.settings_clear_cache_label"));
-        assertTrue(content.indexOf("R.string.settings_clear_cache_label")
-                < content.indexOf("R.string.settings_hide_launcher_icon_label"));
         assertTrue(source.contains("SafeCacheCleaner.formatCacheUsage("));
         assertTrue(source.contains("SafeCacheCleaner.clearAll("));
     }

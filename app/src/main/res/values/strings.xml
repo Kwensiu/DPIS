@@ -518,10 +518,10 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="system_mode_requires_system_scope_hint">System mode is disabled without system-layer Hook</string>
     <string name="system_safe_mode_label">Safe mode</string>
     <string name="system_safe_mode_hint">Limits high-risk hooks to reduce lag and flickering</string>
-    <string name="system_safe_mode_disable_confirm_title">Disable safe mode</string>
-    <string name="system_safe_mode_disable_confirm_message">Disabling safe mode enables all system_server hook targets. This may increase lag, flickering, or instability. Continue?</string>
     <string name="global_log_enabled_label">Diagnostic logs</string>
     <string name="global_log_enabled_hint">Write diagnostic logs for debugging</string>
+    <string name="settings_home_activation_detection_label">Activation status detection</string>
+    <string name="settings_home_activation_detection_hint">Disable only when the Home card reports a false status</string>
     <string name="font_debug_overlay_label">Debug overlay</string>
     <string name="font_debug_entry_hint">Manage overlay and font path statistics</string>
     <string name="font_debug_dialog_title">Font debug panel</string>
@@ -626,7 +626,6 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="config_backup_import_invalid">Backup file is invalid or unsupported</string>
     <string name="config_backup_picker_failed">Unable to open file picker</string>
     <string name="settings_hide_launcher_icon_label">Hide launcher icon</string>
-    <string name="settings_hide_launcher_icon_hint">Access via LSPosed module settings instead</string>
     <string name="settings_hide_launcher_icon_confirm_title">Hide launcher icon</string>
     <string name="settings_hide_launcher_icon_confirm_message">Icon hidden but still accessible via LSPosed. Continue?</string>
     <string name="settings_hide_launcher_icon_apply_failed">Failed to hide launcher icon.</string>

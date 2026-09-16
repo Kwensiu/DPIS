@@ -67,6 +67,10 @@ class SettingsWorkspaceSession(
         ensureComposeController().setGlobalLogFromPresentation(enabled)
     }
 
+    override fun setHomeActivationDetection(enabled: Boolean) {
+        ensureComposeController().setHomeActivationDetectionFromPresentation(enabled)
+    }
+
     override fun openLogs() {
         secondaryNavigation.open(SecondaryDestination.Logs)
     }

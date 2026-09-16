@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import com.dpis.module.settings.AppLocaleManager
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.ui.WatchUiMode
+import com.dpis.module.ui.presentation.wrapInterfaceScaleContext
 import com.dpis.module.ui.compose.applyComposeWindowBackground
 
 /** Applies app-level locale, interface scale, and theme changes across activity boundaries. */
@@ -35,12 +37,12 @@ abstract class LocalizedActivity : ComponentActivity() {
     }
 
     override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(AppUiScaleManager.wrap(AppLocaleManager.wrap(newBase)))
+        super.attachBaseContext(wrapInterfaceScaleContext(AppLocaleManager.wrap(newBase)))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         activeLanguageTag = AppLocaleManager.getLanguageTag(this)
-        activeInterfaceScalePercent = AppUiScaleManager.getEffectiveScalePercent(this)
+        activeInterfaceScalePercent = currentInterfaceScalePercent()
         activeAppearance = ThemeModeStore.getAppearance(this)
         super.onCreate(savedInstanceState)
         // Keep every user-visible Activity on the same edge-to-edge window contract.
@@ -62,7 +64,7 @@ abstract class LocalizedActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         val currentLanguageTag = AppLocaleManager.getLanguageTag(this)
-        val currentInterfaceScalePercent = AppUiScaleManager.getEffectiveScalePercent(this)
+        val currentInterfaceScalePercent = currentInterfaceScalePercent()
         val currentAppearance = ThemeModeStore.getAppearance(this)
         val currentPredictiveBackEnabled = PageSettingsStore.isPredictiveBackEnabled(this)
         if (currentPredictiveBackEnabled != activePredictiveBackEnabled) {
@@ -111,11 +113,19 @@ abstract class LocalizedActivity : ComponentActivity() {
     }
 
     fun markInterfaceScaleAppliedInPlace() {
-        activeInterfaceScalePercent = AppUiScaleManager.getEffectiveScalePercent(this)
+        activeInterfaceScalePercent = currentInterfaceScalePercent()
     }
 
     fun applyPredictiveBackPreferenceInPlace() {
         applyPredictiveBackPreference()
+    }
+
+    private fun currentInterfaceScalePercent(): Int {
+        val store = InterfaceScaleStore(this)
+        return AppUiScaleManager.effectiveScalePercent(
+            store,
+            WatchUiMode.shouldUseCompactUi(this),
+        )
     }
 
     private fun applyPredictiveBackPreference() {
