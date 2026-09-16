@@ -1,7 +1,8 @@
-package com.dpis.module.settings;
+package com.dpis.module.updates;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import com.dpis.module.settings.LegacyUiPreferenceKeys;
 
 public final class StartupDisclaimerStore {
     private static final String PREFS_NAME = "dpis.startup_disclaimer";

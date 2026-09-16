@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.hooks;
 
 public final class SystemHookState {
     public enum Reason {

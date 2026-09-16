@@ -16,7 +16,7 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         val hostWiring = read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt"
         )
-        val workspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
+        val workspace = read("src/main/java/com/dpis/module/tools/presentation/ToolsWorkspace.kt")
 
         assertTrue(hostWiring.contains("var toolsWorkspace: ToolsWorkspace?"))
         assertTrue(hostWiring.contains("toolsWorkspace = ToolsWorkspace("))
@@ -39,7 +39,7 @@ class ToolsWorkspaceBinderSourceSmokeTest {
         val content = read(
             "src/main/java/com/dpis/module/tools/presentation/ToolsWorkspaceContent.kt"
         )
-        val workspace = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt")
+        val workspace = read("src/main/java/com/dpis/module/tools/presentation/ToolsWorkspace.kt")
 
         assertTrue(content.contains("onRequestPermission"))
         assertTrue(content.contains("R.string.system_font_scale_apply"))

@@ -14,7 +14,7 @@ import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySessio
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.presentation.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
-import com.dpis.module.settings.SystemScopeCoordinator
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.MainUiAction

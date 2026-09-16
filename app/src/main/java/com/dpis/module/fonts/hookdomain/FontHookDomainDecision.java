@@ -1,6 +1,6 @@
 package com.dpis.module.fonts.hookdomain;
 
-import com.dpis.module.settings.SystemScopeCoordinator;
+import com.dpis.module.hooks.SystemScopeCoordinator;
 
 import com.dpis.module.config.ConfigSnapshot;
 

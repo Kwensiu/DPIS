@@ -1,5 +1,6 @@
-package com.dpis.module.settings
+package com.dpis.module.about
 
+import com.dpis.module.settings.AppLocaleManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

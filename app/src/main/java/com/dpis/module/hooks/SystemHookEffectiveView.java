@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.hooks;
 
 public final class SystemHookEffectiveView {
     public final boolean desiredEnabled;

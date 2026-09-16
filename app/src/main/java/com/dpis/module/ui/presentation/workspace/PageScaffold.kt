@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
@@ -21,9 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -127,7 +131,7 @@ internal fun PageScaffold(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun PageScaffold(
     pageBar: PageBarBehavior,
@@ -151,24 +155,44 @@ internal fun PageScaffold(
 ) {
     val resolvedListState = listState ?: rememberLazyListState()
     val collapsing = pageBar == PageBarBehavior.Collapsing
-    val topAppBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
     val storedCollapsed = if (scrollStore != null && scrollKey != null) {
         scrollStore.storedTopBarCollapsed(scrollKey)
     } else {
         null
     }
-    LaunchedEffect(collapsing, startCollapsed, storedCollapsed, topAppBarState.heightOffsetLimit) {
-        if (!collapsing) return@LaunchedEffect
-        val collapsed = storedCollapsed ?: startCollapsed
-        if (collapsed && topAppBarState.heightOffsetLimit < 0f) {
-            topAppBarState.heightOffset = topAppBarState.heightOffsetLimit
+    val collapsedInitially = collapsing && (storedCollapsed ?: startCollapsed)
+    // Seed both limit and offset with the collapsed delta so the first frame is
+    // already collapsed. A later LaunchedEffect would paint expanded, then jump.
+    val collapsedOffsetPx = if (collapsedInitially) {
+        val expandedHeight = if (subtitle != null) {
+            TopAppBarDefaults.LargeFlexibleAppBarWithSubtitleExpandedHeight
+        } else {
+            TopAppBarDefaults.LargeFlexibleAppBarWithoutSubtitleExpandedHeight
+        }
+        with(LocalDensity.current) {
+            (TopAppBarDefaults.LargeAppBarCollapsedHeight - expandedHeight).toPx()
+        }
+    } else {
+        0f
+    }
+    val topAppBarState = rememberTopAppBarState(
+        initialHeightOffsetLimit = if (collapsedInitially) collapsedOffsetPx else -Float.MAX_VALUE,
+        initialHeightOffset = collapsedOffsetPx,
+    )
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topAppBarState)
+    val collapsingBarOwnsScroll by remember(collapsing, topAppBarState, resolvedListState) {
+        derivedStateOf {
+            collapsing && collapsingBarOwnsNestedScroll(
+                collapsedFraction = topAppBarState.collapsedFraction,
+                firstVisibleItemIndex = resolvedListState.firstVisibleItemIndex,
+                firstVisibleItemScrollOffset = resolvedListState.firstVisibleItemScrollOffset,
+            )
         }
     }
     val layoutDirection = LocalLayoutDirection.current
     val horizontalSafe = pageHorizontalSafePadding(onBack != null)
     Scaffold(
-        modifier = if (collapsing) {
+        modifier = if (collapsingBarOwnsScroll) {
             modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         } else {
             modifier
@@ -292,3 +316,14 @@ internal fun PageScaffold(
     title = { Text(stringResource(titleRes)) },
     body = body,
 )
+
+/** M3 settleAppBar uses exact 1f; treat near-collapsed as collapsed so body flings skip it. */
+private const val COLLAPSED_FRACTION_EPSILON = 0.001f
+
+internal fun collapsingBarOwnsNestedScroll(
+    collapsedFraction: Float,
+    firstVisibleItemIndex: Int,
+    firstVisibleItemScrollOffset: Int,
+): Boolean =
+    collapsedFraction < 1f - COLLAPSED_FRACTION_EPSILON ||
+        (firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0)

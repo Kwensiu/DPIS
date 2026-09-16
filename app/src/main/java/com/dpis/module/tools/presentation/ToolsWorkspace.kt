@@ -1,11 +1,11 @@
-package com.dpis.module.settings.presentation
+package com.dpis.module.tools.presentation
 
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.SystemFontScaleToolPresenter
-import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.tools.SystemFontScaleToolPresenter
+import com.dpis.module.tools.SystemFontScaleToolState
 
 /** Owns the tools page's Compose state and platform callbacks. */
 class ToolsWorkspace(

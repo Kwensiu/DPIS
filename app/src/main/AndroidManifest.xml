@@ -32,6 +32,7 @@
         android:label="@string/app_name"
         android:supportsRtl="false"
         android:theme="@style/Theme.Dpis"
+        android:enableOnBackInvokedCallback="true"
         tools:ignore="MissingApplicationIcon">
         <activity
             android:name=".fonts.FontLibraryActivity"

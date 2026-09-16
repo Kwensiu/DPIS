@@ -1,8 +1,9 @@
-package com.dpis.module.settings
+package com.dpis.module.about
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.dpis.module.R
+import com.dpis.module.settings.AppLocaleManager
 
 /** User-facing translation credits keyed by the explicitly selected app language. */
 data class TranslationContributor(

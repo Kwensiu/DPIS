@@ -40,11 +40,14 @@ class SystemServerSettingsLayoutSmokeTest {
     @Test
     fun settingsControllerOwnsSemanticRowsAndDebugGates() {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
+        val session = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceSession.kt")
         val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
         val confirms = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt")
+        session.assertContainsAll(
+            "SecondaryDestination.Experimental",
+            "SecondaryDestination.Donate",
+        )
         source.assertContainsAll(
-            "ExperimentalSettingsActivity::class.java",
-            "DonateActivity.createIntent(activity)",
             "if (!BuildConfig.DEBUG) {",
             "private fun onHooksEnabledChanged(",
             "if (!store!!.setSystemServerSafeModeEnabled(enabled))",

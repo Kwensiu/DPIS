@@ -9,7 +9,7 @@ import com.dpis.module.BuildConfig
 import com.dpis.module.R
 import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.StartupDisclaimerStore
+import com.dpis.module.updates.StartupDisclaimerStore
 import com.dpis.module.ui.DialogWindowSizer
 import com.dpis.module.updates.GitHubReleaseNotesFetcher
 import com.dpis.module.updates.ReleaseNotesCacheStore

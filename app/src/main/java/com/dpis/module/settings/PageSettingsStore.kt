@@ -8,6 +8,7 @@ object PageSettingsStore {
     private const val NAME = "dpis_page"
     private const val SHOW_EDIT = "show_home_edit_button"
     private const val START_PAGE = "default_startup_page"
+    private const val PREDICTIVE_BACK = "predictive_back_enabled"
     private const val ORDER = "workspace_order"
     private const val HIDDEN = "workspace_hidden"
     private val validPages = setOf("APP", HOME, "TEMPLATE", "TOOLS", "SETTINGS")
@@ -31,6 +32,22 @@ object PageSettingsStore {
         require(value in validPages)
         context.getSharedPreferences(NAME, 0).edit().putString(START_PAGE, value).apply()
     }
+
+    @JvmStatic
+    fun isPredictiveBackEnabled(context: Context): Boolean = resolvePredictiveBackEnabled(
+        context.getSharedPreferences(NAME, 0).let { prefs ->
+            if (prefs.contains(PREDICTIVE_BACK)) prefs.getBoolean(PREDICTIVE_BACK, true) else null
+        },
+    )
+
+    @JvmStatic
+    fun setPredictiveBackEnabled(context: Context, value: Boolean) {
+        context.getSharedPreferences(NAME, 0).edit().putBoolean(PREDICTIVE_BACK, value).commit()
+    }
+
+    @JvmStatic
+    fun resolvePredictiveBackEnabled(stored: Boolean?): Boolean = stored ?: true
+
     @JvmStatic fun getWorkspaceOrder(context: Context): List<String> = context.getSharedPreferences(NAME, 0)
         .getString(ORDER, null)?.split(',')?.filter(validPages::contains)?.distinct().orEmpty()
         .let { stored -> (stored + listOf("APP", "TEMPLATE", HOME, "TOOLS", "SETTINGS")).distinct() }

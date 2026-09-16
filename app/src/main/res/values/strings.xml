@@ -462,6 +462,8 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="settings_theme_settings_hint">Customize the app appearance</string>
     <string name="settings_theme_section_appearance">Style</string>
     <string name="settings_theme_section_page">Page</string>
+    <string name="settings_page_predictive_back">Predictive back</string>
+    <string name="settings_page_predictive_back_hint">Preview where a back swipe will go</string>
     <string name="settings_page_home_edit_button">Home edit button</string>
     <string name="settings_page_default_startup">Page adjustment</string>
     <string name="settings_page_default_startup_hint">Adjust bottom navigation entries and default startup page</string>

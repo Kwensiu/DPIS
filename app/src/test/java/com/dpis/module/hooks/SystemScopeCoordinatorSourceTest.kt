@@ -1,12 +1,13 @@
-package com.dpis.module
+package com.dpis.module.hooks
 
+import com.dpis.module.SourceSmokeTestPaths
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SystemScopeCoordinatorSourceTest {
     @Test
     fun legacyEffectiveStateFallsBackWhenServiceUnavailable() {
-        val source = read("src/main/java/com/dpis/module/settings/SystemScopeCoordinator.kt")
+        val source = read("src/main/java/com/dpis/module/hooks/SystemScopeCoordinator.kt")
 
         assertTrue(source.contains("fun resolveSystemHookEffectiveEnabled("))
         assertTrue(source.contains("BuildConfig.FLAVOR == \"legacy\""))
@@ -15,7 +16,7 @@ class SystemScopeCoordinatorSourceTest {
 
     @Test
     fun requestScopeUsesSharedGateAndFinishesEveryOutcome() {
-        val source = read("src/main/java/com/dpis/module/settings/SystemScopeCoordinator.kt")
+        val source = read("src/main/java/com/dpis/module/hooks/SystemScopeCoordinator.kt")
 
         assertTrue(source.contains("ScopeRequestGate.shared().tryStart"))
         assertTrue(source.contains("R.string.scope_request_pending"))

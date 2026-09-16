@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -57,6 +58,12 @@ internal fun pageHorizontalSafeInsets(): WindowInsets =
 internal fun pageHorizontalSafePadding(enabled: Boolean): PaddingValues =
     if (enabled) pageHorizontalSafeInsets().asPaddingValues() else PaddingValues()
 
+internal fun fallbackStatusBarPx(): Int {
+    val resources = android.content.res.Resources.getSystem()
+    val resourceId = resources.getIdentifier("status_bar_height", "dimen", "android")
+    return if (resourceId > 0) resources.getDimensionPixelSize(resourceId) else 0
+}
+
 /**
  * Top status inset always. Secondary chrome also takes the correct-side cutout/status
  * inset, then [PageChromeTokens.TitleInset] so the back button sits inset like InstallerX.
@@ -64,7 +71,13 @@ internal fun pageHorizontalSafePadding(enabled: Boolean): PaddingValues =
  */
 @Composable
 internal fun pageTopBarWindowInsets(includeHorizontalSafeInsets: Boolean): WindowInsets {
-    val top = WindowInsets.statusBars.only(WindowInsetsSides.Top)
+    val density = LocalDensity.current
+    val statusBars = WindowInsets.statusBars.only(WindowInsetsSides.Top)
+    val top = if (statusBars.getTop(density) > 0) {
+        statusBars
+    } else {
+        WindowInsets(top = fallbackStatusBarPx())
+    }
     if (!includeHorizontalSafeInsets) return top
     val extraStart = PageChromeTokens.TitleInset
     val extra = if (LocalLayoutDirection.current == LayoutDirection.Ltr) {

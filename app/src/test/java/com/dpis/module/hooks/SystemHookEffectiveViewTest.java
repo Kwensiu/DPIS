@@ -1,7 +1,7 @@
-package com.dpis.module;
+package com.dpis.module.hooks;
 
-import com.dpis.module.settings.SystemHookEffectiveView;
-import com.dpis.module.settings.SystemHookState;
+import com.dpis.module.hooks.SystemHookEffectiveView;
+import com.dpis.module.hooks.SystemHookState;
 
 import org.junit.Test;
 

@@ -48,7 +48,7 @@ public class MainActivityLayoutSmokeTest {
         String content = read(
                 "src/main/java/com/dpis/module/tools/presentation/ToolsWorkspaceContent.kt");
         String workspace = read(
-                "src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt");
+                "src/main/java/com/dpis/module/tools/presentation/ToolsWorkspace.kt");
 
         assertTrue(content.contains("R.string.system_font_scale_title"));
         assertTrue(content.contains("R.string.workspace_tools"));

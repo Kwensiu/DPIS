@@ -12,7 +12,7 @@ import com.dpis.module.home.presentation.HomeWorkspaceSession
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.SystemScopeCoordinator
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.ui.presentation.MainHostWiringSession
 import com.dpis.module.ui.presentation.MainStartupSession
 import com.dpis.module.ui.presentation.MainWorkspaceSession
@@ -76,6 +76,10 @@ class MainActivity :
     )
     internal val scrollStateStore = AppWorkspaceScrollStateStore()
 
+    override fun onUnhandledTaskRootBack() {
+        moveTaskToBack(true)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         startupSession.launch(savedInstanceState)
@@ -89,6 +93,12 @@ class MainActivity :
     override fun onResume() {
         super.onResume()
         startupSession.onResume()
+    }
+
+    override fun handleAppearanceChangeOnResume(): Boolean {
+        val shell = mainWorkspaceSession.composeShell() ?: return false
+        shell.applyAppearanceInPlace()
+        return true
     }
 
     override fun onStop() {

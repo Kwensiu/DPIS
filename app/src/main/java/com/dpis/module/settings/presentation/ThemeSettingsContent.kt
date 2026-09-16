@@ -23,11 +23,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.background
@@ -36,16 +34,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.DropdownMenuPopup
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorPosition
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
@@ -54,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -62,6 +55,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
@@ -99,6 +94,7 @@ fun ThemeSettingsContent(
     interfaceScalePercent: Int,
     showHomeEditButton: Boolean = true,
     defaultStartupPage: String = PageSettingsStore.HOME,
+    predictiveBackEnabled: Boolean = true,
     onModeSelected: (String) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onThemeColorSelected: (String) -> Unit,
@@ -107,6 +103,7 @@ fun ThemeSettingsContent(
     onInterfaceScaleChanged: (Int) -> Unit,
     onShowHomeEditButtonChanged: (Boolean) -> Unit = {},
     onDefaultStartupPageSelected: (String) -> Unit = {},
+    onPredictiveBackChanged: (Boolean) -> Unit = {},
     onBack: () -> Unit,
 ) {
     var showModeDialog by rememberSaveable { mutableStateOf(false) }
@@ -213,16 +210,29 @@ fun ThemeSettingsContent(
             }
             item {
                 ThemeSettingsSection(R.string.settings_theme_section_page) {
+                    val predictiveBackAvailable =
+                        android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU
+                    val pageItemCount = if (predictiveBackAvailable) 3 else 2
+                    if (predictiveBackAvailable) {
+                        ThemePredictiveBackRow(
+                            checked = predictiveBackEnabled,
+                            onCheckedChange = onPredictiveBackChanged,
+                            index = 0,
+                            total = pageItemCount,
+                        )
+                    }
                     ThemeSegmentedSurfaceRow(
                         onClick = { onShowHomeEditButtonChanged(!showHomeEditButton) },
-                        index = 0, total = 2,
+                        index = if (predictiveBackAvailable) 1 else 0,
+                        total = pageItemCount,
                         leadingContent = { Icon(painterResource(R.drawable.ic_edit_24), null) },
                         content = { Text(stringResource(R.string.settings_page_home_edit_button), style = MaterialTheme.typography.titleMedium) },
                         trailingContent = { Switch(checked = showHomeEditButton, onCheckedChange = onShowHomeEditButtonChanged) },
                     )
                     ThemeSegmentedSurfaceRow(
                         onClick = { showStartupPageDialog = true },
-                        index = 1, total = 2,
+                        index = if (predictiveBackAvailable) 2 else 1,
+                        total = pageItemCount,
                         leadingContent = { Icon(painterResource(R.drawable.ic_home_24), null) },
                         content = { Text(stringResource(R.string.settings_page_default_startup), style = MaterialTheme.typography.titleMedium) },
                         supportingContent = { Text(stringResource(R.string.settings_page_default_startup_hint), style = MaterialTheme.typography.bodyMedium) },
@@ -366,6 +376,44 @@ private fun PageNavigationDialog(
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun ThemePredictiveBackRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    index: Int,
+    total: Int,
+) {
+    val changePredictiveBack = rememberClickValueAction(onCheckedChange)
+    ThemeSegmentedSurfaceRow(
+        onClick = { changePredictiveBack(!checked) },
+        index = index,
+        total = total,
+        leadingContent = {
+            Icon(
+                painterResource(R.drawable.ic_arrow_back_24),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        content = {
+            Text(
+                stringResource(R.string.settings_page_predictive_back),
+                style = MaterialTheme.typography.titleMedium,
+            )
+        },
+        supportingContent = {
+            Text(
+                stringResource(R.string.settings_page_predictive_back_hint),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        trailingContent = {
+            Switch(checked = checked, onCheckedChange = changePredictiveBack)
+        },
+    )
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun ThemeDynamicColorRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -468,6 +516,13 @@ private fun ThemeColorRow(
     index: Int,
     total: Int,
 ) {
+    var previewRevision by remember { mutableIntStateOf(0) }
+    LaunchedEffect(paletteStyle, colorSpecification) {
+        withContext(Dispatchers.Default) {
+            ThemeSwatchPreviewCache.prefetch(paletteStyle, colorSpecification)
+        }
+        previewRevision++
+    }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = dpisSegmentedShapes(index, total).shape,
@@ -502,6 +557,7 @@ private fun ThemeColorRow(
                             option = option,
                             paletteStyle = paletteStyle,
                             colorSpecification = colorSpecification,
+                            previewRevision = previewRevision,
                             selected = selectedColor == option.id,
                             onClick = { onColorSelected(option.id) },
                         )
@@ -517,18 +573,14 @@ private fun GeneratedThemeSwatch(
     option: ThemeColorOption,
     paletteStyle: String,
     colorSpecification: String,
+    previewRevision: Int,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
     val swatchDividerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     val seedColor = ColorSchemeFactory.seedColor(option.id)
-    val scheme = remember(option, paletteStyle, colorSpecification) {
-        ColorSchemeFactory.create(
-            seedColor = seedColor,
-            darkTheme = false,
-            paletteStyle = paletteStyle,
-            requestedSpecification = colorSpecification,
-        )
+    val scheme = remember(option.id, paletteStyle, colorSpecification, previewRevision) {
+        ThemeSwatchPreviewCache.peek(option.id, paletteStyle, colorSpecification)
     }
     Box(
         modifier = Modifier
@@ -547,6 +599,8 @@ private fun GeneratedThemeSwatch(
             val gap = 1.dp.toPx()
             val leftWidth = size.width / 2f
             val rightHeight = size.height / 2f
+            val secondary = scheme?.secondaryContainer ?: seedColor
+            val tertiary = scheme?.tertiaryContainer ?: seedColor
             drawCircle(swatchDividerColor)
             // Keep the selected color visible instead of showing only its lighter
             // generated container tone.
@@ -555,7 +609,7 @@ private fun GeneratedThemeSwatch(
                 size = size.copy(width = leftWidth - gap / 2f),
             )
             drawRect(
-                scheme.secondaryContainer,
+                secondary,
                 topLeft = androidx.compose.ui.geometry.Offset(leftWidth + gap / 2f, 0f),
                 size = size.copy(
                     width = leftWidth - gap / 2f,
@@ -563,7 +617,7 @@ private fun GeneratedThemeSwatch(
                 ),
             )
             drawRect(
-                scheme.tertiaryContainer,
+                tertiary,
                 topLeft = androidx.compose.ui.geometry.Offset(
                     leftWidth + gap / 2f,
                     rightHeight + gap / 2f,
@@ -620,73 +674,16 @@ private fun ThemeChoiceMenuAnchor(
     onSelected: (String) -> Unit,
     anchor: @Composable () -> Unit,
 ) {
-    val selectOption = rememberClickValueAction(onSelected)
-    Box(Modifier.fillMaxWidth()) {
-        anchor()
-        // Anchor below the setting's trailing edge. Starting at the row's top edge lets the
-        // opening tap land on the first item after the popup is composed.
-        Box(Modifier.align(Alignment.BottomEnd)) {
-            DropdownMenuPopup(
-                expanded = expanded,
-                onDismissRequest = onDismiss,
-                popupPositionProvider = MenuDefaults.rememberDropdownMenuPopupPositionProvider(
-                    MenuAnchorPosition.Below,
-                ),
-                modifier = Modifier
-                    // Let the widest option define the menu. A fixed minimum made short
-                    // choices look detached from their setting on compact displays.
-                    .widthIn(max = 360.dp)
-                    .heightIn(max = 360.dp),
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .width(IntrinsicSize.Max)
-                        .heightIn(max = 360.dp),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    tonalElevation = MenuDefaults.TonalElevation,
-                    shadowElevation = MenuDefaults.ShadowElevation,
-                ) {
-                    // Keep the vertical inset inside the scroll container. The stock menu
-                    // applies it outside the scroller, producing an extra dark band and a
-                    // second clipping edge before items reach the rounded menu boundary.
-                    Column(
-                        modifier = Modifier
-                            .width(IntrinsicSize.Max)
-                            .verticalScroll(rememberScrollState())
-                            .padding(vertical = 4.dp),
-                    ) {
-                        options.forEach { (value, labelRes) ->
-                            val isSelected = selected == value
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = stringResource(labelRes),
-                                        color = if (isSelected) {
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
-                                    )
-                                },
-                                onClick = { selectOption(value) },
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .clip(MaterialTheme.shapes.large)
-                                    .background(
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.primaryContainer
-                                        } else {
-                                            androidx.compose.ui.graphics.Color.Transparent
-                                        },
-                                    ),
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
+    SettingsChoiceMenu(
+        expanded = expanded,
+        options = options.map { (value, labelRes) ->
+            SettingsChoiceOption(value, stringResource(labelRes))
+        },
+        selected = selected,
+        onDismiss = onDismiss,
+        onSelected = onSelected,
+        content = anchor,
+    )
 }
 
 private val themeModeOptions = listOf(
@@ -898,128 +895,172 @@ private fun ThemeScaleSlider(
     )
 }
 
-fun ComponentActivity.installThemeSettings() {
-    setContent {
-        var mode by remember { mutableStateOf(ThemeModeStore.getMode(this@installThemeSettings)) }
-        var dynamicColorEnabled by remember {
-            mutableStateOf(ThemeModeStore.isDynamicColorEnabled(this@installThemeSettings))
-        }
-        var themeColor by remember { mutableStateOf(ThemeModeStore.getThemeColor(this@installThemeSettings)) }
-        var paletteStyle by remember { mutableStateOf(ThemeModeStore.getPaletteStyle(this@installThemeSettings)) }
-        var colorSpecification by remember {
-            mutableStateOf(ThemeModeStore.getColorSpecification(this@installThemeSettings))
-        }
-        var showHomeEditButton by remember {
-            mutableStateOf(PageSettingsStore.isHomeEditButtonVisible(this@installThemeSettings))
-        }
-        var defaultStartupPage by remember {
-            mutableStateOf(PageSettingsStore.getDefaultStartupPage(this@installThemeSettings))
-        }
-        ComposeDesignSystem(
-            darkTheme = ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme()),
-            dynamicColor = dynamicColorEnabled,
+@Composable
+fun ThemeSettingsRoute(
+    onBack: () -> Unit,
+    compactUi: Boolean,
+    onAppearanceChanged: () -> Unit,
+    onInterfaceScaleChanged: () -> Unit,
+    onPredictiveBackChanged: () -> Unit,
+) {
+    val context = LocalContext.current
+    var mode by remember { mutableStateOf(ThemeModeStore.getMode(context)) }
+    var dynamicColorEnabled by remember {
+        mutableStateOf(ThemeModeStore.isDynamicColorEnabled(context))
+    }
+    var themeColor by remember { mutableStateOf(ThemeModeStore.getThemeColor(context)) }
+    var paletteStyle by remember { mutableStateOf(ThemeModeStore.getPaletteStyle(context)) }
+    var colorSpecification by remember {
+        mutableStateOf(ThemeModeStore.getColorSpecification(context))
+    }
+    var showHomeEditButton by remember {
+        mutableStateOf(PageSettingsStore.isHomeEditButtonVisible(context))
+    }
+    var defaultStartupPage by remember {
+        mutableStateOf(PageSettingsStore.getDefaultStartupPage(context))
+    }
+    var predictiveBackEnabled by remember {
+        mutableStateOf(PageSettingsStore.isPredictiveBackEnabled(context))
+    }
+    val persistAppearance: () -> Unit = {
+        (context.findActivity() as? LocalizedActivity)?.markAppearanceAppliedInPlace()
+        onAppearanceChanged()
+    }
+    if (compactUi) {
+        WearThemeSettingsContent(
+            mode = mode,
+            dynamicColorEnabled = dynamicColorEnabled,
             themeColor = themeColor,
             paletteStyle = paletteStyle,
             colorSpecification = colorSpecification,
-        ) {
-            if (WatchUiMode.shouldUseCompactUi(this@installThemeSettings)) {
-                WearThemeSettingsContent(
-                    mode = mode,
-                    dynamicColorEnabled = dynamicColorEnabled,
-                    themeColor = themeColor,
-                    paletteStyle = paletteStyle,
-                    colorSpecification = colorSpecification,
-                    interfaceScalePercent = AppUiScaleManager.getScalePercent(this@installThemeSettings),
-                    onModeSelected = { selectedMode ->
-                        ThemeModeStore.setMode(this@installThemeSettings, selectedMode)
-                        mode = selectedMode
-                        markAppearanceAppliedInPlace()
-                    },
-                    onDynamicColorChanged = { enabled ->
-                        ThemeModeStore.setDynamicColorEnabled(this@installThemeSettings, enabled)
-                        dynamicColorEnabled = enabled
-                        markAppearanceAppliedInPlace()
-                    },
-                    onThemeColorSelected = { color ->
-                        ThemeModeStore.setThemeColor(this@installThemeSettings, color)
-                        themeColor = color
-                        markAppearanceAppliedInPlace()
-                    },
-                    onPaletteStyleSelected = { style ->
-                        ThemeModeStore.setPaletteStyle(this@installThemeSettings, style)
-                        paletteStyle = style
-                        markAppearanceAppliedInPlace()
-                    },
-                    onColorSpecificationSelected = { specification ->
-                        ThemeModeStore.setColorSpecification(this@installThemeSettings, specification)
-                        colorSpecification = specification
-                        markAppearanceAppliedInPlace()
-                    },
-                    onInterfaceScaleChanged = { percent ->
-                        val store = InterfaceScaleStore(this@installThemeSettings)
-                        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
-                        if (normalized != store.percent || !store.hasExplicitPercent()) {
-                            if (store.setPercent(normalized)) recreate()
-                        }
+            interfaceScalePercent = AppUiScaleManager.getScalePercent(context),
+            onModeSelected = { selectedMode ->
+                ThemeModeStore.setMode(context, selectedMode)
+                mode = selectedMode
+                persistAppearance()
+            },
+            onDynamicColorChanged = { enabled ->
+                ThemeModeStore.setDynamicColorEnabled(context, enabled)
+                dynamicColorEnabled = enabled
+                persistAppearance()
+            },
+            onThemeColorSelected = { color ->
+                ThemeModeStore.setThemeColor(context, color)
+                themeColor = color
+                persistAppearance()
+            },
+            onPaletteStyleSelected = { style ->
+                ThemeModeStore.setPaletteStyle(context, style)
+                paletteStyle = style
+                persistAppearance()
+            },
+            onColorSpecificationSelected = { specification ->
+                ThemeModeStore.setColorSpecification(context, specification)
+                colorSpecification = specification
+                persistAppearance()
+            },
+            onInterfaceScaleChanged = { percent ->
+                val store = InterfaceScaleStore(context)
+                val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                if (normalized != store.percent || !store.hasExplicitPercent) {
+                    if (store.setPercent(normalized)) {
+                        (context.findActivity() as? LocalizedActivity)
+                            ?.markInterfaceScaleAppliedInPlace()
+                        onInterfaceScaleChanged()
                     }
-                )
-            } else {
-                ThemeSettingsContent(
-                    mode = mode,
-                    dynamicColorEnabled = dynamicColorEnabled,
-                    themeColor = themeColor,
-                    paletteStyle = paletteStyle,
-                    colorSpecification = colorSpecification,
-                    interfaceScalePercent = AppUiScaleManager.getScalePercent(this@installThemeSettings),
-                    onModeSelected = { selectedMode ->
-                        ThemeModeStore.setMode(this@installThemeSettings, selectedMode)
-                        mode = selectedMode
-                        markAppearanceAppliedInPlace()
-                    },
-                    onDynamicColorChanged = { enabled ->
-                        ThemeModeStore.setDynamicColorEnabled(this@installThemeSettings, enabled)
-                        dynamicColorEnabled = enabled
-                        markAppearanceAppliedInPlace()
-                    },
-                    onThemeColorSelected = { color ->
-                        ThemeModeStore.setThemeColor(this@installThemeSettings, color)
-                        themeColor = color
-                        markAppearanceAppliedInPlace()
-                    },
-                    onPaletteStyleSelected = { style ->
-                        ThemeModeStore.setPaletteStyle(this@installThemeSettings, style)
-                        paletteStyle = style
-                        markAppearanceAppliedInPlace()
-                    },
-                    onColorSpecificationSelected = { specification ->
-                        ThemeModeStore.setColorSpecification(this@installThemeSettings, specification)
-                        colorSpecification = specification
-                        markAppearanceAppliedInPlace()
-                    },
-                    onInterfaceScaleChanged = { percent ->
-                        val store = InterfaceScaleStore(this@installThemeSettings)
-                        val normalized = AppUiScaleManager.normalizeScalePercent(percent)
-                        if (normalized != store.percent || !store.hasExplicitPercent()) {
-                            if (store.setPercent(normalized)) recreate()
-                        }
-                    },
-                    onShowHomeEditButtonChanged = { value ->
-                        PageSettingsStore.setHomeEditButtonVisible(this@installThemeSettings, value)
-                        showHomeEditButton = value
-                    },
-                    onDefaultStartupPageSelected = { value ->
-                        PageSettingsStore.setDefaultStartupPage(this@installThemeSettings, value)
-                        defaultStartupPage = value
-                    },
-                    showHomeEditButton = showHomeEditButton,
-                    defaultStartupPage = defaultStartupPage,
-                    onBack = ::finish,
-                )
-            }
+                }
+            },
+        )
+    } else {
+        ThemeSettingsContent(
+            mode = mode,
+            dynamicColorEnabled = dynamicColorEnabled,
+            themeColor = themeColor,
+            paletteStyle = paletteStyle,
+            colorSpecification = colorSpecification,
+            interfaceScalePercent = AppUiScaleManager.getScalePercent(context),
+            onModeSelected = { selectedMode ->
+                ThemeModeStore.setMode(context, selectedMode)
+                mode = selectedMode
+                persistAppearance()
+            },
+            onDynamicColorChanged = { enabled ->
+                ThemeModeStore.setDynamicColorEnabled(context, enabled)
+                dynamicColorEnabled = enabled
+                persistAppearance()
+            },
+            onThemeColorSelected = { color ->
+                ThemeModeStore.setThemeColor(context, color)
+                themeColor = color
+                persistAppearance()
+            },
+            onPaletteStyleSelected = { style ->
+                ThemeModeStore.setPaletteStyle(context, style)
+                paletteStyle = style
+                persistAppearance()
+            },
+            onColorSpecificationSelected = { specification ->
+                ThemeModeStore.setColorSpecification(context, specification)
+                colorSpecification = specification
+                persistAppearance()
+            },
+            onInterfaceScaleChanged = { percent ->
+                val store = InterfaceScaleStore(context)
+                val normalized = AppUiScaleManager.normalizeScalePercent(percent)
+                if (normalized != store.percent || !store.hasExplicitPercent) {
+                    if (store.setPercent(normalized)) {
+                        (context.findActivity() as? LocalizedActivity)
+                            ?.markInterfaceScaleAppliedInPlace()
+                        onInterfaceScaleChanged()
+                    }
+                }
+            },
+            onShowHomeEditButtonChanged = { value ->
+                PageSettingsStore.setHomeEditButtonVisible(context, value)
+                showHomeEditButton = value
+            },
+            onDefaultStartupPageSelected = { value ->
+                PageSettingsStore.setDefaultStartupPage(context, value)
+                defaultStartupPage = value
+            },
+            onPredictiveBackChanged = { value ->
+                if (value != predictiveBackEnabled) {
+                    PageSettingsStore.setPredictiveBackEnabled(context, value)
+                    predictiveBackEnabled = value
+                    (context.findActivity() as? LocalizedActivity)
+                        ?.applyPredictiveBackPreferenceInPlace()
+                    onPredictiveBackChanged()
+                }
+            },
+            showHomeEditButton = showHomeEditButton,
+            defaultStartupPage = defaultStartupPage,
+            predictiveBackEnabled = predictiveBackEnabled,
+            onBack = onBack,
+        )
+    }
+}
+
+fun ComponentActivity.installThemeSettings() {
+    setContent {
+        var appearanceEpoch by remember { mutableIntStateOf(0) }
+        appearanceEpoch
+        val mode = ThemeModeStore.getMode(this@installThemeSettings)
+        ComposeDesignSystem(
+            darkTheme = ThemeModeStore.resolveDarkTheme(mode, isSystemInDarkTheme()),
+            dynamicColor = ThemeModeStore.isDynamicColorEnabled(this@installThemeSettings),
+            themeColor = ThemeModeStore.getThemeColor(this@installThemeSettings),
+            paletteStyle = ThemeModeStore.getPaletteStyle(this@installThemeSettings),
+            colorSpecification = ThemeModeStore.getColorSpecification(this@installThemeSettings),
+        ) {
+            ThemeSettingsRoute(
+                onBack = ::finish,
+                compactUi = WatchUiMode.shouldUseCompactUi(this@installThemeSettings),
+                onAppearanceChanged = { appearanceEpoch++ },
+                onInterfaceScaleChanged = { recreate() },
+                onPredictiveBackChanged = { },
+            )
         }
     }
 }
 
-private fun ComponentActivity.markAppearanceAppliedInPlace() {
-    (this as? LocalizedActivity)?.markAppearanceAppliedInPlace()
-}
+

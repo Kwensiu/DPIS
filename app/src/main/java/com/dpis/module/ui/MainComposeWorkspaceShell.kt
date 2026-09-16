@@ -1,5 +1,6 @@
 package com.dpis.module.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,8 +27,21 @@ internal fun MainComposeWorkspaceShell(
     val destinations = PageSettingsStore.getWorkspaceOrder(context).mapNotNull { name ->
         WorkspaceDestination.entries.firstOrNull { it.name == name }
     }.filterNot { it.name in hidden }
+    val selectedDestination = MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode)
+    val homeDestination = workspaceHomeDestination(
+        PageSettingsStore.getDefaultStartupPage(context),
+        destinations,
+    )
+    BackHandler(enabled = homeDestination != null && selectedDestination != homeDestination) {
+        val destination = homeDestination ?: return@BackHandler
+        dispatch(
+            MainUiAction.workspaceModeChanged(
+                MainComposeWorkspaceAdapter.workspaceModeFor(destination),
+            ),
+        )
+    }
     WorkspaceShell(
-        selectedDestination = MainComposeWorkspaceAdapter.destinationFor(state.workspaceMode),
+        selectedDestination = selectedDestination,
         onDestinationSelected = { destination ->
             dispatch(
                 MainUiAction.workspaceModeChanged(
@@ -41,4 +55,19 @@ internal fun MainComposeWorkspaceShell(
         modifier = modifier,
         content = content
     )
+}
+
+/** Visible tab that back should restore before the system can leave the task. */
+internal fun workspaceHomeDestination(
+    defaultPageName: String,
+    visible: List<WorkspaceDestination>,
+): WorkspaceDestination? {
+    if (visible.isEmpty()) {
+        return null
+    }
+    val preferred = visible.firstOrNull { it.name == defaultPageName }
+    if (preferred != null) {
+        return preferred
+    }
+    return visible.firstOrNull { it == WorkspaceDestination.HOME } ?: visible.first()
 }

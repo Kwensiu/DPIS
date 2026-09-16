@@ -3,7 +3,6 @@
 package com.dpis.module.ui.presentation
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.activity.compose.BackHandler
@@ -66,6 +65,7 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.R
 import com.dpis.module.settings.SettingsUiState
@@ -74,12 +74,11 @@ import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.settings.SystemFontScaleToolState
+import com.dpis.module.tools.SystemFontScaleToolState
 import com.dpis.module.templates.presentation.QuickTemplateSortDialog
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.TemplateEditorForm
@@ -297,6 +296,7 @@ private fun WearTypefacePickerPage(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+    val secondaryNavigation = LocalSecondaryNavigation.current
     BackHandler(onBack = onBack)
     val systemFonts = SystemFontRegistry.listRecommendedFonts()
     val library = ConfigStoreFactory.createLocalUiFontLibraryStore(context, null)
@@ -315,7 +315,7 @@ private fun WearTypefacePickerPage(
                 onClick = { onTypefaceSelected(font.id) })
         }
         wearButton("manage", context.getString(R.string.dialog_typeface_manage_action), icon = R.drawable.ic_settings_24, onClick = {
-            context.startActivity(Intent(context, FontLibraryActivity::class.java))
+            secondaryNavigation?.open(SecondaryDestination.FontLibrary)
         })
     }
 }

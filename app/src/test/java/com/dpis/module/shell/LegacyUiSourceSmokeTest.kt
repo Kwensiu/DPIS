@@ -7,7 +7,7 @@ import org.junit.Test
 class LegacyUiSourceSmokeTest {
     @Test
     fun scopeUnavailableActionPromptsManualLsposedSelection() {
-        val source = read("src/main/java/com/dpis/module/settings/SystemScopeCoordinator.kt")
+        val source = read("src/main/java/com/dpis/module/hooks/SystemScopeCoordinator.kt")
         val unavailableBlock = source.substringBefore("ScopeRequestGate.shared()")
 
         assertFalse(unavailableBlock.contains("openLsposedManager"))

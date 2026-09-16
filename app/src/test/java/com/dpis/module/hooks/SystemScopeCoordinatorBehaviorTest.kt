@@ -1,7 +1,7 @@
-package com.dpis.module
+package com.dpis.module.hooks
 
-import com.dpis.module.settings.SystemFrameworkScope
-import com.dpis.module.settings.SystemScopeCoordinator
+import com.dpis.module.hooks.SystemFrameworkScope
+import com.dpis.module.hooks.SystemScopeCoordinator
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

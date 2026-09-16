@@ -1,10 +1,10 @@
-package com.dpis.module;
+package com.dpis.module.tools;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.dpis.module.SourceSmokeTestPaths;
 import java.io.IOException;
-
 import org.junit.Test;
 
 public class SystemFontScaleToolLayoutSmokeTest {
@@ -24,7 +24,7 @@ public class SystemFontScaleToolLayoutSmokeTest {
 
     @Test
     public void toolsWorkspaceRefreshIsOwnedByPresenter() throws IOException {
-        String source = read("src/main/java/com/dpis/module/settings/presentation/ToolsWorkspace.kt");
+        String source = read("src/main/java/com/dpis/module/tools/presentation/ToolsWorkspace.kt");
 
         assertTrue(source.contains("SystemFontScaleToolPresenter("));
         assertTrue(source.contains("fun onStart()"));

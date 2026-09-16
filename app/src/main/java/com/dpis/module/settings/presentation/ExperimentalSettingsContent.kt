@@ -17,8 +17,7 @@ import com.dpis.module.ui.compose.WearExperimentalSettingsContent
 import com.dpis.module.ui.compose.setFeatureContent
 
 /**
- * Standalone empty-state page kept separate from SettingsWorkspaceContent because
- * experimental settings still launch through their own manifest Activity contract.
+ * Standalone empty-state page kept separate from SettingsWorkspaceContent.
  */
 @Composable
 fun ExperimentalSettingsContent(

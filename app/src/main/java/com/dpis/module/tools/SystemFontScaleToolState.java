@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.tools;
 
 public final class SystemFontScaleToolState {
     public static final int MIN_PERCENT = 50;

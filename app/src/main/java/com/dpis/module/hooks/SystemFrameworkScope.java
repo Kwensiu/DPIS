@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.hooks;
 
 import java.util.Collection;
 

@@ -5,6 +5,8 @@ import android.content.Intent
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SettingsActions
+import com.dpis.module.ui.SecondaryDestination
+import java.util.function.Consumer
 
 /**
  * Java-facing adapter that owns the settings controller's Activity session while MainActivity
@@ -14,6 +16,8 @@ class SettingsWorkspaceSession(
     private val activity: LocalizedActivity,
     private val onComposeStateChanged: Runnable,
     private val onOpenLogs: Runnable,
+    private val onOpenSecondary: Consumer<SecondaryDestination>,
+    private val onConfigurationChanged: Runnable,
 ) : SettingsActions {
     companion object {
         /** Stable Java entry point that avoids exposing Kotlin function types or internal classes. */
@@ -22,11 +26,15 @@ class SettingsWorkspaceSession(
             activity: Activity,
             onComposeStateChanged: Runnable,
             onOpenLogs: Runnable,
+            onOpenSecondary: Consumer<SecondaryDestination>,
+            onConfigurationChanged: Runnable,
         ): SettingsWorkspaceSession {
             return SettingsWorkspaceSession(
                 activity as LocalizedActivity,
                 onComposeStateChanged,
                 onOpenLogs,
+                onOpenSecondary,
+                onConfigurationChanged,
             )
         }
     }
@@ -35,7 +43,10 @@ class SettingsWorkspaceSession(
     private var composePresentationStarted = false
 
     fun ensureComposeController(): SystemServerSettingsPageController {
-        val current = controller ?: SystemServerSettingsPageController(activity).also {
+        val current = controller ?: SystemServerSettingsPageController(
+            activity,
+            onConfigurationChanged,
+        ).also {
             controller = it
         }
         if (!composePresentationStarted) {
@@ -72,15 +83,15 @@ class SettingsWorkspaceSession(
     }
 
     override fun openFontLibrary() {
-        ensureComposeController().showFontLibraryFromPresentation()
+        onOpenSecondary.accept(SecondaryDestination.FontLibrary)
     }
 
     override fun openExperimental() {
-        ensureComposeController().showExperimentalSettingsFromPresentation()
+        onOpenSecondary.accept(SecondaryDestination.Experimental)
     }
 
     override fun openTheme() {
-        ensureComposeController().showThemeSettingsFromPresentation()
+        onOpenSecondary.accept(SecondaryDestination.Theme)
     }
 
     override fun setLanguage(tag: String) {
@@ -108,11 +119,11 @@ class SettingsWorkspaceSession(
     }
 
     override fun openAbout() {
-        ensureComposeController().showAboutFromPresentation()
+        onOpenSecondary.accept(SecondaryDestination.About)
     }
 
     override fun openDonate() {
-        ensureComposeController().showDonateFromPresentation()
+        onOpenSecondary.accept(SecondaryDestination.Donate)
     }
 
     fun onStart() {

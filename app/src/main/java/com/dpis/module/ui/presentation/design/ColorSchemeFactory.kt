@@ -1,35 +1,59 @@
 package com.dpis.module.ui.compose
 
 import androidx.compose.material3.ColorScheme
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.dpis.module.settings.ThemeModeStore
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Single authority for DPIS generated colors.
  *
  * A seed, palette style, and specification always produce a complete Material
  * color scheme. Theme rendering and swatch previews must both use this factory.
+ * Created schemes are reused so a new Activity's first frame does not wait on HCT.
  */
 internal object ColorSchemeFactory {
+    private val schemes = ConcurrentHashMap<String, ColorScheme>()
+
+    fun peek(
+        seedColor: Color,
+        darkTheme: Boolean,
+        paletteStyle: String,
+        requestedSpecification: String,
+    ): ColorScheme? = schemes[key(seedColor, darkTheme, paletteStyle, requestedSpecification)]
+
     fun create(
         seedColor: Color,
         darkTheme: Boolean,
         paletteStyle: String,
         requestedSpecification: String,
     ): ColorScheme {
+        return schemes.getOrPut(key(seedColor, darkTheme, paletteStyle, requestedSpecification)) {
+            dynamicColorScheme(
+                seedColor = seedColor,
+                isDark = darkTheme,
+                style = paletteStyle.toMaterialKolorStyle(),
+                specVersion = resolveSpecification(paletteStyle, requestedSpecification),
+            )
+        }
+    }
+
+    fun clear() {
+        schemes.clear()
+    }
+
+    private fun key(
+        seedColor: Color,
+        darkTheme: Boolean,
+        paletteStyle: String,
+        requestedSpecification: String,
+    ): String {
         val specification = resolveSpecification(paletteStyle, requestedSpecification)
-        return dynamicColorScheme(
-            seedColor = seedColor,
-            isDark = darkTheme,
-            style = paletteStyle.toMaterialKolorStyle(),
-            specVersion = specification,
-        )
+        return "${seedColor.toArgb()}|$darkTheme|$paletteStyle|$specification"
     }
 
     fun supports2025Specification(paletteStyle: String): Boolean = paletteStyle in setOf(
@@ -71,53 +95,6 @@ internal object ColorSchemeFactory {
         ThemeModeStore.COLOR_GREY -> Color(0xFF5F6162)
         else -> Color(0xFF4A672D)
     }
-}
-
-@Composable
-internal fun ColorScheme.animateColorSchemeAsState(): ColorScheme {
-    @Composable
-    fun animate(target: Color, label: String): Color = animateColorAsState(
-        targetValue = target,
-        animationSpec = spring(),
-        label = "dpis-theme-$label",
-    ).value
-
-    return copy(
-        primary = animate(primary, "primary"),
-        onPrimary = animate(onPrimary, "on-primary"),
-        primaryContainer = animate(primaryContainer, "primary-container"),
-        onPrimaryContainer = animate(onPrimaryContainer, "on-primary-container"),
-        secondary = animate(secondary, "secondary"),
-        onSecondary = animate(onSecondary, "on-secondary"),
-        secondaryContainer = animate(secondaryContainer, "secondary-container"),
-        onSecondaryContainer = animate(onSecondaryContainer, "on-secondary-container"),
-        tertiary = animate(tertiary, "tertiary"),
-        onTertiary = animate(onTertiary, "on-tertiary"),
-        tertiaryContainer = animate(tertiaryContainer, "tertiary-container"),
-        onTertiaryContainer = animate(onTertiaryContainer, "on-tertiary-container"),
-        background = animate(background, "background"),
-        onBackground = animate(onBackground, "on-background"),
-        surface = animate(surface, "surface"),
-        onSurface = animate(onSurface, "on-surface"),
-        surfaceVariant = animate(surfaceVariant, "surface-variant"),
-        onSurfaceVariant = animate(onSurfaceVariant, "on-surface-variant"),
-        error = animate(error, "error"),
-        onError = animate(onError, "on-error"),
-        errorContainer = animate(errorContainer, "error-container"),
-        onErrorContainer = animate(onErrorContainer, "on-error-container"),
-        outline = animate(outline, "outline"),
-        outlineVariant = animate(outlineVariant, "outline-variant"),
-        inverseSurface = animate(inverseSurface, "inverse-surface"),
-        inverseOnSurface = animate(inverseOnSurface, "inverse-on-surface"),
-        inversePrimary = animate(inversePrimary, "inverse-primary"),
-        surfaceDim = animate(surfaceDim, "surface-dim"),
-        surfaceBright = animate(surfaceBright, "surface-bright"),
-        surfaceContainer = animate(surfaceContainer, "surface-container"),
-        surfaceContainerHigh = animate(surfaceContainerHigh, "surface-container-high"),
-        surfaceContainerHighest = animate(surfaceContainerHighest, "surface-container-highest"),
-        surfaceContainerLow = animate(surfaceContainerLow, "surface-container-low"),
-        surfaceContainerLowest = animate(surfaceContainerLowest, "surface-container-lowest"),
-    )
 }
 
 private fun String.toMaterialKolorStyle(): PaletteStyle = when (this) {

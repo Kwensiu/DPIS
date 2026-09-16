@@ -22,8 +22,8 @@ class RuntimeConfigDeliverySourceTest {
         val persister = read(
             "src/main/java/com/dpis/module/appconfig/editor/AppConfigEditorPersister.kt",
         )
-        val fontLibrary = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
-        val fontDetail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
+        val fontLibrary = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
+        val fontDetail = read("src/main/java/com/dpis/module/fonts/presentation/FontDetailSession.kt")
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
         val systemSettings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
 

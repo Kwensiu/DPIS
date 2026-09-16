@@ -29,7 +29,7 @@ import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.SystemScopeCoordinator
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.viewport.ViewportPropertySyncer
 
 class QuickConfigActivity : LocalizedActivity() {

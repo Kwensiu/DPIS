@@ -86,6 +86,10 @@ class LogActivitySession(
             ::copyEntryByKey,
             ::enableDiagnosticLogs,
         )
+        startData()
+    }
+
+    fun startData() {
         if (LogGate.isEnabled(activity)) {
             loadLogs(true, includeLsposedCurrent = false, refreshRootAccess = false)
         } else {
@@ -131,13 +135,13 @@ class LogActivitySession(
         exportLogs(data.data)
     }
 
-    private fun toggleSort() {
+    internal fun toggleSort() {
         scrollToLatestAfterNextRender = isAtLatestEdge()
         newestAtBottom = !newestAtBottom
         renderSelectedPage()
     }
 
-    private fun toggleAutoRefresh() {
+    internal fun toggleAutoRefresh() {
         autoRefreshEnabled = !autoRefreshEnabled
         renderSelectedPage()
         if (autoRefreshEnabled) {
@@ -150,13 +154,13 @@ class LogActivitySession(
         }
     }
 
-    private fun refreshLogs() {
+    internal fun refreshLogs() {
         val refreshLsposed = selectedPage == Page.LSPOSED_RELATED
         loadLogs(false, refreshLsposed, refreshLsposed)
         showToast(R.string.log_refreshing)
     }
 
-    private fun selectPageIndex(pageIndex: Int) {
+    internal fun selectPageIndex(pageIndex: Int) {
         selectPage(if (pageIndex == 1) Page.LSPOSED_RELATED else Page.DPIS)
     }
 
@@ -243,7 +247,7 @@ class LogActivitySession(
     }
 
     @Suppress("DEPRECATION")
-    private fun launchExportLogPicker() {
+    internal fun launchExportLogPicker() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
             .addCategory(Intent.CATEGORY_OPENABLE)
             .setType(LOG_PACKAGE_MIME_TYPE)
@@ -281,7 +285,7 @@ class LogActivitySession(
         }
     }
 
-    private fun shareLogs() {
+    internal fun shareLogs() {
         showToast(R.string.log_exporting)
         logExecutor.execute {
             var uri: Uri? = null
@@ -495,7 +499,7 @@ class LogActivitySession(
         )
     }
 
-    private fun copyEntryByKey(key: String) {
+    internal fun copyEntryByKey(key: String) {
         val entry = findVisibleEntry(key)
         val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
         if (clipboard == null || entry == null) {
@@ -516,7 +520,7 @@ class LogActivitySession(
 
     private fun isAtLatestEdge(): Boolean = presentation.atLatestEdge
 
-    private fun toggleMessageExpansion(key: String) {
+    internal fun toggleMessageExpansion(key: String) {
         val expanded = !expandedEntryKeys.contains(key)
         if (expanded) {
             expandedEntryKeys.add(key)

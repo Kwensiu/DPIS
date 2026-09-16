@@ -1,26 +1,23 @@
 package com.dpis.module.home.presentation
 
-import android.content.Intent
 import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.InstalledAppCatalogCoordinator
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
-import com.dpis.module.fonts.FontLibraryActivity
-import com.dpis.module.home.DonateActivity
 import com.dpis.module.home.HomeActivationStateResolver
 import com.dpis.module.home.HomeUpdateUiState
 import com.dpis.module.home.HomeWorkspaceActions
 import com.dpis.module.home.HomeWorkspaceLayout
 import com.dpis.module.home.HomeWorkspaceLayoutStore
 import com.dpis.module.home.HomeWorkspaceState
-import com.dpis.module.home.ModeHelpActivity
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.SecondaryDestination
 
 /**
  * Owns Home workspace snapshots and navigation actions.
@@ -88,7 +85,7 @@ class HomeWorkspaceSession(
             }
 
             override fun openFontLibrary() {
-                activity.startActivity(Intent(activity, FontLibraryActivity::class.java))
+                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.FontLibrary)
             }
 
             override fun openTemplateWorkspace() {
@@ -98,11 +95,11 @@ class HomeWorkspaceSession(
             }
 
             override fun openModeHelp() {
-                activity.startActivity(Intent(activity, ModeHelpActivity::class.java))
+                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.ModeHelp)
             }
 
             override fun openDonate() {
-                activity.startActivity(DonateActivity.createIntent(activity))
+                activity.mainWorkspaceSession.openSecondary(SecondaryDestination.Donate)
             }
 
             override fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout) {

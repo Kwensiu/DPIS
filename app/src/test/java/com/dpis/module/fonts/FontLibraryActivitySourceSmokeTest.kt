@@ -6,7 +6,7 @@ import org.junit.Test
 class FontLibraryActivitySourceSmokeTest {
     @Test
     fun ttcImportRegistersAllLoadableFaces() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
         val importRules = read("src/main/java/com/dpis/module/fonts/FontImport.kt")
         val strings = read("src/main/res/values/strings.xml")
 
@@ -28,8 +28,8 @@ class FontLibraryActivitySourceSmokeTest {
 
     @Test
     fun fontPagesOwnDialogsInComposeState() {
-        val library = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
-        val detail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
+        val library = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
+        val detail = read("src/main/java/com/dpis/module/fonts/presentation/FontDetailSession.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
         val wear = read("src/main/java/com/dpis/module/ui/presentation/wear/WearSecondaryPages.kt")
         val textInput = read("src/main/java/com/dpis/module/ui/presentation/dialogs/TextInputDialog.kt")
@@ -68,7 +68,7 @@ class FontLibraryActivitySourceSmokeTest {
 
     @Test
     fun oversizedFontUsesConfirmationInsteadOfHardRejection() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
         val importRules = read("src/main/java/com/dpis/module/fonts/FontImport.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
         val strings = read("src/main/res/values/strings.xml")
@@ -93,7 +93,7 @@ class FontLibraryActivitySourceSmokeTest {
 
     @Test
     fun fontDetailsDisplayPublicationStatus() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontDetailSession.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
         val strings = read("src/main/res/values/strings.xml")
 
@@ -121,7 +121,7 @@ class FontLibraryActivitySourceSmokeTest {
 
     @Test
     fun fontLibraryGroupsFacesIntoCollections() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
 
         source.assertContainsAll(
             "linkedMapOf<String, MutableList<FontLibraryEntry>>()",
@@ -133,7 +133,7 @@ class FontLibraryActivitySourceSmokeTest {
 
     @Test
     fun fontLibraryImportsAndExportsSeparateArchives() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
 
         content.assertContainsAll(
@@ -156,7 +156,8 @@ class FontLibraryActivitySourceSmokeTest {
     @Test
     fun fontDetailsUseDedicatedActivityAndFullPageLayout() {
         val library = read("src/main/java/com/dpis/module/fonts/FontLibraryActivity.kt")
-        val detail = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
+        val session = read("src/main/java/com/dpis/module/fonts/presentation/FontLibrarySession.kt")
+        val detail = read("src/main/java/com/dpis/module/fonts/presentation/FontDetailSession.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
         val manifest = read("src/main/AndroidManifest.xml")
 
@@ -164,9 +165,8 @@ class FontLibraryActivitySourceSmokeTest {
             "Intent(this, FontDetailActivity::class.java)",
             "FontDetailActivity.EXTRA_FONT_ID",
         )
-        library.assertNotContainsAll("showFontDetails(")
+        session.assertNotContainsAll("showFontDetails(")
         detail.assertContainsAll(
-            "EXTRA_FONT_ID",
             "showFallbackExplanationDialog",
             "confirmDeleteForCurrentEntry",
             "confirmClearAppTypefaceByPackage",
@@ -201,7 +201,7 @@ class FontLibraryActivitySourceSmokeTest {
 
     @Test
     fun deleteAndRestoreConfirmationsUseComposeDialogState() {
-        val source = read("src/main/java/com/dpis/module/fonts/FontDetailActivity.kt")
+        val source = read("src/main/java/com/dpis/module/fonts/presentation/FontDetailSession.kt")
         val content = read("src/main/java/com/dpis/module/fonts/presentation/FontLibraryContent.kt")
 
         source.assertContainsAll(

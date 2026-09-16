@@ -7,17 +7,29 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Density
+import com.dpis.module.MainActivity
+import com.dpis.module.settings.AppLocaleManager
+import com.dpis.module.settings.AppUiScaleManager
+import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.ui.SecondaryDestination
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,7 +41,6 @@ import com.dpis.module.ui.compose.MessageAlertDialog
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.dialog.StartupDisclaimerDialog
 import com.dpis.module.ui.dialog.StartupDisclaimerGate
-import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.compose.imeWindowPan
 import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
 import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
@@ -44,12 +55,16 @@ class MainComposeShellHost(
     initialState: MainUiState,
     private val isCompactUi: Boolean,
     private val workspacePresentation: MainWorkspacePresentationCoordinator,
+    private val secondaryPages: SecondaryPageHost,
+    private val activity: MainActivity,
     private val dispatch: (MainUiAction) -> Unit
 ) {
     private var state by mutableStateOf(initialState)
     private var diagnosticPreparation by mutableStateOf<FeedbackDiagnosticPreparationPresentation?>(null)
     private var startupDisclaimer by mutableStateOf<StartupDisclaimerRequest?>(null)
     private var dialog by mutableStateOf<MainShellDialog?>(null)
+    private var configurationEpoch by mutableIntStateOf(0)
+    private var appearanceEpoch by mutableIntStateOf(0)
 
     init {
         composeView.setContent {
@@ -66,7 +81,33 @@ class MainComposeShellHost(
                 StartupDisclaimerGate.bind(disclaimerPresenter)
                 onDispose { StartupDisclaimerGate.clear(disclaimerPresenter) }
             }
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
+            val configurationEpoch = configurationEpoch
+            val appearanceEpoch = appearanceEpoch
+            val appearance = remember(appearanceEpoch) {
+                ThemeModeStore.getAppearance(activity)
+            }
+            val wrappedContext = remember(configurationEpoch) {
+                wrappedConfigurationContext()
+            }
+            CompositionLocalProvider(
+                LocalContext provides wrappedContext,
+                LocalConfiguration provides wrappedContext.resources.configuration,
+                LocalDensity provides Density(
+                    wrappedContext.resources.displayMetrics.density,
+                    wrappedContext.resources.configuration.fontScale,
+                ),
+            ) {
+            ComposeDesignSystem(
+                darkTheme = ThemeModeStore.resolveDarkTheme(
+                    appearance.mode,
+                    isSystemInDarkTheme(),
+                ),
+                dynamicColor = appearance.dynamicColorEnabled,
+                themeColor = appearance.themeColor,
+                paletteStyle = appearance.paletteStyle,
+                colorSpecification = appearance.colorSpecification,
+            ) {
+                ProvideSecondaryNavigation(secondaryPages) {
                 androidx.compose.runtime.DisposableEffect(composeView, inputFocusBoundary) {
                     ViewCompat.setWindowInsetsAnimationCallback(
                         composeView,
@@ -160,7 +201,24 @@ class MainComposeShellHost(
                 }
                 }
             }
+            }
+            }
         }
+    }
+
+    fun openSecondary(destination: SecondaryDestination) {
+        secondaryPages.open(destination)
+    }
+
+    fun applyConfigurationInPlace() {
+        activity.markLocaleAppliedInPlace()
+        activity.markInterfaceScaleAppliedInPlace()
+        configurationEpoch++
+    }
+
+    fun applyAppearanceInPlace() {
+        activity.markAppearanceAppliedInPlace()
+        appearanceEpoch++
     }
 
     fun render(nextState: MainUiState) {
@@ -244,6 +302,10 @@ class MainComposeShellHost(
         val onAccepted: () -> Unit,
         val onBack: () -> Unit,
     )
+
+    private fun wrappedConfigurationContext(): android.content.Context {
+        return AppUiScaleManager.wrap(AppLocaleManager.wrap(activity))
+    }
 }
 
 private sealed class MainShellDialog {

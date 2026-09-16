@@ -1,4 +1,4 @@
-package com.dpis.module.settings;
+package com.dpis.module.tools;
 
 import android.content.Context;
 import android.provider.Settings;

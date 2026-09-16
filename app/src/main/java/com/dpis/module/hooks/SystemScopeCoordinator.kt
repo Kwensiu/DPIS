@@ -1,10 +1,11 @@
-package com.dpis.module.settings
+package com.dpis.module.hooks
 
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.R
+import com.dpis.module.settings.ScopeRequestGate
 import io.github.libxposed.service.XposedService
 
 class SystemScopeCoordinator(

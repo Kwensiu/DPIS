@@ -19,27 +19,26 @@ import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.settings.SettingsPresentationController
 import com.dpis.module.settings.SettingsUiState
-import com.dpis.module.about.AboutActivity
+
 import com.dpis.module.backup.presentation.ConfigBackupHost
 import com.dpis.module.fonts.FontDebugDataDiagnostics
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
 import com.dpis.module.fonts.FontDebugOverlayService
 import com.dpis.module.fonts.FontDebugStatsSchema
 import com.dpis.module.fonts.FontDebugStatsStore
-import com.dpis.module.fonts.FontLibraryActivity
-import com.dpis.module.home.DonateActivity
+
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.delivery.RuntimeDebugPropertySyncer
 import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.settings.ExperimentalSettingsActivity
+
 import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.LauncherIconVisibilityStore
 import com.dpis.module.settings.SafeCacheCleaner
-import com.dpis.module.settings.SystemFrameworkScope
-import com.dpis.module.settings.SystemHookState
+import com.dpis.module.hooks.SystemFrameworkScope
+import com.dpis.module.hooks.SystemHookState
 import com.dpis.module.settings.SystemHooksToggleController
 import com.dpis.module.settings.SystemHooksToggleController.ScopeGateway
-import com.dpis.module.settings.ThemeSettingsActivity
+
 import com.dpis.module.settings.presentation.SettingsComposeDialogs.showBackupActions
 import com.dpis.module.ui.compose.FontDebugComposeSheet
 import com.dpis.module.ui.compose.FontDebugComposeSheet.show
@@ -52,6 +51,7 @@ import kotlin.concurrent.Volatile
 /** Java-facing settings workflow controller used by the Compose presentation. */
 class SystemServerSettingsPageController(
     private val activity: LocalizedActivity,
+    private val onConfigurationChanged: Runnable? = null,
 ) : DpisApplication.ServiceStateListener {
     private val launcherIconVisibilityStore: LauncherIconVisibilityStore
     private val interfaceScaleStore: InterfaceScaleStore
@@ -131,7 +131,7 @@ class SystemServerSettingsPageController(
             available && store!!.isSystemServerHooksEnabled(),
             available && store!!.isSystemServerSafeModeEnabled(),
             available && store!!.isGlobalLogEnabled(),
-            launcherIconVisibilityStore.isHidden(), interfaceScaleStore.getPercent(),
+            launcherIconVisibilityStore.isHidden(), interfaceScaleStore.percent,
             clearCacheInProgress, lastCacheUsage,
             getString(AppLocaleManager.selectedLabelResId(activity)),
             backupHost.pendingImportUri,
@@ -179,18 +179,6 @@ class SystemServerSettingsPageController(
         showFontDebugDialog(null)
     }
 
-    fun showExperimentalSettingsFromPresentation() {
-        startActivity(Intent(activity, ExperimentalSettingsActivity::class.java))
-    }
-
-    fun showThemeSettingsFromPresentation() {
-        startActivity(Intent(activity, ThemeSettingsActivity::class.java))
-    }
-
-    fun showFontLibraryFromPresentation() {
-        startActivity(Intent(activity, FontLibraryActivity::class.java))
-    }
-
     fun showLanguageFromPresentation() {
         showLanguageDialog(null)
     }
@@ -213,14 +201,6 @@ class SystemServerSettingsPageController(
 
     fun clearCacheFromPresentation() {
         clearCache(null)
-    }
-
-    fun showAboutFromPresentation() {
-        startActivity(Intent(activity, AboutActivity::class.java))
-    }
-
-    fun showDonateFromPresentation() {
-        startActivity(DonateActivity.createIntent(activity))
     }
 
     fun onStart() {
@@ -320,7 +300,11 @@ class SystemServerSettingsPageController(
             return
         }
         if (selectedTag != previousTag) {
-            recreate()
+            if (onConfigurationChanged != null) {
+                onConfigurationChanged.run()
+            } else {
+                recreate()
+            }
         }
     }
 

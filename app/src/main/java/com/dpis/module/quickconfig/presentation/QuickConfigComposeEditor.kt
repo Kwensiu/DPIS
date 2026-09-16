@@ -28,7 +28,7 @@ import com.dpis.module.quickconfig.QuickConfigEditorSession
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
-import com.dpis.module.settings.SystemScopeCoordinator
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.viewport.ViewportPropertySyncer
