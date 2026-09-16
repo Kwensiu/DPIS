@@ -1,5 +1,6 @@
 package com.dpis.module.applist
 
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
@@ -24,6 +25,19 @@ class InstalledAppCatalogCoordinator(
         fun getPackageManager(): PackageManager
 
         fun getSelfPackageName(): String
+
+        fun getCatalogLocaleTag(): String
+    }
+
+    class ContextHost(private val context: Context) : Host {
+        override fun getPackageManager(): PackageManager = context.packageManager
+
+        override fun getSelfPackageName(): String = context.packageName
+
+        override fun getCatalogLocaleTag(): String {
+            val locales = context.resources.configuration.locales
+            return catalogLocaleTag(if (locales.isEmpty) null else locales[0])
+        }
     }
 
     private val installedAppCatalogLock = Any()
@@ -130,29 +144,13 @@ class InstalledAppCatalogCoordinator(
             }
 
             val cachedLabels = labelStore?.load() ?: CatalogLabelCacheSnapshot.EMPTY
-            val localeTag = currentLocaleTag()
-            var reusedLabels = 0
-            val snapshot = installedPackages.mapNotNull { packageInfo ->
-                val unresolved = unresolvedCatalogLabel(
-                    packageInfo.applicationInfo,
-                    packageInfo.packageName,
-                )
-                val cached = cachedLabels.resolvedLabel(
-                    localeTag,
-                    packageInfo.packageName,
-                    packageInfo.lastUpdateTime,
-                )
-                if (cached != null) reusedLabels++
-                createCatalogItem(
-                    packageInfo,
-                    selfPackageName,
-                    cached ?: unresolved,
-                    labelResolved = cached != null,
-                )
-            }.sortedWith(
-                compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
-                    .thenBy { it.packageName },
+            val snapshot = buildCatalogSnapshot(
+                installedPackages,
+                selfPackageName,
+                cachedLabels,
+                host.getCatalogLocaleTag(),
             )
+            val reusedLabels = snapshot.count { it.labelResolved }
             DpisLog.i(
                 "installed app catalog rebuilt: raw=${installedPackages.size}, " +
                     "catalog=${snapshot.size}, reusedLabels=$reusedLabels",
@@ -171,21 +169,15 @@ class InstalledAppCatalogCoordinator(
             if (current.isEmpty() || current.all { it.labelResolved }) {
                 return current
             }
-            val resolved = current.map { item ->
-                if (item.labelResolved) {
-                    item
-                } else {
-                    val label = try {
-                        packageManager.getApplicationLabel(item.applicationInfo).toString()
-                    } catch (_: RuntimeException) {
-                        item.label
-                    }
-                    item.withResolvedLabel(label)
+            val resolved = resolveCatalogItemLabels(
+                current,
+            ) { applicationInfo ->
+                try {
+                    packageManager.getApplicationLabel(applicationInfo).toString()
+                } catch (_: RuntimeException) {
+                    null
                 }
-            }.sortedWith(
-                compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
-                    .thenBy { it.packageName },
-            )
+            }
             synchronized(installedAppCatalogLock) {
                 if (catalogInvalidated) {
                     return current
@@ -199,17 +191,15 @@ class InstalledAppCatalogCoordinator(
 
     private fun persistResolvedLabels(catalog: List<InstalledAppCatalogItem>) {
         val store = labelStore ?: return
-        val records = LinkedHashMap<String, CatalogLabelRecord>()
-        for (item in catalog) {
-            if (!item.labelResolved) continue
-            val label = item.label.trim()
-            if (label.isEmpty()) continue
-            records[item.packageName] = CatalogLabelRecord(label, item.lastUpdateTime)
-        }
-        store.replace(currentLocaleTag(), records)
+        val localeTag = host.getCatalogLocaleTag()
+        val merged = mergePersistedLabelRecords(
+            store.load(),
+            localeTag,
+            catalog.mapTo(HashSet()) { it.packageName },
+            persistableLabelRecords(catalog),
+        )
+        store.replace(localeTag, merged)
     }
-
-    private fun currentLocaleTag(): String = Locale.getDefault().toLanguageTag()
 
     private fun isCatalogCacheFresh(): Boolean =
         !catalogInvalidated && installedAppCatalog.isNotEmpty()
@@ -285,6 +275,92 @@ class InstalledAppCatalogCoordinator(
         fun unresolvedCatalogLabel(applicationInfo: ApplicationInfo?, packageName: String): String {
             val nonLocalized = applicationInfo?.nonLocalizedLabel?.toString()?.trim()
             return if (!nonLocalized.isNullOrEmpty()) nonLocalized else packageName
+        }
+
+        @JvmStatic
+        fun catalogLocaleTag(locale: Locale?): String =
+            (locale ?: Locale.getDefault()).toLanguageTag()
+
+        @JvmStatic
+        fun buildCatalogSnapshot(
+            packages: List<PackageInfo>,
+            selfPackageName: String,
+            cachedLabels: CatalogLabelCacheSnapshot,
+            localeTag: String,
+        ): List<InstalledAppCatalogItem> =
+            packages.mapNotNull { packageInfo ->
+                val unresolved = unresolvedCatalogLabel(
+                    packageInfo.applicationInfo,
+                    packageInfo.packageName,
+                )
+                val cached = cachedLabels.resolvedLabel(
+                    localeTag,
+                    packageInfo.packageName,
+                    packageInfo.lastUpdateTime,
+                )
+                createCatalogItem(
+                    packageInfo,
+                    selfPackageName,
+                    cached ?: unresolved,
+                    labelResolved = cached != null,
+                )
+            }.let(::sortedCatalog)
+
+        @JvmStatic
+        fun resolveCatalogItemLabels(
+            items: List<InstalledAppCatalogItem>,
+            loadLabel: (ApplicationInfo) -> String?,
+        ): List<InstalledAppCatalogItem> =
+            items.map { item ->
+                if (item.labelResolved) {
+                    item
+                } else {
+                    val label = loadLabel(item.applicationInfo)?.trim().orEmpty()
+                    if (label.isEmpty()) item else item.withResolvedLabel(label)
+                }
+            }.let(::sortedCatalog)
+
+        private fun sortedCatalog(items: List<InstalledAppCatalogItem>): List<InstalledAppCatalogItem> =
+            items.sortedWith(
+                compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
+                    .thenBy { it.packageName },
+            )
+
+        @JvmStatic
+        fun persistableLabelRecords(
+            catalog: List<InstalledAppCatalogItem>,
+        ): Map<String, CatalogLabelRecord> {
+            val records = LinkedHashMap<String, CatalogLabelRecord>()
+            for (item in catalog) {
+                if (!item.labelResolved) continue
+                val label = item.label.trim()
+                if (label.isEmpty()) continue
+                records[item.packageName] = CatalogLabelRecord(label, item.lastUpdateTime)
+            }
+            return records
+        }
+
+        @JvmStatic
+        fun mergePersistedLabelRecords(
+            existing: CatalogLabelCacheSnapshot,
+            localeTag: String,
+            installedPackages: Set<String>,
+            updates: Map<String, CatalogLabelRecord>,
+        ): Map<String, CatalogLabelRecord> {
+            val merged = LinkedHashMap<String, CatalogLabelRecord>()
+            if (existing.localeTag == localeTag) {
+                existing.records.forEach { (packageName, record) ->
+                    if (packageName in installedPackages) {
+                        merged[packageName] = record
+                    }
+                }
+            }
+            updates.forEach { (packageName, record) ->
+                if (packageName in installedPackages) {
+                    merged[packageName] = record
+                }
+            }
+            return merged
         }
 
         @JvmStatic

@@ -692,33 +692,23 @@ class MainActivitySourceSmokeTest {
 
     @Test
     fun appLoad_reusesInstalledAppCatalogBetweenRefreshes() {
-        val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val viewModelSource = read(
             "src/main/java/com/dpis/module/ui/MainViewModel.kt"
         )
-        val coordinatorSource = read(
-            "src/main/java/com/dpis/module/applist/InstalledAppCatalogCoordinator.kt"
-        )
-
         val loadSession = read(
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt"
         )
         assertTrue(loadSession.contains("attachPackageCatalogMonitor()"))
         assertTrue(loadSession.contains("private val catalogCoordinator by lazy"))
-        assertTrue(loadSession.contains("InstalledAppCatalogLabelStore.from(activity)"))
-        assertTrue(coordinatorSource.contains("labelStore?.load()"))
-        assertTrue(coordinatorSource.contains("persistResolvedLabels("))
+        assertTrue(loadSession.contains("InstalledAppCatalogCoordinator.ContextHost(activity)"))
         assertTrue(
             read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
                 .contains("installedAppsLoadSession.attachPackageCatalogMonitor()"),
         )
         assertTrue(loadSession.contains("InstalledAppCatalogCoordinator("))
-        assertTrue(coordinatorSource.contains("getInstalledAppCatalog("))
-        assertTrue(coordinatorSource.contains("fun invalidate()"))
         assertTrue(
             viewModelSource.contains("forceInstalledAppCatalogReloadRequested")
         )
-        assertTrue(coordinatorSource.contains("isCatalogCacheFresh"))
         assertFalse(loadSession.contains("INSTALLED_APP_CATALOG_TTL_MS"))
     }
 

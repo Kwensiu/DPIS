@@ -26,7 +26,15 @@ class InstalledAppCatalogLabelStore(private val file: File) {
         val snapshot = CatalogLabelCacheSnapshot(localeTag, records)
         synchronized(lock) {
             file.parentFile?.mkdirs()
-            file.writeText(encode(snapshot), StandardCharsets.UTF_8)
+            val tmp = File(file.parentFile, file.name + ".tmp")
+            tmp.writeText(encode(snapshot), StandardCharsets.UTF_8)
+            if (file.exists() && !file.delete()) {
+                file.writeText(encode(snapshot), StandardCharsets.UTF_8)
+                tmp.delete()
+            } else if (!tmp.renameTo(file)) {
+                file.writeText(encode(snapshot), StandardCharsets.UTF_8)
+                tmp.delete()
+            }
             memory = snapshot
         }
     }
@@ -48,10 +56,19 @@ class InstalledAppCatalogLabelStore(private val file: File) {
         private const val KEY_LABEL = "label"
         private const val KEY_LAST_UPDATE_TIME = "lastUpdateTime"
 
+        @Volatile
+        private var shared: InstalledAppCatalogLabelStore? = null
+        private val sharedLock = Any()
+
         @JvmStatic
         fun from(context: Context): InstalledAppCatalogLabelStore {
-            val filesDir = attachedFilesDir(context)
-            return InstalledAppCatalogLabelStore(File(filesDir, FILE_NAME))
+            shared?.let { return it }
+            synchronized(sharedLock) {
+                shared?.let { return it }
+                val created = InstalledAppCatalogLabelStore(File(attachedFilesDir(context), FILE_NAME))
+                shared = created
+                return created
+            }
         }
 
         /**

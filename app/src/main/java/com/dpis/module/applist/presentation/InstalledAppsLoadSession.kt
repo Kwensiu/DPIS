@@ -29,13 +29,7 @@ class InstalledAppsLoadSession(
 ) {
     private val catalogCoordinator by lazy {
         InstalledAppCatalogCoordinator(
-            object : InstalledAppCatalogCoordinator.Host {
-                override fun getPackageManager(): PackageManager =
-                    activity.packageManager
-
-                override fun getSelfPackageName(): String =
-                    activity.packageName
-            },
+            InstalledAppCatalogCoordinator.ContextHost(activity),
             InstalledAppCatalogLabelStore.from(activity),
         )
     }

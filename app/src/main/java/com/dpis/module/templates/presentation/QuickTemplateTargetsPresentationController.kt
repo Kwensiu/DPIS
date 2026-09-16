@@ -71,10 +71,7 @@ class QuickTemplateTargetsPresentationController(private val context: Context) {
     private val packageConfigs = PackageConfigRepository(DpisApplication.getActiveHookConfigStore(context))
     private val loader = Executors.newSingleThreadExecutor()
     private val catalog = InstalledAppCatalogCoordinator(
-        object : InstalledAppCatalogCoordinator.Host {
-            override fun getPackageManager() = context.packageManager
-            override fun getSelfPackageName() = context.packageName
-        },
+        InstalledAppCatalogCoordinator.ContextHost(context),
         InstalledAppCatalogLabelStore.from(context),
     )
     private val listeners = LinkedHashSet<Listener>()
