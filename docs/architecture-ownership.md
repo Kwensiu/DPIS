@@ -102,7 +102,8 @@ Compose rewrite, and do not grow `MainActivity` while extracting a host.
    shared chrome in `ui/`, then feature screens. Java `show()` dialogs and
    sheets use `ComposeOverlay` with `ModalDialog` or `ModalSheet`. XML
    `Theme.Dpis*` is window chrome only. Dialog padding is `DialogChrome`;
-   scale gaps use `LocalSpacing`.
+   scale gaps use `LocalSpacing`. Compose does not keep UI role colors or
+   wizard arrows in XML.
    Do not restyle Settings or the editor to introduce the contract. Do not
    mix this with a package rename.
 2. **Align feature Compose packages with their directories.** Files under

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="font_hook_domain_risk_low">#2E9E55</color>
-    <color name="font_hook_domain_risk_medium">#D88916</color>
-    <color name="font_hook_domain_risk_high">#D64B45</color>
-    <color name="app_config_wizard_bubble_container">#6A6F77</color>
-</resources>

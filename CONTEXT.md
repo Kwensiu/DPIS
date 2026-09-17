@@ -94,6 +94,10 @@ Builder export are not the UI color source.
   Feature-only measured gaps stay next to that dialog. Do not add XML
   `dimens.xml` for Compose dialogs. Wear and phone Compose own round/wide
   geometry; do not restore `values-round` or `values-w720dp` layout bags.
+- Compose does not read `R.color` for UI. Hook-domain risk dots live next to
+  that editor page. The editor wizard arrow is drawn in Compose with
+  `inverseSurface` so it matches the hint bubble. Do not restore XML role
+  colors or wizard drawables.
 
 Do not add another Material 3 component library or freeze a static `Color.kt`.
 

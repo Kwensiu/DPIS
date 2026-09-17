@@ -6,6 +6,7 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -36,8 +37,8 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -422,14 +423,18 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                             .zIndex(1f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.bg_app_config_wizard_arrow),
-                            contentDescription = null,
-                            modifier = androidx.compose.ui.Modifier
-                                .size(width = 14.dp, height = 7.dp)
-                                .rotate(180f),
-                            tint = Color.Unspecified
-                        )
+                        val arrowColor = MaterialTheme.colorScheme.inverseSurface
+                        Canvas(
+                            modifier = androidx.compose.ui.Modifier.size(width = 14.dp, height = 7.dp),
+                        ) {
+                            val path = Path().apply {
+                                moveTo(size.width / 2f, 0f)
+                                lineTo(size.width, size.height)
+                                lineTo(0f, size.height)
+                                close()
+                            }
+                            drawPath(path, color = arrowColor)
+                        }
                         Surface(
                             shape = AppConfigSheetUiTokens.WizardHintShape,
                             color = MaterialTheme.colorScheme.inverseSurface,
