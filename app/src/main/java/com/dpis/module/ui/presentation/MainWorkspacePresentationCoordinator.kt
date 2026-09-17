@@ -6,27 +6,20 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -39,15 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import com.dpis.module.appconfig.editor.AppConfigEditorChip
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import com.dpis.module.appconfig.editor.EditorPresentation
@@ -62,6 +52,7 @@ import com.dpis.module.appconfig.presentation.AppConfigEditorContent
 import com.dpis.module.appconfig.presentation.AppConfigEditorSessionChip
 import com.dpis.module.appconfig.presentation.AppConfigEditorOverlay
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
+import com.dpis.module.appconfig.presentation.AppConfigWizardHint
 import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
@@ -423,65 +414,13 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
             },
             overlayContent = {
                 if (showAdvancedHint && !editorState.destination.isChildPage) {
-                    Column(
-                        modifier = androidx.compose.ui.Modifier
-                            .align(Alignment.TopCenter)
-                            .offset(y = AppConfigSheetUiTokens.WizardHintTopOffset)
-                            .padding(horizontal = 20.dp)
-                            .zIndex(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val arrowColor = MaterialTheme.colorScheme.wizardHintArrowColor()
-                        Canvas(
-                            modifier = androidx.compose.ui.Modifier.size(width = 14.dp, height = 7.dp),
-                        ) {
-                            val path = Path().apply {
-                                moveTo(size.width / 2f, 0f)
-                                lineTo(size.width, size.height)
-                                lineTo(0f, size.height)
-                                close()
-                            }
-                            drawPath(path, color = arrowColor)
-                        }
-                        Surface(
-                            shape = AppConfigSheetUiTokens.WizardHintShape,
-                            color = MaterialTheme.colorScheme.inverseSurface,
-                            contentColor = MaterialTheme.colorScheme.inverseOnSurface
-                        ) {
-                            Row(
-                                modifier = androidx.compose.ui.Modifier.padding(
-                                    start = 14.dp, top = 6.dp, end = 6.dp, bottom = 6.dp
-                                ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    stringResource(R.string.dialog_advanced_wizard_hint),
-                                    modifier = androidx.compose.ui.Modifier.weight(1f, fill = false),
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                                Box(
-                                    modifier = androidx.compose.ui.Modifier
-                                        .padding(start = 8.dp)
-                                        .size(AppConfigSheetUiTokens.WizardHintCloseSize)
-                                        .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.15f))
-                                        .dpisClickable(role = Role.Button, onClick = {
-                                            AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
-                                            showAdvancedHint = false
-                                        }),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_close_24),
-                                        contentDescription = stringResource(
-                                            R.string.dialog_advanced_wizard_close
-                                        ),
-                                        modifier = androidx.compose.ui.Modifier.size(14.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    AppConfigWizardHint(
+                        modifier = androidx.compose.ui.Modifier.align(Alignment.TopCenter),
+                        onDismiss = {
+                            AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
+                            showAdvancedHint = false
+                        },
+                    )
                 }
             }
             )
@@ -507,6 +446,3 @@ private fun ComposeWorkspaceSurface(content: @Composable () -> Unit) {
     )
 }
 
-/** Mix inverseSurface one step toward surface so the triangle is less harsh than the bubble. */
-private fun ColorScheme.wizardHintArrowColor(): Color =
-    lerp(inverseSurface, surface, 0.22f)

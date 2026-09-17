@@ -4,6 +4,7 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 
 /**
@@ -21,6 +22,10 @@ data class SemanticColors(
 val LocalSemanticColors = staticCompositionLocalOf<SemanticColors> {
     error("ComposeDesignSystem must provide SemanticColors")
 }
+
+/** Mix inverseSurface one step toward surface so the tooltip is less harsh. */
+internal fun ColorScheme.wizardHintSurface(): Color =
+    lerp(inverseSurface, surface, 0.22f)
 
 internal fun ColorScheme.toSemanticColors(): SemanticColors {
     val dark = background.luminance() < 0.5f

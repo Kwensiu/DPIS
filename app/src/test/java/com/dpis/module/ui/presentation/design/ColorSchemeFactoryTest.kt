@@ -1,15 +1,14 @@
 package com.dpis.module.ui.presentation.design
 
+import androidx.compose.ui.graphics.luminance
 import com.dpis.module.settings.ThemeModeStore
 import com.materialkolor.dynamiccolor.ColorSpec
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.ui.presentation.design.ColorSchemeFactory
-import com.dpis.module.ui.presentation.design.toSemanticColors
-import com.dpis.module.ui.presentation.design.toWearColorScheme
 
 class ColorSchemeFactoryTest {
     @After
@@ -105,6 +104,28 @@ class ColorSchemeFactoryTest {
         assertNotEquals(light.successContainer, light.warningContainer)
         assertNotEquals(light.successContainer, light.onSuccessContainer)
         assertNotEquals(dark.successContainer, dark.onSuccessContainer)
+    }
+
+    @Test
+    fun wizardHintSurfaceSitsBetweenInverseAndSurface() {
+        val light = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
+            darkTheme = false,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        )
+        val dark = ColorSchemeFactory.create(
+            seedColor = ColorSchemeFactory.seedColor(ThemeModeStore.COLOR_PURPLE),
+            darkTheme = true,
+            paletteStyle = ThemeModeStore.STYLE_TONAL_SPOT,
+            requestedSpecification = ThemeModeStore.SPEC_2025,
+        )
+        val lightHint = light.wizardHintSurface()
+        val darkHint = dark.wizardHintSurface()
+        assertTrue(lightHint.luminance() > light.inverseSurface.luminance())
+        assertTrue(lightHint.luminance() < light.surface.luminance())
+        assertTrue(darkHint.luminance() < dark.inverseSurface.luminance())
+        assertTrue(darkHint.luminance() > dark.surface.luminance())
     }
 
     @Test
