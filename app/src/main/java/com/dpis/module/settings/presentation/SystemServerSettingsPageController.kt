@@ -20,6 +20,7 @@ import com.dpis.module.R
 import com.dpis.module.settings.SettingsPresentationController
 import com.dpis.module.settings.SettingsUiState
 
+import com.dpis.module.applist.RestoreScopePromptStore
 import com.dpis.module.backup.presentation.ConfigBackupHost
 import com.dpis.module.fonts.FontDebugDataDiagnostics
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
@@ -52,7 +53,6 @@ import kotlin.concurrent.Volatile
 /** Java-facing settings workflow controller used by the Compose presentation. */
 class SystemServerSettingsPageController(
     private val activity: LocalizedActivity,
-    private val onConfigurationChanged: Runnable? = null,
 ) : DpisApplication.ServiceStateListener {
     private val launcherIconVisibilityStore: LauncherIconVisibilityStore
     private val interfaceScaleStore: InterfaceScaleStore
@@ -80,7 +80,10 @@ class SystemServerSettingsPageController(
             override fun publishPresentationState() {
                 this@SystemServerSettingsPageController.publishPresentationState()
             }
-            override fun onRestoreSucceeded() {
+            override fun onRestoreSucceeded(moduleScope: List<String>) {
+                if (BuildConfig.FLAVOR == "modern") {
+                    RestoreScopePromptStore(activity).replacePendingScope(moduleScope)
+                }
                 relaunchDpisTask()
             }
             override fun runOnUiThread(action: Runnable) {
@@ -307,11 +310,9 @@ class SystemServerSettingsPageController(
             return
         }
         if (selectedTag != previousTag) {
-            if (onConfigurationChanged != null) {
-                onConfigurationChanged.run()
-            } else {
-                recreate()
-            }
+            // Compose overlays are independent Activity-root compositions. Recreate so every
+            // visible dialog receives the new localized Resources context, not only the shell.
+            recreate()
         }
     }
 

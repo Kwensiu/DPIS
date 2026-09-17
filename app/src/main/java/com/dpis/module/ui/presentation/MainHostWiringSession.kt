@@ -12,7 +12,10 @@ import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.RestoreScopePromptPolicy
+import com.dpis.module.applist.RestoreScopePromptStore
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession
+import com.dpis.module.templates.BatchScopeRequestCoordinator
 import com.dpis.module.tools.presentation.ToolsWorkspace
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainViewModel
@@ -36,6 +39,7 @@ class MainHostWiringSession(
         private set
     var settingsWorkspaceSession: SettingsWorkspaceSession? = null
         private set
+    val restoreScopePromptStore by lazy { RestoreScopePromptStore(activity) }
 
     fun wire(viewModel: MainViewModel) {
         val scopeCoordinator = ComposeEditorScopeRequestCoordinator(
@@ -71,7 +75,6 @@ class MainHostWiringSession(
             activity,
             { activity.mainWorkspaceSession.refreshSettings() },
             secondaryNavigation,
-            { activity.mainWorkspaceSession.applyConfigurationInPlace() },
         )
         toolsWorkspace = ToolsWorkspace(
             activity,
@@ -107,6 +110,53 @@ class MainHostWiringSession(
                 scrollOffset: Int,
             ) {
                 activity.scrollStateStore.update(page, index, scrollOffset)
+            }
+
+            override fun dismissRestoreScopePrompt() {
+                restoreScopePromptStore.clear()
+                activity.mainWorkspaceSession.refreshApps()
+            }
+
+            override fun requestRestoreScope() {
+                val snapshot = activity.startupSession.requireUiState().appsSnapshot()
+                val packages = RestoreScopePromptPolicy.candidatePackages(
+                    snapshot,
+                    restoreScopePromptStore.scopePackages(),
+                )
+                if (packages.isEmpty()) {
+                    restoreScopePromptStore.clear()
+                    activity.mainWorkspaceSession.refreshApps()
+                    return
+                }
+                val result = BatchScopeRequestCoordinator(
+                    object : BatchScopeRequestCoordinator.Host {
+                        override fun showToast(messageResId: Int, vararg formatArgs: Any?) {
+                            activity.showToast(messageResId, *formatArgs)
+                        }
+
+                        override fun requestAppsLoad() {
+                            activity.startupSession.onPageRefreshRequested(
+                                AppListPage.CONFIGURED_APPS,
+                            )
+                        }
+
+                        override fun runOnUiThread(runnable: Runnable) {
+                            activity.runOnUiThread(runnable)
+                        }
+                    },
+                ).requestMissingScope(
+                    packages,
+                    BatchScopeRequestCoordinator.RESTORE_BACKUP_SCOPE_SOURCE,
+                )
+                if (RestoreScopePromptPolicy.shouldClearAfterRequest(
+                        result.requestStarted,
+                        result.manualRequired,
+                        result.affectedPackageCount,
+                    )
+                ) {
+                    restoreScopePromptStore.clear()
+                }
+                activity.mainWorkspaceSession.refreshApps()
             }
         }
     }

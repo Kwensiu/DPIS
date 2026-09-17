@@ -36,7 +36,7 @@ class MainActivity :
     internal val systemScopeCoordinator: SystemScopeCoordinator = SystemScopeCoordinator(
         object : SystemScopeCoordinator.Host {
             override fun showToast(messageResId: Int, vararg formatArgs: Any?) {
-                showToast(messageResId, *formatArgs)
+                this@MainActivity.showToast(messageResId, *formatArgs)
             }
 
             override fun requestAppsLoad() {

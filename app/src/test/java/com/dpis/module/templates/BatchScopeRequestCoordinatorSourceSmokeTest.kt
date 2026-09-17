@@ -17,7 +17,8 @@ class BatchScopeRequestCoordinatorSourceSmokeTest {
         assertTrue(coordinator.contains("quick_template_scope_manual_required"))
         assertTrue(coordinator.contains("onScopeRequestApproved"))
         assertTrue(coordinator.contains("requestHost.requestAppsLoad()"))
-        assertTrue(coordinator.contains("ScopeRequestGate.shared().tryStart"))
+        assertTrue(coordinator.contains("ScopeRequestGate.shared().tryStart(source, requestPackages)"))
+        assertTrue(coordinator.contains("RESTORE_BACKUP_SCOPE_SOURCE"))
         assertTrue(workspace.contains("BatchScopeRequestCoordinator(object : BatchScopeRequestCoordinator.Host"))
         assertTrue(workspace.contains("host.requestAppsLoad()"))
     }

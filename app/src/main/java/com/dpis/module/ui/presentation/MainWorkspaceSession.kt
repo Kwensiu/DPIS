@@ -2,9 +2,12 @@ package com.dpis.module.ui.presentation
 
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
+import com.dpis.module.BuildConfig
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.editor.EditorPresentation
+import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.RestoreScopePromptPolicy
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
@@ -42,14 +45,44 @@ class MainWorkspaceSession(
                 override fun homeState(): HomeWorkspaceState =
                     activity.homeWorkspaceSession.createState()
 
-                override fun appState(): AppWorkspacePresentation.State =
-                    AppWorkspacePresentation.create(
-                        activity.startupSession.requireUiState(),
-                        activity.startupSession.currentAppListPage,
+                override fun appState(): AppWorkspacePresentation.State {
+                    val uiState = activity.startupSession.requireUiState()
+                    val selectedPage = activity.startupSession.currentAppListPage
+                    val snapshot = uiState.appsSnapshot()
+                    val pending = hostWiring.restoreScopePromptStore.isPending()
+                    val modern = BuildConfig.FLAVOR == "modern"
+                    val scopeReadable = RestoreScopePromptPolicy.restoredScopeReadable(
+                        snapshot,
+                        hostWiring.restoreScopePromptStore.scopePackages(),
+                    )
+                    val catalogSettled = !uiState.isRefreshing(AppListPage.CONFIGURED_APPS)
+                    val hasCandidates = RestoreScopePromptPolicy.candidatePackages(
+                        snapshot,
+                        hostWiring.restoreScopePromptStore.scopePackages(),
+                    ).isNotEmpty()
+                    return AppWorkspacePresentation.create(
+                        uiState,
+                        selectedPage,
                         activity.startupSession.isSystemHookEnabledFromStore,
                         activity.scrollStateStore,
                         checkNotNull(hostWiring.appWorkspaceActions),
+                        RestoreScopePromptPolicy.shouldShowCard(
+                            pending,
+                            modern,
+                            selectedPage == AppListPage.CONFIGURED_APPS,
+                            scopeReadable,
+                            catalogSettled,
+                            hasCandidates,
+                        ),
+                        RestoreScopePromptPolicy.shouldConsumeIdle(
+                            pending,
+                            modern,
+                            scopeReadable,
+                            catalogSettled,
+                            hasCandidates,
+                        ),
                     )
+                }
 
                 override fun appEditorState(): EditorPresentation.State? =
                     hostWiring.composeAppEditorController?.createState()

@@ -2,7 +2,9 @@ package com.dpis.module.backup
 
 data class BackupDocument(
     @JvmField val metadata: BackupMetadata,
-    @JvmField val entries: Map<String, Any?>
+    @JvmField val entries: Map<String, Any?>,
+    /** Optional Modern LSPosed application scope; never part of config entries. */
+    @JvmField val moduleScope: List<String> = emptyList(),
 )
 
 data class BackupMetadata(

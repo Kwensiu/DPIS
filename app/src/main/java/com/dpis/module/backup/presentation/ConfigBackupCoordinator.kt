@@ -13,18 +13,22 @@ import java.nio.charset.StandardCharsets
 class ConfigBackupCoordinator(
     private val resolver: ContentResolver,
     private val configStore: DpisConfigStore,
-    private val templateStore: QuickTemplateStore
+    private val templateStore: QuickTemplateStore,
+    private val moduleScopeSupplier: () -> List<String> = { emptyList() },
 ) {
     enum class Code { SUCCESS, INVALID_FILE, IO_ERROR, RESTORE_ERROR, ROLLBACK_ERROR }
 
     class Result private constructor(
         @JvmField val code: Code,
-        @JvmField val cause: Throwable?
+        @JvmField val cause: Throwable?,
+        @JvmField val moduleScope: List<String>,
     ) {
         fun isSuccess() = code == Code.SUCCESS
         companion object {
-            @JvmStatic fun success() = Result(Code.SUCCESS, null)
-            @JvmStatic fun failure(code: Code, cause: Throwable? = null) = Result(code, cause)
+            @JvmStatic fun success(moduleScope: List<String> = emptyList()) =
+                Result(Code.SUCCESS, null, moduleScope)
+            @JvmStatic fun failure(code: Code, cause: Throwable? = null) =
+                Result(code, cause, emptyList())
         }
     }
 
@@ -36,7 +40,9 @@ class ConfigBackupCoordinator(
             .also { templateStore.copyToBackup(it) }
         return try {
             resolver.openOutputStream(uri)?.use { output ->
-                output.write(ConfigBackupCodec.encode(entries).toByteArray(StandardCharsets.UTF_8))
+                output.write(
+                    ConfigBackupCodec.encode(entries, moduleScopeSupplier()).toByteArray(StandardCharsets.UTF_8),
+                )
             } ?: return Result.failure(Code.IO_ERROR)
             Result.success()
         } catch (error: Exception) {
@@ -52,13 +58,14 @@ class ConfigBackupCoordinator(
         } catch (error: IOException) {
             return Result.failure(Code.IO_ERROR, error)
         }
-        val incoming = try {
-            ConfigBackupCodec.decode(payload).entries
-                .mapNotNull { (key, value) -> key?.let { it to value } }
-                .toMap(LinkedHashMap<String, Any?>())
+        val document = try {
+            ConfigBackupCodec.decodeDocument(payload)
         } catch (error: Exception) {
             return Result.failure(Code.INVALID_FILE, error)
         }
+        val incoming = document.entries
+            .mapNotNull { (key, value) -> key?.let { it to value } }
+            .toMap(LinkedHashMap<String, Any?>())
         if (ConfigBackupRestorePolicy.hasUnknownKeys(incoming)) {
             return Result.failure(Code.INVALID_FILE, IllegalArgumentException("Unknown backup key"))
         }
@@ -70,7 +77,7 @@ class ConfigBackupCoordinator(
         val configEntries = ConfigBackupRestorePolicy.configEntries(incoming)
         if (!configStore.replaceBackup(configEntries)) return Result.failure(Code.RESTORE_ERROR)
         if (!QuickTemplateStore.containsTemplateEntries(incoming) || templateStore.restoreFromBackup(incoming)) {
-            return Result.success()
+            return Result.success(document.moduleScope)
         }
         val rolledConfig = configStore.replaceBackup(ConfigBackupRestorePolicy.configEntries(snapshot))
         val rolledTemplates = templateStore.restoreFromBackup(snapshot)

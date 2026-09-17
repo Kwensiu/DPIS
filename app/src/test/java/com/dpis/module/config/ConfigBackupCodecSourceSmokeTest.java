@@ -11,12 +11,14 @@ public class ConfigBackupCodecSourceSmokeTest {
     public void codecDefinesSchemaAndSupportedValueTypes() throws IOException {
         String source = read("src/main/java/com/dpis/module/backup/ConfigBackupCodec.kt");
 
-        assertTrue(source.contains("SCHEMA_VERSION = 3"));
+        assertTrue(source.contains("SCHEMA_VERSION = 4"));
         assertTrue(source.contains("KEY_PACKAGE_CONFIGS"));
         assertTrue(source.contains("KEY_RESOLUTION_CONFIGS"));
         assertTrue(source.contains("KEY_GLOBAL"));
         assertTrue(source.contains("KEY_DEFAULT_PREFILL"));
         assertTrue(source.contains("KEY_TEMPLATES"));
+        assertTrue(source.contains("KEY_MODULE_SCOPE"));
+        assertTrue(source.contains("decodeModuleScope"));
         assertTrue(source.contains("decodeSchemaV1"));
         assertTrue(source.contains("decodeSchemaV2"));
         assertTrue(source.contains("packageConfigs"));

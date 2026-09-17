@@ -16,7 +16,6 @@ class SettingsWorkspaceSession(
     private val activity: LocalizedActivity,
     private val onComposeStateChanged: Runnable,
     private val secondaryNavigation: SecondaryNavigation,
-    private val onConfigurationChanged: Runnable,
 ) : SettingsActions {
     companion object {
         /** Stable Java entry point that avoids exposing Kotlin function types or internal classes. */
@@ -25,13 +24,11 @@ class SettingsWorkspaceSession(
             activity: Activity,
             onComposeStateChanged: Runnable,
             secondaryNavigation: SecondaryNavigation,
-            onConfigurationChanged: Runnable,
         ): SettingsWorkspaceSession {
             return SettingsWorkspaceSession(
                 activity as LocalizedActivity,
                 onComposeStateChanged,
                 secondaryNavigation,
-                onConfigurationChanged,
             )
         }
     }
@@ -42,7 +39,6 @@ class SettingsWorkspaceSession(
     fun ensureComposeController(): SystemServerSettingsPageController {
         val current = controller ?: SystemServerSettingsPageController(
             activity,
-            onConfigurationChanged,
         ).also {
             controller = it
         }

@@ -331,6 +331,11 @@ Mini Programs are not supported yet.</string>
     <string name="quick_template_scope_manual_required">Config saved. Add the selected apps to LSPosed scope manually.</string>
     <string name="tab_all_apps">All apps</string>
     <string name="tab_configured_apps">Configured apps</string>
+    <string name="restore_scope_prompt_title">Request Scope Access</string>
+    <string name="restore_scope_prompt_body">Configuration restored! Some installed apps from the backup are not yet in scope. Tap "Request" to let DPIS request access. Please approve the request from the notification center.</string>
+    <string name="restore_scope_prompt_request">Request</string>
+    <string name="restore_scope_prompt_dismiss">Dismiss</string>
+    <string name="restore_scope_prompt_fab">Request scope access for apps from the backup</string>
     <string name="filter_button">Filter</string>
     <string name="scope_add_button">Add to scope</string>
     <string name="scope_remove_button">Remove</string>

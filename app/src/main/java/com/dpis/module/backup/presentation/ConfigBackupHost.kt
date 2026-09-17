@@ -3,9 +3,13 @@ package com.dpis.module.backup.presentation
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import com.dpis.module.R
 import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.BuildConfig
+import com.dpis.module.DpisApplication
+import com.dpis.module.backup.ModuleScopeSnapshotPolicy
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.ui.dialog.ConfirmDialog
 import java.util.Date
@@ -24,7 +28,7 @@ class ConfigBackupHost(
         fun isComposeSurface(): Boolean
         fun showToast(messageResId: Int)
         fun publishPresentationState()
-        fun onRestoreSucceeded()
+        fun onRestoreSucceeded(moduleScope: List<String>)
         fun runOnUiThread(action: Runnable)
     }
 
@@ -145,7 +149,7 @@ class ConfigBackupHost(
                 }
                 port.showToast(R.string.config_backup_import_success)
                 port.publishPresentationState()
-                port.onRestoreSucceeded()
+                port.onRestoreSucceeded(result.moduleScope)
             }
         }, "dpis-config-backup-import").start()
     }
@@ -154,7 +158,27 @@ class ConfigBackupHost(
         activity.contentResolver,
         store,
         QuickTemplateStore(activity),
+        {
+            if (BuildConfig.FLAVOR != "modern") {
+                emptyList()
+            } else {
+                ModuleScopeSnapshotPolicy.normalize(readInstalledApplicationScope())
+            }
+        },
     )
+
+    private fun readInstalledApplicationScope(): List<String> = try {
+        DpisApplication.xposedService?.scope.orEmpty().filter { packageName ->
+            try {
+                activity.packageManager.getApplicationInfo(packageName, 0)
+                true
+            } catch (_: PackageManager.NameNotFoundException) {
+                false
+            }
+        }
+    } catch (_: RuntimeException) {
+        emptyList()
+    }
 
     @Suppress("DEPRECATION")
     private fun startPicker(intent: Intent, requestCode: Int) {

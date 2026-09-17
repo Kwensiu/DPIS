@@ -317,6 +317,11 @@
     <string name="quick_template_scope_manual_required">配置已保存，请手动将所选应用加入 LSPosed 作用域</string>
     <string name="tab_all_apps">全部应用</string>
     <string name="tab_configured_apps">已配置应用</string>
+    <string name="restore_scope_prompt_title">申请加入作用域</string>
+    <string name="restore_scope_prompt_body">配置恢复成功！部分已安装的应用尚未加入作用域。点击“申请”后，请在通知中心允许作用域请求</string>
+    <string name="restore_scope_prompt_request">申请</string>
+    <string name="restore_scope_prompt_dismiss">忽略</string>
+    <string name="restore_scope_prompt_fab">申请恢复备份中应用的作用域</string>
     <string name="filter_button">筛选</string>
     <string name="scope_add_button">加入作用域</string>
     <string name="scope_remove_button">移出作用域</string>

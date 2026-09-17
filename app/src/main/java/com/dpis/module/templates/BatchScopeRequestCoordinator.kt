@@ -30,7 +30,11 @@ class BatchScopeRequestCoordinator internal constructor(
         fun requestScope(packages: List<String>, listener: XposedService.OnScopeEventListener)
     }
 
-    fun requestMissingScope(successfulPackages: List<String>?): Result {
+    @JvmOverloads
+    fun requestMissingScope(
+        successfulPackages: List<String>?,
+        source: String = TEMPLATE_BATCH_SOURCE,
+    ): Result {
         val packages = successfulPackages.orEmpty()
             .asSequence()
             .map { it.trim() }
@@ -55,7 +59,7 @@ class BatchScopeRequestCoordinator internal constructor(
         val requestPackages = (packages - scope.toSet()).toList()
         if (requestPackages.isEmpty()) return Result.noRequest()
 
-        val request = ScopeRequestGate.shared().tryStart("template-batch", requestPackages)
+        val request = ScopeRequestGate.shared().tryStart(source, requestPackages)
             ?: run {
                 host?.showToast(R.string.scope_request_pending)
                 return Result.requestAlreadyPending(requestPackages.size)
@@ -129,6 +133,9 @@ class BatchScopeRequestCoordinator internal constructor(
     }
 
     companion object {
+        const val TEMPLATE_BATCH_SOURCE = "template-batch"
+        const val RESTORE_BACKUP_SCOPE_SOURCE = "restore-backup-scope"
+
         private fun fromService(service: XposedService?): ScopeRequester? = service?.let { target ->
             object : ScopeRequester {
                 override fun getScope(): List<String> = target.scope

@@ -115,5 +115,7 @@ public final class AppWorkspacePresentationTest {
         @Override public void openApp(AppListItem item) {}
         @Override public void updateScrollPosition(
                 AppListPage page, int index, int scrollOffset) {}
+        @Override public void dismissRestoreScopePrompt() {}
+        @Override public void requestRestoreScope() {}
     }
 }

@@ -209,6 +209,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(hostWiring.contains("var appWorkspaceActions: AppWorkspacePresentation.Actions?"))
         assertTrue(hostWiring.contains("object : AppWorkspacePresentation.Actions"))
+        assertTrue(hostWiring.contains("override fun requestRestoreScope()"))
         assertTrue(workspace.contains("checkNotNull(hostWiring.appWorkspaceActions)"))
         assertFalse(source.contains("createComposeAppWorkspaceActions()"))
         assertTrue(toolsWorkspace.contains("class ToolsWorkspace("))
@@ -813,6 +814,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             source.contains("SystemScopeCoordinator(")
         )
+        assertTrue(source.contains("this@MainActivity.showToast(messageResId, *formatArgs)"))
         val gateway = read(
             "src/main/java/com/dpis/module/appconfig/presentation/ComposeAppEditorActivityGateway.kt",
         )

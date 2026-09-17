@@ -6,7 +6,7 @@ import org.json.JSONException
 import org.json.JSONObject
 
 object ConfigBackupCodec {
-    private const val SCHEMA_VERSION = 3
+    private const val SCHEMA_VERSION = 4
     private val MAX_JSON_CHARS = 4 * 1024 * 1024
     private const val MAX_SECTION_ENTRIES = 10000
 
@@ -21,6 +21,7 @@ object ConfigBackupCodec {
     private const val KEY_GLOBAL = "global"
     private const val KEY_DEFAULT_PREFILL = "defaultPrefill"
     private const val KEY_TEMPLATES = "templates"
+    private const val KEY_MODULE_SCOPE = "moduleScope"
     private const val KEY_TEMPLATE_META = "_meta"
     private const val KEY_TYPE = "type"
     private const val KEY_VALUE = "value"
@@ -56,12 +57,12 @@ object ConfigBackupCodec {
             root.optString(KEY_APP_VERSION_NAME, "")
         )
         @Suppress("UNCHECKED_CAST")
-        return BackupDocument(metadata, entries as Map<String, Any?>)
+        return BackupDocument(metadata, entries as Map<String, Any?>, decodeModuleScope(root, schema))
     }
 
     @Throws(JSONException::class)
     @JvmStatic
-    fun encode(entries: Map<String, Any?>): String {
+    fun encode(entries: Map<String, Any?>, moduleScope: Iterable<String> = emptyList()): String {
         val root = JSONObject()
         root.put(KEY_SCHEMA_VERSION, SCHEMA_VERSION)
         root.put(KEY_CREATED_AT_EPOCH_MS, System.currentTimeMillis())
@@ -117,6 +118,10 @@ object ConfigBackupCodec {
         if (encodedTemplates.length() > 0) {
             root.put(KEY_TEMPLATES, encodedTemplates)
         }
+        val normalizedScope = ModuleScopeSnapshotPolicy.normalize(moduleScope)
+        if (normalizedScope.isNotEmpty()) {
+            root.put(KEY_MODULE_SCOPE, JSONArray(normalizedScope))
+        }
         return root.toString(2)
     }
 
@@ -126,7 +131,7 @@ object ConfigBackupCodec {
         require(rawJson.length <= MAX_JSON_CHARS) { "Backup exceeds size limit" }
         val root = JSONObject(rawJson)
         val schemaVersion = root.optInt(KEY_SCHEMA_VERSION, -1)
-        if (schemaVersion == SCHEMA_VERSION) {
+        if (schemaVersion == 3 || schemaVersion == SCHEMA_VERSION) {
             val packageName = root.optString(KEY_PACKAGE_NAME, "")
             require(BuildConfig.APPLICATION_ID == packageName) { "Backup belongs to another application" }
             require(
@@ -141,7 +146,9 @@ object ConfigBackupCodec {
         if (schemaVersion == 2) {
             return decodeSchemaV2(root)
         }
-        require(schemaVersion == SCHEMA_VERSION) { "Unsupported backup schema version: " + schemaVersion }
+        require(schemaVersion == 3 || schemaVersion == SCHEMA_VERSION) {
+            "Unsupported backup schema version: " + schemaVersion
+        }
         val entries = LinkedHashMap<String?, Any?>()
         val encodedPackageConfigs = root.optJSONObject(KEY_PACKAGE_CONFIGS)
         if (encodedPackageConfigs != null) {
@@ -527,5 +534,20 @@ object ConfigBackupCodec {
             values.add(array.getString(i))
         }
         return values
+    }
+
+    private fun decodeModuleScope(root: JSONObject, schemaVersion: Int): List<String> {
+        if (schemaVersion < 4 || !root.has(KEY_MODULE_SCOPE)) return emptyList()
+        val scope = root.optJSONArray(KEY_MODULE_SCOPE)
+            ?: throw IllegalArgumentException("Invalid module scope payload")
+        val packages = ArrayList<String>(scope.length())
+        for (index in 0 until scope.length()) {
+            val value = scope.opt(index)
+            require(value is String) { "Invalid module scope package" }
+            packages += value
+        }
+        val normalized = ModuleScopeSnapshotPolicy.normalize(packages)
+        require(normalized.size == packages.distinct().size) { "Invalid module scope package" }
+        return normalized
     }
 }

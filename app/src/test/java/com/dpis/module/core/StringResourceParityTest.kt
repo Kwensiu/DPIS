@@ -39,7 +39,7 @@ class StringResourceParityTest {
         val source = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val dialogs = read("src/main/java/com/dpis/module/settings/presentation/SettingsComposeDialogs.kt")
         val dialogLayout = read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
-        val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
+        val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.kt")
         content.assertContainsAll("R.string.settings_language_label", "SettingsChoiceMenu(", "SettingsChoiceRow(")
         content.assertNotContainsAll("LanguageDialogContent(", "showLanguageDialog")
         dialogs.assertContainsAll("LanguageDialogContent(")
@@ -48,20 +48,20 @@ class StringResourceParityTest {
         dialogLayout.assertContainsAll("DialogChrome.SurfacePadding", "LocalSpacing.current")
         source.assertContainsAll("showLanguageDialog", "AppLocaleManager.supportedLanguages()", "LanguageDialogOption(option.tag", "AppLocaleManager.setLanguageTag", "SettingsComposeDialogs.showLanguage", "AppLocaleManager.selectedLabelResId(activity)")
         source.assertNotContainsAll("settings_language_hint")
-        localeManager.assertContainsAll("SUPPORTED_LANGUAGES = List.of(", "TAG_JAPANESE", "R.string.settings_language_japanese", "TAG_RUSSIAN", "R.string.settings_language_russian", "static List<LanguageOption> supportedLanguages()")
+        localeManager.assertContainsAll("private val supportedLanguages = listOf(", "TAG_JAPANESE", "R.string.settings_language_japanese", "TAG_RUSSIAN", "R.string.settings_language_russian", "fun supportedLanguages(): List<LanguageOption>")
     }
 
     @Test
     fun languageSwitchDoesNotUseSavedInstanceStateForPersistedSwitches() {
         read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt").assertNotContainsAll("STATE_HOOKS_SWITCH_CHECKED", "onSaveInstanceState", "restoreSwitchStates")
-        read("src/main/java/com/dpis/module/settings/AppLocaleManager.java").assertContainsAll("boolean setLanguageTag", ".commit()")
+        read("src/main/java/com/dpis/module/settings/AppLocaleManager.kt").assertContainsAll("fun setLanguageTag", ".commit()")
     }
 
     @Test
     fun localeSwitchUsesWrappedBaseContextAndExplicitRecreate() {
         val settings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
         val localized = read("src/main/java/com/dpis/module/settings/LocalizedActivity.kt")
-        val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.java")
+        val localeManager = read("src/main/java/com/dpis/module/settings/AppLocaleManager.kt")
         val main = read("src/main/java/com/dpis/module/MainActivity.kt")
         val about = read("src/main/java/com/dpis/module/about/AboutActivity.kt")
         val license = read("src/main/java/com/dpis/module/about/OpenSourceLicenseActivity.kt")
@@ -70,7 +70,7 @@ class StringResourceParityTest {
         val manifest = read("src/main/AndroidManifest.xml")
         localized.assertContainsAll(": ComponentActivity()", "attachBaseContext(", "override fun onResume()", "AppLocaleManager.getLanguageTag(this)", "recreate()", "ThemeModeStore.getAppearance(this)", "PageSettingsStore.isPredictiveBackEnabled(this)", "legacySystemBack.isEnabled = !activePredictiveBackEnabled", "onUnhandledTaskRootBack()", "finish()")
         localized.assertNotContainsAll("moveTaskToBack(")
-        localeManager.assertContainsAll("Context wrap(Context context)", "createConfigurationContext(configuration)", "Context.MODE_PRIVATE")
+        localeManager.assertContainsAll("fun wrap(context: Context): Context", "createConfigurationContext(configuration)", "Context.MODE_PRIVATE", "Resources.getSystem().configuration.locales")
         main.assertContainsAll("LocalizedActivity()", "override fun onUnhandledTaskRootBack()", "moveTaskToBack(true)")
         read("src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt")
             .assertContainsAll("SettingsWorkspaceSession.create(")

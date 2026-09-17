@@ -3,6 +3,7 @@ package com.dpis.module;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
+import android.content.res.Resources;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -26,6 +27,25 @@ public class AppLocaleManagerBehaviorTest {
             AppLocaleManager.setLanguageTag(appContext, AppLocaleManager.TAG_SIMPLIFIED_CHINESE);
             Context chineseContext = AppLocaleManager.wrap(appContext);
             assertEquals("语言", chineseContext.getString(R.string.settings_language_label));
+        } finally {
+            AppLocaleManager.setLanguageTag(appContext, originalTag);
+        }
+    }
+
+    @Test
+    public void followSystemDoesNotRetainAnExplicitLanguageFromItsInputContext() {
+        Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String originalTag = AppLocaleManager.getLanguageTag(appContext);
+        try {
+            AppLocaleManager.setLanguageTag(appContext, AppLocaleManager.TAG_ENGLISH);
+            Context englishContext = AppLocaleManager.wrap(appContext);
+
+            AppLocaleManager.setLanguageTag(appContext, AppLocaleManager.TAG_FOLLOW_SYSTEM);
+            Context followSystemContext = AppLocaleManager.wrap(englishContext);
+
+            assertEquals(
+                    Resources.getSystem().getConfiguration().getLocales().get(0),
+                    followSystemContext.getResources().getConfiguration().getLocales().get(0));
         } finally {
             AppLocaleManager.setLanguageTag(appContext, originalTag);
         }

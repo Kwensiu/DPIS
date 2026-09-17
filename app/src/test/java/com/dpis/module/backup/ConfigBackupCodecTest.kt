@@ -23,6 +23,30 @@ class ConfigBackupCodecTest {
     }
 
     @Test
+    fun documentRoundTrip_preservesOptionalModuleScopeOutsideEntries() {
+        val document = ConfigBackupCodec.decodeDocument(
+            ConfigBackupCodec.encode(
+                mapOf("ui.interface_scale_percent" to 110),
+                listOf("com.example.app", "android", "com.android.settings"),
+            ),
+        )
+
+        assertEquals(listOf("com.android.settings", "com.example.app"), document.moduleScope)
+        assertEquals(110, document.entries["ui.interface_scale_percent"])
+        assertFalse(document.entries.containsKey("moduleScope"))
+    }
+
+    @Test
+    fun documentRejectsNonStringModuleScopeEntries() {
+        val encoded = ConfigBackupCodec.encode(mapOf("ui.interface_scale_percent" to 110))
+            .replace("\n}", ",\n  \"moduleScope\": [42]\n}")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            ConfigBackupCodec.decodeDocument(encoded)
+        }
+    }
+
+    @Test
     fun encode_rejectsUnsupportedValueForPortableKey() {
         val error = assertThrows(JSONException::class.java) {
             ConfigBackupCodec.encode(mapOf("ui.interface_scale_percent" to Double.NaN))
@@ -75,7 +99,7 @@ class ConfigBackupCodecTest {
             ConfigBackupCodec.decode(missingMetadata)
         }
 
-        val unknownSchema = encoded.replace("\"schemaVersion\": 3", "\"schemaVersion\": 99")
+        val unknownSchema = encoded.replace(Regex("\\\"schemaVersion\\\": \\d+"), "\"schemaVersion\": 99")
         assertThrows(IllegalArgumentException::class.java) {
             ConfigBackupCodec.decode(unknownSchema)
         }
@@ -91,6 +115,13 @@ class ConfigBackupCodecTest {
 
         assertThrows(IllegalArgumentException::class.java) {
             ConfigBackupCodec.decode("{\"schemaVersion\":3,\"packageName\":\"${com.dpis.module.BuildConfig.APPLICATION_ID}\",\"createdAtEpochMs\":1,\"appVersionCode\":1,\"appVersionName\":\"x\",\"packageConfigs\":{\"pkg\":null}}")
+        }
+    }
+
+    @Test
+    fun decodeSchemaThreeStillRequiresPortableBackupIdentity() {
+        assertThrows(IllegalArgumentException::class.java) {
+            ConfigBackupCodec.decode("{\"schemaVersion\":3,\"packageConfigs\":{}}")
         }
     }
 }

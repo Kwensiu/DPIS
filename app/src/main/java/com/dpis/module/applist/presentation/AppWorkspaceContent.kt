@@ -1,6 +1,11 @@
 package com.dpis.module.applist.presentation
 
 import android.content.res.Configuration
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -30,10 +35,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -55,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -82,7 +91,13 @@ import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
 import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
+import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
+import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.presentation.design.dpisClickable
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeDirection
@@ -108,6 +123,11 @@ fun AppWorkspaceContent(
     editorState: EditorPresentation.State? = null,
 ) {
     val focusManager = LocalFocusManager.current
+    LaunchedEffect(state.restoreScopePromptShouldConsume) {
+        if (state.restoreScopePromptShouldConsume) {
+            state.actions.dismissRestoreScopePrompt()
+        }
+    }
     val topSafePadding = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val configuration = LocalConfiguration.current
     val compactVerticalChrome = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -236,6 +256,7 @@ fun AppWorkspaceContent(
                             listState = listState,
                             bottomPadding = padding.calculateBottomPadding(),
                             systemScopeSelected = state.systemScopeSelected,
+                            restoreScopePromptVisible = state.restoreScopePromptVisible,
                             actions = state.actions,
                             query = state.query,
                             filterState = state.filterState,
@@ -323,91 +344,187 @@ private fun AppListPageContent(
     listState: LazyListState,
     bottomPadding: androidx.compose.ui.unit.Dp,
     systemScopeSelected: Boolean,
+    restoreScopePromptVisible: Boolean,
     actions: AppWorkspacePresentation.Actions,
     query: String,
     filterState: AppListFilterState,
     inputFocusManager: androidx.compose.ui.focus.FocusManager
 ) {
-    PullToRefreshBox(
-        isRefreshing = refreshing,
-        onRefresh = { actions.refresh(page) },
-        modifier = Modifier
-            .fillMaxSize()
-            .clearTextInputFocusOnPointerDown(inputFocusManager)
-    ) {
-        if (pageItems.isEmpty() && refreshing) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(y = (-36).dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    stringResource(R.string.quick_template_targets_loading),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else if (pageItems.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(y = (-36).dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    stringResource(R.string.quick_template_targets_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                if (query.isNotBlank() || !filterState.isDefaultSelection) {
-                    androidx.compose.material3.Button(
-                        onClick = {
-                            actions.changeQuery("")
-                            actions.changeFilters(AppListFilterState.defaultState())
-                        },
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Text(stringResource(R.string.reset_filters_button))
-                    }
-                }
-            }
-        } else {
-            Box(Modifier.fillMaxSize()) {
-                val iconSizePx = with(LocalDensity.current) { 50.dp.roundToPx() }
-                PrefetchVisibleAppIcons(listState, pageItems, iconSizePx)
-                LazyColumn(
-                    state = listState,
-                    contentPadding = PaddingValues(
-                        start = 12.dp,
-                        top = 12.dp,
-                        end = 12.dp,
-                        bottom = bottomPadding + 12.dp
-                    )
-                ) {
-                    items(
-                        pageItems,
-                        key = { it.packageName },
-                        contentType = { "app_row" },
-                    ) { item ->
-                        AppRow(
-                            item = item,
-                            systemScopeSelected = systemScopeSelected,
-                            iconSizePx = iconSizePx,
-                            onClick = {
-                                actions.openApp(item)
-                            }
-                        )
-                    }
-                }
-                AppListScrollbar(
-                    listState = listState,
-                    itemCount = pageItems.size,
+    val showRestoreScopePrompt =
+        page == AppListPage.CONFIGURED_APPS && restoreScopePromptVisible
+    var restoreScopeDialogVisible by remember { mutableStateOf(false) }
+    val listBottomPadding = bottomPadding + 12.dp
+    Box(Modifier.fillMaxSize()) {
+        PullToRefreshBox(
+            isRefreshing = refreshing,
+            onRefresh = { actions.refresh(page) },
+            modifier = Modifier
+                .fillMaxSize()
+                .clearTextInputFocusOnPointerDown(inputFocusManager)
+        ) {
+            if (pageItems.isEmpty() && refreshing) {
+                Column(
                     modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .padding(bottom = bottomPadding)
+                        .fillMaxSize()
+                        .offset(y = (-36).dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        stringResource(R.string.quick_template_targets_loading),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else if (pageItems.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(y = (-36).dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        stringResource(R.string.quick_template_targets_empty),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (query.isNotBlank() || !filterState.isDefaultSelection) {
+                        androidx.compose.material3.Button(
+                            onClick = {
+                                actions.changeQuery("")
+                                actions.changeFilters(AppListFilterState.defaultState())
+                            },
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Text(stringResource(R.string.reset_filters_button))
+                        }
+                    }
+                }
+            } else {
+                Box(Modifier.fillMaxSize()) {
+                    val iconSizePx = with(LocalDensity.current) { 50.dp.roundToPx() }
+                    PrefetchVisibleAppIcons(listState, pageItems, iconSizePx)
+                    LazyColumn(
+                        state = listState,
+                        contentPadding = PaddingValues(
+                            start = 12.dp,
+                            top = 12.dp,
+                            end = 12.dp,
+                            bottom = listBottomPadding
+                        )
+                    ) {
+                        items(
+                            pageItems,
+                            key = { it.packageName },
+                            contentType = { "app_row" },
+                        ) { item ->
+                            AppRow(
+                                item = item,
+                                systemScopeSelected = systemScopeSelected,
+                                iconSizePx = iconSizePx,
+                                onClick = {
+                                    actions.openApp(item)
+                                }
+                            )
+                        }
+                    }
+                    AppListScrollbar(
+                        listState = listState,
+                        itemCount = pageItems.size,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(bottom = bottomPadding)
+                    )
+                }
+            }
+        }
+        AnimatedVisibility(
+            visible = showRestoreScopePrompt,
+            enter = fadeIn(tween(ComposeMotionTokens.CONTENT_TRANSITION_DURATION_MILLIS)) + scaleIn(
+                initialScale = 0.8f,
+                transformOrigin = TransformOrigin(1f, 1f),
+            ),
+            exit = fadeOut(tween(ComposeMotionTokens.CONTENT_EXIT_DURATION_MILLIS)) + scaleOut(
+                targetScale = 0.8f,
+                transformOrigin = TransformOrigin(1f, 1f),
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = bottomPadding + 16.dp),
+        ) {
+            FloatingActionButton(
+                onClick = rememberClickAction { restoreScopeDialogVisible = true },
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_sparkles_24),
+                    contentDescription = stringResource(R.string.restore_scope_prompt_fab),
                 )
             }
+        }
+    }
+    if (restoreScopeDialogVisible && showRestoreScopePrompt) {
+        RestoreScopePromptDialog(
+            onRequest = {
+                restoreScopeDialogVisible = false
+                actions.requestRestoreScope()
+            },
+            onDismissPrompt = {
+                restoreScopeDialogVisible = false
+                actions.dismissRestoreScopePrompt()
+            },
+            onDismissDialog = { restoreScopeDialogVisible = false },
+        )
+    }
+}
+
+@Composable
+private fun RestoreScopePromptDialog(
+    onRequest: () -> Unit,
+    onDismissPrompt: () -> Unit,
+    onDismissDialog: () -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    var requesting by remember { mutableStateOf(false) }
+    ModalDialog(onDismissRequest = onDismissDialog) {
+        DialogColumn(
+            title = { DialogTitle(stringResource(R.string.restore_scope_prompt_title)) },
+            actions = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                ) {
+                    OutlinedButton(
+                        onClick = rememberClickAction(onDismissPrompt),
+                        enabled = !requesting,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(ConfirmDialogUiTokens.ActionHeight),
+                        shape = ConfirmDialogUiTokens.ActionShape,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                    ) {
+                        Text(stringResource(R.string.restore_scope_prompt_dismiss))
+                    }
+                    Button(
+                        onClick = rememberClickAction {
+                            requesting = true
+                            onRequest()
+                        },
+                        enabled = !requesting,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(ConfirmDialogUiTokens.ActionHeight),
+                        shape = ConfirmDialogUiTokens.ActionShape,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                    ) {
+                        Text(stringResource(R.string.restore_scope_prompt_request))
+                    }
+                }
+            },
+        ) {
+            Text(
+                text = stringResource(R.string.restore_scope_prompt_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -681,6 +798,8 @@ private fun AppWorkspacePreview() {
         override fun refresh(page: AppListPage) = Unit
         override fun openApp(item: AppListItem) = Unit
         override fun updateScrollPosition(page: AppListPage, index: Int, scrollOffset: Int) = Unit
+        override fun dismissRestoreScopePrompt() = Unit
+        override fun requestRestoreScope() = Unit
     }
     ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
         AppWorkspaceContent(
