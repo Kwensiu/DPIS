@@ -1,40 +1,35 @@
 package com.dpis.module.applist.presentation
 
 import android.content.res.Configuration
-
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,59 +42,60 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.foundation.Image
 import androidx.compose.ui.tooling.preview.Preview
-import com.dpis.module.applist.AppWorkspacePresentation
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import com.dpis.module.R
+import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.appconfig.presentation.AppConfigEditorContent
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
-import com.dpis.module.ui.presentation.design.*
-import com.dpis.module.ui.presentation.dialogs.*
-import com.dpis.module.ui.presentation.editor.*
-import com.dpis.module.ui.presentation.interop.*
-import com.dpis.module.ui.presentation.wear.*
-import com.dpis.module.ui.presentation.workspace.*
-import com.dpis.module.appconfig.editor.EditorPresentation
-import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.R
+import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppStatusFormatter
-import kotlin.math.roundToInt
-import kotlin.math.floor
+import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.fonts.presentation.AppHookChainEditorPage
+import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeDirection
+import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeTokens
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusOnPointerDown
+import com.dpis.module.ui.presentation.editor.edgeOcclusionFade
+import com.dpis.module.ui.presentation.workspace.PageChromeTokens
+import com.dpis.module.ui.presentation.workspace.WorkspaceSearchCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
-import com.dpis.module.fonts.presentation.AppHookChainEditorPage
-import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 private val AppListRowMinHeight = 72.dp
 private val AppListScrollbarThumbHeight = 36.dp
@@ -221,7 +217,9 @@ fun AppWorkspaceContent(
                     AppListPage.ALL_APPS.position() -> allAppsListState
                     else -> configuredAppsListState
                 }
-                Box(Modifier.weight(1f).fillMaxWidth()) {
+                Box(Modifier
+                    .weight(1f)
+                    .fillMaxWidth()) {
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize()
@@ -250,7 +248,7 @@ fun AppWorkspaceContent(
                             .height(EdgeOcclusionFadeTokens.Height)
                             .graphicsLayer {
                                 val scrolled = currentPageListState.firstVisibleItemIndex > 0 ||
-                                    currentPageListState.firstVisibleItemScrollOffset > 0
+                                        currentPageListState.firstVisibleItemScrollOffset > 0
                                 alpha = if (scrolled) 1f else 0f
                             }
                             .edgeOcclusionFade(
@@ -339,7 +337,9 @@ private fun AppListPageContent(
     ) {
         if (pageItems.isEmpty() && refreshing) {
             Column(
-                modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = (-36).dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -350,7 +350,9 @@ private fun AppListPageContent(
             }
         } else if (pageItems.isEmpty()) {
             Column(
-                modifier = Modifier.fillMaxSize().offset(y = (-36).dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = (-36).dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -358,7 +360,7 @@ private fun AppListPageContent(
                     stringResource(R.string.quick_template_targets_empty),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (query.isNotBlank() || !filterState.isDefaultSelection()) {
+                if (query.isNotBlank() || !filterState.isDefaultSelection) {
                     androidx.compose.material3.Button(
                         onClick = {
                             actions.changeQuery("")
@@ -429,7 +431,9 @@ private fun PersistAppListScrollPosition(
 @Composable
 private fun AppWorkspaceEmptyDetail(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxSize().padding(24.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -461,10 +465,9 @@ private fun AppListScrollbar(
     modifier: Modifier = Modifier
 ) {
     if (itemCount == 0) return
-    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     val density = LocalDensity.current
     var pressed by remember(listState) { mutableStateOf(false) }
-    var trackHeightPx by remember { mutableStateOf(0) }
+    var trackHeightPx by remember { mutableIntStateOf(0) }
     var requestedThumbTopPx by remember(listState) { mutableFloatStateOf(0f) }
     val thumbWidth by animateDpAsState(
         targetValue = if (pressed) 8.dp else 6.dp,
@@ -478,8 +481,12 @@ private fun AppListScrollbar(
             .padding(vertical = 8.dp)
             .onSizeChanged { trackHeightPx = it.height }
     ) {
-        val visibleCount = listState.layoutInfo.visibleItemsInfo.size
-        if (visibleCount >= itemCount || trackHeightPx == 0) return@Box
+        // Partially clipped first/last rows still count as visible layout items. The thumb's
+        // presence follows actual scrollability so it stays available at every scroll position.
+        val hasScrollableContent = listState.canScrollBackward || listState.canScrollForward
+        if (!hasScrollableContent || trackHeightPx == 0) {
+            return@Box
+        }
         // Rows grow with the user's font scale. Use the measured visible rows for the
         // scrollbar estimate instead of assuming the compact 72.dp height everywhere.
         val rowHeightPx = listState.layoutInfo.visibleItemsInfo
@@ -533,24 +540,24 @@ private fun AppListScrollbar(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(itemCount, trackHeightPx, thumbHeightPx) {
-                detectVerticalDragGestures(
-                    onDragStart = {
-                        pressed = true
-                        requestedThumbTopPx = currentThumbTopPx.value
-                    },
-                    onDragEnd = {
-                        pressed = false
-                    },
-                    onDragCancel = {
-                        pressed = false
-                    },
-                    onVerticalDrag = { change, dragAmount ->
-                        change.consume()
-                        requestedThumbTopPx = (requestedThumbTopPx + dragAmount)
-                            .coerceIn(0f, scrollableThumbRangePx)
-                    }
-                )
-            }
+                    detectVerticalDragGestures(
+                        onDragStart = {
+                            pressed = true
+                            requestedThumbTopPx = currentThumbTopPx.value
+                        },
+                        onDragEnd = {
+                            pressed = false
+                        },
+                        onDragCancel = {
+                            pressed = false
+                        },
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            requestedThumbTopPx = (requestedThumbTopPx + dragAmount)
+                                .coerceIn(0f, scrollableThumbRangePx)
+                        }
+                    )
+                }
         ) {
             Box(
                 modifier = Modifier
@@ -631,7 +638,9 @@ private fun AppRow(
             }
         }
         Column(
-            modifier = Modifier.weight(1f).padding(start = 12.dp),
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 12.dp),
             verticalArrangement = Arrangement.Center
         ) {
             Text(
