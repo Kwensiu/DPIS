@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 
-import com.dpis.module.ui.compose.WorkspaceDestination;
+import com.dpis.module.ui.presentation.workspace.WorkspaceDestination;
 import org.junit.Test;
 import com.dpis.module.ui.MainComposeWorkspaceAdapter;
 import com.dpis.module.ui.MainUiState;

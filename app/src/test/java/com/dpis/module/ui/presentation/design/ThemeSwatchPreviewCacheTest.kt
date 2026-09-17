@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.design
 
 import com.dpis.module.settings.ThemeModeStore
 import org.junit.After
@@ -7,6 +7,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import com.dpis.module.ui.presentation.design.ColorSchemeFactory
+import com.dpis.module.ui.presentation.design.ThemeSwatchPreviewCache
 
 class ThemeSwatchPreviewCacheTest {
     @Before

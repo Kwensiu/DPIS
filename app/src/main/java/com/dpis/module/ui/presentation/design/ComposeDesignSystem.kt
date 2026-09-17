@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.design
 
 import android.app.Activity
 import android.content.Context

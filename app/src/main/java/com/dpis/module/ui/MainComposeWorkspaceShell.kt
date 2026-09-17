@@ -5,12 +5,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.dpis.module.ui.compose.WorkspaceShell
+import com.dpis.module.ui.presentation.workspace.WorkspaceShell
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.presentation.getDefaultStartupPage
 import com.dpis.module.settings.presentation.getHiddenWorkspaces
 import com.dpis.module.settings.presentation.getWorkspaceOrder
-import com.dpis.module.ui.compose.WorkspaceDestination
+import com.dpis.module.ui.presentation.workspace.WorkspaceDestination
 
 /**
  * Main-state-aware Compose entry point. The Activity supplies dispatch so

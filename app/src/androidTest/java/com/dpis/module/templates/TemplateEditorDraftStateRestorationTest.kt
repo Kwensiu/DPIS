@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.templates
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.text.BasicTextField

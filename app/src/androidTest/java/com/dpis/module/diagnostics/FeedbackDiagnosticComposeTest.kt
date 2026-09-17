@@ -7,7 +7,7 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dpis.module.R
-import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -21,13 +21,13 @@ class FeedbackDiagnosticComposeTest {
         var saved = false
         var shared = false
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 FeedbackDiagnosticResultContent(
                     title = "Diagnostic ready",
                     packageLine = "Package: example.app",
                     versionLine = "Version: 1.0",
                     entries = listOf(
-                        FeedbackDiagnosticEntryUi("diagnostic.txt", "12 lines")
+                        DiagnosticEntryUi("diagnostic.txt", "12 lines")
                     ),
                     onSave = { saved = true },
                     onShare = { shared = true }
@@ -51,7 +51,7 @@ class FeedbackDiagnosticComposeTest {
     @Test
     fun packagingContentShowsProgressCopy() {
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 Column { FeedbackDiagnosticPackagingContent() }
             }
         }

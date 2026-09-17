@@ -1,9 +1,10 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.ui.presentation.editor.editorSecondaryControlWidth
 
 class EditorControlsLayoutTest {
     @Test

@@ -50,11 +50,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
-import com.dpis.module.ui.compose.ComposeMotionTokens
-import com.dpis.module.ui.compose.EditorSheetScaffoldFrame
-import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
-import com.dpis.module.ui.compose.TextInputFocusBoundary
-import com.dpis.module.ui.compose.clearTextInputFocusOutside
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
+import com.dpis.module.ui.presentation.editor.EditorSheetScaffoldFrame
+import com.dpis.module.ui.presentation.editor.LocalTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusOutside
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import kotlinx.coroutines.flow.collectLatest

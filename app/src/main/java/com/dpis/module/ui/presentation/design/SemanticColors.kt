@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.design
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Immutable

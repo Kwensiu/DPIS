@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.appconfig
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
@@ -43,6 +43,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
+import com.dpis.module.fonts.presentation.HookChainEditorPage
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 
 @RunWith(AndroidJUnit4::class)
 class AppConfigEditorOverlayBehaviorTest {
@@ -211,7 +214,7 @@ class AppConfigEditorOverlayBehaviorTest {
         val targetClicked = AtomicBoolean(false)
         composeRule.setContent {
             var currentDestination by remember { destination }
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 ConfigEditorAnimatedContent(
                     destination = currentDestination,
                     modifier = Modifier.fillMaxSize(),
@@ -294,7 +297,7 @@ class AppConfigEditorOverlayBehaviorTest {
         val destination = mutableStateOf(initialDestination)
         composeRule.setContent {
             var currentDestination by remember { destination }
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 AppConfigEditorOverlay(
                     onDismissRequest = { dismissed.set(true) },
                     destination = currentDestination,
@@ -342,7 +345,7 @@ class AppConfigEditorOverlayBehaviorTest {
         val destination = mutableStateOf(ConfigEditorDestination.MAIN)
         composeRule.setContent {
             var currentDestination by remember { destination }
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 AppConfigEditorOverlay(
                     onDismissRequest = {},
                     destination = currentDestination,

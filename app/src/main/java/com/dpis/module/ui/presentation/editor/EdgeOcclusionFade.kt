@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -10,6 +10,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.ui.unit.Dp
+import com.dpis.module.ui.presentation.design.EdgeFadeTokens
 
 internal enum class EdgeOcclusionFadeDirection {
     TOP_TO_BOTTOM,

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.settings
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -21,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 
 class SettingsComposeDialogsTest {
     @get:Rule
@@ -30,8 +31,14 @@ class SettingsComposeDialogsTest {
     fun interfaceScaleRejectsOutOfRangeValue() {
         var saved: Int? = null
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
-                InterfaceScaleDialogContent(100, 60, 120, {}, { saved = it })
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
+                InterfaceScaleDialogContent(
+                    100,
+                    60,
+                    120,
+                    onCancel = {},
+                    onSave = { saved = it },
+                )
             }
         }
 
@@ -50,7 +57,7 @@ class SettingsComposeDialogsTest {
         var done = false
         val options = (0..12).map { LanguageDialogOption("tag-$it", "Language $it") }
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 LanguageDialogContent(
                     options,
                     "tag-0",
@@ -73,7 +80,7 @@ class SettingsComposeDialogsTest {
         var exported = false
         var imported = false
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 BackupActionsDialogContent({ exported = true }, { imported = true }, {})
             }
         }

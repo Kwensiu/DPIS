@@ -114,9 +114,9 @@ Keep token depth shallow:
 
 Shared chrome belongs in `ui/` under short names (`SegmentedRow`,
 `FeedbackButton`, `ModalDialog`, `SecondaryPageScaffold`). Do not nest
-`theme/contract/tokens` packages. Keep `com.dpis.module.ui.compose` as the
-public package until a dedicated rename; do not mix a rename with an
-appearance change.
+`theme/contract/tokens` packages. Shared Compose files use the package that
+matches their directory under `ui/presentation/{design,dialogs,editor,interop,wear,workspace}`
+and `ui/dialog`.
 
 Appearance work is bottom-up: lock this contract first, then shared chrome in
 `ui/`, then feature screens. Do not restyle Settings or the editor to
@@ -152,8 +152,7 @@ rules and remaining migration slices.
    belong in the feature package (`about/presentation`, `settings/presentation`,
    `applist`, `templates/presentation`, and so on). Do not add a new About,
    Settings, or editor screen under `ui/`. Physical directory and Kotlin
-   package must match; do not leave a feature composable in
-   `about/presentation` with a `ui.compose` package.
+   package must match.
 6. Java remains only where the contract requires it: flavor Xposed entrypoints,
    reflection or JNI boundaries, the pinned Quick Settings tile FQCN
    `com.dpis.module.QuickConfigTileService`, or another externally observed

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.diagnostics.presentation
 
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
@@ -63,6 +63,21 @@ import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.FeedbackButton
+import com.dpis.module.ui.presentation.editor.FeedbackFilterChip
+import com.dpis.module.ui.presentation.editor.FeedbackIconButton
+import com.dpis.module.ui.presentation.editor.FeedbackOutlinedButton
+import com.dpis.module.ui.presentation.editor.FeedbackSwitch
+import com.dpis.module.ui.presentation.editor.FeedbackTextButton
+import com.dpis.module.ui.presentation.editor.HorizontalScrollWithEdgeFade
+import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
+import com.dpis.module.ui.presentation.workspace.AnimatedConditionalItem
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
 
 private const val MIN_DIAGNOSTIC_DURATION_SECONDS = 1
 private const val MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400

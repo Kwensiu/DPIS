@@ -1,8 +1,9 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
 
 class TextInputFocusBoundaryTest {
     @Test

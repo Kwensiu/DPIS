@@ -1,6 +1,6 @@
 @file:SuppressLint("LocalContextGetResourceValueCall")
 
-package com.dpis.module.ui.presentation
+package com.dpis.module.ui.presentation.wear
 
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
@@ -86,10 +86,11 @@ import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
-import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.compose.inputFocusFeedback
-import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.toWearColorScheme
+import com.dpis.module.ui.presentation.LocalSecondaryNavigation
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.toWearColorScheme
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType

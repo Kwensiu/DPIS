@@ -1,6 +1,6 @@
 package com.dpis.module.ui;
 
-import com.dpis.module.ui.compose.WorkspaceDestination;
+import com.dpis.module.ui.presentation.workspace.WorkspaceDestination;
 
 /**
  * Maps the existing main state contract to the stateless Compose shell.

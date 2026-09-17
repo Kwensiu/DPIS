@@ -123,8 +123,6 @@ UI 变更至少考虑 source smoke。改结构、字符串、debug-only 入口�
 3. 按页改特征调用并删除无引用的 `*UiTokens`。编辑器 peek/手势留下。Java `show()`
    已走 `ComposeOverlay`；不要再加 XML 样板。
 
-包名与目录对齐（`ui.compose` → 物理路径）是单独一切，不和外观或 chrome 收口混在一个 PR。
-
 ## Out Of Scope
 
 | 暂不处理 | 原因 |

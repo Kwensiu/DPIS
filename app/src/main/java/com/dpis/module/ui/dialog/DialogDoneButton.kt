@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.dpis.module.R
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 /** Standard single-action dialog footer. Its callback always receives one discrete haptic tick. */
 @Composable

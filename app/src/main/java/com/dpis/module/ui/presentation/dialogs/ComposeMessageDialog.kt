@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.dialogs
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.dialog.DialogChrome
@@ -26,9 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.dpis.module.R
-import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.interop.toComposeAnnotatedString
 
 /** Compose-owned informational dialog whose body may be updated by a Java controller. */
 object ComposeMessageDialog {

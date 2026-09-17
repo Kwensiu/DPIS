@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -24,6 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.design.LocalSemanticColors
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
 
 @Composable
 internal fun successButtonColors(): ButtonColors {

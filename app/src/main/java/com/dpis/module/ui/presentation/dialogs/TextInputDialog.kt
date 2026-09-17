@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.dialogs
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.dialog.DialogChrome
@@ -30,6 +30,10 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
 
 @Composable
 internal fun TextInputDialog(

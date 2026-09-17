@@ -57,12 +57,11 @@ Theme Builder snapshot, or extra `*UiTokens` object in `ui/` for values that
 are already `LocalSpacing` or Material 3 defaults. Names stay short
 (`SegmentedRow`, not `DpisSegmentedListItemPolicy`). Do not add
 `ui/.../theme/tokens` layers; shared files stay next to the existing design
-and workspace packages. Keep `package com.dpis.module.ui.compose` until a
-dedicated rename.
+and workspace packages. Shared Compose files use the package that matches
+their directory under `ui/presentation/{design,dialogs,editor,interop,wear,workspace}`
+and `ui/dialog`.
 
-Physical directory and Kotlin package must match. Do not leave a feature
-composable in `about/presentation` (or another feature tree) with a
-`ui.compose` package.
+Physical directory and Kotlin package must match.
 
 ### Java keep-list
 
@@ -104,22 +103,14 @@ Compose rewrite, and do not grow `MainActivity` while extracting a host.
    `Theme.Dpis*` is window chrome only. Dialog padding is `DialogChrome`;
    scale gaps use `LocalSpacing`. Compose does not keep UI role colors or
    wizard arrows in XML.
-   Do not restyle Settings or the editor to introduce the contract. Do not
-   mix this with a package rename.
-2. **Align feature Compose packages with their directories.** Files under
-   `about/presentation`, `settings/presentation`, `applist/presentation`,
-   `appconfig/presentation`, `fonts/presentation`, `diagnostics/presentation`,
-   `tools/presentation`, and `quickconfig/presentation` must not keep
-   `package com.dpis.module.ui.compose`. Shared scaffolds under `ui/` may keep
-   the historical `ui.compose` package until that tree is renamed as its own
-   cut. Prefer one feature tree per PR so the rename is complete.
-3. **Move About update check** out of `AboutActivity` methods into the
+   Do not restyle Settings or the editor to introduce the contract.
+2. **Move About update check** out of `AboutActivity` methods into the
    existing prompt/download coordinators (partially `AboutUpdatePromptState`).
-4. **Peel `MainActivity` Host implementations** (update, disclaimer, download,
+3. **Peel `MainActivity` Host implementations** (update, disclaimer, download,
    workspace `Content`) into those hosts. Keep the Activity as lifecycle and
    dispatch wiring only.
-5. **Replace remaining XML View binders with Compose** only when that surface
+4. **Replace remaining XML View binders with Compose** only when that surface
    is already the change. Do not convert the whole editor in one PR.
-6. **Drop `activity_status` as a coordinator assembly source** once no Java
+5. **Drop `activity_status` as a coordinator assembly source** once no Java
    host still reads that inflated tree. The completed Compose cutover note is
    `docs/archive/specs/compose-workspace-migration.md`.

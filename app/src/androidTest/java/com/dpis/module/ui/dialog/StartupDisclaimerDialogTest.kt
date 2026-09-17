@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.dialog
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,11 +10,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.function.BooleanSupplier
 
 @RunWith(AndroidJUnit4::class)
 class StartupDisclaimerDialogTest {
@@ -25,8 +26,8 @@ class StartupDisclaimerDialogTest {
     fun contentRequiresAgreementBeforeAccepting() {
         var accepted = false
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
-                StartupDisclaimerContent(onAccept = { accepted = true })
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
+                StartupDisclaimerDialog(onAccept = { accepted = true }, onBack = {})
             }
         }
 
@@ -40,28 +41,24 @@ class StartupDisclaimerDialogTest {
     }
 
     @Test
-    fun dialogHostPersistsAcceptanceAndDispatchesCompletion() {
-        var persisted = false
+    fun backLeavesWithoutAccepting() {
         var accepted = false
-        composeRule.activityRule.scenario.onActivity { activity ->
-            activity.setTheme(R.style.Theme_Dpis)
-            StartupDisclaimerDialog.show(
-                activity = activity,
-                markAccepted = BooleanSupplier {
-                    persisted = true
-                    true
-                },
-                onSaveFailed = Runnable {},
-                onAccepted = Runnable { accepted = true },
-                onBack = Runnable {}
-            )
+        var backed = false
+        composeRule.setContent {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
+                StartupDisclaimerDialog(
+                    onAccept = { accepted = true },
+                    onBack = { backed = true },
+                )
+            }
         }
 
-        composeRule.onNodeWithTag("startup-disclaimer-agreement").performClick()
-        composeRule.onNodeWithTag("startup-disclaimer-accept").performClick()
+        composeRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
         composeRule.runOnIdle {
-            assertTrue(persisted)
-            assertTrue(accepted)
+            assertTrue(backed)
+            assertFalse(accepted)
         }
     }
 }

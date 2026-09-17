@@ -29,8 +29,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.LocalSpacing
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.DialogChrome
 import com.dpis.module.ui.dialog.ModalSheet

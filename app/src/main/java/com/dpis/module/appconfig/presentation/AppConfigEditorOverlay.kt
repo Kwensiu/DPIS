@@ -45,11 +45,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.ui.compose.ComposeMotionTokens
-import com.dpis.module.ui.compose.EditorSheetScaffoldFrame
-import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
-import com.dpis.module.ui.compose.TextInputFocusBoundary
-import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
+import com.dpis.module.ui.presentation.editor.EditorSheetScaffoldFrame
+import com.dpis.module.ui.presentation.editor.LocalTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 

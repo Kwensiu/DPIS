@@ -16,7 +16,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.dpis.module.ui.compose.LocalSpacing
+import com.dpis.module.ui.presentation.design.LocalSpacing
 
 /** Measured dialog geometry that is not on the shared 4/8/12/16/24/32 scale. */
 internal object DialogChrome {

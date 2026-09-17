@@ -35,11 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.home.ModeGuideActivity
-import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
 
-import com.dpis.module.ui.compose.dpisClickable
-import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
-import com.dpis.module.ui.compose.setFeatureContent
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.workspace.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.presentation.design.setFeatureContent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

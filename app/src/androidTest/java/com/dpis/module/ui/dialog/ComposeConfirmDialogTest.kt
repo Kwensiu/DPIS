@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.dialog
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -14,6 +14,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.dpis.module.ui.presentation.dialogs.ComposeMessageDialog
+import com.dpis.module.ui.presentation.dialogs.MessageDialogContent
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 
 @RunWith(AndroidJUnit4::class)
 class ComposeConfirmDialogTest {
@@ -25,7 +28,7 @@ class ComposeConfirmDialogTest {
         var confirmed = false
         var canceled = false
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 ConfirmDialogContent(
                     title = "High-risk action",
                     message = "This may crash the system.",
@@ -80,7 +83,7 @@ class ComposeConfirmDialogTest {
     fun messageDialogUsesThemeColorsAndDispatchesClose() {
         var closed = false
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 MessageDialogContent(
                     title = "Release notes",
                     message = AnnotatedString("Changes in this version."),

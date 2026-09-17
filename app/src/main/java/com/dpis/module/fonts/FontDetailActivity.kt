@@ -3,7 +3,7 @@ package com.dpis.module.fonts
 import android.os.Bundle
 import com.dpis.module.fonts.presentation.FontDetailSession
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.ui.compose.installFontDetail
+import com.dpis.module.fonts.presentation.installFontDetail
 
 class FontDetailActivity : LocalizedActivity() {
     private lateinit var session: FontDetailSession

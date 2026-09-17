@@ -59,14 +59,14 @@ import com.dpis.module.R
 import com.dpis.module.home.HomeWorkspaceLayout
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.root.RootAccessProbe
-import com.dpis.module.ui.compose.LocalSpacing
-import com.dpis.module.ui.compose.PageBarBehavior
-import com.dpis.module.ui.compose.PageScaffold
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.workspace.PageBarBehavior
+import com.dpis.module.ui.presentation.workspace.PageScaffold
 
-import com.dpis.module.ui.compose.ToolbarIconButton
-import com.dpis.module.ui.compose.dpisClickable
-import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.rememberRestorableLazyListState
+import com.dpis.module.ui.presentation.workspace.ToolbarIconButton
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.rememberRestorableLazyListState
 
 private data class HomeCountItem(
     val item: HomeWorkspaceLayout.Item,
@@ -80,7 +80,7 @@ private data class HomeCountItem(
 fun HomeWorkspaceContent(
     state: HomeWorkspaceState,
     padding: PaddingValues,
-    scrollStore: com.dpis.module.ui.compose.PageScrollPositionStore,
+    scrollStore: com.dpis.module.ui.presentation.workspace.PageScrollPositionStore,
 ) {
     val context = LocalContext.current
     var editing by rememberSaveable { mutableStateOf(false) }

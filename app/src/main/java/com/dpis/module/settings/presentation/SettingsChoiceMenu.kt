@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.dpis.module.ui.compose.rememberClickValueAction
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
 
 internal data class SettingsChoiceOption(val value: String, val label: String)
 

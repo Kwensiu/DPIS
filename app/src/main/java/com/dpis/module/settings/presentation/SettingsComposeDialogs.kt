@@ -49,7 +49,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import com.dpis.module.R
-import com.dpis.module.ui.compose.*
+import com.dpis.module.ui.presentation.design.*
+import com.dpis.module.ui.presentation.dialogs.*
+import com.dpis.module.ui.presentation.editor.*
+import com.dpis.module.ui.presentation.interop.*
+import com.dpis.module.ui.presentation.wear.*
+import com.dpis.module.ui.presentation.workspace.*
 import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ModalDialog
 import java.util.function.Consumer

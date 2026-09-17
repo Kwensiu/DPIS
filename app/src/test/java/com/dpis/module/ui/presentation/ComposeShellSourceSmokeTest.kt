@@ -444,7 +444,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(overlay.contains("bottomSheetState.hide()"))
         assertTrue(coordinator.contains("R.string.dialog_advanced_wizard_hint"))
         assertTrue(coordinator.contains("Canvas("))
-        assertTrue(coordinator.contains("MaterialTheme.colorScheme.inverseSurface"))
+        assertTrue(coordinator.contains("wizardHintArrowColor()"))
         assertFalse(coordinator.contains("bg_app_config_wizard_arrow"))
         assertTrue(coordinator.contains("R.string.feedback_diagnostic_action"))
         assertTrue(coordinator.contains("AppConfigSheetUiTokens.TopChromeIndicatorWidth"))

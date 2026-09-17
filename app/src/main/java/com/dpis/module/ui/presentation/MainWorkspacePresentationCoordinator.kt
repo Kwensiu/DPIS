@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -60,18 +62,24 @@ import com.dpis.module.appconfig.presentation.AppConfigEditorContent
 import com.dpis.module.appconfig.presentation.AppConfigEditorSessionChip
 import com.dpis.module.appconfig.presentation.AppConfigEditorOverlay
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
-import com.dpis.module.ui.compose.ComposeMotionTokens
-import com.dpis.module.ui.compose.AppHookChainEditorPage
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
+import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.applist.presentation.AppWorkspaceContent
-import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
+import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
 import com.dpis.module.home.presentation.HomeWorkspaceContent
-import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.compose.PageScrollPositionStore
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
 import com.dpis.module.settings.presentation.SettingsWorkspaceContent
 import com.dpis.module.tools.presentation.ToolsWorkspaceContent
-import com.dpis.module.ui.compose.rememberEditorControlHeight
-import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.ui.presentation.editor.rememberEditorControlHeight
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.wear.WearAppConfigEditorContent
+import com.dpis.module.ui.presentation.wear.WearAppWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearHomeWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearSettingsWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearTemplateWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearToolsWorkspaceContent
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.R
@@ -423,7 +431,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                             .zIndex(1f),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        val arrowColor = MaterialTheme.colorScheme.inverseSurface
+                        val arrowColor = MaterialTheme.colorScheme.wizardHintArrowColor()
                         Canvas(
                             modifier = androidx.compose.ui.Modifier.size(width = 14.dp, height = 7.dp),
                         ) {
@@ -498,3 +506,7 @@ private fun ComposeWorkspaceSurface(content: @Composable () -> Unit) {
         content = content
     )
 }
+
+/** Mix inverseSurface one step toward surface so the triangle is less harsh than the bubble. */
+private fun ColorScheme.wizardHintArrowColor(): Color =
+    lerp(inverseSurface, surface, 0.22f)

@@ -6,7 +6,7 @@ import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.ui.compose.FeedbackDiagnosticPreparationPresentation
+import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.ExecutorService
 import com.dpis.module.diagnostics.device.LsposedLogReader
 import com.dpis.module.diagnostics.ExportBuilder

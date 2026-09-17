@@ -12,9 +12,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.activity.ComponentActivity
 import com.dpis.module.R
 import com.dpis.module.ui.WatchUiMode
-import com.dpis.module.ui.compose.SecondaryPageScaffold
-import com.dpis.module.ui.compose.WearExperimentalSettingsContent
-import com.dpis.module.ui.compose.setFeatureContent
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.wear.WearExperimentalSettingsContent
+import com.dpis.module.ui.presentation.design.setFeatureContent
 
 /**
  * Standalone empty-state page kept separate from SettingsWorkspaceContent.

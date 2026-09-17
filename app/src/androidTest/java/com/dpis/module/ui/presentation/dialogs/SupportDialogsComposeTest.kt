@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.dialogs
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -8,6 +8,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.dpis.module.R
+import com.dpis.module.about.presentation.LicenseDetailContent
+import com.dpis.module.ui.dialog.ConfirmDialogContent
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -21,7 +24,7 @@ class SupportDialogsComposeTest {
     fun textInputSubmitsEditedValue() {
         var submitted = ""
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 TextInputDialogContent("Font display name", "Name", "Old", {}, { submitted = it })
             }
         }
@@ -34,7 +37,7 @@ class SupportDialogsComposeTest {
     fun customConfirmActionIsUsed() {
         var confirmed = false
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 ConfirmDialogContent("Delete font?", "Delete this font?", { confirmed = true }, {},
                     cancelLabel = "Cancel", confirmLabel = "Delete")
             }
@@ -46,7 +49,7 @@ class SupportDialogsComposeTest {
     @Test
     fun darkLicenseDetailShowsBodyAndWebsiteAction() {
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 LicenseDetailContent("Library", "License body", true, {}, {})
             }
         }

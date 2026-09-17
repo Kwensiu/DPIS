@@ -14,7 +14,7 @@ import com.dpis.module.ui.WatchUiMode
 import com.dpis.module.settings.presentation.interfaceScaleStore
 import com.dpis.module.settings.presentation.isPredictiveBackEnabled
 import com.dpis.module.ui.presentation.wrapInterfaceScaleContext
-import com.dpis.module.ui.compose.applyComposeWindowBackground
+import com.dpis.module.ui.presentation.design.applyComposeWindowBackground
 
 /** Applies app-level locale, interface scale, and theme changes across activity boundaries. */
 abstract class LocalizedActivity : ComponentActivity() {

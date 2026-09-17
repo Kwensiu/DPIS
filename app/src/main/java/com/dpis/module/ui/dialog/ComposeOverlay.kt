@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.resolveDarkTheme
 
 /**
  * Activity-owned composition host for Java `show()` dialogs and sheets. The overlay view is

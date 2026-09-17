@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.fonts.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -69,6 +69,13 @@ import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.viewport.ViewportApplyMode
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import com.dpis.module.ui.presentation.design.LocalSemanticColors
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
+import com.dpis.module.ui.presentation.editor.EditorSheetChildPageHeader
+import com.dpis.module.ui.presentation.editor.FeedbackOutlinedButton
+import com.dpis.module.ui.presentation.editor.FeedbackSwitch
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
 
 /** Animates destinations inside one editor surface without replacing its sheet or detail pane. */
 @Composable

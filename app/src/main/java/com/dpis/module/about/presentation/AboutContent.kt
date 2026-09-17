@@ -30,15 +30,15 @@ import androidx.compose.ui.unit.dp
 import androidx.activity.ComponentActivity
 import com.dpis.module.R
 import com.dpis.module.ui.WatchUiMode
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.WearAboutContent
-import com.dpis.module.ui.compose.setFeatureContent
-import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.wear.WearAboutContent
+import com.dpis.module.ui.presentation.design.setFeatureContent
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
 
-import com.dpis.module.ui.compose.dpisSegmentedShapes
-import com.dpis.module.ui.compose.segmentedRowColors
-import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
+import com.dpis.module.ui.presentation.workspace.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 @Composable
 fun AboutContent(

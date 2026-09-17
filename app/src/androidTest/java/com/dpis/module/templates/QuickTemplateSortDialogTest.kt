@@ -10,7 +10,7 @@ import androidx.compose.ui.test.performTouchInput
 import com.dpis.module.R
 import com.dpis.module.templates.presentation.QuickTemplateSortContent
 import com.dpis.module.templates.presentation.QuickTemplateSortItem
-import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -23,14 +23,17 @@ class QuickTemplateSortDialogTest {
     fun longPressDragReordersItemsBeforeSave() {
         var savedIds: List<String> = emptyList()
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 QuickTemplateSortContent(
                     initialItems = listOf(
                         QuickTemplateSortItem("one", "First"),
                         QuickTemplateSortItem("two", "Second")
                     ),
-                    onCancel = {},
-                    onSave = { savedIds = it }
+                    onOrderChanged = { ids ->
+                        savedIds = ids
+                        true
+                    },
+                    onDone = {},
                 )
             }
         }
@@ -46,7 +49,7 @@ class QuickTemplateSortDialogTest {
                 up()
             }
         composeRule.onNodeWithText(
-            composeRule.activity.getString(R.string.quick_template_sort_save)
+            composeRule.activity.getString(R.string.quick_template_sort_done)
         ).performClick()
 
         composeRule.runOnIdle {

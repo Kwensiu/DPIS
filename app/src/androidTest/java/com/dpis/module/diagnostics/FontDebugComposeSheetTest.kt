@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.diagnostics
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,6 +11,7 @@ import com.dpis.module.diagnostics.presentation.FontDebugSheetState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 
 class FontDebugComposeSheetTest {
     @get:Rule
@@ -20,7 +21,7 @@ class FontDebugComposeSheetTest {
     fun darkSheetShowsStateAndDispatchesAllActions() {
         val actions = mutableListOf<String>()
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 FontDebugSheetContent(
                     FontDebugSheetState("Chain", "30 seconds", "Updated now", "stats body",
                         "Disable overlay", true),

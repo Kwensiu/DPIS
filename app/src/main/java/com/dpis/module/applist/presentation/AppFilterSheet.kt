@@ -14,11 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.BuildConfig
 import com.dpis.module.applist.AppListFilterState
-import com.dpis.module.ui.compose.FeedbackFilterChip
-import com.dpis.module.ui.compose.FilterSheetResetButton
-import com.dpis.module.ui.compose.FilterSheetScaffold
-import com.dpis.module.ui.compose.FilterSheetScrollChipRow
-import com.dpis.module.ui.compose.FilterSheetUiTokens
+import com.dpis.module.ui.presentation.editor.FeedbackFilterChip
+import com.dpis.module.ui.presentation.design.FilterSheetResetButton
+import com.dpis.module.ui.presentation.design.FilterSheetScaffold
+import com.dpis.module.ui.presentation.design.FilterSheetScrollChipRow
+import com.dpis.module.ui.presentation.design.FilterSheetUiTokens
 
 /** App catalogue filters. Visual grouping mirrors the template target picker, state remains local. */
 @OptIn(ExperimentalMaterial3Api::class)

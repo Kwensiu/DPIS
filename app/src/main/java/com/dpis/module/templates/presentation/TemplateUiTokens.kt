@@ -3,7 +3,7 @@ package com.dpis.module.templates.presentation
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
-import com.dpis.module.ui.compose.PageChromeTokens
+import com.dpis.module.ui.presentation.workspace.PageChromeTokens
 
 /**
  * Template-workspace dimensions that intentionally mirror the established XML surface.

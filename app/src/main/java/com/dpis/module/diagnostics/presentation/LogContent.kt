@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.diagnostics.presentation
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -39,9 +39,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import androidx.activity.ComponentActivity
-import com.dpis.module.ui.compose.setFeatureContent
+import com.dpis.module.ui.presentation.design.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.dpisCombinedClickable
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.PageBarBehavior
+import com.dpis.module.ui.presentation.workspace.PageScaffold
+import com.dpis.module.ui.presentation.workspace.ToolbarIconButton
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenu
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenuItem
+import com.dpis.module.ui.presentation.workspace.edgeToEdgeContentBottomPadding
 
 class LogUiEntry(
     val key: String,

@@ -20,8 +20,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import com.dpis.module.ui.compose.TextInputFocusBoundary
-import com.dpis.module.ui.compose.imeWindowPan
+import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.imeWindowPan
 
 /** Standard container for dialogs whose visibility is owned by Compose state. */
 @Composable

@@ -1,8 +1,8 @@
 package com.dpis.module.ui.dialog
 
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.outlinedWarningButtonColors
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.outlinedWarningButtonColors
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.LocalSpacing
+import com.dpis.module.ui.presentation.design.LocalSpacing
 
 /** Visual contract shared by ordinary phone/tablet dialogs with cancel/confirm actions. */
 internal object ConfirmDialogUiTokens {

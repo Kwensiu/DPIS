@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.design
 
 import com.dpis.module.settings.ThemeModeStore
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -7,6 +7,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
+import com.dpis.module.ui.presentation.design.ColorSchemeFactory
+import com.dpis.module.ui.presentation.design.toSemanticColors
+import com.dpis.module.ui.presentation.design.toWearColorScheme
 
 class ColorSchemeFactoryTest {
     @After

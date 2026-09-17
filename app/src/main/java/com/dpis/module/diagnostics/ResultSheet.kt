@@ -27,8 +27,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.LocalSpacing
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.dialog.DialogChrome

@@ -1,13 +1,13 @@
 package com.dpis.module
 
 import androidx.compose.ui.unit.dp
-import com.dpis.module.ui.compose.WorkspaceNavigationLayout
-import com.dpis.module.ui.compose.WorkspaceDrawerMinWindowWidth
-import com.dpis.module.ui.compose.WorkspaceDrawerWidth
-import com.dpis.module.ui.compose.WorkspaceRailMinWindowWidth
-import com.dpis.module.ui.compose.WorkspaceRailWidth
-import com.dpis.module.ui.compose.WorkspaceTwoPaneMinWidth
-import com.dpis.module.ui.compose.resolveWorkspaceNavigationLayout
+import com.dpis.module.ui.presentation.workspace.WorkspaceNavigationLayout
+import com.dpis.module.ui.presentation.workspace.WorkspaceDrawerMinWindowWidth
+import com.dpis.module.ui.presentation.workspace.WorkspaceDrawerWidth
+import com.dpis.module.ui.presentation.workspace.WorkspaceRailMinWindowWidth
+import com.dpis.module.ui.presentation.workspace.WorkspaceRailWidth
+import com.dpis.module.ui.presentation.workspace.WorkspaceTwoPaneMinWidth
+import com.dpis.module.ui.presentation.workspace.resolveWorkspaceNavigationLayout
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

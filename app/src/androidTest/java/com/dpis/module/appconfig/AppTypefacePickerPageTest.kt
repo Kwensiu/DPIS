@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.appconfig
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
@@ -20,6 +20,7 @@ import org.junit.Rule
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 
 @RunWith(AndroidJUnit4::class)
 class AppTypefacePickerPageTest {
@@ -30,7 +31,7 @@ class AppTypefacePickerPageTest {
     fun pagerSwipesBetweenTypefaceCataloguesAndKeepsOnlyManageAction() {
         val selectedTypeface = mutableStateOf<String?>(null)
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 AppTypefacePickerPage(
                     selectedTypefaceId = selectedTypeface.value,
                     onTypefaceSelected = { selectedTypeface.value = it },

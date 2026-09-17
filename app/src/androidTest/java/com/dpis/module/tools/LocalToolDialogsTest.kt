@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.tools
 
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -9,6 +9,7 @@ import com.dpis.module.tools.presentation.RuntimeReloadNoticeContent
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 
 class LocalToolDialogsTest {
     @get:Rule
@@ -18,7 +19,7 @@ class LocalToolDialogsTest {
     fun runtimeNoticeAcknowledgesFromSingleAction() {
         var acknowledged = false
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 RuntimeReloadNoticeContent { acknowledged = true }
             }
         }
