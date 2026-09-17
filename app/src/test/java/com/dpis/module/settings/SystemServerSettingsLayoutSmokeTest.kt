@@ -131,7 +131,7 @@ class SystemServerSettingsLayoutSmokeTest {
         )
         source.assertNotContainsAll("android.os.Process.killProcess(android.os.Process.myPid())", "RootCommandRunner.run(\"reboot\")")
         dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "ComposeOverlay.show(activity)", "ModalDialog(onDismissRequest = dismiss)")
-        dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", ".weight(1f, fill = false)", "R.dimen.dialog_footer_spacing_top")
+        dialogLayout.assertContainsAll("DialogChrome.SurfacePadding", ".weight(1f, fill = false)", "LocalSpacing.current")
         read("src/main/java/com/dpis/module/DpisApplication.kt").assertContainsAll(
             "fun reloadConfigStore()",
             "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)",
@@ -141,7 +141,7 @@ class SystemServerSettingsLayoutSmokeTest {
 
     @Test
     fun rowLayoutsAndFontDebugSurfaceKeepExpectedSpacing() {
-        read("src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt").assertContainsAll("R.dimen.font_debug_dialog_surface_padding_horizontal", "MaterialTheme.colorScheme.surfaceContainer", "MaterialTheme.colorScheme.errorContainer")
+        read("src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt").assertContainsAll("DialogChrome.HorizontalPadding", "MaterialTheme.colorScheme.surfaceContainer", "MaterialTheme.colorScheme.errorContainer")
     }
 
     @Test

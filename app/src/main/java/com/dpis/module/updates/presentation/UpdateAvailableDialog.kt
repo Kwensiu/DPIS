@@ -37,7 +37,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
@@ -45,7 +44,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.DialogChrome
 import com.dpis.module.ui.dialog.ModalDialog
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.updates.toReleaseNotesAnnotatedString
@@ -142,20 +143,17 @@ object UpdateAvailableDialog {
 @Composable
 internal fun UpdateDialogContent(title: String, message: String, state: UpdateDialogState,
     onPrimary: () -> Unit, onCancel: () -> Unit) {
+    val spacing = LocalSpacing.current
     var expanded by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().padding(
-        start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-        top = dimensionResource(R.dimen.dialog_surface_padding_top),
-        end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-        bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)),
+    Column(Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_title_spacing_top)))
+        Spacer(Modifier.height(spacing.md))
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_message_spacing_top)))
+        Spacer(Modifier.height(spacing.sm))
         Text(message, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_release_notes_spacing_top)))
+        Spacer(Modifier.height(14.dp))
         val releaseNotesShape = RoundedCornerShape(8.dp)
         Surface(modifier = Modifier.fillMaxWidth().clip(releaseNotesShape),
             shape = releaseNotesShape, color = MaterialTheme.colorScheme.surfaceContainer) {
@@ -177,7 +175,7 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
                         state.releaseNotes,
                         modifier = Modifier.fillMaxWidth()
                             .padding(start = 12.dp, end = 12.dp, bottom = 10.dp)
-                            .heightIn(max = dimensionResource(R.dimen.update_dialog_release_notes_max_height))
+                            .heightIn(max = DialogChrome.ScrollBodyMaxHeight)
                             .verticalScroll(rememberScrollState())
                             .drawBehind {
                                 drawReleaseNotesQuoteBars(
@@ -194,14 +192,14 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
             }
         }
         if (state.progressVisible) {
-            Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_progress_spacing_top)))
+            Spacer(Modifier.height(14.dp))
             if (state.progressIndeterminate) LinearProgressIndicator(Modifier.fillMaxWidth())
             else LinearProgressIndicator(progress = { state.progress / 100f }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_progress_text_spacing_top)))
+            Spacer(Modifier.height(spacing.sm))
             Text(state.progressText, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_primary_button_spacing_top)))
+        Spacer(Modifier.height(18.dp))
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             // Keep both actions usable across locales and font scales. Stack the actions when
             // two comfortable touch targets cannot fit; this avoids language-specific sizing.

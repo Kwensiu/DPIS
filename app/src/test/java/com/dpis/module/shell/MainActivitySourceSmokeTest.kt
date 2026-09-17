@@ -479,12 +479,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(runtimeLayout.contains("module_runtime_reload_title"))
         assertTrue(runtimeLayout.contains("module_runtime_reload_message"))
         assertTrue(runtimeLayout.contains("module_runtime_reload_ack_button"))
-        assertTrue(runtimeLayout.contains("R.dimen.dialog_status_icon_padding"))
-        assertTrue(
-            runtimeLayout.contains("R.dimen.dialog_surface_padding_horizontal")
-        )
-        assertTrue(runtimeLayout.contains("R.dimen.dialog_body_spacing"))
-        assertTrue(runtimeLayout.contains("R.dimen.dialog_action_spacing_top"))
+        assertTrue(runtimeLayout.contains("DialogChrome.HorizontalPadding"))
+        assertTrue(runtimeLayout.contains("LocalSpacing.current"))
         val runtimeMessage = stringEntry(
             strings,
             "module_runtime_reload_message"
@@ -586,7 +582,6 @@ class MainActivitySourceSmokeTest {
     @Test
     fun startupDisclaimerComposeKeepsMandatoryAcceptContract() {
         val source = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
-        val dimensions = read("src/main/res/values/dimens.xml")
 
         assertTrue(source.contains("fun StartupDisclaimerDialog("))
         assertTrue(source.contains("R.string.startup_disclaimer_title"))
@@ -595,10 +590,9 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("R.string.startup_disclaimer_accept_button"))
         assertTrue(source.contains("dismissOnBackPress = false"))
         assertTrue(source.contains("dismissOnClickOutside = false"))
-        assertTrue(source.contains("R.dimen.dialog_surface_padding_horizontal"))
+        assertTrue(source.contains("DialogChrome.HorizontalPadding"))
         assertFalse(source.contains("startup_disclaimer_exit_button"))
-        assertTrue(dimensions.contains("dialog_surface_padding_horizontal"))
-        assertFalse(dimensions.contains("dialog_round_surface_padding_horizontal"))
+        assertFalse(source.contains("R.dimen."))
     }
 
     @Test

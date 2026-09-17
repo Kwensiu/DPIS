@@ -1,6 +1,7 @@
 package com.dpis.module.ui.compose
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogChrome
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Column
@@ -20,12 +21,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.dialog.ComposeOverlay
@@ -109,14 +108,10 @@ internal fun MessageDialogContent(
     closeLabel: String,
     onClose: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     val closeAction = rememberClickAction(onClose)
     Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        ),
+        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -127,16 +122,16 @@ internal fun MessageDialogContent(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(
             message,
             modifier = Modifier.fillMaxWidth()
-                .heightIn(max = dimensionResource(R.dimen.update_dialog_release_notes_max_height))
+                .heightIn(max = DialogChrome.ScrollBodyMaxHeight)
                 .verticalScroll(rememberScrollState()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+        Spacer(Modifier.height(spacing.lg))
         OutlinedButton(
             onClick = closeAction,
             modifier = Modifier.fillMaxWidth().height(ConfirmDialogUiTokens.ActionHeight),

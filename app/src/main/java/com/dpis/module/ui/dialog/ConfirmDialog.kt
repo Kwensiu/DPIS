@@ -22,12 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.compose.LocalSpacing
 
 /** Visual contract shared by ordinary phone/tablet dialogs with cancel/confirm actions. */
 internal object ConfirmDialogUiTokens {
@@ -97,15 +97,11 @@ internal fun ConfirmDialogContent(
     cancelLabel: String? = null,
     confirmLabel: String? = null
 ) {
+    val spacing = LocalSpacing.current
     val cancelAction = rememberClickAction(onCancel)
     val confirmAction = rememberClickAction(onConfirm)
     Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        ),
+        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -116,7 +112,7 @@ internal fun ConfirmDialogContent(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(
             text = message,
             modifier = Modifier.fillMaxWidth(),
@@ -124,12 +120,10 @@ internal fun ConfirmDialogContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+        Spacer(Modifier.height(spacing.lg))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                dimensionResource(R.dimen.dialog_action_spacing_between)
-            )
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             // Standard two-action dialogs keep the reversible action on the left and the
             // advancing/destructive action on the right. Both actions share the editor's

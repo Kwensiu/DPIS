@@ -45,7 +45,7 @@ class StringResourceParityTest {
         dialogs.assertContainsAll("LanguageDialogContent(")
         assertTrue(dialogs.indexOf("dismiss()", dialogs.indexOf("onSelected = {")) >= 0)
         assertTrue(dialogs.indexOf("onSelected.accept(selectedTag)") > dialogs.indexOf("dismiss()", dialogs.indexOf("onSelected = {")))
-        dialogLayout.assertContainsAll("R.dimen.dialog_surface_padding_horizontal", "R.dimen.dialog_action_spacing_top")
+        dialogLayout.assertContainsAll("DialogChrome.SurfacePadding", "LocalSpacing.current")
         source.assertContainsAll("showLanguageDialog", "AppLocaleManager.supportedLanguages()", "LanguageDialogOption(option.tag", "AppLocaleManager.setLanguageTag", "SettingsComposeDialogs.showLanguage", "AppLocaleManager.selectedLabelResId(activity)")
         source.assertNotContainsAll("settings_language_hint")
         localeManager.assertContainsAll("SUPPORTED_LANGUAGES = List.of(", "TAG_JAPANESE", "R.string.settings_language_japanese", "TAG_RUSSIAN", "R.string.settings_language_russian", "static List<LanguageOption> supportedLanguages()")

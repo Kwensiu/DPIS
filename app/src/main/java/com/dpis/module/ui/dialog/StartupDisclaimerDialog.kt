@@ -18,7 +18,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.LocalSpacing
 
 @Composable
 internal fun StartupDisclaimerDialog(
@@ -48,9 +48,9 @@ internal fun StartupDisclaimerDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-                        top = dimensionResource(R.dimen.dialog_surface_padding_top),
-                        end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
+                        start = DialogChrome.HorizontalPadding,
+                        top = DialogChrome.TopPadding,
+                        end = DialogChrome.HorizontalPadding,
                     ),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
@@ -75,15 +75,16 @@ private fun StartupDisclaimerBody(
     agreed: Boolean,
     onAgreementChanged: (Boolean) -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-                top = dimensionResource(R.dimen.dialog_body_spacing),
-                end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
+                start = DialogChrome.HorizontalPadding,
+                top = spacing.md,
+                end = DialogChrome.HorizontalPadding,
             ),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.dialog_body_spacing)),
+        verticalArrangement = Arrangement.spacedBy(spacing.md),
     ) {
         Text(
             text = stringResource(R.string.startup_disclaimer_message),
@@ -122,14 +123,15 @@ private fun StartupDisclaimerActions(
     agreed: Boolean,
     onAccept: () -> Unit,
 ) {
+    val spacing = LocalSpacing.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-                top = dimensionResource(R.dimen.dialog_action_spacing_top),
-                end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-                bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom),
+                start = DialogChrome.HorizontalPadding,
+                top = spacing.lg,
+                end = DialogChrome.HorizontalPadding,
+                bottom = DialogChrome.BottomPadding,
             ),
     ) {
         Button(

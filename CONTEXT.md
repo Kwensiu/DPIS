@@ -90,8 +90,9 @@ Builder export are not the UI color source.
 - Java `show()` dialogs and sheets attach a `ComposeOverlay` composition owner
   and render through `ModalDialog` or `ModalSheet`. Do not add
   `MaterialAlertDialogBuilder`, `BottomSheetDialog`, or `DialogWindowSizer`.
-- XML `dimens.xml` only keeps values still read through `dimensionResource`.
-  Do not add View-layout leftovers. Wear and phone Compose own round/wide
+- Dialog padding lives in `DialogChrome`. Scale gaps use `LocalSpacing`.
+  Feature-only measured gaps stay next to that dialog. Do not add XML
+  `dimens.xml` for Compose dialogs. Wear and phone Compose own round/wide
   geometry; do not restore `values-round` or `values-w720dp` layout bags.
 
 Do not add another Material 3 component library or freeze a static `Color.kt`.

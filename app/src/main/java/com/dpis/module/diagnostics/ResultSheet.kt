@@ -21,7 +21,6 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -29,8 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.ui.compose.ComposeDesignSystem
+import com.dpis.module.ui.compose.LocalSpacing
 import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogChrome
 import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.dialog.ModalSheet
 
@@ -111,12 +112,13 @@ internal fun FeedbackDiagnosticResultContent(
     onSave: () -> Unit,
     onShare: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     Column(
         modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(
-            start = dimensionResource(R.dimen.dialog_app_config_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_app_config_padding_top),
-            end = dimensionResource(R.dimen.dialog_app_config_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_app_config_padding_bottom)
+            start = DialogChrome.HorizontalPadding,
+            top = 14.dp,
+            end = DialogChrome.HorizontalPadding,
+            bottom = spacing.xl,
         )
     ) {
         Text(
@@ -210,13 +212,9 @@ object PackagingDialog {
 
 @Composable
 internal fun FeedbackDiagnosticPackagingContent() {
+    val spacing = LocalSpacing.current
     Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        )
+        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding)
     ) {
         Text(
             text = stringResource(R.string.feedback_diagnostic_packaging_title),
@@ -224,9 +222,9 @@ internal fun FeedbackDiagnosticPackagingContent() {
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         LinearProgressIndicator(Modifier.fillMaxWidth())
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(
             text = stringResource(R.string.feedback_diagnostic_packaging_message),
             style = MaterialTheme.typography.bodyMedium,

@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.compose.*
 import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.DialogChrome
 import com.dpis.module.ui.dialog.ModalDialog
 
 object ModuleRuntimeReloadComposeDialog {
@@ -41,24 +41,25 @@ object ModuleRuntimeReloadComposeDialog {
 
 @Composable
 internal fun RuntimeReloadNoticeContent(onAcknowledge: () -> Unit) {
+    val spacing = LocalSpacing.current
     Column(Modifier.fillMaxWidth().padding(
-        horizontal = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-        vertical = dimensionResource(R.dimen.dialog_surface_padding_top)),
+        horizontal = DialogChrome.HorizontalPadding,
+        vertical = DialogChrome.TopPadding),
         horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primaryContainer) {
             Icon(painterResource(R.drawable.ic_error_outline_24), null,
-                Modifier.padding(dimensionResource(R.dimen.dialog_status_icon_padding)).size(32.dp),
+                Modifier.padding(spacing.sm).size(32.dp),
                 tint = MaterialTheme.colorScheme.onPrimaryContainer)
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(stringResource(R.string.module_runtime_reload_title),
             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(stringResource(R.string.module_runtime_reload_message),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+        Spacer(Modifier.height(spacing.lg))
         Button(onClick = rememberClickAction(onAcknowledge), modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.module_runtime_reload_ack_button))
         }

@@ -94,10 +94,11 @@ public class ProcessActionHandlerSourceSmokeTest {
         assertTrue(dialog.contains("ComposeOverlay.show(activity)"));
         assertTrue(dialog.contains("ConfirmAlertDialog("));
         assertFalse(dialog.contains("MaterialAlertDialogBuilder"));
-        assertTrue(dialog.contains("R.dimen.dialog_surface_padding_horizontal"));
-        assertTrue(dialog.contains("R.dimen.dialog_body_spacing"));
-        assertTrue(dialog.contains("R.dimen.dialog_action_spacing_top"));
-        assertTrue(dialog.contains("R.dimen.dialog_action_spacing_between"));
+        assertTrue(dialog.contains("DialogChrome.SurfacePadding"));
+        assertTrue(dialog.contains("LocalSpacing.current"));
+        assertTrue(dialog.contains("spacing.md"));
+        assertTrue(dialog.contains("spacing.lg"));
+        assertTrue(dialog.contains("spacing.sm"));
         assertTrue(dialog.contains("outlinedWarningButtonColors()"));
         assertFalse(dialog.contains("R.color.dpis_warn_container"));
     }

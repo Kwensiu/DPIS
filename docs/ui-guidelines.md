@@ -19,7 +19,8 @@ Theme Builder 静态色板，不要再引一套 Material 3 组件库。
 
 间距优先 `LocalSpacing`（4/8/12/16/24/32）。不要建 `space_16` 或新的
 `*UiTokens` 去包一个 16.dp。多个工作区共用的页面 chrome 只放
-`PageChromeTokens`。测过的特征几何（编辑器 peek、拖动手柄）留在该特征包。
+`PageChromeTokens`。Dialog 表面用 `DialogChrome`。测过的特征几何（编辑器
+peek、拖动手柄、某一 dialog 独有的 14/18dp）留在该特征包。
 
 名称要短、目录要浅。共享控件用 `SegmentedRow`、`FeedbackButton`、`ModalDialog`、
 `SecondaryPageScaffold`。不要加 `ui/theme/tokens` 这类分层，也不要把
