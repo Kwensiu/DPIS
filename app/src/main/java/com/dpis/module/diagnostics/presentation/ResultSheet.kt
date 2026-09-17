@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.presentation
 
 import android.app.Activity
 import android.text.format.Formatter
@@ -27,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
+import com.dpis.module.diagnostics.ExportBuilder
 import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.dialog.ComposeOverlay
@@ -38,7 +39,7 @@ import com.dpis.module.ui.dialog.ModalSheet
 /** Compose-owned diagnostic result sheet; package creation and file actions remain host-owned. */
 class ResultSheet(
     private val activity: Activity?,
-    private val host: Host?
+    private val host: Host?,
 ) {
     interface Host {
         fun shareFeedbackDiagnostic(

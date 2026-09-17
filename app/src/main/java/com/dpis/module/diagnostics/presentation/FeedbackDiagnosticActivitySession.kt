@@ -14,7 +14,6 @@ import com.dpis.module.diagnostics.AppLauncher
 import com.dpis.module.diagnostics.PackageActions
 import com.dpis.module.diagnostics.FeedbackDiagnosticPageRequest
 import com.dpis.module.diagnostics.ExportBuilder
-import com.dpis.module.diagnostics.ResultSheet
 import com.dpis.module.diagnostics.FeedbackDiagnosticDuration
 import com.dpis.module.diagnostics.Coordinator
 

@@ -546,7 +546,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(styles.contains("name=\"Theme.Dpis\""))
         assertTrue(styles.contains("name=\"Theme.Dpis.QuickConfig\""))
         assertTrue(styles.contains("name=\"Theme.Dpis.Ingest\""))
-        val resultSheet = read("src/main/java/com/dpis/module/diagnostics/ResultSheet.kt")
+        val resultSheet = read("src/main/java/com/dpis/module/diagnostics/presentation/ResultSheet.kt")
         val fontDebug = read(
             "src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt"
         )

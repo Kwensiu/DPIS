@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.presentation
 
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.Column

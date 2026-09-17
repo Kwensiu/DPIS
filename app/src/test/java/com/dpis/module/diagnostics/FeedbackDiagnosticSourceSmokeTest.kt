@@ -330,7 +330,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         val moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java")
         val resultSheet = read(
-            "src/main/java/com/dpis/module/diagnostics/ResultSheet.kt"
+            "src/main/java/com/dpis/module/diagnostics/presentation/ResultSheet.kt"
         )
         val forceTextSize =
             read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt")
