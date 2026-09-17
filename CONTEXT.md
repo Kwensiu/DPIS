@@ -87,9 +87,12 @@ Builder export are not the UI color source.
   from `MaterialTheme.colorScheme`. Roles Material 3 does not have (success,
   warning) belong in one CompositionLocal derived from that scheme, not
   `R.color.dpis_*` resources.
-- Java `show()` dialogs attach a `ComposeOverlay` composition owner and render
-  through `ModalDialog`. Do not add `MaterialAlertDialogBuilder` or
-  `DialogWindowSizer`. Bottom sheets may still use `BottomSheetDialog`.
+- Java `show()` dialogs and sheets attach a `ComposeOverlay` composition owner
+  and render through `ModalDialog` or `ModalSheet`. Do not add
+  `MaterialAlertDialogBuilder`, `BottomSheetDialog`, or `DialogWindowSizer`.
+- XML `dimens.xml` only keeps values still read through `dimensionResource`.
+  Do not add View-layout leftovers. Wear and phone Compose own round/wide
+  geometry; do not restore `values-round` or `values-w720dp` layout bags.
 
 Do not add another Material 3 component library or freeze a static `Color.kt`.
 

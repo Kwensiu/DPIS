@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
@@ -60,6 +60,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.dpis.module.R
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
+import com.dpis.module.ui.dialog.ModalDialog
 
 private const val MIN_DIAGNOSTIC_DURATION_SECONDS = 1
 private const val MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400
@@ -641,10 +644,33 @@ private fun CustomDurationDialog(
     val valid = seconds != null &&
         seconds in MIN_DIAGNOSTIC_DURATION_SECONDS..MAX_DIAGNOSTIC_DURATION_SECONDS
 
-    AlertDialog(
+    val focusBoundary = rememberTextInputFocusBoundary()
+    ModalDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.feedback_diagnostic_duration_custom_title)) },
-        text = {
+        imeFocusBoundary = focusBoundary,
+    ) {
+        DialogColumn(
+            title = {
+                DialogTitle(stringResource(R.string.feedback_diagnostic_duration_custom_title))
+            },
+            actions = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FeedbackTextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.feedback_diagnostic_duration_custom_cancel))
+                    }
+                    FeedbackTextButton(
+                        onClick = { onConfirm(seconds!!) },
+                        enabled = valid,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.feedback_diagnostic_duration_custom_confirm))
+                    }
+                }
+            },
+        ) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { value -> input = value.filter(Char::isDigit) },
@@ -660,20 +686,13 @@ private fun CustomDurationDialog(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
-                modifier = Modifier.inputFocusFeedback(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .reportTextInputFocusBounds(focusBoundary, "diagnostic-duration")
+                    .inputFocusFeedback(),
             )
-        },
-        confirmButton = {
-            FeedbackTextButton(onClick = { onConfirm(seconds!!) }, enabled = valid) {
-                Text(stringResource(R.string.feedback_diagnostic_duration_custom_confirm))
-            }
-        },
-        dismissButton = {
-            FeedbackTextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.feedback_diagnostic_duration_custom_cancel))
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable

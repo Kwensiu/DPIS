@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dpis.module.R
+import com.dpis.module.diagnostics.presentation.FontDebugSheetContent
+import com.dpis.module.diagnostics.presentation.FontDebugSheetState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test

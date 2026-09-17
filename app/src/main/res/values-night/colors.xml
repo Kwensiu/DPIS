@@ -1,24 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="home_status_disabled_container">#ECA69E</color>
-    <color name="home_status_disabled_content">#5A3A38</color>
-    <color name="home_status_enabled_container">#7FAEFF</color>
-    <color name="home_status_enabled_content">#102A4A</color>
-    <color name="home_status_update_container">#8FCE84</color>
-    <color name="home_status_update_content">#16351A</color>
-    <color name="land_detail_dock_stop_text">#ECA69E</color>
-    <color name="land_detail_dock_warn_text">#F0C66E</color>
-    <color name="land_detail_dock_success_text">#8FCE84</color>
-    <color name="land_detail_chevron_color">#9AA0AA</color>
-    <color name="help_tutorial_system_card_container">#1F2435</color>
-    <color name="help_tutorial_system_card_stroke">#39425E</color>
-    <color name="help_tutorial_system_badge_container">#2A365C</color>
-    <color name="help_tutorial_system_badge_text">#D9E4FF</color>
-    <color name="help_tutorial_compat_card_container">#30261E</color>
-    <color name="help_tutorial_compat_card_stroke">#5C4732</color>
-    <color name="help_tutorial_compat_badge_container">#5A4020</color>
-    <color name="help_tutorial_compat_badge_text">#FFE2B2</color>
-    <color name="dpis_fab_ripple">#33D9E4FF</color>
     <color name="app_config_wizard_bubble_container">#4D535B</color>
-    <color name="app_config_wizard_bubble_text">#F1F3F4</color>
 </resources>

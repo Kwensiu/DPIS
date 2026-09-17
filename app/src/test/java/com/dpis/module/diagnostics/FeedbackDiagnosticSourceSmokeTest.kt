@@ -14,21 +14,10 @@ class FeedbackDiagnosticSourceSmokeTest {
         val overlay = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt",
         )
-        val dimens = read("src/main/res/values/dimens.xml")
 
         assertTrue(gateway.contains("feedbackDiagnostic?.showPreparation("))
         assertTrue(overlay.contains("AppConfigSheetUiTokens.FeedbackActionSize"))
         assertTrue(overlay.contains("R.drawable.ic_bug_report_24") || overlay.contains("feedback_diagnostic"))
-        assertTrue(
-            dimens.contains(
-                "<dimen name=\"dialog_feedback_diagnostic_button_size\">32dp</dimen>"
-            )
-        )
-        assertTrue(
-            dimens.contains(
-                "<dimen name=\"dialog_feedback_diagnostic_button_margin_top\">12dp</dimen>"
-            )
-        )
     }
 
     @Test
@@ -437,7 +426,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(modernAppSpecific.contains("\"module_loaded_class\""))
         assertTrue(legacyWechat.contains("\"wechat_dpi\""))
         assertTrue(legacyAppSpecific.contains("\"legacy_load_package\""))
-        assertTrue(resultSheet.contains("BottomSheetDialog(activity)"))
+        assertTrue(resultSheet.contains("ModalSheet(onDismissRequest = dismiss)"))
         assertTrue(resultSheet.contains("FeedbackDiagnosticResultContent("))
         assertTrue(resultSheet.contains("R.string.feedback_diagnostic_result_entry_meta"))
         assertFalse(resultSheet.contains("bindStatusChips(statusChips, result);"))

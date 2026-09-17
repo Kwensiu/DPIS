@@ -41,8 +41,8 @@ import com.dpis.module.settings.SystemHooksToggleController
 import com.dpis.module.settings.SystemHooksToggleController.ScopeGateway
 
 import com.dpis.module.settings.presentation.SettingsComposeDialogs.showBackupActions
-import com.dpis.module.ui.compose.FontDebugComposeSheet
-import com.dpis.module.ui.compose.FontDebugComposeSheet.show
+import com.dpis.module.diagnostics.presentation.FontDebugComposeSheet
+import com.dpis.module.diagnostics.presentation.FontDebugComposeSheet.show
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale

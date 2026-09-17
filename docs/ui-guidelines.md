@@ -60,9 +60,9 @@ Java 宿主若仍通过 `ConfirmDialog.show` 调确认框，保持该 Java 表�
 | 应用配置 sheet | `AppConfigEditorContent`、`AppConfigSheetUiTokens` | 复杂主流程。只保留测过的 peek/手势数字。 |
 | 主题设置 | `ThemeSettingsContent` | 改种子色、palette、spec 时必须走 `ColorSchemeFactory`。 |
 
-不要新增 XML layout、`Widget.Dpis.*` 或 `R.color.dpis_*`。Java `show()` 走
-`ComposeOverlay`；Compose 可见性走 `ConfirmAlertDialog` / `ModalDialog`。结果
-sheet 和字体调试仍可用 `BottomSheetDialog`。
+不要新增 XML layout、`Widget.Dpis.*` 或 Compose 用不到的 `R.color` / `drawable` /
+`dimen` 样板。Java `show()` 走 `ComposeOverlay`；Compose 可见性走
+`ConfirmAlertDialog` / `ModalDialog`；结果 sheet 和字体调试走 `ModalSheet`。
 
 ## 模板工作区
 

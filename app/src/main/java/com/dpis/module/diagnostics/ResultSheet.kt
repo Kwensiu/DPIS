@@ -21,8 +21,6 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,13 +28,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
 import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
 import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
 import com.dpis.module.ui.dialog.ModalDialog
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.dpis.module.ui.dialog.ModalSheet
 
 /** Compose-owned diagnostic result sheet; package creation and file actions remain host-owned. */
 class ResultSheet(
@@ -56,12 +52,8 @@ class ResultSheet(
         val activity = activity ?: return
         val host = host ?: return
         val result = diagnosticPackage?.result ?: return
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = BottomSheetDialog(activity)
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
+        ComposeOverlay.show(activity) { dismiss ->
+            ModalSheet(onDismissRequest = dismiss) {
                 FeedbackDiagnosticResultContent(
                     title = activity.getString(
                         R.string.feedback_diagnostic_result_title,
@@ -90,19 +82,16 @@ class ResultSheet(
                         )
                     },
                     onSave = {
-                        dialog.dismiss()
+                        dismiss()
                         host.saveFeedbackDiagnostic(diagnosticPackage)
                     },
                     onShare = {
-                        dialog.dismiss()
+                        dismiss()
                         host.shareFeedbackDiagnostic(diagnosticPackage)
                     }
                 )
             }
         }
-        dialog.setContentView(composeView)
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
     }
 
     private fun valueOrUnknown(value: String?): String {

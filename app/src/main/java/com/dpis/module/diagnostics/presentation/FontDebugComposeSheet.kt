@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.diagnostics.presentation
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -23,8 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -32,8 +30,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.ModalSheet
 
 data class FontDebugSheetState(
     val modeLabel: String = "",
@@ -45,34 +44,29 @@ data class FontDebugSheetState(
 )
 
 object FontDebugComposeSheet {
-    class Handle internal constructor(val dialog: BottomSheetDialog) {
+    class Handle {
         internal var state by mutableStateOf(FontDebugSheetState())
+        internal lateinit var overlay: ComposeOverlay
+
         fun update(modeLabel: String, windowLabel: String, lastUpdated: String,
             content: String, overlayLabel: String, overlayEnabled: Boolean) {
             state = FontDebugSheetState(modeLabel, windowLabel, lastUpdated, content,
                 overlayLabel, overlayEnabled)
         }
-        fun dismiss() = dialog.dismiss()
+        fun dismiss() = overlay.dismiss()
     }
 
     @JvmStatic
     fun show(activity: Activity, onMode: Runnable, onWindow: Runnable, onOverlay: Runnable,
         onClear: Runnable, onDismiss: Runnable): Handle {
-        val view = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = BottomSheetDialog(activity)
-        val handle = Handle(dialog)
-        view.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
+        val handle = Handle()
+        handle.overlay = ComposeOverlay.show(activity) { dismiss ->
+            ModalSheet(onDismissRequest = dismiss) {
                 FontDebugSheetContent(handle.state, onMode::run, onWindow::run,
-                    onOverlay::run, onClear::run) { dialog.dismiss() }
+                    onOverlay::run, onClear::run, dismiss)
             }
         }
-        dialog.setContentView(view)
-        dialog.setOnDismissListener { onDismiss.run() }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
+        handle.overlay.setOnDismissListener(onDismiss)
         return handle
     }
 }

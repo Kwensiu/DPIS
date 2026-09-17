@@ -88,16 +88,6 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun formInputFocusCanMoveFocusToFallbackView() {
-        val source = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java")
-
-        assertTrue(source.contains("fallbackFocusView.setFocusable(true)"))
-        assertTrue(source.contains("fallbackFocusView.setFocusableInTouchMode(true)"))
-        assertTrue(source.contains("fallbackFocusView.requestFocus()"))
-        assertTrue(source.contains("hideSoftInputFromWindow("))
-    }
-
-    @Test
     fun composeSaveRequestsScopeAfterSuccessfulSave() {
         val coordinator = read(
             "src/main/java/com/dpis/module/appconfig/editor/ComposeEditorScopeRequestCoordinator.kt",
@@ -303,19 +293,16 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun landscapeWorkspaceRailUsesCompactMaterialItemHeightAndScrollsWhenNeeded() {
+    fun landscapeWorkspaceRailScrollsWhenNeeded() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val shell = read(
             "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt"
         )
-        val dimensions = read("src/main/res/values/dimens.xml")
-        val roundDimensions = read("src/main/res/values-round/dimens.xml")
 
         assertTrue(shell.contains("NAVIGATION_RAIL"))
+        assertTrue(shell.contains("Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState()))"))
         assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight()"))
         assertFalse(source.contains("workspaceSwitch instanceof NavigationRailView"))
-        assertTrue(dimensions.contains("main_land_workspace_rail_item_min_height\">64dp"))
-        assertTrue(roundDimensions.contains("main_land_workspace_rail_item_min_height\">56dp"))
         assertFalse(source.contains("NavigationRailMenuView"))
     }
 
@@ -563,6 +550,14 @@ class MainActivitySourceSmokeTest {
         assertTrue(styles.contains("name=\"Theme.Dpis\""))
         assertTrue(styles.contains("name=\"Theme.Dpis.QuickConfig\""))
         assertTrue(styles.contains("name=\"Theme.Dpis.Ingest\""))
+        val resultSheet = read("src/main/java/com/dpis/module/diagnostics/ResultSheet.kt")
+        val fontDebug = read(
+            "src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt"
+        )
+        assertTrue(resultSheet.contains("ModalSheet(onDismissRequest = dismiss)"))
+        assertTrue(fontDebug.contains("ModalSheet(onDismissRequest = dismiss)"))
+        assertFalse(resultSheet.contains("BottomSheetDialog"))
+        assertFalse(fontDebug.contains("BottomSheetDialog"))
     }
 
     @Test
@@ -602,8 +597,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("dismissOnClickOutside = false"))
         assertTrue(source.contains("R.dimen.dialog_surface_padding_horizontal"))
         assertFalse(source.contains("startup_disclaimer_exit_button"))
-        assertTrue(dimensions.contains("dialog_round_surface_padding_horizontal"))
-        assertTrue(dimensions.contains("dialog_round_action_spacing_top"))
+        assertTrue(dimensions.contains("dialog_surface_padding_horizontal"))
+        assertFalse(dimensions.contains("dialog_round_surface_padding_horizontal"))
     }
 
     @Test
@@ -845,23 +840,6 @@ class MainActivitySourceSmokeTest {
         assertFalse(
             source.contains("private void toggleScope(String packageName")
         )
-    }
-
-    @Test
-    fun touchFeedbackBinderProvidesSharedHapticAndScaleBehavior() {
-        val source = read(
-            "src/main/java/com/dpis/module/ui/TouchFeedbackBinder.java"
-        )
-
-        assertTrue(source.contains("public final class TouchFeedbackBinder"))
-        assertTrue(source.contains("bindPressScaleAndHaptic(View view)"))
-        assertTrue(
-            source.contains(
-                "performHapticFeedback(resolvePressHapticConstant())"
-            )
-        )
-        assertTrue(source.contains("HapticFeedbackConstants.CONFIRM"))
-        assertTrue(source.contains("HapticFeedbackConstants.VIRTUAL_KEY"))
     }
 
     @Test

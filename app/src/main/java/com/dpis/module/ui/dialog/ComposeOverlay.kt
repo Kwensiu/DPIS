@@ -10,8 +10,8 @@ import com.dpis.module.ui.compose.ComposeDesignSystem
 import com.dpis.module.ui.compose.resolveDarkTheme
 
 /**
- * Activity-owned composition host for Java `show()` dialogs. The overlay view is only a
- * composition owner; [ModalDialog] still creates the visible dialog window.
+ * Activity-owned composition host for Java `show()` dialogs and sheets. The overlay view is
+ * only a composition owner; [ModalDialog] or [ModalSheet] still creates the visible window.
  */
 class ComposeOverlay private constructor(
     private val composeView: ComposeView,
