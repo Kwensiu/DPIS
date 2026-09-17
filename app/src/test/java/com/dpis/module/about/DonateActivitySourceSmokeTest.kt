@@ -38,7 +38,13 @@ class DonateActivitySourceSmokeTest {
             )
         )
         assertTrue(cards.contains(".heightIn(min = 512.dp)") || compose.contains(".heightIn(min = 512.dp)"))
-        assertTrue(cards.contains("supporters.forEachIndexed") || compose.contains("supporters.forEachIndexed"))
+        assertTrue(compose.contains("SheetDestinationAnimatedContent("))
+        assertTrue(compose.contains("clipContentToAnimatedBounds = false"))
+        assertTrue(compose.contains("animateSize = true"))
+        assertTrue(compose.contains("BackHandler(enabled = selected != null)"))
+        assertTrue(cards.contains("SupportersSheet(wall)") || compose.contains("SupportersSheet(wall)"))
+        assertTrue(compose.contains("DonationCatalogLoader.loadWall("))
+        assertTrue(compose.contains("SupporterDetailsContent("))
         assertTrue(cards.contains("R.drawable.donate_wechat") || compose.contains("R.drawable.donate_wechat"))
         assertTrue(cards.contains("R.drawable.donate_alipay") || compose.contains("R.drawable.donate_alipay"))
         assertTrue(
@@ -51,16 +57,18 @@ class DonateActivitySourceSmokeTest {
                 "R.string.donate_alipay_qr_description"
             )
         )
-        assertTrue(
-            cards.contains("R.string.donate_supporter_nickyoung_name") || compose.contains(
-                "R.string.donate_supporter_nickyoung_name"
-            )
-        )
-        assertTrue(
-            cards.contains("R.string.donate_supporter_anonymous_name") || compose.contains(
-                "R.string.donate_supporter_anonymous_name"
-            )
-        )
+        assertTrue(compose.contains("R.string.donate_supporters_anonymous"))
+        val catalog = read("src/main/java/com/dpis/module/home/DonationCatalog.kt")
+        val wall = read("src/main/java/com/dpis/module/home/DonationSupportWall.kt")
+        val ledger = read("src/main/res/raw/donations.json")
+        val loader =
+            read("src/main/java/com/dpis/module/home/presentation/DonationCatalogLoader.kt")
+        assertTrue(catalog.contains("fun parseRecords(rawJson: String)"))
+        assertTrue(wall.contains("fun from(records: List<DonationRecord>)"))
+        assertTrue(loader.contains("R.raw.donations"))
+        assertTrue(ledger.contains("\"donations\""))
+        assertFalse(compose.contains("R.string.donate_supporter_nickyoung_name"))
+        assertFalse(compose.contains("R.string.donate_supporter_anonymous_name"))
         assertTrue(manifest.contains("android:name=\".home.DonateActivity\""))
         assertTrue(homeState.contains("fun openDonate()"))
         assertTrue(settingsController.contains("SecondaryDestination.Donate"))

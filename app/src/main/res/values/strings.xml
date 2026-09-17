@@ -650,16 +650,7 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="donate_supporters_title">Supporters</string>
     <string name="donate_supporters_summary">Thank you again. Wishing everyone good health and smooth days.</string>
     <string name="donate_supporters_sheet_note">This list will keep growing</string>
-    <string name="donate_supporter_nickyoung_name" translatable="false">\@xyuYoung</string>
-    <string name="donate_supporter_nickyoung_amount" translatable="false">10.00￥</string>
-    <string name="donate_supporter_tadow_name" translatable="false">\@Tadow_</string>
-    <string name="donate_supporter_tadow_amount" translatable="false">6.66￥</string>
-    <string name="donate_supporter_han_name" translatable="false">\@**瀚</string>
-    <string name="donate_supporter_han_amount" translatable="false">20.00￥</string>
-    <string name="donate_supporter_spine_name" translatable="false">\@脊椎健康者</string>
-    <string name="donate_supporter_spine_amount" translatable="false">7.77￥</string>
-    <string name="donate_supporter_anonymous_name" translatable="false">\@Anonymous(user)</string>
-    <string name="donate_supporter_anonymous_amount" translatable="false">5.00￥</string>
+    <string name="donate_supporters_anonymous">Anonymous</string>
     <string name="donate_wechat_title">WeChat Pay</string>
     <string name="donate_alipay_title">Alipay</string>
     <string name="donate_wechat_qr_description">WeChat Pay donation QR code</string>

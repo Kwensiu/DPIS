@@ -11,6 +11,9 @@ internal object ComposeMotionTokens {
     const val PAGE_EXIT_DURATION_MILLIS = 120
     const val MODE_TRANSITION_DURATION_MILLIS = 200
     const val FOCUS_PAN_DURATION_MILLIS = 220
+    const val SHEET_DESTINATION_DURATION_MILLIS = 220
+    const val SHEET_DESTINATION_FADE_DURATION_MILLIS = 140
+    const val SHEET_DESTINATION_HEIGHT_DURATION_MILLIS = 180
 
     // Editor sheets resize around measured content anchors. A shared spring keeps app and
     // template editors equally calm without changing their feature-owned anchor state machines.

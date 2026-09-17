@@ -2,21 +2,10 @@ package com.dpis.module
 
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-
+import org.junit.Test
 import java.io.File
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
-import org.junit.Test
-import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
-import com.dpis.module.quirks.presentation.WechatDpiHelp
-import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.ui.MainComposeWorkspaceAdapter
-import com.dpis.module.ui.MainComposeWorkspaceShell
-import com.dpis.module.ui.MainUiAction
-import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.MainViewModel
-import com.dpis.module.appconfig.editor.ComposeAppEditorController
 
 /** Guards the stable Compose shell and workspace routing boundaries. */
 class ComposeShellSourceSmokeTest {
@@ -542,13 +531,19 @@ class ComposeShellSourceSmokeTest {
         assertFalse(page.contains("Dialog("))
         assertFalse(page.contains("Scaffold("))
         assertTrue(page.contains("fun ConfigEditorAnimatedContent("))
+        assertTrue(page.contains("SheetDestinationAnimatedContent("))
         assertTrue(page.contains("clipContentToAnimatedBounds"))
-        assertTrue(page.contains("slideInHorizontally("))
-        assertTrue(page.contains("if (animateSize)"))
-        assertTrue(page.contains("Modifier.zIndex"))
-        assertTrue(page.contains("targetPage == editorPage"))
-        assertTrue(page.contains("clipToBounds()"))
-        assertTrue(page.contains("EditorDestinationHeightDurationMillis = 180"))
+        val sheetDestination = read(
+            "src/main/java/com/dpis/module/ui/presentation/editor/SheetDestinationAnimatedContent.kt",
+        )
+        val motion = read("src/main/java/com/dpis/module/ui/presentation/design/Motion.kt")
+        assertTrue(sheetDestination.contains("slideInHorizontally("))
+        assertTrue(sheetDestination.contains("if (animateSize)"))
+        assertTrue(sheetDestination.contains("Modifier.zIndex"))
+        assertTrue(sheetDestination.contains("clipToBounds()"))
+        assertTrue(sheetDestination.contains("SizeTransform("))
+        assertTrue(sheetDestination.contains("clip = false"))
+        assertTrue(motion.contains("SHEET_DESTINATION_HEIGHT_DURATION_MILLIS = 180"))
         assertTrue(page.contains(".fillMaxHeight()"))
         assertTrue(page.contains("EditorSheetChildPageHeader("))
         assertTrue(page.contains("containerColor = MaterialTheme.colorScheme.surfaceContainer"))

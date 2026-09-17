@@ -1,42 +1,33 @@
 package com.dpis.module.fonts.presentation
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.background
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.SegmentedListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -47,35 +38,33 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import androidx.compose.foundation.shape.CircleShape
-import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.R
+import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.viewport.ViewportApplyMode
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.presentation.design.LocalSemanticColors
 import com.dpis.module.ui.presentation.design.rememberClickValueAction
 import com.dpis.module.ui.presentation.editor.EditorSheetChildPageHeader
 import com.dpis.module.ui.presentation.editor.FeedbackOutlinedButton
 import com.dpis.module.ui.presentation.editor.FeedbackSwitch
+import com.dpis.module.ui.presentation.editor.SheetDestinationAnimatedContent
 import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
 import com.dpis.module.ui.presentation.workspace.segmentedRowColors
+import com.dpis.module.viewport.ViewportApplyMode
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 
 /** Animates destinations inside one editor surface without replacing its sheet or detail pane. */
 @Composable
@@ -90,53 +79,28 @@ internal fun ConfigEditorAnimatedContent(
 ) {
     val editorPage = when {
         destination == ConfigEditorDestination.TYPEFACE -> ConfigEditorPage.TYPEFACE
-        destination.isHookChain() -> ConfigEditorPage.HOOK_CHAIN
+        destination.isHookChain -> ConfigEditorPage.HOOK_CHAIN
         else -> ConfigEditorPage.MAIN
     }
-    AnimatedContent(
+    SheetDestinationAnimatedContent(
         targetState = editorPage,
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (clipContentToAnimatedBounds) Modifier.clipToBounds() else Modifier),
-        transitionSpec = {
-            val direction = if (targetState != ConfigEditorPage.MAIN) 1 else -1
-            (slideInHorizontally(
-                animationSpec = tween(EditorDestinationAnimationDurationMillis),
-                initialOffsetX = { direction * it }
-            ) + fadeIn(tween(EditorDestinationFadeDurationMillis))) togetherWith
-                (slideOutHorizontally(
-                    animationSpec = tween(EditorDestinationAnimationDurationMillis),
-                    targetOffsetX = { -direction * it }
-                ) + fadeOut(tween(EditorDestinationFadeDurationMillis))) using
-                SizeTransform(
-                    clip = false,
-                    sizeAnimationSpec = { _, _ ->
-                        if (animateSize) {
-                            tween(EditorDestinationHeightDurationMillis)
-                        } else {
-                            snap()
-                        }
-                    }
-                )
-        },
-        contentKey = { it },
-        label = "config-editor-destination"
+        modifier = modifier,
+        animateSize = animateSize,
+        clipContentToAnimatedBounds = clipContentToAnimatedBounds,
+        towardChild = { it != ConfigEditorPage.MAIN },
+        label = "config-editor-destination",
     ) { targetPage ->
-        // AnimatedContent keeps both pages composed during the transition. The destination page
-        // must own the interaction layer so an outgoing page cannot consume pointer input.
-        val pageLayerModifier = Modifier.zIndex(
-            if (targetPage == editorPage) 1f else 0f
-        )
         when (targetPage) {
-            ConfigEditorPage.TYPEFACE -> Box(pageLayerModifier) {
+            ConfigEditorPage.TYPEFACE -> {
                 if (typefaceContent != null) {
                     typefaceContent()
                 } else {
                     mainContent()
                 }
             }
-            ConfigEditorPage.HOOK_CHAIN -> Box(pageLayerModifier) { hookContent() }
-            ConfigEditorPage.MAIN -> Box(pageLayerModifier) { mainContent() }
+
+            ConfigEditorPage.HOOK_CHAIN -> hookContent()
+            ConfigEditorPage.MAIN -> mainContent()
         }
     }
 }
@@ -187,7 +151,7 @@ internal fun HookChainEditorPage(
     // state is only the gesture/animation surface and reports a new destination once the nearest
     // snap page changes, without waiting for the remaining fling animation to finish.
     LaunchedEffect(destinationPage) {
-        if (destination.isHookChain() && pagerState.settledPage != destinationPage) {
+        if (destination.isHookChain && pagerState.settledPage != destinationPage) {
             pagerState.animateScrollToPage(destinationPage)
         }
     }
@@ -196,7 +160,7 @@ internal fun HookChainEditorPage(
             .distinctUntilChanged()
             .collect { page ->
                 val selectedDestination = ConfigEditorDestination.forHookChainTab(page)
-                if (currentDestination.isHookChain() &&
+                if (currentDestination.isHookChain &&
                     selectedDestination != currentDestination) {
                     onDestinationChanged(selectedDestination)
                 }
@@ -483,7 +447,9 @@ private fun FontDomainsPage(
             FeedbackOutlinedButton(
                 onClick = { onSelectedDomainsChanged(automaticDomains) },
                 enabled = editable,
-                modifier = Modifier.fillMaxWidth().padding(top = HookChainPageTokens.ActionTopGap)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = HookChainPageTokens.ActionTopGap)
             ) {
                 Text(stringResource(R.string.dialog_font_hook_domains_restore_button))
             }
@@ -593,10 +559,6 @@ private fun hookDomainStatusColor(domainId: String): Color? = when (domainId) {
     FontHookDomainRegistry.ID_RESOURCES_FONT -> HookChainPageTokens.RiskHigh
     else -> null
 }
-
-private const val EditorDestinationAnimationDurationMillis = 220
-private const val EditorDestinationFadeDurationMillis = 140
-private const val EditorDestinationHeightDurationMillis = 180
 
 private fun displayViewportApplyMode(mode: String): String {
     val normalized = ViewportApplyMode.normalize(mode)

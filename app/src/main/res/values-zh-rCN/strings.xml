@@ -611,6 +611,7 @@
     <string name="donate_supporters_title">支持名单</string>
     <string name="donate_supporters_summary">再次感谢，祝大家顺利健康、心想事成</string>
     <string name="donate_supporters_sheet_note">名单会持续更新</string>
+    <string name="donate_supporters_anonymous">匿名</string>
     <string name="donate_wechat_title">微信打赏</string>
     <string name="donate_alipay_title">支付宝</string>
     <string name="donate_wechat_qr_description">微信支付打赏二维码</string>

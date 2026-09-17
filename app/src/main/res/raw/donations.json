@@ -1,0 +1,66 @@
+{
+  "donations": [
+    {
+      "amount": "20.00",
+      "date": "2026-06-17",
+      "displayName": "@**翕",
+      "id": "hxx-1",
+      "orderRef": "****3263",
+      "platform": "wechat",
+      "supporterId": "hxx"
+    },
+    {
+      "amount": "10.00",
+      "date": "2026-06-12",
+      "displayName": "@xyuYoung",
+      "id": "xyuYoung-1",
+      "orderRef": "****3527",
+      "platform": "alipay",
+      "supporterId": "xyuYoung"
+    },
+    {
+      "amount": "7.77",
+      "date": "2026-06-19",
+      "displayName": "@脊椎健康者",
+      "id": "spine-1",
+      "orderRef": "****6235",
+      "platform": "alipay",
+      "supporterId": "spine"
+    },
+    {
+      "amount": "6.66",
+      "date": "2026-06-15",
+      "displayName": "@Tadow_",
+      "id": "tadow-1",
+      "orderRef": "****8151",
+      "platform": "alipay",
+      "supporterId": "Tadow_"
+    },
+    {
+      "amount": "5.00",
+      "date": "2026-08-25",
+      "displayName": "@*冰",
+      "id": "*bing-1",
+      "orderRef": "****2612",
+      "platform": "alipay",
+      "supporterId": "*bing"
+    },
+    {
+      "amount": "5.00",
+      "date": "2026-06-20",
+      "displayName": "@Anonymous",
+      "id": "name-anonymous-1",
+      "orderRef": "****0407",
+      "platform": "wechat",
+      "supporterId": "name-anonymous"
+    },
+    {
+      "amount": "5.00",
+      "date": "2026-09-06",
+      "anonymous": true,
+      "id": "anonymous-1",
+      "orderRef": "****8852",
+      "platform": "wechat"
+    }
+  ]
+}
