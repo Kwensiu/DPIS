@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.interop
 
 import android.text.Spanned
 import android.text.style.URLSpan

@@ -25,14 +25,15 @@ import androidx.activity.ComponentActivity
 import com.dpis.module.R
 import com.dpis.module.about.OpenSourceLicenseItem
 import com.dpis.module.ui.WatchUiMode
-import com.dpis.module.ui.compose.WearOpenSourceLicenseContent
-import com.dpis.module.ui.compose.setFeatureContent
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.wear.WearOpenSourceLicenseContent
+import com.dpis.module.ui.presentation.design.setFeatureContent
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
 
-import com.dpis.module.ui.compose.dpisSegmentedShapes
-import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
+import com.dpis.module.ui.presentation.workspace.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 @Composable
 fun OpenSourceLicenseContent(
@@ -83,10 +84,7 @@ private fun LicenseEntry(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
+        colors = segmentedRowColors(),
         supportingContent = { Text(item.summary) },
         content = { Text(item.name) }
     )

@@ -82,10 +82,22 @@ Builder export are not the UI color source.
 - Wear maps the same generated scheme into Wear Material3. Do not hard-code
   black.
 - XML `Theme.Dpis` (`Theme.Material3.DayNight.NoActionBar`) is window chrome
-  only: transparent system bars and the Activity background. New UI colors
-  come from `MaterialTheme.colorScheme`. Roles Material 3 does not have
-  (success, warning) belong in one CompositionLocal derived from that scheme,
-  not new `R.color.dpis_*` reads from Compose.
+  only: transparent system bars and the Activity background. `Theme.Dpis.QuickConfig`
+  and `Theme.Dpis.Ingest` stay as Activity window themes. New UI colors come
+  from `MaterialTheme.colorScheme`. Roles Material 3 does not have (success,
+  warning) belong in one CompositionLocal derived from that scheme, not
+  `R.color.dpis_*` resources.
+- Java `show()` dialogs and sheets attach a `ComposeOverlay` composition owner
+  and render through `ModalDialog` or `ModalSheet`. Do not add
+  `MaterialAlertDialogBuilder`, `BottomSheetDialog`, or `DialogWindowSizer`.
+- Dialog padding lives in `DialogChrome`. Scale gaps use `LocalSpacing`.
+  Feature-only measured gaps stay next to that dialog. Do not add XML
+  `dimens.xml` for Compose dialogs. Wear and phone Compose own round/wide
+  geometry; do not restore `values-round` or `values-w720dp` layout bags.
+- Compose does not read `R.color` for UI. Hook-domain risk dots live next to
+  that editor page. The editor wizard tooltip (arrow and bubble) mixes
+  `inverseSurface` one step toward `surface`. Do not restore XML role
+  colors or wizard drawables.
 
 Do not add another Material 3 component library or freeze a static `Color.kt`.
 
@@ -97,14 +109,14 @@ Keep token depth shallow:
   lives in `PageChromeTokens` only.
 - Measured feature geometry (editor sheet peek, drag handle) stays in that
   feature. Do not copy it into `ui/` as another 16.dp bag.
-- `AppTypography` and `AppShapes` are Material 3 defaults, not a second
-  design system.
+- Typography and shapes are Material 3 Expressive defaults from
+  `MaterialExpressiveTheme`. Do not add alias wrappers for the stock values.
 
 Shared chrome belongs in `ui/` under short names (`SegmentedRow`,
 `FeedbackButton`, `ModalDialog`, `SecondaryPageScaffold`). Do not nest
-`theme/contract/tokens` packages. Keep `com.dpis.module.ui.compose` as the
-public package until a dedicated rename; do not mix a rename with an
-appearance change.
+`theme/contract/tokens` packages. Shared Compose files use the package that
+matches their directory under `ui/presentation/{design,dialogs,editor,interop,wear,workspace}`
+and `ui/dialog`.
 
 Appearance work is bottom-up: lock this contract first, then shared chrome in
 `ui/`, then feature screens. Do not restyle Settings or the editor to
@@ -140,8 +152,7 @@ rules and remaining migration slices.
    belong in the feature package (`about/presentation`, `settings/presentation`,
    `applist`, `templates/presentation`, and so on). Do not add a new About,
    Settings, or editor screen under `ui/`. Physical directory and Kotlin
-   package must match; do not leave a feature composable in
-   `about/presentation` with a `ui.compose` package.
+   package must match.
 6. Java remains only where the contract requires it: flavor Xposed entrypoints,
    reflection or JNI boundaries, the pinned Quick Settings tile FQCN
    `com.dpis.module.QuickConfigTileService`, or another externally observed

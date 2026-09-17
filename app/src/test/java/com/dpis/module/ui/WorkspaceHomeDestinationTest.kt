@@ -1,7 +1,7 @@
 package com.dpis.module.ui
 
 import com.dpis.module.settings.PageSettingsStore
-import com.dpis.module.ui.compose.WorkspaceDestination
+import com.dpis.module.ui.presentation.workspace.WorkspaceDestination
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

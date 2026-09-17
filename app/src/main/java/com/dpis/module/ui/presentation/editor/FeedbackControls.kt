@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -24,6 +24,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.design.LocalSemanticColors
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
+
+@Composable
+internal fun successButtonColors(): ButtonColors {
+    val semantic = LocalSemanticColors.current
+    return ButtonDefaults.buttonColors(
+        containerColor = semantic.successContainer,
+        contentColor = semantic.onSuccessContainer,
+    )
+}
+
+@Composable
+internal fun warningButtonColors(): ButtonColors {
+    val semantic = LocalSemanticColors.current
+    return ButtonDefaults.buttonColors(
+        containerColor = semantic.warningContainer,
+        contentColor = semantic.onWarningContainer,
+    )
+}
+
+@Composable
+internal fun outlinedWarningButtonColors(): ButtonColors {
+    val semantic = LocalSemanticColors.current
+    return ButtonDefaults.outlinedButtonColors(
+        containerColor = semantic.warningContainer,
+        contentColor = semantic.onWarningContainer,
+    )
+}
+
+@Composable
+internal fun dangerButtonColors(): ButtonColors = ButtonDefaults.buttonColors(
+    containerColor = MaterialTheme.colorScheme.errorContainer,
+    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+)
 
 /** Material button with the product's discrete confirmation feedback. */
 @Composable

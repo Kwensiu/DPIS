@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.fonts.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -54,7 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
@@ -69,6 +69,13 @@ import com.dpis.module.hooks.HookDomainOverrideStore
 import com.dpis.module.viewport.ViewportApplyMode
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import com.dpis.module.ui.presentation.design.LocalSemanticColors
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
+import com.dpis.module.ui.presentation.editor.EditorSheetChildPageHeader
+import com.dpis.module.ui.presentation.editor.FeedbackOutlinedButton
+import com.dpis.module.ui.presentation.editor.FeedbackSwitch
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
 
 /** Animates destinations inside one editor surface without replacing its sheet or detail pane. */
 @Composable
@@ -406,13 +413,13 @@ private fun FontDomainsPage(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = HookChainPageTokens.NoticeShape,
-                    color = colorResource(R.color.font_hook_domain_notice_container)
+                    color = LocalSemanticColors.current.warningContainer
                 ) {
                     Text(
                         stringResource(R.string.dialog_font_hook_domains_font_disabled_hint),
                         modifier = Modifier.padding(HookChainPageTokens.NoticePadding),
                         style = MaterialTheme.typography.bodySmall,
-                        color = colorResource(R.color.font_hook_domain_notice_text)
+                        color = LocalSemanticColors.current.onWarningContainer
                     )
                 }
             }
@@ -512,14 +519,12 @@ private fun HookDomainOptionRow(
                 if (!enabled) drawRect(disabledScrim)
             },
         shapes = shapes,
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ).copy(
+        colors = segmentedRowColors(
             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ).copy(
             disabledContentColor = MaterialTheme.colorScheme.onSurface,
             disabledSupportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledTrailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            disabledTrailingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
         verticalAlignment = Alignment.CenterVertically,
         content = { Text(title) },
@@ -528,12 +533,12 @@ private fun HookDomainOptionRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(HookChainPageTokens.StatusDotGap)
             ) {
-                hookDomainStatusColorResource(domainId)?.let { colorRes ->
+                hookDomainStatusColor(domainId)?.let { statusColor ->
                     Box(
                         modifier = Modifier
                             .size(HookChainPageTokens.StatusDotSize)
                             .clip(CircleShape)
-                            .background(colorResource(colorRes))
+                            .background(statusColor)
                     )
                 }
                 Text(
@@ -575,14 +580,17 @@ private object HookChainPageTokens {
     val GroupTopGap = 8.dp
     val GroupBottomGap = 2.dp
     val ActionTopGap = 8.dp
+    val RiskLow = Color(0xFF2E9E55)
+    val RiskMedium = Color(0xFFD88916)
+    val RiskHigh = Color(0xFFD64B45)
 }
 
-private fun hookDomainStatusColorResource(domainId: String): Int? = when (domainId) {
-    FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE -> R.color.font_hook_domain_risk_low
-    FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE -> R.color.font_hook_domain_risk_medium
+private fun hookDomainStatusColor(domainId: String): Color? = when (domainId) {
+    FontHookDomainRegistry.ID_TEXTVIEW_SP_REWRITE -> HookChainPageTokens.RiskLow
+    FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE -> HookChainPageTokens.RiskMedium
     FontHookDomainRegistry.ID_TEXTVIEW_CURRENT_PX_FALLBACK,
     FontHookDomainRegistry.ID_PAINT_TEXT_SIZE_FALLBACK,
-    FontHookDomainRegistry.ID_RESOURCES_FONT -> R.color.font_hook_domain_risk_high
+    FontHookDomainRegistry.ID_RESOURCES_FONT -> HookChainPageTokens.RiskHigh
     else -> null
 }
 

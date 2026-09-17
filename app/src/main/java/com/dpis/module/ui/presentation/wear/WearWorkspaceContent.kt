@@ -1,6 +1,6 @@
 @file:SuppressLint("LocalContextGetResourceValueCall")
 
-package com.dpis.module.ui.presentation
+package com.dpis.module.ui.presentation.wear
 
 import android.annotation.SuppressLint
 import android.graphics.drawable.Drawable
@@ -86,9 +86,11 @@ import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
-import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.compose.inputFocusFeedback
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.LocalSecondaryNavigation
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.toWearColorScheme
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
@@ -1455,32 +1457,8 @@ internal fun WearWorkspaceList(@StringRes title: Int, content: WearListScope.() 
 @Composable
 internal fun WearMaterialTheme(content: @Composable () -> Unit) {
     val phoneColors = androidx.compose.material3.MaterialTheme.colorScheme
-    val wearColors = MaterialTheme.colorScheme.copy(
-        primary = phoneColors.primary,
-        primaryContainer = phoneColors.primaryContainer,
-        onPrimary = phoneColors.onPrimary,
-        onPrimaryContainer = phoneColors.onPrimaryContainer,
-        secondary = phoneColors.secondary,
-        secondaryContainer = phoneColors.secondaryContainer,
-        onSecondary = phoneColors.onSecondary,
-        onSecondaryContainer = phoneColors.onSecondaryContainer,
-        tertiary = phoneColors.tertiary,
-        tertiaryContainer = phoneColors.tertiaryContainer,
-        onTertiary = phoneColors.onTertiary,
-        onTertiaryContainer = phoneColors.onTertiaryContainer,
-        surfaceContainerLow = phoneColors.surfaceContainerLow,
-        surfaceContainer = phoneColors.surfaceContainer,
-        surfaceContainerHigh = phoneColors.surfaceContainerHigh,
-        onSurface = phoneColors.onSurface,
-        onSurfaceVariant = phoneColors.onSurfaceVariant,
-        outline = phoneColors.outline,
-        outlineVariant = phoneColors.outlineVariant,
-        background = phoneColors.background,
-        onBackground = phoneColors.onBackground,
-        error = phoneColors.error,
-        errorContainer = phoneColors.errorContainer,
-        onError = phoneColors.onError,
-        onErrorContainer = phoneColors.onErrorContainer
+    MaterialTheme(
+        colorScheme = phoneColors.toWearColorScheme(MaterialTheme.colorScheme),
+        content = content,
     )
-    MaterialTheme(colorScheme = wearColors, content = content)
 }

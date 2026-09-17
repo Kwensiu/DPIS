@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.design
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp

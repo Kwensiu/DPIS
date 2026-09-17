@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -88,6 +88,10 @@ import androidx.compose.ui.zIndex
 import com.dpis.module.R
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
 import com.dpis.module.templates.presentation.TemplateUiTokens
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 /**
  * Compact outlined input used by DPIS editor rows.

@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.workspace
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

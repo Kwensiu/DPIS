@@ -1,9 +1,9 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.dialogs
 
 import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogChrome
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,19 +21,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.ui.dialog.ModalDialog
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.interop.toComposeAnnotatedString
 
 /** Compose-owned informational dialog whose body may be updated by a Java controller. */
 object ComposeMessageDialog {
@@ -44,7 +42,7 @@ object ComposeMessageDialog {
         title: CharSequence,
         message: CharSequence,
         closeLabel: CharSequence
-    ): Handle = showInternal(activity, title, message, closeLabel, large = false)
+    ): Handle = showInternal(activity, title, message, closeLabel)
 
     @JvmStatic
     fun showLarge(
@@ -52,49 +50,40 @@ object ComposeMessageDialog {
         title: CharSequence,
         message: CharSequence,
         closeLabel: CharSequence
-    ): Handle = showInternal(activity, title, message, closeLabel, large = true)
+    ): Handle = showInternal(activity, title, message, closeLabel)
 
     private fun showInternal(
         activity: Activity,
         title: CharSequence,
         message: CharSequence,
         closeLabel: CharSequence,
-        large: Boolean
     ): Handle {
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity).setView(composeView).create()
-        val handle = Handle(dialog, message.toComposeAnnotatedString())
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
+        val handle = Handle(message.toComposeAnnotatedString())
+        handle.overlay = ComposeOverlay.show(activity) { dismiss ->
+            ModalDialog(onDismissRequest = dismiss) {
                 MessageDialogContent(
                     title = title.toString(),
                     message = handle.message,
                     closeLabel = closeLabel.toString(),
-                    onClose = dialog::dismiss
+                    onClose = dismiss,
                 )
             }
         }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        if (large) DialogWindowSizer.applyLargeWidth(dialog, activity)
-        else DialogWindowSizer.applyStandardWidth(dialog, activity)
         return handle
     }
 
     class Handle internal constructor(
-        val dialog: AlertDialog,
         initialMessage: AnnotatedString
     ) {
         internal var message by mutableStateOf(initialMessage)
+        internal lateinit var overlay: ComposeOverlay
 
         fun setMessage(value: CharSequence?) {
             message = (value ?: "").toComposeAnnotatedString()
         }
 
-        fun isShowing(): Boolean = dialog.isShowing
-        fun dismiss() = dialog.dismiss()
+        fun isShowing(): Boolean = overlay.isShowing()
+        fun dismiss() = overlay.dismiss()
     }
 }
 
@@ -122,14 +111,10 @@ internal fun MessageDialogContent(
     closeLabel: String,
     onClose: () -> Unit
 ) {
+    val spacing = LocalSpacing.current
     val closeAction = rememberClickAction(onClose)
     Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        ),
+        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -140,16 +125,16 @@ internal fun MessageDialogContent(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(
             message,
             modifier = Modifier.fillMaxWidth()
-                .heightIn(max = dimensionResource(R.dimen.update_dialog_release_notes_max_height))
+                .heightIn(max = DialogChrome.ScrollBodyMaxHeight)
                 .verticalScroll(rememberScrollState()),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+        Spacer(Modifier.height(spacing.lg))
         OutlinedButton(
             onClick = closeAction,
             modifier = Modifier.fillMaxWidth().height(ConfirmDialogUiTokens.ActionHeight),

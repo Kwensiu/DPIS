@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import com.dpis.module.fonts.presentation.FontLibrarySession
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.ui.compose.installFontLibrary
+import com.dpis.module.fonts.presentation.installFontLibrary
 
 class FontLibraryActivity : LocalizedActivity() {
     private lateinit var session: FontLibrarySession

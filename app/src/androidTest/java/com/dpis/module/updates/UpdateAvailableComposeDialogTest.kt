@@ -6,7 +6,9 @@ import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dpis.module.R
-import com.dpis.module.ui.compose.DpisTheme
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.updates.presentation.UpdateDialogContent
+import com.dpis.module.updates.presentation.UpdateDialogState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -19,7 +21,7 @@ class UpdateAvailableComposeDialogTest {
     fun darkDialogExpandsReleaseNotesAndDispatchesActions() {
         val actions = mutableListOf<String>()
         composeRule.setContent {
-            DpisTheme(darkTheme = true, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = true, dynamicColor = false) {
                 UpdateDialogContent("Update available", "1.0 -> 2.0",
                     UpdateDialogState(releaseNotes = androidx.compose.ui.text.AnnotatedString("Changes"),
                         primaryLabel = "Download", cancelLabel = "Cancel"),
@@ -37,7 +39,7 @@ class UpdateAvailableComposeDialogTest {
     @Test
     fun determinateProgressShowsTextAndDisablesPrimaryAction() {
         composeRule.setContent {
-            DpisTheme(darkTheme = false, dynamicColor = false) {
+            ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
                 UpdateDialogContent("Update", "Message",
                     UpdateDialogState(primaryLabel = "Download", cancelLabel = "Cancel",
                         primaryEnabled = false, progressVisible = true,

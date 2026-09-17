@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.design
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -29,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.editor.FeedbackIconButton
+import com.dpis.module.ui.presentation.editor.HorizontalScrollWithEdgeFade
 
 /** Shared visual contract for lightweight filter sheets; filter state stays feature-owned. */
 internal object FilterSheetUiTokens {

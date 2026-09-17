@@ -44,7 +44,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -55,15 +54,16 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.templates.TemplateConfigSummaryFormatter
 
-import com.dpis.module.ui.compose.EdgeOcclusionFadeDirection
-import com.dpis.module.ui.compose.EdgeOcclusionFadeTokens
-import com.dpis.module.ui.compose.PageScrollPositionStore
-import com.dpis.module.ui.compose.WorkspaceSearchCard
-import com.dpis.module.ui.compose.clearTextInputFocusOnPointerDown
-import com.dpis.module.ui.compose.edgeOcclusionFade
-import com.dpis.module.ui.compose.rememberClickAction
-import com.dpis.module.ui.compose.dpisClickable
-import com.dpis.module.ui.compose.rememberRestorableLazyListState
+import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeDirection
+import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeTokens
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
+import com.dpis.module.ui.presentation.workspace.WorkspaceSearchCard
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusOnPointerDown
+import com.dpis.module.ui.presentation.editor.edgeOcclusionFade
+import com.dpis.module.ui.presentation.design.LocalSemanticColors
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.workspace.rememberRestorableLazyListState
 
 private const val EDITOR_GLOBAL = TemplateEditorKinds.GLOBAL
 private const val EDITOR_QUICK = TemplateEditorKinds.QUICK
@@ -391,8 +391,8 @@ private fun SummaryPills(
                     R.string.template_workspace_missing_font,
                     typefaceStatus.typefaceId.orEmpty()
                 ),
-                containerColor = colorResource(R.color.dpis_warn_container),
-                contentColor = colorResource(R.color.dpis_on_warn_container)
+                containerColor = LocalSemanticColors.current.warningContainer,
+                contentColor = LocalSemanticColors.current.onWarningContainer
             )
         }
     }

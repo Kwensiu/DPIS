@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.editor
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Dp
+import com.dpis.module.ui.presentation.design.EdgeFadeTokens
+import com.dpis.module.ui.presentation.design.owningSurfaceFadeColor
 
 /**
  * A horizontally scrollable row whose edge fades reflect the current scroll position.

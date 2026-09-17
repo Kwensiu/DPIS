@@ -1,7 +1,6 @@
 package com.dpis.module.shell
 
 import com.dpis.module.SourceSmokeTestPaths
-import com.dpis.module.ui.DialogWindowSizer
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -86,16 +85,6 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("searchFilterButton.setOnClickListener"))
         assertTrue(composeWorkspace.contains("WorkspaceSearchCard("))
         assertTrue(composeWorkspace.contains("AppFilterSheet("))
-    }
-
-    @Test
-    fun formInputFocusCanMoveFocusToFallbackView() {
-        val source = read("src/main/java/com/dpis/module/ui/FormInputFocusBinder.java")
-
-        assertTrue(source.contains("fallbackFocusView.setFocusable(true)"))
-        assertTrue(source.contains("fallbackFocusView.setFocusableInTouchMode(true)"))
-        assertTrue(source.contains("fallbackFocusView.requestFocus()"))
-        assertTrue(source.contains("hideSoftInputFromWindow("))
     }
 
     @Test
@@ -304,19 +293,16 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun landscapeWorkspaceRailUsesCompactMaterialItemHeightAndScrollsWhenNeeded() {
+    fun landscapeWorkspaceRailScrollsWhenNeeded() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val shell = read(
             "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt"
         )
-        val dimensions = read("src/main/res/values/dimens.xml")
-        val roundDimensions = read("src/main/res/values-round/dimens.xml")
 
         assertTrue(shell.contains("NAVIGATION_RAIL"))
+        assertTrue(shell.contains("Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState()))"))
         assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight()"))
         assertFalse(source.contains("workspaceSwitch instanceof NavigationRailView"))
-        assertTrue(dimensions.contains("main_land_workspace_rail_item_min_height\">64dp"))
-        assertTrue(roundDimensions.contains("main_land_workspace_rail_item_min_height\">56dp"))
         assertFalse(source.contains("NavigationRailMenuView"))
     }
 
@@ -484,7 +470,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(launch.contains("fun maybeShowModuleRuntimeReloadAdvice(): Boolean"))
         assertTrue(launch.contains("ModuleRuntimeReloadNoticeCoordinator(activity)"))
         assertTrue(launch.contains("maybeShow { continueStartupDialogs() }"))
-        assertTrue(runtimeLayout.contains("DialogWindowSizer.applyStandardWidth(dialog, activity)"))
+        assertTrue(runtimeLayout.contains("ComposeOverlay.show(activity)"))
+        assertTrue(runtimeLayout.contains("ModalDialog(onDismissRequest = dismiss)"))
         assertFalse(source.contains("ModuleRuntimeReloader.softReloadAsync("))
         assertFalse(source.contains("module_runtime_reload_now_button"))
         assertFalse(source.contains("module_runtime_reload_later_button"))
@@ -492,12 +479,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(runtimeLayout.contains("module_runtime_reload_title"))
         assertTrue(runtimeLayout.contains("module_runtime_reload_message"))
         assertTrue(runtimeLayout.contains("module_runtime_reload_ack_button"))
-        assertTrue(runtimeLayout.contains("R.dimen.dialog_status_icon_padding"))
-        assertTrue(
-            runtimeLayout.contains("R.dimen.dialog_surface_padding_horizontal")
-        )
-        assertTrue(runtimeLayout.contains("R.dimen.dialog_body_spacing"))
-        assertTrue(runtimeLayout.contains("R.dimen.dialog_action_spacing_top"))
+        assertTrue(runtimeLayout.contains("DialogChrome.HorizontalPadding"))
+        assertTrue(runtimeLayout.contains("LocalSpacing.current"))
         val runtimeMessage = stringEntry(
             strings,
             "module_runtime_reload_message"
@@ -536,10 +519,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(updateSession.contains("startupDisclaimerStore(activity)"))
         assertTrue(updateSession.contains("store.isAccepted"))
         assertTrue(updateSession.contains("store.setAccepted(true)"))
-        assertTrue(updateSession.contains("fun applyLargeDialogWidth("))
-        assertTrue(
-            updateSession.contains("DialogWindowSizer.applyLargeWidth(dialog, activity)")
-        )
+        assertFalse(updateSession.contains("fun applyLargeDialogWidth("))
+        assertFalse(updateSession.contains("DialogWindowSizer"))
         val disclaimerBlock = updateSession.substring(
             updateSession.indexOf("fun maybeShowStartupDisclaimerDialog(): Boolean"),
             updateSession.indexOf("fun maybeCheckForUpdatesOnStartup()")
@@ -548,69 +529,31 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun dialogWindowSizerUsesResponsivePresetConstraints() {
-        val source = read(
-            "src/main/java/com/dpis/module/ui/DialogWindowSizer.java"
-        )
-        val dimens = read("src/main/res/values/dimens.xml")
-        val integers = read("src/main/res/values/integers.xml")
+    fun javaDialogHostsUseComposeOverlayAndModalDialogWidth() {
+        val overlay = read("src/main/java/com/dpis/module/ui/dialog/ComposeOverlay.kt")
+        val modal = read("src/main/java/com/dpis/module/ui/dialog/ModalDialog.kt")
+        val confirm = read("src/main/java/com/dpis/module/ui/dialog/ConfirmDialog.kt")
+        val styles = read("src/main/res/values/styles.xml")
 
-        assertTrue(
-            source.contains(
-                "applyCompactWidth(AlertDialog dialog, Context context)"
-            )
+        assertTrue(overlay.contains("class ComposeOverlay"))
+        assertTrue(overlay.contains("ComposeDesignSystem(darkTheme = resolveDarkTheme())"))
+        assertTrue(modal.contains("usePlatformDefaultWidth = false"))
+        assertTrue(modal.contains(".widthIn(max = 560.dp)"))
+        assertTrue(confirm.contains("ComposeOverlay.show(activity)"))
+        assertTrue(confirm.contains("ConfirmAlertDialog("))
+        assertFalse(confirm.contains("MaterialAlertDialogBuilder"))
+        assertFalse(styles.contains("Widget.Dpis"))
+        assertTrue(styles.contains("name=\"Theme.Dpis\""))
+        assertTrue(styles.contains("name=\"Theme.Dpis.QuickConfig\""))
+        assertTrue(styles.contains("name=\"Theme.Dpis.Ingest\""))
+        val resultSheet = read("src/main/java/com/dpis/module/diagnostics/presentation/ResultSheet.kt")
+        val fontDebug = read(
+            "src/main/java/com/dpis/module/diagnostics/presentation/FontDebugComposeSheet.kt"
         )
-        assertTrue(
-            source.contains(
-                "applyStandardWidth(AlertDialog dialog, Context context)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "applyLargeWidth(AlertDialog dialog, Context context)"
-            )
-        )
-        assertTrue(source.contains("dialog_window_margin_horizontal"))
-        assertTrue(source.contains("resolvePreset(context, preset)"))
-        assertTrue(
-            source.contains("R.integer.dialog_window_large_min_width_dp")
-        )
-        assertTrue(source.contains("? Preset.STANDARD"))
-        assertTrue(source.contains("calculateWindowWidth(screenWidth"))
-        assertTrue(source.contains("screenWidth - horizontalMargin * 2"))
-        assertTrue(
-            source.contains(
-                "COMPACT(R.dimen.dialog_window_compact_max_width, 0.88f)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "STANDARD(R.dimen.dialog_window_standard_max_width, 0.90f)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "LARGE(R.dimen.dialog_window_large_max_width, 0.92f)"
-            )
-        )
-        assertTrue(dimens.contains("dialog_window_margin_horizontal\">16dp"))
-        assertTrue(dimens.contains("dialog_window_compact_max_width\">360dp"))
-        assertTrue(dimens.contains("dialog_window_standard_max_width\">420dp"))
-        assertTrue(dimens.contains("dialog_window_large_max_width\">560dp"))
-        assertTrue(integers.contains("dialog_window_large_min_width_dp\">600"))
-    }
-
-    @Test
-    fun dialogWindowSizerTreatsHorizontalMarginAsPerSideInset() {
-        assertTrue(
-            DialogWindowSizer.calculateWindowWidth(360, 16, 420, 0.90f) == 324
-        )
-        assertTrue(
-            DialogWindowSizer.calculateWindowWidth(1000, 16, 560, 0.92f) == 560
-        )
-        assertTrue(
-            DialogWindowSizer.calculateWindowWidth(24, 16, 420, 0.90f) == 0
-        )
+        assertTrue(resultSheet.contains("ModalSheet(onDismissRequest = dismiss)"))
+        assertTrue(fontDebug.contains("ModalSheet(onDismissRequest = dismiss)"))
+        assertFalse(resultSheet.contains("BottomSheetDialog"))
+        assertFalse(fontDebug.contains("BottomSheetDialog"))
     }
 
     @Test
@@ -639,7 +582,6 @@ class MainActivitySourceSmokeTest {
     @Test
     fun startupDisclaimerComposeKeepsMandatoryAcceptContract() {
         val source = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
-        val dimensions = read("src/main/res/values/dimens.xml")
 
         assertTrue(source.contains("fun StartupDisclaimerDialog("))
         assertTrue(source.contains("R.string.startup_disclaimer_title"))
@@ -648,10 +590,9 @@ class MainActivitySourceSmokeTest {
         assertTrue(source.contains("R.string.startup_disclaimer_accept_button"))
         assertTrue(source.contains("dismissOnBackPress = false"))
         assertTrue(source.contains("dismissOnClickOutside = false"))
-        assertTrue(source.contains("R.dimen.dialog_surface_padding_horizontal"))
+        assertTrue(source.contains("DialogChrome.HorizontalPadding"))
         assertFalse(source.contains("startup_disclaimer_exit_button"))
-        assertTrue(dimensions.contains("dialog_round_surface_padding_horizontal"))
-        assertTrue(dimensions.contains("dialog_round_action_spacing_top"))
+        assertFalse(source.contains("R.dimen."))
     }
 
     @Test
@@ -893,23 +834,6 @@ class MainActivitySourceSmokeTest {
         assertFalse(
             source.contains("private void toggleScope(String packageName")
         )
-    }
-
-    @Test
-    fun touchFeedbackBinderProvidesSharedHapticAndScaleBehavior() {
-        val source = read(
-            "src/main/java/com/dpis/module/ui/TouchFeedbackBinder.java"
-        )
-
-        assertTrue(source.contains("public final class TouchFeedbackBinder"))
-        assertTrue(source.contains("bindPressScaleAndHaptic(View view)"))
-        assertTrue(
-            source.contains(
-                "performHapticFeedback(resolvePressHapticConstant())"
-            )
-        )
-        assertTrue(source.contains("HapticFeedbackConstants.CONFIRM"))
-        assertTrue(source.contains("HapticFeedbackConstants.VIRTUAL_KEY"))
     }
 
     @Test

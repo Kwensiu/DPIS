@@ -28,10 +28,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.FeedbackButton
-import com.dpis.module.ui.compose.ReorderableDragFeedback
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.editor.FeedbackButton
+import com.dpis.module.ui.presentation.design.ReorderableDragFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.dialog.ModalDialog

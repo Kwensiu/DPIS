@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.diagnostics.presentation
 
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
@@ -60,6 +60,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.dpis.module.R
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
+import com.dpis.module.ui.dialog.DialogColumn
+import com.dpis.module.ui.dialog.DialogTitle
+import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.FeedbackButton
+import com.dpis.module.ui.presentation.editor.FeedbackFilterChip
+import com.dpis.module.ui.presentation.editor.FeedbackIconButton
+import com.dpis.module.ui.presentation.editor.FeedbackOutlinedButton
+import com.dpis.module.ui.presentation.editor.FeedbackSwitch
+import com.dpis.module.ui.presentation.editor.FeedbackTextButton
+import com.dpis.module.ui.presentation.editor.HorizontalScrollWithEdgeFade
+import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
+import com.dpis.module.ui.presentation.workspace.AnimatedConditionalItem
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
 
 private const val MIN_DIAGNOSTIC_DURATION_SECONDS = 1
 private const val MAX_DIAGNOSTIC_DURATION_SECONDS = 86_400
@@ -394,7 +412,7 @@ private fun TargetRow(
     SegmentedListItem(
         onClick = {},
         shapes = dpisSegmentedShapes(0, 1),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { DiagnosticTargetAppIcon(appIcon) },
         content = { Text(state.appLabel, fontWeight = FontWeight.SemiBold) },
@@ -460,7 +478,7 @@ private fun DiagnosticRootPermissionRow(
     SegmentedListItem(
         onClick = presentation::refreshRootPermission,
         shapes = dpisSegmentedShapes(0, 3),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_shield_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_root_status)) },
@@ -474,7 +492,7 @@ private fun DiagnosticLogOutputRow(status: String) {
     SegmentedListItem(
         onClick = {},
         shapes = dpisSegmentedShapes(1, 3),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_view_kanban_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_log_status)) },
@@ -503,7 +521,7 @@ private fun DiagnosticLsposedRow(
     SegmentedListItem(
         onClick = rememberClickAction(presentation::refreshLsposedAvailability),
         shapes = dpisSegmentedShapes(2, 3),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(R.drawable.ic_healing_24), null) },
         content = { Text(stringResource(R.string.feedback_diagnostic_lsposed_status)) },
@@ -547,7 +565,7 @@ private fun DiagnosticSessionSection(
         SegmentedListItem(
             onClick = rememberClickAction { presentation.setDurationEnabled(!state.durationEnabled) },
             shapes = dpisSegmentedShapes(0, durationItemCount),
-            colors = diagnosticItemColors(),
+            colors = segmentedRowColors(),
             verticalAlignment = Alignment.CenterVertically,
             leadingContent = { Icon(painterResource(R.drawable.ic_hourglass_check_24), null) },
             content = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_title)) },
@@ -563,7 +581,7 @@ private fun DiagnosticSessionSection(
             SegmentedListItem(
                 onClick = {},
                 shapes = dpisSegmentedShapes(1, durationItemCount),
-                colors = diagnosticItemColors(),
+                colors = segmentedRowColors(),
                 content = {
                     DurationChipSelector(
                         selectedSeconds = state.durationSeconds,
@@ -641,10 +659,33 @@ private fun CustomDurationDialog(
     val valid = seconds != null &&
         seconds in MIN_DIAGNOSTIC_DURATION_SECONDS..MAX_DIAGNOSTIC_DURATION_SECONDS
 
-    AlertDialog(
+    val focusBoundary = rememberTextInputFocusBoundary()
+    ModalDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.feedback_diagnostic_duration_custom_title)) },
-        text = {
+        imeFocusBoundary = focusBoundary,
+    ) {
+        DialogColumn(
+            title = {
+                DialogTitle(stringResource(R.string.feedback_diagnostic_duration_custom_title))
+            },
+            actions = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FeedbackTextButton(onClick = onDismiss, modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.feedback_diagnostic_duration_custom_cancel))
+                    }
+                    FeedbackTextButton(
+                        onClick = { onConfirm(seconds!!) },
+                        enabled = valid,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(stringResource(R.string.feedback_diagnostic_duration_custom_confirm))
+                    }
+                }
+            },
+        ) {
             OutlinedTextField(
                 value = input,
                 onValueChange = { value -> input = value.filter(Char::isDigit) },
@@ -660,20 +701,13 @@ private fun CustomDurationDialog(
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
-                modifier = Modifier.inputFocusFeedback(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .reportTextInputFocusBounds(focusBoundary, "diagnostic-duration")
+                    .inputFocusFeedback(),
             )
-        },
-        confirmButton = {
-            FeedbackTextButton(onClick = { onConfirm(seconds!!) }, enabled = valid) {
-                Text(stringResource(R.string.feedback_diagnostic_duration_custom_confirm))
-            }
-        },
-        dismissButton = {
-            FeedbackTextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.feedback_diagnostic_duration_custom_cancel))
-            }
-        },
-    )
+        }
+    }
 }
 
 @Composable
@@ -693,7 +727,7 @@ private fun DiagnosticPhaseSection(
                 SegmentedListItem(
                     onClick = {},
                     shapes = dpisSegmentedShapes(0, 1),
-                    colors = diagnosticItemColors(),
+                    colors = segmentedRowColors(),
                     content = { Text(stringResource(R.string.feedback_diagnostic_recording_title)) },
                 )
             }
@@ -701,7 +735,7 @@ private fun DiagnosticPhaseSection(
                 SegmentedListItem(
                     onClick = {},
                     shapes = dpisSegmentedShapes(0, 1),
-                    colors = diagnosticItemColors(),
+                    colors = segmentedRowColors(),
                     leadingContent = { Icon(painterResource(R.drawable.ic_overview_24), null) },
                     content = { Text(stringResource(R.string.feedback_diagnostic_packaging_message)) },
                     trailingContent = {
@@ -840,7 +874,7 @@ private fun DiagnosticStatusRow(
     SegmentedListItem(
         onClick = {},
         shapes = dpisSegmentedShapes(index, total),
-        colors = diagnosticItemColors(),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), null) },
         content = { Text(stringResource(titleRes)) },
@@ -848,17 +882,3 @@ private fun DiagnosticStatusRow(
     )
 }
 
-@Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun diagnosticItemColors(enabled: Boolean = true) = ListItemDefaults.segmentedColors(
-    containerColor = MaterialTheme.colorScheme.surfaceBright,
-    contentColor = MaterialTheme.colorScheme.onSurface,
-    leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledContainerColor = if (enabled) {
-        MaterialTheme.colorScheme.surfaceBright
-    } else {
-        MaterialTheme.colorScheme.surfaceContainer
-    },
-    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledLeadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)

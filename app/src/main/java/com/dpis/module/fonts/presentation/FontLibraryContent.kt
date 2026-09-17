@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.fonts.presentation
 
 import android.graphics.Typeface
 import android.net.Uri
@@ -46,10 +46,21 @@ import com.dpis.module.R
 import com.dpis.module.fonts.FontDetailActivity
 import com.dpis.module.fonts.FontLibraryActivity
 import com.dpis.module.ui.WatchUiMode
-import com.dpis.module.ui.compose.WearFontLibraryContent
-import com.dpis.module.ui.compose.setFeatureContent
+import com.dpis.module.ui.presentation.wear.WearFontLibraryContent
+import com.dpis.module.ui.presentation.design.setFeatureContent
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import java.util.function.Consumer
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.dialogs.TextInputDialog
+import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
+import com.dpis.module.ui.presentation.workspace.ToolbarIconButton
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenu
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenuItem
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
 
 class FontLibraryUiItem(
     val id: String,
@@ -398,10 +409,7 @@ private fun FontReferenceSection(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = restore,
                         shapes = dpisSegmentedShapes(index, references.size),
-                        colors = ListItemDefaults.segmentedColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceBright,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
+                        colors = segmentedRowColors(),
                         supportingContent = { Text(reference.packageName) },
                         content = { Text(reference.label) },
                     )

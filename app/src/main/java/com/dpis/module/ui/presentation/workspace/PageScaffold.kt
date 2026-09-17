@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.workspace
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement

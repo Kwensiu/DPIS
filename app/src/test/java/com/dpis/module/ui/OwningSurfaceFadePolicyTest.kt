@@ -1,7 +1,7 @@
 package com.dpis.module
 
 import androidx.compose.ui.graphics.Color
-import com.dpis.module.ui.compose.owningSurfaceFadeColor
+import com.dpis.module.ui.presentation.design.owningSurfaceFadeColor
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path

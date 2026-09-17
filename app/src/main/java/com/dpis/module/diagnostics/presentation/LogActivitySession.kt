@@ -19,10 +19,10 @@ import com.dpis.module.diagnostics.LogReadResult
 import com.dpis.module.diagnostics.device.LsposedLogReader
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.ui.compose.LogActivityHost
-import com.dpis.module.ui.compose.LogPresentation
-import com.dpis.module.ui.compose.LogUiEntry
-import com.dpis.module.ui.compose.LogUiState
+import com.dpis.module.diagnostics.presentation.LogActivityHost
+import com.dpis.module.diagnostics.presentation.LogPresentation
+import com.dpis.module.diagnostics.presentation.LogUiEntry
+import com.dpis.module.diagnostics.presentation.LogUiState
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

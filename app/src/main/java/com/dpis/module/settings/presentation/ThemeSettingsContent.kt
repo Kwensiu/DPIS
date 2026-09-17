@@ -71,7 +71,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
-import com.dpis.module.ui.compose.*
+import com.dpis.module.ui.presentation.design.*
+import com.dpis.module.ui.presentation.dialogs.*
+import com.dpis.module.ui.presentation.editor.*
+import com.dpis.module.ui.presentation.interop.*
+import com.dpis.module.ui.presentation.wear.*
+import com.dpis.module.ui.presentation.workspace.*
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.ThemeModeStore
@@ -775,13 +780,7 @@ private fun ThemeSegmentedSurfaceRow(
         modifier = Modifier.fillMaxWidth(),
         onClick = rememberClickAction(onClick),
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            trailingContentColor = MaterialTheme.colorScheme.primary,
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = leadingContent,
         content = content,

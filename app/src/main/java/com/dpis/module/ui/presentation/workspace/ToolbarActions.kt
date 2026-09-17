@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.workspace
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -21,6 +21,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

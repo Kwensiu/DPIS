@@ -10,21 +10,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -36,16 +31,13 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import com.dpis.module.appconfig.editor.AppConfigEditorChip
 import com.dpis.module.appconfig.AppConfigSheetWizardStore
 import com.dpis.module.appconfig.editor.EditorPresentation
@@ -60,18 +52,25 @@ import com.dpis.module.appconfig.presentation.AppConfigEditorContent
 import com.dpis.module.appconfig.presentation.AppConfigEditorSessionChip
 import com.dpis.module.appconfig.presentation.AppConfigEditorOverlay
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
-import com.dpis.module.ui.compose.ComposeMotionTokens
-import com.dpis.module.ui.compose.AppHookChainEditorPage
+import com.dpis.module.appconfig.presentation.AppConfigWizardHint
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
+import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.applist.presentation.AppWorkspaceContent
-import com.dpis.module.ui.compose.ConfigEditorAnimatedContent
+import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
 import com.dpis.module.home.presentation.HomeWorkspaceContent
-import com.dpis.module.ui.compose.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.compose.PageScrollPositionStore
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
 import com.dpis.module.settings.presentation.SettingsWorkspaceContent
 import com.dpis.module.tools.presentation.ToolsWorkspaceContent
-import com.dpis.module.ui.compose.rememberEditorControlHeight
-import com.dpis.module.ui.compose.dpisClickable
+import com.dpis.module.ui.presentation.editor.rememberEditorControlHeight
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.wear.WearAppConfigEditorContent
+import com.dpis.module.ui.presentation.wear.WearAppWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearHomeWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearSettingsWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearTemplateWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearToolsWorkspaceContent
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.R
@@ -415,61 +414,13 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
             },
             overlayContent = {
                 if (showAdvancedHint && !editorState.destination.isChildPage) {
-                    Column(
-                        modifier = androidx.compose.ui.Modifier
-                            .align(Alignment.TopCenter)
-                            .offset(y = AppConfigSheetUiTokens.WizardHintTopOffset)
-                            .padding(horizontal = 20.dp)
-                            .zIndex(1f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.bg_app_config_wizard_arrow),
-                            contentDescription = null,
-                            modifier = androidx.compose.ui.Modifier
-                                .size(width = 14.dp, height = 7.dp)
-                                .rotate(180f),
-                            tint = Color.Unspecified
-                        )
-                        Surface(
-                            shape = AppConfigSheetUiTokens.WizardHintShape,
-                            color = colorResource(R.color.app_config_wizard_bubble_container),
-                            contentColor = colorResource(R.color.app_config_wizard_bubble_text)
-                        ) {
-                            Row(
-                                modifier = androidx.compose.ui.Modifier.padding(
-                                    start = 14.dp, top = 6.dp, end = 6.dp, bottom = 6.dp
-                                ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    stringResource(R.string.dialog_advanced_wizard_hint),
-                                    modifier = androidx.compose.ui.Modifier.weight(1f, fill = false),
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                                Box(
-                                    modifier = androidx.compose.ui.Modifier
-                                        .padding(start = 8.dp)
-                                        .size(AppConfigSheetUiTokens.WizardHintCloseSize)
-                                        .clip(CircleShape)
-                                        .background(Color.White.copy(alpha = 0.15f))
-                                        .dpisClickable(role = Role.Button, onClick = {
-                                            AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
-                                            showAdvancedHint = false
-                                        }),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_close_24),
-                                        contentDescription = stringResource(
-                                            R.string.dialog_advanced_wizard_close
-                                        ),
-                                        modifier = androidx.compose.ui.Modifier.size(14.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    AppConfigWizardHint(
+                        modifier = androidx.compose.ui.Modifier.align(Alignment.TopCenter),
+                        onDismiss = {
+                            AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
+                            showAdvancedHint = false
+                        },
+                    )
                 }
             }
             )
@@ -494,3 +445,4 @@ private fun ComposeWorkspaceSurface(content: @Composable () -> Unit) {
         content = content
     )
 }
+

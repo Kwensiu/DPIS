@@ -15,10 +15,10 @@ import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.ui.compose.FontDetailDialog
-import com.dpis.module.ui.compose.FontDetailPresentation
-import com.dpis.module.ui.compose.FontDetailUiState
-import com.dpis.module.ui.compose.FontReferenceUiItem
+import com.dpis.module.fonts.presentation.FontDetailDialog
+import com.dpis.module.fonts.presentation.FontDetailPresentation
+import com.dpis.module.fonts.presentation.FontDetailUiState
+import com.dpis.module.fonts.presentation.FontReferenceUiItem
 
 /**
  * Owns a single font collection's detail, rename, delete, and reference restore.

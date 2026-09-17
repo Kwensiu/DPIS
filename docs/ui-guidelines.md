@@ -13,13 +13,14 @@ dialog、编辑器 sheet。
 必须先说明控件属于哪一类：设置开关、设置入口、普通确认、危险确认、选项列表、
 长文本，或调试入口。归类不清时不要新开一套圆角和颜色。
 
-颜色只来自 `MaterialTheme.colorScheme`（由 `ComposeDesignSystem` 注入）。不要为
-Compose 新增 `R.color.dpis_*`，不要导出 Theme Builder 静态色板，不要再引一套
-Material 3 组件库。
+颜色只来自 `MaterialTheme.colorScheme`（由 `ComposeDesignSystem` 注入）。成功/
+警告用 `LocalSemanticColors`，不要为 Compose 新增 `R.color.dpis_*`，不要导出
+Theme Builder 静态色板，不要再引一套 Material 3 组件库。
 
 间距优先 `LocalSpacing`（4/8/12/16/24/32）。不要建 `space_16` 或新的
 `*UiTokens` 去包一个 16.dp。多个工作区共用的页面 chrome 只放
-`PageChromeTokens`。测过的特征几何（编辑器 peek、拖动手柄）留在该特征包。
+`PageChromeTokens`。Dialog 表面用 `DialogChrome`。测过的特征几何（编辑器
+peek、拖动手柄、某一 dialog 独有的 14/18dp）留在该特征包。
 
 名称要短、目录要浅。共享控件用 `SegmentedRow`、`FeedbackButton`、`ModalDialog`、
 `SecondaryPageScaffold`。不要加 `ui/theme/tokens` 这类分层，也不要把
@@ -44,7 +45,8 @@ Material 3 组件库。
 | 加一段说明或日志 | 长文本 | 独立评估滚动和底部动作 | 底部操作必须始终可见。 |
 | 加一个调试入口 | 调试入口 | 对应设置页的 debug-only 分组 | 名称带 `debug_only`。 |
 
-Java 宿主若仍通过 `ConfirmDialog.show` 调确认框，保持该 Java 表面，不要在特征页再包一层 AlertDialog。
+Java 宿主若仍通过 `ConfirmDialog.show` 调确认框，保持该 Java 表面；它已经走
+`ComposeOverlay` + `ModalDialog`。不要在特征页再包一层 AlertDialog。
 
 ## 样板索引
 
@@ -52,14 +54,17 @@ Java 宿主若仍通过 `ConfirmDialog.show` 调确认框，保持该 Java 表�
 | --- | --- | --- |
 | 二级页 | `SecondaryPageScaffold` | 标题、返回、inset、折叠顶栏。不要手写普通 `TopAppBar`。 |
 | 工作区页 | `PageScaffold` | Home / Tools / Settings / App / Template。 |
-| 分段列表行 | 现有 `SegmentedListItem` + `dpisSegmentedShapes` | 容器色用 `surfaceBright`。新代码不要再复制一份 `segmentedColors`。 |
-| 按钮 | `FeedbackButton` / `FeedbackOutlinedButton` | 触感走这里。形状和色用 Material 默认或共享 success/danger，不要每页传 `RoundedCornerShape(16)`。 |
+| 分段列表行 | `SegmentedListItem` + `dpisSegmentedShapes` + `segmentedRowColors()` | 新代码不要再手写 `surfaceBright` 的 `segmentedColors`。 |
+| 按钮 | `FeedbackButton` / `FeedbackOutlinedButton` | 触感走这里。成功/警告/危险用 `successButtonColors()`、`warningButtonColors()`、`dangerButtonColors()`；确认框警告用 `outlinedWarningButtonColors()`。 |
 | 普通确认 | `ConfirmAlertDialog`、`ModalDialog` | Compose state 拥有可见性。 |
 | 筛选 sheet | `FilterSheet` | 不等于普通 dialog。横向芯片溶入 `owningSurfaceColor`。 |
 | 应用配置 sheet | `AppConfigEditorContent`、`AppConfigSheetUiTokens` | 复杂主流程。只保留测过的 peek/手势数字。 |
 | 主题设置 | `ThemeSettingsContent` | 改种子色、palette、spec 时必须走 `ColorSchemeFactory`。 |
 
-XML `item_settings_*.xml`、`dialog_*.xml`、`Widget.Dpis.DialogActionButton.*` 是遗留。不要作为新 UI 的起点。还没迁完的 Java 宿主可以继续调用，但不要扩展这些 layout。
+不要新增 XML layout、`Widget.Dpis.*` 或 Compose 用不到的 `R.color` / `drawable` /
+`dimen` 样板。Hook 风险点色留在 Hook 页；向导箭头和气泡用 `inverseSurface` 向 `surface` 收一档。
+Java `show()` 走 `ComposeOverlay`；Compose 可见性走 `ConfirmAlertDialog` /
+`ModalDialog`；结果 sheet 和字体调试走 `ModalSheet`。
 
 ## 模板工作区
 
@@ -115,9 +120,8 @@ UI 变更至少考虑 source smoke。改结构、字符串、debug-only 入口�
 
 1. 锁死 `CONTEXT.md` **Appearance**（本文件与代码注释跟它对齐）。不改特征页外观。
 2. 在 `ui/` 收口共享 chrome：分段行、确认框视觉、Feedback 的 success/danger。旧调用保持可编译。
-3. 按页改特征调用并删除无引用的 `*UiTokens` 和 XML 样板。编辑器 peek/手势留下。
-
-包名与目录对齐（`ui.compose` → 物理路径）是单独一切，不和外观或 chrome 收口混在一个 PR。
+3. 按页改特征调用并删除无引用的 `*UiTokens`。编辑器 peek/手势留下。Java `show()`
+   已走 `ComposeOverlay`；不要再加 XML 样板。
 
 ## Out Of Scope
 

@@ -49,7 +49,6 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.PlatformTextStyle
@@ -72,20 +71,23 @@ import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.ui.compose.AppIdentityMarqueeText
-import com.dpis.module.ui.compose.CompactEditorTextField
-import com.dpis.module.ui.compose.EditorClearButton
-import com.dpis.module.ui.compose.EditorTypefaceHookRow
-import com.dpis.module.ui.compose.EditorValueModeRow
-import com.dpis.module.ui.compose.FeedbackButton
-import com.dpis.module.ui.compose.FeedbackOutlinedButton
-import com.dpis.module.ui.compose.LocalSpacing
-import com.dpis.module.ui.compose.LocalTextInputFocusBoundary
-import com.dpis.module.ui.compose.dpisClickable
-import com.dpis.module.ui.compose.edgeToEdgeContentBottomPadding
-import com.dpis.module.ui.compose.rememberEditorControlHeight
-import com.dpis.module.ui.compose.rememberTextInputFocusBoundary
-import com.dpis.module.ui.compose.reportTextInputFocusBounds
+import com.dpis.module.ui.presentation.editor.AppIdentityMarqueeText
+import com.dpis.module.ui.presentation.editor.CompactEditorTextField
+import com.dpis.module.ui.presentation.editor.EditorClearButton
+import com.dpis.module.ui.presentation.editor.EditorTypefaceHookRow
+import com.dpis.module.ui.presentation.editor.EditorValueModeRow
+import com.dpis.module.ui.presentation.editor.FeedbackButton
+import com.dpis.module.ui.presentation.editor.dangerButtonColors
+import com.dpis.module.ui.presentation.editor.successButtonColors
+import com.dpis.module.ui.presentation.editor.warningButtonColors
+import com.dpis.module.ui.presentation.editor.FeedbackOutlinedButton
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.editor.LocalTextInputFocusBoundary
+import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.workspace.edgeToEdgeContentBottomPadding
+import com.dpis.module.ui.presentation.editor.rememberEditorControlHeight
+import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
 
@@ -423,10 +425,7 @@ fun AppConfigEditorContent(
                 },
                 modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(R.color.dpis_stop_container),
-                    contentColor = colorResource(R.color.dpis_on_stop_container)
-                ),
+                colors = dangerButtonColors(),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.dialog_stop_button), style = MaterialTheme.typography.labelLarge,
@@ -439,10 +438,7 @@ fun AppConfigEditorContent(
                 },
                 modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(R.color.dpis_warn_container),
-                    contentColor = colorResource(R.color.dpis_on_warn_container)
-                ),
+                colors = warningButtonColors(),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.dialog_restart_button), style = MaterialTheme.typography.labelLarge,
@@ -455,10 +451,7 @@ fun AppConfigEditorContent(
                 },
                 modifier = Modifier.weight(1f).height(rememberEditorControlHeight()),
                 shape = AppConfigSheetUiTokens.ActionShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorResource(R.color.dpis_success_container),
-                    contentColor = colorResource(R.color.dpis_on_success_container)
-                ),
+                colors = successButtonColors(),
                 contentPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
             ) {
                 Text(stringResource(R.string.dialog_start_button), style = MaterialTheme.typography.labelLarge,
@@ -584,17 +577,17 @@ fun AppConfigEditorSessionChip(
     }
     val prefill = visibleChip == AppConfigEditorChip.PREFILL
     val container = if (prefill) {
-        colorResource(R.color.dpis_info_container)
+        MaterialTheme.colorScheme.secondaryContainer
     } else {
         MaterialTheme.colorScheme.primaryContainer
     }
     val content = if (prefill) {
-        colorResource(R.color.dpis_on_info_container)
+        MaterialTheme.colorScheme.onSecondaryContainer
     } else {
         MaterialTheme.colorScheme.onPrimaryContainer
     }
     val outline = if (prefill) {
-        colorResource(R.color.dpis_info)
+        MaterialTheme.colorScheme.secondary
     } else {
         MaterialTheme.colorScheme.primary
     }

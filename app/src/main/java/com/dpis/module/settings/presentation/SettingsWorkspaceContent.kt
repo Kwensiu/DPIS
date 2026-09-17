@@ -52,7 +52,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.BuildConfig
-import com.dpis.module.ui.compose.*
+import com.dpis.module.ui.presentation.design.*
+import com.dpis.module.ui.presentation.dialogs.*
+import com.dpis.module.ui.presentation.editor.*
+import com.dpis.module.ui.presentation.interop.*
+import com.dpis.module.ui.presentation.wear.*
+import com.dpis.module.ui.presentation.workspace.*
 import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
@@ -351,14 +356,7 @@ private fun SettingsSwitchRow(
         onClick = { hapticChanged(!checked) },
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            // Disabled settings remain on the same surface; only their content
-            // should receive Material's disabled emphasis.
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },
@@ -391,13 +389,7 @@ private fun SettingsChoiceRow(
         onClick = hapticClick,
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            trailingContentColor = MaterialTheme.colorScheme.primary,
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },
@@ -428,14 +420,7 @@ private fun SettingsEntry(
         onClick = hapticClick,
         enabled = enabled,
         shapes = dpisSegmentedShapes(index, total),
-        colors = ListItemDefaults.segmentedColors(
-            containerColor = MaterialTheme.colorScheme.surfaceBright,
-            // Keep unavailable actions from falling back to the darker default
-            // disabled container while preserving disabled content treatment.
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceBright,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        ),
+        colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { Icon(painterResource(iconRes), contentDescription = null) },
         content = { Text(stringResource(title)) },

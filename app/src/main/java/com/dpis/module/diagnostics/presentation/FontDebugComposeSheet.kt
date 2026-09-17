@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.diagnostics.presentation
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -23,17 +23,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.DialogChrome
+import com.dpis.module.ui.dialog.ModalSheet
 
 data class FontDebugSheetState(
     val modeLabel: String = "",
@@ -45,34 +45,29 @@ data class FontDebugSheetState(
 )
 
 object FontDebugComposeSheet {
-    class Handle internal constructor(val dialog: BottomSheetDialog) {
+    class Handle {
         internal var state by mutableStateOf(FontDebugSheetState())
+        internal lateinit var overlay: ComposeOverlay
+
         fun update(modeLabel: String, windowLabel: String, lastUpdated: String,
             content: String, overlayLabel: String, overlayEnabled: Boolean) {
             state = FontDebugSheetState(modeLabel, windowLabel, lastUpdated, content,
                 overlayLabel, overlayEnabled)
         }
-        fun dismiss() = dialog.dismiss()
+        fun dismiss() = overlay.dismiss()
     }
 
     @JvmStatic
     fun show(activity: Activity, onMode: Runnable, onWindow: Runnable, onOverlay: Runnable,
         onClear: Runnable, onDismiss: Runnable): Handle {
-        val view = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = BottomSheetDialog(activity)
-        val handle = Handle(dialog)
-        view.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
+        val handle = Handle()
+        handle.overlay = ComposeOverlay.show(activity) { dismiss ->
+            ModalSheet(onDismissRequest = dismiss) {
                 FontDebugSheetContent(handle.state, onMode::run, onWindow::run,
-                    onOverlay::run, onClear::run) { dialog.dismiss() }
+                    onOverlay::run, onClear::run, dismiss)
             }
         }
-        dialog.setContentView(view)
-        dialog.setOnDismissListener { onDismiss.run() }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
+        handle.overlay.setOnDismissListener(onDismiss)
         return handle
     }
 }
@@ -80,15 +75,16 @@ object FontDebugComposeSheet {
 @Composable
 internal fun FontDebugSheetContent(state: FontDebugSheetState, onMode: () -> Unit,
     onWindow: () -> Unit, onOverlay: () -> Unit, onClear: () -> Unit, onClose: () -> Unit) {
+    val spacing = LocalSpacing.current
     Column(Modifier.fillMaxWidth().padding(
-        start = dimensionResource(R.dimen.font_debug_dialog_surface_padding_horizontal),
-        top = dimensionResource(R.dimen.font_debug_dialog_surface_padding_top),
-        end = dimensionResource(R.dimen.font_debug_dialog_surface_padding_horizontal),
-        bottom = dimensionResource(R.dimen.font_debug_dialog_surface_padding_bottom))) {
+        start = DialogChrome.HorizontalPadding,
+        top = DialogChrome.TopPadding,
+        end = DialogChrome.HorizontalPadding,
+        bottom = 18.dp)) {
         Text(stringResource(R.string.font_debug_dialog_title), style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-        Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_filter_spacing_top)))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Spacer(Modifier.height(spacing.sm))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
             OutlinedButton(onClick = rememberClickAction(onMode), modifier = Modifier.weight(1f)) {
                 Text(state.modeLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
@@ -96,27 +92,27 @@ internal fun FontDebugSheetContent(state: FontDebugSheetState, onMode: () -> Uni
                 Text(state.windowLabel, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_metadata_spacing_top)))
+        Spacer(Modifier.height(spacing.md))
         Text(state.lastUpdated, style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_stats_panel_spacing_top)))
+        Spacer(Modifier.height(spacing.sm))
         Surface(modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp, max = 360.dp),
             shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceContainer) {
             Text(state.content, modifier = Modifier.padding(12.dp).verticalScroll(rememberScrollState()),
                 style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace,
                 color = MaterialTheme.colorScheme.onSurface)
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_primary_action_spacing_top)))
+        Spacer(Modifier.height(spacing.lg))
         Button(onClick = rememberClickAction(onOverlay), modifier = Modifier.fillMaxWidth(),
             colors = if (state.overlayEnabled) ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.errorContainer,
                 contentColor = MaterialTheme.colorScheme.onErrorContainer)
             else ButtonDefaults.buttonColors()) { Text(state.overlayLabel) }
-        Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_secondary_action_spacing_top)))
+        Spacer(Modifier.height(spacing.md))
         OutlinedButton(onClick = rememberClickAction(onClear), modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.font_debug_clear_button))
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.font_debug_dialog_close_action_spacing_top)))
+        Spacer(Modifier.height(10.dp))
         OutlinedButton(onClick = rememberClickAction(onClose), modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.dialog_cancel_button))
         }

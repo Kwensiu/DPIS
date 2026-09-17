@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.workspace
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -73,6 +73,8 @@ import com.dpis.module.R
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.MainViewModel
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 /** Mirrors MainUiState.WorkspaceMode without introducing a second mutable selection state. */
 enum class WorkspaceDestination(

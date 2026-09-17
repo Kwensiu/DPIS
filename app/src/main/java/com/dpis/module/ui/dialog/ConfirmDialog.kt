@@ -1,8 +1,8 @@
 package com.dpis.module.ui.dialog
 
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
-import com.dpis.module.ui.compose.rememberClickAction
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.outlinedWarningButtonColors
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -23,20 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
-import com.dpis.module.ui.DialogWindowEdgeToEdge
-import com.dpis.module.ui.DialogWindowSizer
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.presentation.design.LocalSpacing
 
 /** Visual contract shared by ordinary phone/tablet dialogs with cancel/confirm actions. */
 internal object ConfirmDialogUiTokens {
@@ -54,7 +45,7 @@ object ConfirmDialog {
         message: CharSequence,
         onConfirm: Runnable,
         onCancel: Runnable
-    ): AlertDialog = showWithLabels(
+    ): ComposeOverlay = showWithLabels(
         activity, title, message,
         activity.getString(R.string.dialog_process_action_confirm_negative),
         activity.getString(R.string.dialog_process_action_confirm_positive),
@@ -70,45 +61,30 @@ object ConfirmDialog {
         confirmLabel: CharSequence,
         onConfirm: Runnable,
         onCancel: Runnable
-    ): AlertDialog {
-        val composeView = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity)
-            .setView(composeView)
-            .create()
+    ): ComposeOverlay {
         var actionHandled = false
-
-        composeView.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                ConfirmDialogContent(
-                    title = title.toString(),
-                    message = message.toString(),
-                    cancelLabel = cancelLabel.toString(),
-                    confirmLabel = confirmLabel.toString(),
-                    onConfirm = {
+        return ComposeOverlay.show(activity) { dismiss ->
+            ConfirmAlertDialog(
+                onDismissRequest = {
+                    if (!actionHandled) {
                         actionHandled = true
-                        dialog.dismiss()
-                        onConfirm.run()
-                    },
-                    onCancel = {
-                        actionHandled = true
-                        dialog.dismiss()
+                        dismiss()
                         onCancel.run()
                     }
-                )
-            }
+                },
+                title = title.toString(),
+                message = message.toString(),
+                cancelLabel = cancelLabel.toString(),
+                confirmLabel = confirmLabel.toString(),
+                onConfirm = {
+                    if (!actionHandled) {
+                        actionHandled = true
+                        dismiss()
+                        onConfirm.run()
+                    }
+                },
+            )
         }
-        dialog.setOnCancelListener {
-            if (!actionHandled) {
-                actionHandled = true
-                onCancel.run()
-            }
-        }
-        dialog.show()
-        DialogWindowEdgeToEdge.apply(dialog)
-        DialogWindowSizer.applyStandardWidth(dialog, activity)
-        return dialog
     }
 }
 
@@ -121,15 +97,11 @@ internal fun ConfirmDialogContent(
     cancelLabel: String? = null,
     confirmLabel: String? = null
 ) {
+    val spacing = LocalSpacing.current
     val cancelAction = rememberClickAction(onCancel)
     val confirmAction = rememberClickAction(onConfirm)
     Column(
-        modifier = Modifier.fillMaxWidth().padding(
-            start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            top = dimensionResource(R.dimen.dialog_surface_padding_top),
-            end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-            bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)
-        ),
+        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -140,7 +112,7 @@ internal fun ConfirmDialogContent(
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_body_spacing)))
+        Spacer(Modifier.height(spacing.md))
         Text(
             text = message,
             modifier = Modifier.fillMaxWidth(),
@@ -148,12 +120,10 @@ internal fun ConfirmDialogContent(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(dimensionResource(R.dimen.dialog_action_spacing_top)))
+        Spacer(Modifier.height(spacing.lg))
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                dimensionResource(R.dimen.dialog_action_spacing_between)
-            )
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
         ) {
             // Standard two-action dialogs keep the reversible action on the left and the
             // advancing/destructive action on the right. Both actions share the editor's
@@ -171,10 +141,7 @@ internal fun ConfirmDialogContent(
                 onClick = confirmAction,
                 modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = colorResource(R.color.dpis_warn_container),
-                    contentColor = colorResource(R.color.dpis_on_warn_container)
-                ),
+                colors = outlinedWarningButtonColors(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 Text(text = confirmLabel ?: androidx.compose.ui.res.stringResource(

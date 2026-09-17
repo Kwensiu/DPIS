@@ -37,7 +37,12 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
 import com.dpis.module.tools.SystemFontScaleToolState
-import com.dpis.module.ui.compose.*
+import com.dpis.module.ui.presentation.design.*
+import com.dpis.module.ui.presentation.dialogs.*
+import com.dpis.module.ui.presentation.editor.*
+import com.dpis.module.ui.presentation.interop.*
+import com.dpis.module.ui.presentation.wear.*
+import com.dpis.module.ui.presentation.workspace.*
 
 @Composable
 fun ToolsWorkspaceContent(

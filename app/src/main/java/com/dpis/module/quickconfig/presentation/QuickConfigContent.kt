@@ -26,9 +26,15 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.appconfig.presentation.AppConfigEditorContent
 import com.dpis.module.quickconfig.QuickConfigActivity
-import com.dpis.module.ui.compose.*
+import com.dpis.module.ui.presentation.design.*
+import com.dpis.module.ui.presentation.dialogs.*
+import com.dpis.module.ui.presentation.editor.*
+import com.dpis.module.ui.presentation.interop.*
+import com.dpis.module.ui.presentation.wear.*
+import com.dpis.module.ui.presentation.workspace.*
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
+import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 
 sealed class QuickConfigDialog {
     class FeedbackStart(

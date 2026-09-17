@@ -1,7 +1,6 @@
 package com.dpis.module.updates.presentation
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
 import com.dpis.module.R
 import com.dpis.module.ui.dialog.StartupDisclaimerGate
 import com.dpis.module.updates.ReleaseNotesController
@@ -27,7 +26,6 @@ class UpdatePromptDialogCoordinator(
         )
         fun openUrl(url: String)
         fun showToast(messageResId: Int)
-        fun applyLargeDialogWidth(dialog: AlertDialog)
         /** Clears the Activity-owned request when the user has ended the prompt. */
         fun onUpdatePromptDismissed()
         fun finishActivity()
@@ -134,7 +132,6 @@ class UpdatePromptDialogCoordinator(
         })
 
         dialogHandle.show()
-        host.applyLargeDialogWidth(dialogHandle.dialog)
         loadReleaseNotes(dialogHandle, request.versionName, embeddedReleaseNotes.isNotEmpty())
     }
 

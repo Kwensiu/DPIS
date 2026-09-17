@@ -7,7 +7,7 @@ import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.R
 import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.ui.compose.ComposeMessageDialog
+import com.dpis.module.ui.presentation.dialogs.ComposeMessageDialog
 import com.dpis.module.ui.dialog.ConfirmDialog
 import java.util.function.BooleanSupplier
 import java.util.function.Supplier

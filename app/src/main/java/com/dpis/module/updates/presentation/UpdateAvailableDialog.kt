@@ -1,7 +1,7 @@
 package com.dpis.module.updates.presentation
 
 import android.app.Activity
-import androidx.appcompat.app.AlertDialog
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -37,9 +37,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
@@ -47,9 +44,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.compose.ComposeDesignSystem
-import com.dpis.module.ui.compose.resolveDarkTheme
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.DialogChrome
+import com.dpis.module.ui.dialog.ModalDialog
+import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.updates.toReleaseNotesAnnotatedString
 import com.dpis.module.updates.RELEASE_NOTES_QUOTE_TAG
 
@@ -68,25 +67,40 @@ object UpdateAvailableDialog {
     // TODO: Migrate after download progress is lifted from the mutable DialogHandle API.
     @JvmStatic
     fun create(activity: Activity, title: CharSequence, message: CharSequence): DialogHandle {
-        val view = ComposeView(activity).apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-        }
-        val dialog = MaterialAlertDialogBuilder(activity).setView(view).create()
-        val handle = DialogHandle(dialog)
-        view.setContent {
-            ComposeDesignSystem(darkTheme = resolveDarkTheme()) {
-                UpdateDialogContent(title.toString(), message.toString(), handle.state,
-                    { handle.primaryAction.run() }, { handle.cancelAction.run() })
-            }
-        }
-        dialog.setCanceledOnTouchOutside(true)
-        return handle
+        return DialogHandle(activity, title.toString(), message.toString())
     }
 
-    class DialogHandle internal constructor(val dialog: AlertDialog) {
+    class DialogHandle internal constructor(
+        activity: Activity,
+        title: String,
+        message: String,
+    ) {
+        val context: Context = activity
         internal var state by mutableStateOf(UpdateDialogState())
         internal var primaryAction: Runnable = Runnable {}
-        internal var cancelAction: Runnable = Runnable { dialog.dismiss() }
+        internal var cancelAction: Runnable = Runnable { dismiss() }
+        private var visible by mutableStateOf(false)
+        private var allowCancel by mutableStateOf(true)
+        private val overlay = ComposeOverlay.show(activity) { dismiss ->
+            if (visible) {
+                ModalDialog(
+                    onDismissRequest = { if (allowCancel) dismiss() },
+                    properties = DialogProperties(
+                        usePlatformDefaultWidth = false,
+                        dismissOnBackPress = allowCancel,
+                        dismissOnClickOutside = allowCancel,
+                    ),
+                ) {
+                    UpdateDialogContent(
+                        title,
+                        message,
+                        state,
+                        { primaryAction.run() },
+                        { cancelAction.run() },
+                    )
+                }
+            }
+        }
 
         fun setReleaseNotes(value: CharSequence?) {
             state = state.copy(releaseNotes = (value ?: "").toReleaseNotesAnnotatedString())
@@ -112,15 +126,16 @@ object UpdateAvailableDialog {
             state = state.copy(progressVisible = true, progressIndeterminate = indeterminate,
                 progress = progress, progressText = text.toString())
         }
-        fun show() = dialog.show()
-        fun dismiss() = dialog.dismiss()
-        fun isShowing(): Boolean = dialog.isShowing
+        fun show() {
+            visible = true
+        }
+        fun dismiss() = overlay.dismiss()
+        fun isShowing(): Boolean = visible && overlay.isShowing()
         fun setCancelable(cancelable: Boolean) {
-            dialog.setCancelable(cancelable)
-            dialog.setCanceledOnTouchOutside(cancelable)
+            allowCancel = cancelable
         }
         fun setOnDismissListener(listener: Runnable) {
-            dialog.setOnDismissListener { listener.run() }
+            overlay.setOnDismissListener(listener)
         }
     }
 }
@@ -128,20 +143,17 @@ object UpdateAvailableDialog {
 @Composable
 internal fun UpdateDialogContent(title: String, message: String, state: UpdateDialogState,
     onPrimary: () -> Unit, onCancel: () -> Unit) {
+    val spacing = LocalSpacing.current
     var expanded by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().padding(
-        start = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-        top = dimensionResource(R.dimen.dialog_surface_padding_top),
-        end = dimensionResource(R.dimen.dialog_surface_padding_horizontal),
-        bottom = dimensionResource(R.dimen.dialog_surface_padding_bottom)),
+    Column(Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally) {
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_title_spacing_top)))
+        Spacer(Modifier.height(spacing.md))
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_message_spacing_top)))
+        Spacer(Modifier.height(spacing.sm))
         Text(message, style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_release_notes_spacing_top)))
+        Spacer(Modifier.height(14.dp))
         val releaseNotesShape = RoundedCornerShape(8.dp)
         Surface(modifier = Modifier.fillMaxWidth().clip(releaseNotesShape),
             shape = releaseNotesShape, color = MaterialTheme.colorScheme.surfaceContainer) {
@@ -163,7 +175,7 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
                         state.releaseNotes,
                         modifier = Modifier.fillMaxWidth()
                             .padding(start = 12.dp, end = 12.dp, bottom = 10.dp)
-                            .heightIn(max = dimensionResource(R.dimen.update_dialog_release_notes_max_height))
+                            .heightIn(max = DialogChrome.ScrollBodyMaxHeight)
                             .verticalScroll(rememberScrollState())
                             .drawBehind {
                                 drawReleaseNotesQuoteBars(
@@ -180,14 +192,14 @@ internal fun UpdateDialogContent(title: String, message: String, state: UpdateDi
             }
         }
         if (state.progressVisible) {
-            Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_progress_spacing_top)))
+            Spacer(Modifier.height(14.dp))
             if (state.progressIndeterminate) LinearProgressIndicator(Modifier.fillMaxWidth())
             else LinearProgressIndicator(progress = { state.progress / 100f }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_progress_text_spacing_top)))
+            Spacer(Modifier.height(spacing.sm))
             Text(state.progressText, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
         }
-        Spacer(Modifier.height(dimensionResource(R.dimen.update_dialog_primary_button_spacing_top)))
+        Spacer(Modifier.height(18.dp))
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             // Keep both actions usable across locales and font scales. Stack the actions when
             // two comfortable touch targets cannot fit; this avoids language-specific sizing.

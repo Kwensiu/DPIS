@@ -1,8 +1,10 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.workspace
 
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -10,6 +12,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Interpolatable
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
@@ -33,6 +36,20 @@ internal fun dpisSegmentedShapes(index: Int, count: Int): ListItemShapes {
         shapes
     }
 }
+
+/** Workspace list rows sit on surfaceBright so they stay visible on surfaceContainer. */
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+internal fun segmentedRowColors(
+    disabledContainerColor: Color = MaterialTheme.colorScheme.surfaceBright,
+): ListItemColors = ListItemDefaults.segmentedColors(
+    containerColor = MaterialTheme.colorScheme.surfaceBright,
+    disabledContainerColor = disabledContainerColor,
+    contentColor = MaterialTheme.colorScheme.onSurface,
+    leadingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    supportingContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    trailingContentColor = MaterialTheme.colorScheme.primary,
+)
 
 /**
  * Applies the press shape from Material's segmented-list policy to custom segmented surfaces.

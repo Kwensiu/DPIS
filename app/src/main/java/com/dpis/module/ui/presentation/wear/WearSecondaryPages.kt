@@ -1,4 +1,4 @@
-package com.dpis.module.ui.compose
+package com.dpis.module.ui.presentation.wear
 
 import com.dpis.module.ui.dialog.ModalDialog
 
@@ -24,8 +24,10 @@ import com.dpis.module.about.presentation.LicenseDetailDialog
 import com.dpis.module.settings.presentation.InterfaceScaleDialogContent
 import com.dpis.module.settings.AppUiScaleManager
 import com.dpis.module.settings.ThemeModeStore
-import com.dpis.module.ui.presentation.WearMaterialTheme
-import com.dpis.module.ui.presentation.WearWorkspaceList
+import com.dpis.module.fonts.presentation.FontLibraryDialogHost
+import com.dpis.module.fonts.presentation.FontLibraryPresentation
+import com.dpis.module.ui.presentation.design.ColorSchemeFactory
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
 
 @Composable
 internal fun WearThemeSettingsContent(

@@ -53,8 +53,8 @@ class AboutActivitySourceSmokeTest {
             "toReleaseNotesAnnotatedString()",
             "AnimatedVisibility(expanded)",
             "verticalScroll(rememberScrollState())",
-            "R.dimen.dialog_surface_padding_horizontal",
-            "R.dimen.update_dialog_primary_button_spacing_top",
+            "DialogChrome.SurfacePadding",
+            "Spacer(Modifier.height(18.dp))",
             "RoundedCornerShape(16.dp)",
         )
         textInteropSource.assertContainsAll("LinkAnnotation.Url(span.url)")
