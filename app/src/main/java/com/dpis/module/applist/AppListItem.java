@@ -1,20 +1,13 @@
 package com.dpis.module.applist;
 
-import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportTargetSpec;
-import com.dpis.module.viewport.ViewportTargetType;
-
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportTargetType;
-
-import com.dpis.module.viewport.ViewportTargetSpec;
-import com.dpis.module.templates.TemplateConfigValueAdapters;
-
-import com.dpis.module.templates.TemplateConfigValue;
-
 import android.graphics.drawable.Drawable;
+
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.templates.TemplateConfigValue;
+import com.dpis.module.templates.TemplateConfigValueAdapters;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+import com.dpis.module.viewport.ViewportTargetType;
 
 public final class AppListItem {
     public final String label;
@@ -272,6 +265,16 @@ public final class AppListItem {
 
     public boolean hasAppSpecificConfig() {
         return appSpecificConfigActive;
+    }
+
+    /**
+     * True when this row has any DPIS-owned package configuration that reset can remove.
+     */
+    public boolean hasDpisPackageConfig() {
+        return appSpecificConfigActive || viewportTargetSpec.isEnabled()
+                || fontScalePercent != null || typefaceId != null
+                || (fontHookDomainsRaw != null && !fontHookDomainsRaw.isBlank())
+                || wechatDpi != null || !dpisEnabled;
     }
 
     /** Refreshes the persisted enable switch without rebuilding the catalog snapshot. */

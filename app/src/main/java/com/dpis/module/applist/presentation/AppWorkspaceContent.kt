@@ -1,13 +1,14 @@
 package com.dpis.module.applist.presentation
 
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -38,6 +39,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +76,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -86,6 +90,7 @@ import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
+import com.dpis.module.applist.AppListScopeTarget
 import com.dpis.module.applist.AppStatusFormatter
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.fonts.presentation.AppHookChainEditorPage
@@ -98,13 +103,16 @@ import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 import com.dpis.module.ui.presentation.design.LocalSpacing
-import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.design.dpisCombinedClickable
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeDirection
 import com.dpis.module.ui.presentation.editor.EdgeOcclusionFadeTokens
 import com.dpis.module.ui.presentation.editor.clearTextInputFocusOnPointerDown
 import com.dpis.module.ui.presentation.editor.edgeOcclusionFade
 import com.dpis.module.ui.presentation.workspace.PageChromeTokens
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenu
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenuGroup
+import com.dpis.module.ui.presentation.workspace.ToolbarOverflowMenuItem
 import com.dpis.module.ui.presentation.workspace.WorkspaceSearchCard
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -114,6 +122,12 @@ import kotlin.math.roundToInt
 
 private val AppListRowMinHeight = 72.dp
 private val AppListScrollbarThumbHeight = 36.dp
+private val AppListPageChromeHeight = 48.dp
+
+private enum class AppListBatchConfirmation {
+    REMOVE_SCOPE,
+    RESET_CONFIGS,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,6 +137,10 @@ fun AppWorkspaceContent(
     editorState: EditorPresentation.State? = null,
 ) {
     val focusManager = LocalFocusManager.current
+    val selectionActions = state.actions as? AppWorkspacePresentation.SelectionActions
+    BackHandler(enabled = state.selection.active && !state.selection.batchOperationRunning) {
+        selectionActions?.exitSelection()
+    }
     LaunchedEffect(state.restoreScopePromptShouldConsume) {
         if (state.restoreScopePromptShouldConsume) {
             state.actions.dismissRestoreScopePrompt()
@@ -148,6 +166,7 @@ fun AppWorkspaceContent(
         state.actions
     )
     var filterSheetVisible by remember { mutableStateOf(false) }
+    var pendingBatchConfirmation by remember { mutableStateOf<AppListBatchConfirmation?>(null) }
     val pagerState = rememberPagerState(
         initialPage = state.selectedPage.position(),
         pageCount = { AppListPage.entries.size }
@@ -214,7 +233,55 @@ fun AppWorkspaceContent(
                         )
                         .height(PageChromeTokens.SearchCardHeight)
                 )
-                PrimaryTabRow(
+                val currentPage =
+                    state.selection.page ?: AppListPage.fromPosition(pagerState.currentPage)
+                val currentItems = state.itemsFor(currentPage)
+                val selectedItems = state.selectionItemsFor(currentPage).filter {
+                    it.packageName in state.selection.packageNames
+                }
+                val visibleSelectedCount = currentItems.count {
+                    it.packageName in state.selection.packageNames
+                }
+                if (state.selection.active && selectionActions != null) {
+                    AppListSelectionToolbar(
+                        selectedCount = selectedItems.size,
+                        allVisibleSelected = currentItems.isNotEmpty() &&
+                                visibleSelectedCount == currentItems.size,
+                        operationRunning = state.selection.batchOperationRunning,
+                        scopeActionsAvailable = selectedItems.isNotEmpty() &&
+                                selectedItems.all { it.scopeKnown },
+                        canEnableConfig = selectedItems.any {
+                            it.hasDpisPackageConfig() && !it.dpisEnabled
+                        },
+                        canDisableConfig = selectedItems.any {
+                            it.dpisEnabled
+                        },
+                        canReset = selectedItems.any { it.hasDpisPackageConfig() },
+                        onClose = selectionActions::exitSelection,
+                        onSelectAll = { selectionActions.selectAll(currentPage, currentItems) },
+                        onInvert = { selectionActions.invertSelection(currentPage, currentItems) },
+                        onAddScope = {
+                            selectionActions.changeSelectedScope(
+                                AppListScopeTarget.IN_SCOPE,
+                                selectedItems,
+                            )
+                        },
+                        onRemoveScope = {
+                            pendingBatchConfirmation = AppListBatchConfirmation.REMOVE_SCOPE
+                        },
+                        onEnableConfig = {
+                            selectionActions.setSelectedConfigsEnabled(true, selectedItems)
+                        },
+                        onDisableConfig = {
+                            selectionActions.setSelectedConfigsEnabled(false, selectedItems)
+                        },
+                        onReset = {
+                            pendingBatchConfirmation = AppListBatchConfirmation.RESET_CONFIGS
+                        },
+                    )
+                } else {
+                    PrimaryTabRow(
+                        modifier = Modifier.height(AppListPageChromeHeight),
                         selectedTabIndex = pagerState.currentPage,
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ) {
@@ -233,6 +300,7 @@ fun AppWorkspaceContent(
                             )
                         }
                     }
+                }
                 val currentPageListState = when (pagerState.currentPage) {
                     AppListPage.ALL_APPS.position() -> allAppsListState
                     else -> configuredAppsListState
@@ -242,6 +310,7 @@ fun AppWorkspaceContent(
                     .fillMaxWidth()) {
                     HorizontalPager(
                         state = pagerState,
+                        userScrollEnabled = !state.selection.active,
                         modifier = Modifier.fillMaxSize()
                     ) { pageIndex ->
                         val page = AppListPage.fromPosition(pageIndex)
@@ -260,7 +329,9 @@ fun AppWorkspaceContent(
                             actions = state.actions,
                             query = state.query,
                             filterState = state.filterState,
-                            inputFocusManager = focusManager
+                            inputFocusManager = focusManager,
+                            selection = state.selection,
+                            selectionActions = selectionActions,
                         )
                     }
                     Box(
@@ -333,6 +404,219 @@ fun AppWorkspaceContent(
             onDismissRequest = { filterSheetVisible = false }
         )
     }
+    val selectedItems = state.selectionItemsFor(state.selection.page ?: state.selectedPage).filter {
+        it.packageName in state.selection.packageNames
+    }
+    when (pendingBatchConfirmation) {
+        AppListBatchConfirmation.REMOVE_SCOPE -> {
+            AppListBatchConfirmationDialog(
+                title = stringResource(R.string.app_list_batch_remove_scope_title),
+                message = stringResource(
+                    R.string.app_list_batch_remove_scope_message,
+                    selectedItems.size
+                ),
+                confirm = stringResource(R.string.scope_remove_button),
+                onConfirm = {
+                    pendingBatchConfirmation = null
+                    selectionActions?.changeSelectedScope(
+                        AppListScopeTarget.OUT_OF_SCOPE,
+                        selectedItems
+                    )
+                },
+                onDismiss = { pendingBatchConfirmation = null },
+            )
+        }
+
+        AppListBatchConfirmation.RESET_CONFIGS -> {
+            AppListBatchConfirmationDialog(
+                title = stringResource(R.string.app_list_batch_reset_title),
+                message = stringResource(R.string.app_list_batch_reset_message, selectedItems.size),
+                confirm = stringResource(R.string.dialog_disable_button),
+                onConfirm = {
+                    pendingBatchConfirmation = null
+                    selectionActions?.resetSelectedConfigs(selectedItems)
+                },
+                onDismiss = { pendingBatchConfirmation = null },
+            )
+        }
+
+        null -> Unit
+    }
+}
+
+@Composable
+private fun AppListSelectionToolbar(
+    selectedCount: Int,
+    allVisibleSelected: Boolean,
+    operationRunning: Boolean,
+    scopeActionsAvailable: Boolean,
+    canEnableConfig: Boolean,
+    canDisableConfig: Boolean,
+    canReset: Boolean,
+    onClose: () -> Unit,
+    onSelectAll: () -> Unit,
+    onInvert: () -> Unit,
+    onAddScope: () -> Unit,
+    onRemoveScope: () -> Unit,
+    onEnableConfig: () -> Unit,
+    onDisableConfig: () -> Unit,
+    onReset: () -> Unit,
+) {
+    var operationsExpanded by remember { mutableStateOf(false) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AppListPageChromeHeight)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = rememberClickAction(onClose), enabled = !operationRunning) {
+                Icon(
+                    painterResource(R.drawable.ic_close_24),
+                    contentDescription = stringResource(R.string.app_list_selection_close),
+                )
+            }
+            Text(
+                text = stringResource(R.string.app_list_selection_count, selectedCount),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            IconButton(
+                onClick = rememberClickAction(onSelectAll),
+                enabled = !operationRunning && !allVisibleSelected,
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_select_all_24),
+                    contentDescription = stringResource(R.string.app_list_select_all),
+                )
+            }
+            IconButton(
+                onClick = rememberClickAction(onInvert),
+                enabled = !operationRunning,
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_flip_24),
+                    contentDescription = stringResource(R.string.app_list_invert_selection),
+                )
+            }
+            Box {
+                IconButton(
+                    onClick = rememberClickAction { operationsExpanded = true },
+                    enabled = !operationRunning,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_more_vert_24),
+                        contentDescription = stringResource(R.string.app_list_batch_actions),
+                    )
+                }
+                ToolbarOverflowMenu(
+                    expanded = operationsExpanded,
+                    onDismiss = { operationsExpanded = false },
+                    groupCount = 3,
+                ) {
+                    ToolbarOverflowMenuGroup(index = 0, count = 3, spacingAfter = true) {
+                        ToolbarOverflowMenuItem(
+                            textRes = R.string.app_list_menu_scope,
+                            enabled = scopeActionsAvailable,
+                            onClick = {
+                                operationsExpanded = false
+                                onAddScope()
+                            },
+                        )
+                        ToolbarOverflowMenuItem(
+                            textRes = R.string.app_list_menu_remove,
+                            enabled = scopeActionsAvailable,
+                            onClick = {
+                                operationsExpanded = false
+                                onRemoveScope()
+                            },
+                        )
+                    }
+                    ToolbarOverflowMenuGroup(index = 1, count = 3, spacingAfter = true) {
+                        ToolbarOverflowMenuItem(
+                            textRes = R.string.app_list_menu_enable,
+                            enabled = canEnableConfig,
+                            onClick = {
+                                operationsExpanded = false
+                                onEnableConfig()
+                            },
+                        )
+                        ToolbarOverflowMenuItem(
+                            textRes = R.string.app_list_menu_disable,
+                            enabled = canDisableConfig,
+                            onClick = {
+                                operationsExpanded = false
+                                onDisableConfig()
+                            },
+                        )
+                    }
+                    ToolbarOverflowMenuGroup(index = 2, count = 3) {
+                        ToolbarOverflowMenuItem(
+                            textRes = R.string.app_list_menu_reset,
+                            enabled = canReset,
+                            onClick = {
+                                operationsExpanded = false
+                                onReset()
+                            },
+                        )
+                    }
+                }
+            }
+        }
+        // Keep the selection chrome boundary identical to the landscape pane divider.
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    }
+}
+
+@Composable
+private fun AppListBatchConfirmationDialog(
+    title: String,
+    message: String,
+    confirm: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val spacing = LocalSpacing.current
+    ModalDialog(onDismissRequest = onDismiss) {
+        DialogColumn(
+            title = { DialogTitle(title) },
+            actions = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                ) {
+                    OutlinedButton(
+                        onClick = rememberClickAction(onDismiss),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(ConfirmDialogUiTokens.ActionHeight),
+                        shape = ConfirmDialogUiTokens.ActionShape,
+                    ) {
+                        Text(stringResource(R.string.dialog_cancel_button))
+                    }
+                    Button(
+                        onClick = rememberClickAction(onConfirm),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(ConfirmDialogUiTokens.ActionHeight),
+                        shape = ConfirmDialogUiTokens.ActionShape,
+                    ) {
+                        Text(confirm)
+                    }
+                }
+            },
+        ) {
+            Text(message, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -348,7 +632,9 @@ private fun AppListPageContent(
     actions: AppWorkspacePresentation.Actions,
     query: String,
     filterState: AppListFilterState,
-    inputFocusManager: androidx.compose.ui.focus.FocusManager
+    inputFocusManager: androidx.compose.ui.focus.FocusManager,
+    selection: com.dpis.module.applist.AppListSelectionController.State,
+    selectionActions: AppWorkspacePresentation.SelectionActions?,
 ) {
     val showRestoreScopePrompt =
         page == AppListPage.CONFIGURED_APPS && restoreScopePromptVisible
@@ -388,7 +674,7 @@ private fun AppListPageContent(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (query.isNotBlank() || !filterState.isDefaultSelection) {
-                        androidx.compose.material3.Button(
+                        Button(
                             onClick = {
                                 actions.changeQuery("")
                                 actions.changeFilters(AppListFilterState.defaultState())
@@ -421,9 +707,21 @@ private fun AppListPageContent(
                                 item = item,
                                 systemScopeSelected = systemScopeSelected,
                                 iconSizePx = iconSizePx,
+                                selected = item.packageName in selection.packageNames,
+                                selectionMode = selection.active,
                                 onClick = {
-                                    actions.openApp(item)
-                                }
+                                    if (selection.active) selectionActions?.toggleSelection(
+                                        page,
+                                        item
+                                    )
+                                    else actions.openApp(item)
+                                },
+                                onLongClick = {
+                                    if (!selection.active) selectionActions?.beginSelection(
+                                        page,
+                                        item
+                                    )
+                                },
                             )
                         }
                     }
@@ -694,7 +992,10 @@ private fun AppRow(
     item: AppListItem,
     systemScopeSelected: Boolean,
     iconSizePx: Int,
-    onClick: () -> Unit
+    selected: Boolean,
+    selectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val resources = context.resources
@@ -725,9 +1026,19 @@ private fun AppRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = AppListRowMinHeight)
+            // Keep the original full-width card while reserving 2.dp on each vertical edge;
+            // adjacent selected cards therefore have a 4.dp visual gap without changing width.
+            .padding(vertical = 2.dp)
             .clip(RoundedCornerShape(8.dp))
-            .dpisClickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .background(
+                if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+            )
+            .dpisCombinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .semantics { this.selected = selected }
+            .padding(horizontal = 8.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -765,6 +1076,8 @@ private fun AppRow(
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -772,7 +1085,8 @@ private fun AppRow(
                 text = item.packageName,
                 modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -780,9 +1094,24 @@ private fun AppRow(
                 AppStatusFormatter.formatCompact(resources, statusInput),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (warn) MaterialTheme.colorScheme.error
+                else if (selected) MaterialTheme.colorScheme.onSecondaryContainer
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+        if (selectionMode) {
+            Icon(
+                painter = painterResource(
+                    if (selected) R.drawable.ic_check_circle_24 else R.drawable.ic_radio_button_unchecked_24,
+                ),
+                contentDescription = if (selected) {
+                    stringResource(R.string.app_list_selection_selected)
+                } else {
+                    stringResource(R.string.app_list_selection_unselected)
+                },
+                tint = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+                else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

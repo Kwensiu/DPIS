@@ -1,11 +1,9 @@
 package com.dpis.module.ui;
 
-import com.dpis.module.applist.AppListFilter;
+import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.AppListVisibleSections;
-
-import com.dpis.module.applist.AppListFilterState;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -104,6 +102,19 @@ public final class MainUiState {
     public MainUiState withApps(List<AppListItem> appsSnapshot) {
         return new MainUiState(appQuery, templateQuery, filterState, appsSnapshot,
                 refreshingPages, workspaceMode);
+    }
+
+    public MainUiState withDpisEnabled(Set<String> packageNames, boolean enabled) {
+        if (packageNames == null || packageNames.isEmpty()) {
+            return this;
+        }
+        List<AppListItem> updated = new ArrayList<>(appsSnapshot.size());
+        for (AppListItem item : appsSnapshot) {
+            updated.add(packageNames.contains(item.packageName)
+                    ? item.withDpisEnabled(enabled)
+                    : item);
+        }
+        return withApps(updated);
     }
 
     public MainUiState withWorkspaceMode(WorkspaceMode workspaceMode) {

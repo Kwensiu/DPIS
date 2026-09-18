@@ -2,7 +2,10 @@ package com.dpis.module.ui.presentation.workspace
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
@@ -10,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorPosition
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.PlainTooltip
@@ -19,8 +23,11 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.dpis.module.ui.presentation.design.rememberClickAction
 
 @Composable
@@ -49,6 +56,7 @@ internal fun ToolbarIconButton(
 internal fun ToolbarOverflowMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
+    groupCount: Int = 1,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DropdownMenuPopup(
@@ -58,7 +66,13 @@ internal fun ToolbarOverflowMenu(
             MenuAnchorPosition.Below,
         ),
     ) {
-        ToolbarOverflowMenuGroup(content = content)
+        if (groupCount == 1) {
+            ToolbarOverflowMenuGroup(content = content)
+        } else {
+            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                content()
+            }
+        }
     }
 }
 
@@ -67,21 +81,34 @@ internal fun ToolbarOverflowMenu(
 internal fun ToolbarOverflowMenuGroup(
     index: Int = 0,
     count: Int = 1,
+    spacingAfter: Boolean = false,
+    containerColor: Color = if (isSystemInDarkTheme()) {
+        MaterialTheme.colorScheme.surfaceContainerHigh
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    },
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    DropdownMenuGroup(
-        shapes = MenuDefaults.groupShape(index, count),
-        content = content,
-    )
+    Column(
+        modifier = if (spacingAfter) Modifier.padding(bottom = 4.dp) else Modifier,
+    ) {
+        DropdownMenuGroup(
+            shapes = MenuDefaults.groupShape(index, count),
+            containerColor = containerColor,
+            content = content,
+        )
+    }
 }
 
 @Composable
 internal fun ToolbarOverflowMenuItem(
     @StringRes textRes: Int,
+    enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     DropdownMenuItem(
         text = { Text(stringResource(textRes)) },
         onClick = rememberClickAction(onClick),
+        enabled = enabled,
     )
 }

@@ -1,7 +1,6 @@
 package com.dpis.module.config
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.FakePrefs
 
+import com.dpis.module.FakePrefs
 import com.dpis.module.fonts.FontApplyMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -89,6 +88,20 @@ class FontLifecycleTest {
 
         assertNull(store.getTargetTypefaceId("bin.mt.plus.canary"))
         assertFalse(store.getConfiguredPackages().contains("bin.mt.plus.canary"))
+    }
+
+    @Test
+    fun clearTargetPackageConfigsResetsSeveralPackagesWithOneConfiguredSetUpdate() {
+        val store = DpisConfigStore(FakePrefs())
+        assertTrue(store.setTargetTypefaceId("com.example.one", "font_one"))
+        assertTrue(store.setTargetTypefaceId("com.example.two", "font_two"))
+
+        assertTrue(store.clearTargetPackageConfigs(listOf("com.example.one", "com.example.two")))
+
+        assertNull(store.getTargetTypefaceId("com.example.one"))
+        assertNull(store.getTargetTypefaceId("com.example.two"))
+        assertFalse(store.getConfiguredPackages().contains("com.example.one"))
+        assertFalse(store.getConfiguredPackages().contains("com.example.two"))
     }
 
     @Test

@@ -11,15 +11,17 @@ import com.dpis.module.appconfig.presentation.MainWorkspaceEditorPostSaveEffects
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
+import com.dpis.module.applist.AppListScopeTarget
+import com.dpis.module.applist.AppListSelectionController
 import com.dpis.module.applist.AppWorkspacePresentation
 import com.dpis.module.applist.RestoreScopePromptPolicy
 import com.dpis.module.applist.RestoreScopePromptStore
+import com.dpis.module.applist.presentation.AppListBatchActionCoordinator
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession
 import com.dpis.module.templates.BatchScopeRequestCoordinator
 import com.dpis.module.tools.presentation.ToolsWorkspace
 import com.dpis.module.ui.MainUiAction
 import com.dpis.module.ui.MainViewModel
-import com.dpis.module.ui.SecondaryDestination
 
 /**
  * Owns onCreate host construction for the Compose editor, catalogue, tools,
@@ -37,6 +39,7 @@ class MainHostWiringSession(
         private set
     var appWorkspaceActions: AppWorkspacePresentation.Actions? = null
         private set
+    val appListSelectionController = AppListSelectionController()
     var settingsWorkspaceSession: SettingsWorkspaceSession? = null
         private set
     val restoreScopePromptStore by lazy { RestoreScopePromptStore(activity) }
@@ -81,12 +84,50 @@ class MainHostWiringSession(
             { activity.mainWorkspaceSession.refreshTools() },
             { activity.showToast(R.string.system_settings_save_failed) },
         )
-        appWorkspaceActions = object : AppWorkspacePresentation.Actions {
+        val batchActions = AppListBatchActionCoordinator(
+            object : AppListBatchActionCoordinator.Host {
+                override fun configStore() = activity.hookConfigStore
+
+                override fun showToast(messageResId: Int, vararg formatArgs: Any?) {
+                    activity.showToast(messageResId, *formatArgs)
+                }
+
+                override fun refreshApps() {
+                    activity.startupSession.requestAppsLoad()
+                    activity.mainWorkspaceSession.refreshApps()
+                }
+
+                override fun publishSelection() {
+                    activity.mainWorkspaceSession.refreshApps()
+                }
+
+                override fun publishDpisEnabled(
+                    packageNames: Collection<String>,
+                    enabled: Boolean
+                ) {
+                    activity.startupSession.publishDpisEnabled(packageNames, enabled)
+                }
+
+                override fun runOnUiThread(action: Runnable) {
+                    activity.runOnUiThread(action)
+                }
+
+                override fun runInBackground(action: Runnable) {
+                    // Preference commits and property cleanup can grow with the selected set.
+                    Thread(action, "dpis-app-list-reset").start()
+                }
+            },
+            appListSelectionController,
+        )
+        appWorkspaceActions = object : AppWorkspacePresentation.Actions,
+            AppWorkspacePresentation.SelectionActions {
             override fun changeQuery(query: String) {
                 activity.startupSession.dispatch(MainUiAction.queryChanged(query))
             }
 
             override fun changePage(page: AppListPage) {
+                if (appListSelectionController.isBatchOperationRunning()) return
+                appListSelectionController.exit()
                 activity.startupSession.setCurrentAppListPage(page, true)
                 activity.mainWorkspaceSession.refreshApps()
             }
@@ -102,6 +143,43 @@ class MainHostWiringSession(
 
             override fun openApp(item: AppListItem) {
                 composeAppEditorController?.open(item)
+            }
+
+            override fun beginSelection(page: AppListPage, item: AppListItem) {
+                appListSelectionController.begin(page, item.packageName)
+                activity.mainWorkspaceSession.refreshApps()
+            }
+
+            override fun toggleSelection(page: AppListPage, item: AppListItem) {
+                appListSelectionController.toggle(page, item.packageName)
+                activity.mainWorkspaceSession.refreshApps()
+            }
+
+            override fun exitSelection() {
+                appListSelectionController.exit()
+                activity.mainWorkspaceSession.refreshApps()
+            }
+
+            override fun selectAll(page: AppListPage, items: List<AppListItem>) {
+                appListSelectionController.selectAll(page, items.map { it.packageName })
+                activity.mainWorkspaceSession.refreshApps()
+            }
+
+            override fun invertSelection(page: AppListPage, items: List<AppListItem>) {
+                appListSelectionController.invert(page, items.map { it.packageName })
+                activity.mainWorkspaceSession.refreshApps()
+            }
+
+            override fun changeSelectedScope(target: AppListScopeTarget, items: List<AppListItem>) {
+                batchActions.changeScope(target, items)
+            }
+
+            override fun setSelectedConfigsEnabled(enabled: Boolean, items: List<AppListItem>) {
+                batchActions.setConfigsEnabled(enabled, items)
+            }
+
+            override fun resetSelectedConfigs(items: List<AppListItem>) {
+                batchActions.reset(items)
             }
 
             override fun updateScrollPosition(

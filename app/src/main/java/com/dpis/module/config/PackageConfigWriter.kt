@@ -34,12 +34,12 @@ internal class PackageConfigWriter(
 
     fun setViewportSpec(packageName: String, spec: ViewportTargetSpec?): Boolean {
         val normalized = spec ?: ViewportTargetSpec.off()
-        if (!normalized.isEnabled()) return clearViewport(packageName)
+        if (!normalized.isEnabled) return clearViewport(packageName)
         return commitWithConfiguredPackage(packageName) {
             persistence.removePackageViewportValueKeys(this, packageName)
             putString(persistence.keyForViewportTargetType(packageName), normalized.type())
             putString(persistence.keyForPackageViewportTargetType(packageName), normalized.type())
-            if (normalized.isRelativeScale()) {
+            if (normalized.isRelativeScale) {
                 putViewportScale(packageName, normalized.scaleMilliPercent())
             } else {
                 putInt(persistence.keyForViewportWidth(packageName), normalized.absoluteWidthDp())
@@ -210,6 +210,31 @@ internal class PackageConfigWriter(
         }
     }
 
+    /** Clears several DPIS-only package configurations in one preference transaction. */
+    fun clearPackageConfigs(packageNames: Collection<String>): Boolean {
+        val targets = packageNames.asSequence()
+            .map(String::trim)
+            .filter(String::isNotEmpty)
+            .toCollection(LinkedHashSet())
+        if (targets.isEmpty()) return true
+        val packages = LinkedHashSet(configuredPackages()).apply { removeAll(targets) }
+        return commit {
+            putStringSet(persistence.KEY_TARGET_PACKAGES, packages)
+            targets.forEach { packageName ->
+                persistence.removePackageConfigKeys(
+                    this,
+                    packageName,
+                    persistence.PACKAGE_CONFIG_KEYS
+                )
+                persistence.removePackageConfigKeys(
+                    this,
+                    packageName,
+                    persistence.PACKAGE_AGGREGATED_CONFIG_KEYS,
+                )
+            }
+        }
+    }
+
     fun pruneDefaultPackage(packageName: String?, isEnabled: Boolean): Boolean {
         if (packageName.isNullOrBlank() || !isEnabled || hasAnyAfterRemoving(packageName, emptyArray())) return true
         return removePackageValuesWhenEmpty(packageName, arrayOf(
@@ -331,10 +356,10 @@ internal class PackageConfigWriter(
         includeAppSpecific: Boolean
     ) {
         val viewport = value.viewportTargetSpec()
-        if (viewport.isEnabled()) {
+        if (viewport.isEnabled) {
             putString(persistence.keyForViewportTargetType(packageName), viewport.type())
             putString(persistence.keyForPackageViewportTargetType(packageName), viewport.type())
-            if (viewport.isRelativeScale()) {
+            if (viewport.isRelativeScale) {
                 val scale = viewport.scaleMilliPercent()
                 putInt(persistence.keyForViewportScaleMilliPercent(packageName), scale)
                 putInt(persistence.keyForPackageViewportScaleMilliPercent(packageName), scale)

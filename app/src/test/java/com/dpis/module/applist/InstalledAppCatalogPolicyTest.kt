@@ -211,6 +211,24 @@ class InstalledAppCatalogPolicyTest {
         assertFalse(items[1].installed)
     }
 
+    @Test
+    fun toAppListItemsPreservesDisabledOnlyStateInAllApps() {
+        val catalog = listOf(catalogItem("Maps", "com.example.maps", resolved = true))
+        val store = com.dpis.module.config.DpisConfigStore(com.dpis.module.FakePrefs())
+        store.setTargetDpisEnabled("com.example.maps", false)
+
+        val items = InstalledAppCatalogPolicy.toAppListItems(
+            catalog,
+            store,
+            emptySet(),
+            true,
+        )
+
+        assertEquals(1, items.size)
+        assertFalse(items[0].dpisEnabled)
+        assertFalse(items[0].configured)
+    }
+
     private fun catalogItem(
         label: String,
         packageName: String,

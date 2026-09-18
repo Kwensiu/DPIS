@@ -144,6 +144,10 @@ class MainViewModel(initialState: MainUiState?) {
             state = state.withRefreshingPage(action.page, true)
             emptyList()
         }
+        is MainUiAction.DpisEnabledChanged -> {
+            state = state.withDpisEnabled(action.packageNames, action.enabled)
+            emptyList()
+        }
         is MainUiAction.WorkspaceModeChanged -> {
             state = state.withWorkspaceMode(action.workspaceMode)
             emptyList()

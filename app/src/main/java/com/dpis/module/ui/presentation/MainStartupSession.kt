@@ -10,12 +10,11 @@ import com.dpis.module.applist.AppListFilterStateStore
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
-
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.presentation.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.presentation.getDefaultStartupPage
-import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.templates.presentation.TemplateWorkspaceActivitySession
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.MainUiAction
@@ -178,6 +177,10 @@ class MainStartupSession(
 
     fun dispatchInstalledAppsLoadFinished(requestId: Int, loaded: List<AppListItem>?) {
         dispatch(MainUiAction.appsLoadFinished(requestId, loaded))
+    }
+
+    fun publishDpisEnabled(packageNames: Collection<String>, enabled: Boolean) {
+        dispatch(MainUiAction.dpisEnabledChanged(packageNames, enabled))
     }
 
     fun onPageRefreshRequested(page: AppListPage?) {

@@ -293,7 +293,12 @@ object InstalledAppCatalogPolicy {
             val result = ArrayList<AppListItem>(catalog.size)
             for (item in catalog) {
                 val inScope = scopePackages?.contains(item.packageName) == true
-                val listItem = if (item.packageName in configuredPackages) {
+                // A disabled-only override is intentionally omitted from the configured-app
+                // page, but it still carries the user's effective enable state. Decode every
+                // real package record here so the All Apps page can offer Enable correctly.
+                val hasStoredPackageState = store?.hasRealPackageConfig(item.packageName) == true
+                val listItem =
+                    if (item.packageName in configuredPackages || hasStoredPackageState) {
                     createAppListItem(
                         store,
                         scopePackages,

@@ -108,7 +108,7 @@ open class PackageConfigStore internal constructor(
         return packageReader.viewportScaleMilliPercent(packageName)
     }
 
-    fun getTargetViewportType(packageName: String): String? {
+    fun getTargetViewportType(packageName: String): String {
         return packageReader.viewportType(packageName)
     }
 
@@ -376,6 +376,10 @@ open class PackageConfigStore internal constructor(
 
     fun clearTargetPackageConfig(packageName: String?): Boolean {
         return packageWriter.clearPackageConfig(packageName)
+    }
+
+    fun clearTargetPackageConfigs(packageNames: Collection<String>): Boolean {
+        return packageWriter.clearPackageConfigs(packageNames)
     }
 
     fun prunePackageIfOnlyDefaultConfigRemains(packageName: String?): Boolean {

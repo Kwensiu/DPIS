@@ -1,8 +1,8 @@
 package com.dpis.module.ui
 
+import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.AppListFilterState
 
 sealed class MainUiAction {
     class QueryChanged(val query: String) : MainUiAction()
@@ -18,6 +18,11 @@ sealed class MainUiAction {
     ) : MainUiAction()
 
     class MarkPageRefreshing(val page: AppListPage) : MainUiAction()
+
+    class DpisEnabledChanged(
+        val packageNames: Set<String>,
+        val enabled: Boolean,
+    ) : MainUiAction()
 
     class WorkspaceModeChanged(val workspaceMode: MainUiState.WorkspaceMode) : MainUiAction()
 
@@ -42,6 +47,10 @@ sealed class MainUiAction {
 
         @JvmStatic
         fun markPageRefreshing(page: AppListPage): MainUiAction = MarkPageRefreshing(page)
+
+        @JvmStatic
+        fun dpisEnabledChanged(packageNames: Collection<String>, enabled: Boolean): MainUiAction =
+            DpisEnabledChanged(packageNames.toSet(), enabled)
 
         @JvmStatic
         fun workspaceModeChanged(workspaceMode: MainUiState.WorkspaceMode): MainUiAction =

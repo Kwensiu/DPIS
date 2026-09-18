@@ -65,6 +65,7 @@ class MainWorkspaceSession(
                         selectedPage,
                         activity.startupSession.isSystemHookEnabledFromStore,
                         activity.scrollStateStore,
+                        hostWiring.appListSelectionController,
                         checkNotNull(hostWiring.appWorkspaceActions),
                         RestoreScopePromptPolicy.shouldShowCard(
                             pending,
@@ -136,6 +137,9 @@ class MainWorkspaceSession(
 
     fun applyWorkspaceMode(workspaceMode: MainUiState.WorkspaceMode?) {
         val mode = workspaceMode ?: MainUiState.WorkspaceMode.HOME
+        if (mode != MainUiState.WorkspaceMode.APP) {
+            hostWiring.appListSelectionController.exit()
+        }
         val enteringToolsWorkspace = mode == MainUiState.WorkspaceMode.TOOLS
             && renderedWorkspaceMode != MainUiState.WorkspaceMode.TOOLS
         renderedWorkspaceMode = mode

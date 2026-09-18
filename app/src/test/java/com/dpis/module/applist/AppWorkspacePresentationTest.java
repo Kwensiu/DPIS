@@ -8,16 +8,18 @@ import static org.junit.Assert.assertTrue;
 import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.AppListSelectionController;
+import com.dpis.module.applist.AppWorkspacePresentation;
+import com.dpis.module.applist.AppWorkspaceScrollStateStore;
 import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.ui.MainUiState;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
+import org.junit.Test;
+
 import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
-import com.dpis.module.applist.AppWorkspaceScrollStateStore;
-import com.dpis.module.applist.AppWorkspacePresentation;
-import com.dpis.module.ui.MainUiState;
 
 public final class AppWorkspacePresentationTest {
     @Test
@@ -81,6 +83,59 @@ public final class AppWorkspacePresentationTest {
         assertEquals(1, state.itemsFor(AppListPage.CONFIGURED_APPS).size());
         assertEquals("com.example.configured",
                 state.itemsFor(AppListPage.CONFIGURED_APPS).get(0).packageName);
+    }
+
+    @Test
+    public void createKeepsSelectionWhenQueryHidesTheSelectedPackage() {
+        AppListItem selected = app("All", "com.example.all", false);
+        AppListItem matching = app("Configured", "com.example.configured", true);
+        MainUiState mainState = MainUiState.initial(
+                "configured",
+                AppListFilterState.noAdditionalConstraints(),
+                List.of(selected, matching),
+                Collections.emptySet());
+        AppListSelectionController selection = new AppListSelectionController();
+        selection.begin(AppListPage.ALL_APPS, selected.packageName);
+
+        AppWorkspacePresentation.State state = AppWorkspacePresentation.create(
+                mainState,
+                AppListPage.ALL_APPS,
+                false,
+                new AppWorkspaceScrollStateStore(),
+                selection,
+                new Actions(),
+                false,
+                false);
+
+        assertEquals(1, state.itemsFor(AppListPage.ALL_APPS).size());
+        assertTrue(state.selection.getActive());
+        assertEquals(Collections.singleton(selected.packageName), state.selection.getPackageNames());
+    }
+
+    @Test
+    public void createReconcilesAgainstFullDirectoryWhenQueryHidesSelectedPackage() {
+        AppListItem selected = app("All", "com.example.all", false);
+        AppListItem matching = app("Configured", "com.example.configured", true);
+        MainUiState mainState = MainUiState.initial(
+                "configured",
+                AppListFilterState.noAdditionalConstraints(),
+                List.of(selected, matching),
+                Collections.emptySet());
+        AppListSelectionController selection = new AppListSelectionController();
+        selection.begin(AppListPage.ALL_APPS, selected.packageName);
+
+        AppWorkspacePresentation.create(
+                mainState,
+                AppListPage.ALL_APPS,
+                false,
+                new AppWorkspaceScrollStateStore(),
+                selection,
+                new Actions(),
+                false,
+                false);
+
+        assertEquals(Collections.singleton(selected.packageName),
+                selection.snapshotFor(AppListPage.ALL_APPS).getPackageNames());
     }
 
     private static AppListItem app(String label, String packageName, boolean configured) {
