@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.2.0](https://github.com/Kwensiu/DPIS/compare/v2.1.0...v2.2.0) (2026-09-19)
+
+
+### Features
+
+* implement multi-select and batch actions in app list ([72a0e1b](https://github.com/Kwensiu/DPIS/commit/72a0e1bf562baaa5da9f5dc7218e3066f76b85cf))
+* **l10n:** merge updated Russian translations ([40bbf55](https://github.com/Kwensiu/DPIS/commit/40bbf559080d61d8fadc5d1a6a0708f92436b916))
+* load dynamic donation ledger and extract sheet animation ([090e092](https://github.com/Kwensiu/DPIS/commit/090e092f51f14897fde6e39f9cd2e072b9388951))
+* restore modern app scope from backups ([9e36618](https://github.com/Kwensiu/DPIS/commit/9e3661856865221b83ce89064c5859e61ac404bc))
+
+
+### Bug Fixes
+
+* base app list scrollbar visibility on actual scrollability ([b28ed81](https://github.com/Kwensiu/DPIS/commit/b28ed81ce0c99672605368fc62b4a52637556ebd))
+* **deps:** update baselineprofile to v1.5.0-rc02 ([#127](https://github.com/Kwensiu/DPIS/issues/127)) ([507e970](https://github.com/Kwensiu/DPIS/commit/507e9702d328fc7c8183f05eb5dd6914409f946a))
+* **deps:** update dependency androidx.test.uiautomator:uiautomator to v2.4.0 ([#130](https://github.com/Kwensiu/DPIS/issues/130)) ([380b464](https://github.com/Kwensiu/DPIS/commit/380b464bb55f3121d16a91344cb33603fb1a9a60))
+* keep filter sheet actions visible and fade into owning surface ([8113909](https://github.com/Kwensiu/DPIS/commit/8113909100b8e30ba34d6d8bc6111e7683e714d4))
+* keep Parcelable CREATOR through release R8 ([4a68e9f](https://github.com/Kwensiu/DPIS/commit/4a68e9f225c712299434365d8429de0d6a69430d))
+* simplify home page title ([0f177b6](https://github.com/Kwensiu/DPIS/commit/0f177b6e75f77bb3d9201a592c57af8baa9ddf04))
+* **ui:** keep system-hook toggle debug-only and align settings chrome ([8795203](https://github.com/Kwensiu/DPIS/commit/87952037deb2fdf724e12605d428319511a084dd))
+
+
+### Performance
+
+* faster apps catalog fetch ([#141](https://github.com/Kwensiu/DPIS/issues/141)) ([c7f03c5](https://github.com/Kwensiu/DPIS/commit/c7f03c51f336c0b597c50bc4b60a78dfb09bf7d0))
+
+
+### Refactoring
+
+* align AppConfig persist and HyperOS native-proxy seams ([#139](https://github.com/Kwensiu/DPIS/issues/139)) ([5873aea](https://github.com/Kwensiu/DPIS/commit/5873aead716b056bb5eb68ca8dc17908aa533073))
+* Compose-first MainActivity and drop leftover XML editors ([#138](https://github.com/Kwensiu/DPIS/issues/138)) ([fd6ad92](https://github.com/Kwensiu/DPIS/commit/fd6ad929599150be4e293cb290fa64d1672127ee))
+* extract remaining host policies and convert leftover Kotlin hosts ([#137](https://github.com/Kwensiu/DPIS/issues/137)) ([a33edf4](https://github.com/Kwensiu/DPIS/commit/a33edf41535f651ff31a3ef3e79f8a86c60f0f90))
+* lock Compose appearance chrome and drop dead View XML ([#142](https://github.com/Kwensiu/DPIS/issues/142)) ([d8fff70](https://github.com/Kwensiu/DPIS/commit/d8fff70e4e5cf968f710ef314e9c924aa6f19b72))
+* own confirm dialogs in Compose and extract diagnostic session ([#135](https://github.com/Kwensiu/DPIS/issues/135)) ([e68c9ed](https://github.com/Kwensiu/DPIS/commit/e68c9edc09221c9d464ea3c40cf68c48f5f42c70))
+* own font page dialogs in Compose state ([#134](https://github.com/Kwensiu/DPIS/issues/134)) ([7a2be1f](https://github.com/Kwensiu/DPIS/commit/7a2be1f943fab9a009cd8e37b04f35e651e83057))
+* own license detail dialog in Compose state ([#132](https://github.com/Kwensiu/DPIS/issues/132)) ([5275b74](https://github.com/Kwensiu/DPIS/commit/5275b74f0b404348158e0bbf055df593f3ca7126))
+* own template sort dialog in Compose state ([#133](https://github.com/Kwensiu/DPIS/issues/133)) ([e4a99d0](https://github.com/Kwensiu/DPIS/commit/e4a99d0e5e33a0e105f1351edb44b237320dc06a))
+* place template workspace hosts under presentation ([#136](https://github.com/Kwensiu/DPIS/issues/136)) ([7c01472](https://github.com/Kwensiu/DPIS/commit/7c01472429a0bf5f835cfcba3c4047d17c0d2006))
+* restore secondary Activities and align settings ownership ([#140](https://github.com/Kwensiu/DPIS/issues/140)) ([60ae307](https://github.com/Kwensiu/DPIS/commit/60ae307decd4085b295c1d080bed827db0fb47b1))
+
 ## [2.1.0](https://github.com/Kwensiu/DPIS/compare/v2.0.0...v2.1.0) (2026-09-08)
 
 
