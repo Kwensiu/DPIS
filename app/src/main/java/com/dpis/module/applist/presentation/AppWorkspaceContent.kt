@@ -679,7 +679,7 @@ private fun AppListPageContent(
                         stringResource(R.string.quick_template_targets_empty),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (query.isNotBlank() || !filterState.isDefaultSelection) {
+                    if (query.isNotBlank() || !filterState.isDefaultSelection()) {
                         Button(
                             onClick = {
                                 actions.changeQuery("")
@@ -876,7 +876,7 @@ private fun AppWorkspaceEmptyDetail(modifier: Modifier = Modifier) {
             text = stringResource(R.string.land_detail_empty_message),
             modifier = Modifier.padding(top = 6.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
     }
 }

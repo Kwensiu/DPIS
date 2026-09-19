@@ -63,35 +63,35 @@ import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.lazy.TransformationSpec
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
-import com.dpis.module.applist.AppWorkspacePresentation
-import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.ui.SecondaryDestination
-import com.dpis.module.runtime.ConfigStoreFactory
-import com.dpis.module.R
 import com.dpis.module.BuildConfig
-import com.dpis.module.settings.SettingsUiState
-import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
+import com.dpis.module.R
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
+import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.SystemFontRegistry
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.tools.SystemFontScaleToolState
-import com.dpis.module.templates.presentation.QuickTemplateSortDialog
+import com.dpis.module.runtime.ConfigStoreFactory
+import com.dpis.module.settings.SettingsUiState
+import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.templates.presentation.QuickTemplateSortDialog
 import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
-import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.templates.presentation.rememberTemplateEditorDraftState
+import com.dpis.module.tools.SystemFontScaleToolState
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.SecondaryDestination
+import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.presentation.LocalSecondaryNavigation
-import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
 import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.design.toWearColorScheme
-import com.dpis.module.applist.presentation.rememberInstalledAppIcon
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
 
@@ -153,12 +153,11 @@ private fun WearAppFilterPage(
             enabled = true,
         ) { checked ->
             onFilterChanged(
-                AppListFilterState(
-                    checked,
-                    filterState.injectedOnly(),
-                    filterState.widthConfiguredOnly(),
-                    filterState.fontConfiguredOnly(),
-                )
+                if (checked) {
+                    filterState.selectAllAppTypes()
+                } else {
+                    filterState.selectAppTypes(setOf(AppListFilterState.AppType.USER))
+                }
             )
         }
         wearSwitch(
@@ -166,14 +165,9 @@ private fun WearAppFilterPage(
             label = R.string.filter_scoped_only,
             checked = filterState.injectedOnly(),
             enabled = true,
-        ) { checked ->
+        ) { _ ->
             onFilterChanged(
-                AppListFilterState(
-                    filterState.showSystemApps(),
-                    checked,
-                    filterState.widthConfiguredOnly(),
-                    filterState.fontConfiguredOnly(),
-                )
+                filterState.toggleConfiguration(AppListFilterState.ConfigurationFilter.INJECTED)
             )
         }
         wearSwitch(
@@ -181,14 +175,9 @@ private fun WearAppFilterPage(
             label = R.string.filter_width_only,
             checked = filterState.widthConfiguredOnly(),
             enabled = true,
-        ) { checked ->
+        ) { _ ->
             onFilterChanged(
-                AppListFilterState(
-                    filterState.showSystemApps(),
-                    filterState.injectedOnly(),
-                    checked,
-                    filterState.fontConfiguredOnly(),
-                )
+                filterState.toggleConfiguration(AppListFilterState.ConfigurationFilter.VIEWPORT)
             )
         }
         wearSwitch(
@@ -196,14 +185,9 @@ private fun WearAppFilterPage(
             label = R.string.filter_font_only,
             checked = filterState.fontConfiguredOnly(),
             enabled = true,
-        ) { checked ->
+        ) { _ ->
             onFilterChanged(
-                AppListFilterState(
-                    filterState.showSystemApps(),
-                    filterState.injectedOnly(),
-                    filterState.widthConfiguredOnly(),
-                    checked,
-                )
+                filterState.toggleConfiguration(AppListFilterState.ConfigurationFilter.FONT)
             )
         }
     }

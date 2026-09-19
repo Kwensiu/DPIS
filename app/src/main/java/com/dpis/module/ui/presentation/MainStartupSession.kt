@@ -353,17 +353,50 @@ class MainStartupSession(
         if (savedInstanceState != null) {
             query = savedInstanceState.getString(STATE_CURRENT_QUERY, "") ?: ""
             templateQuery = savedInstanceState.getString(STATE_TEMPLATE_QUERY, "") ?: ""
-            filterState = AppListFilterState(
-                parseAppType(
+            val selectedAppTypes = EnumSet.noneOf(AppListFilterState.AppType::class.java)
+            if (savedInstanceState.containsKey(STATE_FILTER_USER_SELECTED)
+                || savedInstanceState.containsKey(STATE_FILTER_SYSTEM_SELECTED)
+            ) {
+                if (savedInstanceState.getBoolean(STATE_FILTER_USER_SELECTED, false)) {
+                    selectedAppTypes.add(AppListFilterState.AppType.USER)
+                }
+                if (savedInstanceState.getBoolean(STATE_FILTER_SYSTEM_SELECTED, false)) {
+                    selectedAppTypes.add(AppListFilterState.AppType.SYSTEM)
+                }
+            } else {
+                when (parseAppType(
                     savedInstanceState.getString(STATE_FILTER_APP_TYPE),
                     savedInstanceState.getBoolean(STATE_FILTER_SHOW_SYSTEM, false),
-                ),
-                savedInstanceState.getBoolean(STATE_FILTER_INJECTED_ONLY, false),
-                savedInstanceState.getBoolean(STATE_FILTER_DISABLED_ONLY, false),
-                savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false),
-                savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false),
-                savedInstanceState.getBoolean(STATE_FILTER_TYPEFACE_ONLY, false),
-                savedInstanceState.getBoolean(STATE_FILTER_HOOK_ONLY, false),
+                )) {
+                    AppListFilterState.AppType.USER -> selectedAppTypes.add(AppListFilterState.AppType.USER)
+                    AppListFilterState.AppType.SYSTEM -> selectedAppTypes.add(AppListFilterState.AppType.SYSTEM)
+                    AppListFilterState.AppType.ALL -> Unit
+                }
+            }
+            val selectedConfigurationFilters = EnumSet.noneOf(
+                AppListFilterState.ConfigurationFilter::class.java,
+            )
+            if (savedInstanceState.getBoolean(STATE_FILTER_INJECTED_ONLY, false)) {
+                selectedConfigurationFilters.add(AppListFilterState.ConfigurationFilter.INJECTED)
+            }
+            if (savedInstanceState.getBoolean(STATE_FILTER_DISABLED_ONLY, false)) {
+                selectedConfigurationFilters.add(AppListFilterState.ConfigurationFilter.DISABLED)
+            }
+            if (savedInstanceState.getBoolean(STATE_FILTER_WIDTH_ONLY, false)) {
+                selectedConfigurationFilters.add(AppListFilterState.ConfigurationFilter.VIEWPORT)
+            }
+            if (savedInstanceState.getBoolean(STATE_FILTER_FONT_ONLY, false)) {
+                selectedConfigurationFilters.add(AppListFilterState.ConfigurationFilter.FONT)
+            }
+            if (savedInstanceState.getBoolean(STATE_FILTER_TYPEFACE_ONLY, false)) {
+                selectedConfigurationFilters.add(AppListFilterState.ConfigurationFilter.TYPEFACE)
+            }
+            if (savedInstanceState.getBoolean(STATE_FILTER_HOOK_ONLY, false)) {
+                selectedConfigurationFilters.add(AppListFilterState.ConfigurationFilter.HOOK)
+            }
+            filterState = AppListFilterState(
+                selectedAppTypes,
+                selectedConfigurationFilters,
                 parseSortOrder(savedInstanceState.getString(STATE_FILTER_SORT_ORDER)),
                 savedInstanceState.getBoolean(STATE_FILTER_REVERSE, false),
             )
@@ -462,6 +495,8 @@ class MainStartupSession(
         outState.putString(STATE_TEMPLATE_QUERY, state.templateQuery)
         outState.putString(STATE_WORKSPACE_MODE, state.workspaceMode.name)
         outState.putBoolean(STATE_FILTER_SHOW_SYSTEM, state.filterState.showSystemApps())
+        outState.putBoolean(STATE_FILTER_USER_SELECTED, state.filterState.userAppsSelected())
+        outState.putBoolean(STATE_FILTER_SYSTEM_SELECTED, state.filterState.systemAppsSelected())
         outState.putBoolean(STATE_FILTER_INJECTED_ONLY, state.filterState.injectedOnly())
         outState.putBoolean(STATE_FILTER_WIDTH_ONLY, state.filterState.widthConfiguredOnly())
         outState.putBoolean(STATE_FILTER_FONT_ONLY, state.filterState.fontConfiguredOnly())
@@ -494,6 +529,8 @@ class MainStartupSession(
         const val STATE_CURRENT_PAGE = "state.current_page"
         const val STATE_WORKSPACE_MODE = "state.workspace_mode"
         const val STATE_FILTER_SHOW_SYSTEM = "state.filter.show_system"
+        const val STATE_FILTER_USER_SELECTED = "state.filter.user_selected"
+        const val STATE_FILTER_SYSTEM_SELECTED = "state.filter.system_selected"
         const val STATE_FILTER_INJECTED_ONLY = "state.filter.injected_only"
         const val STATE_FILTER_WIDTH_ONLY = "state.filter.width_only"
         const val STATE_FILTER_FONT_ONLY = "state.filter.font_only"
