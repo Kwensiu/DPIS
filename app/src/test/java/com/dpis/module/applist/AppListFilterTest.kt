@@ -3,6 +3,7 @@ package com.dpis.module
 import com.dpis.module.applist.AppListFilter
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.fonts.FontApplyMode
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -191,6 +192,48 @@ class AppListFilterTest {
         assertFalse(state.injectedOnly())
         assertFalse(state.widthConfiguredOnly())
         assertFalse(state.fontConfiguredOnly())
+    }
+
+    @Test
+    fun filterStateOperationsKeepSelectionsAndSortOptionsConsistent() {
+        val default = AppListFilterState.defaultState()
+        assertFalse(default.showSystemApps())
+        assertTrue(default.allConfigurationSelected())
+        assertTrue(default.isDefaultSelection())
+        assertEquals(AppListFilterState.AppType.ALL, default.appType())
+        assertEquals(AppListFilterState.SortOrder.NAME, default.sortOrder)
+
+        val userOnly = default.toggleAppType(AppListFilterState.AppType.USER)
+        assertTrue(userOnly.userAppsSelected())
+        assertEquals(AppListFilterState.AppType.USER, userOnly.appType())
+
+        val userAndSystem = userOnly.toggleAppType(AppListFilterState.AppType.SYSTEM)
+        assertTrue(userAndSystem.userAppsSelected())
+        assertTrue(userAndSystem.systemAppsSelected())
+        assertEquals(AppListFilterState.AppType.USER, userAndSystem.appType())
+
+        val systemOnly = userAndSystem.toggleAppType(AppListFilterState.AppType.USER)
+        assertEquals(AppListFilterState.AppType.SYSTEM, systemOnly.appType())
+        assertTrue(systemOnly.selectAppTypes(emptySet()).allAppsSelected())
+        assertTrue(systemOnly.selectAllAppTypes().allAppsSelected())
+
+        val configured = default.toggleConfiguration(AppListFilterState.ConfigurationFilter.FONT)
+        assertFalse(configured.allConfigurationSelected())
+        assertFalse(configured.isDefaultSelection())
+        assertTrue(
+            configured.toggleConfiguration(AppListFilterState.ConfigurationFilter.FONT)
+                .allConfigurationSelected()
+        )
+        assertTrue(
+            configured.toggleConfiguration(AppListFilterState.ConfigurationFilter.ALL)
+                .allConfigurationSelected()
+        )
+
+        val changed = configured
+            .withSortOrder(AppListFilterState.SortOrder.UPDATED)
+            .withReverseOrder(true)
+        assertEquals(AppListFilterState.SortOrder.UPDATED, changed.sortOrder())
+        assertTrue(changed.reverseOrder())
     }
 
     @Test
