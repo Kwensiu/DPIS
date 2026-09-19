@@ -287,8 +287,8 @@
     <string name="quick_template_missing">模板已不存在</string>
     <string name="quick_template_save_success">已保存模板</string>
     <string name="quick_template_save_failed">保存模板失败</string>
-    <string name="quick_template_delete_title">删除模板？</string>
-    <string name="quick_template_delete_message">删除 &quot;%1$s&quot;？已写入的应用配置不受影响。</string>
+    <string name="quick_template_delete_title">删除模板</string>
+    <string name="quick_template_delete_message">即将删除模板 %1$s，不会影响应用配置，此操作无法撤销</string>
     <string name="quick_template_delete_success">已删除模板</string>
     <string name="quick_template_delete_failed">删除模板失败</string>
     <string name="quick_template_create_action">新建模板</string>
@@ -344,10 +344,10 @@
     <string name="app_list_menu_reset">重置</string>
     <string name="app_list_selection_selected">已选中</string>
     <string name="app_list_selection_unselected">未选中</string>
-    <string name="app_list_batch_remove_scope_title">移出选中的应用？</string>
-    <string name="app_list_batch_remove_scope_message">将 %1$d 个选中的应用移出 LSPosed 作用域，保留其 DPIS 配置。</string>
+    <string name="app_list_batch_remove_scope_title">移除应用作用域</string>
+    <string name="app_list_batch_remove_scope_message">即将移除 %1$d 个应用的作用域，应用配置不会受到影响，此操作无法撤销</string>
     <string name="app_list_batch_reset_title">重置应用配置</string>
-    <string name="app_list_batch_reset_message">重置 %1$d 个选中应用的 DPIS 专属配置，保留其 LSPosed 作用域。</string>
+    <string name="app_list_batch_reset_message">即将清理 %1$d 个应用配置，此操作无法撤销</string>
     <string name="app_list_batch_scope_unavailable">DPIS 尚无法读取 LSPosed 作用域，无法进行作用域操作。</string>
     <string name="app_list_batch_scope_result">已更新 %1$d 个应用的作用域；跳过 %2$d 个</string>
     <string name="app_list_batch_scope_failed">更新选中应用的作用域失败</string>
