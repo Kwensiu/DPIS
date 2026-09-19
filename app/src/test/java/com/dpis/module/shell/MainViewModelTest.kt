@@ -5,6 +5,10 @@ import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.fonts.FontApplyMode
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.MainViewModel
 import com.dpis.module.viewport.ViewportApplyMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,10 +16,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.ui.MainUiAction
-import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.MainViewModel
 
 class MainViewModelTest {
     @Test
@@ -243,7 +243,16 @@ class MainViewModelTest {
         viewModel.dispatch(MainUiAction.queryChanged("alpha"))
         assertEquals(2, viewModel.state.visibleItems(AppListPage.ALL_APPS).size)
 
-        viewModel.dispatch(MainUiAction.filterChanged(AppListFilterState(false, false, false, false)))
+        viewModel.dispatch(
+            MainUiAction.filterChanged(
+                AppListFilterState(
+                    setOf(AppListFilterState.AppType.USER),
+                    emptySet(),
+                    AppListFilterState.SortOrder.NAME,
+                    false,
+                )
+            )
+        )
         val filtered = viewModel.state.visibleItems(AppListPage.ALL_APPS)
         assertEquals(1, filtered.size)
         assertEquals("com.example.alpha", filtered[0].packageName)
@@ -253,7 +262,12 @@ class MainViewModelTest {
     fun workspaceModeKeepsSeparateAppAndTemplateSearchQueries() {
         val initial = MainUiState.initial(
             "alpha",
-            AppListFilterState(false, true, false, false),
+            AppListFilterState(
+                setOf(AppListFilterState.AppType.USER),
+                setOf(AppListFilterState.ConfigurationFilter.INJECTED),
+                AppListFilterState.SortOrder.NAME,
+                false,
+            ),
             listOf(
                 app("Alpha Tool", "com.example.alpha", true, false),
                 app("Beta Tool", "com.example.beta", true, false),
