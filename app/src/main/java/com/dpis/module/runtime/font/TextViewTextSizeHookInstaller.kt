@@ -6,6 +6,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.FontDebugStatsReporter
+import com.dpis.module.fonts.FontMutationScheduler
 import com.dpis.module.fonts.TextViewFontProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker.UnitKind
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
@@ -119,6 +120,23 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         return@Hooker result
                     }
                     val forcedPx = originalPx * factor
+                    val schedule = FontMutationScheduler.decide(
+                        originalPx,
+                        thisObject.textSize,
+                        forcedPx,
+                        factor,
+                        false,
+                        FontMutationScheduler.currentTransactionTarget(),
+                        false
+                    )
+                    if (schedule.action() != FontMutationScheduler.Action.APPLY) {
+                        if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
+                            RuntimeHotPathEvents.kept(packageName, ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
+                                "reason=scheduler_keep, view=" + thisObject.javaClass.getName())
+                            return@Hooker null
+                        }
+                        return@Hooker result
+                    }
                     if (!ForceTextSizeHookRuntime.shouldApplyTargetSize(thisObject, forcedPx)) {
                         RuntimeHotPathEvents.skipped(
                             packageName,
@@ -148,7 +166,12 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             System.nanoTime()
                         else
                             0L
-                        thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
+                        FontMutationScheduler.withMutation(forcedPx, factor) {
+                            thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
+                        }
+                        thisObject.paint?.let { paint ->
+                            com.dpis.module.fonts.PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
+                        }
                         val frameworkDurationNs = if (diagnosticCaptureActive) max(
                             0L,
                             System.nanoTime() - frameworkStartedAt
@@ -297,6 +320,23 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         return@Hooker result
                     }
                     val forcedPx = originalPx * factor
+                    val schedule = FontMutationScheduler.decide(
+                        originalPx,
+                        thisObject.textSize,
+                        forcedPx,
+                        factor,
+                        false,
+                        FontMutationScheduler.currentTransactionTarget(),
+                        false
+                    )
+                    if (schedule.action() != FontMutationScheduler.Action.APPLY) {
+                        if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
+                            RuntimeHotPathEvents.kept(packageName, "textview_sp_rewrite",
+                                "reason=scheduler_keep, view=" + thisObject.javaClass.getName())
+                            return@Hooker null
+                        }
+                        return@Hooker result
+                    }
                     if (!ForceTextSizeHookRuntime.shouldApplyTargetSize(thisObject, forcedPx)) {
                         RuntimeHotPathEvents.skipped(
                             packageName,
@@ -327,7 +367,12 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             System.nanoTime()
                         else
                             0L
-                        thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
+                        FontMutationScheduler.withMutation(forcedPx, factor) {
+                            thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
+                        }
+                        thisObject.paint?.let { paint ->
+                            com.dpis.module.fonts.PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
+                        }
                         val frameworkDurationNs = if (diagnosticCaptureActive) max(
                             0L,
                             System.nanoTime() - frameworkStartedAt

@@ -239,7 +239,7 @@ object ForceTextSizeHookRuntime {
         currentPx: Float,
         factor: Float,
         strongerDomainOwns: Boolean
-    ): PaintFallbackDecision = PaintFallbackResolver.resolve(
+    ): FontMutationScheduler.Decision = PaintTextSizeHookInstaller.resolvePaintFallbackDecisionForTest(
         paint, incomingPx, currentPx, factor, strongerDomainOwns
     )
 

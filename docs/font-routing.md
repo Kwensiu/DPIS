@@ -170,6 +170,15 @@ showed repeated Paint fallback applications and TextView setter reinforcement.
 The optimization targets duplicate synchronous writes and layout invalidation;
 it does not claim that every remaining frame delay is caused by DPIS.
 
+The synchronous field scheduler has three cooperating layers: per-object Paint
+provenance slots, an in-flight thread-local mutation stack for nested setters,
+and a layout-stack heuristic for stronger TextView/resource ownership. The
+stack is identity-bound and is not a process-global `(px, factor)` rewrite
+cache: an independent Paint may legitimately submit the same unscaled size
+later and must still be scaled once. A nested setter matching the active
+transaction target passes through the original argument and is counted as
+`kept`, not as a second `applied` mutation.
+
 The app-process `resources_font` route may see two different runtime meanings
 for the same target factor:
 

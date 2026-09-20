@@ -5,6 +5,7 @@ import android.text.TextPaint
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.fonts.FontDebugStatsReporter
+import com.dpis.module.fonts.FontMutationScheduler
 import com.dpis.module.fonts.PaintProvenanceTracker
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import io.github.libxposed.api.XposedInterface
@@ -82,31 +83,30 @@ internal object PaintTextSizeHookInstaller {
                     }
                     val incoming = chain.getArg(0) as Float
                     val currentPx = thisObject.getTextSize()
-                    var context = PaintFallbackResolver.provisional(ForceTextSizeHookRuntime.isInsideTextViewSetTextSize)
-                    var decision = PaintFallbackResolver.resolve(
-                        thisObject,
-                        incoming,
-                        currentPx,
-                        factor,
-                        context.strongerDomainOwns
+                    PaintProvenanceTracker.invalidateIfDrifted(thisObject, currentPx)
+                    val transactionTarget = FontMutationScheduler.currentTransactionTarget()
+                    val alreadyApplied = PaintProvenanceTracker.isKnownApplied(thisObject, incoming, factor)
+                    var targetPx = PaintProvenanceTracker.resolveScaled(thisObject, incoming, factor)
+                    var strongerDomainOwns = ForceTextSizeHookRuntime.isInsideTextViewSetTextSize
+                    var decision = FontMutationScheduler.decide(
+                        incoming, currentPx, targetPx, factor, strongerDomainOwns,
+                        transactionTarget, alreadyApplied
                     )
-                    if (decision.action == PaintFallbackAction.WRITE) {
-                        // Defer the stack snapshot to the write gate (see the
-                        // Paint.setTextSize hook above for the rationale).
-                        context = PaintFallbackResolver.capture(
-                            thisObject, incoming, ForceTextSizeHookRuntime.isInsideTextViewSetTextSize,
-                            ForceTextSizeHookRuntime::isPaintSizeOwnedByTextLayout, ForceTextSizeHookRuntime::summarizePaintFallbackStack
-                        )
-                        decision = PaintFallbackResolver.resolve(
-                            thisObject,
-                            incoming,
-                            currentPx,
-                            factor,
-                            context.strongerDomainOwns
-                        )
+                    var detailSuffix = ""
+                    if (decision.action() == FontMutationScheduler.Action.APPLY) {
+                        val trace = Thread.currentThread().stackTrace
+                        strongerDomainOwns = strongerDomainOwns ||
+                                ForceTextSizeHookRuntime.isPaintSizeOwnedByTextLayout(trace)
+                        if (strongerDomainOwns) {
+                            decision = FontMutationScheduler.decide(
+                                incoming, currentPx, targetPx, factor, true,
+                                transactionTarget, alreadyApplied
+                            )
+                            detailSuffix = ForceTextSizeHookRuntime.summarizePaintFallbackStack(trace)
+                        }
                     }
-                    if (decision.action != PaintFallbackAction.WRITE) {
-                        if (decision.action == PaintFallbackAction.KEEP) {
+                    if (decision.action() != FontMutationScheduler.Action.APPLY) {
+                        if (decision.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
                             RuntimeHotPathEvents.kept(
                                 packageName,
                                 eventName,
@@ -117,14 +117,22 @@ internal object PaintTextSizeHookInstaller {
                             )
                             return@Hooker null
                         }
+                        if (decision.action() == FontMutationScheduler.Action.PASS_THROUGH) {
+                            PaintProvenanceTracker.recordApplied(thisObject, incoming, factor)
+                            RuntimeHotPathEvents.kept(
+                                packageName,
+                                eventName,
+                                "reason=transaction_target, paint=" + thisObject.javaClass.getName()
+                            )
+                        }
                         return@Hooker chain.proceed()
                     }
                     val detail = ("paint=" + thisObject.javaClass.getName()
                             + ", in=" + incoming
-                            + ", out=" + decision.adjustedPx
+                            + ", out=" + decision.targetPx()
                             + ", factor=" + factor
                             + ", percent=" + targetPercent
-                            + context.detailSuffix())
+                            + detailSuffix)
                     RuntimeHotPathEvents.begin(
                         packageName,
                         eventName,
@@ -132,10 +140,12 @@ internal object PaintTextSizeHookInstaller {
                     )
                     var result: Any?
                     try {
-                        result = chain.proceed(arrayOf<Any>(decision.adjustedPx))
+                        result = FontMutationScheduler.withMutation(decision.targetPx(), factor) {
+                            chain.proceed(arrayOf<Any>(decision.targetPx()))
+                        }
                         PaintProvenanceTracker.recordApplied(
                             thisObject,
-                            decision.adjustedPx,
+                            decision.targetPx(),
                             factor
                         )
                         RuntimeHotPathEvents.applied(
@@ -160,7 +170,7 @@ internal object PaintTextSizeHookInstaller {
                         ForceTextSizeHookRuntime.logSampled(
                             ForceTextSizeHookRuntime.buildHotFontLogKey(packageName, sampleName),
                             ("DPIS_FONT " + overrideLabel + ": in=" + incoming
-                                    + ", out=" + decision.adjustedPx
+                                    + ", out=" + decision.targetPx()
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent),
                             HOT_LOG_INTERVAL
@@ -183,13 +193,16 @@ internal object PaintTextSizeHookInstaller {
         currentPx: Float,
         factor: Float,
         strongerDomainOwns: Boolean
-    ): PaintFallbackDecision {
-        return PaintFallbackResolver.resolve(
-            paint,
+    ): FontMutationScheduler.Decision {
+        val targetPx = PaintProvenanceTracker.resolveScaled(paint, incomingPx, factor)
+        return FontMutationScheduler.decide(
             incomingPx,
             currentPx,
+            targetPx,
             factor,
-            strongerDomainOwns
+            strongerDomainOwns,
+            null,
+            PaintProvenanceTracker.isKnownApplied(paint, incomingPx, factor)
         )
     }
 }

@@ -138,10 +138,9 @@ public class ForceTextSizeRegressionReferenceTest {
         assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"));
         assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"));
         assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"));
-        assertTrue(source.contains("PaintFallbackResolver.resolve("));
-        assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
+        assertTrue(source.contains("FontMutationScheduler.decide("));
+        assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.targetPx()))"));
         assertTrue(source.contains("summarizePaintFallbackStack("));
-        assertTrue(source.contains("detailSuffix()"));
         assertFalse(source.contains("paint.setTextSize(adjusted)"));
         assertFalse(source.contains("textPaint.setTextSize(adjusted)"));
         assertFalse(source.contains("isPxTextHandledByResources"));
@@ -154,7 +153,7 @@ public class ForceTextSizeRegressionReferenceTest {
     public void paintFallbackUsesArgumentReplacementInsteadOfPostWrite() throws Exception {
         String source = read("src/main/java/com/dpis/module/runtime/font/PaintTextSizeHookInstaller.kt");
 
-        assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.adjustedPx))"));
+        assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.targetPx()))"));
         assertTrue(source.contains("installPaintTextSizeHook("));
         assertFalse(source.contains("paint.setTextSize(adjusted)"));
         assertFalse(source.contains("textPaint.setTextSize(adjusted)"));

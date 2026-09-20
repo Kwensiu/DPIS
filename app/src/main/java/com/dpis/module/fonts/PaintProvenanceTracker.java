@@ -51,13 +51,7 @@ public final class PaintProvenanceTracker {
                 return Resolution.skip(incomingPx);
             }
             float adjustedPx = entry.resolveScaledLocked(incomingPx, factor);
-            FontMutationScheduler.Decision schedule = FontMutationScheduler.decide(
-                    incomingPx,
-                    currentPx,
-                    adjustedPx,
-                    factor,
-                    false);
-            if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
+            if (FontFieldRewriteMath.approximatelyEqual(currentPx, adjustedPx)) {
                 return Resolution.keep(incomingPx);
             }
             if (FontFieldRewriteMath.approximatelyEqual(adjustedPx, incomingPx)) {

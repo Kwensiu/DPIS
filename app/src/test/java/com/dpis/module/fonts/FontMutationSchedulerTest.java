@@ -29,4 +29,30 @@ public class FontMutationSchedulerTest {
 
         assertEquals(FontMutationScheduler.Action.OBSERVE, decision.action());
     }
+
+    @Test
+    public void transactionTargetPassesThroughBeforeStrongerOwner() {
+        FontMutationScheduler.Decision decision = FontMutationScheduler.decide(
+                28.2f, 28.2f, 26.508f, 0.94f, true, 28.2f, false);
+
+        assertEquals(FontMutationScheduler.Action.PASS_THROUGH, decision.action());
+        assertEquals(0f, decision.targetPx(), 0.0001f);
+    }
+
+    @Test
+    public void alreadyAppliedTargetKeepsCurrentValue() {
+        FontMutationScheduler.Decision decision = FontMutationScheduler.decide(
+                28.2f, 28.2f, 26.508f, 0.94f, false, null, true);
+
+        assertEquals(FontMutationScheduler.Action.KEEP_CURRENT, decision.action());
+    }
+
+    @Test
+    public void differentIncomingValueStillApplies() {
+        FontMutationScheduler.Decision decision = FontMutationScheduler.decide(
+                30f, 30f, 28.2f, 0.94f, false, null, false);
+
+        assertEquals(FontMutationScheduler.Action.APPLY, decision.action());
+        assertEquals(28.2f, decision.targetPx(), 0.0001f);
+    }
 }
