@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +60,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -84,6 +87,7 @@ import kotlin.math.roundToInt
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 import android.content.res.Configuration
+import android.view.ViewTreeObserver
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
@@ -138,7 +142,8 @@ internal fun CompactEditorTextField(
                 .onFocusChanged {
                     onFocusChanged?.invoke(it.isFocused)
                 }
-                .inputFocusFeedback(onFocused),
+                .inputFocusFeedback(onFocused)
+                .clearTextInputFocusWhenImeDismissed(),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
             singleLine = true,
             keyboardOptions = keyboardOptions,
@@ -227,6 +232,58 @@ internal fun Modifier.clearTextInputFocusOnPointerDown(
         focusManager.clearFocus(force = true)
         waitForUpOrCancellation()
     }
+}
+
+/**
+ * Ends the text-input session when the user hides the IME. Back gestures and extract-UI Done
+ * leave Compose focus in place; a still-focused field would immediately request the keyboard
+ * again, which on small screens is the fullscreen extract panel.
+ */
+internal fun Modifier.clearTextInputFocusWhenImeDismissed(): Modifier = composed {
+    val focusManager = LocalFocusManager.current
+    val density = LocalDensity.current
+    val view = LocalView.current
+    val imeVisible = androidx.compose.foundation.layout.WindowInsets.ime.getBottom(density) > 0
+    var inputFocused by remember { mutableStateOf(false) }
+    var imeShownWhileFocused by remember { mutableStateOf(false) }
+    var lostWindowFocusWhileInputFocused by remember { mutableStateOf(false) }
+    var windowHasFocus by remember { mutableStateOf(view.hasWindowFocus()) }
+    DisposableEffect(view) {
+        val listener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+            windowHasFocus = hasFocus
+        }
+        view.viewTreeObserver.addOnWindowFocusChangeListener(listener)
+        onDispose {
+            view.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
+        }
+    }
+    val nextImeShown = ImeDismissFocusPolicy.imeShownWhileFocused(
+        inputFocused = inputFocused,
+        imeVisible = imeVisible,
+        previouslyShownWhileFocused = imeShownWhileFocused,
+    )
+    val nextLostWindow = ImeDismissFocusPolicy.lostWindowFocusWhileInputFocused(
+        inputFocused = inputFocused,
+        windowHasFocus = windowHasFocus,
+        previouslyLostWindowFocusWhileInputFocused = lostWindowFocusWhileInputFocused,
+    )
+    val shouldClear = ImeDismissFocusPolicy.shouldClearFocus(
+        inputFocused = inputFocused,
+        imeVisible = imeVisible,
+        windowHasFocus = windowHasFocus,
+        imeShownWhileFocused = nextImeShown,
+        lostWindowFocusWhileInputFocused = nextLostWindow,
+    )
+    SideEffect {
+        imeShownWhileFocused = nextImeShown
+        lostWindowFocusWhileInputFocused = nextLostWindow
+    }
+    LaunchedEffect(shouldClear) {
+        if (shouldClear) {
+            focusManager.clearFocus(force = true)
+        }
+    }
+    onFocusChanged { inputFocused = it.isFocused }
 }
 
 /** Tracks editor input bounds in root coordinates so outside-tap dismissal excludes the fields. */

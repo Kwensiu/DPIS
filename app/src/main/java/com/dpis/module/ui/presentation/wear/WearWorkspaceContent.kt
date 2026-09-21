@@ -89,6 +89,7 @@ import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.presentation.LocalSecondaryNavigation
 import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.design.toWearColorScheme
 import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
@@ -772,7 +773,8 @@ internal class WearListScope(
                     modifier = Modifier
                         .fillMaxWidth()
                         .onFocusChanged { focused = it.isFocused }
-                        .inputFocusFeedback(),
+                        .inputFocusFeedback()
+                        .clearTextInputFocusWhenImeDismissed(),
                     decorationBox = { inner ->
                         Box(Modifier.fillMaxWidth()) {
                             if (value.isEmpty() && !focused) {
@@ -825,7 +827,8 @@ internal class WearListScope(
                         modifier = Modifier
                             .fillMaxWidth()
                             .onFocusChanged { focused = it.isFocused }
-                            .inputFocusFeedback(),
+                            .inputFocusFeedback()
+                            .clearTextInputFocusWhenImeDismissed(),
                         decorationBox = { inner ->
                             Box(Modifier.fillMaxWidth()) {
                                 if (value.isEmpty() && !focused) {
@@ -885,6 +888,7 @@ internal class WearListScope(
                             .fillMaxWidth()
                             .padding(top = 4.dp)
                             .inputFocusFeedback()
+                            .clearTextInputFocusWhenImeDismissed()
                     )
                 }
             }
@@ -930,6 +934,7 @@ internal class WearListScope(
                             .fillMaxWidth()
                             .padding(top = 4.dp)
                             .inputFocusFeedback()
+                            .clearTextInputFocusWhenImeDismissed()
                     )
                     Row(
                         modifier = Modifier

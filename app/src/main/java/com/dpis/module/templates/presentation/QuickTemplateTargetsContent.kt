@@ -83,6 +83,7 @@ import com.dpis.module.ui.presentation.workspace.SecondaryPageTopBar
 import com.dpis.module.ui.presentation.workspace.SplitPaneHeader
 import com.dpis.module.ui.presentation.workspace.pageHorizontalSafePadding
 import com.dpis.module.ui.presentation.editor.clearTextInputFocusOnPointerDown
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
 import com.dpis.module.ui.presentation.editor.dialogListContentFade
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.design.rememberClickValueAction
@@ -590,7 +591,8 @@ private fun TargetSearchCard(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .inputFocusFeedback(),
+                    .inputFocusFeedback()
+                    .clearTextInputFocusWhenImeDismissed(),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface

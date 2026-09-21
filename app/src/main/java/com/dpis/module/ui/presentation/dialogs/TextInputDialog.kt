@@ -32,6 +32,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
 import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.presentation.design.inputFocusFeedback
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
 
@@ -96,6 +97,7 @@ internal fun TextInputDialogContent(
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
                 .inputFocusFeedback()
+                .clearTextInputFocusWhenImeDismissed()
         )
         Spacer(Modifier.height(spacing.lg))
         Row(Modifier.fillMaxWidth()) {

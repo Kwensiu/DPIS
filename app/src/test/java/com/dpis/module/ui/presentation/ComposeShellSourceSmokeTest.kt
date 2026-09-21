@@ -631,10 +631,16 @@ class ComposeShellSourceSmokeTest {
         assertTrue(controls.contains("fun Modifier.clearTextInputFocusOnPointerDown("))
         assertTrue(controls.contains("focusManager.clearFocus(force = true)"))
         assertTrue(controls.contains("fun Modifier.clearTextInputFocusOutside("))
+        assertTrue(controls.contains("fun Modifier.clearTextInputFocusWhenImeDismissed("))
         assertTrue(apps.contains(".clearTextInputFocusOnPointerDown(inputFocusManager)"))
         assertTrue(targets.contains(".clearTextInputFocusOutside(focusManager, inputFocusBoundary)"))
         assertTrue(targets.contains("target-search"))
         assertTrue(templates.contains(".clearTextInputFocusOnPointerDown(focusManager)"))
+        val search = read(
+            "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceSearchCard.kt"
+        )
+        assertTrue(search.contains(".clearTextInputFocusWhenImeDismissed()"))
+        assertTrue(targets.contains(".clearTextInputFocusWhenImeDismissed()"))
     }
 
     private fun read(relativePath: String): String {

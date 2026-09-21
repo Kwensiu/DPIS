@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.dpis.module.R
 import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.editor.FeedbackIconButton
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
 
 /** Shared MD3 search surface used by the app and template workspaces. */
 @Composable
@@ -54,7 +55,8 @@ internal fun WorkspaceSearchCard(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .inputFocusFeedback(),
+                    .inputFocusFeedback()
+                    .clearTextInputFocusWhenImeDismissed(),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface

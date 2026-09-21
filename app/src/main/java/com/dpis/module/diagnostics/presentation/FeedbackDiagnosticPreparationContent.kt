@@ -65,6 +65,7 @@ import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
 import com.dpis.module.ui.presentation.editor.FeedbackButton
 import com.dpis.module.ui.presentation.editor.FeedbackFilterChip
 import com.dpis.module.ui.presentation.editor.FeedbackIconButton
@@ -704,7 +705,8 @@ private fun CustomDurationDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .reportTextInputFocusBounds(focusBoundary, "diagnostic-duration")
-                    .inputFocusFeedback(),
+                    .inputFocusFeedback()
+                    .clearTextInputFocusWhenImeDismissed(),
             )
         }
     }
