@@ -23,7 +23,7 @@ object FontMutationScheduler {
         fun targetPx(): Float = targetPxValue
     }
 
-    private data class Frame(val targetPx: Float, val factor: Float)
+    private data class Frame(val targetPx: Float)
 
     private val transactionStack: ThreadLocal<ArrayDeque<Frame>> =
         ThreadLocal.withInitial<ArrayDeque<Frame>> { ArrayDeque() }
@@ -87,12 +87,12 @@ object FontMutationScheduler {
     }
 
     @JvmStatic
-    fun currentTransactionTarget(): Float? = transactionStack.get().peekLast()?.targetPx
+    fun currentTransactionTarget(): Float? = stack().peekLast()?.targetPx
 
-    /** Runs a synchronous framework mutation with a restorable nested transaction frame. */
+    @Suppress("UNUSED_PARAMETER")
     fun <T> withMutation(targetPx: Float, factor: Float, block: () -> T): T {
-        val stack = transactionStack.get()
-        stack.addLast(Frame(targetPx, factor))
+        val stack = stack()
+        stack.addLast(Frame(targetPx))
         return try {
             block()
         } finally {
@@ -101,6 +101,16 @@ object FontMutationScheduler {
                 transactionStack.remove()
             }
         }
+    }
+
+    private fun stack(): ArrayDeque<Frame> {
+        val frames = transactionStack.get()
+        if (frames != null) {
+            return frames
+        }
+        val created = ArrayDeque<Frame>()
+        transactionStack.set(created)
+        return created
     }
 
     @JvmStatic

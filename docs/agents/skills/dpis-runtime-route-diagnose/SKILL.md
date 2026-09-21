@@ -103,12 +103,30 @@ When reviewing an exported diagnostic package:
   unless the selected config still required a change.
 - Treat an empty diagnostic marker as incomplete evidence. Cross-check raw
   `lsposed-log.txt` and runtime-hotpath events before declaring a route absent.
+- A `module-effects.tsv` row `selected but no … route effect observed` is
+  valid only when the session window also has no matching structured hot-path
+  event. WeChat DPI mutations are `route=wechat_dpi` runtime events, not
+  ProcessPerformance aggregate route names. Font aggregates plus a WeChat
+  `mutation_applied` event must not be read as “WeChat DPI did nothing”.
+- Prefer the last `stage=aggregate` snapshot per process. Earlier snapshots
+  are cumulative prefixes, not a second independent session.
+- Font rewrite `applied` details should include `in=`/`out=`. Missing pairs on
+  `textview_current_px_fallback` are an evidence-format gap, not proof the
+  route skipped. Timeline `applied` counts can be lower than the aggregate
+  because kept is aggregate-only and transport may sample begin/applied/end.
+- Do not treat `|incoming - earlier out| < epsilon` as double-scale. A
+  second-order *candidate* is an incoming px that equals a first-scale
+  output. Independent later sizes, including another object's unscaled
+  `28.2`, must still rewrite. Same-object already-scaled Paint must not.
 - A hot-reload warning is recoverable only if later module-entry and route
   evidence exists after the restart/reload path. Otherwise report it as an
   unresolved framework or loading failure.
 - For performance claims, check `thread_state` and `sched_slice` for the
   target process and main thread. Distinguish Running, Runnable, and sleeping
   or blocked states before naming a bottleneck.
+- For exported ZIP or extracted diagnostic directories, run
+  `python tools/analyze_diagnostic_pack.py <zip-or-dir>` before narrating
+  font/DPI effectiveness. Use `--self-check` to verify the analyzer itself.
 
 ## Flicker And Relaunch Checks
 

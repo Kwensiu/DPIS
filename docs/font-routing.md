@@ -258,6 +258,11 @@ that owns the value remains `skipped` for the fallback route. This prevents
 the aggregate from understating scheduler hits or treating route arbitration
 as a redundant-write optimization.
 
+`textview_current_px_fallback` applied, kept, and setText-reinforce details
+include `in=` / `out=` like SP and absolute rewrites. Begin and end of the
+same callback keep that same detail string so latency pairing stays valid.
+Kept remains aggregate-only and is not one timeline row per callback.
+
 Paint mutation counters and latency measurements remain full-fidelity during
 diagnostics. Caller stack text is sampled per Paint type and input-size bucket
 to keep repeated stack formatting and transport payloads from becoming a

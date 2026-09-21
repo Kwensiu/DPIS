@@ -1,8 +1,8 @@
 package com.dpis.module.runtime.font
 
+import android.text.Spanned
 import android.widget.TextView
 import android.widget.TextView.BufferType
-import android.text.Spanned
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.fonts.FontDebugStatsReporter
@@ -41,59 +41,31 @@ val setTextMethod = textViewClass.getDeclaredMethod(
                 if (!TextSizePolicy.isTargetPercentActive(targetPercent)) {
                     return@Hooker chain!!.proceed()
                 }
-                val thisObject = chain!!.getThisObject()
+                val thisObject = chain!!.thisObject
                 if (thisObject !is TextView) {
                     return@Hooker chain.proceed()
                 }
-                if (XIAOHEIHE_EXPRESSION_TEXT_VIEW == thisObject.javaClass.getName()) {
+                if (XIAOHEIHE_EXPRESSION_TEXT_VIEW == thisObject.javaClass.name) {
                     ForceTextSizeHookRuntime.applyExpressionTextSizeOverride(thisObject, factor)
                 }
                 val sourceText = chain.getArg(0) as CharSequence?
                 if (sourceText !is Spanned) {
                     val result = chain.proceed()
-                    if (ForceTextSizeHookRuntime.reinforceTextViewTarget(thisObject, factor, domainPlan)) {
-                        ForceTextSizeHookRuntime.recordCurrentPxReinforceHotPath(
-                            packageName,
-                            thisObject,
-                            factor,
-                            targetPercent
-                        )
-                        FontDebugStatsReporter.record(
-                            "textview-settext-reinforce",
-                            thisObject.javaClass.getName(),
-                            thisObject.getContext()
-                        )
-                    } else if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewFallback(thisObject, factor)) {
-                        ForceTextSizeHookRuntime.recordCurrentPxKeptHotPath(
-                            packageName, thisObject, factor, targetPercent
-                        )
-                    }
+                    reinforceOrKeepCurrentPx(
+                        thisObject, factor, targetPercent, packageName, domainPlan
+                    )
                     return@Hooker result
                 }
                 val patched = TextSpanScaler.scale(sourceText, factor)
                 if (patched === sourceText) {
                     val result = chain.proceed()
-                    if (ForceTextSizeHookRuntime.reinforceTextViewTarget(thisObject, factor, domainPlan)) {
-                        ForceTextSizeHookRuntime.recordCurrentPxReinforceHotPath(
-                            packageName,
-                            thisObject,
-                            factor,
-                            targetPercent
-                        )
-                        FontDebugStatsReporter.record(
-                            "textview-settext-reinforce",
-                            thisObject.javaClass.getName(),
-                            thisObject.getContext()
-                        )
-                    } else if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewFallback(thisObject, factor)) {
-                        ForceTextSizeHookRuntime.recordCurrentPxKeptHotPath(
-                            packageName, thisObject, factor, targetPercent
-                        )
-                    }
+                    reinforceOrKeepCurrentPx(
+                        thisObject, factor, targetPercent, packageName, domainPlan
+                    )
                     return@Hooker result
                 }
                 val bufferType = chain.getArg(1) as BufferType?
-                val detail = ("view=" + thisObject.javaClass.getName()
+                val detail = ("view=" + thisObject.javaClass.name
                         + ", factor=" + factor
                         + ", percent=" + targetPercent
                         + ", length=" + patched.length)
@@ -124,30 +96,16 @@ val setTextMethod = textViewClass.getDeclaredMethod(
                         detail
                     )
                 }
-                if (ForceTextSizeHookRuntime.reinforceTextViewTarget(thisObject, factor, domainPlan)) {
-                    ForceTextSizeHookRuntime.recordCurrentPxReinforceHotPath(
-                        packageName,
-                        thisObject,
-                        factor,
-                        targetPercent
-                    )
-                    FontDebugStatsReporter.record(
-                        "textview-settext-reinforce",
-                        thisObject.javaClass.getName(),
-                        thisObject.getContext()
-                    )
-                } else if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewFallback(thisObject, factor)) {
-                    ForceTextSizeHookRuntime.recordCurrentPxKeptHotPath(
-                        packageName, thisObject, factor, targetPercent
-                    )
-                }
+                reinforceOrKeepCurrentPx(
+                    thisObject, factor, targetPercent, packageName, domainPlan
+                )
                 if (ForceTextSizeHookRuntime.verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                     ForceTextSizeHookRuntime.logSampled(
                         ForceTextSizeHookRuntime.buildHotFontLogKey(
-                            packageName, "textview-span-" + thisObject.javaClass.getName()
+                            packageName, "textview-span-" + thisObject.javaClass.name
                         ),
                         ("DPIS_FONT TextView span override: view="
-                                + thisObject.javaClass.getName()
+                                + thisObject.javaClass.name
                                 + ", factor=" + factor
                                 + ", percent=" + targetPercent
                                 + ", length=" + patched.length),
@@ -156,10 +114,39 @@ val setTextMethod = textViewClass.getDeclaredMethod(
                 }
                 FontDebugStatsReporter.record(
                     "textview-span",
-                    thisObject.javaClass.getName(),
-                    thisObject.getContext()
+                    thisObject.javaClass.name,
+                    thisObject.context
                 )
                 null
             })
+    }
+
+    private fun reinforceOrKeepCurrentPx(
+        textView: TextView,
+        factor: Float,
+        targetPercent: Int?,
+        packageName: String?,
+        domainPlan: FontDomainPlan?
+    ) {
+        val incomingPx = textView.textSize
+        if (ForceTextSizeHookRuntime.reinforceTextViewTarget(textView, factor, domainPlan)) {
+            ForceTextSizeHookRuntime.recordCurrentPxReinforceHotPath(
+                packageName,
+                textView,
+                factor,
+                targetPercent,
+                incomingPx,
+                textView.textSize
+            )
+            FontDebugStatsReporter.record(
+                "textview-settext-reinforce",
+                textView.javaClass.name,
+                textView.context
+            )
+        } else if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewFallback(textView, factor)) {
+            ForceTextSizeHookRuntime.recordCurrentPxKeptHotPath(
+                packageName, textView, factor, targetPercent
+            )
+        }
     }
 }

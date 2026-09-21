@@ -1,49 +1,30 @@
 package com.dpis.module.runtime.font
 
-import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.text.TextPaint
-import android.text.style.AbsoluteSizeSpan
-import android.text.style.RelativeSizeSpan
 import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import android.widget.TextView
-import android.widget.TextView.BufferType
 import com.dpis.module.BuildConfig
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
-import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
-import com.dpis.module.fonts.FontDebugStatsReporter
 import com.dpis.module.fonts.FontFieldRewriteMath
 import com.dpis.module.fonts.FontMutationScheduler
-import com.dpis.module.fonts.PaintDiagnosticCallerSampler
-import com.dpis.module.fonts.PaintProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker.UnitKind
 import com.dpis.module.fonts.hookdomain.FontHookArbitration
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
 import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.runtime.font.FontScaleOverride.resolve
-import com.dpis.module.runtime.font.FontScaleOverride.toPx
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller.resolveFieldRewriteFactor
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
 import io.github.libxposed.api.XposedInterface
-import io.github.libxposed.api.XposedInterface.HookBuilder
-import io.github.libxposed.api.XposedInterface.Hooker
-import java.lang.reflect.Method
 import java.util.Collections
 import java.util.WeakHashMap
-import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Supplier
 import kotlin.concurrent.Volatile
 import kotlin.math.abs
-import kotlin.math.max
 
 object ForceTextSizeHookRuntime {
     private const val BRIDGE_LOG_PREFIX = "DPIS "
@@ -94,6 +75,7 @@ object ForceTextSizeHookRuntime {
     fun resetForHotReload() {
         installedPid = -1
         clearThreadLocalState()
+        FontMutationScheduler.resetForHotReload()
     }
 
     /** Clears hook-local state before a hot reload can reuse this process thread.  */
@@ -290,7 +272,7 @@ object ForceTextSizeHookRuntime {
             ) {
                 return false
             }
-            val currentPx = textView.getTextSize()
+            val currentPx = textView.textSize
             desiredPx = FontFieldRewriteMath.resolveScaledTextSize<TextView?>(
                 currentPx, factor, COMMENT_TEXT_BASE_TEXT_SIZES, textView
             )
@@ -311,16 +293,48 @@ object ForceTextSizeHookRuntime {
         }
     }
 
+    internal fun expectedCurrentPxFallback(
+        textView: TextView,
+        factor: Float
+    ): Float {
+        return FontFieldRewriteMath.resolveScaledTextSize(
+            textView.textSize, factor, TEXT_VIEW_BASE_TEXT_SIZES, textView
+        )
+    }
+
+    internal fun currentPxFallbackDetail(
+        viewClassName: String,
+        incomingPx: Float,
+        outgoingPx: Float,
+        factor: Float,
+        targetPercent: Int?,
+        reason: String? = null
+    ): String {
+        val prefix = if (reason.isNullOrEmpty()) "" else "reason=$reason, "
+        return (prefix
+                + "view=" + viewClassName
+                + ", in=" + incomingPx
+                + ", out=" + outgoingPx
+                + ", factor=" + factor
+                + ", percent=" + targetPercent)
+    }
+
     internal fun recordCurrentPxReinforceHotPath(
         packageName: String?,
         textView: TextView,
         factor: Float,
-        targetPercent: Int?
+        targetPercent: Int?,
+        incomingPx: Float,
+        outgoingPx: Float
     ) {
-        val detail = ("reason=set_text_reinforce"
-                + ", view=" + textView.javaClass.getName()
-                + ", factor=" + factor
-                + ", percent=" + targetPercent)
+        val detail = currentPxFallbackDetail(
+            textView.javaClass.name,
+            incomingPx,
+            outgoingPx,
+            factor,
+            targetPercent,
+            "set_text_reinforce"
+        )
         RuntimeHotPathEvents.begin(
             packageName,
             "textview_current_px_fallback",
@@ -370,10 +384,15 @@ object ForceTextSizeHookRuntime {
         factor: Float,
         targetPercent: Int?
     ) {
-        val detail = ("reason=current_target"
-                + ", view=" + textView.javaClass.getName()
-                + ", factor=" + factor
-                + ", percent=" + targetPercent)
+        val currentPx = textView.textSize
+        val detail = currentPxFallbackDetail(
+            textView.javaClass.name,
+            currentPx,
+            currentPx,
+            factor,
+            targetPercent,
+            "current_target"
+        )
         // Kept is an aggregate-only outcome; do not create begin/end rows for
         // a callback that performed no mutation.
         RuntimeHotPathEvents.kept(
@@ -387,26 +406,26 @@ object ForceTextSizeHookRuntime {
         if (textView == null) {
             return false
         }
-        if (containsCommentHint(textView.javaClass.getName())) {
+        if (containsCommentHint(textView.javaClass.name)) {
             return true
         }
         try {
-            val viewId = textView.getId()
+            val viewId = textView.id
             if (viewId != View.NO_ID) {
-                val entryName = textView.getResources().getResourceEntryName(viewId)
+                val entryName = textView.resources.getResourceEntryName(viewId)
                 if (containsCommentHint(entryName)) {
                     return true
                 }
             }
         } catch (ignored: Throwable) {
         }
-        var parent = textView.getParent()
+        var parent = textView.parent
         var depth = 0
         while (parent != null && depth < 4) {
-            if (containsCommentHint(parent.javaClass.getName())) {
+            if (containsCommentHint(parent.javaClass.name)) {
                 return true
             }
-            parent = parent.getParent()
+            parent = parent.parent
             depth++
         }
         return false
@@ -429,7 +448,7 @@ object ForceTextSizeHookRuntime {
     }
 
     internal fun applyExpressionTextSizeOverride(textView: TextView, factor: Float) {
-        val currentPx = textView.getTextSize()
+        val currentPx = textView.textSize
         val desiredPx = FontFieldRewriteMath.resolveScaledTextSize<TextView?>(
             currentPx, factor, EXPRESSION_BASE_TEXT_SIZES, textView
         )
@@ -450,7 +469,7 @@ object ForceTextSizeHookRuntime {
         factor: Float,
         domainPlan: FontDomainPlan?
     ): Boolean {
-        val currentPx = textView.getTextSize()
+        val currentPx = textView.textSize
         if (isKnownAppliedTextSize(textView, currentPx, factor)) {
             return false
         }
@@ -492,7 +511,7 @@ object ForceTextSizeHookRuntime {
         textView: TextView,
         factor: Float
     ): Boolean {
-        val currentPx = textView.getTextSize()
+        val currentPx = textView.textSize
         if (isKnownAppliedTextSize(textView, currentPx, factor)) {
             return true
         }
@@ -512,7 +531,7 @@ object ForceTextSizeHookRuntime {
         if (textView == null || targetPx <= 0f) {
             return false
         }
-        val currentPx = textView.getTextSize()
+        val currentPx = textView.textSize
         return abs(currentPx - targetPx) >= SIZE_EPSILON_PX
     }
 
@@ -524,7 +543,7 @@ object ForceTextSizeHookRuntime {
         if (textView == null || incomingPx <= 0f) {
             return false
         }
-        val currentPx = textView.getTextSize()
+        val currentPx = textView.textSize
         val target = LAST_TARGET_TEXT_SIZES.get(textView)
         var targetPx = if (target != null && target.matchesFactor(factor))
             target.px
@@ -568,8 +587,8 @@ object ForceTextSizeHookRuntime {
 
     internal fun isKnownAppliedTextSize(
         textView: TextView?,
-        currentPx: kotlin.Float,
-        factor: kotlin.Float
+        currentPx: Float,
+        factor: Float
     ): Boolean {
         if (textView == null || currentPx <= 0f) {
             return false
@@ -585,8 +604,8 @@ object ForceTextSizeHookRuntime {
 
     internal fun recordTextViewBase(
         textView: TextView?,
-        basePx: kotlin.Float,
-        factor: kotlin.Float
+        basePx: Float,
+        factor: Float
     ) {
         if (textView == null || basePx <= 0f) {
             return
@@ -602,15 +621,15 @@ object ForceTextSizeHookRuntime {
         }
     }
 
-    private fun targetPx(textView: TextView?, factor: kotlin.Float): kotlin.Float? {
+    private fun targetPx(textView: TextView?, factor: Float): Float? {
         val target = LAST_TARGET_TEXT_SIZES.get(textView)
         return if (target != null && target.matchesFactor(factor)) target.px else null
     }
 
     internal fun recordResourcesHandledTextSize(
         textView: TextView?,
-        currentPx: kotlin.Float,
-        factor: kotlin.Float
+        currentPx: Float,
+        factor: Float
     ) {
         if (textView == null || currentPx <= 0f || !TextSizePolicy.isScaleFactorActive(factor)) {
             return
@@ -625,9 +644,9 @@ object ForceTextSizeHookRuntime {
 
     internal fun recordTextViewRewrite(
         textView: TextView?,
-        originalPx: kotlin.Float,
-        forcedPx: kotlin.Float,
-        factor: kotlin.Float,
+        originalPx: Float,
+        forcedPx: Float,
+        factor: Float,
         unit: Int
     ) {
         val source: TextViewFontProvenanceTracker.Source?
@@ -649,7 +668,7 @@ object ForceTextSizeHookRuntime {
         )
     }
 
-    private fun scaleSpans(source: Spanned, factor: kotlin.Float): CharSequence =
+    private fun scaleSpans(source: Spanned, factor: Float): CharSequence =
         TextSpanScaler.scale(source, factor)
 
     internal fun logIfChanged(key: String?, message: String) {
@@ -718,7 +737,7 @@ object ForceTextSizeHookRuntime {
         if (sourceCount >= MAX_SAMPLES_PER_SOURCE) {
             return
         }
-        val stackSummary = summarizeStack(Thread.currentThread().getStackTrace())
+        val stackSummary = summarizeStack(Thread.currentThread().stackTrace)
         if (stackSummary == null || stackSummary.isEmpty()) {
             return
         }
@@ -742,7 +761,7 @@ object ForceTextSizeHookRuntime {
             if (element == null) {
                 continue
             }
-            val className = element.getClassName()
+            val className = element.className
             if (className == null) {
                 continue
             }
@@ -758,9 +777,9 @@ object ForceTextSizeHookRuntime {
             }
             builder.append(className)
                 .append("#")
-                .append(element.getMethodName())
+                .append(element.methodName)
                 .append(":")
-                .append(element.getLineNumber())
+                .append(element.lineNumber)
             added++
             if (added >= MAX_STACK_FRAMES) {
                 break
@@ -798,7 +817,7 @@ object ForceTextSizeHookRuntime {
             if (element == null) {
                 continue
             }
-            val className = element.getClassName()
+            val className = element.className
             if (className == null) {
                 continue
             }
@@ -825,7 +844,7 @@ object ForceTextSizeHookRuntime {
             if (element == null) {
                 continue
             }
-            val className = element.getClassName()
+            val className = element.className
             if (className == null || className.startsWith("java.lang.Thread")
                 || className.startsWith("de.robv.android.xposed")
                 || className.startsWith("io.github.libxposed")
@@ -840,9 +859,9 @@ object ForceTextSizeHookRuntime {
             }
             builder.append(className)
                 .append("#")
-                .append(element.getMethodName())
+                .append(element.methodName)
                 .append(":")
-                .append(element.getLineNumber())
+                .append(element.lineNumber)
             added++
             if (added >= MAX_STACK_FRAMES) {
                 break
@@ -868,14 +887,14 @@ object ForceTextSizeHookRuntime {
 
     internal fun isSpTextHandledByResources(
         textView: TextView?,
-        factor: kotlin.Float,
+        factor: Float,
         domainPlan: FontDomainPlan?
     ): Boolean {
         if (textView == null || domainPlan == null || !domainPlan.resourcesFontEnabled) {
             return false
         }
-        val metrics = if (textView.getResources() != null)
-            textView.getResources().getDisplayMetrics()
+        val metrics = if (textView.resources != null)
+            textView.resources.displayMetrics
         else
             null
         return metrics != null && FontFieldRewriteMath.isResourcesScaledDensityApplied(
@@ -900,8 +919,8 @@ object ForceTextSizeHookRuntime {
         }
     }
 
-    private class TargetTextSize(val px: kotlin.Float, val factor: kotlin.Float) {
-        fun matchesFactor(candidate: kotlin.Float): Boolean {
+    private class TargetTextSize(val px: Float, val factor: Float) {
+        fun matchesFactor(candidate: Float): Boolean {
             return TextSizePolicy.isScaleFactorActive(factor)
                     && TextSizePolicy.isScaleFactorActive(candidate)
                     && abs(factor - candidate) <= 0.001f

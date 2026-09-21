@@ -1,12 +1,12 @@
 package com.dpis.module.fonts;
 
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
 
 public class PaintProvenanceTrackerTest {
     @Test
@@ -78,10 +78,31 @@ public class PaintProvenanceTrackerTest {
         float adjusted = PaintProvenanceTracker.resolveScaled(paint, 18f, 0.93f);
         PaintProvenanceTracker.recordApplied(paint, adjusted, 0.93f);
 
-        PaintProvenanceTracker.Resolution resolution = PaintProvenanceTracker.resolveFallback(
-                paint, 18f, 16.74f, 0.93f, false);
+        FontMutationScheduler.Decision decision = FontMutationScheduler.decide(
+                18f, 16.74f, adjusted, 0.93f, false, null, false);
 
-        assertEquals(PaintProvenanceTracker.Action.KEEP, resolution.action());
+        assertEquals(FontMutationScheduler.Action.KEEP_CURRENT, decision.action());
+    }
+
+    @Test
+    public void differentPaintDoesNotInheritAnotherPaintsAppliedTarget() {
+        Object textViewPaint = new Object();
+        Object otherPaint = new Object();
+
+        PaintProvenanceTracker.recordApplied(textViewPaint, 28.2f, 0.94f);
+
+        assertTrue(PaintProvenanceTracker.isKnownApplied(textViewPaint, 28.2f, 0.94f));
+        assertFalse(PaintProvenanceTracker.isKnownApplied(otherPaint, 28.2f, 0.94f));
+    }
+
+    @Test
+    public void driftedCurrentSizeClearsAppliedMark() {
+        Object paint = new Object();
+
+        PaintProvenanceTracker.recordApplied(paint, 28.2f, 0.94f);
+        PaintProvenanceTracker.invalidateIfDrifted(paint, 30f);
+
+        assertFalse(PaintProvenanceTracker.isKnownApplied(paint, 28.2f, 0.94f));
     }
 
     @Test

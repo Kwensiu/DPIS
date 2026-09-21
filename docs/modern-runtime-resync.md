@@ -195,6 +195,19 @@ zero row when a selected route, such as `viewport_auto`, has no observed route
 effect in the session window. This is an explicit evidence gap, not proof that
 the route executed or mutated runtime state.
 
+As of 2026-09-21, that filler consults structured hot-path events as well as
+ProcessPerformance aggregates. WeChat DPI mutations are `route=wechat_dpi`
+runtime events and never appear as aggregate route names; a font aggregate
+plus `wechat_dpi` `mutation_applied` must not emit
+`selected but no WeChat DPI route effect observed`. The same date,
+`textview_current_px_fallback` applied/kept/reinforce details include `in=`
+and `out=` so a pack can be read without a current-px false gap. Use
+`tools/analyze_diagnostic_pack.py` on an exported ZIP to compare last
+aggregates, WeChat filler contradiction, current-px `in=`/`out=`, and
+value-space second-order candidates. A candidate is not a double-scale bug:
+same-object already-scaled Paint must not re-multiply, but an independent
+later size still must.
+
 As of 2026-08-14, Modern `system_server` viewport mutations and selected skip
 outcomes publish target-package-scoped `runtime-transport` evidence. Emission
 shares the existing `SystemServerHookLogGate`, so diagnostic collection adds no
@@ -225,6 +238,17 @@ The `kept` outcome is now published as a separate target-process performance
 counter and timeline stage. It must not be folded into `skipped`: `kept` means
 DPIS intentionally preserved the current target and did not call the native
 setter, while `skipped` means the route was observed and allowed to continue.
+
+As of 2026-09-21, that scheduler also owns an in-flight mutation stack and
+`PASS_THROUGH` for nested Paint/TextPaint writes whose incoming size already
+equals the TextView apply target. Recognition is identity-bound: Paint 4-slot
+provenance, the same `TextView` paint object, then the layout-stack stronger
+owner. A process-global `(px, factor)` table is not a rewrite gate. An
+independent later `28.2` that is not this object's applied slot still
+rewrites. Nested pass-through counts as `kept` (`calls++`, `applied` unchanged)
+and does not emit a second `applied` timeline event. The live `Paint.setTextSize`
+hook remains `PaintTextSizeHookInstaller` only. Regression signature:
+`28.2 -> 26.508` on an already-scaled same-object or layout-owned write.
 
 ## Full Tree
 

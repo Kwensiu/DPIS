@@ -69,7 +69,8 @@ final class StructuredEvidenceExporter {
                     "target-process-lsposed-aggregate",
                     summaries,
                     "",
-                    selectedRoutes
+                    selectedRoutes,
+                    runtimeEvents
             );
         }
         summaries = ProcessPerformanceParser.parseMutationAppliedFallback(
@@ -79,20 +80,22 @@ final class StructuredEvidenceExporter {
                     "target-process-log-fallback",
                     summaries,
                     "aggregate transport missing; latency percentiles unavailable",
-                    selectedRoutes
+                    selectedRoutes,
+                    runtimeEvents
             );
         }
         if (snapshot != null && !snapshot.entries().isEmpty()) {
-            return buildUiSnapshotTsv(snapshot, selectedRoutes);
+            return buildUiSnapshotTsv(snapshot, selectedRoutes, runtimeEvents);
         }
-        return buildSelectedRouteOnlyTsv(selectedRoutes);
+        return buildSelectedRouteOnlyTsv(selectedRoutes, runtimeEvents);
     }
 
     private static String buildProcessSummaryTsv(
             String source,
             List<ProcessPerformanceParser.ProcessSummary> summaries,
             String note,
-            List<SelectedRoute> selectedRoutes
+            List<SelectedRoute> selectedRoutes,
+            List<String> runtimeEvents
     ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
         List<String> observedModules = new ArrayList<>();
@@ -121,13 +124,15 @@ final class StructuredEvidenceExporter {
                 );
             }
         }
+        observedModules.addAll(modulesObservedInEvents(runtimeEvents));
         appendUnobservedSelectedRoutes(builder, selectedRoutes, observedModules);
         return builder.toString();
     }
 
     private static String buildUiSnapshotTsv(
             PerformanceSnapshot snapshot,
-            List<SelectedRoute> selectedRoutes
+            List<SelectedRoute> selectedRoutes,
+            List<String> runtimeEvents
     ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
         List<String> observedModules = new ArrayList<>();
@@ -153,14 +158,46 @@ final class StructuredEvidenceExporter {
                     "ui-process snapshot; not proof of target-process hook execution"
             );
         }
+        observedModules.addAll(modulesObservedInEvents(runtimeEvents));
         appendUnobservedSelectedRoutes(builder, selectedRoutes, observedModules);
         return builder.toString();
     }
 
-    private static String buildSelectedRouteOnlyTsv(List<SelectedRoute> selectedRoutes) {
+    private static String buildSelectedRouteOnlyTsv(
+            List<SelectedRoute> selectedRoutes,
+            List<String> runtimeEvents
+    ) {
         StringBuilder builder = new StringBuilder(MODULE_EFFECTS_HEADER);
-        appendUnobservedSelectedRoutes(builder, selectedRoutes, List.of());
+        appendUnobservedSelectedRoutes(
+                builder,
+                selectedRoutes,
+                modulesObservedInEvents(runtimeEvents)
+        );
         return builder.toString();
+    }
+
+    /**
+     * Selected-route fillers must look at structured hot-path events, not only
+     * ProcessPerformance aggregates. WeChat DPI mutations are runtime events
+     * ({@code route=wechat_dpi}) and never appear as aggregate route names.
+     */
+    private static List<String> modulesObservedInEvents(List<String> runtimeEvents) {
+        List<String> modules = new ArrayList<>();
+        if (runtimeEvents == null) {
+            return modules;
+        }
+        for (String event : runtimeEvents) {
+            if (!isStructuredTimelineEvent(event)) {
+                continue;
+            }
+            String moduleRoute = valueOrDefault(tokenField(event, "route="), UNKNOWN);
+            String route = valueOrDefault(tokenField(event, "routeName="), moduleRoute);
+            String module = moduleFor(moduleRoute, route);
+            if (!UNKNOWN.equals(module) && !modules.contains(module)) {
+                modules.add(module);
+            }
+        }
+        return modules;
     }
 
     private static void appendModuleEffectRow(
@@ -320,17 +357,13 @@ final class StructuredEvidenceExporter {
         return routes;
     }
 
-    private static final class SelectedRoute {
-        final String module;
-        final String route;
-        final String note;
-
-        SelectedRoute(String module, String route, String note) {
-            this.module = valueOrDefault(module, UNKNOWN);
-            this.route = valueOrDefault(route, UNKNOWN);
-            this.note = valueOrDefault(note, "");
+    private record SelectedRoute(String module, String route, String note) {
+            private SelectedRoute(String module, String route, String note) {
+                this.module = valueOrDefault(module, UNKNOWN);
+                this.route = valueOrDefault(route, UNKNOWN);
+                this.note = valueOrDefault(note, "");
+            }
         }
-    }
 
     private static String messageFor(String event) {
         String message = restField(event, "message=");

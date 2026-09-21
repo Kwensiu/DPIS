@@ -273,6 +273,11 @@ DPIS 自定义 trace 不应为每个高频 callback 创建完整 slice。建议�
   必须输出 `source=diagnostic-plan` 的显式 0 行，例如
   `selected but no viewport route effect observed`。这表示证据缺口，不表示
   route 已执行或已修改。
+- “观测到”包括结构化热路径事件的 `route=` / `routeName=`，不只是
+  ProcessPerformance aggregate 里的 route 名。WeChat DPI 的
+  `mutation_applied` 是 `route=wechat_dpi` 运行时事件，不会出现在 font
+  aggregate 的 route 列表里；有这类事件时不得再输出
+  `selected but no WeChat DPI route effect observed`。
 
 `dpis-log.txt`：
 

@@ -95,6 +95,13 @@ zero row for any selected route that has no observed effect in the session
 window. Treat this as a route-evidence gap, not as evidence that the Legacy route
 executed or mutated the target process.
 
+As of 2026-09-21, the shared exporter treats structured hot-path events as
+observed modules, not only ProcessPerformance aggregates. Shared WeChat DPI
+`mutation_applied` evidence must suppress the WeChat “no route effect”
+filler even when the pack’s aggregates are font-only. Shared
+`textview_current_px_fallback` details now include `in=`/`out=`. Pack
+analysis lives in `tools/analyze_diagnostic_pack.py`.
+
 As of 2026-08-14, the shared Modern `system_server` installer publishes
 target-package-scoped, rate-limited `runtime-transport` events for its
 viewport mutation and selected skip paths. Legacy does not install that shared
@@ -116,6 +123,12 @@ redundant native setters. Legacy keeps required synchronous mutations and still
 re-arbitrates after external drift, factor changes, or a new base size.
 The diagnostic aggregate exports this outcome as `kept`, separately from
 ordinary skipped callbacks.
+
+As of 2026-09-21, the shared scheduler adds nested `PASS_THROUGH` and per-object
+Paint slots. Legacy uses the same `runtime.font` installers: identity-bound
+already-applied marks, in-flight `withMutation`, and layout-stack stronger
+ownership. A later independent `28.2` still rewrites. Nested Paint is `kept`,
+not a second `applied`. Do not treat `28.2 -> 26.508` as a WeChat-only branch.
 
 The shared app-process font route implementation now lives under
 `runtime.font`. Legacy flavor entry points still call the same install/reset

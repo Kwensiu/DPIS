@@ -9,7 +9,7 @@ import io.github.libxposed.api.XposedInterface
 
 /** Public compatibility facade for the font hook installation boundary. */
 object ForceTextSizeHookInstaller {
-    enum class PaintFallbackAction { WRITE, SKIP, KEEP, OBSERVE }
+    enum class PaintFallbackAction { WRITE, KEEP, OBSERVE }
 
     class PaintFallbackDecision(
         @JvmField val action: PaintFallbackAction,
@@ -44,10 +44,8 @@ object ForceTextSizeHookInstaller {
         )
         val action = when (result.action()) {
             FontMutationScheduler.Action.APPLY -> PaintFallbackAction.WRITE
-            // Keep the historical facade contract for callers/tests; the live
-            // route uses FontMutationScheduler.Action.KEEP_CURRENT directly.
-            FontMutationScheduler.Action.KEEP_CURRENT -> PaintFallbackAction.SKIP
-            FontMutationScheduler.Action.PASS_THROUGH -> PaintFallbackAction.SKIP
+            FontMutationScheduler.Action.KEEP_CURRENT -> PaintFallbackAction.KEEP
+            FontMutationScheduler.Action.PASS_THROUGH,
             FontMutationScheduler.Action.OBSERVE -> PaintFallbackAction.OBSERVE
         }
         val adjustedPx = if (result.action() == FontMutationScheduler.Action.OBSERVE

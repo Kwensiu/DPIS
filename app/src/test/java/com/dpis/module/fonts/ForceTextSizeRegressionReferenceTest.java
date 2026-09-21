@@ -1,21 +1,18 @@
 package com.dpis.module;
 
-import com.dpis.module.fonts.hookdomain.FontHookArbitration;
-
-import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
-
-import com.dpis.module.fonts.TextViewFontProvenanceTracker;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.dpis.module.fonts.FontFieldRewriteMath;
+import com.dpis.module.fonts.TextViewFontProvenanceTracker;
+import com.dpis.module.fonts.hookdomain.FontHookArbitration;
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
 
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class ForceTextSizeRegressionReferenceTest {
     @Test
@@ -155,8 +152,18 @@ public class ForceTextSizeRegressionReferenceTest {
 
         assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.targetPx()))"));
         assertTrue(source.contains("installPaintTextSizeHook("));
+        assertTrue(source.contains("FontMutationScheduler.Action.PASS_THROUGH"));
+        assertTrue(source.contains("reason=transaction_target"));
+        assertTrue(source.contains("RuntimeHotPathEvents.kept("));
         assertFalse(source.contains("paint.setTextSize(adjusted)"));
         assertFalse(source.contains("textPaint.setTextSize(adjusted)"));
+        int passThrough = source.indexOf("FontMutationScheduler.Action.PASS_THROUGH");
+        int applyBegin = source.indexOf("RuntimeHotPathEvents.begin(", passThrough);
+        assertTrue(passThrough >= 0);
+        assertTrue(applyBegin > passThrough);
+        String passThroughBlock = source.substring(passThrough, applyBegin);
+        assertTrue(passThroughBlock.contains("RuntimeHotPathEvents.kept("));
+        assertFalse(passThroughBlock.contains("RuntimeHotPathEvents.applied("));
     }
 
     @Test

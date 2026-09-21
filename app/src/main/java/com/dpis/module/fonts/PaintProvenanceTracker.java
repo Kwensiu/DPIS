@@ -32,35 +32,6 @@ public final class PaintProvenanceTracker {
         }
     }
 
-    public static Resolution resolveFallback(Object paint,
-                                             float incomingPx,
-                                             float currentPx,
-                                             float factor,
-                                             boolean strongerDomainOwns) {
-        if (paint == null || incomingPx <= 0f || !isScaleFactorActive(factor)) {
-            return Resolution.observe(incomingPx);
-        }
-        Entry entry = getOrCreateEntry(paint);
-        synchronized (entry) {
-            entry.invalidateIfDrifted(currentPx);
-            if (strongerDomainOwns) {
-                entry.resolveScaledLocked(incomingPx, factor);
-                return Resolution.observe(incomingPx);
-            }
-            if (entry.isKnownAppliedLocked(incomingPx, factor)) {
-                return Resolution.skip(incomingPx);
-            }
-            float adjustedPx = entry.resolveScaledLocked(incomingPx, factor);
-            if (FontFieldRewriteMath.approximatelyEqual(currentPx, adjustedPx)) {
-                return Resolution.keep(incomingPx);
-            }
-            if (FontFieldRewriteMath.approximatelyEqual(adjustedPx, incomingPx)) {
-                return Resolution.observe(incomingPx);
-            }
-            return Resolution.write(adjustedPx);
-        }
-    }
-
     public static float resolveScaled(Object paint, float incomingPx, float factor) {
         if (paint == null || incomingPx <= 0f || !isScaleFactorActive(factor)) {
             return incomingPx;
@@ -259,44 +230,4 @@ public final class PaintProvenanceTracker {
         }
     }
 
-    public enum Action {
-        WRITE,
-        SKIP,
-        KEEP,
-        OBSERVE
-    }
-
-    public static final class Resolution {
-        private final Action action;
-        private final float adjustedPx;
-
-        private Resolution(Action action, float adjustedPx) {
-            this.action = action;
-            this.adjustedPx = adjustedPx;
-        }
-
-        static Resolution write(float adjustedPx) {
-            return new Resolution(Action.WRITE, adjustedPx);
-        }
-
-        static Resolution skip(float incomingPx) {
-            return new Resolution(Action.SKIP, incomingPx);
-        }
-
-        static Resolution keep(float incomingPx) {
-            return new Resolution(Action.KEEP, incomingPx);
-        }
-
-        static Resolution observe(float incomingPx) {
-            return new Resolution(Action.OBSERVE, incomingPx);
-        }
-
-        public Action action() {
-            return action;
-        }
-
-        public float adjustedPx() {
-            return adjustedPx;
-        }
-    }
 }

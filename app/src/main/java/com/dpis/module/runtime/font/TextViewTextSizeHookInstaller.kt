@@ -7,6 +7,7 @@ import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.FontDebugStatsReporter
 import com.dpis.module.fonts.FontMutationScheduler
+import com.dpis.module.fonts.PaintProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker
 import com.dpis.module.fonts.TextViewFontProvenanceTracker.UnitKind
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
@@ -54,18 +55,18 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     if (size <= 0f) {
                         return@Hooker chain.proceed()
                     }
-                    val thisObject = chain.getThisObject()
+                    val thisObject = chain.thisObject
                     if (thisObject !is TextView) {
                         return@Hooker chain.proceed()
                     }
                     val originalPx = toPx(
-                        unit, size, thisObject.getResources().getDisplayMetrics()
+                        unit, size, thisObject.resources.displayMetrics
                     )
                     if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewTarget(thisObject, originalPx, factor)) {
                         RuntimeHotPathEvents.kept(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
-                            ("reason=current_target, view=" + thisObject.javaClass.getName()
+                            ("reason=current_target, view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
                         )
@@ -83,7 +84,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
-                            ("reason=known_applied, view=" + thisObject.javaClass.getName()
+                            ("reason=known_applied, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -97,7 +98,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=resources_handled, view=" + thisObject.javaClass.getName()
+                            ("reason=resources_handled, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -111,7 +112,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
                             ("reason=domain_disabled, unit=" + unit
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -132,7 +133,8 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     if (schedule.action() != FontMutationScheduler.Action.APPLY) {
                         if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
                             RuntimeHotPathEvents.kept(packageName, ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
-                                "reason=scheduler_keep, view=" + thisObject.javaClass.getName())
+                                "reason=scheduler_keep, view=" + thisObject.javaClass.name
+                            )
                             return@Hooker null
                         }
                         return@Hooker result
@@ -142,7 +144,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
                             ("reason=no_change, unit=" + unit
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", in=" + originalPx
                                     + ", out=" + forcedPx
                                     + ", factor=" + factor
@@ -152,7 +154,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     }
                     val routeName = ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit)
                     val detail = ("unit=" + unit
-                            + ", view=" + thisObject.javaClass.getName()
+                            + ", view=" + thisObject.javaClass.name
                             + ", in=" + originalPx
                             + ", out=" + forcedPx
                             + ", factor=" + factor
@@ -170,7 +172,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
                         }
                         thisObject.paint?.let { paint ->
-                            com.dpis.module.fonts.PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
+                            PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
                         }
                         val frameworkDurationNs = if (diagnosticCaptureActive) max(
                             0L,
@@ -214,7 +216,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             ("DPIS_FONT ForceTextSize override: unit=" + unit
                                     + ", size=" + size
                                     + ", px=" + originalPx + " -> " + forcedPx
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent),
                             HOT_LOG_INTERVAL
@@ -223,8 +225,8 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     }
                     FontDebugStatsReporter.recordUnit(
                         unit,
-                        thisObject.javaClass.getName(),
-                        thisObject.getContext()
+                        thisObject.javaClass.name,
+                        thisObject.context
                     )
                     result
                 })
@@ -252,7 +254,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     if (!TextSizePolicy.isTargetPercentActive(targetPercent)) {
                         return@Hooker chain!!.proceed()
                     }
-                    val thisObject = chain!!.getThisObject()
+                    val thisObject = chain!!.thisObject
                     if (thisObject !is TextView) {
                         return@Hooker chain.proceed()
                     }
@@ -263,13 +265,13 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     val originalPx = toPx(
                         TypedValue.COMPLEX_UNIT_SP,
                         sizeSp,
-                        thisObject.getResources().getDisplayMetrics()
+                        thisObject.resources.displayMetrics
                     )
                     if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewTarget(thisObject, originalPx, factor)) {
                         RuntimeHotPathEvents.kept(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=current_target, view=" + thisObject.javaClass.getName()
+                            ("reason=current_target, view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
                         )
@@ -287,7 +289,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=known_applied, view=" + thisObject.javaClass.getName()
+                            ("reason=known_applied, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -299,7 +301,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=resources_handled, view=" + thisObject.javaClass.getName()
+                            ("reason=resources_handled, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -311,7 +313,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=domain_disabled, view=" + thisObject.javaClass.getName()
+                            ("reason=domain_disabled, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -332,7 +334,8 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     if (schedule.action() != FontMutationScheduler.Action.APPLY) {
                         if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
                             RuntimeHotPathEvents.kept(packageName, "textview_sp_rewrite",
-                                "reason=scheduler_keep, view=" + thisObject.javaClass.getName())
+                                "reason=scheduler_keep, view=" + thisObject.javaClass.name
+                            )
                             return@Hooker null
                         }
                         return@Hooker result
@@ -341,7 +344,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=no_change, view=" + thisObject.javaClass.getName()
+                            ("reason=no_change, view=" + thisObject.javaClass.name
                                     + ", in=" + originalPx
                                     + ", out=" + forcedPx
                                     + ", factor=" + factor
@@ -349,7 +352,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         )
                         return@Hooker result
                     }
-                    val detail = ("view=" + thisObject.javaClass.getName()
+                    val detail = ("view=" + thisObject.javaClass.name
                             + ", in=" + originalPx
                             + ", out=" + forcedPx
                             + ", factor=" + factor
@@ -371,7 +374,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
                         }
                         thisObject.paint?.let { paint ->
-                            com.dpis.module.fonts.PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
+                            PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
                         }
                         val frameworkDurationNs = if (diagnosticCaptureActive) max(
                             0L,
@@ -430,7 +433,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             ("DPIS_FONT ForceTextSize override: unit=SP(default)"
                                     + ", size=" + sizeSp
                                     + ", px=" + originalPx + " -> " + forcedPx
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent),
                             HOT_LOG_INTERVAL
@@ -439,8 +442,8 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     }
                     FontDebugStatsReporter.record(
                         "text-size-float",
-                        thisObject.javaClass.getName(),
-                        thisObject.getContext()
+                        thisObject.javaClass.name,
+                        thisObject.context
                     )
                     result
                 })
