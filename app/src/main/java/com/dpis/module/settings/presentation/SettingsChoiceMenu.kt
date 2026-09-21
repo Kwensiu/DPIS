@@ -1,6 +1,5 @@
 package com.dpis.module.settings.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -11,18 +10,17 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorPosition
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.dpis.module.ui.presentation.design.rememberClickValueAction
@@ -76,30 +74,16 @@ internal fun SettingsChoiceMenu(
                             .verticalScroll(rememberScrollState())
                             .padding(vertical = 4.dp),
                     ) {
-                        options.forEach { option ->
-                            val isSelected = selected == option.value
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        text = option.label,
-                                        color = if (isSelected) {
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface
-                                        },
-                                    )
-                                },
+                        options.forEachIndexed { index, option ->
+                            SelectableDropdownMenuItem(
+                                selected = selected == option.value,
                                 onClick = { selectOption(option.value) },
-                                modifier = Modifier
-                                    .padding(horizontal = 4.dp)
-                                    .clip(MaterialTheme.shapes.large)
-                                    .background(
-                                        if (isSelected) {
-                                            MaterialTheme.colorScheme.primaryContainer
-                                        } else {
-                                            Color.Transparent
-                                        },
-                                    ),
+                                text = { Text(option.label) },
+                                shapes = MenuDefaults.itemShape(index, options.size),
+                                colors = MenuDefaults.selectableItemColors(
+                                    containerColor = Color.Transparent,
+                                    disabledContainerColor = Color.Transparent,
+                                ),
                             )
                         }
                     }

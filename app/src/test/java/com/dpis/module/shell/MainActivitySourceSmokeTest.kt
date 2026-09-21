@@ -4,18 +4,6 @@ import com.dpis.module.SourceSmokeTestPaths
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.ui.presentation.MainComposeShellHost
-import com.dpis.module.ui.presentation.MainWorkspacePresentationCoordinator
-import com.dpis.module.appconfig.presentation.ComposeAppEditorActivityGateway
-
-import com.dpis.module.updates.presentation.UpdateAvailableDialog
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.diagnostics.DpisLog
-import com.dpis.module.ui.MainUiAction
-import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.MainViewModel
-import com.dpis.module.settings.SettingsUiState
-import com.dpis.module.appconfig.editor.ComposeEditorScopeRequestCoordinator
 
 class MainActivitySourceSmokeTest {
 
@@ -540,6 +528,13 @@ class MainActivitySourceSmokeTest {
         assertTrue(overlay.contains("ComposeDesignSystem(darkTheme = resolveDarkTheme())"))
         assertTrue(modal.contains("usePlatformDefaultWidth = false"))
         assertTrue(modal.contains(".widthIn(max = 560.dp)"))
+        assertFalse(modal.contains("ApplyDialogBehindBlur()"))
+        assertFalse(modal.contains("FLAG_BLUR_BEHIND"))
+        assertFalse(modal.contains("blurBehindRadius"))
+        assertFalse(
+            read("src/main/java/com/dpis/module/ui/dialog/DialogLayout.kt")
+                .contains("BehindBlurRadius"),
+        )
         assertTrue(confirm.contains("ComposeOverlay.show(activity)"))
         assertTrue(confirm.contains("ConfirmAlertDialog("))
         assertFalse(confirm.contains("MaterialAlertDialogBuilder"))

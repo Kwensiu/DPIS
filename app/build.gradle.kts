@@ -383,6 +383,7 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     implementation(libs.material.kolor)
+    implementation(libs.aboutlibraries.compose.m3)
     implementation(libs.reorderable)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.material3)

@@ -4,12 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -20,29 +16,26 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dpis.module.R
 import com.dpis.module.tools.SystemFontScaleToolState
-import com.dpis.module.ui.presentation.design.*
-import com.dpis.module.ui.presentation.dialogs.*
-import com.dpis.module.ui.presentation.editor.*
-import com.dpis.module.ui.presentation.interop.*
-import com.dpis.module.ui.presentation.wear.*
-import com.dpis.module.ui.presentation.workspace.*
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.PageBarBehavior
+import com.dpis.module.ui.presentation.workspace.PageScaffold
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
+import com.dpis.module.ui.presentation.workspace.rememberRestorableLazyListState
 
 @Composable
 fun ToolsWorkspaceContent(
@@ -88,12 +81,19 @@ fun ToolsWorkspaceContent(
                     }
                     if (expanded && state != null) {
                         if (!state.canWrite && !state.unavailable) {
-                            Button(onClick = rememberClickAction(onRequestPermission), modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) { Text(stringResource(R.string.system_font_scale_permission_button)) }
+                            Button(
+                                onClick = rememberClickAction(onRequestPermission),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp)
+                            ) { Text(stringResource(R.string.system_font_scale_permission_button)) }
                         } else if (state.unavailable) {
                             Text(stringResource(R.string.system_font_scale_unavailable_message), modifier = Modifier.padding(top = 16.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                         } else {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -107,17 +107,27 @@ fun ToolsWorkspaceContent(
                                     enabled = state.canIncrement()
                                 ) { Icon(painterResource(R.drawable.ic_add_24), stringResource(R.string.system_font_scale_increment)) }
                             }
-                            Slider(
-                                value = state.pendingPercent.toFloat(),
-                                onValueChange = {
-                                    onPendingChanged(SystemFontScaleToolState.normalizeSliderPercent(it))
-                                },
-                                valueRange = 50f..200f,
+                            val pendingPercent = state.pendingPercent.toFloat()
+                            val sliderState = rememberSliderState(
+                                value = pendingPercent,
                                 steps = 0,
+                                trackRange = 50f..200f,
+                            )
+                            sliderState.value = pendingPercent
+                            Slider(
+                                state = sliderState,
+                                onValueChange = {
+                                    val normalizedPercent =
+                                        SystemFontScaleToolState.normalizeSliderPercent(it)
+                                    sliderState.value = normalizedPercent.toFloat()
+                                    onPendingChanged(normalizedPercent)
+                                },
                                 modifier = Modifier.padding(top = 16.dp)
                             )
                             Surface(
-                                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 16.dp),
                                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                                 shape = MaterialTheme.shapes.medium
                             ) {
@@ -151,7 +161,9 @@ fun ToolsWorkspaceContent(
                             TextButton(
                                 onClick = rememberClickAction(onRestore),
                                 enabled = state.canRestore(),
-                                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 8.dp)
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(top = 8.dp)
                             ) { Text(stringResource(R.string.system_font_scale_restore_default)) }
                         }
                     }

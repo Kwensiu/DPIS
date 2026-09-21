@@ -6,17 +6,13 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.R
-import com.dpis.module.about.presentation.OpenSourceLicenseItems
 import com.dpis.module.about.presentation.installOpenSourceLicenses
 import com.dpis.module.settings.LocalizedActivity
 
 class OpenSourceLicenseActivity : LocalizedActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        installOpenSourceLicenses(
-            OpenSourceLicenseItems.load(this),
-            ::openUrl,
-        )
+        installOpenSourceLicenses(::openUrl)
     }
 
     private fun openUrl(url: String) {

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -25,7 +24,6 @@ import com.dpis.module.ui.presentation.editor.imeWindowPan
 
 /** Standard container for dialogs whose visibility is owned by Compose state. */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 internal fun ModalDialog(
     onDismissRequest: () -> Unit,
     // Let the content express the responsive Material width instead of inheriting the platform's
@@ -70,7 +68,6 @@ private fun DialogSurface(content: @Composable () -> Unit) {
  * scrolls, so short-height and landscape windows do not strand a required action off-screen.
  */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 internal fun StructuredModalDialog(
     onDismissRequest: () -> Unit,
     title: @Composable () -> Unit,

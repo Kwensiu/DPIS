@@ -23,6 +23,8 @@ class OpenSourceLicenseActivityParsingTest {
         val content = read("src/main/java/com/dpis/module/about/presentation/OpenSourceLicenseContent.kt")
 
         assertTrue(content.contains("fun OpenSourceLicenseContent("))
+        assertTrue(content.contains("produceLibraries(R.raw.aboutlibraries)"))
+        assertTrue(content.contains("OpenSourceLicenseItems.fromLibrary("))
         assertTrue(content.contains("items("))
         assertTrue(content.contains("SecondaryPageScaffold("))
         assertTrue(content.contains("SegmentedListItem("))
@@ -30,6 +32,8 @@ class OpenSourceLicenseActivityParsingTest {
         assertTrue(content.contains("OpenSourceLicenseContentPreview"))
         assertTrue(content.contains("LicenseDetailDialog("))
         assertTrue(content.contains("onOpenUrl"))
+        assertTrue(content.contains("OpenSourceLicenseItems.load("))
+        assertTrue(!content.contains("LibrariesContainer"))
         assertTrue(!content.contains("onItemSelected"))
     }
 

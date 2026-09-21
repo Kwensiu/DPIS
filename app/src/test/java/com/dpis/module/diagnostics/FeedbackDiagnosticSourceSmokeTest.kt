@@ -41,7 +41,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertFalse(preparation.contains(
                 "onCheckedChange = rememberClickValueAction(presentation::setDurationEnabled)"))
         val theme = read(
-            "src/main/java/com/dpis/module/settings/presentation/ThemeSettingsContent.kt"
+            "src/main/java/com/dpis/module/settings/presentation/ThemeRows.kt"
         )
         val edgeFade = read(
             "src/main/java/com/dpis/module/ui/presentation/editor/HorizontalScrollEdgeFade.kt"
