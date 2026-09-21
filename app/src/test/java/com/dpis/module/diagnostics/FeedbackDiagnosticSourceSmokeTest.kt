@@ -61,7 +61,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         val structuredExporter = read(
             "src/main/java/com/dpis/module/diagnostics/"
-                    + "StructuredEvidenceExporter.java"
+                    + "StructuredEvidenceExporter.kt"
         )
         val logGate = read(
             "src/main/java/com/dpis/module/diagnostics/presentation/LogGate.kt"
