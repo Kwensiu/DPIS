@@ -21,6 +21,9 @@ public class HotReloadInstallerResetSourceTest {
         assertSourceContains("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookInstaller.kt",
                 "fun resetForHotReload()",
                 "ForceTextSizeHookRuntime.resetForHotReload()");
+        assertSourceContains("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt",
+                "fun resetForHotReload()",
+                "FontMutationScheduler.resetForHotReload()");
         assertSourceContains("src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.kt",
                 "fun resetForHotReload()",
                 "installedPid = -1");

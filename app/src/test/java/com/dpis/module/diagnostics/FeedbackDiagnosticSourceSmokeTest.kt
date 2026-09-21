@@ -61,7 +61,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         )
         val structuredExporter = read(
             "src/main/java/com/dpis/module/diagnostics/"
-                    + "StructuredEvidenceExporter.java"
+                    + "StructuredEvidenceExporter.kt"
         )
         val logGate = read(
             "src/main/java/com/dpis/module/diagnostics/presentation/LogGate.kt"
@@ -340,9 +340,8 @@ class FeedbackDiagnosticSourceSmokeTest {
             read("src/main/java/com/dpis/module/runtime/font/TextViewAppearanceHookInstaller.kt")
         val textViewSetText =
             read("src/main/java/com/dpis/module/runtime/font/TextViewSetTextHookInstaller.kt")
-        val paintFallback = read(
-            "src/main/java/com/dpis/module/runtime/font/PaintTextSizeFallbackHookInstaller.kt"
-        )
+        val textViewAttach =
+            read("src/main/java/com/dpis/module/runtime/font/TextViewAttachHookInstaller.kt")
         val webViewFont =
             read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.kt")
         val modernWechat = read(
@@ -406,10 +405,11 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(forceTextSize.contains("\"textview_sp_rewrite\""))
         assertTrue(forceTextSize.contains("\"textview_absolute_rewrite\""))
         assertTrue(forceTextSize.contains("\"textview_current_px_fallback\""))
+        assertTrue(forceTextSize.contains("fun currentPxFallbackDetail("))
+        assertTrue(textViewAttach.contains("currentPxFallbackDetail("))
         assertTrue(textViewSetText.contains("\"textview_span_rewrite\""))
         assertTrue(paintTextSize.contains("\"paint_text_size_fallback\""))
         assertTrue(paintTextSize.contains("\"textpaint_text_size_fallback\""))
-        assertTrue(paintFallback.contains("\"paint_fallback\""))
         assertTrue(webViewFont.contains("\"webview_text_zoom\""))
         assertTrue(webViewFont.contains("\"x5_webview_text_zoom\""))
         assertTrue(exportBuilder.contains("wechatDpiRoute: selected"))

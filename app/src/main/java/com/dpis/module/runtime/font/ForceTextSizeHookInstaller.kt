@@ -1,6 +1,7 @@
 package com.dpis.module.runtime.font
 
 import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.fonts.FontMutationScheduler
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
@@ -8,7 +9,7 @@ import io.github.libxposed.api.XposedInterface
 
 /** Public compatibility facade for the font hook installation boundary. */
 object ForceTextSizeHookInstaller {
-    enum class PaintFallbackAction { WRITE, SKIP, KEEP, OBSERVE }
+    enum class PaintFallbackAction { WRITE, KEEP, OBSERVE }
 
     class PaintFallbackDecision(
         @JvmField val action: PaintFallbackAction,
@@ -41,8 +42,20 @@ object ForceTextSizeHookInstaller {
         val result = ForceTextSizeHookRuntime.resolvePaintFallbackDecisionForTest(
             paint, incomingPx, currentPx, factor, strongerDomainOwns
         )
-        return PaintFallbackDecision(
-            PaintFallbackAction.valueOf(result.action.name), result.adjustedPx
-        )
+        val action = when (result.action()) {
+            FontMutationScheduler.Action.APPLY -> PaintFallbackAction.WRITE
+            FontMutationScheduler.Action.KEEP_CURRENT -> PaintFallbackAction.KEEP
+            FontMutationScheduler.Action.PASS_THROUGH,
+            FontMutationScheduler.Action.OBSERVE -> PaintFallbackAction.OBSERVE
+        }
+        val adjustedPx = if (result.action() == FontMutationScheduler.Action.OBSERVE
+            || result.action() == FontMutationScheduler.Action.KEEP_CURRENT
+            || result.action() == FontMutationScheduler.Action.PASS_THROUGH
+        ) {
+            incomingPx
+        } else {
+            result.targetPx()
+        }
+        return PaintFallbackDecision(action, adjustedPx)
     }
 }

@@ -1,12 +1,11 @@
 package com.dpis.module;
 
-import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
+import static org.junit.Assert.assertEquals;
 
 import com.dpis.module.fonts.PaintProvenanceTracker;
+import com.dpis.module.runtime.font.ForceTextSizeHookInstaller;
 
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class ForceTextSizeHookInstallerPaintFallbackTest {
     @Test
@@ -34,7 +33,7 @@ public class ForceTextSizeHookInstallerPaintFallbackTest {
     }
 
     @Test
-    public void paintFallbackDecisionSkipsKnownAppliedPaint() {
+    public void paintFallbackDecisionKeepsKnownAppliedPaint() {
         Object paint = new Object();
 
         ForceTextSizeHookInstaller.PaintFallbackDecision first =
@@ -46,7 +45,7 @@ public class ForceTextSizeHookInstallerPaintFallbackTest {
                 ForceTextSizeHookInstaller.resolvePaintFallbackDecisionForTest(
                         paint, 36f, 36f, 2.0f, false);
 
-        assertEquals(ForceTextSizeHookInstaller.PaintFallbackAction.SKIP, second.action);
+        assertEquals(ForceTextSizeHookInstaller.PaintFallbackAction.KEEP, second.action);
         assertEquals(36f, second.adjustedPx, 0.0001f);
     }
 }

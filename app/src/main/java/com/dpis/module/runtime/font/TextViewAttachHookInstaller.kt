@@ -37,7 +37,7 @@ try {
                     if (!TextSizePolicy.isTargetPercentActive(targetPercent)) {
                         return@Hooker result
                     }
-                    val thisObject = chain.getThisObject()
+                    val thisObject = chain.thisObject
                     if (thisObject !is TextView) {
                         return@Hooker result
                     }
@@ -50,9 +50,17 @@ try {
                         )
                         return@Hooker result
                     }
-                    val detail = ("view=" + thisObject.javaClass.getName()
-                            + ", factor=" + factor
-                            + ", percent=" + targetPercent)
+                    val incomingPx = thisObject.textSize
+                    val detail = ForceTextSizeHookRuntime.currentPxFallbackDetail(
+                        thisObject.javaClass.name,
+                        incomingPx,
+                        ForceTextSizeHookRuntime.expectedCurrentPxFallback(
+                            thisObject,
+                            factor
+                        ),
+                        factor,
+                        targetPercent
+                    )
                     RuntimeHotPathEvents.begin(
                         packageName,
                         "textview_current_px_fallback",
@@ -74,19 +82,16 @@ try {
                             ForceTextSizeHookRuntime.logSampled(
                                 ForceTextSizeHookRuntime.buildHotFontLogKey(
                                     packageName,
-                                    "textview-attach-" + thisObject.javaClass.getName()
+                                    "textview-attach-" + thisObject.javaClass.name
                                 ),
-                                ("DPIS_FONT TextView attach override: view="
-                                        + thisObject.javaClass.getName()
-                                        + ", factor=" + factor
-                                        + ", percent=" + targetPercent),
+                                ("DPIS_FONT TextView attach override: " + detail),
                                 HOT_LOG_INTERVAL
                             )
                         }
                         FontDebugStatsReporter.record(
                             "textview-attach",
-                            thisObject.javaClass.getName(),
-                            thisObject.getContext()
+                            thisObject.javaClass.name,
+                            thisObject.context
                         )
                     } else {
                         RuntimeHotPathEvents.skipped(
@@ -110,7 +115,7 @@ try {
             ForceTextSizeHookRuntime.logIfChanged(
                 ForceTextSizeHookRuntime.buildFontLogKey(packageName, "textview-attach-hook-skip"),
                 "DPIS_FONT TextView attach hook skipped: "
-                        + t.javaClass.getSimpleName()
+                        + t.javaClass.simpleName
             )
         }
     }

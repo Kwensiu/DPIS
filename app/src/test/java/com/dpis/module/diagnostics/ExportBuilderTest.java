@@ -1,36 +1,28 @@
 package com.dpis.module.diagnostics;
 
-import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.*;
-
-import com.dpis.module.viewport.DpiConfig;
-
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportTargetSpec;
-
-
-
-import com.dpis.module.root.RootAccessProbe;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.root.RootAccessProbe;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
+
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
-import org.junit.Test;
 
 public final class ExportBuilderTest {
     private static final long SESSION_START_MILLIS = millis("2023-11-15 06:13:20.000");
@@ -288,6 +280,59 @@ public final class ExportBuilderTest {
                 "target-process-log-fallback\tcom.example.app\tunknown\tfont"
                         + "\tpaint_set_text_size\t1\t1\t0\t0\t0\t0\t0\t0\t0"
                         + "\taggregate transport missing; latency percentiles unavailable"));
+    }
+
+    @Test
+    public void moduleEffectsDoesNotClaimMissingWechatWhenHotPathMutationObserved()
+            throws IOException {
+        ExportBuilder builder = new ExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=runtime-transport "
+                        + "category=performance route=runtime stage=aggregate "
+                        + "package=com.tencent.mm message=process=com.tencent.mm,pid=21619;"
+                        + "route=textview_current_px_fallback,calls=100,applied=10,skipped=0,"
+                        + "kept=90,measuredCalls=10,p50Us=4,p95Us=20,p99Us=20,maxUs=30",
+                "11-15 06:13:20.200 source=runtime-hotpath category=runtime "
+                        + "route=wechat_dpi stage=mutation_applied "
+                        + "routeName=displaymetrics package=com.tencent.mm "
+                        + "message=densityDpi=480->380"
+        ), 380)));
+
+        String moduleEffects = entries.get("module-effects.tsv");
+
+        assertTrue(moduleEffects.contains(
+                "target-process-lsposed-aggregate\tcom.tencent.mm\t21619\tfont"
+                        + "\ttextview_current_px_fallback\t100\t10\t0\t90\t10\t4\t20\t20\t30\t"));
+        assertFalse(moduleEffects.contains(
+                "selected but no WeChat DPI route effect observed"));
+    }
+
+    @Test
+    public void moduleEffectsReportsUnobservedWechatWhenOnlyFontAggregateExists()
+            throws IOException {
+        ExportBuilder builder = new ExportBuilder(
+                List::of,
+                () -> new LogReadResult(0, "test-source", "", "")
+        );
+
+        Map<String, String> entries = unzip(builder.buildZip(result(List.of(
+                "11-15 06:13:20.100 source=runtime-transport "
+                        + "category=performance route=runtime stage=aggregate "
+                        + "package=com.tencent.mm message=process=com.tencent.mm,pid=21619;"
+                        + "route=textview_current_px_fallback,calls=100,applied=10,skipped=0,"
+                        + "kept=90,measuredCalls=10,p50Us=4,p95Us=20,p99Us=20,maxUs=30"
+        ), 380)));
+
+        String moduleEffects = entries.get("module-effects.tsv");
+
+        assertTrue(moduleEffects.contains(
+                "diagnostic-plan\tunknown\tunknown\twechat_dpi\twechat_dpi"
+                        + "\t0\t0\t0\t0\t0\t0\t0\t0\t0"
+                        + "\tselected but no WeChat DPI route effect observed"));
     }
 
     @Test

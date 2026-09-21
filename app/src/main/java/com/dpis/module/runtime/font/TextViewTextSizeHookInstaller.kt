@@ -6,8 +6,8 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.diagnostics.device.RuntimeTransport.isCaptureActive
 import com.dpis.module.fonts.FontDebugStatsReporter
-import com.dpis.module.fonts.TextViewFontProvenanceTracker
-import com.dpis.module.fonts.TextViewFontProvenanceTracker.UnitKind
+import com.dpis.module.fonts.FontMutationScheduler
+import com.dpis.module.fonts.PaintProvenanceTracker
 import com.dpis.module.fonts.hookdomain.FontHookArbitration.FontDomainPlan
 import com.dpis.module.runtime.font.FontScaleOverride.toPx
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
@@ -53,18 +53,18 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     if (size <= 0f) {
                         return@Hooker chain.proceed()
                     }
-                    val thisObject = chain.getThisObject()
+                    val thisObject = chain.thisObject
                     if (thisObject !is TextView) {
                         return@Hooker chain.proceed()
                     }
                     val originalPx = toPx(
-                        unit, size, thisObject.getResources().getDisplayMetrics()
+                        unit, size, thisObject.resources.displayMetrics
                     )
                     if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewTarget(thisObject, originalPx, factor)) {
                         RuntimeHotPathEvents.kept(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
-                            ("reason=current_target, view=" + thisObject.javaClass.getName()
+                            ("reason=current_target, view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
                         )
@@ -82,7 +82,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
-                            ("reason=known_applied, view=" + thisObject.javaClass.getName()
+                            ("reason=known_applied, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -96,7 +96,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=resources_handled, view=" + thisObject.javaClass.getName()
+                            ("reason=resources_handled, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -110,7 +110,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
                             ("reason=domain_disabled, unit=" + unit
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -119,12 +119,30 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         return@Hooker result
                     }
                     val forcedPx = originalPx * factor
+                    val schedule = FontMutationScheduler.decide(
+                        originalPx,
+                        thisObject.textSize,
+                        forcedPx,
+                        factor,
+                        false,
+                        FontMutationScheduler.currentTransactionTarget(),
+                        false
+                    )
+                    if (schedule.action() != FontMutationScheduler.Action.APPLY) {
+                        if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
+                            RuntimeHotPathEvents.kept(packageName, ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
+                                "reason=scheduler_keep, view=" + thisObject.javaClass.name
+                            )
+                            return@Hooker null
+                        }
+                        return@Hooker result
+                    }
                     if (!ForceTextSizeHookRuntime.shouldApplyTargetSize(thisObject, forcedPx)) {
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit),
                             ("reason=no_change, unit=" + unit
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", in=" + originalPx
                                     + ", out=" + forcedPx
                                     + ", factor=" + factor
@@ -134,64 +152,31 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     }
                     val routeName = ForceTextSizeHookRuntime.routeNameForTextViewSetTextSize(unit)
                     val detail = ("unit=" + unit
-                            + ", view=" + thisObject.javaClass.getName()
+                            + ", view=" + thisObject.javaClass.name
                             + ", in=" + originalPx
                             + ", out=" + forcedPx
                             + ", factor=" + factor
                             + ", percent=" + targetPercent)
-                    RuntimeHotPathEvents.begin(packageName, routeName, detail)
-                    ForceTextSizeHookRuntime.INTERNAL_UPDATE.set(true)
-                    try {
-                        val diagnosticCaptureActive =
-                            isCaptureActive
-                        val frameworkStartedAt = if (diagnosticCaptureActive)
-                            System.nanoTime()
-                        else
-                            0L
-                        thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
-                        val frameworkDurationNs = if (diagnosticCaptureActive) max(
-                            0L,
-                            System.nanoTime() - frameworkStartedAt
-                        ) else
-                            0L
-                        val bookkeepingStartedAt = if (diagnosticCaptureActive)
-                            System.nanoTime()
-                        else
-                            0L
-                        ForceTextSizeHookRuntime.recordTextViewBase(thisObject, originalPx, factor)
-                        ForceTextSizeHookRuntime.markAppliedTargetSize(thisObject, forcedPx, factor)
-                        ForceTextSizeHookRuntime.recordTextViewRewrite(thisObject, originalPx, forcedPx, factor, unit)
-                        val bookkeepingDurationNs = if (diagnosticCaptureActive) max(
-                            0L,
-                            System.nanoTime() - bookkeepingStartedAt
-                        ) else
-                            0L
-                        RuntimeHotPathEvents.applied(packageName, routeName, detail)
-                        ForceTextSizeHookRuntime.recordSlowTextMutationEvidence(
-                            packageName,
-                            routeName,
-                            detail,
-                            frameworkDurationNs,
-                            bookkeepingDurationNs,
-                            diagnosticCaptureActive
-                        )
-                        ForceTextSizeHookRuntime.bridgeMutationAppliedIfChanged(
-                            xposed,
-                            packageName,
-                            HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT,
-                            "textview setTextSize(unit) override applied"
-                        )
-                    } finally {
-                        ForceTextSizeHookRuntime.INTERNAL_UPDATE.remove()
-                        RuntimeHotPathEvents.end(packageName, routeName, detail)
-                    }
+                    applyForcedTextSizeAndRecord(
+                        xposed,
+                        packageName,
+                        thisObject,
+                        originalPx,
+                        forcedPx,
+                        factor,
+                        unit,
+                        routeName,
+                        detail,
+                        HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_WITH_UNIT,
+                        "textview setTextSize(unit) override applied"
+                    )
                     if (ForceTextSizeHookRuntime.verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                         ForceTextSizeHookRuntime.logSampled(
                             ForceTextSizeHookRuntime.buildHotFontLogKey(packageName, "text-size-unit-" + unit),
                             ("DPIS_FONT ForceTextSize override: unit=" + unit
                                     + ", size=" + size
                                     + ", px=" + originalPx + " -> " + forcedPx
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent),
                             HOT_LOG_INTERVAL
@@ -200,8 +185,8 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     }
                     FontDebugStatsReporter.recordUnit(
                         unit,
-                        thisObject.javaClass.getName(),
-                        thisObject.getContext()
+                        thisObject.javaClass.name,
+                        thisObject.context
                     )
                     result
                 })
@@ -229,7 +214,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     if (!TextSizePolicy.isTargetPercentActive(targetPercent)) {
                         return@Hooker chain!!.proceed()
                     }
-                    val thisObject = chain!!.getThisObject()
+                    val thisObject = chain!!.thisObject
                     if (thisObject !is TextView) {
                         return@Hooker chain.proceed()
                     }
@@ -240,13 +225,13 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     val originalPx = toPx(
                         TypedValue.COMPLEX_UNIT_SP,
                         sizeSp,
-                        thisObject.getResources().getDisplayMetrics()
+                        thisObject.resources.displayMetrics
                     )
                     if (ForceTextSizeHookRuntime.shouldKeepCurrentTextViewTarget(thisObject, originalPx, factor)) {
                         RuntimeHotPathEvents.kept(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=current_target, view=" + thisObject.javaClass.getName()
+                            ("reason=current_target, view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
                         )
@@ -264,7 +249,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=known_applied, view=" + thisObject.javaClass.getName()
+                            ("reason=known_applied, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -276,7 +261,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=resources_handled, view=" + thisObject.javaClass.getName()
+                            ("reason=resources_handled, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -288,7 +273,7 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=domain_disabled, view=" + thisObject.javaClass.getName()
+                            ("reason=domain_disabled, view=" + thisObject.javaClass.name
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -297,11 +282,29 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         return@Hooker result
                     }
                     val forcedPx = originalPx * factor
+                    val schedule = FontMutationScheduler.decide(
+                        originalPx,
+                        thisObject.textSize,
+                        forcedPx,
+                        factor,
+                        false,
+                        FontMutationScheduler.currentTransactionTarget(),
+                        false
+                    )
+                    if (schedule.action() != FontMutationScheduler.Action.APPLY) {
+                        if (schedule.action() == FontMutationScheduler.Action.KEEP_CURRENT) {
+                            RuntimeHotPathEvents.kept(packageName, "textview_sp_rewrite",
+                                "reason=scheduler_keep, view=" + thisObject.javaClass.name
+                            )
+                            return@Hooker null
+                        }
+                        return@Hooker result
+                    }
                     if (!ForceTextSizeHookRuntime.shouldApplyTargetSize(thisObject, forcedPx)) {
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=no_change, view=" + thisObject.javaClass.getName()
+                            ("reason=no_change, view=" + thisObject.javaClass.name
                                     + ", in=" + originalPx
                                     + ", out=" + forcedPx
                                     + ", factor=" + factor
@@ -309,83 +312,31 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         )
                         return@Hooker result
                     }
-                    val detail = ("view=" + thisObject.javaClass.getName()
+                    val detail = ("view=" + thisObject.javaClass.name
                             + ", in=" + originalPx
                             + ", out=" + forcedPx
                             + ", factor=" + factor
                             + ", percent=" + targetPercent)
-                    RuntimeHotPathEvents.begin(
+                    applyForcedTextSizeAndRecord(
+                        xposed,
                         packageName,
+                        thisObject,
+                        originalPx,
+                        forcedPx,
+                        factor,
+                        TypedValue.COMPLEX_UNIT_SP,
                         "textview_sp_rewrite",
-                        detail
+                        detail,
+                        HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP,
+                        "textview setTextSize(default sp) override applied"
                     )
-                    ForceTextSizeHookRuntime.INTERNAL_UPDATE.set(true)
-                    try {
-                        val diagnosticCaptureActive =
-                            isCaptureActive
-                        val frameworkStartedAt = if (diagnosticCaptureActive)
-                            System.nanoTime()
-                        else
-                            0L
-                        thisObject.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
-                        val frameworkDurationNs = if (diagnosticCaptureActive) max(
-                            0L,
-                            System.nanoTime() - frameworkStartedAt
-                        ) else
-                            0L
-                        val bookkeepingStartedAt = if (diagnosticCaptureActive)
-                            System.nanoTime()
-                        else
-                            0L
-                        ForceTextSizeHookRuntime.recordTextViewBase(thisObject, originalPx, factor)
-                        ForceTextSizeHookRuntime.markAppliedTargetSize(thisObject, forcedPx, factor)
-                        TextViewFontProvenanceTracker.recordApplied(
-                            thisObject,
-                            originalPx,
-                            forcedPx,
-                            factor,
-                            TextViewFontProvenanceTracker.Source.TEXTVIEW_SP_REWRITE,
-                            UnitKind.SP
-                        )
-                        val bookkeepingDurationNs = if (diagnosticCaptureActive) max(
-                            0L,
-                            System.nanoTime() - bookkeepingStartedAt
-                        ) else
-                            0L
-                        RuntimeHotPathEvents.applied(
-                            packageName,
-                            "textview_sp_rewrite",
-                            detail
-                        )
-                        ForceTextSizeHookRuntime.recordSlowTextMutationEvidence(
-                            packageName,
-                            "textview_sp_rewrite",
-                            detail,
-                            frameworkDurationNs,
-                            bookkeepingDurationNs,
-                            diagnosticCaptureActive
-                        )
-                        ForceTextSizeHookRuntime.bridgeMutationAppliedIfChanged(
-                            xposed,
-                            packageName,
-                            HOOK_ID_TEXTVIEW_SET_TEXT_SIZE_DEFAULT_SP,
-                            "textview setTextSize(default sp) override applied"
-                        )
-                    } finally {
-                        ForceTextSizeHookRuntime.INTERNAL_UPDATE.remove()
-                        RuntimeHotPathEvents.end(
-                            packageName,
-                            "textview_sp_rewrite",
-                            detail
-                        )
-                    }
                     if (ForceTextSizeHookRuntime.verboseFontLogsEnabled && DpisLog.isLoggingEnabled()) {
                         ForceTextSizeHookRuntime.logSampled(
                             ForceTextSizeHookRuntime.buildHotFontLogKey(packageName, "text-size-float"),
                             ("DPIS_FONT ForceTextSize override: unit=SP(default)"
                                     + ", size=" + sizeSp
                                     + ", px=" + originalPx + " -> " + forcedPx
-                                    + ", view=" + thisObject.javaClass.getName()
+                                    + ", view=" + thisObject.javaClass.name
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent),
                             HOT_LOG_INTERVAL
@@ -394,10 +345,68 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                     }
                     FontDebugStatsReporter.record(
                         "text-size-float",
-                        thisObject.javaClass.getName(),
-                        thisObject.getContext()
+                        thisObject.javaClass.name,
+                        thisObject.context
                     )
                     result
                 })
+    }
+
+    private fun applyForcedTextSizeAndRecord(
+        xposed: XposedInterface,
+        packageName: String?,
+        textView: TextView,
+        originalPx: Float,
+        forcedPx: Float,
+        factor: Float,
+        unit: Int,
+        routeName: String,
+        detail: String,
+        hookId: String,
+        appliedMessage: String
+    ) {
+        RuntimeHotPathEvents.begin(packageName, routeName, detail)
+        ForceTextSizeHookRuntime.INTERNAL_UPDATE.set(true)
+        try {
+            val diagnosticCaptureActive = isCaptureActive
+            val frameworkStartedAt = if (diagnosticCaptureActive) System.nanoTime() else 0L
+            FontMutationScheduler.withMutation(forcedPx, factor) {
+                textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, forcedPx)
+            }
+            textView.paint?.let { paint ->
+                PaintProvenanceTracker.recordApplied(paint, forcedPx, factor)
+            }
+            val frameworkDurationNs =
+                if (diagnosticCaptureActive) max(0L, System.nanoTime() - frameworkStartedAt) else 0L
+            val bookkeepingStartedAt = if (diagnosticCaptureActive) System.nanoTime() else 0L
+            ForceTextSizeHookRuntime.recordTextViewBase(textView, originalPx, factor)
+            ForceTextSizeHookRuntime.markAppliedTargetSize(textView, forcedPx, factor)
+            ForceTextSizeHookRuntime.recordTextViewRewrite(
+                textView, originalPx, forcedPx, factor, unit
+            )
+            val bookkeepingDurationNs =
+                if (diagnosticCaptureActive) max(
+                    0L,
+                    System.nanoTime() - bookkeepingStartedAt
+                ) else 0L
+            RuntimeHotPathEvents.applied(packageName, routeName, detail)
+            ForceTextSizeHookRuntime.recordSlowTextMutationEvidence(
+                packageName,
+                routeName,
+                detail,
+                frameworkDurationNs,
+                bookkeepingDurationNs,
+                diagnosticCaptureActive
+            )
+            ForceTextSizeHookRuntime.bridgeMutationAppliedIfChanged(
+                xposed,
+                packageName,
+                hookId,
+                appliedMessage
+            )
+        } finally {
+            ForceTextSizeHookRuntime.INTERNAL_UPDATE.remove()
+            RuntimeHotPathEvents.end(packageName, routeName, detail)
+        }
     }
 }
