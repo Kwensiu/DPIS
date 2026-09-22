@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.3.0](https://github.com/Kwensiu/DPIS/compare/v2.2.0...v2.3.0) (2026-09-22)
+
+
+### Features
+
+* adapt Material3 1.5 theme settings and AboutLibraries licenses ([2511aba](https://github.com/Kwensiu/DPIS/commit/2511abaf6fe56c8263619dade067ea541dea947b))
+* implement Baseline Profiles and Macrobenchmarks ([90fd72a](https://github.com/Kwensiu/DPIS/commit/90fd72adf227afac4b3cbcf0660f62916aec2cd1))
+
+
+### Bug Fixes
+
+* release text field focus when IME is dismissed ([#148](https://github.com/Kwensiu/DPIS/issues/148)) ([88fb5e0](https://github.com/Kwensiu/DPIS/commit/88fb5e05482bbefd42b7baba0dc5d6875a229dd9))
+
+
+### Refactoring
+
+* modernize app list filtering and consolidate matching policy ([#143](https://github.com/Kwensiu/DPIS/issues/143)) ([3c37983](https://github.com/Kwensiu/DPIS/commit/3c37983885d9f6571fc473646c80fe74e0604dfc))
+* unify font mutation scheduling and diagnostic evidence ([#145](https://github.com/Kwensiu/DPIS/issues/145)) ([f3bc30d](https://github.com/Kwensiu/DPIS/commit/f3bc30d40beb6ae6493e6f6b3f85dba4c3d9e5ed))
+
 ## [2.2.0](https://github.com/Kwensiu/DPIS/compare/v2.1.0...v2.2.0) (2026-09-19)
 
 
