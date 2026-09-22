@@ -371,7 +371,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(controls.contains("coerceAtLeast(AppConfigSheetUiTokens.ActionHeight)"))
         assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"))
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"))
-        assertTrue(controls.contains(".inputFocusFeedback(onFocused)"))
+        assertTrue(controls.contains(".textInputFocusBehavior(onFocused)"))
         val haptics = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeHaptics.kt")
         assertTrue(haptics.contains("fun Modifier.inputFocusFeedback("))
         assertTrue(haptics.contains("focusState.isFocused && !wasFocused"))
@@ -639,8 +639,8 @@ class ComposeShellSourceSmokeTest {
         val search = read(
             "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceSearchCard.kt"
         )
-        assertTrue(search.contains(".clearTextInputFocusWhenImeDismissed()"))
-        assertTrue(targets.contains(".clearTextInputFocusWhenImeDismissed()"))
+        assertTrue(search.contains(".textInputFocusBehavior()"))
+        assertTrue(targets.contains(".textInputFocusBehavior()"))
     }
 
     private fun read(relativePath: String): String {

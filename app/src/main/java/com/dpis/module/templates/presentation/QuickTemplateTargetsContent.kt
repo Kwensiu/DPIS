@@ -3,7 +3,6 @@ package com.dpis.module.templates.presentation
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -12,7 +11,6 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,14 +42,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,29 +66,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.presentation.design.FilterSheetResetButton
+import com.dpis.module.ui.presentation.design.FilterSheetScaffold
+import com.dpis.module.ui.presentation.design.FilterSheetUiTokens
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
 import com.dpis.module.ui.presentation.editor.AppIdentityMarqueeText
 import com.dpis.module.ui.presentation.editor.FeedbackButton
 import com.dpis.module.ui.presentation.editor.FeedbackFilterChip
 import com.dpis.module.ui.presentation.editor.FeedbackIconButton
 import com.dpis.module.ui.presentation.editor.FeedbackTextButton
-import com.dpis.module.ui.presentation.design.FilterSheetResetButton
-import com.dpis.module.ui.presentation.design.FilterSheetScaffold
-import com.dpis.module.ui.presentation.design.FilterSheetUiTokens
+import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.clearTextInputFocusOutside
+import com.dpis.module.ui.presentation.editor.dialogListContentFade
+import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
+import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 import com.dpis.module.ui.presentation.workspace.SecondaryPageTopBar
 import com.dpis.module.ui.presentation.workspace.SplitPaneHeader
 import com.dpis.module.ui.presentation.workspace.pageHorizontalSafePadding
-import com.dpis.module.ui.presentation.editor.clearTextInputFocusOnPointerDown
-import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
-import com.dpis.module.ui.presentation.editor.dialogListContentFade
-import com.dpis.module.ui.presentation.design.rememberClickAction
-import com.dpis.module.ui.presentation.design.rememberClickValueAction
-import com.dpis.module.ui.presentation.design.dpisClickable
-import com.dpis.module.ui.presentation.design.inputFocusFeedback
-import com.dpis.module.ui.presentation.editor.clearTextInputFocusOutside
-import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
-import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
-import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
-import com.dpis.module.ui.dialog.ModalDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -591,8 +583,7 @@ private fun TargetSearchCard(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .inputFocusFeedback()
-                    .clearTextInputFocusWhenImeDismissed(),
+                    .textInputFocusBehavior(),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface

@@ -8,7 +8,7 @@ class ImeDismissFocusPolicyTest {
     @Test
     fun hidingImeAfterItWasShownReleasesFocus() {
         assertTrue(
-            ImeDismissFocusPolicy.shouldClearFocus(
+            shouldClearFocus(
                 inputFocused = true,
                 imeVisible = false,
                 previousImeVisible = true,
@@ -19,7 +19,7 @@ class ImeDismissFocusPolicyTest {
     @Test
     fun showingImeDoesNotReleaseFocus() {
         assertFalse(
-            ImeDismissFocusPolicy.shouldClearFocus(
+            shouldClearFocus(
                 inputFocused = true,
                 imeVisible = true,
                 previousImeVisible = false,
@@ -30,7 +30,7 @@ class ImeDismissFocusPolicyTest {
     @Test
     fun stayingHiddenDoesNotReleaseFocus() {
         assertFalse(
-            ImeDismissFocusPolicy.shouldClearFocus(
+            shouldClearFocus(
                 inputFocused = true,
                 imeVisible = false,
                 previousImeVisible = false,
@@ -41,7 +41,7 @@ class ImeDismissFocusPolicyTest {
     @Test
     fun unfocusedInputDoesNotReleaseFocusForImeTransition() {
         assertFalse(
-            ImeDismissFocusPolicy.shouldClearFocus(
+            shouldClearFocus(
                 inputFocused = false,
                 imeVisible = false,
                 previousImeVisible = true,
@@ -52,18 +52,28 @@ class ImeDismissFocusPolicyTest {
     @Test
     fun windowFocusIsNotPartOfImeDismissalPolicy() {
         assertTrue(
-            ImeDismissFocusPolicy.shouldClearFocus(
+            shouldClearFocus(
                 inputFocused = true,
                 imeVisible = false,
                 previousImeVisible = true,
             ),
         )
         assertFalse(
-            ImeDismissFocusPolicy.shouldClearFocus(
+            shouldClearFocus(
                 inputFocused = true,
                 imeVisible = false,
                 previousImeVisible = false,
             ),
         )
     }
+
+    private fun shouldClearFocus(
+        inputFocused: Boolean,
+        imeVisible: Boolean,
+        previousImeVisible: Boolean,
+    ): Boolean = ImeDismissFocusPolicy.shouldClearFocus(
+        inputFocused = inputFocused,
+        imeVisible = imeVisible,
+        previousImeVisible = previousImeVisible,
+    )
 }

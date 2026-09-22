@@ -138,8 +138,7 @@ internal fun CompactEditorTextField(
                 .onFocusChanged {
                     onFocusChanged?.invoke(it.isFocused)
                 }
-                .inputFocusFeedback(onFocused)
-                .clearTextInputFocusWhenImeDismissed(),
+                .textInputFocusBehavior(onFocused),
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
             singleLine = true,
             keyboardOptions = keyboardOptions,
@@ -256,6 +255,11 @@ internal fun Modifier.clearTextInputFocusWhenImeDismissed(): Modifier = composed
     }
     onFocusChanged { inputFocused = it.isFocused }
 }
+
+/** Applies the standard editor focus feedback and ends the text-input session on IME dismissal. */
+internal fun Modifier.textInputFocusBehavior(
+    onFocused: (() -> Unit)? = null,
+): Modifier = inputFocusFeedback(onFocused).clearTextInputFocusWhenImeDismissed()
 
 /** Tracks editor input bounds in root coordinates so outside-tap dismissal excludes the fields. */
 internal class TextInputFocusBoundary {

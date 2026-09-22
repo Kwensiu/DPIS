@@ -88,10 +88,9 @@ import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.presentation.LocalSecondaryNavigation
-import com.dpis.module.ui.presentation.design.inputFocusFeedback
-import com.dpis.module.ui.presentation.editor.clearTextInputFocusWhenImeDismissed
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.design.toWearColorScheme
+import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
@@ -773,8 +772,7 @@ internal class WearListScope(
                     modifier = Modifier
                         .fillMaxWidth()
                         .onFocusChanged { focused = it.isFocused }
-                        .inputFocusFeedback()
-                        .clearTextInputFocusWhenImeDismissed(),
+                        .textInputFocusBehavior(),
                     decorationBox = { inner ->
                         Box(Modifier.fillMaxWidth()) {
                             if (value.isEmpty() && !focused) {
@@ -827,8 +825,7 @@ internal class WearListScope(
                         modifier = Modifier
                             .fillMaxWidth()
                             .onFocusChanged { focused = it.isFocused }
-                            .inputFocusFeedback()
-                            .clearTextInputFocusWhenImeDismissed(),
+                            .textInputFocusBehavior(),
                         decorationBox = { inner ->
                             Box(Modifier.fillMaxWidth()) {
                                 if (value.isEmpty() && !focused) {
@@ -887,8 +884,7 @@ internal class WearListScope(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
-                            .inputFocusFeedback()
-                            .clearTextInputFocusWhenImeDismissed()
+                            .textInputFocusBehavior()
                     )
                 }
             }
@@ -933,8 +929,7 @@ internal class WearListScope(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
-                            .inputFocusFeedback()
-                            .clearTextInputFocusWhenImeDismissed()
+                            .textInputFocusBehavior()
                     )
                     Row(
                         modifier = Modifier
