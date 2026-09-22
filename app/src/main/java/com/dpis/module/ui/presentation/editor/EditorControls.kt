@@ -1,30 +1,36 @@
 package com.dpis.module.ui.presentation.editor
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateDpAsState
+import android.content.res.Configuration
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,67 +41,57 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.layout.layout
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Constraints
-import kotlin.math.roundToInt
-import kotlin.math.abs
-import kotlin.time.Duration.Companion.milliseconds
-import android.content.res.Configuration
-import android.view.ViewTreeObserver
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dpis.module.R
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
-import com.dpis.module.templates.presentation.TemplateUiTokens
 import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.design.rememberClickAction
+import kotlin.math.abs
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Compact outlined input used by DPIS editor rows.
@@ -235,53 +231,28 @@ internal fun Modifier.clearTextInputFocusOnPointerDown(
 }
 
 /**
- * Ends the text-input session when the user hides the IME. Back gestures and extract-UI Done
- * leave Compose focus in place; a still-focused field would immediately request the keyboard
- * again, which on small screens is the fullscreen extract panel.
+ * Ends the text-input session when the focused field observes the IME transition from visible to
+ * hidden. Compose intentionally keeps focus when the IME is hidden, so this is the small adapter
+ * needed only for surfaces whose product behavior treats IME dismissal as ending text input.
  */
 internal fun Modifier.clearTextInputFocusWhenImeDismissed(): Modifier = composed {
     val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
-    val view = LocalView.current
     val imeVisible = androidx.compose.foundation.layout.WindowInsets.ime.getBottom(density) > 0
     var inputFocused by remember { mutableStateOf(false) }
-    var imeShownWhileFocused by remember { mutableStateOf(false) }
-    var lostWindowFocusWhileInputFocused by remember { mutableStateOf(false) }
-    var windowHasFocus by remember { mutableStateOf(view.hasWindowFocus()) }
-    DisposableEffect(view) {
-        val listener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
-            windowHasFocus = hasFocus
-        }
-        view.viewTreeObserver.addOnWindowFocusChangeListener(listener)
-        onDispose {
-            view.viewTreeObserver.removeOnWindowFocusChangeListener(listener)
-        }
-    }
-    val nextImeShown = ImeDismissFocusPolicy.imeShownWhileFocused(
-        inputFocused = inputFocused,
-        imeVisible = imeVisible,
-        previouslyShownWhileFocused = imeShownWhileFocused,
-    )
-    val nextLostWindow = ImeDismissFocusPolicy.lostWindowFocusWhileInputFocused(
-        inputFocused = inputFocused,
-        windowHasFocus = windowHasFocus,
-        previouslyLostWindowFocusWhileInputFocused = lostWindowFocusWhileInputFocused,
-    )
+    var previousImeVisible by remember { mutableStateOf(false) }
     val shouldClear = ImeDismissFocusPolicy.shouldClearFocus(
         inputFocused = inputFocused,
         imeVisible = imeVisible,
-        windowHasFocus = windowHasFocus,
-        imeShownWhileFocused = nextImeShown,
-        lostWindowFocusWhileInputFocused = nextLostWindow,
+        previousImeVisible = previousImeVisible,
     )
-    SideEffect {
-        imeShownWhileFocused = nextImeShown
-        lostWindowFocusWhileInputFocused = nextLostWindow
-    }
-    LaunchedEffect(shouldClear) {
+    LaunchedEffect(imeVisible, inputFocused) {
         if (shouldClear) {
             focusManager.clearFocus(force = true)
         }
+        // Each focused field owns a separate IME session. Do not carry a visible IME from a
+        // previous focus session into a later field focus and mistake it for a dismissal edge.
+        previousImeVisible = if (inputFocused) imeVisible else false
     }
     onFocusChanged { inputFocused = it.isFocused }
 }
@@ -746,12 +717,17 @@ internal fun ModeSelector(
                 .width(thumbWidth)
                 .height(controlHeight)
                 .clip(AppConfigSheetUiTokens.FieldAndActionShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer, AppConfigSheetUiTokens.FieldAndActionShape)
+                .background(
+                    MaterialTheme.colorScheme.secondaryContainer,
+                    AppConfigSheetUiTokens.FieldAndActionShape
+                )
                 // The two halves own hit testing, but press feedback belongs to the animated
                 // thumb. Sharing this source prevents a rectangular half-track ripple.
                 .indication(modeInteractionSource, ripple(bounded = true))
         )
-        Row(Modifier.fillMaxSize().zIndex(1f)) {
+        Row(Modifier
+            .fillMaxSize()
+            .zIndex(1f)) {
             ModeLabel(
                 firstLabel, selectedFirst, labelStyle, selectFirst,
                 modeInteractionSource, Modifier.weight(1f), edgeFadeEnabled
