@@ -2,10 +2,10 @@ package com.dpis.module.diagnostics.presentation
 
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,42 +13,35 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -63,7 +56,6 @@ import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.ui.dialog.DialogColumn
 import com.dpis.module.ui.dialog.DialogTitle
 import com.dpis.module.ui.dialog.ModalDialog
-import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.editor.FeedbackButton
 import com.dpis.module.ui.presentation.editor.FeedbackFilterChip
@@ -74,6 +66,7 @@ import com.dpis.module.ui.presentation.editor.FeedbackTextButton
 import com.dpis.module.ui.presentation.editor.HorizontalScrollWithEdgeFade
 import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
 import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
+import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 import com.dpis.module.ui.presentation.workspace.AnimatedConditionalItem
 import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
 import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
@@ -276,7 +269,7 @@ fun FeedbackDiagnosticPreparationContent(
                                 .padding(horizontal = 20.dp, vertical = 12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            androidx.compose.foundation.layout.Row(
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
@@ -704,7 +697,7 @@ private fun CustomDurationDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .reportTextInputFocusBounds(focusBoundary, "diagnostic-duration")
-                    .inputFocusFeedback(),
+                    .textInputFocusBehavior(),
             )
         }
     }

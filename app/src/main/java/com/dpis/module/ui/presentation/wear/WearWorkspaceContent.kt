@@ -88,9 +88,9 @@ import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.presentation.LocalSecondaryNavigation
-import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.design.toWearColorScheme
+import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
@@ -751,7 +751,6 @@ internal class WearListScope(
 
     fun wearSearchField(key: Any, value: String, label: String, onValueChanged: (String) -> Unit) = with(scope) {
         item(key = key) {
-            var focused by remember { mutableStateOf(false) }
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -759,32 +758,11 @@ internal class WearListScope(
                 contentPadding = CardDefaults.ContentPadding,
                 transformation = SurfaceTransformation(transformationSpec)
             ) {
-                BasicTextField(
+                WearTextField(
                     value = value,
                     onValueChange = onValueChanged,
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    cursorBrush = SolidColor(
-                        MaterialTheme.colorScheme.primary
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { focused = it.isFocused }
-                        .inputFocusFeedback(),
-                    decorationBox = { inner ->
-                        Box(Modifier.fillMaxWidth()) {
-                            if (value.isEmpty() && !focused) {
-                                Text(
-                                    label,
-                                    maxLines = 1,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            inner()
-                        }
-                    }
+                    label = label,
+                    labelAsPlaceholder = true,
                 )
             }
         }
@@ -799,7 +777,6 @@ internal class WearListScope(
         onActionClick: () -> Unit
     ) = with(scope) {
         item(key = key) {
-            var focused by remember { mutableStateOf(false) }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -812,32 +789,11 @@ internal class WearListScope(
                     contentPadding = CardDefaults.ContentPadding,
                     transformation = SurfaceTransformation(transformationSpec)
                 ) {
-                    BasicTextField(
+                    WearTextField(
                         value = value,
                         onValueChange = onValueChanged,
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        cursorBrush = SolidColor(
-                            MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onFocusChanged { focused = it.isFocused }
-                            .inputFocusFeedback(),
-                        decorationBox = { inner ->
-                            Box(Modifier.fillMaxWidth()) {
-                                if (value.isEmpty() && !focused) {
-                                    Text(
-                                        label,
-                                        maxLines = 1,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                                inner()
-                            }
-                        }
+                        label = label,
+                        labelAsPlaceholder = true,
                     )
                 }
                 Button(
@@ -865,28 +821,7 @@ internal class WearListScope(
                 contentPadding = CardDefaults.ContentPadding,
                 transformation = SurfaceTransformation(transformationSpec)
             ) {
-                Column(Modifier.fillMaxWidth()) {
-                    Text(
-                        label,
-                        maxLines = 1,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    BasicTextField(
-                        value = value,
-                        onValueChange = onValueChanged,
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        cursorBrush = SolidColor(
-                            MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                            .inputFocusFeedback()
-                    )
-                }
+                WearTextField(value, onValueChanged, label)
             }
         }
     }
@@ -910,46 +845,25 @@ internal class WearListScope(
                 contentPadding = CardDefaults.ContentPadding,
                 transformation = SurfaceTransformation(transformationSpec)
             ) {
-                Column(Modifier.fillMaxWidth()) {
-                    Text(
-                        label,
-                        maxLines = 1,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                WearTextField(value, onValueChanged, label)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    wearModeChoiceButton(
+                        label = startLabel,
+                        selected = startSelected,
+                        modifier = Modifier.weight(1f),
+                        onClick = onStartSelected
                     )
-                    BasicTextField(
-                        value = value,
-                        onValueChange = onValueChanged,
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface
-                        ),
-                        cursorBrush = SolidColor(
-                            MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                            .inputFocusFeedback()
+                    wearModeChoiceButton(
+                        label = endLabel,
+                        selected = !startSelected,
+                        modifier = Modifier.weight(1f),
+                        onClick = onEndSelected
                     )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        wearModeChoiceButton(
-                            label = startLabel,
-                            selected = startSelected,
-                            modifier = Modifier.weight(1f),
-                            onClick = onStartSelected
-                        )
-                        wearModeChoiceButton(
-                            label = endLabel,
-                            selected = !startSelected,
-                            modifier = Modifier.weight(1f),
-                            onClick = onEndSelected
-                        )
-                    }
                 }
             }
         }
@@ -1407,6 +1321,59 @@ private fun WearAppIcon(
             )
         }
     }
+}
+
+/** Keeps Wear text-entry styling and IME dismissal behavior consistent across field layouts. */
+@Composable
+private fun WearTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    labelAsPlaceholder: Boolean = false,
+) {
+    var focused by remember { mutableStateOf(false) }
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(
+            color = MaterialTheme.colorScheme.onSurface
+        ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focused = it.isFocused }
+            .textInputFocusBehavior(),
+        decorationBox = { inner ->
+            if (labelAsPlaceholder) {
+                Box(Modifier.fillMaxWidth()) {
+                    if (value.isEmpty() && !focused) {
+                        Text(
+                            label,
+                            maxLines = 1,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    inner()
+                }
+            } else {
+                Column(Modifier.fillMaxWidth()) {
+                    Text(
+                        label,
+                        maxLines = 1,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                    ) {
+                        inner()
+                    }
+                }
+            }
+        }
+    )
 }
 
 @Composable

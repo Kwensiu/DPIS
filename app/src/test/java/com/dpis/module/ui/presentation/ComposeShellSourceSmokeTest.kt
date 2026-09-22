@@ -371,7 +371,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(controls.contains("coerceAtLeast(AppConfigSheetUiTokens.ActionHeight)"))
         assertTrue(controls.contains("color = MaterialTheme.colorScheme.onSurface"))
         assertTrue(controls.contains("cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)"))
-        assertTrue(controls.contains(".inputFocusFeedback(onFocused)"))
+        assertTrue(controls.contains(".textInputFocusBehavior(onFocused)"))
         val haptics = read("src/main/java/com/dpis/module/ui/presentation/design/ComposeHaptics.kt")
         assertTrue(haptics.contains("fun Modifier.inputFocusFeedback("))
         assertTrue(haptics.contains("focusState.isFocused && !wasFocused"))
@@ -631,10 +631,16 @@ class ComposeShellSourceSmokeTest {
         assertTrue(controls.contains("fun Modifier.clearTextInputFocusOnPointerDown("))
         assertTrue(controls.contains("focusManager.clearFocus(force = true)"))
         assertTrue(controls.contains("fun Modifier.clearTextInputFocusOutside("))
+        assertTrue(controls.contains("fun Modifier.clearTextInputFocusWhenImeDismissed("))
         assertTrue(apps.contains(".clearTextInputFocusOnPointerDown(inputFocusManager)"))
         assertTrue(targets.contains(".clearTextInputFocusOutside(focusManager, inputFocusBoundary)"))
         assertTrue(targets.contains("target-search"))
         assertTrue(templates.contains(".clearTextInputFocusOnPointerDown(focusManager)"))
+        val search = read(
+            "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceSearchCard.kt"
+        )
+        assertTrue(search.contains(".textInputFocusBehavior()"))
+        assertTrue(targets.contains(".textInputFocusBehavior()"))
     }
 
     private fun read(relativePath: String): String {

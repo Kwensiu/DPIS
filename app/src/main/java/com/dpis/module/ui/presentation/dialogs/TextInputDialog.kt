@@ -1,9 +1,5 @@
 package com.dpis.module.ui.presentation.dialogs
 
-import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
-import com.dpis.module.ui.dialog.DialogChrome
-import com.dpis.module.ui.dialog.ModalDialog
-
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,15 +21,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.window.DialogProperties
 import com.dpis.module.R
+import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogChrome
+import com.dpis.module.ui.dialog.ModalDialog
 import com.dpis.module.ui.presentation.design.LocalSpacing
-import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
+import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 
 @Composable
 internal fun TextInputDialog(
@@ -82,7 +81,9 @@ internal fun TextInputDialogContent(
     val cancel = rememberClickAction(onCancel)
     val submit = rememberClickAction { onSubmit(value.text) }
     Column(
-        Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding)
+        Modifier
+            .fillMaxWidth()
+            .padding(DialogChrome.SurfacePadding)
     ) {
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface)
@@ -95,18 +96,22 @@ internal fun TextInputDialogContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(focusRequester)
-                .inputFocusFeedback()
+                .textInputFocusBehavior()
         )
         Spacer(Modifier.height(spacing.lg))
         Row(Modifier.fillMaxWidth()) {
             OutlinedButton(onClick = cancel,
-                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape) {
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_process_action_confirm_negative))
             }
             Spacer(Modifier.weight(0.05f))
             Button(onClick = submit,
-                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape) {
                 Text(androidx.compose.ui.res.stringResource(R.string.dialog_confirm_button))
             }

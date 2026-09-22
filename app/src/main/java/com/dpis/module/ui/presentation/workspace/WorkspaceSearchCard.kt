@@ -22,8 +22,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
-import com.dpis.module.ui.presentation.design.inputFocusFeedback
 import com.dpis.module.ui.presentation.editor.FeedbackIconButton
+import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 
 /** Shared MD3 search surface used by the app and template workspaces. */
 @Composable
@@ -54,7 +54,7 @@ internal fun WorkspaceSearchCard(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .inputFocusFeedback(),
+                    .textInputFocusBehavior(),
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface
