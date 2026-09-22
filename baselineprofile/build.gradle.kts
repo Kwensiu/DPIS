@@ -11,6 +11,11 @@ android {
         minSdk = 28
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments["androidx.benchmark.suppressErrors"] = "EMULATOR"
+    }
+
+    testOptions {
+        animationsDisabled = true
     }
 
     targetProjectPath = ":app"
@@ -24,6 +29,11 @@ android {
             dimension = "xposedApi"
         }
     }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
 }
 
 baselineProfile {
@@ -35,5 +45,17 @@ baselineProfile {
 dependencies {
     implementation(libs.androidx.benchmark.macro.junit4)
     implementation(libs.androidx.test.ext.junit)
+    implementation(libs.androidx.test.core)
+    implementation(libs.androidx.test.runner)
     implementation(libs.androidx.uiautomator)
+}
+
+androidComponents {
+    onVariants { variant ->
+        val artifactsLoader = variant.artifacts.getBuiltArtifactsLoader()
+        variant.instrumentationRunnerArguments.put(
+            "targetAppId",
+            variant.testedApks.map { artifactsLoader.load(it)?.applicationId },
+        )
+    }
 }

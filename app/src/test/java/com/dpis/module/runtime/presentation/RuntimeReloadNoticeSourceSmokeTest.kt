@@ -19,6 +19,7 @@ class RuntimeReloadNoticeSourceSmokeTest {
         assertTrue(dialog.contains("overlay.setOnDismissListener(onDismissed)"))
         assertTrue(dialog.contains("ComposeOverlay.show(activity)"))
         assertTrue(dialog.contains("ModalDialog(onDismissRequest = dismiss)"))
+        assertTrue(dialog.contains("testTag(\"runtime-reload-notice-ack\")"))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

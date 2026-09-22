@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
@@ -16,11 +17,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.view.WindowCompat
 import com.dpis.module.settings.ThemeModeStore
 
@@ -44,7 +49,7 @@ fun resolveDarkTheme(): Boolean {
  * previews deterministic; runtime roots use the stored preference by default.
  */
 @Composable
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3ExpressiveApi::class)
 fun ComposeDesignSystem(
     darkTheme: Boolean,
     dynamicColor: Boolean? = null,
@@ -126,8 +131,11 @@ fun ComposeDesignSystem(
         MaterialExpressiveTheme(
             colorScheme = colors,
             motionScheme = MotionScheme.expressive(),
-            content = content,
-        )
+        ) {
+            Box(Modifier.semantics { testTagsAsResourceId = true }) {
+                content()
+            }
+        }
     }
 }
 

@@ -65,6 +65,56 @@ For narrow iteration, use a real flavor test task such as:
 ./gradlew :app:testModernDebugUnitTest --tests com.dpis.module.ModulePackagePlanTest
 ```
 
+### Baseline Profiles
+
+Baseline Profiles 只优化 DPIS 管理器 UI 进程，不会加快被 hook 的目标应用。
+GitHub Actions does not generate them.
+
+Official capture API is `BaselineProfileRule.collect`. The journey launches
+with `am start` **without** `-W` (`startManagerAndDismissOverlays`) so capture
+does not depend on UiAutomator's accessibility view of the Compose UI.
+
+Use a dedicated **API 33+ AOSP or Google APIs emulator** with a normal
+non-root `shell`/`adbd` environment. Connect only that device while capturing,
+or set `ANDROID_SERIAL` to its serial; otherwise connected-device discovery can
+wait on an unrelated device. Avoid custom root tooling that causes shell
+probes such as `su` to block.
+
+Preferred: Android Studio → Run → Edit Configurations → **Generate Baseline
+Profile** for `app` (`modernRelease` / `legacyRelease`) → deploy to the
+dedicated emulator.
+
+Gradle (PowerShell; replace the serial value with the selected device):
+
+```powershell
+$deviceSerial = "your-device-serial"
+$env:ANDROID_SERIAL = $deviceSerial
+adb -s $deviceSerial wait-for-device
+adb -s $deviceSerial shell id
+adb -s $deviceSerial shell input keyevent KEYCODE_HOME
+./gradlew :app:generateModernReleaseBaselineProfile "-Pandroid.testInstrumentationRunnerArguments.class=com.dpis.module.baselineprofile.DpisBaselineProfileGenerator"
+./gradlew :app:generateLegacyReleaseBaselineProfile "-Pandroid.testInstrumentationRunnerArguments.class=com.dpis.module.baselineprofile.DpisBaselineProfileGenerator"
+```
+
+Capture progress is in logcat as well as Gradle output:
+
+```powershell
+adb -s $deviceSerial logcat -s DpisBaselineProfile:* Benchmark:* TestRunner:*
+```
+
+Successful capture should show the journey's `iteration launch` messages,
+`Baseline profile ... is stable`, and `collect finished`, followed by Gradle's
+generated profile paths. An existing file under `app/build/intermediates/` is
+only an intermediate build artifact and does not prove that the current
+capture completed successfully.
+
+Commit:
+
+- `app/src/modernRelease/generated/baselineProfiles/`
+- `app/src/legacyRelease/generated/baselineProfiles/`
+
+A release APK without those files does not include this optimization.
+
 如果修改 UI 结构、资源 id、共享 binder、导航或 layout 归属，请同步检查相关 source/layout smoke tests。常见触点包括
 `MainActivitySourceSmokeTest`, `MainActivityLayoutSmokeTest`,
 `AppConfigDialogBinderSourceSmokeTest`, and related `*SourceSmokeTest` files.

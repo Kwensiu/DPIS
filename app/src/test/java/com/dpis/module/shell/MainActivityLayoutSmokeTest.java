@@ -3,9 +3,9 @@ package com.dpis.module;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-
 import org.junit.Test;
+
+import java.io.IOException;
 
 public class MainActivityLayoutSmokeTest {
     @Test
@@ -30,11 +30,11 @@ public class MainActivityLayoutSmokeTest {
         String shell = read(
                 "src/main/java/com/dpis/module/ui/presentation/workspace/WorkspaceShell.kt");
 
-        assertTrue(shell.contains("APP(R.string.workspace_app, R.drawable.ic_apps_24)"));
-        assertTrue(shell.contains("TEMPLATE(R.string.workspace_template, R.drawable.ic_template_24)"));
-        assertTrue(shell.contains("HOME(R.string.workspace_home, R.drawable.ic_home_24)"));
-        assertTrue(shell.contains("TOOLS(R.string.workspace_tools, R.drawable.ic_build_24)"));
-        assertTrue(shell.contains("SETTINGS(R.string.workspace_settings, R.drawable.ic_settings_24)"));
+        assertTrue(shell.contains("APP(R.string.workspace_app, R.drawable.ic_apps_24, \"workspace-nav-app\")"));
+        assertTrue(shell.contains("TEMPLATE(R.string.workspace_template, R.drawable.ic_template_24, \"workspace-nav-template\")"));
+        assertTrue(shell.contains("HOME(R.string.workspace_home, R.drawable.ic_home_24, \"workspace-nav-home\")"));
+        assertTrue(shell.contains("TOOLS(R.string.workspace_tools, R.drawable.ic_build_24, \"workspace-nav-tools\")"));
+        assertTrue(shell.contains("SETTINGS(R.string.workspace_settings, R.drawable.ic_settings_24, \"workspace-nav-settings\")"));
         int app = shell.indexOf("APP(R.string.workspace_app");
         int template = shell.indexOf("TEMPLATE(R.string.workspace_template");
         int home = shell.indexOf("HOME(R.string.workspace_home");

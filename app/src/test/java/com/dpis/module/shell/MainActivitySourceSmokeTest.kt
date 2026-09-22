@@ -289,7 +289,8 @@ class MainActivitySourceSmokeTest {
         )
 
         assertTrue(shell.contains("NAVIGATION_RAIL"))
-        assertTrue(shell.contains("Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState()))"))
+        assertTrue(shell.contains(".fillMaxHeight()"))
+        assertTrue(shell.contains(".verticalScroll(rememberScrollState())"))
         assertFalse(source.contains("bindLandscapeWorkspaceRailItemHeight()"))
         assertFalse(source.contains("workspaceSwitch instanceof NavigationRailView"))
         assertFalse(source.contains("NavigationRailMenuView"))

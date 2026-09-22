@@ -368,6 +368,7 @@ if (releaseTasksRequested && !hasReleaseSigningConfig) {
 dependencies {
     implementation(libs.androidx.core.ktx)
     baselineProfile(project(":baselineprofile"))
+    implementation(libs.androidx.profileinstaller)
     compileOnly(libs.libxposed.api)
     compileOnly(libs.legacy.xposed.api)
     implementation(libs.libxposed.service)

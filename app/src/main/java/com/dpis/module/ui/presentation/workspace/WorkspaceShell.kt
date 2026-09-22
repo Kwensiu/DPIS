@@ -1,8 +1,11 @@
 package com.dpis.module.ui.presentation.workspace
 
+import androidx.activity.compose.BackHandler
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,82 +14,73 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
-import androidx.activity.compose.BackHandler
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
-import androidx.compose.material3.PermanentNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.setValue
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.AppScaffold
-import androidx.wear.compose.material3.ButtonDefaults as WearButtonDefaults
-import androidx.wear.compose.material3.CompactButton as WearCompactButton
-import androidx.wear.compose.material3.Button as WearButton
-import androidx.wear.compose.material3.Icon as WearIcon
-import androidx.wear.compose.material3.MaterialTheme as WearMaterialTheme
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.SurfaceTransformation
-import androidx.wear.compose.material3.Text as WearText
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import com.dpis.module.R
-import com.dpis.module.ui.MainUiAction
-import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.MainViewModel
 import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.presentation.design.rememberClickAction
+import androidx.wear.compose.material3.Button as WearButton
+import androidx.wear.compose.material3.ButtonDefaults as WearButtonDefaults
+import androidx.wear.compose.material3.CompactButton as WearCompactButton
+import androidx.wear.compose.material3.Icon as WearIcon
+import androidx.wear.compose.material3.MaterialTheme as WearMaterialTheme
+import androidx.wear.compose.material3.Text as WearText
 
 /** Mirrors MainUiState.WorkspaceMode without introducing a second mutable selection state. */
 enum class WorkspaceDestination(
     @param:StringRes val labelRes: Int,
-    @param:DrawableRes val iconRes: Int
+    @param:DrawableRes val iconRes: Int,
+    val testTag: String,
 ) {
     // Keep this sequence aligned with the established workspace navigation order.
-    APP(R.string.workspace_app, R.drawable.ic_apps_24),
-    TEMPLATE(R.string.workspace_template, R.drawable.ic_template_24),
-    HOME(R.string.workspace_home, R.drawable.ic_home_24),
-    TOOLS(R.string.workspace_tools, R.drawable.ic_build_24),
-    SETTINGS(R.string.workspace_settings, R.drawable.ic_settings_24)
+    APP(R.string.workspace_app, R.drawable.ic_apps_24, "workspace-nav-app"),
+    TEMPLATE(R.string.workspace_template, R.drawable.ic_template_24, "workspace-nav-template"),
+    HOME(R.string.workspace_home, R.drawable.ic_home_24, "workspace-nav-home"),
+    TOOLS(R.string.workspace_tools, R.drawable.ic_build_24, "workspace-nav-tools"),
+    SETTINGS(R.string.workspace_settings, R.drawable.ic_settings_24, "workspace-nav-settings")
 }
 
 enum class WorkspaceNavigationLayout {
@@ -133,6 +127,7 @@ fun resolveWorkspaceNavigationLayout(
  * each later migration can replace only its workspace content.
  */
 @Composable
+@OptIn(ExperimentalComposeUiApi::class)
 fun WorkspaceShell(
     selectedDestination: WorkspaceDestination,
     onDestinationSelected: (WorkspaceDestination) -> Unit,
@@ -142,7 +137,11 @@ fun WorkspaceShell(
     destinations: List<WorkspaceDestination> = WorkspaceDestination.entries,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxSize()
+            .semantics { testTagsAsResourceId = true },
+    ) {
         // Persistent navigation uses the brightest neutral surface role so it remains
         // visually distinct from the page container without introducing an accent color.
         val navigationContainerColor = MaterialTheme.colorScheme.surfaceBright
@@ -173,6 +172,7 @@ fun WorkspaceShell(
                                 NavigationBarItem(
                                     selected = destination == selectedDestination,
                                     onClick = onDestinationClick,
+                                    modifier = Modifier.testTag(destination.testTag),
                                     icon = {
                                         Icon(
                                             painter = painterResource(destination.iconRes),
@@ -215,7 +215,11 @@ fun WorkspaceShell(
                             containerColor = Color.Transparent,
                             windowInsets = verticalNavigationSurfaceInsets()
                         ) {
-                            Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+                            Column(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
                                 destinations.forEach { destination ->
                                     val label = stringResource(destination.labelRes)
                                     val onDestinationClick = rememberClickAction {
@@ -226,6 +230,7 @@ fun WorkspaceShell(
                                     NavigationRailItem(
                                         selected = destination == selectedDestination,
                                         onClick = onDestinationClick,
+                                        modifier = Modifier.testTag(destination.testTag),
                                         icon = {
                                             Icon(
                                                 painter = painterResource(destination.iconRes),
@@ -251,7 +256,11 @@ fun WorkspaceShell(
                         drawerContainerColor = navigationContainerColor,
                         windowInsets = navigationSurfaceInsets()
                     ) {
-                        Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
+                        Column(
+                            Modifier
+                                .fillMaxHeight()
+                                .verticalScroll(rememberScrollState())
+                        ) {
                             Text(
                                 text = stringResource(R.string.app_name),
                                 modifier = Modifier.padding(LocalSpacing.current.lg),
@@ -274,9 +283,9 @@ fun WorkspaceShell(
                                         )
                                     },
                                     label = { Text(label) },
-                                    modifier = Modifier.padding(
-                                        horizontal = LocalSpacing.current.sm
-                                    )
+                                    modifier = Modifier
+                                        .padding(horizontal = LocalSpacing.current.sm)
+                                        .testTag(destination.testTag)
                                 )
                             }
                         }
@@ -369,7 +378,8 @@ private fun CompactWearWorkspaceNavigation(
                                     .transformedHeight(this, transformationSpec)
                                     .minimumVerticalContentPadding(
                                         WearButtonDefaults.minimumVerticalListContentPadding
-                                    ),
+                                    )
+                                    .testTag(destination.testTag),
                                 transformation = SurfaceTransformation(transformationSpec)
                             )
                         }
@@ -384,7 +394,8 @@ private fun CompactWearWorkspaceNavigation(
                         onClick = openNavigation,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(bottom = 28.dp),
+                            .padding(bottom = 28.dp)
+                            .testTag("workspace-nav-menu"),
                         icon = {
                             WearIcon(
                                 painter = painterResource(selectedDestination.iconRes),
