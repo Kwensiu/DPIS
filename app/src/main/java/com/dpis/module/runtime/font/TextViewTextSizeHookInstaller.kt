@@ -91,12 +91,18 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         return@Hooker result
                     }
                     if (unit == TypedValue.COMPLEX_UNIT_SP
-                        && ForceTextSizeHookRuntime.isSpTextHandledByResources(thisObject, factor, domainPlan)
+                        && ForceTextSizeHookRuntime.isSpAlreadyCoveredByScaledDensity(
+                            thisObject,
+                            factor
+                        )
                     ) {
+                        val metrics = thisObject.resources.displayMetrics
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=resources_handled, view=" + thisObject.javaClass.name
+                            ("reason=scaled_density_at_target, view=" + thisObject.javaClass.name
+                                    + ", density=" + metrics.density
+                                    + ", scaledDensity=" + metrics.scaledDensity
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)
@@ -257,11 +263,18 @@ val setTextSizeMethod = textViewClass.getDeclaredMethod(
                         ForceTextSizeHookRuntime.markAppliedTargetSize(thisObject, originalPx, factor)
                         return@Hooker result
                     }
-                    if (ForceTextSizeHookRuntime.isSpTextHandledByResources(thisObject, factor, domainPlan)) {
+                    if (ForceTextSizeHookRuntime.isSpAlreadyCoveredByScaledDensity(
+                            thisObject,
+                            factor
+                        )
+                    ) {
+                        val metrics = thisObject.resources.displayMetrics
                         RuntimeHotPathEvents.skipped(
                             packageName,
                             "textview_sp_rewrite",
-                            ("reason=resources_handled, view=" + thisObject.javaClass.name
+                            ("reason=scaled_density_at_target, view=" + thisObject.javaClass.name
+                                    + ", density=" + metrics.density
+                                    + ", scaledDensity=" + metrics.scaledDensity
                                     + ", px=" + originalPx
                                     + ", factor=" + factor
                                     + ", percent=" + targetPercent)

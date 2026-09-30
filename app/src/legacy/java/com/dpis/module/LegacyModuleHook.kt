@@ -8,9 +8,12 @@ import android.graphics.Rect
 import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
+import android.widget.TextView
 import com.dpis.module.config.ConfigSnapshot
 import com.dpis.module.config.ConfigSnapshotLoader
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.ModulePackagePlan
+import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeBridgeEvents
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.runtime.appprocess.DisplayHookInstaller
@@ -18,6 +21,7 @@ import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller
 import com.dpis.module.runtime.appprocess.ResourcesManagerHookInstaller
 import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller
 import com.dpis.module.runtime.appprocess.WindowFrameOverride
+import com.dpis.module.runtime.font.ForceTextSizeHookRuntime
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller
 import com.dpis.module.runtime.systemserver.SystemServerProcess
 import com.dpis.module.viewport.VirtualDisplayOverride
@@ -31,8 +35,6 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.diagnostics.DpisLog
 
 @Suppress("unused", "java:S1872")
 class LegacyModuleHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
@@ -689,6 +691,15 @@ class LegacyModuleHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
                             return
                         }
                         val unit: Int = (param.args[0] as Integer).toInt()
+                        if (unit == TypedValue.COMPLEX_UNIT_SP
+                            && ForceTextSizeHookRuntime.isSpAlreadyCoveredByScaledDensity(
+                                param.thisObject as? TextView,
+                                factor,
+                            )
+                        ) {
+                            FONT_TEXTVIEW_UPDATE.set(true)
+                            return
+                        }
                         if (shouldScaleTextUnit(unit)) {
                             param.args[1] = (param.args[1] as Float?)!! * factor
                             FONT_TEXTVIEW_UPDATE.set(
@@ -711,6 +722,14 @@ class LegacyModuleHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
                         // Android's one-argument TextView#setTextSize delegates to the
                         // two-argument overload on AOSP. The shared guard keeps legacy
                         // field rewrite to one scale pass across that nested call chain.
+                        if (ForceTextSizeHookRuntime.isSpAlreadyCoveredByScaledDensity(
+                                param.thisObject as? TextView,
+                                factor,
+                            )
+                        ) {
+                            FONT_TEXTVIEW_UPDATE.set(true)
+                            return
+                        }
                         param.args[0] = (param.args[0] as Float?)!! * factor
                         FONT_TEXTVIEW_UPDATE.set(true)
                     }

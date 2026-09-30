@@ -885,22 +885,15 @@ object ForceTextSizeHookRuntime {
             "textview_absolute_rewrite"
     }
 
-    internal fun isSpTextHandledByResources(
+    internal fun isSpAlreadyCoveredByScaledDensity(
         textView: TextView?,
         factor: Float,
-        domainPlan: FontDomainPlan?
     ): Boolean {
-        if (textView == null || domainPlan == null || !domainPlan.resourcesFontEnabled) {
-            return false
-        }
-        val metrics = if (textView.resources != null)
-            textView.resources.displayMetrics
-        else
-            null
-        return metrics != null && FontFieldRewriteMath.isResourcesScaledDensityApplied(
+        val metrics = textView?.resources?.displayMetrics ?: return false
+        return FontFieldRewriteMath.isSpAlreadyCoveredByScaledDensity(
             metrics.density,
             metrics.scaledDensity,
-            factor
+            factor,
         )
     }
 

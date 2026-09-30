@@ -204,7 +204,14 @@ package and target factor.
 In compat / field-rewrite font mode, the automatic domain set does not include
 `resources_font`. Users can still enable it manually from the custom hook-chain
 font page when an app needs read-path `fontScale` / `scaledDensity` values to
-match the target. When enabled in compat mode, `resources_font` uses a mixed
+match the target. An SP setter still converts through the view's current
+`scaledDensity`. When that ratio already equals the target font factor, within
+the same 0.001 factor match used by provenance, the SP route records the size
+as already handled and does not multiply again. This stop follows the metrics
+on the view, including a viewport write that placed the target factor in
+`scaledDensity` while `resources_font` stays off. A system ratio such as 1.25
+against a 1.30 target is not a match. Absolute, dp, and paint sizes still
+scale once. When enabled in compat mode, `resources_font` uses a mixed
 Resources route:
 
 - `ResourcesImpl.updateConfiguration` is installed as a low-frequency metrics
