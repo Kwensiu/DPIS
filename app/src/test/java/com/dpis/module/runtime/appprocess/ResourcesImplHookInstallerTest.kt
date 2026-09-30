@@ -235,8 +235,8 @@ class ResourcesImplHookInstallerTest {
 
         applyDensityOverride("bin.mt.plus.canary", config, metrics, store)
 
-        Assert.assertEquals(1080, VirtualDisplayState.get().widthPx.toLong())
-        Assert.assertEquals(2208, VirtualDisplayState.get().heightPx.toLong())
+        Assert.assertEquals(1080, VirtualDisplayState.get()!!.widthPx.toLong())
+        Assert.assertEquals(2208, VirtualDisplayState.get()!!.heightPx.toLong())
     }
 
     @Test
@@ -294,9 +294,9 @@ class ResourcesImplHookInstallerTest {
 
         applyDensityOverride("bin.mt.plus.canary", config, metrics, store)
 
-        Assert.assertEquals(480, VirtualDisplayState.get().densityDpi.toLong())
-        Assert.assertEquals(2376, VirtualDisplayState.get().widthPx.toLong())
-        Assert.assertEquals(1080, VirtualDisplayState.get().heightPx.toLong())
+        Assert.assertEquals(480, VirtualDisplayState.get()!!.densityDpi.toLong())
+        Assert.assertEquals(2376, VirtualDisplayState.get()!!.widthPx.toLong())
+        Assert.assertEquals(1080, VirtualDisplayState.get()!!.heightPx.toLong())
     }
 
     @Test
@@ -326,9 +326,9 @@ class ResourcesImplHookInstallerTest {
         Assert.assertEquals(420, metrics.densityDpi.toLong())
         Assert.assertEquals(1176, metrics.widthPixels.toLong())
         Assert.assertEquals(2546, metrics.heightPixels.toLong())
-        Assert.assertEquals(420, VirtualDisplayState.get().densityDpi.toLong())
-        Assert.assertEquals(1176, VirtualDisplayState.get().widthPx.toLong())
-        Assert.assertEquals(2546, VirtualDisplayState.get().heightPx.toLong())
+        Assert.assertEquals(420, VirtualDisplayState.get()!!.densityDpi.toLong())
+        Assert.assertEquals(1176, VirtualDisplayState.get()!!.widthPx.toLong())
+        Assert.assertEquals(2546, VirtualDisplayState.get()!!.heightPx.toLong())
     }
 
     @Test
@@ -438,8 +438,8 @@ class ResourcesImplHookInstallerTest {
         Assert.assertEquals(500, config.smallestScreenWidthDp.toLong())
         Assert.assertEquals(1080, metrics.widthPixels.toLong())
         Assert.assertEquals(2208, metrics.heightPixels.toLong())
-        Assert.assertEquals(1080, VirtualDisplayState.get().widthPx.toLong())
-        Assert.assertEquals(2208, VirtualDisplayState.get().heightPx.toLong())
+        Assert.assertEquals(1080, VirtualDisplayState.get()!!.widthPx.toLong())
+        Assert.assertEquals(2208, VirtualDisplayState.get()!!.heightPx.toLong())
         Assert.assertEquals(500, config.smallestScreenWidthDp.toLong())
         Assert.assertEquals(346, config.densityDpi.toLong())
     }
@@ -683,9 +683,9 @@ class ResourcesImplHookInstallerTest {
         Assert.assertEquals(960, config.screenHeightDp.toLong())
         Assert.assertEquals(540, config.smallestScreenWidthDp.toLong())
         Assert.assertEquals(320, config.densityDpi.toLong())
-        Assert.assertEquals(320, VirtualDisplayState.get().densityDpi.toLong())
-        Assert.assertEquals(1080, VirtualDisplayState.get().widthPx.toLong())
-        Assert.assertEquals(1920, VirtualDisplayState.get().heightPx.toLong())
+        Assert.assertEquals(320, VirtualDisplayState.get()!!.densityDpi.toLong())
+        Assert.assertEquals(1080, VirtualDisplayState.get()!!.widthPx.toLong())
+        Assert.assertEquals(1920, VirtualDisplayState.get()!!.heightPx.toLong())
     }
 
     @Test
@@ -740,10 +740,10 @@ class ResourcesImplHookInstallerTest {
         Assert.assertEquals(320, windowMetrics.densityDpi.toLong())
         Assert.assertEquals(1080, windowMetrics.widthPixels.toLong())
         Assert.assertEquals(1920, windowMetrics.heightPixels.toLong())
-        Assert.assertEquals(540, VirtualDisplayState.get().widthDp.toLong())
-        Assert.assertEquals(1188, VirtualDisplayState.get().heightDp.toLong())
-        Assert.assertEquals(1080, VirtualDisplayState.get().widthPx.toLong())
-        Assert.assertEquals(2376, VirtualDisplayState.get().heightPx.toLong())
+        Assert.assertEquals(540, VirtualDisplayState.get()!!.widthDp.toLong())
+        Assert.assertEquals(1188, VirtualDisplayState.get()!!.heightDp.toLong())
+        Assert.assertEquals(1080, VirtualDisplayState.get()!!.widthPx.toLong())
+        Assert.assertEquals(2376, VirtualDisplayState.get()!!.heightPx.toLong())
     }
 
     @Test

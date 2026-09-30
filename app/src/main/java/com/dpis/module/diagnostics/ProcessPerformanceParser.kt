@@ -79,6 +79,7 @@ internal object ProcessPerformanceParser {
                 "skipped" -> summary.skipped = numericValue
                 "kept" -> summary.kept = numericValue
                 "measuredCalls" -> summary.measuredCalls = numericValue
+                "sampleStride" -> summary.sampleStride = numericValue.toInt()
                 "p50Us" -> summary.p50Us = numericValue
                 "p95Us" -> summary.p95Us = numericValue
                 "p99Us" -> summary.p99Us = numericValue
@@ -175,6 +176,9 @@ internal object ProcessPerformanceParser {
 
         @JvmField
         var measuredCalls: Long = 0
+
+        @JvmField
+        var sampleStride: Int = 0
 
         @JvmField
         var p50Us: Long = 0

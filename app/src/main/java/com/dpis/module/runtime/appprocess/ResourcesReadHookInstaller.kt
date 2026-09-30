@@ -7,6 +7,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
+import com.dpis.module.diagnostics.device.RuntimeTransport
 import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.font.FontScaleOverride
@@ -26,11 +27,13 @@ import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayPlan
+import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.VirtualDisplayState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.Volatile
 import kotlin.math.abs
 
@@ -49,10 +52,12 @@ object ResourcesReadHookInstaller {
     private val INTERNAL_UPDATE = ThreadLocal<Boolean>()
     private val LAST_MESSAGES = ConcurrentHashMap<String, String>()
     private val HOTPATH_SAMPLER = RuntimeHotPathEvidenceSampler()
+    private val reusedDisplayMetricsHits = AtomicInteger()
 
     @JvmStatic
     fun resetForHotReload() {
         hookInstalled = false
+        ResourcesMetricsReadReuse.clearForTest()
     }
 
     @Throws(ReflectiveOperationException::class)
@@ -187,7 +192,23 @@ object ResourcesReadHookInstaller {
                         return@Hooker result
                     }
                     INTERNAL_UPDATE.set(true)
+                    val captureActive = RuntimeTransport.isCaptureActive
+                    val startedAt = if (captureActive) System.nanoTime() else 0L
+                    var reusedStableRead = false
                     try {
+                        if (ResourcesMetricsReadReuse.matchesDisplayMetrics(
+                                thisObject,
+                                result.densityDpi,
+                                result.density.toBits(),
+                                result.scaledDensity.toBits(),
+                                result.widthPixels,
+                                result.heightPixels,
+                                System.nanoTime(),
+                            )
+                        ) {
+                            reusedStableRead = true
+                            return@Hooker result
+                        }
                         val config = thisObject.configuration
                         applyMetricsOverride(
                             thisObject,
@@ -200,6 +221,17 @@ object ResourcesReadHookInstaller {
                         )
                     } finally {
                         INTERNAL_UPDATE.set(false)
+                        val durationNs = if (captureActive) System.nanoTime() - startedAt else 0L
+                        if (captureActive) {
+                            RuntimeHotPathEvents.recordBodySample(
+                                packageName,
+                                "resources_read_display_metrics_override",
+                                durationNs,
+                            )
+                            if (reusedStableRead) {
+                                recordReusedDisplayMetricsSkip(packageName)
+                            }
+                        }
                     }
                     result
                 })
@@ -751,8 +783,12 @@ object ResourcesReadHookInstaller {
         val originalScaledDensity = metrics.scaledDensity
         val originalWidthPixels = metrics.widthPixels
         val originalHeightPixels = metrics.heightPixels
+        if (reuseResolvedMetrics(resourceScope, packageName, metrics)) {
+            return
+        }
         var targetDensity = DensityOverride.densityFromDpi(targetDensityDpi)
         val targetFontFactor = FontScaleOverride.targetFactorForResources(store, packageName)
+        val display = VirtualDisplayState.get()
         val observedFontScale = if (config.fontScale > 0f) config.fontScale else 1.0f
         ResourcesFontScheduler.observeResourcesFontScale(
             resourceScope,
@@ -797,6 +833,7 @@ object ResourcesReadHookInstaller {
                     "source=ResourcesRead(getDisplayMetrics), reason=stable_metrics"
                 )
             }
+            rememberResolvedMetrics(resourceScope, metrics)
             return
         }
         val localViewportResult =
@@ -835,6 +872,7 @@ object ResourcesReadHookInstaller {
                 "source=ResourcesRead(getDisplayMetrics), reason=stable_metrics"
             )
         }
+        rememberResolvedMetrics(resourceScope, metrics)
 
         logMetricsIfChanged(
             metricsChanged,
@@ -938,6 +976,62 @@ object ResourcesReadHookInstaller {
     @JvmStatic
     fun resetHotPathSamplerForTest() {
         HOTPATH_SAMPLER.resetForTest()
+        reusedDisplayMetricsHits.set(0)
+        ResourcesMetricsReadReuse.clearForTest()
+    }
+
+    @JvmStatic
+    fun recordReusedDisplayMetricsSkip(packageName: String?) {
+        if (!RuntimeTransport.isCaptureActive) {
+            return
+        }
+        val hit = reusedDisplayMetricsHits.incrementAndGet()
+        if (hit % RuntimeHotPathEvents.BODY_SAMPLE_STRIDE != 0) {
+            return
+        }
+        RuntimeHotPathEvents.skipped(
+            packageName,
+            "viewport",
+            "resources_read_display_metrics_override",
+            "source=ResourcesRead(getDisplayMetrics), reason=reused_stable_metrics, hitCount=$hit",
+        )
+    }
+
+    private fun reuseResolvedMetrics(
+        resourceScope: Any?,
+        packageName: String?,
+        metrics: DisplayMetrics,
+    ): Boolean {
+        if (!ResourcesMetricsReadReuse.matchesDisplayMetrics(
+                resourceScope,
+                metrics.densityDpi,
+                metrics.density.toBits(),
+                metrics.scaledDensity.toBits(),
+                metrics.widthPixels,
+                metrics.heightPixels,
+                System.nanoTime(),
+            )
+        ) {
+            return false
+        }
+        recordMetricsSkip(
+            packageName,
+            "reused_stable_metrics",
+            "source=ResourcesRead(getDisplayMetrics), reason=reused_stable_metrics",
+        )
+        return true
+    }
+
+    private fun rememberResolvedMetrics(resourceScope: Any?, metrics: DisplayMetrics) {
+        ResourcesMetricsReadReuse.remember(
+            resourceScope,
+            metrics.densityDpi,
+            metrics.density.toBits(),
+            metrics.scaledDensity.toBits(),
+            metrics.widthPixels,
+            metrics.heightPixels,
+            System.nanoTime(),
+        )
     }
 
     private fun logFontMetricsIfChanged(

@@ -1,5 +1,6 @@
 package com.dpis.module.diagnostics.device
 
+import com.dpis.module.diagnostics.ProcessPerformance
 import com.dpis.module.diagnostics.ProcessPerformance.RouteSnapshot
 import com.dpis.module.root.RootAppProcessLauncher.ShellResult
 import com.dpis.module.runtime.transport.SecureProcessLauncher
@@ -214,7 +215,7 @@ object RuntimeTransport {
         packageName: String?,
         processName: String?,
         pid: Int,
-        routes: MutableMap<String?, RouteSnapshot?>?
+        routes: Map<String, ProcessPerformance.RouteSnapshot>?
     ) {
         if (routes == null || routes.isEmpty()) {
             return
@@ -228,13 +229,17 @@ object RuntimeTransport {
         }
         for (entry
         in routes.entries) {
-            val snapshot: RouteSnapshot = entry.value!!
+            val snapshot = entry.value
             message.append(";route=").append(entry.key)
                 .append(",calls=").append(snapshot.calls)
                 .append(",applied=").append(snapshot.applied)
                 .append(",skipped=").append(snapshot.skipped)
                 .append(",kept=").append(snapshot.kept)
                 .append(",measuredCalls=").append(snapshot.measuredCalls)
+            if (snapshot.sampleStride > 1) {
+                message.append(",sampleStride=").append(snapshot.sampleStride)
+            }
+            message
                 .append(",p50Us=").append(snapshot.p50Us)
                 .append(",p95Us=").append(snapshot.p95Us)
                 .append(",p99Us=").append(snapshot.p99Us)

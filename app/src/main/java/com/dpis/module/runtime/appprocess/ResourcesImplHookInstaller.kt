@@ -9,6 +9,7 @@ import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportConfigurationScope
 import com.dpis.module.viewport.ViewportDebugReporter
@@ -73,6 +74,7 @@ object ResourcesImplHookInstaller {
                 .intercept(Hooker { chain: XposedInterface.Chain? ->
                     val config = chain!!.getArg(0) as Configuration?
                     val metrics = chain.getArg(1) as DisplayMetrics?
+                    ResourcesMetricsReadReuse.bump()
                     applyDensityOverride(packageName, config, metrics, store, policy)
                     chain.proceed()
                 })

@@ -1,6 +1,7 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
+import com.dpis.module.viewport.ResourcesMetricsReadReuse
 
 /**
  * Owns preference-source precedence and the commit policy shared by config
@@ -88,7 +89,10 @@ internal class ConfigPreferenceAccess(
     ): Boolean {
         val editor = target.edit().apply(action)
         return editor.commit().also { committed ->
-            if (committed) legacyPreferencesBridge.mirror()
+            if (committed) {
+                legacyPreferencesBridge.mirror()
+                ResourcesMetricsReadReuse.bump()
+            }
         }
     }
 }

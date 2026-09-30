@@ -265,7 +265,7 @@ def report(pack: Pack, factor_fallback: float) -> str:
             primary_process = process
             last_counts = counts
         for part in msg.split(";"):
-            print(f"  {part[:220]}", file=out)
+            print(f"  {part[:480]}", file=out)
 
     print("\n== wechat vs module-effects ==", file=out)
     wechat = wechat_events(lines)

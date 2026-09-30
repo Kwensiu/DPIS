@@ -138,7 +138,7 @@ class FeedbackDiagnosticActivitySession(
             packageActions.feedbackDiagnosticSharedCachePath(diagnosticPackage),
             activity.getString(
                 R.string.feedback_diagnostic_package_metadata,
-                FeedbackDiagnosticDuration.format(diagnosticPackage.result.durationMs),
+                FeedbackDiagnosticDuration.format(diagnosticPackage.result!!.durationMs),
                 Formatter.formatFileSize(activity, diagnosticPackage.zipBytes.size.toLong()),
             ),
             diagnosticPackage.entries.map { entry ->

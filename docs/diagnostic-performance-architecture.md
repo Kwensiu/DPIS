@@ -305,6 +305,15 @@ Perfetto 原始文件：
 `PerformanceSnapshot` 仍是迁移期间的 UI 进程 fallback，
 不能作为目标 App 进程实际执行结果。
 
+`Resources.getDisplayMetrics` 的覆盖计算在诊断会话进行时另记 body sample。
+`calls` 是每次进入覆盖计算的次数，不是采样日志次数。耗时每次都会计入
+`maxUs`，百分位只保留每 50 次中的 1 次，聚合字段是 `sampleStride=50`。
+这样 4096 个样本能盖住整段滑动，而不是只盖住开头约两秒。没有诊断会话时
+不记这组样本。稳定读的复用判断留在同一次计时里。命中时不再读 `getConfiguration`
+和字体存储，只比较已返回的密度、像素宽高和写入侧代数。
+解析入口用同一条比较，不再另建配置、字体和虚拟显示戳记。
+复用命中的跳过日志在计时结束之后每 50 次记一条，命中路径不再为采样加锁或拼接字符串。
+
 当前 `RuntimeTransport` 已经提供跨进程 marker 和文件通道，
 并已开始承载目标进程周期性聚合快照。由于 appdomain 对
 `/data/local/tmp` 的读取/追加可能受 SELinux 策略限制，活动 session 同时通过

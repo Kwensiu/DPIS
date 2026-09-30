@@ -247,7 +247,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.java"
         )
         val hotPath = read(
-            "src/main/java/com/dpis/module/diagnostics/RuntimeHotPathEvents.java"
+            "src/main/java/com/dpis/module/diagnostics/RuntimeHotPathEvents.kt"
         )
 
         assertTrue(dpisLog.contains("private static void write("))
@@ -255,9 +255,9 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(dpisLog.contains("RuntimeTransport.record("))
         assertTrue(hotPath.contains("RuntimeEvents.recordStructured("))
         assertTrue(hotPath.contains("RuntimeTransport.record("))
-        assertTrue(hotPath.contains("static void begin("))
-        assertTrue(hotPath.contains("static void applied("))
-        assertTrue(hotPath.contains("static void end("))
+        assertTrue(hotPath.contains("fun begin("))
+        assertTrue(hotPath.contains("fun applied("))
+        assertTrue(hotPath.contains("fun end("))
         assertTrue(collector.contains("private static volatile Session activeSession;"))
         assertTrue(collector.contains("\"unexpected_route_hit\""))
         assertTrue(collector.contains("\"repeated_write\""))
@@ -326,7 +326,13 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/PackageActions.kt"
         )
         val exportBuilder = read(
-            "src/main/java/com/dpis/module/diagnostics/ExportBuilder.java"
+            "src/main/java/com/dpis/module/diagnostics/ExportBuilder.kt"
+        )
+        val reportText = read(
+            "src/main/java/com/dpis/module/diagnostics/DiagnosticReportText.kt"
+        )
+        val logExcerpt = read(
+            "src/main/java/com/dpis/module/diagnostics/DiagnosticLogExcerpt.kt"
         )
         val moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java")
         val resultSheet = read(
@@ -380,24 +386,24 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(exportBuilder.contains("DIAGNOSTIC_ENTRY_NAME = \"diagnostic.txt\""))
         assertTrue(exportBuilder.contains("DPIS_LOG_ENTRY_NAME = \"dpis-log.txt\""))
         assertTrue(exportBuilder.contains("LSPOSED_LOG_ENTRY_NAME = \"lsposed-log.txt\""))
-        assertTrue(exportBuilder.contains("LsposedTimelineParser.parse("))
-        assertTrue(exportBuilder.contains("SessionWindow.around("))
-        assertTrue(exportBuilder.contains("filterDpisEntries("))
-        assertTrue(exportBuilder.contains("windowRawLog("))
-        assertTrue(exportBuilder.contains("[manifest]"))
-        assertTrue(exportBuilder.contains("[app-config]"))
-        assertTrue(exportBuilder.contains("[diagnostic-plan]"))
-        assertTrue(exportBuilder.contains("[runtime-summary]"))
-        assertTrue(exportBuilder.contains("[runtime-density]"))
-        assertTrue(exportBuilder.contains("[runtime-anomalies]"))
-        assertTrue(exportBuilder.contains("[wechat-dpi-evidence]"))
-        assertTrue(exportBuilder.contains("[runtime-timeline]"))
-        assertTrue(exportBuilder.contains("[runtime-self-test]"))
-        assertTrue(exportBuilder.contains("[raw-log]"))
-        assertTrue(exportBuilder.contains("versionName: "))
-        assertTrue(exportBuilder.contains("static final class DiagnosticPackage"))
-        assertTrue(exportBuilder.contains("static final class EntrySummary"))
-        assertTrue(exportBuilder.contains("DiagnosticPackage buildPackage("))
+        assertTrue(logExcerpt.contains("LsposedTimelineParser.parse("))
+        assertTrue(logExcerpt.contains("SessionWindow.around("))
+        assertTrue(logExcerpt.contains("filterDpisEntries("))
+        assertTrue(logExcerpt.contains("windowRawLog("))
+        assertTrue(reportText.contains("[manifest]"))
+        assertTrue(reportText.contains("[app-config]"))
+        assertTrue(reportText.contains("[diagnostic-plan]"))
+        assertTrue(reportText.contains("[runtime-summary]"))
+        assertTrue(reportText.contains("[runtime-density]"))
+        assertTrue(reportText.contains("[runtime-anomalies]"))
+        assertTrue(reportText.contains("[wechat-dpi-evidence]"))
+        assertTrue(reportText.contains("[runtime-timeline]"))
+        assertTrue(reportText.contains("[runtime-self-test]"))
+        assertTrue(reportText.contains("[raw-log]"))
+        assertTrue(reportText.contains("versionName: "))
+        assertTrue(exportBuilder.contains("class DiagnosticPackage"))
+        assertTrue(exportBuilder.contains("class EntrySummary"))
+        assertTrue(exportBuilder.contains("fun buildPackage("))
         assertTrue(forceTextSize.contains("RuntimeHotPathEvents.begin("))
         assertTrue(moduleMain.contains("RuntimeHotPathEvents.probe("))
         assertTrue(moduleMain.contains("\"process_entry\""))
@@ -412,7 +418,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(paintTextSize.contains("\"textpaint_text_size_fallback\""))
         assertTrue(webViewFont.contains("\"webview_text_zoom\""))
         assertTrue(webViewFont.contains("\"x5_webview_text_zoom\""))
-        assertTrue(exportBuilder.contains("wechatDpiRoute: selected"))
+        assertTrue(reportText.contains("wechatDpiRoute: selected"))
         assertTrue(modernWechat.contains("\"wechat_dpi\""))
         assertTrue(modernWechat.contains("\"displaymetrics\""))
         assertTrue(modernWechat.contains("\"bottom_tab_icon\""))
