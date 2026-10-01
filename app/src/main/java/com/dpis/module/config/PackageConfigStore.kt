@@ -477,10 +477,6 @@ open class PackageConfigStore internal constructor(
         return preferenceAccess.readPrimaryPackageConfigValue(spec, key)
     }
 
-    fun ensureSeedConfig(seedTargetViewportWidthDps: MutableMap<String?, Int?>): Boolean {
-        return packageWriter.ensureSeedConfig(seedTargetViewportWidthDps)
-    }
-
     fun snapshotAll(): MutableMap<String, Any?> {
         return snapshotRepository.snapshotAll()
     }

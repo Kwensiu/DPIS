@@ -47,11 +47,11 @@ class RuntimePropertyConfigPreferencesTest {
     }
 
     @Test
-    fun legacyMainProcessTreatsAutoAsCompatForAnyEnabledViewportTarget() {
+    fun legacyMainProcessTreatsAutoAsCompatOnlyForAbsoluteViewportTargets() {
         val route = RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET
 
         assertEquals(
-            ViewportApplyMode.COMPAT,
+            ViewportApplyMode.AUTO,
             RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                 ViewportApplyMode.AUTO, ViewportTargetSpec.relativeScale(150000), route,
             ),
@@ -71,9 +71,9 @@ class RuntimePropertyConfigPreferencesTest {
     }
 
     @Test
-    fun modernRuntimeMirrorCanResolveAutoRelativeScaleAsAppProcessRoute() {
+    fun modernRuntimeMirrorKeepsAutoRelativeScaleForSystemOwnedRoute() {
         assertEquals(
-            ViewportApplyMode.COMPAT,
+            ViewportApplyMode.AUTO,
             RuntimePropertyConfigPreferences.resolveRuntimeViewportModeForTest(
                 ViewportApplyMode.AUTO,
                 ViewportTargetSpec.relativeScale(150000),

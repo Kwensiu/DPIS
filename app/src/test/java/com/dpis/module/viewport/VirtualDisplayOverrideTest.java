@@ -83,6 +83,27 @@ public class VirtualDisplayOverrideTest {
     }
 
     @Test
+    public void defersRelativeDisplayMetricsToSystemServer() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(
+                "com.max.xiaoheihe", ViewportTargetSpec.relativeScale(120000));
+        store.setSystemServerHooksEnabled(true);
+        DisplayHookInstaller.setTargetStoreForLegacy(store);
+        DisplayMetrics metrics = new DisplayMetrics();
+        metrics.widthPixels = 1080;
+        metrics.heightPixels = 2208;
+        metrics.densityDpi = 480;
+        metrics.density = 3.0f;
+        metrics.scaledDensity = 3.0f;
+
+        DisplayHookInstaller.applyDisplayMetrics(metrics, "getRealMetrics");
+
+        assertEquals(1080, metrics.widthPixels);
+        assertEquals(2208, metrics.heightPixels);
+        assertEquals(480, metrics.densityDpi);
+    }
+
+    @Test
     public void displayMetricsOverrideRecordsViewportHotpathEvidence() {
         publishTargetRecord();
         RuntimeEvents.start("com.max.xiaoheihe", request());

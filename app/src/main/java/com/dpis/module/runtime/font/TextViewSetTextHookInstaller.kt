@@ -15,7 +15,6 @@ import io.github.libxposed.api.XposedInterface.Hooker
 internal object TextViewSetTextHookInstaller {
     private const val HOT_LOG_INTERVAL = 32
     private const val HOOK_ID_TEXTVIEW_SET_TEXT = "textview_set_text"
-    private const val XIAOHEIHE_EXPRESSION_TEXT_VIEW = "com.max.xiaoheihe.module.expression.widget.ExpressionTextView"
 
     fun install(
         xposed: XposedInterface,
@@ -45,8 +44,14 @@ val setTextMethod = textViewClass.getDeclaredMethod(
                 if (thisObject !is TextView) {
                     return@Hooker chain.proceed()
                 }
-                if (XIAOHEIHE_EXPRESSION_TEXT_VIEW == thisObject.javaClass.name) {
-                    ForceTextSizeHookRuntime.applyExpressionTextSizeOverride(thisObject, factor)
+                // Text updates can arrive before attach/appearance callbacks; use the shared
+                // current-px fallback here so no widget class needs a special-case path.
+                if (TextSizePolicy.shouldInstallCurrentPxTextViewFallbacks(domainPlan)) {
+                    ForceTextSizeHookRuntime.applyTextViewSizeOverride(
+                        thisObject,
+                        factor,
+                        domainPlan
+                    )
                 }
                 val sourceText = chain.getArg(0) as CharSequence?
                 if (sourceText !is Spanned) {

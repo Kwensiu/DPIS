@@ -1,11 +1,8 @@
 package com.dpis.module.config
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.FakePrefs
 
+import com.dpis.module.FakePrefs
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.viewport.DpiConfig
 import com.dpis.module.viewport.ViewportApplyMode
-import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -172,29 +169,8 @@ class PackageStateTest {
     }
 
     @Test
-    fun seedsMissingPackageListAndTargetValuesWithoutOverwritingExistingValues() {
-        val prefs = FakePrefs()
-        prefs.edit()
-            .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES, setOf("bin.mt.plus.canary"))
-            .putInt("viewport.bin.mt.plus.canary.width_dp", 420)
-            .commit()
-
-        val store = DpisConfigStore(prefs)
-        store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps())
-
-        assertEquals(420, store.getTargetViewportWidthDp("bin.mt.plus.canary"))
-        assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP,
-            store.getTargetViewportWidthDp("com.max.xiaoheihe"),
-        )
-        assertTrue(store.getConfiguredPackages().contains("bin.mt.plus.canary"))
-        assertTrue(store.getConfiguredPackages().contains("com.max.xiaoheihe"))
-    }
-
-    @Test
     fun updatesViewportWidthForConfiguredPackage() {
         val store = DpisConfigStore(FakePrefs())
-        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()))
 
         assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360))
 
@@ -204,7 +180,7 @@ class PackageStateTest {
     @Test
     fun clearsViewportWidthWhenDisabled() {
         val store = DpisConfigStore(FakePrefs())
-        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()))
+        assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360))
 
         assertTrue(store.clearTargetViewportWidthDp("bin.mt.plus.canary"))
 

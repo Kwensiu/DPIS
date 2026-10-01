@@ -1,6 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+
 - Main Android module: `app/` (single-module project; see `settings.gradle.kts`).
 - Production code: `app/src/main/java/com/dpis/module/`.
 - Flavor-specific code: `app/src/modern/java/` (libxposed API 101) and `app/src/legacy/java/` (legacy Xposed API).
@@ -26,11 +27,6 @@
   runtime-route semantics, inset ownership, naming, comments, and validation
   requirements must be corrected in the same change when the touched scope
   exposes a violation.
-- When an existing Java class is materially changed and its responsibility is
-  inside the Kotlin/Compose ownership boundary, migrate it to Kotlin in the
-  same change. If migration is not safe because of reflection, JNI, flavor
-  entrypoints, or an externally observed JVM signature, record that reason in
-  the change and preserve the boundary deliberately.
 - Keep physical directories aligned with responsibility. Do not leave new
   presentation code in a catch-all package when an existing feature/design,
   editor, workspace, dialog, interop, or Wear boundary applies. Keep Kotlin
@@ -47,10 +43,6 @@
 
 Issues are tracked in GitHub Issues for `Kwensiu/DPIS`. See `docs/agents/issue-tracker.md`.
 
-### Triage labels
-
-Use the default Matt Pocock skill label roles unless the repository labels are intentionally changed. See `docs/agents/triage-labels.md`.
-
 ### Domain docs
 
 DPIS currently uses a single-context documentation layout. See
@@ -62,44 +54,18 @@ packaging, or UI colors and shared chrome.
 
 ### CodeGraph
 
-Agents may use CodeGraph for project structure navigation, symbol lookup,
-callers/callees, and impact analysis. Prefer runtime source under `app/src/**`
-for behavioral conclusions; `docs/archive/` may contain historical snapshots
-that can appear in CodeGraph results.
-Prefer CodeGraph when:
-- a change crosses multiple shared classes and plain text search does not make
-  ownership or call paths obvious;
-- you need callers/callees or interface implementation relationships for impact
-  analysis before editing;
-- a setting, store value, or shared model may affect multiple UI and runtime
-  paths and you need to enumerate the real dependency surface;
-- historical docs or archived code make `rg` results noisy and you need to
-  anchor conclusions to the active runtime source.
+Before editing shared code, use CodeGraph for callers, callees, and impact. Treat `app/src/**` as
+the behavioral source. Results from `docs/archive/` are historical and are not current behavior.
 
-### Tooling and analysis workflow
+### Tooling
 
-Before committing or opening a PR, use the project skill
-`.agents/skills/dpis-precommit-review/SKILL.md`. It contains the review order,
-tool usage, SonarQube MCP lookup, boundary audit, validation commands, and
-Git handoff.
-
-- For ordinary development, follow the discovery and validation details in
-  `.agents/skills/dpis-precommit-review/SKILL.md`; use CodeGraph when a change
-  crosses shared state or interface boundaries. Active runtime source under
-  `app/src/**` is authoritative over archived documentation.
+Before committing or opening a PR, use `.agents/skills/dpis-precommit-review/SKILL.md`.
 
 ### Sub-agent usage
 
-When delegating to sub-agents, prefer reusing the existing sub-agent for the
-same task type or feature theme. Do not create a fresh sub-agent for every
-small follow-up on the same topic. Start a new sub-agent only when the previous
-one is overloaded, the task domain has clearly changed, or shared context would
-pollute the result.
-
-For large diffs (Compose dialog migrations, Activity extractions, or any change
-that crosses several feature packages), do not review the whole branch in one
-agent context. Slice by ownership and dispatch one read-only reviewer per
-slice. The split, reuse, and merge rules live in
+Reuse an existing sub-agent for the same task or feature. Start a new one only when the previous one
+is overloaded, the task domain has changed, or shared context would pollute the result. For a large
+diff, slice by ownership and use one read-only reviewer per slice. The split rules live in
 `.agents/skills/dpis-precommit-review/SKILL.md`.
 
 ### DPIS runtime route playbook
@@ -137,8 +103,9 @@ device evidence for dp/font emulation, use
 bundle and does not modify global agent skills.
 
 ## Build, Test, and Development Commands
-Use `.agents/skills/dpis-precommit-review/SKILL.md` for the complete
-pre-commit validation sequence. The main quick commands are:
+
+The complete pre-commit sequence is in `.agents/skills/dpis-precommit-review/SKILL.md`. The main
+quick commands are:
 
 - `./gradlew :app:testAllDebugUnitTests`
 - `./gradlew :app:assembleModernDebug :app:assembleLegacyDebug`
@@ -149,6 +116,7 @@ disable Android Studio deployment optimization so LSPosed does not retain stale
 module paths or optimized code.
 
 ## Coding Style & Naming Conventions
+
 - Create new code and test files in Kotlin by default. Java 17 remains the
   compatibility target for existing Java sources and JVM bytecode.
 - DPIS has completed its main Compose UI migration. Build new screens,
@@ -194,14 +162,14 @@ module paths or optimized code.
 - Do not introduce unnecessary abstractions; follow KISS/YAGNI.
 
 ## Testing Guidelines
+
 - Framework: JUnit4 (`testImplementation(libs.junit4)`).
 - Test location mirrors production package structure.
 - Test class names end in `Test` and method names describe behavior (e.g.,
   `usesObservedDefaultDensityWhenNoUserValueExists`). Use the matching `.kt`
   or `.java` extension for the implementation language.
-- Use `.agents/skills/dpis-precommit-review/SKILL.md` for the required full
-  suite, Android CLI order, flavor builds, SonarQube MCP checks, and final
-  validation record.
+- The required suite, flavor builds, and Sonar checks are in
+  `.agents/skills/dpis-precommit-review/SKILL.md`.
 - Prefer behavior tests for parsers, caches, and policy classes. Source smoke tests are acceptable for wiring checks, but should not be the only coverage for business logic.
 - JVM coverage exclusions are a directory contract, decided when the file is
   created, not after Sonar fails. Put JVM-untestable code under
@@ -214,27 +182,12 @@ module paths or optimized code.
   `*Receiver`, `Application`) may be excluded by those suffixes because the
   JVM harness cannot construct them. Do not invent extra suffix globs
   (`*Session`, `*Confirm`, `*Handler`, `*Binder`, `*Shell`) to hide coupling.
-- During every review or implementation pass, audit all touched files against
-  the full project-level rules above. Fix newly exposed violations in the same
-  pass, including non-test style, structure, language, ownership, and
-  documentation violations.
 - Tests must pin user-visible behavior, domain invariants, or stable module contracts. Do not add tests that merely repeat a source line, method name, literal value, file path, or implementation detail unless that detail is itself an intentional compatibility contract.
-- Keep source smoke tests focused and sparse: one semantic assertion may cover a coherent wiring rule, but do not create large collections of string-presence assertions that all restate the same implementation. When refactoring, update or remove stale implementation anchors instead of preserving them for their own sake.
-- Prefer tests that would still pass after a reasonable internal refactor and would fail when the promised behavior regresses. If a behavior cannot be exercised directly, document why a narrow source-level anchor is the least fragile available check.
-- When changing UI structure, resource ids, shared binders/helpers, navigation,
-  or layout ownership, explicitly check and update source/layout smoke tests.
-  In this project the frequent touch points are
-  `MainActivitySourceSmokeTest`, `MainActivityLayoutSmokeTest`,
-  `AppConfigDialogBinderSourceSmokeTest`, and related `*SourceSmokeTest`
-  files. Use `rg` for removed ids/helper names/layouts so tests keep checking
-  the current product semantics instead of preserving stale implementation
-  details.
-- After Java-to-Kotlin conversion, update source smoke tests to read the active
-  `.kt` source and assert semantic anchors rather than Java-specific local
-  variables, generic syntax, or the old file extension.
-- When Kotlin idioms replace Java getters, lambdas, or inferred local types,
-  update affected source-smoke anchors in the same change; do not preserve
-  Java syntax solely because a test previously matched it.
+- Keep source smoke tests sparse. When changing UI structure, resource ids, shared binders,
+  navigation, or layout ownership, update the related `*SourceSmokeTest` files, including
+  `MainActivitySourceSmokeTest`, `MainActivityLayoutSmokeTest`, and
+  `AppConfigDialogBinderSourceSmokeTest`. After Java-to-Kotlin, assert the current `.kt` semantics,
+  not the old Java spelling.
 - For Compose UI changes, run the relevant unit/source smoke tests, build the
   Modern Debug APK, and install it on the active device after a successful
   build. For shared Java/Kotlin interoperability, dependency, R8, or flavor
@@ -242,18 +195,21 @@ module paths or optimized code.
   configuration is available.
 
 ## Update Flow Guidelines
+
 - Do not cache update detection, version decisions, or manifest results.
 - Release notes body may be cached by version with TTL, but must not affect update availability.
 - Network failure must not overwrite already available release notes content.
 - Empty release notes body should still be cacheable when the goal is to reduce repeated body fetches.
 
 ## Debug-only UI Entrypoints
+
 - Temporary debug-only UI rows must be gated by `BuildConfig.DEBUG`.
 - Name ids, strings, and binding methods with `debug_only`.
 - Group debug-only rows with their own dividers so release layouts keep static separators.
 - Before release-related commits, explicitly decide whether to remove or keep debug-only entries.
 
 ## Log Page & Feedback Diagnostics
+
 - Read `CONTEXT.md` before changing log page behavior, feedback diagnostic flow,
   or the roles of `diagnostic.txt`, `dpis-log.txt`, and `lsposed-log.txt`.
 - When changing diagnostic package structure, log parsing, export file names, or
@@ -262,64 +218,41 @@ module paths or optimized code.
   semantics.
 
 ## Android Runtime Validation
+
 - Do not use `monkey` to launch target applications, either from ADB automation or
   DPIS runtime logic. On some systems it can unexpectedly enable automatic
   rotation. Prefer an explicit launcher intent or resolved launcher component;
   for ADB validation, use `adb shell am start` with the target package/component.
 
 ## Frida Runtime Probes
-- Frida may be used as a read-only Android app-process probe when Xposed rebuilds
-  would be too slow. Prefer it for process lists, current Activity/resources,
-  View tree metrics, and one-off method return inspection.
-- Use the Frida binaries installed on the local machine; do not encode a
-  developer-specific Python or filesystem path in project documentation.
-- Start a matching Frida server on the connected test device using the local
-  device tooling; keep the server binary and its temporary logs outside the
-  repository.
-- Example process check: run the locally installed `frida-ps` with `-U` and
-  filter for the target package, PID, or process name.
-- Keep Frida artifacts local. Do not commit `.frida/`, downloaded servers,
-  temporary Frida scripts, captures, or generated debug evidence unless they are
-  intentionally promoted into documented tooling.
-- Treat Frida as supporting evidence only. It complements DPIS/LSPosed logs and
-  `dumpsys`; it does not replace system_server `ActivityRecord`,
-  WindowManager, or DisplayManager evidence.
+
+- Frida may be used as a read-only app-process probe when an Xposed rebuild would be too slow.
+- Do not commit Frida artifacts, and do not encode a machine-specific path in project docs.
+- Frida does not replace `system_server` evidence from `ActivityRecord`, WindowManager, or
+  DisplayManager.
 
 ## Runtime Hook Debugging Discipline
+
 - Read `CONTEXT.md` before changing runtime-route meaning, evidence rules, or
   route-effectiveness criteria.
-- `docs/legacy-runtime-resync.md` and
-  `docs/modern-runtime-resync.md` are the DPIS living route documents for
-  viewport/runtime hook routes. Before adding, modifying, or removing any
-  viewport/runtime hook route, read the relevant document, and read both when
-  touching shared code under `app/src/main/java/com/dpis/module/`.
-- For runtime diagnosis, follow
-  `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md`:
-  identify the owning layer first, then prove entry, guard, hook install,
-  callback, package resolution, field policy, mutation, and visible effect in
-  order.
-- Record every new route exploration, route detail adjustment, abandoned
-  attempt, and runtime finding in the relevant living route document.
-- For LSPosed diagnostics (both flavors), use the framework's module and
-  verbose logs as the primary source when proving module entry or hook
-  execution. `logcat` is useful for cross-checking forwarded framework lines,
-  but absence in plain `logcat` is not a reliable negative signal. See
-  `docs/lsposed-diagnostics.md` for the pull-and-filter path.
-- Probe one boundary at a time: entry, guard return, dependency availability,
-  hook install, callback hit, and final effect.
-- Do not diagnose a later stage until logs prove execution reached that stage.
-- Log the source of runtime context used by hooks, such as the classloader or
-  process entry point.
-- If evidence changes the working theory, update the plan before continuing;
-  do not keep executing an outdated hypothesis by inertia.
-- Keep temporary high-volume probes debug-only or remove them before release
-  cleanup.
+- `docs/legacy-runtime-resync.md` and `docs/modern-runtime-resync.md` are the
+  living route documents. Read the relevant one before adding, modifying, or
+  removing a viewport/runtime hook route, and read both when touching shared
+  code under `app/src/main/java/com/dpis/module/`.
+- Record new route exploration, adjustments, abandoned attempts, and runtime
+  findings in the relevant living document.
+- Follow `docs/agents/skills/dpis-runtime-route-diagnose/SKILL.md` for the diagnosis order.
+- For LSPosed diagnostics, the framework's module and verbose logs are the primary source. Absence
+  in plain `logcat` is not a reliable negative signal. See `docs/lsposed-diagnostics.md`.
+- Keep temporary high-volume probes debug-only or remove them before release cleanup.
 
 ## Gradle Task Detection
+
 - Build scripts must not infer release tasks by scanning arbitrary Gradle arguments such as `--tests`.
 - Release signing checks should only trigger for actual release task names.
 
 ## Commit & Pull Request Guidelines
+
 - Follow Conventional Commit style observed in history:
   - `feat: ...`, `fix: ...`, `chore: ...`, `docs: ...`
 - Keep commits scoped and atomic (code + related tests/docs together).

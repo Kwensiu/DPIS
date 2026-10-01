@@ -156,7 +156,114 @@ public class ViewportTargetResolverTest {
 
         assertTrue(result.hasTarget());
         assertEquals(518, result.effectiveSmallestWidthDp);
-        assertEquals("already-target-record", result.reason);
+        assertEquals("current-virtual-display-target", result.reason);
+    }
+
+    @Test
+    public void resourcesManagerReusesPublishedRelativeTargetInsteadOfScalingAgain() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(120000);
+        store.setTargetViewportSpec("com.example", targetSpec);
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
+
+        android.content.res.Configuration baseline = new android.content.res.Configuration();
+        baseline.screenWidthDp = 360;
+        baseline.screenHeightDp = 792;
+        baseline.smallestScreenWidthDp = 360;
+        baseline.densityDpi = 480;
+        ViewportSourceSnapshot baselineSource = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER, baseline, null);
+        ViewportOverride.Result viewportResult = new ViewportOverride.Result(
+                432, 950, 432, 400);
+        VirtualDisplayState.publish(
+                "com.example",
+                targetSpec,
+                baselineSource,
+                viewportResult,
+                new VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+
+        android.content.res.Configuration transformed = new android.content.res.Configuration();
+        transformed.screenWidthDp = 432;
+        transformed.screenHeightDp = 950;
+        transformed.smallestScreenWidthDp = 432;
+        transformed.densityDpi = 400;
+        ViewportSourceSnapshot transformedSource = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER, transformed, null);
+
+        ViewportTargetResolution result = TargetViewportWidthResolver.resolve(
+                store, "com.example", transformedSource);
+
+        assertTrue(result.hasTarget());
+        assertEquals(432, result.effectiveSmallestWidthDp);
+        assertEquals("current-virtual-display-target", result.reason);
+    }
+
+    @Test
+    public void relativeScaleDoesNotReusePrePublishResolutionForSameConfiguration() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(120000);
+        store.setTargetViewportSpec("com.example", targetSpec);
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
+        ViewportSourceSnapshot transformed = ViewportSourceSnapshot.systemDisplayInfo(
+                432, 950, 432, 400, 1080, 2376);
+
+        ViewportTargetResolution beforePublish = TargetViewportWidthResolver.resolve(
+                store, "com.example", transformed);
+        assertEquals(518, beforePublish.effectiveSmallestWidthDp);
+
+        VirtualDisplayState.publish(
+                "com.example",
+                targetSpec,
+                ViewportSourceSnapshot.systemDisplayInfo(
+                        360, 792, 360, 480, 1080, 2376),
+                new ViewportOverride.Result(432, 950, 432, 400),
+                new VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+
+        ViewportTargetResolution afterPublish = TargetViewportWidthResolver.resolve(
+                store, "com.example", transformed);
+        assertEquals(432, afterPublish.effectiveSmallestWidthDp);
+        assertEquals("current-virtual-display-target", afterPublish.reason);
+    }
+
+    @Test
+    public void relativeScaleReusesBaselineAcrossDisplayScopedResourceReads() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(120000);
+        store.setTargetViewportSpec("com.example", targetSpec);
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
+
+        ViewportTargetResolution first = TargetViewportWidthResolver.resolve(
+                store,
+                "com.example",
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376));
+        ViewportTargetResolution repeated = TargetViewportWidthResolver.resolve(
+                store,
+                "com.example",
+                ViewportSourceSnapshot.systemDisplayInfo(432, 950, 432, 400, 1080, 2376));
+
+        assertEquals(432, first.effectiveSmallestWidthDp);
+        assertEquals(432, repeated.effectiveSmallestWidthDp);
+        assertEquals("already-applied-relative-scale", repeated.reason);
+    }
+
+    @Test
+    public void relativeScaleUsesCurrentVirtualDisplayForSystemResourceConfiguration() {
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(120000);
+        store.setTargetViewportSpec("com.example", targetSpec);
+        store.setTargetViewportApplyMode("com.example", ViewportApplyMode.COMPAT);
+        VirtualDisplayState.set(new VirtualDisplayOverride.Result(
+                432, 950, 432, 400, 1080, 2376));
+
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.systemDisplayInfo(
+                432, 950, 432, 400, 0, 0);
+        ViewportTargetResolution result = TargetViewportWidthResolver.resolve(
+                store, "com.example", source);
+
+        assertEquals(432, result.effectiveSmallestWidthDp);
+        assertEquals("current-virtual-display-target", result.reason);
     }
 
     @Test

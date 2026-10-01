@@ -6,6 +6,7 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.runtime.ProcessScopedInstallGate
+import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
@@ -14,6 +15,7 @@ import com.dpis.module.viewport.ViewportPropertyBridge
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.RelativeViewportOwnership
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -34,6 +36,9 @@ object DisplayHookInstaller {
     private var targetStore: DpisConfigStore? = null
 
     @Volatile
+    private var effectiveSystemServerHooksEnabled: Boolean? = null
+
+    @Volatile
     private var currentPackageNameMethod: Method? = null
 
     @Volatile
@@ -51,11 +56,18 @@ object DisplayHookInstaller {
     fun resetForHotReload() {
         installedPid = -1
         RUNTIME_FALLBACK_OVERRIDES.clear()
+        effectiveSystemServerHooksEnabled = null
     }
 
     @JvmStatic
     @Throws(ReflectiveOperationException::class)
-    fun install(xposed: XposedInterface, packageName: String?, store: DpisConfigStore?) {
+    @JvmOverloads
+    fun install(
+        xposed: XposedInterface,
+        packageName: String?,
+        store: DpisConfigStore?,
+        policy: HookRuntimePolicy? = HookRuntimePolicy.fromStore(store),
+    ) {
         if (ProcessScopedInstallGate.isInstalledForCurrentProcess(installedPid)) {
             return
         }
@@ -65,6 +77,7 @@ object DisplayHookInstaller {
             }
             targetPackageName = packageName
             targetStore = store
+            effectiveSystemServerHooksEnabled = policy?.systemServerHooksEnabled
             val bootClassLoader = ClassLoader.getSystemClassLoader()
             val displayClass = Class.forName("android.view.Display", false, bootClassLoader)
             hookDisplayMetricsMethod(xposed, displayClass, "getMetrics")
@@ -189,6 +202,18 @@ object DisplayHookInstaller {
         val effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
             targetStore, effectivePackageName
         )
+        if (RelativeViewportOwnership.shouldDefer(
+                effectiveStore,
+                effectivePackageName,
+                effectiveSystemServerHooksEnabled
+                    ?: (effectiveStore != null && effectiveStore.isSystemServerHooksEnabled()),
+            )) {
+            recordViewportSkipAtMostEvery(
+                routeName,
+                "source=" + sourceTag + ", reason=system_server_owns_relative_viewport"
+            )
+            return
+        }
         var override = resolvePackageScopedOverride(
             effectivePackageName, effectiveStore
         )
@@ -443,6 +468,18 @@ object DisplayHookInstaller {
         }
         if (targetSpec == null || !targetSpec.isEnabled) {
             return null
+        }
+        if (targetSpec.isRelativeScale) {
+            val current = VirtualDisplayState.get()
+            if (current != null
+                && current.widthPx == metrics.widthPixels
+                && current.heightPx == metrics.heightPixels
+            ) {
+                // Display callbacks can arrive after Resources has already
+                // published the target. Re-deriving from the target density
+                // compounds the ratio and shrinks the apparent viewport.
+                return current
+            }
         }
         val sourceSmallestDp = max(
             1, Math.round(

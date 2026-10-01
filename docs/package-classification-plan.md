@@ -69,7 +69,6 @@ the real dependency graph is inspected.
 | Package | Contents | Notes |
 | --- | --- | --- |
 | `backup` | `ConfigBackupCodec` | First small migration. The codec is now an explicit backup package interface used by settings import/export. |
-| `viewport` | `DpiConfig` | Low-risk utility move. Keeps compat viewport seed rules near viewport semantics. |
 | `runtime.systemserver` | `LegacySystemServerGate` | Small legacy gate move for system-server installation policy. |
 | `runtime.systemserver` | `ConfigSnapshotRefreshPolicy`, `ReflectionProbeCache`, `SystemServerPackageUidResolver` | System-server route support helpers with narrow callers. |
 | `runtime.systemserver` | `PerAppDisplayConfig`, `SystemServerDisplayDiagnostics`, `SystemServerDisplayEnvironmentInstaller`, `SystemServerEntryRoute`, `SystemServerHookCatalog`, `SystemServerHookLogGate`, `SystemServerHookSpec`, `SystemServerHotPathInspector`, `SystemServerMutationField`, `SystemServerMutationPolicy`, `SystemServerProcess` | System-server route display value, installation, diagnostics, route catalog, log gating, mutation policy, and process checks. Flavor entries keep calling the same public install/diagnostic protocols; route behavior is unchanged. |

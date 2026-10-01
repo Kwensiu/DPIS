@@ -16,8 +16,6 @@ internal object TextSizeRuntimeState {
     val internalUpdate: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
     val internalTextUpdate: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
     val textViewSetTextSizeDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
-    val expressionBaseTextSizes: MutableMap<TextView?, Float?> =
-        Collections.synchronizedMap(WeakHashMap())
     val textViewBaseTextSizes: MutableMap<TextView?, Float?> =
         Collections.synchronizedMap(WeakHashMap())
     val commentTextBaseTextSizes: MutableMap<TextView?, Float?> =
