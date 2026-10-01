@@ -9,6 +9,7 @@ import com.dpis.module.viewport.ViewportTargetResolution;
 import com.dpis.module.viewport.ViewportTargetSpec;
 
 import com.dpis.module.runtime.probe.RuntimeClock;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class TargetViewportWidthResolver {
 
@@ -24,6 +25,8 @@ public final class TargetViewportWidthResolver {
     // config changes take effect on restart/rebind anyway, so 1s is acceptable.
     private static final long RESOLVE_CACHE_TTL_NS = 1_000_000_000L;
     private static volatile ResolveCacheEntry resolveCacheEntry;
+    private static final ConcurrentHashMap<String, RelativeScaleBaseline> relativeScaleBaselines =
+            new ConcurrentHashMap<>();
 
     private TargetViewportWidthResolver() {
     }
@@ -69,14 +72,26 @@ public final class TargetViewportWidthResolver {
                 && cached.densityDpi == densityDpi
                 && cached.scope.equals(scope)
                 && cached.origin.equals(origin)
+                // Relative-scale results depend on the just-published
+                // display record. A cache entry created before that publish
+                // can otherwise turn 432dp into a stale 518dp target.
+                && !isRelativeScaleResolution(cached.resolution)
                 && (System.nanoTime() - cached.createdAtNanos) < RESOLVE_CACHE_TTL_NS) {
             return cached.resolution;
         }
         ViewportTargetResolution resolved = resolveUncached(store, packageName, source);
-        resolveCacheEntry = new ResolveCacheEntry(
-                packageName, widthDp, heightDp, smallestWidthDp, densityDpi, scope, origin,
-                resolved, System.nanoTime());
+        if (!isRelativeScaleResolution(resolved)) {
+            resolveCacheEntry = new ResolveCacheEntry(
+                    packageName, widthDp, heightDp, smallestWidthDp, densityDpi, scope, origin,
+                    resolved, System.nanoTime());
+        }
         return resolved;
+    }
+
+    private static boolean isRelativeScaleResolution(ViewportTargetResolution resolution) {
+        return resolution != null
+                && resolution.spec != null
+                && resolution.spec.isRelativeScale();
     }
 
     private static ViewportTargetResolution resolveUncached(DpisConfigStore store,
@@ -104,6 +119,20 @@ public final class TargetViewportWidthResolver {
                         targetSpec, targetSpec.absoluteWidthDp(), source, "absolute-dp");
             }
             return ViewportTargetResolution.none("invalid-source");
+        }
+        // Resources.getSystem() can cross the ResourcesManager boundary
+        // without carrying the package-scoped runtime record. Once the
+        // process has published a relative target, the current virtual
+        // display result is authoritative for a matching Configuration.
+        if (targetSpec.isRelativeScale()
+                && source.displayScoped()
+                && matchesCurrentVirtualDisplay(source)) {
+            VirtualDisplayOverride.Result current = VirtualDisplayState.get();
+            return ViewportTargetResolution.resolved(
+                    targetSpec,
+                    current.smallestWidthDp,
+                    source,
+                    "current-virtual-display-target");
         }
         ViewportRuntimeRecord localRecord =
                 VirtualDisplayState.findForSource(packageName, targetSpec, source);
@@ -156,6 +185,31 @@ public final class TargetViewportWidthResolver {
         if (displayRecord == null) {
             displayRecord = importedMarkerRecord;
         }
+        if (targetSpec.isRelativeScale()) {
+            RelativeScaleBaseline baseline = relativeScaleBaselines.get(relativeScaleKey(
+                    packageName, targetSpec));
+            if (baseline != null && baseline.matchesTarget(source)) {
+                return ViewportTargetResolution.resolved(
+                        targetSpec,
+                        baseline.targetSmallestWidthDp,
+                        source,
+                        "already-applied-relative-scale");
+            }
+        }
+        // ResourcesManager callbacks can observe the Configuration after the
+        // compat route has already applied the relative target. Their source
+        // origin is not appProcessConsumerScoped(), so the old branch below
+        // recalculated the scale from the already-transformed smallest width
+        // (for example 360 -> 432, then 432 -> 518 at 120%). Reuse the
+        // published display result only when this callback matches that result;
+        // a genuinely new display baseline must still be recalculated.
+        if (targetSpec.isRelativeScale()
+                && displayRecord != null
+                && source.displayScoped()
+                && matchesPublishedDisplayResult(source, displayRecord)) {
+            return ViewportTargetResolution.fromRecord(
+                    displayRecord, "already-applied-display-record");
+        }
         if (targetSpec.isRelativeScale()
                 && source.appProcessConsumerScoped()
                 && displayRecord != null) {
@@ -169,6 +223,7 @@ public final class TargetViewportWidthResolver {
             }
             int effectiveTarget = Math.max(1,
                     Math.round((source.smallestWidthDp * targetSpec.scaleMilliPercent()) / 100000.0f));
+            rememberRelativeScaleBaseline(packageName, targetSpec, source, effectiveTarget);
             return ViewportTargetResolution.resolved(
                     targetSpec,
                     effectiveTarget,
@@ -197,8 +252,88 @@ public final class TargetViewportWidthResolver {
         }
         int effectiveTarget = Math.max(1,
                 Math.round((source.smallestWidthDp * targetSpec.scaleMilliPercent()) / 100000.0f));
+        RelativeScaleBaseline baseline = relativeScaleBaselines.get(relativeScaleKey(
+                packageName, targetSpec));
+        if (targetSpec.isRelativeScale()
+                && baseline != null
+                && baseline.matchesTarget(source)) {
+            return ViewportTargetResolution.resolved(
+                    targetSpec,
+                    baseline.targetSmallestWidthDp,
+                    source,
+                    "already-applied-relative-scale");
+        }
+        rememberRelativeScaleBaseline(packageName, targetSpec, source, effectiveTarget);
         return ViewportTargetResolution.resolved(
                 targetSpec, effectiveTarget, source, "relative-scale");
+    }
+
+    private static void rememberRelativeScaleBaseline(
+            String packageName,
+            ViewportTargetSpec targetSpec,
+            ViewportSourceSnapshot source,
+            int targetSmallestWidthDp) {
+        if (packageName == null || targetSpec == null || source == null
+                || !targetSpec.isRelativeScale() || targetSmallestWidthDp <= 0) {
+            return;
+        }
+        // The first display-scoped baseline wins for the lifetime of this
+        // process. Later ResourcesImpl/ResourcesRead callbacks observe the
+        // transformed Configuration and must not replace 432dp with a new
+        // 518dp baseline.
+        relativeScaleBaselines.putIfAbsent(
+                relativeScaleKey(packageName, targetSpec),
+                new RelativeScaleBaseline(
+                        Math.max(1, Math.round(source.widthDp
+                                * (targetSmallestWidthDp / (float) source.smallestWidthDp))),
+                        Math.max(1, Math.round(source.heightDp
+                                * (targetSmallestWidthDp / (float) source.smallestWidthDp))),
+                        targetSmallestWidthDp));
+    }
+
+    private static String relativeScaleKey(String packageName, ViewportTargetSpec targetSpec) {
+        return packageName + "|" + targetSpec.fingerprint();
+    }
+
+    private static final class RelativeScaleBaseline {
+        private final int targetWidthDp;
+        private final int targetHeightDp;
+        private final int targetSmallestWidthDp;
+
+        private RelativeScaleBaseline(int targetWidthDp, int targetHeightDp,
+                                      int targetSmallestWidthDp) {
+            this.targetWidthDp = targetWidthDp;
+            this.targetHeightDp = targetHeightDp;
+            this.targetSmallestWidthDp = targetSmallestWidthDp;
+        }
+
+        private boolean matchesTarget(ViewportSourceSnapshot source) {
+            return source != null
+                    && source.widthDp == targetWidthDp
+                    && source.heightDp == targetHeightDp
+                    && source.smallestWidthDp == targetSmallestWidthDp;
+        }
+    }
+
+    private static boolean matchesPublishedDisplayResult(
+            ViewportSourceSnapshot source,
+            ViewportRuntimeRecord displayRecord) {
+        if (source == null || displayRecord == null || displayRecord.viewportResult == null) {
+            return false;
+        }
+        ViewportOverride.Result result = displayRecord.viewportResult;
+        return source.widthDp == result.widthDp
+                && source.heightDp == result.heightDp
+                && source.smallestWidthDp == result.smallestWidthDp;
+    }
+
+    private static boolean matchesCurrentVirtualDisplay(ViewportSourceSnapshot source) {
+        VirtualDisplayOverride.Result current = VirtualDisplayState.get();
+        return current != null
+                && source != null
+                && source.widthDp == current.widthDp
+                && source.heightDp == current.heightDp
+                && source.smallestWidthDp == current.smallestWidthDp;
     }
 
     private static boolean canDeriveCompatTarget(String requestedMode,
@@ -320,6 +455,7 @@ public final class TargetViewportWidthResolver {
 
     public static void resetResolveCacheForTest() {
         resolveCacheEntry = null;
+        relativeScaleBaselines.clear();
     }
 
 }

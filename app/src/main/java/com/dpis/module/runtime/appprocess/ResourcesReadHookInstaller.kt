@@ -28,6 +28,7 @@ import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.ResourcesMetricsReadReuse
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.VirtualDisplayState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
@@ -261,7 +262,11 @@ object ResourcesReadHookInstaller {
                             result, config, packageName, store,
                             "ResourcesRead(getSystem)",
                             null,
-                            viewportReadHandlingEnabled,
+                            // Resources.getSystem() is global system
+                            // resources, not an app-scoped viewport. Applying
+                            // the app ratio here feeds transformed density
+                            // back into Display and compounds the scale.
+                            false,
                             configurationFontOverrideEnabled,
                             runtimePolicy
                         )
@@ -272,7 +277,7 @@ object ResourcesReadHookInstaller {
                             config,
                             packageName,
                             store,
-                            viewportReadHandlingEnabled,
+                            false,
                             metricsTargetFontOverrideEnabled
                         )
                     } finally {
@@ -403,6 +408,22 @@ object ResourcesReadHookInstaller {
                     ("DPIS_FONT " + sourceTag + " override: package=" + packageName
                             + ", fontScale "
                             + fontScale.original + " -> " + config.fontScale)
+                )
+            }
+            return
+        }
+        if (sourceTag.startsWith("ResourcesRead(getConfiguration)")
+            && RelativeViewportOwnership.shouldDefer(store, packageName, policy)) {
+            recordConfigurationSkip(
+                packageName,
+                "system_server_owns_relative_viewport",
+                "source=" + sourceTag + ", reason=system_server_owns_relative_viewport",
+            )
+            if (fontScaleApplied) {
+                logIfChanged(
+                    packageName + ":" + sourceTag + ":font-only",
+                    ("DPIS_FONT " + sourceTag + " override: package=" + packageName
+                            + ", fontScale " + fontScale.original + " -> " + config.fontScale)
                 )
             }
             return
@@ -969,6 +990,25 @@ object ResourcesReadHookInstaller {
                 "viewport",
                 "resources_read_display_metrics_override",
                 sample.detail
+            )
+        }
+    }
+
+    private fun recordConfigurationSkip(
+        packageName: String?,
+        reason: String,
+        detail: String,
+    ) {
+        val sample = HOTPATH_SAMPLER.sample(
+            "skip|configuration|" + packageName + "|" + reason,
+            detail,
+        )
+        if (sample.emit) {
+            RuntimeHotPathEvents.skipped(
+                packageName,
+                "viewport",
+                "resources_read_configuration_override",
+                sample.detail,
             )
         }
     }

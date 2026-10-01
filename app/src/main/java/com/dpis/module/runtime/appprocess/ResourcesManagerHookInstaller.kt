@@ -18,6 +18,7 @@ import com.dpis.module.viewport.ViewportResolvedTarget
 import com.dpis.module.viewport.ViewportRuntimeMarkerProbe
 import com.dpis.module.viewport.ViewportRuntimeRecord
 import com.dpis.module.viewport.ViewportSourceSnapshot
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.VirtualDisplayState
 import io.github.libxposed.api.XposedInterface
@@ -472,6 +473,21 @@ object ResourcesManagerHookInstaller {
             store, packageName, config.fontScale
         )
         FontScaleOverride.applyToConfiguration(config, fontScale)
+        // A relative viewport owned by system_server must not be re-derived from
+        // any app-process ResourcesManager callback. The ordinary apply/create
+        // callbacks are the first recursion entry (360 -> 432 -> 518); limiting
+        // this guard to the ResourcesManagerKey path leaves that entry open.
+        // Keep font scaling independent so system-owned viewport mode does not
+        // disable an otherwise configured text-size adjustment.
+        if (RelativeViewportOwnership.shouldDefer(store, packageName, policy)) {
+            recordViewportSkip(
+                packageName,
+                "resources_manager_config_override",
+                "system_server_owns_relative_viewport",
+                "source=" + sourceTag + ", reason=system_server_owns_relative_viewport",
+            )
+            return
+        }
         val originalWidthDp = config.screenWidthDp
         val originalHeightDp = config.screenHeightDp
         val originalSmallestWidthDp = config.smallestScreenWidthDp

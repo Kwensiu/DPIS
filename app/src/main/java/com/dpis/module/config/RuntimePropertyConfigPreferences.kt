@@ -168,8 +168,15 @@ class RuntimePropertyConfigPreferences @JvmOverloads constructor(
             route: AutoViewportRuntimeRoute,
         ): String {
             val mode = ViewportApplyMode.normalize(rawMode)
+            // Relative-scale AUTO must remain AUTO so EffectiveModeResolver can
+            // select the system-owned route when system_server hooks are active.
+            // Rewriting it to COMPAT here makes the app process own the same
+            // configuration that system_server already transformed, causing
+            // recursive scaling (360 -> 432 -> 518). Absolute-width AUTO keeps
+            // the established app-process compatibility route.
             return if (mode == ViewportApplyMode.AUTO &&
-                route.shouldUseAppProcessRoute(targetSpec)
+                route.shouldUseAppProcessRoute(targetSpec) &&
+                targetSpec?.isAbsoluteDp() == true
             ) ViewportApplyMode.COMPAT else mode
         }
 

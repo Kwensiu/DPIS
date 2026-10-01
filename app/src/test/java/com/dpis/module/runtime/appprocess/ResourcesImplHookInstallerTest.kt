@@ -611,6 +611,47 @@ class ResourcesImplHookInstallerTest {
     }
 
     @Test
+    fun relativeScaleDoesNotTreatResourcesConfigurationAsANewBaseline() {
+        val packageName = "com.example.viewport"
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs)
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(120000))
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT)
+
+        val firstConfig = Configuration()
+        firstConfig.screenWidthDp = 360
+        firstConfig.screenHeightDp = 792
+        firstConfig.smallestScreenWidthDp = 360
+        firstConfig.densityDpi = 480
+        firstConfig.fontScale = 1.0f
+        val firstMetrics = DisplayMetrics()
+        firstMetrics.widthPixels = 1080
+        firstMetrics.heightPixels = 2376
+        firstMetrics.densityDpi = 480
+
+        applyDensityOverride(packageName, firstConfig, firstMetrics, store)
+
+        Assert.assertEquals(432, firstConfig.smallestScreenWidthDp.toLong())
+
+        val secondConfig = Configuration()
+        secondConfig.screenWidthDp = 432
+        secondConfig.screenHeightDp = 950
+        secondConfig.smallestScreenWidthDp = 432
+        secondConfig.densityDpi = 400
+        secondConfig.fontScale = 1.0f
+        val secondMetrics = DisplayMetrics()
+        secondMetrics.widthPixels = 1080
+        secondMetrics.heightPixels = 2376
+        secondMetrics.densityDpi = 400
+
+        applyDensityOverride(packageName, secondConfig, secondMetrics, store)
+
+        Assert.assertEquals(432, secondConfig.screenWidthDp.toLong())
+        Assert.assertEquals(432, secondConfig.smallestScreenWidthDp.toLong())
+        Assert.assertEquals(400, secondConfig.densityDpi.toLong())
+    }
+
+    @Test
     fun relativeScaleDoesNotCompoundWhenConfigurationAlreadyMatchesTarget() {
         val packageName = "com.example.viewport"
         val prefs = FakePrefs()
