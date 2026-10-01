@@ -61,6 +61,15 @@
       "id": "anonymous-1",
       "orderRef": "****8852",
       "platform": "wechat"
+    },
+    {
+      "amount": "6.66",
+      "date": "2026-09-20",
+      "displayName": "@不說",
+      "id": "bu-shuo-1",
+      "orderRef": "****6781",
+      "platform": "wechat",
+      "supporterId": "bu-shuo"
     }
   ]
 }
