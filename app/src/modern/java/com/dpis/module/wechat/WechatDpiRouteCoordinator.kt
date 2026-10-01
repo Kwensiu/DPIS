@@ -7,6 +7,7 @@ import android.util.Log
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
@@ -54,6 +55,10 @@ object WechatDpiRouteCoordinator {
     ) {
         if (xposed == null || !WechatDpiConfig.appliesTo(packageName) ||
             !WechatDpiConfig.appliesTo(processName)) return
+        if (!ModernApiCapabilitiesResolver.fromXposed(xposed).supportsHotReloadCallbacks()) {
+            DpisLog.i("modern WeChat DPI hot reload replay skipped: API 102 capability unavailable")
+            return
+        }
         installPackageReadyRoute(
             xposed, packageName, classLoader, applicationInfo, processName,
             WechatDpiInstallPhase.HOT_RELOAD_PACKAGE_READY,
@@ -91,7 +96,6 @@ object WechatDpiRouteCoordinator {
                 val result = chain.proceed()
                 val context = chain.args.firstOrNull() as? Context
                 if (context != null && WechatDpiConfig.appliesTo(context.packageName)) {
-                    WechatDpiResourceRecovery.installForegroundMonitor(context)
                     val classLoader = context.classLoader
                     val packageName = context.packageName
                     DpisLog.i(

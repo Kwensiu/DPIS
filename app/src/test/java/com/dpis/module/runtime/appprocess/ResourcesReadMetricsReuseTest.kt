@@ -32,6 +32,7 @@ class ResourcesReadMetricsReuseTest {
 
     @After
     fun tearDown() {
+        RuntimeTransport.cancel { _ -> ShellResult(0, "") }
         RuntimeEvents.cancel()
         RuntimeHotPathEvents.resetForTest()
         ResourcesReadHookInstaller.resetHotPathSamplerForTest()

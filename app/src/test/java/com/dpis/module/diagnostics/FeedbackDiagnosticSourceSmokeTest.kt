@@ -351,13 +351,16 @@ class FeedbackDiagnosticSourceSmokeTest {
         val webViewFont =
             read("src/main/java/com/dpis/module/runtime/font/WebViewFontHookInstaller.kt")
         val modernWechat = read(
-            "src/modern/java/com/dpis/module/wechat/WechatDpiModernHookInstaller.java"
+            "src/modern/java/com/dpis/module/wechat/WechatDpiModernHookInstaller.kt"
+        )
+        val modernBottomTab = read(
+            "src/modern/java/com/dpis/module/wechat/WechatDpiModernBottomTabHookInstaller.kt"
         )
         val modernAppSpecific = read(
             "src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.kt"
         )
         val legacyWechat = read(
-            "src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.java"
+            "src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt"
         )
         val legacyAppSpecific = read(
             "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java"
@@ -421,13 +424,12 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(reportText.contains("wechatDpiRoute: selected"))
         assertTrue(modernWechat.contains("\"wechat_dpi\""))
         assertTrue(modernWechat.contains("\"displaymetrics\""))
-        assertTrue(modernWechat.contains("\"bottom_tab_icon\""))
-        assertTrue(modernWechat.contains("reason=init_method_not_found"))
+        assertTrue(modernBottomTab.contains("\"bottom_tab_icon\""))
+        assertTrue(modernBottomTab.contains("init_method_not_found"))
         assertTrue(modernWechat.contains("modern WeChat DPI route plan: "))
         assertTrue(modernWechat.contains("retiredTargets="))
         assertTrue(modernWechat.contains("retiredActive=false"))
-        assertTrue(modernWechat.contains("firstCallbackMethod="))
-        assertTrue(modernWechat.contains("appliedMethod="))
+        assertTrue(modernBottomTab.contains("mutation_applied"))
         assertTrue(modernAppSpecific.contains("WechatDpiRouteCoordinator"))
         assertFalse(modernAppSpecific.contains("\"module_loaded_class\""))
         assertTrue(legacyWechat.contains("\"wechat_dpi\""))

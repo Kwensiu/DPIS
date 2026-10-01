@@ -8,8 +8,6 @@ import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 import org.junit.Test;
 
 import java.io.IOException;
-import com.dpis.module.runtime.ConfigStoreFactory;
-import com.dpis.module.diagnostics.DpisLog;
 
 public class ModuleMainHookInstallerTest {
     @Test
@@ -101,7 +99,9 @@ public class ModuleMainHookInstallerTest {
         String router = read(
                 "src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.kt");
         String installer = read(
-                "src/modern/java/com/dpis/module/wechat/WechatDpiModernHookInstaller.java");
+                "src/modern/java/com/dpis/module/wechat/WechatDpiModernHookInstaller.kt");
+        String bottomTabInstaller = read(
+                "src/modern/java/com/dpis/module/wechat/WechatDpiModernBottomTabHookInstaller.kt");
         String wechatRoute = read(
                 "src/modern/java/com/dpis/module/wechat/WechatDpiRouteCoordinator.kt");
 
@@ -125,42 +125,38 @@ public class ModuleMainHookInstallerTest {
         assertTrue(wechatRoute.contains("param.applicationInfo"));
         assertTrue(wechatRoute.contains("describeClassLoaderForLog("));
         assertTrue(wechatRoute.contains("alongside generic hooks"));
-        assertTrue(installer.contains("ApplicationInfo applicationInfo"));
+        assertTrue(installer.contains("applicationInfo: ApplicationInfo?"));
         assertFalse(installer.contains("installFromLoadedClass("));
         assertFalse(installer.contains("WechatDpiRouteMode.useV1123CompatRoute()"));
         assertFalse(installer.contains("WechatDpiMethodLocator.Source.LOADED_CLASS"));
         assertFalse(installer.contains("WechatDpiMethodLocator.densityManagerMethods("));
-        assertTrue(installer.contains("installBottomTabIconHook("));
-        assertTrue(installer.contains("WECHAT_BOTTOM_TAB_ICON_VIEW_CLASS"));
-        assertTrue(installer.contains("\"bottom_tab_icon\""));
-        assertTrue(installer.contains("findBottomTabIconInitMethod("));
-        assertTrue(installer.contains("findBottomTabIconScaleField("));
-        assertTrue(installer.contains("WechatDpiRuntime.bottomTabIconScale("));
-        assertTrue(installer.contains("Bitmap.createScaledBitmap("));
-        assertTrue(installer.contains("postBottomTabBitmapNormalization("));
-        assertTrue(installer.contains("postOnAnimation("));
-        assertTrue(installer.contains("BOTTOM_TAB_BITMAP_NORMALIZE_MAX_ATTEMPTS"));
-        assertTrue(installer.contains("scaleField != null"));
-        assertTrue(installer.contains("originalBitmaps"));
-        assertTrue(installer.contains("tabIconView.invalidate()"));
-        assertTrue(installer.contains("bottom tab icon hook skipped: class not found"));
+        assertTrue(installer.contains("WechatDpiModernBottomTabHookInstaller.install("));
+        assertTrue(bottomTabInstaller.contains("\"bottom_tab_icon\""));
+        assertTrue(bottomTabInstaller.contains("WechatDpiRuntime.bottomTabIconScale("));
+        assertTrue(bottomTabInstaller.contains("Bitmap.createScaledBitmap("));
+        assertTrue(bottomTabInstaller.contains("postOnAnimation"));
+        assertTrue(bottomTabInstaller.contains("MAX_NORMALIZE_ATTEMPTS"));
+        assertTrue(bottomTabInstaller.contains("originalBitmaps"));
+        assertTrue(bottomTabInstaller.contains("view.invalidate()"));
         assertTrue(installer.contains("resolveWechatVersionCode"));
         assertTrue(installer.contains("WechatDpiMethodLocator.locate("));
-        assertTrue(installer.contains("phase.getAllowsDexKit()"));
+        assertTrue(installer.contains("phase.allowsDexKit"));
         assertTrue(wechatRoute.contains("WechatDpiInstallPhase.PACKAGE_READY"));
         assertTrue(wechatRoute.contains("WechatDpiInstallPhase.APPLICATION_ATTACH"));
-        assertTrue(installer.contains("WechatDpiRuntime.apply(metrics, dpi)"));
+        assertTrue(installer.contains("WechatDpiRuntime.detached(metrics, targetDpi)"));
+        assertTrue(installer.contains("ModernApiCapabilitiesResolver.fromXposed(xposed)"));
+        assertTrue(installer.contains("HOOK_ID_DENSITY_PREFIX"));
+        assertTrue(bottomTabInstaller.contains("HOOK_ID"));
+        assertFalse(installer.contains("WechatDpiResourceRecovery"));
         assertTrue(installer.contains("configuredDpi="));
         assertTrue(installer.contains("describeClassLoaderForLog("));
-        assertTrue(installer.contains("locatorResult.source.logName"));
-        assertTrue(installer.contains("isDisplayMetricsMutator(hookMethod)"));
-        assertTrue(installer.contains("displayMetricsArgument(chain.getArgs())"));
-        assertTrue(installer.contains("isTargetFieldGetter(hookMethod)"));
-        assertTrue(installer.contains("isTargetFieldSetter(hookMethod)"));
-        assertTrue(installer.contains("Object result = chain.proceed();"));
-        assertTrue(installer.contains("return result;"));
+        assertTrue(installer.contains("locator.source.logName"));
+        assertFalse(installer.contains("isDisplayMetricsMutator(hookMethod)"));
+        assertFalse(installer.contains("displayMetricsArgument(chain.getArgs())"));
+        assertTrue(installer.contains("val result = chain.proceed()"));
+        assertTrue(installer.contains("applyWechatDpi(result, methodName(method), phase)"));
         assertFalse(installer.contains("findDisplayMetricsMethods(densityManagerClass)"));
-        assertTrue(installer.contains("applyWechatDpi(metrics"));
+        assertTrue(installer.contains("applyWechatDpi(result"));
         assertFalse(installer.contains("resourcesClassName"));
         assertFalse(installer.contains("installDpiGetterHook("));
         assertFalse(installer.contains("installDpiSetterHook("));
@@ -296,6 +292,8 @@ public class ModuleMainHookInstallerTest {
                 .contains("handlePackageReadyReplay("));
         assertTrue(read("src/modern/java/com/dpis/module/wechat/WechatDpiRouteCoordinator.kt")
                 .contains("WechatDpiInstallPhase.HOT_RELOAD_PACKAGE_READY"));
+        assertTrue(read("src/modern/java/com/dpis/module/wechat/WechatDpiRouteCoordinator.kt")
+                .contains("supportsHotReloadCallbacks()"));
         assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName);"));
         assertTrue(moduleMain.contains("system_server hot reload replay enter"));
         assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"));

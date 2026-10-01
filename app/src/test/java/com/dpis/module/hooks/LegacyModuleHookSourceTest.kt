@@ -209,15 +209,16 @@ class LegacyModuleHookSourceTest {
     @Test
     fun legacyAppSpecificRouteInstallerOwnsWechatDpiRoute() {
         val router = read("src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java")
-        val installer = read("src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.java")
+        val installer = read("src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt")
 
         assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.packageName)"))
         assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.processName)"))
         assertTrue(router.contains("WechatDpiLegacyHookInstaller.install(lpparam)"))
         assertTrue(router.contains("alongside generic hooks"))
         assertTrue(installer.contains("WechatDpiMethodLocator.locate("))
-        assertTrue(installer.contains("WechatDpiRuntime.apply(metrics, dpi)"))
-        assertTrue(installer.contains("locatorResult.source.logName"))
+        assertTrue(installer.contains("WechatDpiRuntime.detached(metrics, dpi)"))
+        assertTrue(installer.contains("let(param::setResult)"))
+        assertTrue(installer.contains("result.source.logName"))
         assertFalse(installer.contains("WechatDpiRoutes.forVersionCode(versionCode)"))
         assertFalse(installer.contains("findDisplayMetricsMethods(densityManagerClass)"))
         assertTrue(installer.contains("XposedBridge.hookMethod(metricsMethod"))
