@@ -200,7 +200,7 @@ object ResourcesImplHookInstaller {
         val windowLikeBorrow = windowLikeBorrowResult != null
         val appProcessWindowMetricsOnly = appProcessWindowMetricsResult != null
         val trustedDisplayResult =
-            if (resolution.isAppProcessBorrowTarget())
+            if (resolution.isAppProcessBorrowTarget)
                 null
             else
                 ViewportResolvedTarget.viewportResult(trustedDisplayTarget)
@@ -505,7 +505,7 @@ object ResourcesImplHookInstaller {
         if (resolution == null || resolution.spec == null || !resolution.spec.isEnabled()) {
             return false
         }
-        if (resolution.isAppProcessDisplayBorrowTarget()
+        if (resolution.isAppProcessDisplayBorrowTarget
             && !WebApkCarrierResolver.isWebApkOwnerPackage(packageName)
         ) {
             return false

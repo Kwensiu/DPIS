@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import java.io.IOException;
-import com.dpis.module.fonts.device.FontDebugLogcatBridge;
-import com.dpis.module.config.DpisConfigStore;
 
 public class FontDebugStatsProviderSourceSmokeTest {
     @Test
@@ -27,7 +25,7 @@ public class FontDebugStatsProviderSourceSmokeTest {
     @Test
     public void fontStatsReportersUseProviderTransportInsteadOfDirectBroadcasts() throws IOException {
         String fontReporter = read("src/main/java/com/dpis/module/fonts/FontDebugStatsReporter.java");
-        String viewportReporter = read("src/main/java/com/dpis/module/viewport/ViewportDebugReporter.java");
+        String viewportReporter = read("src/main/java/com/dpis/module/viewport/ViewportDebugReporter.kt");
 
         assertTrue(fontReporter.contains("FontDebugStatsTransport.sendUpdate(context, extras)"));
         assertTrue(viewportReporter.contains("FontDebugStatsTransport.sendUpdate(context, extras)"));
