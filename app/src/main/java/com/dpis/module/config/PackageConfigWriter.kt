@@ -298,20 +298,6 @@ internal class PackageConfigWriter(
         }
     }
 
-    /** Seeds only missing legacy viewport values during the one-time bootstrap. */
-    fun ensureSeedConfig(seedTargetViewportWidthDps: MutableMap<String?, Int?>): Boolean {
-        val packages = LinkedHashSet(configuredPackages()).apply { addAll(seedTargetViewportWidthDps.keys) }
-        return commit {
-            putStringSet(persistence.KEY_TARGET_PACKAGES, packages)
-            seedTargetViewportWidthDps.forEach { (packageName, widthDp) ->
-                if (packageName != null && widthDp != null) {
-                    val key = persistence.keyForViewportWidth(packageName)
-                    if (!containsPrimary(key)) putInt(key, widthDp)
-                }
-            }
-        }
-    }
-
     fun writePackageConfig(packageName: String?, value: PackageConfigValue?): Boolean {
         if (packageName.isNullOrBlank()) return false
         val normalized = value ?: PackageConfigValue.EMPTY

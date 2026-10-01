@@ -1,9 +1,7 @@
 package com.dpis.module.config
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.FakePrefs
 
+import com.dpis.module.FakePrefs
 import com.dpis.module.templates.QuickTemplateStore
-import com.dpis.module.viewport.DpiConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -15,12 +13,12 @@ class GlobalSnapshotTest {
     fun reportsFailureWhenViewportWidthCommitFails() {
         val prefs = FakePrefs()
         val store = DpisConfigStore(prefs)
-        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()))
+        assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360))
         prefs.setCommitResult(false)
 
         assertFalse(store.setTargetViewportWidthDp("bin.mt.plus.canary", 320))
         assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP,
+            360,
             store.getTargetViewportWidthDp("bin.mt.plus.canary"),
         )
     }
@@ -29,12 +27,12 @@ class GlobalSnapshotTest {
     fun reportsFailureWhenViewportWidthClearCommitFails() {
         val prefs = FakePrefs()
         val store = DpisConfigStore(prefs)
-        assertTrue(store.ensureSeedConfig(DpiConfig.getSeedViewportWidthDps()))
+        assertTrue(store.setTargetViewportWidthDp("bin.mt.plus.canary", 360))
         prefs.setCommitResult(false)
 
         assertFalse(store.clearTargetViewportWidthDp("bin.mt.plus.canary"))
         assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP,
+            360,
             store.getTargetViewportWidthDp("bin.mt.plus.canary"),
         )
     }
@@ -118,7 +116,7 @@ class GlobalSnapshotTest {
         assertEquals(360, store.getTargetViewportWidthDp("com.max.xiaoheihe"))
         assertTrue(store.isStartupDisclaimerAccepted)
         assertEquals(73, store.interfaceScalePercent)
-        assertTrue(remotePrefs.getAll().isEmpty())
+        assertTrue(remotePrefs.all.isEmpty())
     }
 
     @Test
@@ -134,25 +132,11 @@ class GlobalSnapshotTest {
         assertEquals(150, store.getTargetFontScalePercent("com.max.xiaoheihe"))
         assertEquals(73, store.interfaceScalePercent)
         assertTrue(store.isStartupDisclaimerAccepted)
-        assertTrue(remotePrefs.getAll().containsKey("font.com.max.xiaoheihe.scale_percent"))
-        assertFalse(remotePrefs.getAll().containsKey(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT))
-        assertFalse(remotePrefs.getAll().containsKey(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED))
+        assertTrue(remotePrefs.all.containsKey("font.com.max.xiaoheihe.scale_percent"))
+        assertFalse(remotePrefs.all.containsKey(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT))
+        assertFalse(remotePrefs.all.containsKey(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED))
         assertEquals(73, localPrefs.getInt(DpisConfigStore.KEY_INTERFACE_SCALE_PERCENT, 0))
         assertTrue(localPrefs.getBoolean(DpisConfigStore.KEY_STARTUP_DISCLAIMER_ACCEPTED, false))
-    }
-
-    @Test
-    fun ensureSeedConfigUsesOnlyCurrentStoreExistence() {
-        val prefs = FakePrefs()
-        prefs.edit().putInt("viewport.com.max.xiaoheihe.width_dp", 300).commit()
-        val store = DpisConfigStore(prefs)
-        val seed = linkedMapOf<String?, Int?>(
-            "com.max.xiaoheihe" to DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP,
-        )
-
-        assertTrue(store.ensureSeedConfig(seed))
-
-        assertEquals(300, store.getTargetViewportWidthDp("com.max.xiaoheihe"))
     }
 
     @Test

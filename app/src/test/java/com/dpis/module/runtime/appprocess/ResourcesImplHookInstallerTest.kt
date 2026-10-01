@@ -2,6 +2,7 @@ package com.dpis.module
 
 import android.content.res.Configuration
 import android.util.DisplayMetrics
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller.applyDensityOverride
 import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller.applyDensityOverrideForTest
 import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller.shouldPublishResourcesImplResultForTest
@@ -9,7 +10,6 @@ import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.font.ResourcesFontScheduler
 import com.dpis.module.viewport.DensityOverride
-import com.dpis.module.viewport.DpiConfig
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportRuntimeRecord
@@ -21,7 +21,6 @@ import com.dpis.module.viewport.VirtualDisplayState
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
-import com.dpis.module.config.DpisConfigStore
 
 class ResourcesImplHookInstallerTest {
     @After
@@ -72,18 +71,18 @@ class ResourcesImplHookInstallerTest {
         config.smallestScreenWidthDp = 600
         config.fontScale = 1.1f
         val prefs = FakePrefs()
-        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP)
+        putCompatViewport(prefs, "bin.mt.plus.canary", TARGET_WIDTH_DP)
         val store = DpisConfigStore(prefs)
 
         applyDensityOverride("bin.mt.plus.canary", config, null, store)
 
         Assert.assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP.toLong(),
+            TARGET_WIDTH_DP.toLong(),
             config.screenWidthDp.toLong()
         )
         Assert.assertEquals(600, config.screenHeightDp.toLong())
         Assert.assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP.toLong(),
+            TARGET_WIDTH_DP.toLong(),
             config.smallestScreenWidthDp.toLong()
         )
         Assert.assertEquals(533, config.densityDpi.toLong())
@@ -104,18 +103,18 @@ class ResourcesImplHookInstallerTest {
         metrics.widthPixels = 1200
         metrics.heightPixels = 2000
         val prefs = FakePrefs()
-        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP)
+        putCompatViewport(prefs, "bin.mt.plus.canary", TARGET_WIDTH_DP)
         val store = DpisConfigStore(prefs)
 
         applyDensityOverride("bin.mt.plus.canary", config, metrics, store)
 
         Assert.assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP.toLong(),
+            TARGET_WIDTH_DP.toLong(),
             config.screenWidthDp.toLong()
         )
         Assert.assertEquals(600, config.screenHeightDp.toLong())
         Assert.assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP.toLong(),
+            TARGET_WIDTH_DP.toLong(),
             config.smallestScreenWidthDp.toLong()
         )
         Assert.assertEquals(533, config.densityDpi.toLong())
@@ -182,27 +181,27 @@ class ResourcesImplHookInstallerTest {
     fun updatesMetricsWhenConfigurationAlreadyMatchesTarget() {
         val config = Configuration()
         config.densityDpi = 480
-        config.screenWidthDp = DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP
+        config.screenWidthDp = TARGET_WIDTH_DP
         config.screenHeightDp = 600
-        config.smallestScreenWidthDp = DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP
+        config.smallestScreenWidthDp = TARGET_WIDTH_DP
         config.fontScale = 1.15f
         val metrics = DisplayMetrics()
         metrics.densityDpi = 480
         metrics.density = 3.0f
         metrics.scaledDensity = 3.0f
         val prefs = FakePrefs()
-        putCompatViewport(prefs, "bin.mt.plus.canary", DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP)
+        putCompatViewport(prefs, "bin.mt.plus.canary", TARGET_WIDTH_DP)
         val store = DpisConfigStore(prefs)
 
         applyDensityOverride("bin.mt.plus.canary", config, metrics, store)
 
         Assert.assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP.toLong(),
+            TARGET_WIDTH_DP.toLong(),
             config.screenWidthDp.toLong()
         )
         Assert.assertEquals(600, config.screenHeightDp.toLong())
         Assert.assertEquals(
-            DpiConfig.SEED_TARGET_VIEWPORT_WIDTH_DP.toLong(),
+            TARGET_WIDTH_DP.toLong(),
             config.smallestScreenWidthDp.toLong()
         )
         Assert.assertEquals(480, config.densityDpi.toLong())
@@ -864,6 +863,8 @@ class ResourcesImplHookInstallerTest {
     }
 
     companion object {
+        private const val TARGET_WIDTH_DP = 360
+
         private fun putCompatViewport(prefs: FakePrefs, packageName: String?, widthDp: Int) {
             prefs.edit()
                 .putInt("viewport." + packageName + ".width_dp", widthDp)

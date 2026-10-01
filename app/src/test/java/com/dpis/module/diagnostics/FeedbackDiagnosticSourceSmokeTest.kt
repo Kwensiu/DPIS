@@ -363,7 +363,7 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt"
         )
         val legacyAppSpecific = read(
-            "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java"
+            "src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.kt"
         )
 
         assertTrue(

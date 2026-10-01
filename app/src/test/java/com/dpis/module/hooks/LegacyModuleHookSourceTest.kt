@@ -208,7 +208,7 @@ class LegacyModuleHookSourceTest {
 
     @Test
     fun legacyAppSpecificRouteInstallerOwnsWechatDpiRoute() {
-        val router = read("src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.java")
+        val router = read("src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.kt")
         val installer = read("src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt")
 
         assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.packageName)"))

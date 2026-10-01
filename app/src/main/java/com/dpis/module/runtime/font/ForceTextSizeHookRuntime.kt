@@ -28,8 +28,6 @@ import kotlin.math.abs
 
 object ForceTextSizeHookRuntime {
     private const val BRIDGE_LOG_PREFIX = "DPIS "
-    private const val XIAOHEIHE_EXPRESSION_TEXT_VIEW =
-        "com.max.xiaoheihe.module.expression.widget.ExpressionTextView"
     private const val FONT_LOG_KEY_PREFIX = "font"
     private const val FONT_HOT_LOG_KEY_PREFIX = "font-hot"
     private const val BRIDGE_LOG_KEY_PREFIX = "font-bridge"
@@ -54,7 +52,6 @@ object ForceTextSizeHookRuntime {
     internal val INTERNAL_UPDATE get() = TextSizeRuntimeState.internalUpdate
     internal val INTERNAL_TEXT_UPDATE get() = TextSizeRuntimeState.internalTextUpdate
     private val TEXT_VIEW_SET_TEXT_SIZE_DEPTH get() = TextSizeRuntimeState.textViewSetTextSizeDepth
-    private val EXPRESSION_BASE_TEXT_SIZES get() = TextSizeRuntimeState.expressionBaseTextSizes
     private val TEXT_VIEW_BASE_TEXT_SIZES get() = TextSizeRuntimeState.textViewBaseTextSizes
     private val COMMENT_TEXT_BASE_TEXT_SIZES get() = TextSizeRuntimeState.commentTextBaseTextSizes
     private val LAST_TARGET_TEXT_SIZES: MutableMap<TextView?, TargetTextSize?> =
@@ -445,23 +442,6 @@ object ForceTextSizeHookRuntime {
         apiCapabilities: ModernApiCapabilities
     ) {
         TextViewAppearanceHookInstaller.installTextAppearanceHooks(xposed, textViewClass, factor, targetPercent, packageName, domainPlan, apiCapabilities)
-    }
-
-    internal fun applyExpressionTextSizeOverride(textView: TextView, factor: Float) {
-        val currentPx = textView.textSize
-        val desiredPx = FontFieldRewriteMath.resolveScaledTextSize<TextView?>(
-            currentPx, factor, EXPRESSION_BASE_TEXT_SIZES, textView
-        )
-        if (!shouldApplyTargetSize(textView, desiredPx)) {
-            return
-        }
-        INTERNAL_UPDATE.set(true)
-        try {
-            textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, desiredPx)
-            markAppliedTargetSize(textView, desiredPx, factor)
-        } finally {
-            INTERNAL_UPDATE.remove()
-        }
     }
 
     internal fun applyTextViewSizeOverride(

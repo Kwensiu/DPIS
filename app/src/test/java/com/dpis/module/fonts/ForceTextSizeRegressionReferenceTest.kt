@@ -171,6 +171,7 @@ class ForceTextSizeRegressionReferenceTest {
     fun replacementHookKeepsCurrentPxFallbackBehindDomainPlan() {
         val source =
             read("src/main/java/com/dpis/module/runtime/font/ForceTextSizeHookRuntime.kt") +
+                    read("src/main/java/com/dpis/module/runtime/font/TextViewSetTextHookInstaller.kt") +
                     read("src/main/java/com/dpis/module/runtime/font/TextViewAttachHookInstaller.kt") +
                     read("src/main/java/com/dpis/module/runtime/font/PaintTextSizeHookInstaller.kt") +
                     read("src/main/java/com/dpis/module/runtime/font/TextViewTextSizeHookInstaller.kt")
@@ -187,6 +188,10 @@ class ForceTextSizeRegressionReferenceTest {
         assertTrue(source.contains("recordResourcesHandledTextSize(thisObject, originalPx, factor)"))
         assertTrue(source.contains("TextViewFontProvenanceTracker.recordResourcesHandled"))
         assertTrue(source.contains("TextViewFontProvenanceTracker.Source.TEXTVIEW_CURRENT_PX_FALLBACK"))
+        assertTrue(source.contains("TextSizePolicy.shouldInstallCurrentPxTextViewFallbacks(domainPlan)"))
+        assertTrue(source.contains("ForceTextSizeHookRuntime.applyTextViewSizeOverride(thisObject, factor, domainPlan)"))
+        assertFalse(source.contains("ExpressionTextView"))
+        assertFalse(source.contains("expressionBaseTextSizes"))
         assertTrue(source.contains("hasStrongerProvenanceForCurrentPxFallback"))
         assertTrue(source.contains("FontMutationScheduler.decide("))
         assertTrue(source.contains("chain.proceed(arrayOf<Any>(decision.targetPx()))"))
