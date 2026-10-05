@@ -92,6 +92,13 @@ or localization review, use the project-local playbook in
 `docs/agents/skills/dpis-localization/SKILL.md`. This is a project-local skill
 bundle and does not modify global agent skills.
 
+### DPIS release notes
+
+When a task mentions release notes, changelog text, 更新日志, 发布说明, or
+release-please output for users, use
+`.agents/skills/dpis-release-notes/SKILL.md`. This is a project-local skill
+bundle and does not modify global agent skills.
+
 Do not add translation text for locales other than English and Simplified
 Chinese unless the user explicitly requests that locale's content.
 
