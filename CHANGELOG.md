@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.3.0](https://github.com/Kwensiu/DPIS/compare/v2.2.0...v2.3.0) (2026-10-05)
+
+
+### Features
+
+* adapt Material3 1.5 theme settings and AboutLibraries licenses ([2511aba](https://github.com/Kwensiu/DPIS/commit/2511abaf6fe56c8263619dade067ea541dea947b))
+* implement Baseline Profiles and Macrobenchmarks ([90fd72a](https://github.com/Kwensiu/DPIS/commit/90fd72adf227afac4b3cbcf0660f62916aec2cd1))
+
+
+### Bug Fixes
+
+* release text field focus when IME is dismissed ([#148](https://github.com/Kwensiu/DPIS/issues/148)) ([88fb5e0](https://github.com/Kwensiu/DPIS/commit/88fb5e05482bbefd42b7baba0dc5d6875a229dd9))
+* reuse stable display-metrics reads without hit-path sampling ([2a155f2](https://github.com/Kwensiu/DPIS/commit/2a155f29ab8042092974056c9dc7265417564e64))
+* size small windows from each resource callback ([d46bf5f](https://github.com/Kwensiu/DPIS/commit/d46bf5ff0ec76ceec354d2a6716de342d04a95a5))
+* stabilize relative viewport ownership ([aefd932](https://github.com/Kwensiu/DPIS/commit/aefd932f8a0996333827b47c0ed15aef2fbdc81f))
+* stop a second SP scale when density already matches ([c39c370](https://github.com/Kwensiu/DPIS/commit/c39c370a17b0d2015732fd28d40be25fd3a42a6d))
+
+
+### Refactoring
+
+* migrate viewport value policies to Kotlin ([9114164](https://github.com/Kwensiu/DPIS/commit/9114164cfdc8f2cf139c35f75a28e18a8d2b2f5c))
+* modernize app list filtering and consolidate matching policy ([#143](https://github.com/Kwensiu/DPIS/issues/143)) ([3c37983](https://github.com/Kwensiu/DPIS/commit/3c37983885d9f6571fc473646c80fe74e0604dfc))
+* remove legacy DpiConfig seeding and convert utilities to Kotlin ([e5fdf07](https://github.com/Kwensiu/DPIS/commit/e5fdf07fbb93c9d7fe9857ec9aa4aeaddcf57915))
+* return detached DisplayMetrics in WeChat DPI hooks and migrate components to Kotlin ([bf4440d](https://github.com/Kwensiu/DPIS/commit/bf4440d3238aa4b19d89b5bfe42573a55fc6f562))
+* unify font mutation scheduling and diagnostic evidence ([#145](https://github.com/Kwensiu/DPIS/issues/145)) ([f3bc30d](https://github.com/Kwensiu/DPIS/commit/f3bc30d40beb6ae6493e6f6b3f85dba4c3d9e5ed))
+
 ## [2.2.0](https://github.com/Kwensiu/DPIS/compare/v2.1.0...v2.2.0) (2026-09-19)
 
 
