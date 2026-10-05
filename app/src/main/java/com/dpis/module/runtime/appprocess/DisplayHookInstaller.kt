@@ -12,7 +12,6 @@ import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.viewport.DensityOverride
-import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.ViewportPropertyBridge
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -24,10 +23,14 @@ import io.github.libxposed.api.XposedInterface.Hooker
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
 object DisplayHookInstaller {
+    private const val MIN_WINDOW_SURFACE_PX = 100
+    private const val DISPLAY_PIXEL_TOLERANCE = 1
+
     @Volatile
     private var installedPid = -1
 
@@ -204,18 +207,6 @@ object DisplayHookInstaller {
         val effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
             targetStore, effectivePackageName
         )
-        if (RelativeViewportOwnership.shouldDefer(
-                effectiveStore,
-                effectivePackageName,
-                effectiveSystemServerHooksEnabled
-                    ?: (effectiveStore != null && effectiveStore.isSystemServerHooksEnabled()),
-            )) {
-            recordViewportSkipAtMostEvery(
-                routeName,
-                "source=" + sourceTag + ", reason=system_server_owns_relative_viewport"
-            )
-            return
-        }
         var override = resolvePackageScopedOverride(
             effectivePackageName, effectiveStore
         )
@@ -251,8 +242,18 @@ object DisplayHookInstaller {
         metrics.densityDpi = override.densityDpi
         metrics.density = DensityOverride.densityFromDpi(override.densityDpi)
         metrics.scaledDensity = metrics.density * fontScale
-        metrics.widthPixels = override.widthPx
-        metrics.heightPixels = override.heightPx
+        val surface = if (forcesDisplayPixels(sourceTag)) {
+            intArrayOf(override.widthPx, override.heightPx)
+        } else {
+            surfacePixels(
+                originalWidthPixels,
+                originalHeightPixels,
+                override.widthPx,
+                override.heightPx,
+            )
+        }
+        metrics.widthPixels = surface[0]
+        metrics.heightPixels = surface[1]
         val changed = originalDensityDpi != metrics.densityDpi ||
                 originalDensity != metrics.density ||
                 originalScaledDensity != metrics.scaledDensity ||
@@ -332,8 +333,13 @@ object DisplayHookInstaller {
         }
         val originalX = point.x
         val originalY = point.y
-        point.x = override.widthPx
-        point.y = override.heightPx
+        val surface = if (forcesDisplayPixels(sourceTag)) {
+            intArrayOf(override.widthPx, override.heightPx)
+        } else {
+            surfacePixels(originalX, originalY, override.widthPx, override.heightPx)
+        }
+        point.x = surface[0]
+        point.y = surface[1]
         if (originalX == point.x && originalY == point.y) {
             recordViewportSkipAtMostEvery(
                 routeName,
@@ -398,18 +404,24 @@ object DisplayHookInstaller {
             )
             return
         }
+        val appSurface = surfacePixels(
+            readIntField(displayInfo, "appWidth") ?: 0,
+            readIntField(displayInfo, "appHeight") ?: 0,
+            override.widthPx,
+            override.heightPx,
+        )
         var changed = false
         changed = changed or writeIntField(displayInfo, "logicalDensityDpi", override.densityDpi)
         changed = changed or writeIntField(displayInfo, "logicalWidth", override.widthPx)
         changed = changed or writeIntField(displayInfo, "logicalHeight", override.heightPx)
-        changed = changed or writeIntField(displayInfo, "appWidth", override.widthPx)
-        changed = changed or writeIntField(displayInfo, "appHeight", override.heightPx)
-        changed = changed or writeIntField(displayInfo, "smallestNominalAppWidth", override.widthPx)
+        changed = changed or writeIntField(displayInfo, "appWidth", appSurface[0])
+        changed = changed or writeIntField(displayInfo, "appHeight", appSurface[1])
+        changed = changed or writeIntField(displayInfo, "smallestNominalAppWidth", appSurface[0])
         changed =
-            changed or writeIntField(displayInfo, "smallestNominalAppHeight", override.heightPx)
-        changed = changed or writeIntField(displayInfo, "largestNominalAppWidth", override.widthPx)
+            changed or writeIntField(displayInfo, "smallestNominalAppHeight", appSurface[1])
+        changed = changed or writeIntField(displayInfo, "largestNominalAppWidth", appSurface[0])
         changed =
-            changed or writeIntField(displayInfo, "largestNominalAppHeight", override.heightPx)
+            changed or writeIntField(displayInfo, "largestNominalAppHeight", appSurface[1])
         if (!changed) {
             recordViewportSkipAtMostEvery(
                 routeName,
@@ -421,7 +433,8 @@ object DisplayHookInstaller {
         }
         val message = ("Display override(" + sourceTag + "): package="
                 + safeValue(effectivePackageName) + ", logical=" + override.widthPx + "x"
-                + override.heightPx + ", densityDpi=" + override.densityDpi)
+                + override.heightPx + ", app=" + appSurface[0] + "x" + appSurface[1]
+                + ", densityDpi=" + override.densityDpi)
         if (logIfChanged(effectivePackageName + ":displayInfo:" + sourceTag, message)) {
             RuntimeHotPathEvents.applied(
                 effectivePackageName,
@@ -430,6 +443,8 @@ object DisplayHookInstaller {
                 ("source=" + sourceTag
                         + ", logicalWidth=" + override.widthPx
                         + ", logicalHeight=" + override.heightPx
+                        + ", appWidth=" + appSurface[0]
+                        + ", appHeight=" + appSurface[1]
                         + ", densityDpi=" + override.densityDpi)
             )
         }
@@ -473,9 +488,9 @@ object DisplayHookInstaller {
         }
         if (targetSpec.isRelativeScale) {
             val current = VirtualDisplayState.get()
-            if (current != null
-                && current.widthPx == metrics.widthPixels
-                && current.heightPx == metrics.heightPixels
+            if (current != null &&
+                ((current.widthPx == metrics.widthPixels && current.heightPx == metrics.heightPixels) ||
+                        (current.densityDpi > 0 && current.densityDpi == metrics.densityDpi))
             ) {
                 // Display callbacks can arrive after Resources has already
                 // published the target. Re-deriving from the target density
@@ -570,6 +585,41 @@ object DisplayHookInstaller {
             return null
         }
         return cached.result
+    }
+
+    /** Screen callbacks stay on the display. App-area callbacks may be a window. */
+    private fun forcesDisplayPixels(sourceTag: String): Boolean {
+        return sourceTag == "getRealMetrics" || sourceTag == "getRealSize"
+    }
+
+    /**
+     * A real window keeps its own pixels and only adopts the display density.
+     * A missing or placeholder size still receives the display pixels.
+     */
+    private fun surfacePixels(
+        ownWidth: Int,
+        ownHeight: Int,
+        displayWidth: Int,
+        displayHeight: Int,
+    ): IntArray {
+        if (ownWidth >= MIN_WINDOW_SURFACE_PX &&
+            ownHeight >= MIN_WINDOW_SURFACE_PX &&
+            (abs(ownWidth - displayWidth) > DISPLAY_PIXEL_TOLERANCE ||
+                    abs(ownHeight - displayHeight) > DISPLAY_PIXEL_TOLERANCE)
+        ) {
+            return intArrayOf(ownWidth, ownHeight)
+        }
+        return intArrayOf(displayWidth, displayHeight)
+    }
+
+    private fun readIntField(target: Any, fieldName: String): Int? {
+        try {
+            val field = target.javaClass.getDeclaredField(fieldName)
+            field.isAccessible = true
+            return field.getInt(target)
+        } catch (ignored: Throwable) {
+            return null
+        }
     }
 
     private fun writeIntField(target: Any, fieldName: String, value: Int): Boolean {

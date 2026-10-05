@@ -5,7 +5,7 @@ import com.dpis.module.runtime.font.ForceTextSizeHookInstaller
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller
 import com.dpis.module.runtime.font.TypefaceOverrideHookInstaller
 import com.dpis.module.runtime.font.WebViewFontHookInstaller
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 
 object AppProcessHotReloadResetter {
     /**

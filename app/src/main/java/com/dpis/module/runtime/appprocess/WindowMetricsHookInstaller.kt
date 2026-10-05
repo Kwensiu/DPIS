@@ -9,7 +9,7 @@ import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.viewport.ViewportConsistencyDiagnostics
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker

@@ -616,6 +616,36 @@ superseded.
 
 2026-10-01 viewport finding: relative-scale compat resolution now keeps the first process baseline, applies that baseline before the app-process borrow branch, does not cache relative results across virtual-display publication, and app-process `Resources.getSystem()` explicitly skips app viewport overrides. Display callbacks reuse the current physical-size result instead of deriving from transformed density. This prevents a second ratio pass such as `360->432` followed by `432->518`; focused regression coverage was added.
 2026-10-01 viewport ownership boundary: app-process configuration, ResourcesManagerKey, and DisplayMetrics supplements defer only when the effective viewport mode resolves to `system` for a relative target and system hooks are enabled. Explicit `compat` and WebAPK owner routes remain app-owned. Each defer now emits `system_server_owns_relative_viewport` evidence for diagnostic packages.
+2026-10-05 viewport ownership boundary: a system-owned relative read defers only when that
+configuration or display density already carries the published result. A still-physical display
+configuration is written once to the same dp and density. This stops a title and the first list row
+from using 480 dpi configuration against 369 dpi metrics, as in Moshi 3.15.2 at 130%. A
+configuration that already matches the result is still not multiplied again.
+2026-10-05 display metrics: system-owned viewport still installs app-process `Display.getMetrics` /
+`getRealMetrics` hooks. React Native measures text with Resources `scaledDensity` and draws it with
+the density copied from `getRealMetrics`. Leaving that call at the physical 480 dpi clips the last
+glyphs when Resources are already 369 dpi. Window-bounds replacement stays with system_server.
+`getRealMetrics` stays on the display pixels so a small window does not replace the 130% screen
+metrics. `getMetrics` keeps a real window's own pixels and the same density. A metrics object whose
+dpi already matches is still rewritten when its density, scaledDensity, or pixel size does not.
+2026-10-05 window aspect: a relative configuration whose long-to-short ratio differs from the
+published display result by more than 0.15 is a window on ResourcesImpl as well as ResourcesManager.
+ResourcesImpl does not publish that configuration as the display, so a later `getRealMetrics` keeps
+the portrait display pixels. A callback whose pixels match the stored display reuses the remembered
+window only when the two share an orientation. Moshi pack 19(1) published 640×360 as display pixels
+1921×1081, then scaled the next landscape window with the portrait window 1080×1920. Pack 19(2)
+never received that configuration.
+2026-10-05 copied display result: system mode still records `WindowMetrics.getBounds` in the app
+process and does not replace the rect. When that window's shape differs from a configuration that
+already carries the full display result, the app process rewrites the configuration to the window
+height at the display density. At 120%, a 1080x1920 window under a copied 432x950 result becomes
+432x768 at density 400, and the stored display stays 1080x2376. Moshi pack 2031 left the 150% small
+window on the full 540x1188 result because the copy was treated as system-owned and no window bounds
+were recorded. Pack 2030 width mode already rewrote each window from its own incoming size.
+2026-10-05 display evidence: a Display metrics mutation that happens before the diagnostic bridge
+can deliver is kept and written once after the bridge sink and capture are both ready. The line
+keeps `densityDpi` before and after, marked `delivery=retained-until-bridge`. The performance
+counter is not incremented a second time.
 
 ## Safety Rules
 
@@ -1156,3 +1186,7 @@ not change route selection, mutation policy, or evidence semantics.
   density 400. system_server keeps the display-shaped configuration. A window
   configuration is still scaled in the app process. Display pixels 1080x2376
   stay on the display scale 432x950, including while a window is active.
+  A relative configuration whose aspect differs from that display result is a
+  window even when no window bounds have been recorded, and it does not replace
+  the display pixels. A display-sized callback reuses the remembered window
+  only when that window has the same orientation.

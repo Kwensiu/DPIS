@@ -23,7 +23,7 @@ import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -169,6 +169,9 @@ object ResourcesImplHookInstaller {
                 WindowBoundsState.matchesDisplayPixels(metrics.widthPixels, metrics.heightPixels)
         if (ownPixelsMatchDisplay) {
             windowScoped = false
+        }
+        if (!windowScoped && differsFromPublishedDisplay(packageName, config, resolution)) {
+            windowScoped = true
         }
         val sourceWidthPx = if (metrics != null) metrics.widthPixels else 0
         val sourceHeightPx = if (metrics != null) metrics.heightPixels else 0
@@ -567,6 +570,24 @@ object ResourcesImplHookInstaller {
             return true
         }
         return resolution.spec.isAbsoluteDp
+    }
+
+    private fun differsFromPublishedDisplay(
+        packageName: String?,
+        config: Configuration,
+        resolution: ViewportTargetResolution,
+    ): Boolean {
+        if (config.screenWidthDp <= 0 || config.screenHeightDp <= 0) {
+            return false
+        }
+        val reference = ViewportConfigurationScope.publishedRelativeResult(packageName, resolution)
+            ?: return false
+        return ViewportConfigurationScope.isDifferentDisplayAspect(
+            config.screenWidthDp,
+            config.screenHeightDp,
+            reference.widthDp,
+            reference.heightDp,
+        )
     }
 
     private fun resolveWindowLikeBorrowResult(

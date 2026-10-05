@@ -255,6 +255,49 @@ class RuntimeHotPathEventsTest {
     }
 
     @Test
+    fun retainsAppliedDisplayMetricsUntilBridgeCanDeliver() {
+        RuntimeHotPathEvents.applied(
+            "app.getmoshi.android",
+            "viewport",
+            "display_metrics_override",
+            "source=getRealMetrics, widthPx=1080->1080, heightPx=2376->2376, densityDpi=480->369",
+        )
+
+        val bridgeLines = ArrayList<String>()
+        RuntimeBridgeEvents.setBridgeSink { line ->
+            bridgeLines.add(line)
+        }
+        RuntimeBridgeEvents.flushForTest()
+        assertTrue(bridgeLines.isEmpty())
+        assertEquals(
+            1L,
+            RuntimeHotPathEvents.performanceSnapshotForTest()["display_metrics_override"]!!.applied,
+        )
+
+        RuntimeTransport.start(
+            "app.getmoshi.android",
+            RuntimeTransport.ShellRunner { ShellResult(0, "") },
+        )
+        RuntimeBridgeEvents.emitSessionDiscovery(
+            "app.getmoshi.android",
+            "app.getmoshi.android",
+        )
+        RuntimeBridgeEvents.flushForTest()
+
+        val appliedLines = bridgeLines.filter { line ->
+            line.contains("routeName=display_metrics_override") &&
+                    line.contains("stage=applied") &&
+                    line.contains("densityDpi=480->369") &&
+                    line.contains("delivery=retained-until-bridge")
+        }
+        assertEquals(1, appliedLines.size)
+        assertEquals(
+            1L,
+            RuntimeHotPathEvents.performanceSnapshotForTest()["display_metrics_override"]!!.applied,
+        )
+    }
+
+    @Test
     fun doesNotEmitDiagnosticFallbackLogWhenCaptureInactive() {
         RuntimeHotPathEvents.begin(
             "com.example.app",

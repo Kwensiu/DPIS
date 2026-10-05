@@ -21,7 +21,7 @@ import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -1027,6 +1027,53 @@ class ResourcesImplHookInstallerTest {
         Assert.assertEquals(400, shortWindow.densityDpi.toLong())
         Assert.assertEquals(1079, shortMetrics.widthPixels.toLong())
         Assert.assertEquals(1439, shortMetrics.heightPixels.toLong())
+        Assert.assertEquals(2376, VirtualDisplayState.get()!!.heightPx.toLong())
+    }
+
+    @Test
+    fun landscapeWindowDoesNotReplaceThePortraitDisplay() {
+        val packageName = "com.example.viewport.landscape-window"
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(packageName, targetSpec)
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT)
+        VirtualDisplayState.publish(
+            packageName,
+            targetSpec,
+            ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+            ViewportOverride.Result(432, 950, 432, 400),
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+        )
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                432,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        val landscape = Configuration()
+        landscape.densityDpi = 480
+        landscape.screenWidthDp = 640
+        landscape.screenHeightDp = 360
+        landscape.smallestScreenWidthDp = 360
+        landscape.fontScale = 1.0f
+        val metrics = windowMetrics(1921, 1081)
+
+        applyDensityOverride(packageName, landscape, metrics, store)
+
+        Assert.assertEquals(768, landscape.screenWidthDp.toLong())
+        Assert.assertEquals(432, landscape.screenHeightDp.toLong())
+        Assert.assertEquals(432, landscape.smallestScreenWidthDp.toLong())
+        Assert.assertEquals(400, landscape.densityDpi.toLong())
+        Assert.assertEquals(1921, metrics.widthPixels.toLong())
+        Assert.assertEquals(1081, metrics.heightPixels.toLong())
+        Assert.assertEquals(1080, VirtualDisplayState.get()!!.widthPx.toLong())
         Assert.assertEquals(2376, VirtualDisplayState.get()!!.heightPx.toLong())
     }
 

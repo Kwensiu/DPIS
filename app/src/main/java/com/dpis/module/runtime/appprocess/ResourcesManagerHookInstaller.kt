@@ -9,10 +9,10 @@ import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.probe.DebugPackageOverride
-import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.TargetViewportWidthResolver
+import com.dpis.module.viewport.ViewportConfigurationScope
 import com.dpis.module.viewport.ViewportConfigurationScope.isWindowScoped
 import com.dpis.module.viewport.ViewportModePolicy
 import com.dpis.module.viewport.ViewportOverride
@@ -24,16 +24,13 @@ import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
-import kotlin.math.abs
-import kotlin.math.max
-import kotlin.math.min
 
 object ResourcesManagerHookInstaller {
     private const val HOOK_ID_APPLY_CONFIGURATION =
@@ -480,12 +477,10 @@ object ResourcesManagerHookInstaller {
             store, packageName, config.fontScale
         )
         FontScaleOverride.applyToConfiguration(config, fontScale)
-        // A relative viewport owned by system_server must not be re-derived from
-        // any app-process ResourcesManager callback. The ordinary apply/create
-        // callbacks are the first recursion entry (360 -> 432 -> 518); limiting
-        // this guard to the ResourcesManagerKey path leaves that entry open.
-        // Keep font scaling independent so system-owned viewport mode does not
-        // disable an otherwise configured text-size adjustment.
+        // A configuration that already carries the relative result stays put, so
+        // a later apply/create callback cannot multiply it (360 -> 432 -> 518).
+        // A still-physical configuration is written once, together with density.
+        // Keep font scaling independent of that viewport decision.
         if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
             recordViewportSkip(
                 packageName,
@@ -705,59 +700,19 @@ object ResourcesManagerHookInstaller {
         config: Configuration,
         resolution: ViewportTargetResolution,
     ): Boolean {
-        if (!resolution.spec.isRelativeScale
-            || config.screenWidthDp <= 0
-            || config.screenHeightDp <= 0
-        ) {
+        if (config.screenWidthDp <= 0 || config.screenHeightDp <= 0) {
             return false
         }
-        val reference = resolution.record?.viewportResult
-            ?: readMarkerViewportResult(packageName, resolution)
+        val reference = ViewportConfigurationScope.publishedRelativeResult(packageName, resolution)
             ?: return false
-        if (reference.widthDp <= 0 || reference.heightDp <= 0) {
-            return false
-        }
         if (WindowBoundsState.isRecentWindow(packageName, reference)) {
             return true
         }
-        val sourceLong = max(config.screenWidthDp, config.screenHeightDp).toFloat()
-        val sourceShort = min(config.screenWidthDp, config.screenHeightDp).toFloat()
-        val referenceLong = max(reference.widthDp, reference.heightDp).toFloat()
-        val referenceShort = min(reference.widthDp, reference.heightDp).toFloat()
-        if (sourceShort <= 0f || referenceShort <= 0f) {
-            return false
-        }
-        val sourceAspect = sourceLong / sourceShort
-        val referenceAspect = referenceLong / referenceShort
-        // A freeform window can retain the display smallest width while its
-        // height changes substantially. Do not rewrite that window as a full
-        // display configuration when the marker proves a different aspect.
-        return abs(sourceAspect - referenceAspect) > 0.15f
-    }
-
-    private fun readMarkerViewportResult(
-        packageName: String?,
-        resolution: ViewportTargetResolution,
-    ): ViewportOverride.Result? {
-        val marker = ViewportRuntimeMarkerBridge.read(
-            packageName,
-            resolution.spec.fingerprint(),
-            RuntimeClock.crossProcessMarkerMillis(),
-        )
-        val record = marker.record ?: return null
-        if (!marker.hit
-            || record.resultWidthDp <= 0
-            || record.resultHeightDp <= 0
-            || record.resultSmallestWidthDp <= 0
-            || record.resultDensityDpi <= 0
-        ) {
-            return null
-        }
-        return ViewportOverride.Result(
-            record.resultWidthDp,
-            record.resultHeightDp,
-            record.resultSmallestWidthDp,
-            record.resultDensityDpi,
+        return ViewportConfigurationScope.isDifferentDisplayAspect(
+            config.screenWidthDp,
+            config.screenHeightDp,
+            reference.widthDp,
+            reference.heightDp,
         )
     }
 

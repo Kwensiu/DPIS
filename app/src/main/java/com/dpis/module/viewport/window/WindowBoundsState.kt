@@ -1,7 +1,10 @@
-package com.dpis.module.viewport
+package com.dpis.module.viewport.window
 
 import android.content.res.Configuration
 import android.graphics.Rect
+import com.dpis.module.viewport.ResourcesMetricsReadReuse
+import com.dpis.module.viewport.ViewportOverride
+import com.dpis.module.viewport.VirtualDisplayState
 import java.util.IdentityHashMap
 import kotlin.math.abs
 import kotlin.math.round
@@ -200,8 +203,10 @@ object WindowBoundsState {
      * Picks the pixels this callback should use.
      *
      * A size that is not the display replaces the remembered window. A size that
-     * still matches the display keeps the remembered window, so one stale
-     * fullscreen read cannot drop an active window.
+     * still matches the display keeps the remembered window when they share an
+     * orientation, so one stale fullscreen read cannot drop an active window.
+     * A remembered window in the other orientation is left in place and is not
+     * returned; the caller uses the configuration's own size.
      */
     @JvmStatic
     @Synchronized
@@ -214,7 +219,15 @@ object WindowBoundsState {
             recordInternal(packageName, 0, 0, ownWidth, ownHeight, null)
             return PhysicalBounds(ownWidth, ownHeight)
         }
-        return states[packageName]?.activeWindow
+        val window = states[packageName]?.activeWindow
+        if (display != null && window != null &&
+            ownWidth > 0 && ownHeight > 0 &&
+            matchesDisplay(ownWidth, ownHeight, display) &&
+            !sameOrientation(window, display)
+        ) {
+            return null
+        }
+        return window
     }
 
     /** Uses this configuration's own dp and density as its pixel size. */
@@ -288,5 +301,11 @@ object WindowBoundsState {
     private fun matchesDisplay(width: Int, height: Int, display: PhysicalBounds): Boolean {
         return abs(width - display.width) <= DISPLAY_PIXEL_TOLERANCE &&
                 abs(height - display.height) <= DISPLAY_PIXEL_TOLERANCE
+    }
+
+    private fun sameOrientation(left: PhysicalBounds, right: PhysicalBounds): Boolean {
+        val leftCompare = left.width.compareTo(left.height)
+        val rightCompare = right.width.compareTo(right.height)
+        return leftCompare == 0 || rightCompare == 0 || leftCompare == rightCompare
     }
 }

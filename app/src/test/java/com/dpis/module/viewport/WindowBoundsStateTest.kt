@@ -2,6 +2,7 @@ package com.dpis.module.viewport
 
 import android.content.res.Configuration
 import android.graphics.Rect
+import com.dpis.module.viewport.window.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -138,6 +139,22 @@ class WindowBoundsStateTest {
 
         assertTrue(adopted == WindowBoundsState.PhysicalBounds(1080, 1920))
         assertTrue(WindowBoundsState.hasActiveWindow("package"))
+    }
+
+    @Test
+    fun landscapeDisplayPixelsDoNotReuseAPortraitWindow() {
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(832, 468, 468, 369, 1921, 1081),
+        )
+        WindowBoundsState.record("package", 759, 144, 1839, 2064)
+
+        val adopted = WindowBoundsState.pixelsForCallback("package", 1921, 1081)
+
+        assertTrue(adopted == null)
+        assertTrue(
+            WindowBoundsState.currentWindowBounds("package") ==
+                    WindowBoundsState.PhysicalBounds(1080, 1920),
+        )
     }
 
     @Test

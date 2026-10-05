@@ -355,6 +355,26 @@ classification only, not a route behavior change.
 
 2026-10-01 viewport finding: the shared relative-scale resolver now keeps the first process baseline, applies that baseline before the app-process borrow branch, does not cache relative results across virtual-display publication, and app-process `Resources.getSystem()` explicitly skips app viewport overrides. Display callbacks reuse the current physical-size result instead of deriving from transformed density. This prevents a second ratio pass such as `360->432` followed by `432->518`; Legacy inherits the shared fix.
 2026-10-01 viewport ownership boundary: shared app-process configuration, ResourcesManagerKey, and DisplayMetrics supplements defer only when the effective viewport mode resolves to `system` for a relative target and system hooks are enabled. Explicit `compat` and WebAPK owner routes remain app-owned. Each defer now emits `system_server_owns_relative_viewport` evidence for diagnostic packages.
+2026-10-05 viewport ownership boundary: a system-owned relative read defers only when that
+configuration or display density already carries the published result. A still-physical display
+configuration is written once to the same dp and density. Legacy inherits the shared fix. A
+configuration that already matches the result is still not multiplied again.
+2026-10-05 display metrics: system-owned viewport still installs the shared app-process Display
+metrics hooks, so `getRealMetrics` density matches Resources. Legacy inherits that install gate.
+Window-bounds replacement stays with system_server. `getRealMetrics` stays on the display pixels.
+`getMetrics` keeps a real window's own pixels at that same density. Legacy inherits the shared rule.
+A matching dpi does not skip a metrics object whose density or scaledDensity still disagree.
+2026-10-05 window aspect: Legacy inherits the shared ResourcesImpl rule. A relative configuration
+whose long-to-short ratio differs from the published display result by more than 0.15 stays a window
+and is not published as the display. A display-sized callback reuses the remembered window only when
+they share an orientation.
+2026-10-05 copied display result: Legacy inherits the shared rule. System mode records window bounds
+without replacing the rect. A configuration that already carries the full display result is
+rewritten to the remembered window's height when that window has a different shape. The stored
+display pixels stay unchanged.
+2026-10-05 display evidence: Legacy inherits the shared bridge retain. A Display metrics mutation
+that happens before the diagnostic bridge can deliver is written once later with the original
+`densityDpi` before and after. The performance counter is not incremented a second time.
 
 ## Safety Rules
 
@@ -510,4 +530,8 @@ classification only, not a route behavior change.
   density 400. system_server keeps the display-shaped configuration. A window
   configuration is still scaled in the app process. Display pixels 1080x2376
   stay on the display scale 432x950, including while a window is active.
+  A relative configuration whose aspect differs from that display result is a
+  window even when no window bounds have been recorded, and it does not replace
+  the display pixels. A display-sized callback reuses the remembered window
+  only when that window has the same orientation.
   Shared app-process code; Modern and Legacy see the same resource route.
