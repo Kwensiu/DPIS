@@ -37,4 +37,5 @@ class ViewportConfigurationScopeTest {
         assertFalse(ViewportConfigurationScope.isValidDisplayConfiguration(valid))
         assertFalse(ViewportConfigurationScope.isValidDisplayConfiguration(null))
     }
+
 }

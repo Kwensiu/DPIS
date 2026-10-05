@@ -6,27 +6,34 @@ import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.probe.DebugPackageOverride
-import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
+import com.dpis.module.runtime.probe.DebugPackageOverride
+import com.dpis.module.runtime.probe.RuntimeClock
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportConfigurationScope.isWindowScoped
 import com.dpis.module.viewport.ViewportModePolicy
 import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportResolvedTarget
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportRuntimeMarkerProbe
 import com.dpis.module.viewport.ViewportRuntimeRecord
 import com.dpis.module.viewport.ViewportSourceSnapshot
-import com.dpis.module.viewport.RelativeViewportOwnership
+import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.WindowBoundsState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 object ResourcesManagerHookInstaller {
     private const val HOOK_ID_APPLY_CONFIGURATION =
@@ -479,7 +486,7 @@ object ResourcesManagerHookInstaller {
         // this guard to the ResourcesManagerKey path leaves that entry open.
         // Keep font scaling independent so system-owned viewport mode does not
         // disable an otherwise configured text-size adjustment.
-        if (RelativeViewportOwnership.shouldDefer(store, packageName, policy)) {
+        if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
             recordViewportSkip(
                 packageName,
                 "resources_manager_config_override",
@@ -522,19 +529,36 @@ object ResourcesManagerHookInstaller {
             )
         }
         val windowScoped = isWindowScoped(config)
+                || WindowBoundsState.hasActiveWindow(packageName)
+                || WindowBoundsState.matchesWindowConfiguration(packageName, config)
+                || isLikelyWindowScopedRelativeConfiguration(packageName, config, resolution)
         val stableTarget =
             ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth)
+        val physicalWindowBounds = if (windowScoped)
+            WindowBoundsState.pixelsForConfiguration(packageName, config)
+        else
+            null
         val resolvedRecordResult =
             ViewportResolvedTarget.viewportResult(resolution, windowScoped, config)
         val result = if (resolvedRecordResult != null)
             resolvedRecordResult
         else
-            ViewportOverride.derive(
-                config,
-                if (targetViewportWidth != null) targetViewportWidth else 0,
-                windowScoped,
-                stableTarget
-            )
+            if (physicalWindowBounds != null) {
+                ViewportOverride.deriveWindowScoped(
+                    config,
+                    if (targetViewportWidth != null) targetViewportWidth else 0,
+                    stableTarget,
+                    physicalWindowBounds.width,
+                    physicalWindowBounds.height,
+                )
+            } else {
+                ViewportOverride.derive(
+                    config,
+                    if (targetViewportWidth != null) targetViewportWidth else 0,
+                    windowScoped,
+                    stableTarget
+                )
+            }
         if (result == null) {
             if (fontScale.changed) {
                 val fontMessage = ("DPIS_FONT " + sourceTag + " override: package="
@@ -582,6 +606,11 @@ object ResourcesManagerHookInstaller {
         }
         val needsViewportUpdate =
             result.widthDp != originalWidthDp || result.heightDp != originalHeightDp || result.smallestWidthDp != originalSmallestWidthDp || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi)
+        if (needsViewportUpdate) {
+            ViewportRuntimeMarkerBridge.publishRelativeResultIfChanged(
+                packageName, resolution, source, result, windowScoped
+            )
+        }
         val applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
             policy, store, packageName, resolution, needsViewportUpdate
         )
@@ -669,6 +698,67 @@ object ResourcesManagerHookInstaller {
             return true
         }
         return false
+    }
+
+    private fun isLikelyWindowScopedRelativeConfiguration(
+        packageName: String?,
+        config: Configuration,
+        resolution: ViewportTargetResolution,
+    ): Boolean {
+        if (!resolution.spec.isRelativeScale
+            || config.screenWidthDp <= 0
+            || config.screenHeightDp <= 0
+        ) {
+            return false
+        }
+        val reference = resolution.record?.viewportResult
+            ?: readMarkerViewportResult(packageName, resolution)
+            ?: return false
+        if (reference.widthDp <= 0 || reference.heightDp <= 0) {
+            return false
+        }
+        if (WindowBoundsState.isRecentWindow(packageName, reference)) {
+            return true
+        }
+        val sourceLong = max(config.screenWidthDp, config.screenHeightDp).toFloat()
+        val sourceShort = min(config.screenWidthDp, config.screenHeightDp).toFloat()
+        val referenceLong = max(reference.widthDp, reference.heightDp).toFloat()
+        val referenceShort = min(reference.widthDp, reference.heightDp).toFloat()
+        if (sourceShort <= 0f || referenceShort <= 0f) {
+            return false
+        }
+        val sourceAspect = sourceLong / sourceShort
+        val referenceAspect = referenceLong / referenceShort
+        // A freeform window can retain the display smallest width while its
+        // height changes substantially. Do not rewrite that window as a full
+        // display configuration when the marker proves a different aspect.
+        return abs(sourceAspect - referenceAspect) > 0.15f
+    }
+
+    private fun readMarkerViewportResult(
+        packageName: String?,
+        resolution: ViewportTargetResolution,
+    ): ViewportOverride.Result? {
+        val marker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            resolution.spec.fingerprint(),
+            RuntimeClock.crossProcessMarkerMillis(),
+        )
+        val record = marker.record ?: return null
+        if (!marker.hit
+            || record.resultWidthDp <= 0
+            || record.resultHeightDp <= 0
+            || record.resultSmallestWidthDp <= 0
+            || record.resultDensityDpi <= 0
+        ) {
+            return null
+        }
+        return ViewportOverride.Result(
+            record.resultWidthDp,
+            record.resultHeightDp,
+            record.resultSmallestWidthDp,
+            record.resultDensityDpi,
+        )
     }
 
     private fun recordViewportSkip(

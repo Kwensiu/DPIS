@@ -43,6 +43,43 @@ object ViewportOverride {
         return Result(targetWidth, targetHeight, targetWidthDp, targetDensityDpi)
     }
 
+    @JvmStatic
+    fun deriveWindowScoped(
+        config: Configuration?,
+        targetWidthDp: Int,
+        stableTarget: VirtualDisplayOverride.Result?,
+        physicalWidthPx: Int,
+        physicalHeightPx: Int,
+    ): Result? {
+        if (config == null || physicalWidthPx <= 0 || physicalHeightPx <= 0) {
+            return derive(config, targetWidthDp, true, stableTarget)
+        }
+        var densityDpi = if (stableTarget != null && stableTarget.densityDpi > 0 &&
+            (targetWidthDp <= 0 || stableTarget.smallestWidthDp == targetWidthDp)
+        ) {
+            stableTarget.densityDpi
+        } else {
+            config.densityDpi
+        }
+        if (targetWidthDp > 0 && config.smallestScreenWidthDp > 0 && config.densityDpi > 0 &&
+            (stableTarget == null || stableTarget.smallestWidthDp != targetWidthDp)
+        ) {
+            densityDpi = maxOf(
+                1,
+                kotlin.math.round(
+                    config.densityDpi * config.smallestScreenWidthDp.toFloat() / targetWidthDp,
+                ).toInt(),
+            )
+        }
+        if (densityDpi <= 0) {
+            return derive(config, targetWidthDp, true, stableTarget)
+        }
+        val density = DensityOverride.densityFromDpi(densityDpi)
+        val widthDp = maxOf(1, kotlin.math.round(physicalWidthPx / density).toInt())
+        val heightDp = maxOf(1, kotlin.math.round(physicalHeightPx / density).toInt())
+        return Result(widthDp, heightDp, minOf(widthDp, heightDp), densityDpi)
+    }
+
     private fun deriveWindowScoped(
         config: Configuration,
         stableTarget: VirtualDisplayOverride.Result?,

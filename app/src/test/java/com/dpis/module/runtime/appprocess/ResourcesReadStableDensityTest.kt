@@ -16,6 +16,7 @@ import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportConfigurationScope
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -37,6 +38,7 @@ class ResourcesReadStableDensityTest {
         TargetViewportWidthResolver.resetResolveCacheForTest()
         ViewportConfigurationScope.resetReflectionCacheForTest()
         VirtualDisplayState.set(null)
+        WindowBoundsState.clearForTest()
         ResourcesFontScheduler.clearForTest()
         ResourcesMetricsReadReuse.clearForTest()
     }
@@ -189,6 +191,72 @@ class ResourcesReadStableDensityTest {
         )
         assertEquals(1080, metrics.widthPixels)
         assertEquals(1920, metrics.heightPixels)
+    }
+
+    @Test
+    fun wideSplitBoundsPreventDisplayPixelReuseWhenConfigurationLooksDisplayLike() {
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+        )
+        WindowBoundsState.record(PACKAGE_NAME, 278, 144, 2196, 1223)
+        val config = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 639
+            screenHeightDp = 360
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 480
+            density = 3.0f
+            scaledDensity = 3.0f
+            widthPixels = 1918
+            heightPixels = 1079
+        }
+
+        ResourcesReadHookInstaller.applyMetricsOverride(
+            null,
+            metrics,
+            config,
+            PACKAGE_NAME,
+        )
+
+        assertEquals(1918, metrics.widthPixels)
+        assertEquals(1079, metrics.heightPixels)
+        assertEquals(480, metrics.densityDpi)
+    }
+
+    @Test
+    fun displaySizedMetricsStayFullWhileAWindowIsActive() {
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+        )
+        WindowBoundsState.record(PACKAGE_NAME, 0, 0, 1079, 1439)
+        val config = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 480
+            density = 3.0f
+            scaledDensity = 3.0f
+            widthPixels = 1080
+            heightPixels = 2376
+        }
+
+        ResourcesReadHookInstaller.applyMetricsOverride(
+            null,
+            metrics,
+            config,
+            PACKAGE_NAME,
+        )
+
+        assertEquals(1080, metrics.widthPixels)
+        assertEquals(2376, metrics.heightPixels)
+        assertTrue(WindowBoundsState.hasActiveWindow(PACKAGE_NAME))
     }
 
     @Test

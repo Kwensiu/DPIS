@@ -9,24 +9,41 @@ import com.dpis.module.runtime.appprocess.ResourcesImplHookInstaller.shouldPubli
 import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.font.ResourcesFontScheduler
+import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportOverride
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportRuntimeRecord
 import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.WindowBoundsState
 import org.junit.After
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 
 class ResourcesImplHookInstallerTest {
+    @Before
+    fun setUp() {
+        clearProcessViewportState()
+    }
+
     @After
     fun tearDown() {
-        VirtualDisplayState.set(null)
+        clearProcessViewportState()
+        WindowBoundsState.clearForTest()
         ResourcesFontScheduler.clearForTest()
+    }
+
+    private fun clearProcessViewportState() {
+        VirtualDisplayState.set(null)
+        ViewportRuntimeMarkerBridge.clearForTest()
+        TargetViewportWidthResolver.resetResolveCacheForTest()
     }
 
     @Test
@@ -700,6 +717,67 @@ class ResourcesImplHookInstallerTest {
     }
 
     @Test
+    fun relativeScaleDoesNotReapplyTargetAfterFirstDisplayPass() {
+        val packageName = "com.example.viewport.first-pass"
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs)
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(120000))
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO)
+        store.setSystemServerHooksEnabled(true)
+
+        val firstConfig = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val firstMetrics = DisplayMetrics().apply {
+            widthPixels = 1080
+            heightPixels = 2376
+            densityDpi = 480
+        }
+
+        applyDensityOverride(packageName, firstConfig, firstMetrics, store)
+
+        Assert.assertEquals(432, firstConfig.screenWidthDp.toLong())
+        Assert.assertEquals(950, firstConfig.screenHeightDp.toLong())
+        Assert.assertEquals(432, firstConfig.smallestScreenWidthDp.toLong())
+        Assert.assertEquals(400, firstConfig.densityDpi.toLong())
+        val marker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            ViewportTargetSpec.relativeScale(120000).fingerprint(),
+            RuntimeClock.crossProcessMarkerMillis(),
+        )
+        Assert.assertTrue(marker.hit)
+        Assert.assertEquals(432, marker.record!!.resultSmallestWidthDp.toLong())
+
+        // Simulate a second hook/classloader boundary where only the published
+        // cross-process marker survives and the in-memory display record does not.
+        VirtualDisplayState.set(null)
+
+        val secondConfig = Configuration().apply {
+            densityDpi = firstConfig.densityDpi
+            screenWidthDp = firstConfig.screenWidthDp
+            screenHeightDp = firstConfig.screenHeightDp
+            smallestScreenWidthDp = firstConfig.smallestScreenWidthDp
+            fontScale = 1.0f
+        }
+        val secondMetrics = DisplayMetrics().apply {
+            widthPixels = firstMetrics.widthPixels
+            heightPixels = firstMetrics.heightPixels
+            densityDpi = firstMetrics.densityDpi
+        }
+
+        applyDensityOverride(packageName, secondConfig, secondMetrics, store)
+
+        Assert.assertEquals(432, secondConfig.screenWidthDp.toLong())
+        Assert.assertEquals(950, secondConfig.screenHeightDp.toLong())
+        Assert.assertEquals(432, secondConfig.smallestScreenWidthDp.toLong())
+        Assert.assertEquals(400, secondConfig.densityDpi.toLong())
+    }
+
+    @Test
     fun matchingViewportConfigurationPublishesStableMetricsWithoutRewriting() {
         val packageName = "com.example.viewport"
         val prefs = FakePrefs()
@@ -830,6 +908,189 @@ class ResourcesImplHookInstallerTest {
 
         Assert.assertEquals(480, windowConfig.densityDpi.toLong())
         Assert.assertEquals(320, windowMetrics.densityDpi.toLong())
+    }
+
+    @Test
+    fun wideSplitBoundsKeepResourcesImplMetricsWithinObservedWindow() {
+        val packageName = "com.example.viewport.split"
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs)
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(120000))
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT)
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+        )
+        WindowBoundsState.record(packageName, 278, 144, 2196, 1223)
+        val config = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 639
+            screenHeightDp = 360
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 480
+            density = 3.0f
+            scaledDensity = 3.0f
+            widthPixels = 1918
+            heightPixels = 1079
+        }
+
+        applyDensityOverride(packageName, config, metrics, store)
+
+        Assert.assertEquals(1918, metrics.widthPixels.toLong())
+        Assert.assertEquals(1079, metrics.heightPixels.toLong())
+        Assert.assertEquals(400, metrics.densityDpi.toLong())
+    }
+
+    @Test
+    fun splitBoundsDoNotTrustStaleVirtualDisplayDensity() {
+        val packageName = "com.example.viewport.split.stale"
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs)
+        store.setTargetViewportSpec(packageName, ViewportTargetSpec.relativeScale(120000))
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT)
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(518, 1140, 518, 334, 1080, 2376),
+        )
+        WindowBoundsState.record(packageName, 0, 0, 1080, 1116)
+        val config = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 480
+            density = 3.0f
+            scaledDensity = 3.0f
+            widthPixels = 1080
+            heightPixels = 2376
+        }
+
+        applyDensityOverride(packageName, config, metrics, store)
+
+        Assert.assertEquals(400, metrics.densityDpi.toLong())
+        Assert.assertEquals(1080, metrics.widthPixels.toLong())
+        Assert.assertEquals(2376, metrics.heightPixels.toLong())
+    }
+
+    @Test
+    fun windowCallbackKeepsItsOwnHeightWhenDisplayMarkerIsComplete() {
+        val packageName = "com.example.viewport.window-marker"
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(packageName, targetSpec)
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.COMPAT)
+        VirtualDisplayState.publish(
+            packageName,
+            targetSpec,
+            ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+            ViewportOverride.Result(432, 950, 432, 400),
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+        )
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                432,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        WindowBoundsState.record(packageName, 0, 0, 1080, 1920)
+        val tallWindow = windowConfiguration(640)
+        val tallMetrics = windowMetrics(1080, 1920)
+
+        applyDensityOverride(packageName, tallWindow, tallMetrics, store)
+
+        Assert.assertEquals(432, tallWindow.screenWidthDp.toLong())
+        Assert.assertEquals(768, tallWindow.screenHeightDp.toLong())
+        Assert.assertEquals(432, tallWindow.smallestScreenWidthDp.toLong())
+        Assert.assertEquals(400, tallWindow.densityDpi.toLong())
+        Assert.assertEquals(1080, tallMetrics.widthPixels.toLong())
+        Assert.assertEquals(1920, tallMetrics.heightPixels.toLong())
+
+        val shortWindow = windowConfiguration(480)
+        val shortMetrics = windowMetrics(1079, 1439)
+        WindowBoundsState.record(packageName, 0, 0, 1079, 1439)
+
+        applyDensityOverride(packageName, shortWindow, shortMetrics, store)
+
+        Assert.assertEquals(432, shortWindow.screenWidthDp.toLong())
+        Assert.assertEquals(576, shortWindow.screenHeightDp.toLong())
+        Assert.assertEquals(400, shortWindow.densityDpi.toLong())
+        Assert.assertEquals(1079, shortMetrics.widthPixels.toLong())
+        Assert.assertEquals(1439, shortMetrics.heightPixels.toLong())
+        Assert.assertEquals(2376, VirtualDisplayState.get()!!.heightPx.toLong())
+    }
+
+    @Test
+    fun displayPixelsStayOnTheDisplayScaleWhileAWindowIsActive() {
+        val packageName = "com.example.viewport.display-during-window"
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(packageName, targetSpec)
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO)
+        store.setSystemServerHooksEnabled(true)
+        VirtualDisplayState.publish(
+            packageName,
+            targetSpec,
+            ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+            ViewportOverride.Result(432, 950, 432, 400),
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+        )
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                432,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        WindowBoundsState.record(packageName, 0, 0, 1080, 1441)
+        val config = windowConfiguration(792)
+        val metrics = windowMetrics(1080, 2376)
+
+        applyDensityOverride(packageName, config, metrics, store)
+
+        Assert.assertEquals(432, config.screenWidthDp.toLong())
+        Assert.assertEquals(950, config.screenHeightDp.toLong())
+        Assert.assertEquals(432, config.smallestScreenWidthDp.toLong())
+        Assert.assertEquals(400, config.densityDpi.toLong())
+        Assert.assertEquals(1080, metrics.widthPixels.toLong())
+        Assert.assertEquals(2376, metrics.heightPixels.toLong())
+        Assert.assertEquals(400, metrics.densityDpi.toLong())
+    }
+
+    private fun windowConfiguration(heightDp: Int): Configuration {
+        val config = Configuration()
+        config.densityDpi = 480
+        config.screenWidthDp = 360
+        config.screenHeightDp = heightDp
+        config.smallestScreenWidthDp = 360
+        config.fontScale = 1.0f
+        return config
+    }
+
+    private fun windowMetrics(widthPx: Int, heightPx: Int): DisplayMetrics {
+        val metrics = DisplayMetrics()
+        metrics.densityDpi = 480
+        metrics.density = 3.0f
+        metrics.scaledDensity = 3.0f
+        metrics.widthPixels = widthPx
+        metrics.heightPixels = heightPx
+        return metrics
     }
 
     @Test

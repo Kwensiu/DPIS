@@ -1,6 +1,7 @@
 package com.dpis.module.viewport
 
 import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.runtime.probe.RuntimeClock
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
@@ -23,6 +24,11 @@ object ViewportRuntimeMarkerBridge {
     private const val PROVENANCE_SYSTEM_SERVER = "s"
     private val PROCESS_LOCAL_MARKERS: MutableMap<String?, String?> =
         ConcurrentHashMap<String?, String?>()
+
+    @JvmStatic
+    fun clearForTest() {
+        PROCESS_LOCAL_MARKERS.clear()
+    }
 
     @JvmStatic
     fun propertyNameForPackage(packageName: String?): String {
@@ -271,6 +277,51 @@ object ViewportRuntimeMarkerBridge {
             )
         }
         return true
+    }
+
+    /**
+     * Publishes the result of a display-scoped relative mutation so later
+     * resource callbacks cannot derive another scale from the transformed
+     * configuration.
+     */
+    @JvmStatic
+    fun publishRelativeResultIfChanged(
+        packageName: String?,
+        targetResolution: ViewportTargetResolution?,
+        source: ViewportSourceSnapshot?,
+        result: ViewportOverride.Result?,
+        windowScoped: Boolean,
+    ): Boolean {
+        if (packageName.isNullOrBlank()
+            || targetResolution == null
+            || !targetResolution.spec.isRelativeScale
+            || source == null
+            || source.scope == ViewportSourceSnapshot.SCOPE_WINDOW
+            || windowScoped
+            || result == null
+            || result.densityDpi <= 0
+        ) {
+            return false
+        }
+        val now = RuntimeClock.crossProcessMarkerMillis()
+        val record = createRecord(
+            packageName,
+            targetResolution.spec,
+            result.smallestWidthDp,
+            source,
+            result,
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+            now,
+        ) ?: return false
+        val existing = read(packageName, targetResolution.spec.fingerprint(), now)
+        if (existing.hit && existing.record != null
+            && existing.record.sourceSignature == record.sourceSignature
+            && existing.record.resultSignature == record.resultSignature
+            && existing.record.effectiveSmallestWidthDp == record.effectiveSmallestWidthDp
+        ) {
+            return false
+        }
+        return publish(packageName, record)
     }
 
     @JvmStatic

@@ -25,6 +25,23 @@ How does the Modern APK route viewport and font runtime changes through
 libxposed, and how do we keep future Legacy experiments from accidentally
 changing Modern behavior?
 
+## Window Semantics
+
+The shared `viewport/window` layer keeps four meanings separate:
+
+- capability: whether a vendor/framework exposes flexible-window support;
+- policy: whether an app or ratio is allowed by that framework;
+- state: whether the current task is fullscreen, freeform, split-screen, or
+  unknown;
+- geometry: the current bounds, app bounds, and maximum bounds.
+
+`WindowScopeResolver` answers only the current state and carries evidence,
+confidence, geometry, and capability facts. A vendor policy method such as
+ColorOS `FlexibleWindowUtils.isSupportFlexibleWindow` must not be treated as
+proof that the current task is a small window. A future system_server adapter
+may supply task state and geometry through this contract without making common
+app-process code depend on vendor controller classes.
+
 ## 102 Coexistence Plan
 
 The Modern codebase stays single-track. API 102 does not get a separate business
@@ -1112,3 +1129,30 @@ not change route selection, mutation policy, or evidence semantics.
   the current route is exercised by Kazumi, but not by Bettbox. The generic
   `route=NONE` / `ParagraphBuilder` / `pushStyle` probe remains unrelated
   font-size evidence and is not a negative result for the Typeface route.
+- 2026-10-04: Small-window sizing uses each resource callback's own pixels at
+  one relative scale. A size that is not the display replaces the remembered
+  window; a display-sized callback keeps it. Two consecutive fullscreen
+  observations that match the display, including origin, end the episode.
+  Source identity is evidence only. A top-left split or freeform that still
+  fits inside the display does not clear the global viewport. When the stored
+  pixels are only a window, a larger origin rect becomes the display baseline
+  before that stale viewport is cleared. A complete relative-scale marker,
+  published at the ResourcesManager boundary and reused by ResourcesImpl and
+  Display, replaces a second application of the same scale and wins over a
+  conflicting in-memory display record while physical pixels stay. When window
+  metadata is missing, a configuration whose aspect differs from that marker
+  stays a window and keeps its physical bounds. A display-sized metrics read
+  keeps the display pixels. Hot reload drops
+  the remembered window. Window frame override stays off. Consistency snapshots
+  and layout diagnostics stay bounded evidence and are not the size source.
+  Scope is platform windowing mode plus bounds versus maximum bounds, with
+  optional ColorOS task reflection. The resolver keeps the evidence source so
+  another vendor detector can be added without changing viewport callers. A
+  sibling resource object may briefly rewrite the previous window, an
+  off-origin full-size rect is not fullscreen, and a short window may keep its
+  own smallest width at the same density.
+- 2026-10-05: A complete display marker does not replace a window callback's
+  height. At 120%, 1080x1920 stays 768dp and 1079x1439 stays 576dp, both at
+  density 400. system_server keeps the display-shaped configuration. A window
+  configuration is still scaled in the app process. Display pixels 1080x2376
+  stay on the display scale 432x950, including while a window is active.

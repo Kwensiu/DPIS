@@ -5,17 +5,19 @@ import android.util.DisplayMetrics
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
-import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.hooks.HookRuntimePolicy
+import com.dpis.module.runtime.ProcessScopedInstallGate
+import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
+import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
-import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.ViewportPropertyBridge
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.RelativeViewportOwnership
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -519,6 +521,32 @@ object DisplayHookInstaller {
         val targetSpec = store.getTargetViewportSpec(packageName)
         if (!targetSpec.isEnabled) {
             return null
+        }
+        val marker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            targetSpec.fingerprint(),
+            RuntimeClock.crossProcessMarkerMillis(),
+        )
+        val markerRecord = marker.record
+        val currentResult = VirtualDisplayState.get()
+        if (marker.hit
+            && markerRecord != null
+            && markerRecord.resultWidthDp > 0
+            && markerRecord.resultHeightDp > 0
+            && markerRecord.resultSmallestWidthDp > 0
+            && markerRecord.resultDensityDpi > 0
+            && currentResult != null
+            && currentResult.widthPx > 0
+            && currentResult.heightPx > 0
+        ) {
+            return VirtualDisplayOverride.Result(
+                markerRecord.resultWidthDp,
+                markerRecord.resultHeightDp,
+                markerRecord.resultSmallestWidthDp,
+                markerRecord.resultDensityDpi,
+                currentResult.widthPx,
+                currentResult.heightPx,
+            )
         }
         val record =
             VirtualDisplayState.findDisplayRecordForTarget(packageName, targetSpec)

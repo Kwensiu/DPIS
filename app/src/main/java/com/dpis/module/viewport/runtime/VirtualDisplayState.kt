@@ -1,7 +1,7 @@
 package com.dpis.module.viewport
 
+import android.graphics.Rect
 import com.dpis.module.runtime.probe.RuntimeClock
-import java.util.LinkedHashMap
 
 object VirtualDisplayState {
     private const val MAX_RECORDS = 24
@@ -187,7 +187,9 @@ object VirtualDisplayState {
                 0,
             )
         }
-        val virtualDisplayResult = completeMarkerVirtualDisplayResult(marker, hasCompleteResult)
+        val virtualDisplayResult = completeMarkerVirtualDisplayResult(
+            targetSpec, marker, hasCompleteResult,
+        )
         val record = ViewportRuntimeRecord(
             packageName,
             targetSpec,
@@ -276,6 +278,49 @@ object VirtualDisplayState {
     @JvmStatic
     fun get(): VirtualDisplayOverride.Result? = current
 
+    /** Invalidates a freeform display result once fullscreen bounds contradict it. */
+    @JvmStatic
+    fun invalidateIfFullscreenBoundsConflict(bounds: Rect?): VirtualDisplayOverride.Result? {
+        if (bounds == null) {
+            return null
+        }
+        return invalidateIfFullscreenBoundsConflict(
+            bounds.left, bounds.top, bounds.right, bounds.bottom
+        )
+    }
+
+    @JvmStatic
+    fun invalidateIfFullscreenBoundsConflict(
+        left: Int,
+        top: Int,
+        right: Int,
+        bottom: Int,
+    ): VirtualDisplayOverride.Result? {
+        val result = current
+        if (result == null || right <= left || bottom <= top || left != 0 || top != 0) {
+            return null
+        }
+        val boundsWidth = right - left
+        val boundsHeight = bottom - top
+        if (result.widthPx == boundsWidth && result.heightPx == boundsHeight) {
+            return null
+        }
+        synchronized(this) {
+            val currentResult = current
+            if (currentResult == null ||
+                currentResult.widthPx == boundsWidth && currentResult.heightPx == boundsHeight
+            ) {
+                return null
+            }
+            current = null
+            synchronized(records) {
+                records.clear()
+            }
+            ResourcesMetricsReadReuse.bump()
+            return currentResult
+        }
+    }
+
     @JvmStatic
     fun signatureForSmallestWidth(smallestWidthDp: Int): String {
         return "sw:" + maxOf(0, smallestWidthDp)
@@ -289,15 +334,16 @@ object VirtualDisplayState {
     }
 
     private fun completeMarkerVirtualDisplayResult(
+        targetSpec: ViewportTargetSpec?,
         marker: ViewportRuntimeMarkerBridge.MarkerRecord,
         hasCompleteResult: Boolean,
     ): VirtualDisplayOverride.Result? {
         val currentResult = current
         if (!hasCompleteResult ||
             currentResult == null ||
-            currentResult.smallestWidthDp != marker.resultSmallestWidthDp ||
             currentResult.widthPx <= 0 ||
-            currentResult.heightPx <= 0
+            currentResult.heightPx <= 0 ||
+            !acceptsMarkerDisplay(targetSpec, marker, currentResult)
         ) {
             return null
         }
@@ -309,6 +355,25 @@ object VirtualDisplayState {
             currentResult.widthPx,
             currentResult.heightPx,
         )
+    }
+
+    /**
+     * A complete marker is the one-scale display result. Also accept a local
+     * state that applied that same scale a second time, and replace it.
+     */
+    private fun acceptsMarkerDisplay(
+        targetSpec: ViewportTargetSpec?,
+        marker: ViewportRuntimeMarkerBridge.MarkerRecord,
+        currentResult: VirtualDisplayOverride.Result,
+    ): Boolean {
+        if (currentResult.smallestWidthDp == marker.resultSmallestWidthDp) return true
+        if (targetSpec == null || !targetSpec.isRelativeScale || marker.resultSmallestWidthDp <= 0) {
+            return false
+        }
+        val compounded = kotlin.math.round(
+            marker.resultSmallestWidthDp * (targetSpec.scaleMilliPercent() / 100000f),
+        ).toInt()
+        return compounded == currentResult.smallestWidthDp
     }
 
     private fun legacySignature(result: VirtualDisplayOverride.Result?): String {

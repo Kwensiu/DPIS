@@ -16,12 +16,14 @@ import com.dpis.module.viewport.ViewportDebugReporter
 import com.dpis.module.viewport.ViewportModePolicy
 import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportResolvedTarget
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportRuntimeMarkerProbe
 import com.dpis.module.viewport.ViewportRuntimeRecord
 import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.WindowBoundsState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -151,17 +153,36 @@ object ResourcesImplHookInstaller {
             resolution.effectiveSmallestWidthDp
         else
             null
-        if (targetViewportWidth != null && resolution.spec.isEnabled()) {
+        if (targetViewportWidth != null && resolution.spec.isEnabled) {
             ViewportRuntimeMarkerProbe.observeAppProcessProbe(
                 packageName, resolution.spec, "ResourcesImpl"
             )
         }
-        val windowScoped = if (windowScopedOverride != null)
+        var windowScoped = if (windowScopedOverride != null) {
             windowScopedOverride
-        else
+        } else {
             ViewportConfigurationScope.isWindowScoped(config)
+                    || WindowBoundsState.hasActiveWindow(packageName)
+                    || WindowBoundsState.matchesWindowConfiguration(packageName, config)
+        }
+        val ownPixelsMatchDisplay = metrics != null &&
+                WindowBoundsState.matchesDisplayPixels(metrics.widthPixels, metrics.heightPixels)
+        if (ownPixelsMatchDisplay) {
+            windowScoped = false
+        }
         val sourceWidthPx = if (metrics != null) metrics.widthPixels else 0
         val sourceHeightPx = if (metrics != null) metrics.heightPixels else 0
+        val physicalWindowBounds = if (windowScoped) {
+            if (metrics != null && metrics.widthPixels > 0 && metrics.heightPixels > 0) {
+                WindowBoundsState.pixelsForCallback(
+                    packageName, metrics.widthPixels, metrics.heightPixels,
+                )
+            } else {
+                WindowBoundsState.pixelsForConfiguration(packageName, config)
+            }
+        } else {
+            null
+        }
         val stableTarget =
             ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth)
         val stableTargetForResult =
@@ -170,7 +191,7 @@ object ResourcesImplHookInstaller {
             else
                 null
         val pixelDerivedTarget =
-            if (!windowScoped && stableTargetForResult == null && targetViewportWidth != null && resolution.spec.isAbsoluteDp()
+            if (!windowScoped && stableTargetForResult == null && targetViewportWidth != null && resolution.spec.isAbsoluteDp
                 && originalDensityDpi > 0 && (originalSmallestWidthDp != targetViewportWidth
                         || (metrics != null && originalDensityDpi != metrics.densityDpi))
             )
@@ -191,16 +212,26 @@ object ResourcesImplHookInstaller {
         val windowLikeBorrowResult =
             resolveWindowLikeBorrowResult(config, resolution, windowScoped)
         val appProcessWindowMetricsResult =
-            if (windowScoped)
-                ViewportResolvedTarget.appProcessWindowMetricsResult(
+            if (windowScoped && resolution.isAppProcessBorrowTarget)
+                physicalWindowBounds?.let { bounds ->
+                    ViewportOverride.deriveWindowScoped(
+                        config,
+                        targetViewportWidth ?: 0,
+                        stableTarget,
+                        bounds.width,
+                        bounds.height,
+                    )
+                } ?: ViewportResolvedTarget.appProcessWindowMetricsResult(
                     config, resolution, targetViewportWidth, stableTarget
                 )
             else
                 null
         val windowLikeBorrow = windowLikeBorrowResult != null
         val appProcessWindowMetricsOnly = appProcessWindowMetricsResult != null
+        val windowOwnsThisCallback =
+            windowScoped && physicalWindowBounds != null && !ownPixelsMatchDisplay
         val trustedDisplayResult =
-            if (resolution.isAppProcessBorrowTarget)
+            if (resolution.isAppProcessBorrowTarget || windowOwnsThisCallback)
                 null
             else
                 ViewportResolvedTarget.viewportResult(trustedDisplayTarget)
@@ -216,12 +247,22 @@ object ResourcesImplHookInstaller {
                     if (trustedDisplayResult != null)
                         trustedDisplayResult
                     else
-                        ViewportOverride.derive(
-                            config,
-                            if (targetViewportWidth != null) targetViewportWidth else 0,
-                            windowScoped,
-                            stableTarget
-                        )
+                        if (physicalWindowBounds != null) {
+                            ViewportOverride.deriveWindowScoped(
+                                config,
+                                if (targetViewportWidth != null) targetViewportWidth else 0,
+                                stableTarget,
+                                physicalWindowBounds.width,
+                                physicalWindowBounds.height,
+                            )
+                        } else {
+                            ViewportOverride.derive(
+                                config,
+                                if (targetViewportWidth != null) targetViewportWidth else 0,
+                                windowScoped,
+                                stableTarget
+                            )
+                        }
         if (result == null) {
             val originalScaledDensity = if (metrics != null) metrics.scaledDensity else -1f
             val metricsApplied = applyScaledDensityIfChanged(metrics, config)
@@ -257,6 +298,13 @@ object ResourcesImplHookInstaller {
         }
         val needsViewportUpdate =
             result.widthDp != originalWidthDp || result.heightDp != originalHeightDp || result.smallestWidthDp != originalSmallestWidthDp || (result.densityDpi > 0 && result.densityDpi != originalDensityDpi)
+        if (needsViewportUpdate && !windowScoped) {
+            // Keep the first display-scoped relative result available across
+            // hook/classloader boundaries so a later callback cannot compound it.
+            ViewportRuntimeMarkerBridge.publishRelativeResultIfChanged(
+                packageName, resolution, source, result, windowScoped
+            )
+        }
         val applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
             policy, store, packageName, resolution, needsViewportUpdate
         )
@@ -285,7 +333,7 @@ object ResourcesImplHookInstaller {
             val canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                 publishableSharedResult, originalSmallestWidthDp, targetViewportWidth
             )
-            if (canPublishState && resolution.spec.isEnabled() && source != null) {
+            if (canPublishState && resolution.spec.isEnabled && source != null) {
                 VirtualDisplayState.publish(
                     packageName,
                     resolution.spec,
@@ -413,6 +461,11 @@ object ResourcesImplHookInstaller {
             if (publishableSharedResult != null) {
                 metrics.widthPixels = publishableSharedResult.widthPx
                 metrics.heightPixels = publishableSharedResult.heightPx
+            } else if (windowScoped && !ownPixelsMatchDisplay) {
+                physicalWindowBounds?.let { bounds ->
+                    metrics.widthPixels = bounds.width
+                    metrics.heightPixels = bounds.height
+                }
             }
         }
         val modeLabel = if (applyToConfiguration) "config" else "metrics"
@@ -502,7 +555,7 @@ object ResourcesImplHookInstaller {
         resolution: ViewportTargetResolution?,
         needsViewportUpdate: Boolean
     ): Boolean {
-        if (resolution == null || resolution.spec == null || !resolution.spec.isEnabled()) {
+        if (resolution == null || resolution.spec == null || !resolution.spec.isEnabled) {
             return false
         }
         if (resolution.isAppProcessDisplayBorrowTarget
@@ -513,7 +566,7 @@ object ResourcesImplHookInstaller {
         if (needsViewportUpdate) {
             return true
         }
-        return resolution.spec.isAbsoluteDp()
+        return resolution.spec.isAbsoluteDp
     }
 
     private fun resolveWindowLikeBorrowResult(
@@ -522,7 +575,7 @@ object ResourcesImplHookInstaller {
         windowScoped: Boolean
     ): ViewportOverride.Result? {
         if (config == null || windowScoped
-            || resolution == null || resolution.record == null || resolution.record.viewportResult == null || resolution.spec == null || !resolution.spec.isRelativeScale()
+            || resolution == null || resolution.record == null || resolution.record.viewportResult == null || resolution.spec == null || !resolution.spec.isRelativeScale
         ) {
             return null
         }

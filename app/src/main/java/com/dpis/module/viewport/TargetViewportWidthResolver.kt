@@ -115,17 +115,35 @@ object TargetViewportWidthResolver {
             )
         }
         var record = VirtualDisplayState.findForSource(packageName, targetSpec, source)
-        if (record != null) return if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) ViewportTargetResolution.fromAppProcessBorrowRecord(
-            record
-        ) else ViewportTargetResolution.fromRecord(record, "local-source-record")
+        if (record != null) {
+            resolveMarkerResultForAlreadyAppliedSource(
+                packageName,
+                targetSpec,
+                source
+            )?.let { return it }
+            return if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) {
+                ViewportTargetResolution.fromAppProcessBorrowRecord(record)
+            } else {
+                ViewportTargetResolution.fromRecord(record, "local-source-record")
+            }
+        }
         record = VirtualDisplayState.findBySignature(
             packageName,
             targetSpec,
             VirtualDisplayState.signatureForSmallestWidth(source.smallestWidthDp)
         )
-        if (record != null) return if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) ViewportTargetResolution.fromAppProcessBorrowRecord(
-            record
-        ) else ViewportTargetResolution.fromRecord(record, "already-target-record")
+        if (record != null) {
+            resolveMarkerResultForAlreadyAppliedSource(
+                packageName,
+                targetSpec,
+                source
+            )?.let { return it }
+            return if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) {
+                ViewportTargetResolution.fromAppProcessBorrowRecord(record)
+            } else {
+                ViewportTargetResolution.fromRecord(record, "already-target-record")
+            }
+        }
         val marker = ViewportRuntimeMarkerBridge.read(
             packageName,
             targetSpec.fingerprint(),
@@ -322,6 +340,24 @@ object TargetViewportWidthResolver {
             store.isSystemServerHooksEnabled(),
             runtimeOverride
         )
+
+    private fun resolveMarkerResultForAlreadyAppliedSource(
+        packageName: String,
+        targetSpec: ViewportTargetSpec,
+        source: ViewportSourceSnapshot,
+    ): ViewportTargetResolution? {
+        if (!targetSpec.isRelativeScale()) return null
+        val marker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            targetSpec.fingerprint(),
+            RuntimeClock.crossProcessMarkerMillis(),
+        )
+        val record = marker.record
+        if (!marker.hit || !hasCompleteMarkerResult(record) || record == null) return null
+        if (source.sourceSignature() != record.resultSignature) return null
+        val markerRecord = VirtualDisplayState.importMarker(packageName, targetSpec, marker)
+        return ViewportTargetResolution.fromRecord(markerRecord, "system-marker-result")
+    }
 
     private fun hasCompleteMarkerResult(record: ViewportRuntimeMarkerBridge.MarkerRecord?) =
         record != null && record.resultWidthDp > 0 && record.resultHeightDp > 0 && record.resultSmallestWidthDp > 0 && record.resultDensityDpi > 0

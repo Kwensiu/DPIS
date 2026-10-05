@@ -9,12 +9,14 @@ import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.diagnostics.device.RuntimeTransport
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.font.ResourcesFontScheduler
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.RelativeViewportOwnership
+import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportConfigurationScope
@@ -27,9 +29,8 @@ import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetResolution
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayPlan
-import com.dpis.module.viewport.ResourcesMetricsReadReuse
-import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.WindowBoundsState
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -413,7 +414,8 @@ object ResourcesReadHookInstaller {
             return
         }
         if (sourceTag.startsWith("ResourcesRead(getConfiguration)")
-            && RelativeViewportOwnership.shouldDefer(store, packageName, policy)) {
+            && RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)
+        ) {
             recordConfigurationSkip(
                 packageName,
                 "system_server_owns_relative_viewport",
@@ -460,26 +462,46 @@ object ResourcesReadHookInstaller {
                 packageName, resolution.spec, sourceTag
             )
         }
-        val windowScoped = if (windowScopedOverride != null)
+        val windowScoped = if (windowScopedOverride != null) {
             windowScopedOverride
-        else
+        } else {
             ViewportConfigurationScope.isWindowScoped(config)
+                    || WindowBoundsState.hasActiveWindow(packageName)
+                    || WindowBoundsState.matchesWindowConfiguration(packageName, config)
+        }
+        val physicalWindowBounds = if (windowScoped)
+            WindowBoundsState.pixelsForConfiguration(packageName, config)
+        else
+            null
         if (windowScoped && resolution.isAppProcessBorrowTarget) {
-            if (fontScaleApplied) {
-                logIfChanged(
-                    packageName + ":" + sourceTag + ":window-borrow-font-only",
-                    ("DPIS_FONT " + sourceTag + " window borrow: package=" + packageName
-                            + ", fontScale "
-                            + fontScale.original + " -> " + config.fontScale)
-                )
+            if (physicalWindowBounds == null) {
+                // Without physical bounds the existing configuration is the
+                // only trustworthy window geometry; do not derive from a
+                // display target that may belong to another resource scope.
+                if (fontScaleApplied) {
+                    logIfChanged(
+                        packageName + ":" + sourceTag + ":window-borrow-font-only",
+                        ("DPIS_FONT " + sourceTag + " window borrow: package=" + packageName
+                                + ", fontScale "
+                                + fontScale.original + " -> " + config.fontScale)
+                    )
+                }
+                return
             }
-            return
         }
         val stableTarget =
             ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth)
         val resolvedRecordResult =
             ViewportResolvedTarget.viewportResult(resolution, windowScoped)
-        val result = if (resolvedRecordResult != null)
+        val result = if (physicalWindowBounds != null)
+            ViewportOverride.deriveWindowScoped(
+                config,
+                if (targetViewportWidth != null) targetViewportWidth else 0,
+                stableTarget,
+                physicalWindowBounds.width,
+                physicalWindowBounds.height,
+            )
+        else if (resolvedRecordResult != null)
             resolvedRecordResult
         else
             ViewportOverride.derive(
@@ -672,7 +694,7 @@ object ResourcesReadHookInstaller {
     ) {
         applyMetricsOverride(
             resourceScope, metrics, config, packageName,
-            ViewportConfigurationScope.isWindowScoped(config), store, true, false
+            isWindowScoped(packageName, config), store, true, false
         )
     }
 
@@ -687,7 +709,7 @@ object ResourcesReadHookInstaller {
     ) {
         applyMetricsOverride(
             resourceScope, metrics, config, packageName,
-            ViewportConfigurationScope.isWindowScoped(config), store, viewportHandlingEnabled,
+            isWindowScoped(packageName, config), store, viewportHandlingEnabled,
             metricsTargetFontOverrideEnabled
         )
     }
@@ -804,7 +826,24 @@ object ResourcesReadHookInstaller {
         val originalScaledDensity = metrics.scaledDensity
         val originalWidthPixels = metrics.widthPixels
         val originalHeightPixels = metrics.heightPixels
-        if (reuseResolvedMetrics(resourceScope, packageName, metrics)) {
+        if (windowScoped) {
+            WindowBoundsState.pixelsForCallback(
+                packageName, originalWidthPixels, originalHeightPixels,
+            )
+        }
+        val observedWindowBounds = if (windowScoped)
+            WindowBoundsState.currentWindowBounds(packageName)
+        else
+            null
+        val metricsMatchObservedWindow = observedWindowBounds == null
+                || metrics.widthPixels == observedWindowBounds.width
+                && metrics.heightPixels == observedWindowBounds.height
+        if (metricsMatchObservedWindow && reuseResolvedMetrics(
+                resourceScope,
+                packageName,
+                metrics
+            )
+        ) {
             return
         }
         var targetDensity = DensityOverride.densityFromDpi(targetDensityDpi)
@@ -857,13 +896,15 @@ object ResourcesReadHookInstaller {
             rememberResolvedMetrics(resourceScope, metrics)
             return
         }
+        val effectiveWindowScoped = windowScoped &&
+                !WindowBoundsState.matchesDisplayPixels(originalWidthPixels, originalHeightPixels)
         val localViewportResult =
-            resolveLocalMetricsViewportResult(config, packageName, store, windowScoped)
+            resolveLocalMetricsViewportResult(config, packageName, store, effectiveWindowScoped)
         if (localViewportResult != null && localViewportResult.densityDpi > 0) {
             targetDensityDpi = localViewportResult.densityDpi
             densitySource = "viewport-target"
         }
-        val applied = matchingVirtualDisplayState(config, windowScoped)
+        val applied = matchingVirtualDisplayState(config, effectiveWindowScoped)
         if (applied != null && applied.densityDpi > 0) {
             targetDensityDpi = applied.densityDpi
             densitySource = "virtual-display-state"
@@ -884,6 +925,17 @@ object ResourcesReadHookInstaller {
                 metrics.widthPixels = applied.widthPx
                 metrics.heightPixels = applied.heightPx
                 metricsChanged = true
+            }
+        }
+        if (effectiveWindowScoped && applied == null &&
+            !WindowBoundsState.matchesDisplayPixels(originalWidthPixels, originalHeightPixels)
+        ) {
+            WindowBoundsState.currentWindowBounds(packageName)?.let { bounds ->
+                if (metrics.widthPixels != bounds.width || metrics.heightPixels != bounds.height) {
+                    metrics.widthPixels = bounds.width
+                    metrics.heightPixels = bounds.height
+                    metricsChanged = true
+                }
             }
         }
         if (!metricsChanged) {
@@ -909,6 +961,12 @@ object ResourcesReadHookInstaller {
             originalHeightPixels,
             metrics
         )
+    }
+
+    private fun isWindowScoped(packageName: String?, config: Configuration?): Boolean {
+        return ViewportConfigurationScope.isWindowScoped(config)
+                || WindowBoundsState.hasActiveWindow(packageName)
+                || WindowBoundsState.matchesWindowConfiguration(packageName, config)
     }
 
     private fun resolveMetricsFontScale(
@@ -1142,6 +1200,17 @@ object ResourcesReadHookInstaller {
                 resolution, resolution.effectiveSmallestWidthDp
             )
         if (windowScoped) {
+            val physicalBounds = WindowBoundsState.currentWindowBounds(packageName)
+            if (physicalBounds != null) {
+                val physicalResult = ViewportOverride.deriveWindowScoped(
+                    config,
+                    resolution.effectiveSmallestWidthDp,
+                    stableTarget,
+                    physicalBounds.width,
+                    physicalBounds.height,
+                )
+                return LocalMetricsViewportResult(resolution, physicalResult)
+            }
             val result = ViewportResolvedTarget.appProcessWindowMetricsResult(
                 config,
                 resolution,

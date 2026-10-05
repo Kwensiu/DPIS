@@ -18,7 +18,9 @@ import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportRuntimeRecord
 import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetSpec
+import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -40,6 +42,7 @@ class ResourcesReadRelativeScaleTest {
         TargetViewportWidthResolver.resetResolveCacheForTest()
         ViewportConfigurationScope.resetReflectionCacheForTest()
         VirtualDisplayState.set(null)
+        WindowBoundsState.clearForTest()
         ResourcesFontScheduler.clearForTest()
         ResourcesMetricsReadReuse.clearForTest()
     }
@@ -166,6 +169,104 @@ class ResourcesReadRelativeScaleTest {
         assertEquals(640, windowConfig.screenHeightDp)
         assertEquals(360, windowConfig.smallestScreenWidthDp)
         assertEquals(480, windowConfig.densityDpi)
+    }
+
+    @Test
+    fun relativeScaleWindowConfigurationReadRepairsStaleDisplayGeometryWhenBoundsAreKnown() {
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val displaySource = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        VirtualDisplayState.publish(
+            PACKAGE_NAME,
+            targetSpec,
+            ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                displaySource,
+                null,
+            ),
+            ViewportOverride.Result(432, 950, 432, 400),
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+        )
+        WindowBoundsState.record(PACKAGE_NAME, 759, 144, 1839, 2064)
+        val windowConfig = Configuration().apply {
+            densityDpi = 400
+            screenWidthDp = 432
+            screenHeightDp = 950
+            smallestScreenWidthDp = 432
+            fontScale = 1.0f
+        }
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec)
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT)
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+            null,
+            windowConfig,
+            PACKAGE_NAME,
+            store,
+            "ResourcesRead(getConfiguration)",
+            true,
+        )
+
+        assertEquals(432, windowConfig.screenWidthDp)
+        assertEquals(768, windowConfig.screenHeightDp)
+        assertEquals(432, windowConfig.smallestScreenWidthDp)
+        assertEquals(400, windowConfig.densityDpi)
+    }
+
+    @Test
+    fun relativeScaleWindowUsesTheCallbackSizeInsteadOfTheLatchedWindow() {
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val displaySource = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        VirtualDisplayState.publish(
+            PACKAGE_NAME,
+            targetSpec,
+            ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_MANAGER,
+                displaySource,
+                null,
+            ),
+            ViewportOverride.Result(432, 950, 432, 400),
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+        )
+        WindowBoundsState.record(PACKAGE_NAME, 759, 144, 1839, 2064)
+        val windowConfig = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 480
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec)
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.COMPAT)
+
+        ResourcesReadHookInstaller.applyConfigurationOverrideForTest(
+            null,
+            windowConfig,
+            PACKAGE_NAME,
+            store,
+            "ResourcesRead(getConfiguration)",
+            true,
+        )
+
+        assertEquals(432, windowConfig.screenWidthDp)
+        assertEquals(576, windowConfig.screenHeightDp)
+        assertEquals(432, windowConfig.smallestScreenWidthDp)
+        assertEquals(400, windowConfig.densityDpi)
     }
 
     @Test

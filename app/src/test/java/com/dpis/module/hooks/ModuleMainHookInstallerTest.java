@@ -286,7 +286,7 @@ public class ModuleMainHookInstallerTest {
         assertTrue(appProcessInstaller.contains("apiCapabilities);"));
         assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.kt")
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO"));
-        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.java")
+        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.kt")
                 .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS"));
         assertTrue(read("src/modern/java/com/dpis/module/ModernAppSpecificRouteInstaller.kt")
                 .contains("handlePackageReadyReplay("));
@@ -302,8 +302,8 @@ public class ModuleMainHookInstallerTest {
                 .contains("apiCapabilities.applyStableHookId("));
         assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
                 .contains("static void resetForHotReload()"));
-        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHotReloadResetter.java")
-                .contains("static void resetAll()"));
+        assertTrue(read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHotReloadResetter.kt")
+                .contains("fun resetAll()"));
         assertTrue(read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerHookCatalog.java")
                 .contains("system_server_launch_activity_item"));
     }
