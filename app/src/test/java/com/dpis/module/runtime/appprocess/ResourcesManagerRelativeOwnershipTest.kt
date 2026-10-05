@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import com.dpis.module.FakePrefs
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.runtime.probe.RuntimeClock
+import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
@@ -12,14 +13,14 @@ import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ResourcesManagerRelativeOwnershipTest {
     @Test
-    fun systemOwnedRelativeViewportSkipsConfigurationMutation() {
+    fun systemOwnedRelativeViewportWritesPhysicalConfigurationOnce() {
         val packageName = "com.example.target"
         val config = Configuration().apply {
             screenWidthDp = 360
@@ -44,10 +45,22 @@ class ResourcesManagerRelativeOwnershipTest {
             "ResourcesManager",
         )
 
-        assertEquals(360, config.screenWidthDp)
-        assertEquals(792, config.screenHeightDp)
-        assertEquals(360, config.smallestScreenWidthDp)
-        assertEquals(480, config.densityDpi)
+        assertEquals(432, config.screenWidthDp)
+        assertEquals(950, config.screenHeightDp)
+        assertEquals(432, config.smallestScreenWidthDp)
+        assertEquals(400, config.densityDpi)
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            config,
+            store,
+            packageName,
+            "ResourcesManager",
+        )
+
+        assertEquals(432, config.screenWidthDp)
+        assertEquals(950, config.screenHeightDp)
+        assertEquals(432, config.smallestScreenWidthDp)
+        assertEquals(400, config.densityDpi)
     }
 
     @Test
@@ -106,5 +119,6 @@ class ResourcesManagerRelativeOwnershipTest {
         VirtualDisplayState.set(null)
         WindowBoundsState.clearForTest()
         ViewportRuntimeMarkerBridge.clearForTest()
+        TargetViewportWidthResolver.resetResolveCacheForTest()
     }
 }

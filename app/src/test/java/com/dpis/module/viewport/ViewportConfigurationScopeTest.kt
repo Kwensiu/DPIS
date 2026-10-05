@@ -38,4 +38,16 @@ class ViewportConfigurationScopeTest {
         assertFalse(ViewportConfigurationScope.isValidDisplayConfiguration(null))
     }
 
+    @Test
+    fun freeformAspectDiffersFromThePublishedDisplay() {
+        assertTrue(ViewportConfigurationScope.isDifferentDisplayAspect(640, 360, 468, 1030))
+    }
+
+    @Test
+    fun rotatedDisplayKeepsThePublishedAspect() {
+        assertFalse(ViewportConfigurationScope.isDifferentDisplayAspect(792, 360, 432, 950))
+        assertFalse(ViewportConfigurationScope.isDifferentDisplayAspect(360, 792, 432, 950))
+        assertFalse(ViewportConfigurationScope.isDifferentDisplayAspect(0, 360, 432, 950))
+    }
+
 }

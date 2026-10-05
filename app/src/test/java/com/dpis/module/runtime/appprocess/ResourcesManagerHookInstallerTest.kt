@@ -21,7 +21,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -267,6 +267,57 @@ class ResourcesManagerHookInstallerTest {
         assertEquals(432, window.smallestScreenWidthDp)
         assertEquals(400, window.densityDpi)
         VirtualDisplayState.set(null)
+    }
+
+    @Test
+    fun displayResultCopiedOntoAShorterWindowUsesTheWindowHeight() {
+        val packageName = "com.example.resources-manager.copied-display"
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(packageName, targetSpec)
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO)
+        store.setSystemServerHooksEnabled(true)
+        VirtualDisplayState.publish(
+            packageName,
+            targetSpec,
+            ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+            ViewportOverride.Result(432, 950, 432, 400),
+            VirtualDisplayOverride.Result(432, 950, 432, 400, 1080, 2376),
+            ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+        )
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                432,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        WindowBoundsState.record(packageName, 759, 144, 1839, 2064)
+        val copied = Configuration()
+        copied.screenWidthDp = 432
+        copied.screenHeightDp = 950
+        copied.smallestScreenWidthDp = 432
+        copied.densityDpi = 400
+        copied.fontScale = 1.0f
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            copied,
+            store,
+            packageName,
+            "ResourcesManager",
+        )
+
+        assertEquals(432, copied.screenWidthDp)
+        assertEquals(768, copied.screenHeightDp)
+        assertEquals(432, copied.smallestScreenWidthDp)
+        assertEquals(400, copied.densityDpi)
+        assertEquals(1080, VirtualDisplayState.get()!!.widthPx)
+        assertEquals(2376, VirtualDisplayState.get()!!.heightPx)
     }
 
     @Test

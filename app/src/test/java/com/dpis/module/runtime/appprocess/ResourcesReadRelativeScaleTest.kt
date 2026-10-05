@@ -8,6 +8,7 @@ import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.runtime.appprocess.ResourcesReadHookTestSupport.PACKAGE_NAME
 import com.dpis.module.runtime.font.ResourcesFontScheduler
+import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.viewport.DensityOverride
 import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.TargetViewportWidthResolver
@@ -20,7 +21,7 @@ import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -45,6 +46,57 @@ class ResourcesReadRelativeScaleTest {
         WindowBoundsState.clearForTest()
         ResourcesFontScheduler.clearForTest()
         ResourcesMetricsReadReuse.clearForTest()
+        ViewportRuntimeMarkerBridge.clearForTest()
+    }
+
+    @Test
+    fun systemRelativeConfigurationReadAlignsAPhysicalConfigWithThePublishedResult() {
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(PACKAGE_NAME, targetSpec)
+        store.setTargetViewportApplyMode(PACKAGE_NAME, ViewportApplyMode.AUTO)
+        store.setSystemServerHooksEnabled(true)
+        ViewportRuntimeMarkerBridge.publish(
+            PACKAGE_NAME,
+            ViewportRuntimeMarkerBridge.createRecord(
+                PACKAGE_NAME,
+                targetSpec,
+                432,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        val physical = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(
+            physical,
+            PACKAGE_NAME,
+            store,
+            "ResourcesRead(getConfiguration)",
+        )
+
+        assertEquals(432, physical.screenWidthDp)
+        assertEquals(950, physical.screenHeightDp)
+        assertEquals(432, physical.smallestScreenWidthDp)
+        assertEquals(400, physical.densityDpi)
+
+        ResourcesReadHookInstaller.applyConfigurationOverride(
+            physical,
+            PACKAGE_NAME,
+            store,
+            "ResourcesRead(getConfiguration)",
+        )
+
+        assertEquals(432, physical.screenWidthDp)
+        assertEquals(400, physical.densityDpi)
     }
 
     @Test

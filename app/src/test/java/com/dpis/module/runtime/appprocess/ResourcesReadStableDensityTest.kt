@@ -16,7 +16,7 @@ import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportConfigurationScope
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
-import com.dpis.module.viewport.WindowBoundsState
+import com.dpis.module.viewport.window.WindowBoundsState
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
