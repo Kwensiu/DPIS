@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/Kwensiu/DPIS/compare/v2.3.0...v2.3.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* keep relative small windows on their own height ([ffa8411](https://github.com/Kwensiu/DPIS/commit/ffa8411469917da967fc5833ac930b073dc6846a))
+
 ## [2.3.0](https://github.com/Kwensiu/DPIS/compare/v2.2.0...v2.3.0) (2026-10-05)
 
 
