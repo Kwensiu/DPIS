@@ -57,8 +57,8 @@ class Session(context: Context) {
 
     private val coordinator: Coordinator by lazy(LazyThreadSafetyMode.NONE) {
         Coordinator(object : Coordinator.Host {
-        override fun restartTargetAppForDiagnostic(packageName: String): Boolean {
-            return host?.restartTargetAppForDiagnostic(packageName) ?: false
+        override fun restartTargetAppForDiagnostic(packageName: String?): Boolean {
+            return packageName?.let { host?.restartTargetAppForDiagnostic(it) } ?: false
         }
 
         override fun dpisPackageName(): String = applicationContext.packageName
@@ -87,7 +87,8 @@ class Session(context: Context) {
             notifyHost { it.onStartUnavailable(true) }
         }
 
-        override fun onFeedbackDiagnosticFinished(result: Coordinator.Result) {
+        override fun onFeedbackDiagnosticFinished(result: Coordinator.Result?) {
+            result ?: return
             currentPhase = Phase.PACKAGING
             notifyHost { it.onPackagingStarted() }
             val generation = sessionGeneration
