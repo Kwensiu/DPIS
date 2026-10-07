@@ -63,7 +63,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.appconfig.editor.AppConfigEditorChip
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppStatusFormatter
@@ -106,11 +106,11 @@ fun AppConfigEditorContent(
     val inputFocusBoundary = LocalTextInputFocusBoundary.current ?: rememberTextInputFocusBoundary()
     val density = LocalDensity.current
     val completeInput = { focusManager.clearFocus(force = true) }
-    val viewportTargetSpec = AppConfigInputValidation.parseViewportTargetSpec(
+    val viewportTargetSpec = AppConfigInput.parseViewportTargetSpec(
         draft.viewportInputFor(draft.viewportMode),
         draft.viewportMode
     )
-    val fontScalePercent = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput)
+    val fontScalePercent = AppConfigInput.parseFontScalePercentOrNull(draft.fontInput)
     val effectiveViewportApplyMode = if (viewportTargetSpec.isEnabled()) {
         draft.viewportApplyMode
     } else {

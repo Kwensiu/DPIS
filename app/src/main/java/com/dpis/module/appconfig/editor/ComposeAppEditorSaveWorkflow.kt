@@ -1,6 +1,6 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -40,11 +40,11 @@ class ComposeAppEditorSaveWorkflow(
 
     fun save(item: AppListItem?, draft: EditorDraft?): Boolean {
         if (item == null || draft == null) return false
-        val viewport = AppConfigInputValidation.parseViewportTargetSpec(
+        val viewport = AppConfigInput.parseViewportTargetSpec(
             draft.viewportInputFor(draft.viewportMode),
             draft.viewportMode,
         )
-        val fontPercent = AppConfigInputValidation.parseFontScalePercentOrNull(draft.fontInput)
+        val fontPercent = AppConfigInput.parseFontScalePercentOrNull(draft.fontInput)
         var result = persister.persist(item, draft, viewport, fontPercent)
         if (result.success) {
             result = effects.afterPersist(result, item, draft)

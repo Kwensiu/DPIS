@@ -6,7 +6,7 @@ import com.dpis.module.fonts.FontApplyMode;
 
 import com.dpis.module.*;
 
-import com.dpis.module.appconfig.AppConfigInputValidation;
+import com.dpis.module.appconfig.AppConfigInput;
 import com.dpis.module.appconfig.editor.EditorDraft;
 
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -664,7 +664,7 @@ public final class Coordinator {
             return "off";
         }
         if (request.viewportTargetSpec.isRelativeScale()) {
-            return "scale=" + AppConfigInputValidation.formatScaleMilliPercent(
+            return "scale=" + AppConfigInput.formatScaleMilliPercent(
                     request.viewportTargetSpec.scaleMilliPercent());
         }
         if (request.viewportTargetSpec.isAbsoluteDp()) {

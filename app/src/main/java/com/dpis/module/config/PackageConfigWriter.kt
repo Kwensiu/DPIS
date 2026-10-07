@@ -1,7 +1,7 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.templates.TemplateConfigValue
@@ -349,7 +349,7 @@ internal class PackageConfigWriter(
                 val scale = viewport.scaleMilliPercent()
                 putInt(persistence.keyForViewportScaleMilliPercent(packageName), scale)
                 putInt(persistence.keyForPackageViewportScaleMilliPercent(packageName), scale)
-                val legacy = AppConfigInputValidation.toLegacyScalePermille(scale)
+                val legacy = AppConfigInput.toLegacyScalePermille(scale)
                 putInt(persistence.keyForViewportScalePermille(packageName), legacy)
                 putInt(persistence.keyForPackageViewportScalePermille(packageName), legacy)
             } else {
@@ -420,7 +420,7 @@ internal class PackageConfigWriter(
     private fun SharedPreferences.Editor.putViewportScale(packageName: String, scaleMilliPercent: Int) {
         putInt(persistence.keyForViewportScaleMilliPercent(packageName), scaleMilliPercent)
         putInt(persistence.keyForPackageViewportScaleMilliPercent(packageName), scaleMilliPercent)
-        val legacyPermille = AppConfigInputValidation.toLegacyScalePermille(scaleMilliPercent)
+        val legacyPermille = AppConfigInput.toLegacyScalePermille(scaleMilliPercent)
         putInt(persistence.keyForViewportScalePermille(packageName), legacyPermille)
         putInt(persistence.keyForPackageViewportScalePermille(packageName), legacyPermille)
     }

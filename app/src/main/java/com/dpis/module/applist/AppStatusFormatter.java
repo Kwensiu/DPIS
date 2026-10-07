@@ -7,7 +7,7 @@ import com.dpis.module.viewport.EffectiveModeResolver;
 import com.dpis.module.R;
 
 
-import com.dpis.module.appconfig.AppConfigInputValidation;
+import com.dpis.module.appconfig.AppConfigInput;
 
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportTargetSpec;
@@ -365,7 +365,7 @@ public final class AppStatusFormatter {
             boolean compact) {
         String value = labels.viewportScale
                 + " "
-                + AppConfigInputValidation.formatScaleMilliPercent(scaleMilliPercent);
+                + AppConfigInput.formatScaleMilliPercent(scaleMilliPercent);
         if (compact) {
             return value;
         }

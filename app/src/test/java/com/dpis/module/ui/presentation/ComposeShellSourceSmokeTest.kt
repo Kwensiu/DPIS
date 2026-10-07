@@ -427,7 +427,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(sheet.contains("ModalBottomSheet("))
         assertTrue(sheet.contains("openPartiallyExpanded: Boolean = false"))
         assertTrue(overlay.contains("fun AppConfigEditorOverlay("))
-        assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"))
+        assertTrue(coordinator.contains("AppConfigWizardStore.shouldShowAdvancedHint(context)"))
         assertTrue(coordinator.contains("AppConfigEditorOverlay("))
         assertTrue(coordinator.contains("RenderAppEditorOverlay(mode: MainUiState.WorkspaceMode, wear: Boolean = false)"))
         assertTrue(coordinator.contains("WearAppConfigEditorContent(it)"))

@@ -67,7 +67,7 @@ class AppConfigSaveHandler {
                 saved = store.clearTargetViewportValue(item.packageName) && saved
                 saved = store.setTargetViewportTypeDraft(
                     item.packageName,
-                    ConfigDraftSaveSemantics.viewportTargetTypeForSave(viewportTargetType)
+                    DraftSavePolicy.viewportTargetTypeForSave(viewportTargetType)
                 )
                         && saved
                 saved = store.setTargetViewportApplyMode(item.packageName, ViewportApplyMode.OFF)
@@ -88,7 +88,7 @@ class AppConfigSaveHandler {
                 saved = store.clearTargetFontScalePercent(item.packageName) && saved
                 saved = store.setTargetFontApplyMode(
                     item.packageName,
-                    ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)
+                    DraftSavePolicy.fontApplyModeForSave(fontMode)
                 ) && saved
             } else {
                 saved = store.setTargetFontScalePercent(item.packageName, fontScalePercent) && saved
@@ -111,7 +111,7 @@ class AppConfigSaveHandler {
             } else if (isDefaultPackageState(item, store)) {
                 saved = store.setTargetViewportTypeDraft(
                     item.packageName,
-                    ConfigDraftSaveSemantics.viewportTargetTypeForSave(viewportTargetType),
+                    DraftSavePolicy.viewportTargetTypeForSave(viewportTargetType),
                 ) && saved
             }
             if (!saved) {
@@ -223,14 +223,14 @@ class AppConfigSaveHandler {
                 normalizedViewportSpec.type()
             else
                 ViewportTargetType.OFF
-            var savedViewportMode = ConfigDraftSaveSemantics.viewportApplyModeForSave(
+            var savedViewportMode = DraftSavePolicy.viewportApplyModeForSave(
                 viewportApplyMode,
                 normalizedViewportSpec
             )
             var savedFontMode = if (fontScalePercent != null)
                 FontApplyMode.normalize(fontMode)
             else
-                ConfigDraftSaveSemantics.fontApplyModeForSave(fontMode)
+                DraftSavePolicy.fontApplyModeForSave(fontMode)
             if (ViewportTargetType.ABSOLUTE_DP != savedViewportType) {
                 savedViewportType = ViewportTargetType.OFF
             }
@@ -423,7 +423,7 @@ class AppConfigSaveHandler {
             if (raw.isEmpty()) {
                 return ViewportDraftValue.valid(null)
             }
-            val value = AppConfigInputValidation.parsePositiveIntOrNull(raw)
+            val value = AppConfigInput.parsePositiveIntOrNull(raw)
             return if (value != null) ViewportDraftValue.valid(value) else ViewportDraftValue.invalid()
         }
 
@@ -432,7 +432,7 @@ class AppConfigSaveHandler {
             if (raw.isEmpty()) {
                 return ViewportDraftValue.valid(null)
             }
-            val value = AppConfigInputValidation.parseViewportScaleMilliPercentOrNull(raw)
+            val value = AppConfigInput.parseViewportScaleMilliPercentOrNull(raw)
             return if (value != null) ViewportDraftValue.valid(value) else ViewportDraftValue.invalid()
         }
     }

@@ -1,6 +1,6 @@
 package com.dpis.module.templates
 
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
 import com.dpis.module.viewport.ViewportApplyMode
@@ -77,7 +77,7 @@ class TemplateEditorForm private constructor(
             form.viewportScaleInput = text(viewportScaleInput)
             form.viewportAbsoluteInput = text(viewportAbsoluteInput)
             form.fontInput = text(fontInput)
-            form.fontMode = AppConfigInputValidation.initialFontMode(fontMode)
+            form.fontMode = AppConfigInput.initialFontMode(fontMode)
             form.selectedTypefaceId = selectedTypefaceId
             form.fontHookDomainsRaw = fontHookDomainsRaw
             form.initialSignature = initialSignature ?: form.signature()
@@ -95,7 +95,7 @@ class TemplateEditorForm private constructor(
         viewportApplyMode = ViewportApplyMode.normalize(normalized.viewportApplyMode)
         fontInput = normalized.fontScalePercent?.toString().orEmpty()
         // Persisted OFF has no font override; editors present it as the saveable System default.
-        fontMode = AppConfigInputValidation.initialFontMode(normalized.fontApplyMode)
+        fontMode = AppConfigInput.initialFontMode(normalized.fontApplyMode)
         selectedTypefaceId = normalized.typefaceId
         fontHookDomainsRaw = normalized.fontHookDomainsRaw
     }
@@ -109,7 +109,7 @@ class TemplateEditorForm private constructor(
         viewportScaleInput = text(draft.viewportScaleInput)
         viewportAbsoluteInput = text(draft.viewportAbsoluteInput)
         fontInput = text(draft.fontInput)
-        fontMode = AppConfigInputValidation.initialFontMode(draft.fontMode)
+        fontMode = AppConfigInput.initialFontMode(draft.fontMode)
         selectedTypefaceId = draft.selectedTypefaceId
         fontHookDomainsRaw = draft.draftFontHookDomainsRaw
     }
@@ -150,8 +150,8 @@ class TemplateEditorForm private constructor(
     val isValid: Boolean
         get() = isNameValid() && isViewportInputValid() && isFontInputValid()
     fun isNameValid() = !quickTemplate || nameInput.trim().isNotEmpty()
-    fun isViewportInputValid() = AppConfigInputValidation.isViewportInputValid(viewportInput, viewportMode)
-    fun isFontInputValid() = AppConfigInputValidation.isFontScaleInputValid(fontInput)
+    fun isViewportInputValid() = AppConfigInput.isViewportInputValid(viewportInput, viewportMode)
+    fun isFontInputValid() = AppConfigInput.isFontScaleInputValid(fontInput)
     val isDirty: Boolean
         get() = initialSignature != signature()
     fun initialSignature() = initialSignature

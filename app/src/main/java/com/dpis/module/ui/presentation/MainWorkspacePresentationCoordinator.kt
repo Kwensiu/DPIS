@@ -39,7 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.dpis.module.appconfig.editor.AppConfigEditorChip
-import com.dpis.module.appconfig.AppConfigSheetWizardStore
+import com.dpis.module.appconfig.AppConfigWizardStore
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.tools.SystemFontScaleToolState
@@ -293,7 +293,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
             val editorControlHeight = rememberEditorControlHeight()
             val context = LocalContext.current
             var showAdvancedHint by remember(editorState.item.packageName) {
-                mutableStateOf(AppConfigSheetWizardStore.shouldShowAdvancedHint(context))
+                mutableStateOf(AppConfigWizardStore.shouldShowAdvancedHint(context))
             }
             AppConfigEditorOverlay(
                 onDismissRequest = editorState.actions::close,
@@ -417,7 +417,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                     AppConfigWizardHint(
                         modifier = androidx.compose.ui.Modifier.align(Alignment.TopCenter),
                         onDismiss = {
-                            AppConfigSheetWizardStore.markAdvancedHintDismissed(context)
+                            AppConfigWizardStore.markAdvancedHintDismissed(context)
                             showAdvancedHint = false
                         },
                     )
