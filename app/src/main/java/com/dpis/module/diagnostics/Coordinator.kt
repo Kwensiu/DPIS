@@ -7,7 +7,9 @@ import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.device.ForegroundAppReader
+import com.dpis.module.diagnostics.device.PerfettoTrace
 import com.dpis.module.diagnostics.device.RuntimeTransport
+import com.dpis.module.diagnostics.device.TransportSelfTest
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.viewport.ViewportApplyMode
@@ -240,7 +242,7 @@ class Coordinator private constructor(
                 return@execute
             }
             recordTimelineEvent(if (perfettoStart.available) "perfetto trace prepared" else "perfetto unavailable: ${perfettoStart.note}")
-            val selfTest = RuntimeSelfTest.runUiTransportSelfTest(request.packageName, null)
+            val selfTest = TransportSelfTest.runUiTransportSelfTest(request.packageName, null)
             recordTimelineEvent(if (selfTest.uiWriteReadOk) "runtime transport self-test ok" else "runtime transport self-test failed: ${selfTest.message}")
             recordTimelineEvent("root force-stop/start requested")
             val launched = host.restartTargetAppForDiagnostic(request.packageName)

@@ -124,7 +124,7 @@ public final class TypefaceOverrideHookInstallerTest {
     @Test
     public void modernTypefaceEventsReachRuntimeTransport() throws Exception {
         String source = SourceSmokeTestPaths.read(
-                "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.java");
+                "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.kt");
 
         assertTrue(source.contains("RuntimeTransport.record("));
         assertTrue(source.contains("\"typeface\", stage, packageName, message"));

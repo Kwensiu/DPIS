@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.diagnostics.AppLauncher
+import com.dpis.module.diagnostics.device.TargetAppLauncher
 import com.dpis.module.diagnostics.Coordinator
 import com.dpis.module.diagnostics.ExportBuilder
 import com.dpis.module.diagnostics.ExportBuilder.DiagnosticPackage
@@ -27,7 +27,7 @@ internal class QuickConfigDiagnosticSession(
     private val persistCurrentConfig: (AppListItem) -> AppListItem?,
     private val syncRuntimeForLaunch: (String?) -> Unit,
 ) {
-    private val launcher = AppLauncher(activity)
+    private val launcher = TargetAppLauncher(activity)
     private val exportBuilder = ExportBuilder(activity)
     private val exportExecutor = Executors.newSingleThreadExecutor()
     private val packageActions = PackageActions(activity, exportExecutor, SAVE_REQUEST)

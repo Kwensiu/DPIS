@@ -30,15 +30,15 @@ class FeedbackDiagnosticSourceSmokeTest {
 
     @Test
     fun feedbackDiagnosticMirrorsRuntimeDpisLogEvents() {
-        val dpisLog = read("src/main/java/com/dpis/module/diagnostics/DpisLog.java")
+        val dpisLog = read("src/main/java/com/dpis/module/diagnostics/DpisLog.kt")
         val collector = read(
-            "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.java"
+            "src/main/java/com/dpis/module/diagnostics/RuntimeEvents.kt"
         )
         val hotPath = read(
             "src/main/java/com/dpis/module/diagnostics/RuntimeHotPathEvents.kt"
         )
 
-        assertTrue(dpisLog.contains("private static void write("))
+        assertTrue(dpisLog.contains("private fun write("))
         assertTrue(dpisLog.contains("RuntimeEvents.recordDpisLog("))
         assertTrue(dpisLog.contains("RuntimeTransport.record("))
         assertTrue(hotPath.contains("RuntimeEvents.recordStructured("))
@@ -46,7 +46,7 @@ class FeedbackDiagnosticSourceSmokeTest {
         assertTrue(hotPath.contains("fun begin("))
         assertTrue(hotPath.contains("fun applied("))
         assertTrue(hotPath.contains("fun end("))
-        assertTrue(collector.contains("private static volatile Session activeSession;"))
+        assertTrue(collector.contains("private var activeSession: Session?"))
         assertTrue(collector.contains("\"unexpected_route_hit\""))
         assertTrue(collector.contains("\"repeated_write\""))
     }
@@ -57,17 +57,17 @@ class FeedbackDiagnosticSourceSmokeTest {
             "src/main/java/com/dpis/module/diagnostics/presentation/FeedbackDiagnosticActivitySession.kt"
         )
         val launcher = read(
-            "src/main/java/com/dpis/module/diagnostics/AppLauncher.java"
+            "src/main/java/com/dpis/module/diagnostics/device/TargetAppLauncher.kt"
         )
         val rootLauncher =
             read("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt")
 
-        assertTrue(sessionOwner.contains("AppLauncher(activity)"))
+        assertTrue(sessionOwner.contains("TargetAppLauncher(activity)"))
         assertTrue(sessionOwner.contains("restartTargetAppForDiagnostic("))
         assertTrue(sessionOwner.contains("launcher.restartForDiagnostic(packageName)"))
         assertFalse(sessionOwner.contains("public boolean launchTargetApp(String packageName)"))
 
-        assertTrue(launcher.contains("new RootAppProcessLauncher(context)"))
+        assertTrue(launcher.contains("RootAppProcessLauncher(context)"))
         assertTrue(launcher.contains("rootLauncher.restart(packageName).code() == 0"))
         assertTrue(rootLauncher.contains("am force-stop \" + packageName"))
         assertTrue(rootLauncher.contains("am start --user current"))

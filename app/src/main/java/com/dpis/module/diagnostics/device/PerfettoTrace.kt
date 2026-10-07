@@ -1,4 +1,4 @@
-package com.dpis.module.diagnostics
+package com.dpis.module.diagnostics.device
 
 import com.dpis.module.root.RootAppProcessLauncher.ShellResult
 import com.dpis.module.runtime.transport.SecureProcessLauncher
