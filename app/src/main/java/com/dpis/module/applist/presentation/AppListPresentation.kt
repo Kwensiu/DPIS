@@ -1,9 +1,15 @@
-package com.dpis.module.applist
+package com.dpis.module.applist.presentation
 
+import com.dpis.module.applist.AppListFilterState
+import com.dpis.module.applist.AppListItem
+import com.dpis.module.applist.AppListPage
+import com.dpis.module.applist.AppListScopeTarget
+import com.dpis.module.applist.AppListSelectionController
+import com.dpis.module.applist.AppListVisibleSections
 import com.dpis.module.ui.MainUiState
 
 /** Immutable Kotlin/Compose boundary for the app catalogue; [MainUiState] remains authoritative. */
-object AppWorkspacePresentation {
+object AppListPresentation {
     interface Actions {
         fun changeQuery(query: String)
         fun changePage(page: AppListPage)
@@ -130,7 +136,7 @@ object AppWorkspacePresentation {
         state: MainUiState,
         selectedPage: AppListPage?,
         systemScopeSelected: Boolean,
-        scrollStateStore: AppWorkspaceScrollStateStore,
+        scrollStateStore: AppListScrollStateStore,
         selectionController: AppListSelectionController,
         actions: Actions,
     ): State = createState(
@@ -143,7 +149,7 @@ object AppWorkspacePresentation {
         state: MainUiState,
         selectedPage: AppListPage?,
         systemScopeSelected: Boolean,
-        scrollStateStore: AppWorkspaceScrollStateStore,
+        scrollStateStore: AppListScrollStateStore,
         actions: Actions,
     ): State = createState(
         state, selectedPage, systemScopeSelected, scrollStateStore,
@@ -156,7 +162,7 @@ object AppWorkspacePresentation {
         state: MainUiState,
         selectedPage: AppListPage?,
         systemScopeSelected: Boolean,
-        scrollStateStore: AppWorkspaceScrollStateStore,
+        scrollStateStore: AppListScrollStateStore,
         actions: Actions,
         restoreScopePromptVisible: Boolean,
         restoreScopePromptShouldConsume: Boolean,
@@ -170,7 +176,7 @@ object AppWorkspacePresentation {
         state: MainUiState,
         selectedPage: AppListPage?,
         systemScopeSelected: Boolean,
-        scrollStateStore: AppWorkspaceScrollStateStore,
+        scrollStateStore: AppListScrollStateStore,
         selectionController: AppListSelectionController,
         actions: Actions,
         restoreScopePromptVisible: Boolean,
@@ -184,7 +190,7 @@ object AppWorkspacePresentation {
         state: MainUiState,
         selectedPage: AppListPage?,
         systemScopeSelected: Boolean,
-        scrollStateStore: AppWorkspaceScrollStateStore,
+        scrollStateStore: AppListScrollStateStore,
         selectionController: AppListSelectionController?,
         actions: Actions,
         restoreScopePromptVisible: Boolean,

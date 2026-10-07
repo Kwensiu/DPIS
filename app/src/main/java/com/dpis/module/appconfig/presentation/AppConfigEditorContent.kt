@@ -66,7 +66,7 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.appconfig.editor.AppConfigEditorChip
 import com.dpis.module.appconfig.editor.EditorPresentation
-import com.dpis.module.applist.AppStatusFormatter
+import com.dpis.module.applist.presentation.StatusFormatter
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.quirks.presentation.WechatDpiHelp
@@ -122,9 +122,9 @@ fun AppConfigEditorContent(
         || !draft.selectedTypefaceId.isNullOrEmpty()
     val context = androidx.compose.ui.platform.LocalContext.current
     val resources = context.resources
-    val statusLabel = AppStatusFormatter.formatCompact(
+    val statusLabel = StatusFormatter.formatCompact(
         resources,
-        AppStatusFormatter.StatusInput(
+        StatusFormatter.StatusInput(
             state.item.inScope,
             state.item.scopeKnown,
             state.item.installed,
@@ -138,19 +138,19 @@ fun AppConfigEditorContent(
             null
         )
     )
-    val warnViewport = state.item.scopeKnown && AppStatusFormatter.shouldWarnViewportEmulation(
+    val warnViewport = state.item.scopeKnown && StatusFormatter.shouldWarnViewportEmulation(
         viewportTargetSpec,
         effectiveViewportApplyMode,
         state.systemHooksEnabled,
         draft.dpisEnabled
     )
-    val warnFont = state.item.scopeKnown && AppStatusFormatter.shouldWarnFontEmulation(
+    val warnFont = state.item.scopeKnown && StatusFormatter.shouldWarnFontEmulation(
         fontScalePercent,
         effectiveFontMode,
         state.systemHooksEnabled,
         draft.dpisEnabled
     )
-    val styledStatus = AppStatusFormatter.applyConfigSegmentsWarnStyle(
+    val styledStatus = StatusFormatter.applyConfigSegmentsWarnStyle(
         statusLabel,
         MaterialTheme.colorScheme.error.toArgb(),
         warnViewport,

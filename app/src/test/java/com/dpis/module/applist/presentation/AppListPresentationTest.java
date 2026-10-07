@@ -1,4 +1,4 @@
-package com.dpis.module;
+package com.dpis.module.applist.presentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,8 +9,8 @@ import com.dpis.module.applist.AppListFilterState;
 import com.dpis.module.applist.AppListItem;
 import com.dpis.module.applist.AppListPage;
 import com.dpis.module.applist.AppListSelectionController;
-import com.dpis.module.applist.AppWorkspacePresentation;
-import com.dpis.module.applist.AppWorkspaceScrollStateStore;
+import com.dpis.module.applist.presentation.AppListPresentation;
+import com.dpis.module.applist.presentation.AppListScrollStateStore;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.ui.MainUiState;
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -21,7 +21,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
-public final class AppWorkspacePresentationTest {
+public final class AppListPresentationTest {
     @Test
     public void createUsesMainUiStateVisiblePageWithoutOwningAnotherQuery() {
         AppListItem allOnly = app("All", "com.example.all", false);
@@ -32,11 +32,11 @@ public final class AppWorkspacePresentationTest {
                 List.of(allOnly, configured),
                 Collections.emptySet());
         Actions actions = new Actions();
-        AppWorkspaceScrollStateStore scrollStateStore = new AppWorkspaceScrollStateStore();
+        AppListScrollStateStore scrollStateStore = new AppListScrollStateStore();
         scrollStateStore.update(AppListPage.ALL_APPS, 8, 12);
         scrollStateStore.update(AppListPage.CONFIGURED_APPS, 3, 24);
 
-        AppWorkspacePresentation.State state = AppWorkspacePresentation.create(
+        AppListPresentation.State state = AppListPresentation.create(
                 mainState,
                 AppListPage.CONFIGURED_APPS,
                 true,
@@ -72,11 +72,11 @@ public final class AppWorkspacePresentationTest {
                 List.of(allOnly, configured),
                 Collections.emptySet());
 
-        AppWorkspacePresentation.State state = AppWorkspacePresentation.create(
+        AppListPresentation.State state = AppListPresentation.create(
                 mainState,
                 AppListPage.ALL_APPS,
                 false,
-                new AppWorkspaceScrollStateStore(),
+                new AppListScrollStateStore(),
                 new Actions());
 
         assertEquals(2, state.itemsFor(AppListPage.ALL_APPS).size());
@@ -97,11 +97,11 @@ public final class AppWorkspacePresentationTest {
         AppListSelectionController selection = new AppListSelectionController();
         selection.begin(AppListPage.ALL_APPS, selected.packageName);
 
-        AppWorkspacePresentation.State state = AppWorkspacePresentation.create(
+        AppListPresentation.State state = AppListPresentation.create(
                 mainState,
                 AppListPage.ALL_APPS,
                 false,
-                new AppWorkspaceScrollStateStore(),
+                new AppListScrollStateStore(),
                 selection,
                 new Actions(),
                 false,
@@ -124,11 +124,11 @@ public final class AppWorkspacePresentationTest {
         AppListSelectionController selection = new AppListSelectionController();
         selection.begin(AppListPage.ALL_APPS, selected.packageName);
 
-        AppWorkspacePresentation.create(
+        AppListPresentation.create(
                 mainState,
                 AppListPage.ALL_APPS,
                 false,
-                new AppWorkspaceScrollStateStore(),
+                new AppListScrollStateStore(),
                 selection,
                 new Actions(),
                 false,
@@ -162,7 +162,7 @@ public final class AppWorkspacePresentationTest {
                 null);
     }
 
-    private static final class Actions implements AppWorkspacePresentation.Actions {
+    private static final class Actions implements AppListPresentation.Actions {
         @Override public void changeQuery(String query) {}
         @Override public void changePage(AppListPage page) {}
         @Override public void changeFilters(AppListFilterState filterState) {}

@@ -7,7 +7,7 @@ import android.os.Build;
 import android.service.quicksettings.TileService;
 
 import com.dpis.module.quickconfig.QuickConfigActivity;
-import com.dpis.module.applist.ForegroundPackageResolver;
+import com.dpis.module.quickconfig.ForegroundAppResolver;
 
 public class QuickConfigTileService extends TileService {
     @Override
@@ -15,7 +15,7 @@ public class QuickConfigTileService extends TileService {
         super.onClick();
         Intent intent = QuickConfigActivity.createIntent(
                 this,
-                ForegroundPackageResolver.resolve(this));
+                ForegroundAppResolver.resolve(this));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             PendingIntent pendingIntent = PendingIntent.getActivity(
                     this,

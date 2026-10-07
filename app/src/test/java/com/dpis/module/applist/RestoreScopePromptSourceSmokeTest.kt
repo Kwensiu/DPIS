@@ -9,7 +9,7 @@ class RestoreScopePromptSourceSmokeTest {
     @Test
     fun restorePromptIsOneShotForBackupScopeAndReusesBatchScopeRequest() {
         val workspace = SourceSmokeTestPaths.read(
-            "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt",
+            "src/main/java/com/dpis/module/applist/presentation/AppListContent.kt",
         )
         val hostWiring = SourceSmokeTestPaths.read(
             "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt",

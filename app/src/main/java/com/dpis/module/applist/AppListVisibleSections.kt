@@ -31,7 +31,7 @@ object AppListVisibleSections {
                 compareBy { it.firstInstallTime }
 
             AppListFilterState.SortOrder.NAME ->
-                compareBy<AppListItem> { (it.label ?: "").lowercase(Locale.ROOT) }
+                compareBy<AppListItem> { it.label.lowercase(Locale.ROOT) }
                     .thenBy { it.packageName }
         }.let { if (effectiveState.reverseOrder()) it.reversed() else it }
 

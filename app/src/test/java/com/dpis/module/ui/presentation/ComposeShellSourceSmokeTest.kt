@@ -180,7 +180,7 @@ class ComposeShellSourceSmokeTest {
         assertFalse(theme.contains("rememberPageListState()"))
         assertFalse(topBar.contains("fontSize = 34.sp"))
         assertTrue(topBar.contains("internal fun InFlowPageHeader("))
-        val appWorkspace = read("src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
+        val appWorkspace = read("src/main/java/com/dpis/module/applist/presentation/AppListContent.kt")
         val templateWorkspace = read(
                 "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceContent.kt")
         assertFalse(appWorkspace.contains("SplitPaneHeader("))
@@ -299,16 +299,11 @@ class ComposeShellSourceSmokeTest {
     }
 
     @Test
-    fun appEditorDerivesPrefillChipFromEditorSession() {
+    fun mainShellDisplaysPrefillChipFromEditorSession() {
         val shell = read("src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
-        val item = read("src/main/java/com/dpis/module/applist/AppListItem.java")
-        val editor = read("src/main/java/com/dpis/module/appconfig/editor/ComposeAppEditorController.kt")
 
+        // Compose shell wiring requires an Android runtime; the session chip behavior is covered by AppConfigEditorSessionTest.
         assertTrue(shell.contains("editorState.chip != AppConfigEditorChip.NONE"))
-        assertTrue(item.contains("appSpecificConfigActive,"))
-        assertTrue(editor.contains("val editorItem = host.resolveEditorItem(item.packageName) ?: item"))
-        assertTrue(editor.contains("session.editorSession = openSession(editorItem)"))
-        assertTrue(editor.contains("AppConfigEditorSession.open(editorItem, hasSaved, prefill)"))
     }
 
     @Test
@@ -411,7 +406,7 @@ class ComposeShellSourceSmokeTest {
         val appEditor = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorContent.kt")
         val appWorkspace = read(
-                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppListContent.kt")
         val controls = read(
                 "src/main/java/com/dpis/module/ui/presentation/editor/EditorControls.kt")
         val catalog = read(
@@ -515,7 +510,7 @@ class ComposeShellSourceSmokeTest {
         val appEditor = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorContent.kt")
         val appWorkspace = read(
-                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppListContent.kt")
         val coordinator = read(
                 "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt")
         val viewModel = read("src/main/java/com/dpis/module/ui/MainViewModel.kt")
@@ -622,7 +617,7 @@ class ComposeShellSourceSmokeTest {
         val controls = read(
                 "src/main/java/com/dpis/module/ui/presentation/editor/EditorControls.kt")
         val apps = read(
-                "src/main/java/com/dpis/module/applist/presentation/AppWorkspaceContent.kt")
+                "src/main/java/com/dpis/module/applist/presentation/AppListContent.kt")
         val targets = read(
                 "src/main/java/com/dpis/module/templates/presentation/QuickTemplateTargetsContent.kt")
         val templates = read(

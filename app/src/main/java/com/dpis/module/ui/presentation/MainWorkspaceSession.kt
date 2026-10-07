@@ -6,7 +6,7 @@ import com.dpis.module.BuildConfig
 import com.dpis.module.MainActivity
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.presentation.AppListPresentation
 import com.dpis.module.applist.RestoreScopePromptPolicy
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.ui.MainUiAction
@@ -45,7 +45,7 @@ class MainWorkspaceSession(
                 override fun homeState(): HomeWorkspaceState =
                     activity.homeWorkspaceSession.createState()
 
-                override fun appState(): AppWorkspacePresentation.State {
+                override fun appState(): AppListPresentation.State {
                     val uiState = activity.startupSession.requireUiState()
                     val selectedPage = activity.startupSession.currentAppListPage
                     val snapshot = uiState.appsSnapshot()
@@ -60,13 +60,13 @@ class MainWorkspaceSession(
                         snapshot,
                         hostWiring.restoreScopePromptStore.scopePackages(),
                     ).isNotEmpty()
-                    return AppWorkspacePresentation.create(
+                    return AppListPresentation.create(
                         uiState,
                         selectedPage,
                         activity.startupSession.isSystemHookEnabledFromStore,
                         activity.scrollStateStore,
                         hostWiring.appListSelectionController,
-                        checkNotNull(hostWiring.appWorkspaceActions),
+                        checkNotNull(hostWiring.appListActions),
                         RestoreScopePromptPolicy.shouldShowCard(
                             pending,
                             modern,

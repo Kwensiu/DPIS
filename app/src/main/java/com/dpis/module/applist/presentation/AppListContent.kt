@@ -92,8 +92,8 @@ import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.AppListScopeTarget
-import com.dpis.module.applist.AppStatusFormatter
-import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.presentation.StatusFormatter
+import com.dpis.module.applist.presentation.AppListPresentation
 import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
 import com.dpis.module.ui.ConfigEditorDestination
@@ -132,13 +132,13 @@ private enum class AppListBatchConfirmation {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppWorkspaceContent(
-    state: AppWorkspacePresentation.State,
+fun AppListContent(
+    state: AppListPresentation.State,
     padding: PaddingValues,
     editorState: EditorPresentation.State? = null,
 ) {
     val focusManager = LocalFocusManager.current
-    val selectionActions = state.actions as? AppWorkspacePresentation.SelectionActions
+    val selectionActions = state.actions as? AppListPresentation.SelectionActions
     BackHandler(enabled = state.selection.active && !state.selection.batchOperationRunning) {
         selectionActions?.exitSelection()
     }
@@ -392,7 +392,7 @@ fun AppWorkspaceContent(
                             }
                         )
                     } else {
-                        AppWorkspaceEmptyDetail()
+                        AppListEmptyDetail()
                     }
                 }
             }
@@ -635,12 +635,12 @@ private fun AppListPageContent(
     bottomPadding: androidx.compose.ui.unit.Dp,
     systemScopeSelected: Boolean,
     restoreScopePromptVisible: Boolean,
-    actions: AppWorkspacePresentation.Actions,
+    actions: AppListPresentation.Actions,
     query: String,
     filterState: AppListFilterState,
     inputFocusManager: androidx.compose.ui.focus.FocusManager,
     selection: com.dpis.module.applist.AppListSelectionController.State,
-    selectionActions: AppWorkspacePresentation.SelectionActions?,
+    selectionActions: AppListPresentation.SelectionActions?,
 ) {
     val showRestoreScopePrompt =
         page == AppListPage.CONFIGURED_APPS && restoreScopePromptVisible
@@ -839,7 +839,7 @@ private fun RestoreScopePromptDialog(
 private fun PersistAppListScrollPosition(
     listState: LazyListState,
     page: AppListPage,
-    actions: AppWorkspacePresentation.Actions
+    actions: AppListPresentation.Actions
 ) {
     val latestActions by rememberUpdatedState(actions)
     LaunchedEffect(listState, page) {
@@ -852,7 +852,7 @@ private fun PersistAppListScrollPosition(
 }
 
 @Composable
-private fun AppWorkspaceEmptyDetail(modifier: Modifier = Modifier) {
+private fun AppListEmptyDetail(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -1010,7 +1010,7 @@ private fun AppRow(
     // Visible rows load a display-sized bitmap. That keeps PackageManager I/O off the list
     // snapshot, and Compose Image avoids creating an ImageView on every bind.
     val icon = rememberInstalledAppIconBitmap(item.packageName, item.icon, iconSizePx)
-    val statusInput = AppStatusFormatter.StatusInput(
+    val statusInput = StatusFormatter.StatusInput(
         item.inScope,
         item.scopeKnown,
         item.installed,
@@ -1024,9 +1024,9 @@ private fun AppRow(
         item.wechatDpi
     )
     val warn = item.scopeKnown && (
-        AppStatusFormatter.shouldWarnViewportEmulation(
+        StatusFormatter.shouldWarnViewportEmulation(
             item.viewportTargetSpec, item.viewportMode, systemScopeSelected, item.dpisEnabled
-        ) || AppStatusFormatter.shouldWarnFontEmulation(
+        ) || StatusFormatter.shouldWarnFontEmulation(
             item.fontScalePercent, item.fontMode, systemScopeSelected, item.dpisEnabled
         )
     )
@@ -1099,7 +1099,7 @@ private fun AppRow(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                AppStatusFormatter.formatCompact(resources, statusInput),
+                StatusFormatter.formatCompact(resources, statusInput),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (warn) MaterialTheme.colorScheme.error
                 else if (selected) MaterialTheme.colorScheme.onSecondaryContainer
@@ -1127,8 +1127,8 @@ private fun AppRow(
 
 @Preview(showBackground = true, widthDp = 360, heightDp = 720)
 @Composable
-private fun AppWorkspacePreview() {
-    val actions = object : AppWorkspacePresentation.Actions {
+private fun AppListPreview() {
+    val actions = object : AppListPresentation.Actions {
         override fun changeQuery(query: String) = Unit
         override fun changePage(page: AppListPage) = Unit
         override fun changeFilters(filterState: AppListFilterState) = Unit
@@ -1139,12 +1139,12 @@ private fun AppWorkspacePreview() {
         override fun requestRestoreScope() = Unit
     }
     ComposeDesignSystem(darkTheme = false, dynamicColor = false) {
-        AppWorkspaceContent(
-            state = AppWorkspacePresentation.State(
+        AppListContent(
+            state = AppListPresentation.State(
                 "", AppListPage.ALL_APPS, emptyList(), emptyList(), false, false,
                 AppListFilterState.defaultState(), false,
-                AppWorkspacePresentation.ScrollPosition(0, 0),
-                AppWorkspacePresentation.ScrollPosition(0, 0),
+                AppListPresentation.ScrollPosition(0, 0),
+                AppListPresentation.ScrollPosition(0, 0),
                 actions
             ),
             padding = PaddingValues()

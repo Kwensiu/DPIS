@@ -13,7 +13,7 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.AppListScopeTarget
 import com.dpis.module.applist.AppListSelectionController
-import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.presentation.AppListPresentation
 import com.dpis.module.applist.RestoreScopePromptPolicy
 import com.dpis.module.applist.RestoreScopePromptStore
 import com.dpis.module.applist.presentation.AppListBatchActionCoordinator
@@ -37,7 +37,7 @@ class MainHostWiringSession(
         private set
     var toolsWorkspace: ToolsWorkspace? = null
         private set
-    var appWorkspaceActions: AppWorkspacePresentation.Actions? = null
+    var appListActions: AppListPresentation.Actions? = null
         private set
     val appListSelectionController = AppListSelectionController()
     var settingsWorkspaceSession: SettingsWorkspaceSession? = null
@@ -119,8 +119,8 @@ class MainHostWiringSession(
             },
             appListSelectionController,
         )
-        appWorkspaceActions = object : AppWorkspacePresentation.Actions,
-            AppWorkspacePresentation.SelectionActions {
+        appListActions = object : AppListPresentation.Actions,
+            AppListPresentation.SelectionActions {
             override fun changeQuery(query: String) {
                 activity.startupSession.dispatch(MainUiAction.queryChanged(query))
             }

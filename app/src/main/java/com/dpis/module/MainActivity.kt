@@ -5,7 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import com.dpis.module.appconfig.AppConfigSaveHandler
-import com.dpis.module.applist.AppWorkspaceScrollStateStore
+import com.dpis.module.applist.presentation.AppListScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.home.presentation.HomeWorkspaceSession
@@ -80,7 +80,7 @@ class MainActivity :
         hostWiringSession,
         mainWorkspaceSession,
     )
-    internal val scrollStateStore = AppWorkspaceScrollStateStore()
+    internal val scrollStateStore = AppListScrollStateStore()
 
     override fun onUnhandledTaskRootBack() {
         moveTaskToBack(true)

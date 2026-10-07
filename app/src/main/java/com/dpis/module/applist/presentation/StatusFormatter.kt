@@ -1,4 +1,4 @@
-package com.dpis.module.applist
+package com.dpis.module.applist.presentation
 
 import android.content.res.Resources
 import android.text.SpannableString
@@ -13,7 +13,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 import java.util.Locale
 
 /** Formats the compact and detailed status shown for an application. */
-object AppStatusFormatter {
+object StatusFormatter {
     class StatusInput constructor(
         @JvmField val inScope: Boolean,
         @JvmField val scopeKnown: Boolean,

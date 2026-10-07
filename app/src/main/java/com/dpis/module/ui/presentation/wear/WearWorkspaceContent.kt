@@ -68,7 +68,7 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.applist.AppListFilterState
 import com.dpis.module.applist.AppListPage
-import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.presentation.AppListPresentation
 import com.dpis.module.applist.presentation.rememberInstalledAppIcon
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.SystemFontRegistry
@@ -97,7 +97,7 @@ import com.dpis.module.viewport.ViewportTargetType
 
 /** Wear-native presentation for the five main workspaces. Domain state remains Java-owned. */
 @Composable
-internal fun WearAppWorkspaceContent(state: AppWorkspacePresentation.State) {
+internal fun WearAppListContent(state: AppListPresentation.State) {
     val context = LocalContext.current
     var filtersVisible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {

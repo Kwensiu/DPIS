@@ -56,7 +56,7 @@ import com.dpis.module.appconfig.presentation.AppConfigWizardHint
 import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
-import com.dpis.module.applist.presentation.AppWorkspaceContent
+import com.dpis.module.applist.presentation.AppListContent
 import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
 import com.dpis.module.home.presentation.HomeWorkspaceContent
 import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
@@ -66,12 +66,12 @@ import com.dpis.module.tools.presentation.ToolsWorkspaceContent
 import com.dpis.module.ui.presentation.editor.rememberEditorControlHeight
 import com.dpis.module.ui.presentation.design.dpisClickable
 import com.dpis.module.ui.presentation.wear.WearAppConfigEditorContent
-import com.dpis.module.ui.presentation.wear.WearAppWorkspaceContent
+import com.dpis.module.ui.presentation.wear.WearAppListContent
 import com.dpis.module.ui.presentation.wear.WearHomeWorkspaceContent
 import com.dpis.module.ui.presentation.wear.WearSettingsWorkspaceContent
 import com.dpis.module.ui.presentation.wear.WearTemplateWorkspaceContent
 import com.dpis.module.ui.presentation.wear.WearToolsWorkspaceContent
-import com.dpis.module.applist.AppWorkspacePresentation
+import com.dpis.module.applist.presentation.AppListPresentation
 import com.dpis.module.ui.MainUiState
 import com.dpis.module.R
 import com.dpis.module.ui.ConfigEditorDestination
@@ -80,7 +80,7 @@ import com.dpis.module.ui.ConfigEditorDestination
 class MainWorkspacePresentationCoordinator(private val content: Content) {
     interface Content {
         fun homeState(): HomeWorkspaceState
-        fun appState(): AppWorkspacePresentation.State
+        fun appState(): AppListPresentation.State
         fun appEditorState(): EditorPresentation.State?
         fun toolsState(): SystemFontScaleToolState?
         fun changeToolsPending(percent: Int)
@@ -135,7 +135,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
             MainUiState.WorkspaceMode.APP -> {
                 appRevision
                 ComposeWorkspaceSurface {
-                    AppWorkspaceContent(
+                    AppListContent(
                         state = content.appState(),
                         padding = padding,
                         editorState = content.appEditorState()
@@ -218,7 +218,7 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
     ): Boolean {
         CompositionLocalProvider(LocalWearWorkspaceContentPadding provides padding) {
         when (mode) {
-        MainUiState.WorkspaceMode.APP -> { appRevision; WearAppWorkspaceContent(content.appState()); true }
+        MainUiState.WorkspaceMode.APP -> { appRevision; WearAppListContent(content.appState()); true }
         MainUiState.WorkspaceMode.HOME -> { homeRevision; WearHomeWorkspaceContent(content.homeState()); true }
         MainUiState.WorkspaceMode.TOOLS -> {
             toolsRevision

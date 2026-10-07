@@ -1,21 +1,21 @@
-package com.dpis.module;
+package com.dpis.module.applist.presentation;
 
 import static org.junit.Assert.assertEquals;
 
 import com.dpis.module.applist.AppListPage;
+import com.dpis.module.applist.presentation.AppListPresentation;
 
 import org.junit.Test;
-import com.dpis.module.applist.AppWorkspaceScrollStateStore;
-import com.dpis.module.applist.AppWorkspacePresentation;
+import com.dpis.module.applist.presentation.AppListScrollStateStore;
 
-public final class AppWorkspaceScrollStateStoreTest {
+public final class AppListScrollStateStoreTest {
     @Test
     public void snapshotRestoreKeepsBothPagePositionsIndependent() {
-        AppWorkspaceScrollStateStore source = new AppWorkspaceScrollStateStore();
+        AppListScrollStateStore source = new AppListScrollStateStore();
         source.update(AppListPage.ALL_APPS, 12, 34);
         source.update(AppListPage.CONFIGURED_APPS, 5, 67);
 
-        AppWorkspaceScrollStateStore restored = new AppWorkspaceScrollStateStore();
+        AppListScrollStateStore restored = new AppListScrollStateStore();
         restored.restore(source.snapshot());
 
         assertPosition(restored, AppListPage.ALL_APPS, 12, 34);
@@ -24,7 +24,7 @@ public final class AppWorkspaceScrollStateStoreTest {
 
     @Test
     public void invalidValuesAndSnapshotsCannotProduceNegativePositions() {
-        AppWorkspaceScrollStateStore store = new AppWorkspaceScrollStateStore();
+        AppListScrollStateStore store = new AppListScrollStateStore();
         store.update(AppListPage.ALL_APPS, -4, -8);
         store.restore(new int[]{9});
 
@@ -32,9 +32,9 @@ public final class AppWorkspaceScrollStateStoreTest {
         assertPosition(store, AppListPage.CONFIGURED_APPS, 0, 0);
     }
 
-    private static void assertPosition(AppWorkspaceScrollStateStore store,
+    private static void assertPosition(AppListScrollStateStore store,
             AppListPage page, int index, int offset) {
-        AppWorkspacePresentation.ScrollPosition position = store.positionFor(page);
+        AppListPresentation.ScrollPosition position = store.positionFor(page);
         assertEquals(index, position.index);
         assertEquals(offset, position.scrollOffset);
     }

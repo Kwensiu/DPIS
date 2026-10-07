@@ -14,7 +14,7 @@ import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.applist.ForegroundPackageResolver
+import com.dpis.module.quickconfig.ForegroundAppResolver
 import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.runtime.hyperos.HyperOsNativeAppDetector
@@ -77,11 +77,11 @@ class QuickConfigActivity : LocalizedActivity() {
         }
 
         val explicitPackageName = intent.getStringExtra(EXTRA_PACKAGE_NAME)
-        val usageAccessGranted = ForegroundPackageResolver.hasUsageAccess(this)
+        val usageAccessGranted = ForegroundAppResolver.hasUsageAccess(this)
         val targetDecision = QuickConfigTargetDecision.decide(
             explicitPackageName,
             usageAccessGranted,
-            if (usageAccessGranted) ForegroundPackageResolver.resolve(this) else null,
+            if (usageAccessGranted) ForegroundAppResolver.resolve(this) else null,
         )
         if (targetDecision.kind == QuickConfigTargetDecision.Kind.REQUEST_USAGE_ACCESS) {
             openUsageAccessSettings()

@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.applist.AppStatusFormatter
+import com.dpis.module.applist.presentation.StatusFormatter
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -24,14 +24,14 @@ class LegacyUiSourceSmokeTest {
 
     @Test
     fun unknownScopeHidesInjectionStatus() {
-        val labels = AppStatusFormatter.Labels(
+        val labels = StatusFormatter.Labels(
             "Injected", "Not injected", "Enabled", "Disabled", "Not enabled",
             "Not installed", "No value", "System", "Compat", "Interface", "Interface",
             "Font", "WeChat DPI", Locale.US,
         )
-        val status = AppStatusFormatter.formatCompact(
+        val status = StatusFormatter.formatCompact(
             labels,
-            AppStatusFormatter.StatusInput(
+            StatusFormatter.StatusInput(
                 false,
                 false,
                 ViewportTargetSpec.absoluteDp(320),
