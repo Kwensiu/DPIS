@@ -10,7 +10,7 @@ class SystemServerSettingsActivityFontLibrarySourceTest {
         val content = read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt")
         val manifest = read("src/main/AndroidManifest.xml")
         val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
-        val store = read("src/main/java/com/dpis/module/fonts/store/FontLibraryStore.java")
+        val store = read("src/main/java/com/dpis/module/fonts/store/FontLibraryStore.kt")
 
         content.assertContainsAll("R.string.settings_font_library_label")
         source.assertContainsAll(
