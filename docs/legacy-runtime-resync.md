@@ -375,6 +375,11 @@ display pixels stay unchanged.
 2026-10-05 display evidence: Legacy inherits the shared bridge retain. A Display metrics mutation
 that happens before the diagnostic bridge can deliver is written once later with the original
 `densityDpi` before and after. The performance counter is not incremented a second time.
+2026-10-05 Chrome tab-grid limit: Legacy inherits the shared limit. Relative scale
+leaves the physical width beside the published result. Chrome's page snapshot
+animates with the physical width while the toolbar and tab card use the published
+width. The animation does not change Configuration or WindowMetrics, so the shared
+viewport hooks cannot see those frames. A Chrome-only snapshot route was not added.
 
 ## Safety Rules
 
@@ -535,3 +540,7 @@ that happens before the diagnostic bridge can deliver is written once later with
   the display pixels. A display-sized callback reuses the remembered window
   only when that window has the same orientation.
   Shared app-process code; Modern and Legacy see the same resource route.
+- 2026-10-05: Chrome's tab grid is a shared relative-scale limit. The page snapshot
+  animates from the physical width while the toolbar and card use the published
+  width. The clicks do not change WindowMetrics, so the shared viewport route
+  cannot see those frames. No Chrome-only route was added.

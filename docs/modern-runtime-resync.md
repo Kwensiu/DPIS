@@ -646,6 +646,14 @@ were recorded. Pack 2030 width mode already rewrote each window from its own inc
 can deliver is kept and written once after the bridge sink and capture are both ready. The line
 keeps `densityDpi` before and after, marked `delivery=retained-until-bridge`. The performance
 counter is not incremented a second time.
+2026-10-05 Chrome tab-grid limit: relative scale leaves the physical width observable
+beside the published result, and Chrome's page snapshot animates with the physical
+width while the toolbar and tab card use the published width. At 120% on
+1080x2376, Chrome 154 kept bounds at 1080x2376 across repeated tab-button clicks
+while the page preview sat inside the card and the fullscreen page. Width mode
+does not do this, because the app process keeps one absolute width. The animation
+never changes Configuration or WindowMetrics, so the shared viewport hooks cannot
+see those frames. A Chrome-only snapshot route was not added.
 
 ## Safety Rules
 
@@ -1190,3 +1198,9 @@ not change route selection, mutation policy, or evidence semantics.
   window even when no window bounds have been recorded, and it does not replace
   the display pixels. A display-sized callback reuses the remembered window
   only when that window has the same orientation.
+- 2026-10-05: Chrome's tab grid is a relative-scale limit. The page snapshot
+  animates from the physical width while the toolbar and card use the published
+  width, so the preview sits inside the card until the animation ends. Width mode
+  stays flush because it has one absolute width. Chrome 154 at 120% on 1080x2376
+  never changed WindowMetrics away from 1080x2376 during the clicks, so no shared
+  viewport write can reach those frames. No Chrome-only route was added.

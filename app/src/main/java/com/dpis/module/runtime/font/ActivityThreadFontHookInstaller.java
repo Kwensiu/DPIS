@@ -1,25 +1,18 @@
 package com.dpis.module.runtime.font;
 
-import com.dpis.module.config.DpisConfigStore;
+import android.content.res.Configuration;
 
 import com.dpis.module.BuildConfig;
-
-
+import com.dpis.module.config.DpisConfigStore;
 import com.dpis.module.diagnostics.DpisLog;
-
-
-import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
-
 import com.dpis.module.fonts.FontDebugStatsReporter;
-
-import android.content.res.Configuration;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.dpis.module.runtime.ProcessScopedInstallGate;
 
 import io.github.libxposed.api.XposedInterface;
 
@@ -63,11 +56,16 @@ public final class ActivityThreadFontHookInstaller {
                     .intercept(chain -> {
                         Object bindData = chain.getArg(0);
                         boolean changed = applyFontScaleToBindData(bindData, packageName, store);
+                        Object result = chain.proceed();
                         if (changed) {
+                            FontDebugStatsReporter.record(
+                                    "font-emulation-bind",
+                                    bindData.getClass().getSimpleName(),
+                                    null);
                             bridgeLog(xposed, "DPIS_FONT ActivityThread bind override applied: package="
                                     + packageName + ", hookId=" + HOOK_ID_HANDLE_BIND_APPLICATION);
                         }
-                        return chain.proceed();
+                        return result;
                     });
             installedPid = ProcessScopedInstallGate.currentPid();
             DpisLog.i("ActivityThread font hook ready: hookId="
@@ -93,10 +91,6 @@ public final class ActivityThreadFontHookInstaller {
         logIfChanged(buildFontLogKey(packageName, "activity-thread-bind"),
                 "DPIS_FONT ActivityThread bind override: fontScale "
                         + fontScale.original + " -> " + config.fontScale);
-        FontDebugStatsReporter.record(
-                "font-emulation-bind",
-                bindData.getClass().getSimpleName(),
-                null);
         return true;
     }
 
