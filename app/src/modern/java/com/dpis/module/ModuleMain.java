@@ -38,7 +38,6 @@ import com.dpis.module.hooks.HookRuntimePolicy;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver;
 
-import com.dpis.module.fonts.FontDebugStatsTransport;
 
 import com.dpis.module.runtime.probe.DebugPackageOverride;
 
@@ -77,7 +76,6 @@ public final class ModuleMain extends XposedModule {
         moduleLoadedObserved = true;
         currentProcessName = param.getProcessName();
         configStore = ConfigStoreFactory.createForXposedHost(this);
-        FontDebugStatsTransport.initialize(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         String message = "module loaded: process=" + param.getProcessName()
                 + ", marker=" + SystemServerDisplayDiagnostics.BUILD_MARKER;
@@ -611,7 +609,6 @@ public final class ModuleMain extends XposedModule {
         DpisConfigStore local = configStore;
         if (local == null) {
             local = ConfigStoreFactory.createForXposedHost(this);
-            FontDebugStatsTransport.initialize(this);
             configStore = local;
         }
         return local;

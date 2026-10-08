@@ -68,13 +68,6 @@
             android:name=".diagnostics.LogActivity"
             android:exported="false" />
         <activity
-            android:name=".fonts.FontDebugStatsIngestActivity"
-            android:excludeFromRecents="true"
-            android:exported="false"
-            android:finishOnTaskLaunch="true"
-            android:noHistory="true"
-            android:theme="@style/Theme.Dpis.Ingest" />
-        <activity
             android:name=".quickconfig.QuickConfigActivity"
             android:excludeFromRecents="true"
             android:exported="false"
@@ -106,15 +99,6 @@
         </activity-alias>
 
         <receiver
-            android:name=".fonts.FontDebugStatsReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="io.github.kwensiu.dpis.ACTION_FONT_DEBUG_STATS_UPDATE" />
-            </intent-filter>
-        </receiver>
-
-        <receiver
             android:name=".runtime.lifecycle.DpisPackageLifecycleReceiver"
             android:enabled="true"
             android:exported="false">
@@ -126,11 +110,6 @@
 
         <service
             android:name=".fonts.FontDebugOverlayService"
-            android:enabled="true"
-            android:exported="false" />
-
-        <service
-            android:name=".fonts.FontDebugStatsIngestService"
             android:enabled="true"
             android:exported="false" />
 
@@ -153,7 +132,7 @@
             android:name=".fonts.FontDebugStatsProvider"
             android:authorities="${applicationId}.fontdebugstats"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="true" />
 
         <provider
             android:name=".fonts.FontFileProvider"
