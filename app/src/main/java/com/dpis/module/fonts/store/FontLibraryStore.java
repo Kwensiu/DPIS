@@ -1,8 +1,8 @@
 package com.dpis.module.fonts;
 
-import com.dpis.module.diagnostics.DpisLog;
-
 import android.content.SharedPreferences;
+
+import com.dpis.module.diagnostics.DpisLog;
 
 import java.io.File;
 import java.io.FileInputStream;
