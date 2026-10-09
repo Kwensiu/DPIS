@@ -906,14 +906,14 @@ class FontLibraryStore @JvmOverloads constructor(
             }
             val importedAtEpochMs: Long
             try {
-                importedAtEpochMs = `object`.get(JSON_IMPORTED_AT_EPOCH_MS)!!.toLong()
+                importedAtEpochMs = (`object`.get(JSON_IMPORTED_AT_EPOCH_MS) ?: return null).toLong()
             } catch (ignored: NumberFormatException) {
                 return null
             }
             var ttcIndex = 0
             if (`object`.containsKey(JSON_TTC_INDEX)) {
                 try {
-                    ttcIndex = max(0, `object`.get(JSON_TTC_INDEX)!!.toInt())
+                    ttcIndex = max(0, (`object`.get(JSON_TTC_INDEX) ?: return null).toInt())
                 } catch (ignored: NumberFormatException) {
                     return null
                 }
