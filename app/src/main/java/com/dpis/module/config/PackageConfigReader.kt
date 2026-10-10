@@ -1,7 +1,7 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.templates.TemplateConfigValue
@@ -35,7 +35,7 @@ internal class PackageConfigReader(
             persistence.keyForPackageViewportScalePermille(packageName)
         ) ?: return null
         return persistence.normalizeViewportScalePermille(legacy)?.let(
-            AppConfigInputValidation::fromLegacyScalePermille
+            AppConfigInput::fromLegacyScalePermille
         )
     }
 

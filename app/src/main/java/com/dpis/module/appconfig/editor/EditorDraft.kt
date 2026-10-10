@@ -1,6 +1,6 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode
@@ -62,7 +62,7 @@ class EditorDraft(
 
     fun withFontMode(value: String?): EditorDraft = copy(
         viewportScaleInput, viewportAbsoluteInput, viewportMode, fontInput,
-        AppConfigInputValidation.initialFontMode(value), selectedTypefaceId, draftFontHookDomainsRaw,
+        AppConfigInput.initialFontMode(value), selectedTypefaceId, draftFontHookDomainsRaw,
         viewportApplyMode, fontHookDomainsResetRequested, viewportApplyModeResetRequested,
         wechatDpiInput, scopeSelected, dpisEnabled,
     )
@@ -124,7 +124,7 @@ class EditorDraft(
      * must not make that empty draft look Unsaved.
      */
     private fun persistedViewportApplyMode(): String {
-        val spec = AppConfigInputValidation.parseViewportTargetSpec(
+        val spec = AppConfigInput.parseViewportTargetSpec(
             viewportInputFor(viewportMode),
             viewportMode,
         )
@@ -156,10 +156,10 @@ class EditorDraft(
             val targetType = if (preferredTargetType != ViewportTargetType.OFF) {
                 preferredTargetType
             } else {
-                AppConfigInputValidation.initialViewportTargetType(item.viewportTargetSpec)
+                AppConfigInput.initialViewportTargetType(item.viewportTargetSpec)
             }
             val scaleInput = item.viewportScaleMilliPercent?.let {
-                AppConfigInputValidation.formatScaleMilliPercentInput(it)
+                AppConfigInput.formatScaleMilliPercentInput(it)
             } ?: ""
             val absoluteInput = item.viewportWidthDp?.toString()
                 ?: ""
@@ -169,7 +169,7 @@ class EditorDraft(
                 scaleInput
             }
             return EditorDraft(item.packageName, viewportInput, scaleInput, absoluteInput, targetType,
-                item.fontScalePercent?.toString() ?: "", AppConfigInputValidation.initialFontMode(item.fontMode),
+                item.fontScalePercent?.toString() ?: "", AppConfigInput.initialFontMode(item.fontMode),
                 item.typefaceId, item.effectiveFontHookDomainsRaw(), item.viewportMode, false, false,
                 item.wechatDpi?.toString() ?: "", item.inScope, item.dpisEnabled)
         }

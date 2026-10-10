@@ -465,7 +465,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun debugBuildKeepsRuntimeHookLogsVisible() {
-        val source: String = read("src/main/java/com/dpis/module/diagnostics/DpisLog.java")
+        val source: String = read("src/main/java/com/dpis/module/diagnostics/DpisLog.kt")
 
         Assert.assertTrue(source.contains("BuildConfig.DEBUG || isLoggingEnabled()"))
     }

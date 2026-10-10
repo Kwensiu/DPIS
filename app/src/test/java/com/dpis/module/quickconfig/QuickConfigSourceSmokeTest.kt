@@ -23,40 +23,55 @@ class QuickConfigSourceSmokeTest {
 
     @Test
     @Throws(IOException::class)
-    fun quickConfigUsesAppConfigSheetForForegroundPackage() {
+    fun quickConfigOpensEditorForResolvedForegroundPackage() {
         val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
         val editor: String =
             read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigComposeEditor.kt")
-        val resolver: String =
-            read("src/main/java/com/dpis/module/applist/ForegroundPackageResolver.java")
-        val manifestTile: String = read("src/main/java/com/dpis/module/QuickConfigTileService.java")
-        val tile: String =
-            read("src/main/java/com/dpis/module/quickconfig/QuickConfigTileService.java")
-        val styles: String = read("src/main/res/values/styles.xml")
-        val content: String =
-            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigContent.kt")
 
+        // Activity wiring requires an Android runtime; target selection is covered by QuickConfigTargetDecisionTest.
         Assert.assertTrue(activity.contains("EXTRA_PACKAGE_NAME"))
+        Assert.assertTrue(activity.contains("ForegroundAppResolver.resolve(this)"))
         Assert.assertTrue(activity.contains("installQuickConfig(presentation!!)"))
         Assert.assertTrue(editor.contains("EditorPresentationFactory.create("))
+        Assert.assertTrue(activity.contains("InstalledAppCatalogPolicy.createAppListItem("))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun quickConfigRequestsUsageAccessWhenTargetIsUnavailable() {
+        val activity: String = read("src/main/java/com/dpis/module/quickconfig/QuickConfigActivity.kt")
+
+        Assert.assertTrue(activity.contains("QuickConfigTargetDecision.decide("))
+        Assert.assertTrue(activity.contains("Settings.ACTION_USAGE_ACCESS_SETTINGS"))
+        Assert.assertTrue(activity.contains("Uri.parse(\"package:${'$'}packageName\")"))
+        Assert.assertTrue(activity.contains("Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun quickConfigUsesSheetChromeForEditorContent() {
+        val content: String =
+            read("src/main/java/com/dpis/module/quickconfig/presentation/QuickConfigContent.kt")
+        val styles: String = read("src/main/res/values/styles.xml")
+
         Assert.assertTrue(content.contains("SheetVisualChrome()"))
         Assert.assertFalse(content.contains("extraTopPadding = 12.dp"))
         Assert.assertTrue(content.contains("AppHookChainEditorPage(state = state)"))
         Assert.assertFalse(content.contains("startFeedbackDiagnostic"))
         Assert.assertTrue(content.contains("contentAlignment = Alignment.BottomCenter"))
         Assert.assertTrue(content.contains("RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)"))
-        Assert.assertTrue(activity.contains("InstalledAppCatalogPolicy.createAppListItem("))
         Assert.assertTrue(styles.contains("Theme.Dpis.QuickConfig"))
         Assert.assertTrue(styles.contains("android:windowIsTranslucent"))
-        Assert.assertTrue(resolver.contains("UsageStatsManager"))
-        Assert.assertTrue(resolver.contains("AppOpsManager.OPSTR_GET_USAGE_STATS"))
-        Assert.assertTrue(activity.contains("QuickConfigTargetDecision.decide("))
-        Assert.assertTrue(activity.contains("Settings.ACTION_USAGE_ACCESS_SETTINGS"))
-        Assert.assertTrue(activity.contains("Uri.parse(\"package:${'$'}packageName\")"))
-        Assert.assertTrue(activity.contains("Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)"))
-        Assert.assertTrue(resolver.contains("UsageEvents.Event.MOVE_TO_FOREGROUND"))
-        Assert.assertTrue(resolver.contains("SYSTEM_UI_PACKAGE"))
-        Assert.assertTrue(manifestTile.contains("extends com.dpis.module.quickconfig.QuickConfigTileService"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun quickSettingsTileOpensQuickConfigActivity() {
+        val manifestTile: String = read("src/main/java/com/dpis/module/QuickConfigTileService.kt")
+        val tile: String =
+            read("src/main/java/com/dpis/module/quickconfig/QuickConfigTileService.kt")
+
+        Assert.assertTrue(manifestTile.contains("com.dpis.module.quickconfig.QuickConfigTileService"))
         Assert.assertTrue(tile.contains("QuickConfigActivity.createIntent("))
         Assert.assertTrue(tile.contains("startActivityAndCollapse"))
     }

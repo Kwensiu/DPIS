@@ -1,6 +1,6 @@
 package com.dpis.module.appconfig.editor
 
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.fonts.FontApplyMode
@@ -50,10 +50,10 @@ class EditorPresentation private constructor() {
         @JvmField val hookChainText: String = hookChainText ?: ""
         @JvmField val automaticFontHookDomains: Set<String> = automaticFontHookDomains.toSet()
         @JvmField val destination: ConfigEditorDestination = destination ?: ConfigEditorDestination.MAIN
-        @JvmField val viewportInputValid = AppConfigInputValidation.isViewportInputValid(
+        @JvmField val viewportInputValid = AppConfigInput.isViewportInputValid(
             draft.viewportInputFor(draft.viewportMode), draft.viewportMode,
         )
-        @JvmField val fontInputValid = AppConfigInputValidation.isFontScaleInputValid(draft.fontInput)
+        @JvmField val fontInputValid = AppConfigInput.isFontScaleInputValid(draft.fontInput)
         @JvmField val wechatDpiInputValid = !WechatDpiConfig.appliesTo(item.packageName)
             || WechatDpiConfig.isInputValid(draft.wechatDpiInput)
         @JvmField val saveEnabled = viewportInputValid && fontInputValid && wechatDpiInputValid

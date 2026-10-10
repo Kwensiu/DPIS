@@ -2,6 +2,7 @@ package com.dpis.module.diagnostics
 
 import com.dpis.module.diagnostics.device.RuntimeTransport
 import java.util.ArrayDeque
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -22,8 +23,13 @@ object RuntimeBridgeEvents {
     private const val MAX_PENDING_HOT_PATH_EVENTS = 4096
     private const val MAX_RETAINED_APPLIED_EVENTS = 16
 
+    private sealed interface PendingHotPathEvent {
+        data class Message(val value: String) : PendingHotPathEvent
+        class Flush(val completed: CountDownLatch) : PendingHotPathEvent
+    }
+
     private val pendingHotPathEvents =
-        LinkedBlockingQueue<String>(MAX_PENDING_HOT_PATH_EVENTS)
+        LinkedBlockingQueue<PendingHotPathEvent>(MAX_PENDING_HOT_PATH_EVENTS)
     private val retainedAppliedEvents = ArrayDeque<String>()
     private val dispatcherLock = Object()
     private val droppedHotPathEvents = AtomicLong()
@@ -114,7 +120,7 @@ object RuntimeBridgeEvents {
     }
 
     private fun enqueueHotPathMessage(message: String) {
-        if (!pendingHotPathEvents.offer(message)) {
+        if (!pendingHotPathEvents.offer(PendingHotPathEvent.Message(message))) {
             droppedHotPathEvents.incrementAndGet()
             return
         }
@@ -154,7 +160,7 @@ object RuntimeBridgeEvents {
             copy
         }
         for (message in pending) {
-            if (!pendingHotPathEvents.offer(message)) {
+            if (!pendingHotPathEvents.offer(PendingHotPathEvent.Message(message))) {
                 retainApplied(message)
                 droppedHotPathEvents.incrementAndGet()
                 return
@@ -174,7 +180,14 @@ object RuntimeBridgeEvents {
             val thread = Thread({
                 while (true) {
                     try {
-                        val message = pendingHotPathEvents.take()
+                        val message = when (val event = pendingHotPathEvents.take()) {
+                            is PendingHotPathEvent.Flush -> {
+                                event.completed.countDown()
+                                continue
+                            }
+
+                            is PendingHotPathEvent.Message -> event.value
+                        }
                         synchronized(dispatcherLock) {
                             dispatchingHotPathEvents++
                         }
@@ -202,18 +215,15 @@ object RuntimeBridgeEvents {
 
     @JvmStatic
     internal fun flushForTest() {
-        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2L)
-        synchronized(dispatcherLock) {
-            while ((pendingHotPathEvents.isNotEmpty() || dispatchingHotPathEvents > 0) &&
-                System.nanoTime() < deadline
-            ) {
-                try {
-                    dispatcherLock.wait(10L)
-                } catch (_: InterruptedException) {
-                    Thread.currentThread().interrupt()
-                    return
-                }
-            }
+        val completed = CountDownLatch(1)
+        if (!pendingHotPathEvents.offer(PendingHotPathEvent.Flush(completed))) {
+            return
+        }
+        ensureDispatcher()
+        try {
+            completed.await(2L, TimeUnit.SECONDS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
         }
     }
 

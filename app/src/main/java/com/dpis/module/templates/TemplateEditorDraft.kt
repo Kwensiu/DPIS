@@ -1,6 +1,6 @@
 package com.dpis.module.templates
 
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetType
@@ -26,5 +26,5 @@ class TemplateEditorDraft(
     @JvmField val viewportScaleInput = viewportScaleInput.orEmpty()
     @JvmField val viewportAbsoluteInput = viewportAbsoluteInput.orEmpty()
     @JvmField val fontInput = fontInput.orEmpty()
-    @JvmField val fontMode = AppConfigInputValidation.initialFontMode(fontMode)
+    @JvmField val fontMode = AppConfigInput.initialFontMode(fontMode)
 }

@@ -10,7 +10,7 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.Executors
 import com.dpis.module.diagnostics.Session
-import com.dpis.module.diagnostics.AppLauncher
+import com.dpis.module.diagnostics.device.TargetAppLauncher
 import com.dpis.module.diagnostics.PackageActions
 import com.dpis.module.diagnostics.FeedbackDiagnosticPageRequest
 import com.dpis.module.diagnostics.ExportBuilder
@@ -34,7 +34,7 @@ class FeedbackDiagnosticActivitySession(
 
     private val exportExecutor = Executors.newSingleThreadExecutor()
     private val session = retained?.session ?: Session(activity.applicationContext)
-    private val launcher = AppLauncher(activity)
+    private val launcher = TargetAppLauncher(activity)
     private val packageActions = PackageActions(activity, exportExecutor, SAVE_REQUEST)
     private val confirm = FeedbackDiagnosticConfirm(
         activity,

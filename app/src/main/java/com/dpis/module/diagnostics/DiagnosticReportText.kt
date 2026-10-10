@@ -1,6 +1,7 @@
 package com.dpis.module.diagnostics
 
-import com.dpis.module.appconfig.AppConfigInputValidation
+import com.dpis.module.appconfig.AppConfigInput
+import com.dpis.module.diagnostics.device.TransportSelfTest
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.viewport.ViewportTargetSpec
 import java.util.LinkedHashMap
@@ -239,14 +240,14 @@ internal object DiagnosticReportText {
     }
 
     private fun appendRuntimeSelfTest(builder: StringBuilder, runtimeEvents: List<String>?) {
-        val status = RuntimeSelfTest.lastStatus()
+        val status = TransportSelfTest.lastStatus()
         var transportCount = 0
         var hotPathProbeFound = false
         for (event in runtimeEvents.orEmpty()) {
             if (event.contains("source=runtime-transport")) {
                 transportCount++
             }
-            if (RuntimeSelfTest.hasHotPathProbe(listOf(event))) {
+            if (TransportSelfTest.hasHotPathProbe(listOf(event))) {
                 hotPathProbeFound = true
             }
         }
@@ -425,7 +426,7 @@ internal object DiagnosticReportText {
         val spec: ViewportTargetSpec = request.viewportTargetSpec
         val target = when {
             spec.isRelativeScale() ->
-                "scale=" + AppConfigInputValidation.formatScaleMilliPercent(spec.scaleMilliPercent())
+                "scale=" + AppConfigInput.formatScaleMilliPercent(spec.scaleMilliPercent())
 
             spec.isAbsoluteDp() -> "widthDp=" + spec.absoluteWidthDp()
             else -> "off"

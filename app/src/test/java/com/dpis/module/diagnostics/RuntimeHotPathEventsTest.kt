@@ -14,6 +14,7 @@ import org.junit.Test
 class RuntimeHotPathEventsTest {
     @After
     fun tearDown() {
+        RuntimeBridgeEvents.flushForTest()
         RuntimeEvents.cancel()
         RuntimeHotPathEvents.resetForTest()
         RuntimeBridgeEvents.setBridgeSink(null)
@@ -295,6 +296,15 @@ class RuntimeHotPathEventsTest {
             1L,
             RuntimeHotPathEvents.performanceSnapshotForTest()["display_metrics_override"]!!.applied,
         )
+    }
+
+    @Test
+    fun bridgeFlushReturnsWhenInterrupted() {
+        Thread.currentThread().interrupt()
+
+        RuntimeBridgeEvents.flushForTest()
+
+        assertTrue(Thread.interrupted())
     }
 
     @Test

@@ -53,8 +53,8 @@ class AppConfigDialogBinderSourceSmokeTest {
         val coordinator = read(
             "src/main/java/com/dpis/module/ui/presentation/MainWorkspacePresentationCoordinator.kt",
         )
-        assertTrue(coordinator.contains("AppConfigSheetWizardStore.shouldShowAdvancedHint(context)"))
-        assertTrue(coordinator.contains("AppConfigSheetWizardStore.markAdvancedHintDismissed(context)"))
+        assertTrue(coordinator.contains("AppConfigWizardStore.shouldShowAdvancedHint(context)"))
+        assertTrue(coordinator.contains("AppConfigWizardStore.markAdvancedHintDismissed(context)"))
     }
 
     @Test
