@@ -14,6 +14,7 @@ import org.junit.Test
 class RuntimeHotPathEventsTest {
     @After
     fun tearDown() {
+        RuntimeBridgeEvents.flushForTest()
         RuntimeEvents.cancel()
         RuntimeHotPathEvents.resetForTest()
         RuntimeBridgeEvents.setBridgeSink(null)
