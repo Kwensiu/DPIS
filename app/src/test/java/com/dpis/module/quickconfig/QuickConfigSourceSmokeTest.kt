@@ -67,11 +67,11 @@ class QuickConfigSourceSmokeTest {
     @Test
     @Throws(IOException::class)
     fun quickSettingsTileOpensQuickConfigActivity() {
-        val manifestTile: String = read("src/main/java/com/dpis/module/QuickConfigTileService.java")
+        val manifestTile: String = read("src/main/java/com/dpis/module/QuickConfigTileService.kt")
         val tile: String =
-            read("src/main/java/com/dpis/module/quickconfig/QuickConfigTileService.java")
+            read("src/main/java/com/dpis/module/quickconfig/QuickConfigTileService.kt")
 
-        Assert.assertTrue(manifestTile.contains("extends com.dpis.module.quickconfig.QuickConfigTileService"))
+        Assert.assertTrue(manifestTile.contains("com.dpis.module.quickconfig.QuickConfigTileService"))
         Assert.assertTrue(tile.contains("QuickConfigActivity.createIntent("))
         Assert.assertTrue(tile.contains("startActivityAndCollapse"))
     }
