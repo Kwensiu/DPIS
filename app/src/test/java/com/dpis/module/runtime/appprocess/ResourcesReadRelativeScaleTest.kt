@@ -50,7 +50,7 @@ class ResourcesReadRelativeScaleTest {
     }
 
     @Test
-    fun systemRelativeConfigurationReadAlignsAPhysicalConfigWithThePublishedResult() {
+    fun systemOwnedFullscreenReadLeavesPhysicalAndScaledConfigurationsUnchanged() {
         val targetSpec = ViewportTargetSpec.relativeScale(120000)
         val store = DpisConfigStore(FakePrefs())
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec)
@@ -64,7 +64,7 @@ class ResourcesReadRelativeScaleTest {
                 432,
                 ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
                 ViewportOverride.Result(432, 950, 432, 400),
-                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
                 RuntimeClock.crossProcessMarkerMillis(),
             ),
         )
@@ -75,6 +75,13 @@ class ResourcesReadRelativeScaleTest {
             smallestScreenWidthDp = 360
             fontScale = 1.0f
         }
+        val scaled = Configuration().apply {
+            densityDpi = 400
+            screenWidthDp = 432
+            screenHeightDp = 950
+            smallestScreenWidthDp = 432
+            fontScale = 1.0f
+        }
 
         ResourcesReadHookInstaller.applyConfigurationOverride(
             physical,
@@ -82,21 +89,21 @@ class ResourcesReadRelativeScaleTest {
             store,
             "ResourcesRead(getConfiguration)",
         )
-
-        assertEquals(432, physical.screenWidthDp)
-        assertEquals(950, physical.screenHeightDp)
-        assertEquals(432, physical.smallestScreenWidthDp)
-        assertEquals(400, physical.densityDpi)
-
         ResourcesReadHookInstaller.applyConfigurationOverride(
-            physical,
+            scaled,
             PACKAGE_NAME,
             store,
             "ResourcesRead(getConfiguration)",
         )
 
-        assertEquals(432, physical.screenWidthDp)
-        assertEquals(400, physical.densityDpi)
+        assertEquals(360, physical.screenWidthDp)
+        assertEquals(792, physical.screenHeightDp)
+        assertEquals(360, physical.smallestScreenWidthDp)
+        assertEquals(480, physical.densityDpi)
+        assertEquals(432, scaled.screenWidthDp)
+        assertEquals(950, scaled.screenHeightDp)
+        assertEquals(432, scaled.smallestScreenWidthDp)
+        assertEquals(400, scaled.densityDpi)
     }
 
     @Test

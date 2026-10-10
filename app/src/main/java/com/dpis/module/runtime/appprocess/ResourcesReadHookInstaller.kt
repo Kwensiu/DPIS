@@ -897,14 +897,24 @@ object ResourcesReadHookInstaller {
             return
         }
         val effectiveWindowScoped = windowScoped &&
-                !WindowBoundsState.matchesDisplayPixels(originalWidthPixels, originalHeightPixels)
+                !differsFromRecordedWindow(
+                    packageName,
+                    originalWidthPixels,
+                    originalHeightPixels,
+                )
         val localViewportResult =
             resolveLocalMetricsViewportResult(config, packageName, store, effectiveWindowScoped)
         if (localViewportResult != null && localViewportResult.densityDpi > 0) {
             targetDensityDpi = localViewportResult.densityDpi
             densitySource = "viewport-target"
         }
-        val applied = matchingVirtualDisplayState(config, effectiveWindowScoped)
+        val applied = matchingVirtualDisplayState(
+            packageName,
+            config,
+            effectiveWindowScoped,
+            originalWidthPixels,
+            originalHeightPixels,
+        )
         if (applied != null && applied.densityDpi > 0) {
             targetDensityDpi = applied.densityDpi
             densitySource = "virtual-display-state"
@@ -967,6 +977,16 @@ object ResourcesReadHookInstaller {
         return ViewportConfigurationScope.isWindowScoped(config)
                 || WindowBoundsState.hasActiveWindow(packageName)
                 || WindowBoundsState.matchesWindowConfiguration(packageName, config)
+    }
+
+    /** Display pixels differ from the recorded window, so they stay on the display path. */
+    private fun differsFromRecordedWindow(
+        packageName: String?,
+        widthPixels: Int,
+        heightPixels: Int,
+    ): Boolean {
+        val window = WindowBoundsState.currentWindowBounds(packageName) ?: return false
+        return abs(widthPixels - window.width) > 1 || abs(heightPixels - window.height) > 1
     }
 
     private fun resolveMetricsFontScale(
@@ -1163,11 +1183,23 @@ object ResourcesReadHookInstaller {
     }
 
     private fun matchingVirtualDisplayState(
+        packageName: String?,
         config: Configuration,
-        windowScoped: Boolean
+        windowScoped: Boolean,
+        metricsWidthPixels: Int,
+        metricsHeightPixels: Int,
     ): VirtualDisplayOverride.Result? {
         val current = VirtualDisplayState.get()
-        if (windowScoped) {
+        // A cached target can be shorter than the Surface this callback already
+        // reported. Replacing that height stretches image edges.
+        if (configurationMatchesMetrics(config, metricsWidthPixels, metricsHeightPixels)
+            && current != null
+            && current.widthPx == metricsWidthPixels
+            && abs(current.heightPx - metricsHeightPixels) > 1
+        ) {
+            return null
+        }
+        if (windowScoped || WindowBoundsState.hasActiveWindow(packageName)) {
             return null
         }
         // The shared display state may have been produced by an earlier target.
@@ -1176,6 +1208,23 @@ object ResourcesReadHookInstaller {
             return null
         }
         return current
+    }
+
+    private fun configurationMatchesMetrics(
+        config: Configuration,
+        metricsWidthPixels: Int,
+        metricsHeightPixels: Int,
+    ): Boolean {
+        if (config.densityDpi <= 0 || config.screenWidthDp <= 0 ||
+            config.screenHeightDp <= 0 || metricsWidthPixels <= 0 || metricsHeightPixels <= 0
+        ) {
+            return false
+        }
+        val density = config.densityDpi / 160f
+        val configurationWidthPixels = kotlin.math.round(config.screenWidthDp * density).toInt()
+        val configurationHeightPixels = kotlin.math.round(config.screenHeightDp * density).toInt()
+        return abs(configurationWidthPixels - metricsWidthPixels) <= 1 &&
+            abs(configurationHeightPixels - metricsHeightPixels) <= 1
     }
 
     private fun resolveLocalMetricsViewportResult(

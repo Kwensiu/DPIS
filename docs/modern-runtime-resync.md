@@ -267,6 +267,33 @@ and does not emit a second `applied` timeline event. The live `Paint.setTextSize
 hook remains `PaintTextSizeHookInstaller` only. Regression signature:
 `28.2 -> 26.508` on an already-scaled same-object or layout-owned write.
 
+As of 2026-10-10, a relative-scale system-mode app stuttered on 2.3.1 and was
+smooth on 2.3.0. Hook body time is not the difference: `getDisplayMetrics`
+stays near 1 µs. The route difference is `resources_manager_config_override`.
+2.3.0 skipped it with `system_server_owns_relative_viewport`. 2.3.1 applied
+the still-physical display configuration, including during
+`createBaseTokenResources`. A later capture with the Display supplement absent
+still applied that configuration and still kept the main thread busy.
+Fullscreen configuration, including a still-physical one, stays with
+system_server. Resource creation, `ResourcesImpl.updateConfiguration`, and
+`Resources.getConfiguration` do not rewrite it. A smaller window, and a display
+result copied onto that window, stay in the app process so the window keeps its
+own height. Display metrics keep the physical height when a cached target is
+shorter than the Surface the callback already reported.
+A later feed trace showed the same boundary. `ResourcesImpl.updateConfiguration`
+applied a one-percent fullscreen change before a long run of main-thread
+traversal, inflation, and layout. Any applied fullscreen change, including a
+very small one, sent the scrolling list down that creation path. That
+app-process write now stays deferred with resource creation.
+Display and WindowMetrics supplements stay installed for system mode.
+The same capture showed a same-orientation active window whose display-sized
+metrics were replaced by a shorter cached height, which stretched image edges.
+Resources display reads now keep the physical display pixels whenever a window
+episode is active, even when the window and display have the same aspect ratio.
+The classification also compares the callback's physical size with the active
+window bounds before trusting cached virtual-display pixels, so stale target
+pixels cannot turn a full display callback into a window-sized image surface.
+
 ## Full Tree
 
 ```text
