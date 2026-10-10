@@ -42,7 +42,7 @@ class MainActivitySourceSmokeTest {
         val updateSession = read(
                 "src/main/java/com/dpis/module/updates/presentation/MainUpdateSession.kt"
         )
-        val homeState = read("src/main/java/com/dpis/module/home/HomeUpdateUiState.java")
+        val homeState = read("src/main/java/com/dpis/module/home/HomeUpdateUiState.kt")
         val composeHome = read(
                 "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
@@ -58,7 +58,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.UP_TO_DATE)"))
         assertTrue(updateSession.contains("applyHomeUpdateState(HomeUpdateUiState.FAILED)"))
         assertTrue(homeState.contains("CHECKING,"))
-        assertTrue(homeState.contains("AVAILABLE -> context.getString"))
+        assertTrue(homeState.contains("Status.AVAILABLE -> context.getString"))
         assertTrue(composeHome.contains("state.updateState.subtitle(context)"))
     }
 
