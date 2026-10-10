@@ -515,36 +515,39 @@ class AppProcessHookInstallerTest {
 
     @Test
     fun debugFlutterSettingsPropertiesAreDebugOnlyAndPackageScoped() {
-        val source =
-            read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.kt")
-        val planner = read("src/main/java/com/dpis/module/hooks/HookExecutionPlanner.java")
-        val packagePlan = read("src/main/java/com/dpis/module/config/ModulePackagePlan.kt")
+        val debugOverride = DebugFontOverride.of(true, true)
+        val plan = HookExecutionPlanner.buildPlan(
+            createPolicy(safeMode = false),
+            "com.example.app",
+            false,
+            ViewportApplyMode.OFF,
+            true,
+            FontApplyMode.FIELD_REWRITE,
+            true,
+            true,
+            HookDomainOverride.automatic(),
+            debugOverride,
+        )
 
-        assertTrue(source.contains("debug.dpis.font.force_flutter_settings_package"))
-        assertTrue(source.contains("debug.dpis.font.flutter_settings_only_package"))
-        assertTrue(source.contains("debug.dpis.font.disable_textview_absolute_rewrite_package"))
-        assertTrue(source.contains("debug.dpis.font.disable_activity_thread_package"))
-        assertTrue(source.contains("debug.dpis.viewport.disable_display_supplement_package"))
-        assertTrue(source.contains("debug.dpis.viewport.disable_resources_impl_package"))
-        assertTrue(source.contains("debug.dpis.viewport.disable_resources_read_package"))
-        assertTrue(source.contains("DebugPackageOverride.matches("))
         assertTrue(
-            read("src/main/java/com/dpis/module/runtime/probe/DebugPackageOverride.java")
-                .contains("if (!BuildConfig.DEBUG || packageName == null"),
+            AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.app",
+                "com.example.app",
+            ),
         )
-        assertTrue(source.contains("DebugFontOverride.of("))
-        assertTrue(source.contains("packagePlan.buildExecutionPlan("))
-        assertFalse(source.contains("HookExecutionPlanner.buildPlan("))
-        assertTrue(packagePlan.contains("HookExecutionPlanner.buildPlan("))
-        assertTrue(planner.contains("if (resolvedDebug.forceFlutterSettings)"))
-        assertTrue(planner.contains("shapedDomains.add(FontHookDomainRegistry.ID_FLUTTER_SETTINGS);"))
-        assertTrue(planner.contains("if (resolvedDebug.disableTextViewAbsoluteRewrite)"))
-        assertTrue(
-            planner.contains("shapedDomains.remove(FontHookDomainRegistry.ID_TEXTVIEW_ABSOLUTE_REWRITE);"),
+        assertFalse(
+            AppProcessHookInstaller.isDebugPropertyPackageMatchForTest(
+                "debug.dpis.font.flutter_settings_only_package",
+                "com.example.other",
+                "com.example.app",
+            ),
         )
-        assertTrue(planner.contains("if (resolvedDebug.disableActivityThreadFont)"))
-        assertTrue(planner.contains("shapedDomains.remove(FontHookDomainRegistry.ID_ACTIVITY_THREAD_FONT);"))
-        assertTrue(planner.contains("!resolvedDebug.flutterSettingsOnly"))
+        assertTrue(plan.flutterSettingsEnabled)
+        assertTrue(plan.debugForceFlutterSettings)
+        assertTrue(plan.debugFlutterSettingsOnly)
+        assertFalse(plan.resourcesHooksEnabled)
+        assertTrue(plan.hookDomains.contains(FontHookDomainRegistry.ID_FLUTTER_SETTINGS))
     }
 
     @Test
