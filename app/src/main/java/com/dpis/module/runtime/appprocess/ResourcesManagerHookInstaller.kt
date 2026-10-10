@@ -477,10 +477,9 @@ object ResourcesManagerHookInstaller {
             store, packageName, config.fontScale
         )
         FontScaleOverride.applyToConfiguration(config, fontScale)
-        // A configuration that already carries the relative result stays put, so
-        // a later apply/create callback cannot multiply it (360 -> 432 -> 518).
-        // A still-physical configuration is written once, together with density.
-        // Keep font scaling independent of that viewport decision.
+        // Font scaling stays independent of viewport ownership. Fullscreen
+        // configuration, including one that is still physical, stays with
+        // system_server. A smaller window is still scaled here.
         if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
             recordViewportSkip(
                 packageName,

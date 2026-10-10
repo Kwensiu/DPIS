@@ -260,6 +260,69 @@ class ResourcesReadStableDensityTest {
     }
 
     @Test
+    fun reportedDisplayHeightStaysWhileASmallerWindowIsActive() {
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(288, 589, 288, 600, 1080, 2208),
+        )
+        WindowBoundsState.record(PACKAGE_NAME, 0, 0, 1079, 2200)
+        val config = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 480
+            density = 3.0f
+            scaledDensity = 3.0f
+            widthPixels = 1080
+            heightPixels = 2376
+        }
+
+        ResourcesReadHookInstaller.applyMetricsOverride(
+            null,
+            metrics,
+            config,
+            PACKAGE_NAME,
+        )
+
+        assertEquals(1080, metrics.widthPixels)
+        assertEquals(2376, metrics.heightPixels)
+    }
+
+    @Test
+    fun reportedDisplayHeightStaysBeforeAWindowIsKnown() {
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(288, 589, 288, 600, 1080, 2208),
+        )
+        val config = Configuration().apply {
+            densityDpi = 480
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 480
+            density = 3.0f
+            scaledDensity = 3.0f
+            widthPixels = 1080
+            heightPixels = 2376
+        }
+
+        ResourcesReadHookInstaller.applyMetricsOverride(
+            null,
+            metrics,
+            config,
+            PACKAGE_NAME,
+        )
+
+        assertEquals(1080, metrics.widthPixels)
+        assertEquals(2376, metrics.heightPixels)
+    }
+
+    @Test
     fun targetMatchingSmallestWidthDoesNotRewriteWindowConfiguration() {
         val config = Configuration()
         config.densityDpi = 420

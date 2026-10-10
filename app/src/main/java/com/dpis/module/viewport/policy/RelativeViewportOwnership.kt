@@ -26,11 +26,10 @@ object RelativeViewportOwnership {
     )
 
     /**
-     * A display-shaped configuration is left with system_server only after it
-     * already carries the relative result. A still-physical configuration is
-     * written once here, with the same density, so a title and a list cannot
-     * use two sizes. A window configuration is still scaled here, because the
-     * system result is the full display and does not fit the window.
+     * Fullscreen configuration stays with system_server, including one that is
+     * still physical. Resource creation and configuration updates in the app
+     * process do not rewrite it. A smaller window is still scaled here,
+     * because system_server copies the full display result onto it.
      */
     @JvmStatic
     fun shouldDefer(
@@ -42,7 +41,8 @@ object RelativeViewportOwnership {
         if (!shouldDefer(store, packageName, policy)) return false
         if (belongsToActiveWindow(packageName, config)) return false
         if (displayResultWasCopiedOntoAnotherWindow(store, packageName, config)) return false
-        return alreadyCarriesRelativeResult(store, packageName, config)
+        if (WindowBoundsState.hasActiveWindow(packageName)) return false
+        return true
     }
 
     /**

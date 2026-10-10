@@ -20,7 +20,7 @@ import org.junit.Test
 
 class ResourcesManagerRelativeOwnershipTest {
     @Test
-    fun systemOwnedRelativeViewportWritesPhysicalConfigurationOnce() {
+    fun systemOwnedFullscreenConfigurationStaysWithSystemServer() {
         val packageName = "com.example.target"
         val config = Configuration().apply {
             screenWidthDp = 360
@@ -45,10 +45,10 @@ class ResourcesManagerRelativeOwnershipTest {
             "ResourcesManager",
         )
 
-        assertEquals(432, config.screenWidthDp)
-        assertEquals(950, config.screenHeightDp)
-        assertEquals(432, config.smallestScreenWidthDp)
-        assertEquals(400, config.densityDpi)
+        assertEquals(360, config.screenWidthDp)
+        assertEquals(792, config.screenHeightDp)
+        assertEquals(360, config.smallestScreenWidthDp)
+        assertEquals(480, config.densityDpi)
 
         ResourcesManagerHookInstaller.applyResourceOverrides(
             config,
@@ -57,10 +57,52 @@ class ResourcesManagerRelativeOwnershipTest {
             "ResourcesManager",
         )
 
-        assertEquals(432, config.screenWidthDp)
-        assertEquals(950, config.screenHeightDp)
-        assertEquals(432, config.smallestScreenWidthDp)
-        assertEquals(400, config.densityDpi)
+        assertEquals(360, config.screenWidthDp)
+        assertEquals(792, config.screenHeightDp)
+        assertEquals(360, config.smallestScreenWidthDp)
+        assertEquals(480, config.densityDpi)
+    }
+
+    @Test
+    fun publishedFullscreenResultStaysOutOfResourceCreation() {
+        val packageName = "com.example.target"
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs()).also {
+            it.setTargetViewportSpec(packageName, targetSpec)
+            it.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO)
+            it.setSystemServerHooksEnabled(true)
+        }
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                432,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        val config = Configuration().apply {
+            screenWidthDp = 360
+            screenHeightDp = 792
+            smallestScreenWidthDp = 360
+            densityDpi = 480
+            fontScale = 1.0f
+        }
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            config,
+            store,
+            packageName,
+            "ResourcesManagerCreate(createBaseTokenResources)",
+        )
+
+        assertEquals(360, config.screenWidthDp)
+        assertEquals(792, config.screenHeightDp)
+        assertEquals(360, config.smallestScreenWidthDp)
+        assertEquals(480, config.densityDpi)
     }
 
     @Test

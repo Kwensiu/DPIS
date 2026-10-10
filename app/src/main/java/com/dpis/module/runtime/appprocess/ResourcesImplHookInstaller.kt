@@ -8,7 +8,9 @@ import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportConfigurationScope
@@ -35,6 +37,7 @@ object ResourcesImplHookInstaller {
     @Volatile
     private var hookInstalled = false
     private val LAST_MESSAGES = ConcurrentHashMap<String, String>()
+    private val HOTPATH_SAMPLER = RuntimeHotPathEvidenceSampler()
 
     @JvmStatic
     fun resetForHotReload() {
@@ -128,6 +131,21 @@ object ResourcesImplHookInstaller {
             store, packageName, config.fontScale
         )
         val fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale)
+        if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
+            val sample = HOTPATH_SAMPLER.sample(
+                "skip|" + packageName + "|resources_impl_override|system_server_owns_relative_viewport",
+                "source=ResourcesImpl, reason=system_server_owns_relative_viewport",
+            )
+            if (sample.emit) {
+                RuntimeHotPathEvents.skipped(
+                    packageName,
+                    "viewport",
+                    "resources_impl_override",
+                    sample.detail,
+                )
+            }
+            return
+        }
         if (!ViewportConfigurationScope.isValidDisplayConfiguration(config)) {
             logIfChanged(
                 packageName + ":invalid-config",

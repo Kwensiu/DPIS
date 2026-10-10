@@ -381,6 +381,24 @@ animates with the physical width while the toolbar and tab card use the publishe
 width. The animation does not change Configuration or WindowMetrics, so the shared
 viewport hooks cannot see those frames. A Chrome-only snapshot route was not added.
 
+2026-10-09 shared display-pixel ownership: a relative-scale diagnostic showed an
+active same-orientation window where stale viewport pixels replaced a taller
+display metrics callback, producing stretched image edges. Shared
+`ResourcesRead` now keeps display-sized physical pixels whenever a window
+episode is active and does not reuse cached virtual-display pixels for that
+callback. Legacy inherits this boundary.
+2026-10-10 shared fullscreen ownership: a relative-scale system-mode app
+stuttered on 2.3.1 because the app process rewrote a still-physical fullscreen
+configuration that 2.3.0 left with system_server. Shared ownership now defers
+that fullscreen configuration, including before the relative result is
+published. A smaller window is still rewritten in the app process. Legacy
+inherits this boundary.
+2026-10-10 shared fullscreen update: `ResourcesImpl.updateConfiguration` and
+`Resources.getConfiguration` leave a system-owned fullscreen configuration
+unchanged. A feed trace showed a one-percent app-process change before a long
+run of main-thread inflation. A smaller window is still rewritten in the app
+process. Legacy inherits this boundary.
+
 ## Safety Rules
 
 - Changes under `app/src/modern/java/` should not be described as legacy

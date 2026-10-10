@@ -69,12 +69,12 @@ class RelativeViewportOwnershipTest {
     }
 
     @Test
-    fun physicalDisplayConfigurationIsWrittenUntilItCarriesTheRelativeResult() {
+    fun fullscreenPhysicalConfigurationStaysWithSystemServer() {
         val packageName = "com.example.target"
         val store = systemOwnedStore(packageName)
         val target = ViewportTargetSpec.relativeScale(120000)
 
-        assertFalse(
+        assertTrue(
             RelativeViewportOwnership.shouldDefer(
                 store,
                 packageName,
@@ -96,7 +96,7 @@ class RelativeViewportOwnershipTest {
             ),
         )
 
-        assertFalse(
+        assertTrue(
             RelativeViewportOwnership.shouldDefer(
                 store,
                 packageName,
