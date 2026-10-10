@@ -299,6 +299,15 @@ class RuntimeHotPathEventsTest {
     }
 
     @Test
+    fun bridgeFlushReturnsWhenInterrupted() {
+        Thread.currentThread().interrupt()
+
+        RuntimeBridgeEvents.flushForTest()
+
+        assertTrue(Thread.interrupted())
+    }
+
+    @Test
     fun doesNotEmitDiagnosticFallbackLogWhenCaptureInactive() {
         RuntimeHotPathEvents.begin(
             "com.example.app",
