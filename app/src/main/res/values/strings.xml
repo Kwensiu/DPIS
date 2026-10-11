@@ -173,6 +173,9 @@ Mini Programs are not supported yet.</string>
     <string name="feedback_diagnostic_duration_custom_cancel">Cancel</string>
     <string name="feedback_diagnostic_duration_toggle_title">Automatic stop</string>
     <string name="feedback_diagnostic_duration_toggle_hint">Stop the diagnosis in the background after the selected duration. You can still return to DPIS earlier.</string>
+    <string name="feedback_diagnostic_perfetto_section">System trace</string>
+    <string name="feedback_diagnostic_perfetto_toggle_title">Perfetto capture</string>
+    <string name="feedback_diagnostic_perfetto_toggle_hint">Enable when needed to analyze performance and jank.</string>
     <string name="feedback_diagnostic_recording_title">Diagnosing</string>
     <string name="feedback_diagnostic_exit_confirm_message">Leaving will stop the diagnostic session and clear its current package and results.</string>
     <string name="feedback_diagnostic_exit_clear_action">Stop and clear</string>

@@ -3,6 +3,7 @@ package com.dpis.module.diagnostics
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.dpis.module.diagnostics.device.PerfettoTrace
 import com.dpis.module.root.RootAccessProbe
 import java.io.IOException
 import java.util.concurrent.ExecutorService
@@ -63,6 +64,9 @@ class Session(context: Context) {
 
         override fun dpisPackageName(): String = applicationContext.packageName
 
+            override fun diagnosticCacheDirectory(): String =
+                applicationContext.cacheDir.absolutePath
+
         override fun rootAccess(): RootAccessProbe.Result = RootAccessProbe.cachedResult()
 
         override fun systemHooksEnabled(): Boolean = host?.systemHooksEnabled() ?: false
@@ -114,12 +118,18 @@ class Session(context: Context) {
         request: Coordinator.Request,
         durationEnabled: Boolean,
         durationSeconds: Int,
+        perfettoEnabled: Boolean = false,
     ): Boolean {
         if (currentPhase != Phase.PREPARING) return false
         sessionGeneration++
         this.durationEnabled = durationEnabled
         this.durationSeconds = durationSeconds.coerceAtLeast(1)
-        return coordinator.start(request)
+        val perfettoDurationMs = when {
+            !perfettoEnabled -> 0L
+            durationEnabled -> this.durationSeconds * 1_000L
+            else -> PerfettoTrace.MAX_CAPTURE_DURATION_MS
+        }
+        return coordinator.start(request, perfettoDurationMs)
     }
 
     fun isRunning(): Boolean = coordinator.isRunning()

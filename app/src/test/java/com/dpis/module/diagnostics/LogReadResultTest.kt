@@ -44,6 +44,19 @@ class LogReadResultTest {
             LsposedLogReader.availability(LogReadResult(0, "LSPosed", "", "", false, false)),
         )
         assertEquals(
+            LsposedLogReader.Availability.NO_LOGS,
+            LsposedLogReader.availability(
+                LogReadResult(
+                    2,
+                    "LSPosed",
+                    "",
+                    "missing file",
+                    false,
+                    false
+                )
+            ),
+        )
+        assertEquals(
             LsposedLogReader.Availability.NO_VALID_LOGS,
             LsposedLogReader.availability(LogReadResult(0, "LSPosed", "", "", true, false)),
         )

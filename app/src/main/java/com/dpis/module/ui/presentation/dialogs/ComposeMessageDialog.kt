@@ -1,8 +1,5 @@
 package com.dpis.module.ui.presentation.dialogs
 
-import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
-import com.dpis.module.ui.dialog.DialogChrome
-
 import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -25,10 +22,11 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import com.dpis.module.R
-import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.ui.dialog.ComposeOverlay
+import com.dpis.module.ui.dialog.ConfirmDialogUiTokens
+import com.dpis.module.ui.dialog.DialogChrome
 import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.ui.presentation.design.LocalSpacing
 import com.dpis.module.ui.presentation.design.rememberClickAction
 import com.dpis.module.ui.presentation.interop.toComposeAnnotatedString
@@ -114,7 +112,9 @@ internal fun MessageDialogContent(
     val spacing = LocalSpacing.current
     val closeAction = rememberClickAction(onClose)
     Column(
-        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -128,16 +128,20 @@ internal fun MessageDialogContent(
         Spacer(Modifier.height(spacing.md))
         Text(
             message,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .heightIn(max = DialogChrome.ScrollBodyMaxHeight)
                 .verticalScroll(rememberScrollState()),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(spacing.lg))
         OutlinedButton(
             onClick = closeAction,
-            modifier = Modifier.fillMaxWidth().height(ConfirmDialogUiTokens.ActionHeight),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(ConfirmDialogUiTokens.ActionHeight),
             shape = ConfirmDialogUiTokens.ActionShape
         ) {
             Text(closeLabel)

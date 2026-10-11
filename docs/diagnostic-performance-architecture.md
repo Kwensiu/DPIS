@@ -11,7 +11,7 @@
 - 用户复现后返回 DPIS，返回动作同时结束运行证据采集和 Perfetto 采集。
 - 不要求用户再次点击“继续采集”或“停止采集”。
 - 一般诊断时长不超过 1 分钟；Perfetto 采集预算按约 60 秒设计。
-  ring buffer 与导出上限均为 64 MiB，避免高频调度/ftrace 事件在启动或快速
+  ring buffer 与导出上限均为 128 MiB，避免高频调度/ftrace 事件在启动或快速
   滑动期间覆盖前段 trace，或在导出阶段被第二次截断。
 - 如果用户更早返回，立即停止并打包；不为了凑满 60 秒而延迟结束。
 - 目标进程负责记录实际 hook 执行证据；DPIS UI 进程只负责控制会话、停止采集和导出。
@@ -207,19 +207,27 @@ Perfetto 由 DiagnosticSession 控制：
 5. DPIS 立即停止 Perfetto 和 runtime evidence capture。
 6. DPIS 读取并打包 trace 与聚合证据。
 
-采集预算按约 60 秒设计，但返回 DPIS 是硬停止边界。超过预算时应采取
-明确的安全策略，而不是要求用户再次操作；首期优先保证会话可以自动结束，
-并在导出中标记 trace 是否因预算截断。
+诊断页上的 Perfetto 是可选项，默认关闭。打开后由 perfetto 客户端用
+`-o` 写到 `/data/local/tmp`。不要改成 `write_into_file`：traced
+无法在这个目录建文件，进程会马上退出，诊断包里就没有 trace。
+缓冲是 128 MB、`DISCARD`，保留从诊断开始的内容，满了就不再收下一段。
+自动结束诊断时，trace 时长等于所选诊断时长；未开启自动结束时，上限是
+86400 秒。返回 DPIS 仍然立刻停止。超过 128 MB 的文件不导出。导出阶段按
+3 MiB 对齐分块读取并 Base64 解码，避免把整段编码文本一次性放入内存；后续
+仍可继续演进为直接文件流转移。
 
 Perfetto 至少需要覆盖：
 
 - scheduler / thread state
 - frame timeline / gfx
 - input
-- cpu frequency / idle
-- binder（用于等待链分析）
-- 目标进程线程
+- 进程创建、退出和重命名
 - DPIS 自定义 counter 或慢调用 trace slice
+
+首期配置主动移除了 `view`、`binder_driver` 和全进程 `process_stats` 扫描，
+因为它们在高频目标应用上容易制造大量与当前卡顿判断无关的事件。若后续诊断
+实际发现现有 scheduler、frame timeline、gfx、input 和进程生命周期证据不足以
+证明某类卡顿现象，再根据具体证据缺口恢复相应数据源，而不是默认全部开启。
 
 DPIS 自定义 trace 不应为每个高频 callback 创建完整 slice。建议所有调用
 进入聚合 counter，仅对超过阈值的慢调用创建 slice，并保留 mutation counter。

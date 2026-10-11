@@ -68,8 +68,10 @@ import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
 import com.dpis.module.ui.presentation.editor.reportTextInputFocusBounds
 import com.dpis.module.ui.presentation.editor.textInputFocusBehavior
 import com.dpis.module.ui.presentation.workspace.AnimatedConditionalItem
+import com.dpis.module.ui.presentation.workspace.PageSectionLabel
 import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
 import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.pageTitleStart
 import com.dpis.module.ui.presentation.workspace.segmentedRowColors
 
 private const val MIN_DIAGNOSTIC_DURATION_SECONDS = 1
@@ -152,6 +154,12 @@ class FeedbackDiagnosticPreparationPresentation(
 
     fun selectedDurationSeconds(): Int = state.durationSeconds
 
+    fun isPerfettoEnabled(): Boolean = state.perfettoEnabled
+
+    fun setPerfettoEnabled(enabled: Boolean) {
+        state = state.copy(perfettoEnabled = enabled)
+    }
+
     fun setDurationEnabled(enabled: Boolean) {
         state = state.copy(durationEnabled = enabled)
     }
@@ -221,6 +229,7 @@ class FeedbackDiagnosticPreparationPresentation(
         val outputEntries: List<OutputEntry> = emptyList(),
         val durationEnabled: Boolean = false,
         val durationSeconds: Int = DEFAULT_DIAGNOSTIC_DURATION_SECONDS,
+        val perfettoEnabled: Boolean = false,
     )
 
     data class OutputEntry(
@@ -367,11 +376,13 @@ private fun LazyListScope.diagnosticPageItems(
                 text = stringResource(R.string.feedback_diagnostic_preparation_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.pageTitleStart(),
             )
         }
         item { DiagnosticSection(R.string.feedback_diagnostic_target_section) { TargetRow(state) } }
         item { EnvironmentSection(state, presentation) }
         item { DiagnosticSessionSection(state, presentation) }
+    item { DiagnosticPerfettoSection(state, presentation) }
         item { DiagnosticPhaseSection(state, presentation) }
 }
 
@@ -382,12 +393,7 @@ private fun DiagnosticSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column {
-        Text(
-            text = stringResource(titleRes),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 8.dp),
-        )
+        PageSectionLabel(stringResource(titleRes))
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
@@ -408,13 +414,15 @@ private fun TargetRow(
         colors = segmentedRowColors(),
         verticalAlignment = Alignment.CenterVertically,
         leadingContent = { DiagnosticTargetAppIcon(appIcon) },
-        content = { Text(state.appLabel, fontWeight = FontWeight.SemiBold) },
+        content = {
+            Text(state.appLabel, style = MaterialTheme.typography.titleMedium)
+        },
         supportingContent = {
             Column {
                 if (state.versionName.isNotBlank()) {
-                    Text("v${state.versionName}")
+                    Text("v${state.versionName}", style = MaterialTheme.typography.bodyMedium)
                 }
-                Text(state.packageName)
+                Text(state.packageName, style = MaterialTheme.typography.bodyMedium)
             }
         },
     )
@@ -561,8 +569,18 @@ private fun DiagnosticSessionSection(
             colors = segmentedRowColors(),
             verticalAlignment = Alignment.CenterVertically,
             leadingContent = { Icon(painterResource(R.drawable.ic_hourglass_check_24), null) },
-            content = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_title)) },
-            supportingContent = { Text(stringResource(R.string.feedback_diagnostic_duration_toggle_hint)) },
+            content = {
+                Text(
+                    stringResource(R.string.feedback_diagnostic_duration_toggle_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                Text(
+                    stringResource(R.string.feedback_diagnostic_duration_toggle_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
             trailingContent = {
                 FeedbackSwitch(
                     checked = state.durationEnabled,
@@ -583,6 +601,43 @@ private fun DiagnosticSessionSection(
                 },
             )
         }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun DiagnosticPerfettoSection(
+    state: FeedbackDiagnosticPreparationPresentation.State,
+    presentation: FeedbackDiagnosticPreparationPresentation,
+) {
+    DiagnosticSection(R.string.feedback_diagnostic_perfetto_section) {
+        SegmentedListItem(
+            onClick = rememberClickAction {
+                presentation.setPerfettoEnabled(!state.perfettoEnabled)
+            },
+            shapes = dpisSegmentedShapes(0, 1),
+            colors = segmentedRowColors(),
+            verticalAlignment = Alignment.CenterVertically,
+            leadingContent = { Icon(painterResource(R.drawable.ic_bug_report_24), null) },
+            content = {
+                Text(
+                    stringResource(R.string.feedback_diagnostic_perfetto_toggle_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            },
+            supportingContent = {
+                Text(
+                    stringResource(R.string.feedback_diagnostic_perfetto_toggle_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            },
+            trailingContent = {
+                FeedbackSwitch(
+                    checked = state.perfettoEnabled,
+                    onCheckedChange = presentation::setPerfettoEnabled,
+                )
+            },
+        )
     }
 }
 

@@ -6,16 +6,17 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.nio.charset.StandardCharsets
 
 class PerfettoTraceTest {
     @Test
-    fun startsDetachedCliTraceWithoutServiceSideFileWriter() {
+    fun recordsTheWholeSessionThroughOneFileWriter() {
         val commands = ArrayList<String>()
-        val result = PerfettoTrace.start { command ->
+        val result = PerfettoTrace.start(PerfettoTrace.ShellRunner { command ->
             commands += command
             RootAppProcessLauncher.ShellResult(0, "")
-        }
+        })
 
         assertTrue(result.available)
         assertNotNull(result.trace)
@@ -23,23 +24,42 @@ class PerfettoTraceTest {
 
         val launch = commands[0]
         assertTrue(launch.contains("/system/bin/perfetto --background-wait --txt"))
+        assertTrue(launch.contains(" -o '"))
         assertTrue(launch.contains(" > '"))
         assertFalse(launch.contains("nohup"))
         assertFalse(launch.contains("--size"))
-        assertFalse(launch.contains("write_into_file: true"))
-        assertFalse(launch.contains("file_write_period_ms"))
-        assertFalse(launch.contains("max_file_size_bytes"))
-        assertTrue(launch.contains("linux.process_stats"))
-        assertTrue(launch.contains("scan_all_processes_on_start: true"))
+        assertFalse(launch.contains("write_into_file"))
+        assertFalse(launch.contains("output_path"))
+        assertTrue(launch.contains("fill_policy: DISCARD"))
+        assertTrue(launch.contains("duration_ms: 86400000"))
+        assertTrue(launch.contains("size_kb: 131072"))
+        assertFalse(launch.contains("atrace_categories: \"view\""))
+        assertFalse(launch.contains("atrace_categories: \"binder_driver\""))
+        assertFalse(launch.contains("linux.process_stats"))
         assertTrue(launch.contains("android.surfaceflinger.frametimeline"))
         assertTrue(launch.contains("task/task_newtask"))
         assertTrue(launch.contains("task/task_rename"))
     }
 
     @Test
+    fun usesTheSelectedDiagnosisDuration() {
+        val commands = ArrayList<String>()
+        val result = PerfettoTrace.start(
+            shellRunner = PerfettoTrace.ShellRunner { command ->
+                commands += command
+                RootAppProcessLauncher.ShellResult(0, "")
+            },
+            durationMs = 15_000L,
+        )
+
+        assertTrue(result.available)
+        assertTrue(commands[0].contains("duration_ms: 15000"))
+    }
+
+    @Test
     fun exportsCompletedTraceAndCleansUpDeviceFiles() {
         val commands = ArrayList<String>()
-        val started = PerfettoTrace.start { command ->
+        val started = PerfettoTrace.start(PerfettoTrace.ShellRunner { command ->
             commands += command
             when {
                 command.contains("available:size") -> RootAppProcessLauncher.ShellResult(
@@ -47,10 +67,10 @@ class PerfettoTraceTest {
                     "available:size=3"
                 )
 
-                command.startsWith("base64 ") -> RootAppProcessLauncher.ShellResult(0, "YWJj")
+                command.contains("| base64") -> RootAppProcessLauncher.ShellResult(0, "YWJj")
                 else -> RootAppProcessLauncher.ShellResult(0, "")
             }
-        }
+        })
 
         val trace = started.trace!!
         val stopped = trace.stop()
@@ -59,15 +79,39 @@ class PerfettoTraceTest {
         assertTrue(stopped.available)
         assertTrue(exported.available)
         assertEquals("abc", String(exported.traceBytes!!, StandardCharsets.UTF_8))
-        assertFalse(commands[2].contains("rm -f"))
-        assertTrue(commands.any { it.startsWith("base64 ") })
+        assertTrue(commands.any { it.contains("| base64") })
+    }
+
+    @Test
+    fun exportsTraceIntoDestinationFileWithoutRetainingTraceBytes() {
+        val destination = File.createTempFile("dpis-perfetto", ".pftrace")
+        val started = PerfettoTrace.start(PerfettoTrace.ShellRunner { command ->
+            when {
+                command.contains("available:size") -> RootAppProcessLauncher.ShellResult(
+                    0,
+                    "available:size=3"
+                )
+
+                command.contains("| base64") -> RootAppProcessLauncher.ShellResult(0, "YWJj")
+                else -> RootAppProcessLauncher.ShellResult(0, "")
+            }
+        })
+
+        val trace = started.trace!!
+        val exported = trace.consumeStoppedTrace(trace.stop(), destination)
+
+        assertTrue(exported.available)
+        assertEquals(destination.absolutePath, exported.traceFilePath)
+        assertEquals(0, exported.traceBytes?.size ?: 0)
+        assertEquals("abc", destination.readText())
+        destination.delete()
     }
 
     @Test
     fun reportsUnavailableWhenPerfettoLaunchOrReadinessFails() {
-        val launchFailure = PerfettoTrace.start {
+        val launchFailure = PerfettoTrace.start(PerfettoTrace.ShellRunner {
             RootAppProcessLauncher.ShellResult(1, "permission denied")
-        }
+        })
         val readinessFailure = PerfettoTrace.start(object : PerfettoTrace.ShellRunner {
             private var calls = 0
 
@@ -135,7 +179,7 @@ class PerfettoTraceTest {
                     "available:size=3"
                 )
 
-                command.startsWith("base64 ") -> RootAppProcessLauncher.ShellResult(0, "not base64")
+                command.contains("| base64") -> RootAppProcessLauncher.ShellResult(0, "not base64")
                 else -> RootAppProcessLauncher.ShellResult(0, "")
             }
         }
@@ -146,7 +190,7 @@ class PerfettoTraceTest {
                     "available:size=4"
                 )
 
-                command.startsWith("base64 ") -> RootAppProcessLauncher.ShellResult(0, "YWJj")
+                command.contains("| base64") -> RootAppProcessLauncher.ShellResult(0, "YWJj")
                 else -> RootAppProcessLauncher.ShellResult(0, "")
             }
         }

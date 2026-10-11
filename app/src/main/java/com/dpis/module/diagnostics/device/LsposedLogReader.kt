@@ -1,5 +1,6 @@
 package com.dpis.module.diagnostics.device
 
+import com.dpis.module.diagnostics.LogReadResult
 import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.BufferedReader
 import java.io.IOException
@@ -8,10 +9,10 @@ import java.nio.charset.StandardCharsets
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import com.dpis.module.diagnostics.LogReadResult
 
 object LsposedLogReader {
     private const val ROOT_READ_TIMEOUT_MS = 8000L
+    private const val AVAILABILITY_TIMEOUT_MS = 2500L
     private const val SOURCE_MODULE_FILE = "modules_*.log"
     private const val SOURCE_VERBOSE_FILE = "verbose_*.log"
     private const val FILE_MARKER = "__DPIS_LSP_FILES__="
@@ -19,7 +20,7 @@ object LsposedLogReader {
 
     @JvmStatic
     fun availability(result: LogReadResult?): Availability {
-        if (result == null || result.code != 0 || result.needsRootAccess()) {
+        if (result == null || result.needsRootAccess()) {
             return Availability.NO_PERMISSION
         }
         if (!result.sourceFilesPresent) {
@@ -103,7 +104,31 @@ object LsposedLogReader {
         )
     }
 
-    private fun runSu(sourceLabel: String?, command: String?): LogReadResult {
+    /** Uses one bounded probe so the preparation page does not read entire historical logs. */
+    @JvmStatic
+    fun readLsposedAvailability(): LogReadResult {
+        val result = runSu(
+            "modules_*.log + verbose_*.log",
+            ("files=0; valid=0; read_error=0; "
+                    + "for file in /data/adb/lspd/log/modules_*.log /data/adb/lspd/log/verbose_*.log; do "
+                    + "if [ -e \"\$file\" ]; then files=1; "
+                    + "grep -a -m 1 -q -E "
+                    + "'[(][^)]*)\\[io\\.github\\.kwensiu\\.dpis,|"
+                    + "Auto hot reload .*io\\.github\\.kwensiu\\.dpis' \"\$file\"; "
+                    + "status=\$?; [ \$status -eq 0 ] && valid=1; "
+                    + "[ \$status -gt 1 ] && read_error=1; fi; done; "
+                    + "printf '__DPIS_LSP_FILES__=%s\\n__DPIS_LSP_VALID__=%s\\n' \$files \$valid; "
+                    + "[ \$read_error -eq 0 ]"),
+            AVAILABILITY_TIMEOUT_MS,
+        )
+        return result
+    }
+
+    private fun runSu(
+        sourceLabel: String?,
+        command: String?,
+        timeoutMs: Long = ROOT_READ_TIMEOUT_MS,
+    ): LogReadResult {
         var process: Process? = null
         try {
             process = SecureProcessLauncher.start("su", "-c", command)
@@ -139,7 +164,7 @@ object LsposedLogReader {
             }, "DPIS-LSPosed-log-stderr")
             outputReaderThread.start()
             errorReaderThread.start()
-            if (!process.waitFor(ROOT_READ_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            if (!process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly()
                 outputReaderThread.join()
                 errorReaderThread.join()

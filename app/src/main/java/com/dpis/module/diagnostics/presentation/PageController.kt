@@ -4,12 +4,11 @@ import android.content.Context
 import com.dpis.module.R
 import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.diagnostics.ExportBuilder
+import com.dpis.module.diagnostics.device.LsposedLogReader
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticPreparationPresentation
 import java.util.concurrent.ExecutorService
-import com.dpis.module.diagnostics.device.LsposedLogReader
-import com.dpis.module.diagnostics.ExportBuilder
 
 /** Coordinates construction and environment updates for the diagnostic preparation page. */
 class PageController(
@@ -42,6 +41,7 @@ class PageController(
             versionName: String,
             durationEnabled: Boolean,
             durationSeconds: Int,
+            perfettoEnabled: Boolean,
         ): Boolean
 
         fun diagnosticPackage(): ExportBuilder.DiagnosticPackage?
@@ -194,7 +194,7 @@ class PageController(
         executor.execute {
             val rootAccess = RootAccessProbe.probe()
             val result = if (refreshLsposed && rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
-                LsposedLogReader.readLsposedDpisCurrent()
+                LsposedLogReader.readLsposedAvailability()
             } else {
                 null
             }
@@ -242,7 +242,7 @@ class PageController(
         executor.execute {
             val rootAccess = RootAccessProbe.cachedResult()
             val result = if (rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
-                LsposedLogReader.readLsposedDpisCurrent()
+                LsposedLogReader.readLsposedAvailability()
             } else {
                 null
             }
@@ -279,6 +279,7 @@ class PageController(
             currentVersionName,
             current?.isDurationEnabled() ?: false,
             current?.selectedDurationSeconds() ?: 30,
+            current?.isPerfettoEnabled() ?: false,
         )
         if (!started) {
             current?.markStartFailed()

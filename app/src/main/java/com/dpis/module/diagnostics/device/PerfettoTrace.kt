@@ -3,6 +3,8 @@ package com.dpis.module.diagnostics.device
 import com.dpis.module.root.RootAppProcessLauncher.ShellResult
 import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 import java.util.UUID
@@ -100,7 +102,7 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
      * Transfers the completed trace into the app process, then removes root-owned temporary
      * files. The trace only exists on-device until its diagnostic ZIP is assembled.
      */
-    fun consumeStoppedTrace(stoppedTrace: StopResult?): StopResult {
+    fun consumeStoppedTrace(stoppedTrace: StopResult?, destination: File? = null): StopResult {
         if (stoppedTrace == null || !stoppedTrace.available) {
             return if (stoppedTrace != null)
                 stoppedTrace
@@ -111,31 +113,64 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
             discardCompletedTrace()
             return StopResult.ready(
                 stoppedTrace.sizeBytes, true, ByteArray(0),
+                null,
                 "trace exceeded device-side size limit and was not exported"
             )
         }
-        val result = shellRunner.run(
-            ("base64 " + quote(tracePath)
-                    + "; code=$?; rm -f " + quote(tracePath) + " " + quote(pidPath)
-                    + " " + quote(errorPath) + " " + quote(configPath) + "; exit \$code")
-        )
-        if (result.code() != 0 || result.output().isBlank()) {
-            return StopResult.unavailable(
-                "Perfetto trace export failed: " + compact(result.output())
+        val traceBytes = if (destination == null) {
+            ByteArrayOutputStream(
+                stoppedTrace.sizeBytes.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
             )
+        } else {
+            null
         }
+        val traceOutput = destination?.let {
+            it.parentFile?.mkdirs()
+            FileOutputStream(it)
+        }
+        var offset = 0L
+        var exported = false
         try {
-            val bytes = Base64.getMimeDecoder().decode(result.output())
-            if (bytes.size.toLong() != stoppedTrace.sizeBytes) {
-                return StopResult.unavailable("Perfetto trace export size mismatch")
+            while (offset < stoppedTrace.sizeBytes) {
+                val count = minOf(TRACE_TRANSFER_CHUNK_BYTES, stoppedTrace.sizeBytes - offset)
+                val result = shellRunner.run(
+                    ("dd if=" + quote(tracePath) + " bs=" + TRACE_TRANSFER_CHUNK_BYTES
+                            + " skip=" + (offset / TRACE_TRANSFER_CHUNK_BYTES)
+                            + " count=1 2>/dev/null | base64")
+                )
+                if (result.code() != 0 || result.output().isBlank()) {
+                    return StopResult.unavailable(
+                        "Perfetto trace export failed: " + compact(result.output())
+                    )
+                }
+                val bytes = Base64.getMimeDecoder().decode(result.output())
+                if (bytes.size.toLong() != count) {
+                    return StopResult.unavailable("Perfetto trace export size mismatch")
+                }
+                traceOutput?.write(bytes) ?: traceBytes?.write(bytes)
+                offset += count
             }
+            traceOutput?.flush()
+            val bytes = traceBytes?.toByteArray() ?: ByteArray(0)
+            exported = true
             return StopResult.ready(
-                bytes.size.toLong(), false, bytes,
+                stoppedTrace.sizeBytes, false, bytes, destination?.absolutePath,
                 "trace exported with diagnostic package"
             )
         } catch (exception: IllegalArgumentException) {
             return StopResult.unavailable("Perfetto trace export was invalid")
+        } finally {
+            traceOutput?.close()
+            if (destination != null && !exported) {
+                destination.delete()
+            }
+            shellRunner.run(removeTraceFilesCommand())
         }
+    }
+
+    private fun removeTraceFilesCommand(): String {
+        return "rm -f " + quote(tracePath) + " " + quote(pidPath) + " " +
+                quote(errorPath) + " " + quote(configPath)
     }
 
     private fun discardCompletedTrace() {
@@ -166,6 +201,7 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
         sizeBytes: Long,
         @JvmField val truncated: Boolean,
         traceBytes: ByteArray?,
+        traceFilePath: String?,
         note: String?
     ) {
         @JvmField
@@ -173,43 +209,55 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
         @JvmField
         val traceBytes: ByteArray?
         @JvmField
+        val traceFilePath: String?
+
+        @JvmField
         val note: String
 
         init {
             this.sizeBytes = max(0L, sizeBytes)
             this.traceBytes = if (traceBytes != null) traceBytes.clone() else ByteArray(0)
+            this.traceFilePath = traceFilePath
             this.note = if (note != null) note else ""
         }
 
         companion object {
             fun ready(sizeBytes: Long, truncated: Boolean, note: String?): StopResult {
-                return ready(sizeBytes, truncated, ByteArray(0), note)
+                return ready(sizeBytes, truncated, ByteArray(0), null, note)
             }
 
             fun ready(
                 sizeBytes: Long,
                 truncated: Boolean,
                 traceBytes: ByteArray?,
+                traceFilePath: String?,
                 note: String?
             ): StopResult {
-                return StopResult(true, sizeBytes, truncated, traceBytes, note)
+                return StopResult(true, sizeBytes, truncated, traceBytes, traceFilePath, note)
             }
 
             @JvmStatic
             fun unavailable(note: String?): StopResult {
-                return StopResult(false, 0L, false, ByteArray(0), note)
+                return StopResult(false, 0L, false, ByteArray(0), null, note)
             }
         }
     }
 
     companion object {
         private const val DIRECTORY = "/data/local/tmp/dpis-feedback-diagnostic"
-        private const val TRACE_DURATION_MS = 60000L
-        private val TRACE_BUFFER_KB = 8L * 1024L
-        private val TRACE_MAX_FILE_BYTES = 16L * 1024L * 1024L
+        const val MAX_CAPTURE_DURATION_MS = 86_400_000L
+        private const val TRACE_BUFFER_KB = 128L * 1024L
+        private const val TRACE_MAX_FILE_BYTES = 128L * 1024L * 1024L
+
+        // Keep shell output bounded while preserving Base64 block alignment.
+        private const val TRACE_TRANSFER_CHUNK_BYTES = 3L * 1024L * 1024L
 
         @JvmStatic
-        fun start(shellRunner: ShellRunner?): StartResult {
+        @JvmOverloads
+        fun start(
+            shellRunner: ShellRunner? = null,
+            durationMs: Long = MAX_CAPTURE_DURATION_MS,
+        ): StartResult {
             val trace =
                 PerfettoTrace(
                     if (shellRunner != null)
@@ -221,10 +269,11 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
                         + " " + quote(trace.pidPath)
                         + " " + quote(trace.errorPath)
                         + " " + quote(trace.configPath)
-                        + " && printf %s " + quote(config())
-                        + " > " + quote(trace.configPath) // Perfetto owns the detached process here. Do not mix
-                        // TraceConfig.write_into_file with CLI -o: Android 16
-                        // Perfetto rejects that two-writer configuration.
+                        + " && printf %s " + quote(config(durationMs))
+                        + " > " + quote(trace.configPath)
+                        // The perfetto client writes -o. write_into_file is owned by
+                        // traced and exits immediately when that daemon cannot create
+                        // the output under /data/local/tmp.
                         + " && /system/bin/perfetto --background-wait --txt -c "
                         + quote(trace.configPath)
                         + " -o " + quote(trace.tracePath)
@@ -250,9 +299,10 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
             return StartResult.ready(trace)
         }
 
-        private fun config(): String {
-            return ("buffers { size_kb: " + TRACE_BUFFER_KB + " fill_policy: RING_BUFFER }\n"
-                    + "duration_ms: " + TRACE_DURATION_MS + "\n"
+        private fun config(durationMs: Long): String {
+            val boundedDurationMs = durationMs.coerceIn(1_000L, MAX_CAPTURE_DURATION_MS)
+            return ("buffers { size_kb: " + TRACE_BUFFER_KB + " fill_policy: DISCARD }\n"
+                    + "duration_ms: " + boundedDurationMs + "\n"
                     + "data_sources { config { name: \"linux.ftrace\" "
                     + "ftrace_config { "
                     + "ftrace_events: \"sched/sched_switch\" "
@@ -263,12 +313,11 @@ internal class PerfettoTrace private constructor(shellRunner: ShellRunner) {
                     + "ftrace_events: \"task/task_newtask\" "
                     + "ftrace_events: \"task/task_rename\" "
                     + "atrace_categories: \"gfx\" "
-                    + "atrace_categories: \"view\" "
                     + "atrace_categories: \"input\" "
-                    + "atrace_categories: \"binder_driver\" "
                     + "} } }\n"
-                    + "data_sources { config { name: \"linux.process_stats\" "
-                    + "process_stats_config { scan_all_processes_on_start: true } } }\n"
+                    // Keep the first diagnostic profile focused on scheduler and frame evidence.
+                    // If those signals cannot explain a reproduced stall, restore the omitted
+                    // view, binder, or process-stats sources based on that concrete evidence.
                     + "data_sources { config { name: \"android.surfaceflinger.frametimeline\" } }\n")
         }
 

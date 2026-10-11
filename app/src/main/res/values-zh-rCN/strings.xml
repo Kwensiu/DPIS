@@ -165,6 +165,9 @@
     <string name="feedback_diagnostic_duration_custom_cancel">取消</string>
     <string name="feedback_diagnostic_duration_toggle_title">自动结束诊断</string>
     <string name="feedback_diagnostic_duration_toggle_hint">在所选时长后于后台结束诊断，也可以提前返回 DPIS 手动结束</string>
+    <string name="feedback_diagnostic_perfetto_section">系统跟踪</string>
+    <string name="feedback_diagnostic_perfetto_toggle_title">Perfetto 采集</string>
+    <string name="feedback_diagnostic_perfetto_toggle_hint">必要时开启，分析性能与卡顿</string>
     <string name="feedback_diagnostic_recording_title">正在诊断</string>
     <string name="feedback_diagnostic_exit_confirm_message">退出后将停止诊断，并清除当前诊断包和结果</string>
     <string name="feedback_diagnostic_exit_clear_action">停止并清除</string>

@@ -3,6 +3,8 @@ package com.dpis.module.diagnostics
 import android.content.Context
 import com.dpis.module.diagnostics.device.LsposedLogReader
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -134,35 +136,51 @@ class ExportBuilder {
             result?.request,
         )
         val perfettoTrace = if (result != null) result.perfettoTraceBytes else ByteArray(0)
+        val perfettoTraceFile = result?.perfettoTraceFilePath
+            ?.let(::File)
+            ?.takeIf(File::isFile)
         val output = ByteArrayOutputStream()
-        ZipOutputStream(output, StandardCharsets.UTF_8).use { zip ->
-            writeZipEntry(zip, DIAGNOSTIC_ENTRY_NAME, diagnostic)
-            writeZipEntry(zip, TIMELINE_ENTRY_NAME, timeline)
-            writeZipEntry(zip, MODULE_EFFECTS_ENTRY_NAME, moduleEffects)
-            writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, dpisLog)
-            writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, lsposed)
-            if (perfettoTrace.isNotEmpty()) {
-                writeZipEntry(zip, PERFETTO_TRACE_ENTRY_NAME, perfettoTrace)
+        try {
+            ZipOutputStream(output, StandardCharsets.UTF_8).use { zip ->
+                writeZipEntry(zip, DIAGNOSTIC_ENTRY_NAME, diagnostic)
+                writeZipEntry(zip, TIMELINE_ENTRY_NAME, timeline)
+                writeZipEntry(zip, MODULE_EFFECTS_ENTRY_NAME, moduleEffects)
+                writeZipEntry(zip, DPIS_LOG_ENTRY_NAME, dpisLog)
+                writeZipEntry(zip, LSPOSED_LOG_ENTRY_NAME, lsposed)
+                if (perfettoTrace.isNotEmpty()) {
+                    writeZipEntry(zip, PERFETTO_TRACE_ENTRY_NAME, perfettoTrace)
+                } else if (perfettoTraceFile != null) {
+                    writeZipEntry(zip, PERFETTO_TRACE_ENTRY_NAME, perfettoTraceFile)
+                }
             }
+            val entries = ArrayList(
+                listOf(
+                    EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
+                    EntrySummary(TIMELINE_ENTRY_NAME, timeline),
+                    EntrySummary(MODULE_EFFECTS_ENTRY_NAME, moduleEffects),
+                    EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
+                    EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed),
+                ),
+            )
+            if (perfettoTrace.isNotEmpty()) {
+                entries.add(EntrySummary.binary(PERFETTO_TRACE_ENTRY_NAME, perfettoTrace.size))
+            } else if (perfettoTraceFile != null) {
+                entries.add(
+                    EntrySummary.binary(
+                        PERFETTO_TRACE_ENTRY_NAME,
+                        perfettoTraceFile.length().toInt()
+                    )
+                )
+            }
+            return DiagnosticPackage(
+                result,
+                buildFileName(result),
+                output.toByteArray(),
+                entries,
+            )
+        } finally {
+            perfettoTraceFile?.delete()
         }
-        val entries = ArrayList(
-            listOf(
-                EntrySummary(DIAGNOSTIC_ENTRY_NAME, diagnostic),
-                EntrySummary(TIMELINE_ENTRY_NAME, timeline),
-                EntrySummary(MODULE_EFFECTS_ENTRY_NAME, moduleEffects),
-                EntrySummary(DPIS_LOG_ENTRY_NAME, dpisLog),
-                EntrySummary(LSPOSED_LOG_ENTRY_NAME, lsposed),
-            ),
-        )
-        if (perfettoTrace.isNotEmpty()) {
-            entries.add(EntrySummary.binary(PERFETTO_TRACE_ENTRY_NAME, perfettoTrace.size))
-        }
-        return DiagnosticPackage(
-            result,
-            buildFileName(result),
-            output.toByteArray(),
-            entries,
-        )
     }
 
     @Throws(IOException::class)
@@ -226,6 +244,13 @@ class ExportBuilder {
         private fun writeZipEntry(zip: ZipOutputStream, name: String, content: ByteArray?) {
             zip.putNextEntry(ZipEntry(name))
             zip.write(content ?: ByteArray(0))
+            zip.closeEntry()
+        }
+
+        @Throws(IOException::class)
+        private fun writeZipEntry(zip: ZipOutputStream, name: String, content: File) {
+            zip.putNextEntry(ZipEntry(name))
+            FileInputStream(content).use { input -> input.copyTo(zip) }
             zip.closeEntry()
         }
     }

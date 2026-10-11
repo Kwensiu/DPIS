@@ -3,21 +3,21 @@ package com.dpis.module.quickconfig.presentation
 import android.app.Activity
 import android.content.Intent
 import com.dpis.module.R
+import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.diagnostics.device.TargetAppLauncher
 import com.dpis.module.diagnostics.Coordinator
 import com.dpis.module.diagnostics.ExportBuilder
 import com.dpis.module.diagnostics.ExportBuilder.DiagnosticPackage
-import com.dpis.module.ui.dialog.ComposeOverlay
 import com.dpis.module.diagnostics.PackageActions
+import com.dpis.module.diagnostics.device.TargetAppLauncher
+import com.dpis.module.diagnostics.presentation.LogGate
 import com.dpis.module.diagnostics.presentation.PackagingDialog
 import com.dpis.module.diagnostics.presentation.ResultSheet
-import com.dpis.module.diagnostics.presentation.LogGate
 import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.root.RootAccessProbe
+import com.dpis.module.ui.dialog.ComposeOverlay
 import java.io.IOException
 import java.util.concurrent.Executors
-import com.dpis.module.appconfig.editor.EditorDraft
 
 /**
  * Owns Quick Config feedback-diagnostic start, packaging, and result-file actions.
@@ -171,6 +171,8 @@ internal class QuickConfigDiagnosticSession(
         }
 
         override fun dpisPackageName(): String? = activity.packageName
+
+        override fun diagnosticCacheDirectory(): String = activity.cacheDir.absolutePath
 
         override fun rootAccess(): RootAccessProbe.Result = RootAccessProbe.cachedResult()
 

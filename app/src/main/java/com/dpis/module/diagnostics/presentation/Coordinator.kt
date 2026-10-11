@@ -14,6 +14,7 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,6 +55,7 @@ class Coordinator private constructor(
         fun onFeedbackDiagnosticRootRequired()
         fun onFeedbackDiagnosticFinished(result: Result?)
         fun onFeedbackDiagnosticAutoFinished() {}
+        fun diagnosticCacheDirectory(): String? = null
     }
 
     class Request(
@@ -161,7 +163,8 @@ class Coordinator private constructor(
         perfettoSizeBytes: Long,
         @JvmField val perfettoTruncated: Boolean,
         perfettoNote: String?,
-        perfettoTraceBytes: ByteArray?
+        perfettoTraceBytes: ByteArray?,
+        @JvmField val perfettoTraceFilePath: String? = null,
     ) {
         @JvmField val rootAccess = rootAccess ?: RootAccessProbe.Result.unknown()
         @JvmField val summary = summary ?: ""
@@ -177,7 +180,8 @@ class Coordinator private constructor(
             systemHooksEnabled: Boolean, summary: String?, timelineEvents: List<String>?
         ) : this(request, startedAtMillis, finishedAtMillis, durationMs, targetLaunchStarted,
             rootAccess, systemHooksEnabled, summary, timelineEvents, PerformanceSnapshot.EMPTY,
-            false, 0L, false, "", ByteArray(0))
+            false, 0L, false, "", ByteArray(0), null
+        )
 
         constructor(
             request: Request, startedAtMillis: Long, finishedAtMillis: Long, durationMs: Long,
@@ -186,7 +190,8 @@ class Coordinator private constructor(
             performanceSnapshot: PerformanceSnapshot?
         ) : this(request, startedAtMillis, finishedAtMillis, durationMs, targetLaunchStarted,
             rootAccess, systemHooksEnabled, summary, timelineEvents, performanceSnapshot,
-            false, 0L, false, "", ByteArray(0))
+            false, 0L, false, "", ByteArray(0), null
+        )
 
         constructor(
             request: Request, startedAtMillis: Long, finishedAtMillis: Long, durationMs: Long,
@@ -196,7 +201,13 @@ class Coordinator private constructor(
             perfettoSizeBytes: Long, perfettoTruncated: Boolean, perfettoNote: String?
         ) : this(request, startedAtMillis, finishedAtMillis, durationMs, targetLaunchStarted,
             rootAccess, systemHooksEnabled, summary, timelineEvents, performanceSnapshot,
-            perfettoAvailable, perfettoSizeBytes, perfettoTruncated, perfettoNote, ByteArray(0))
+            perfettoAvailable,
+            perfettoSizeBytes,
+            perfettoTruncated,
+            perfettoNote,
+            ByteArray(0),
+            null
+        )
     }
 
     @Volatile private var running = false
@@ -214,6 +225,13 @@ class Coordinator private constructor(
     private val activeSummaryBuilder: SummaryBuilder get() = summaryBuilder
 
     fun start(request: Request?): Boolean {
+        return start(request, PerfettoTrace.MAX_CAPTURE_DURATION_MS)
+    }
+
+    /**
+     * Starts a diagnostic session, optionally skipping Perfetto when duration is non-positive.
+     */
+    fun start(request: Request?, perfettoDurationMs: Long): Boolean {
         if (running || request == null || !request.isValid()) return false
         running = true
         runningRequest = request
@@ -233,15 +251,19 @@ class Coordinator private constructor(
                 return@execute
             }
             recordTimelineEvent(if (transportStatus.available) "runtime transport prepared" else transportStatus.message)
-            val perfettoStart = PerfettoTrace.start(null)
-            runningPerfettoTrace = perfettoStart.trace
-            if (!isActiveRequest(request)) {
-                runningPerfettoTrace = null
-                perfettoStart.trace?.discard()
-                RuntimeTransport.cancel(null)
-                return@execute
+            if (perfettoDurationMs <= 0L) {
+                recordTimelineEvent("perfetto not requested")
+            } else {
+                val perfettoStart = PerfettoTrace.start(null, perfettoDurationMs)
+                runningPerfettoTrace = perfettoStart.trace
+                if (!isActiveRequest(request)) {
+                    runningPerfettoTrace = null
+                    perfettoStart.trace?.discard()
+                    RuntimeTransport.cancel(null)
+                    return@execute
+                }
+                recordTimelineEvent(if (perfettoStart.available) "perfetto trace prepared" else "perfetto unavailable: ${perfettoStart.note}")
             }
-            recordTimelineEvent(if (perfettoStart.available) "perfetto trace prepared" else "perfetto unavailable: ${perfettoStart.note}")
             val selfTest = TransportSelfTest.runUiTransportSelfTest(request.packageName, null)
             recordTimelineEvent(if (selfTest.uiWriteReadOk) "runtime transport self-test ok" else "runtime transport self-test failed: ${selfTest.message}")
             recordTimelineEvent("root force-stop/start requested")
@@ -370,7 +392,13 @@ class Coordinator private constructor(
         val trace = runningPerfettoTrace
         runningPerfettoTrace = null
         var perfettoStop = trace?.stop() ?: PerfettoTrace.StopResult.unavailable("Perfetto trace was not started")
-        if (trace != null && perfettoStop.available) perfettoStop = trace.consumeStoppedTrace(perfettoStop)
+        if (trace != null && perfettoStop.available) {
+            val destination = host.diagnosticCacheDirectory()?.let { directory ->
+                File(directory).apply { mkdirs() }
+                    .resolve("dpis-perfetto-${startedAt}-${request.packageName.hashCode()}.pftrace")
+            }
+            perfettoStop = trace.consumeStoppedTrace(perfettoStop, destination)
+        }
         val timelineEvents = synchronized(timelineLock) { ArrayList(runningTimelineEvents) }
         timelineEvents.addAll(runtimeEvents)
         timelineEvents.addAll(transportSnapshot.events)
@@ -392,7 +420,7 @@ class Coordinator private constructor(
             activeSummaryBuilder.build(summaryInput(request), startedAt, finishedAt, durationMs,
                 launched, rootAccess, systemHooksEnabled), timelineEvents, performanceSnapshot,
             perfettoStop.available, perfettoStop.sizeBytes, perfettoStop.truncated,
-            perfettoStop.note, perfettoStop.traceBytes
+            perfettoStop.note, perfettoStop.traceBytes, perfettoStop.traceFilePath
         )
         clearRunningState()
         activeHandler.post { host.onFeedbackDiagnosticFinished(result) }

@@ -2,20 +2,19 @@ package com.dpis.module.diagnostics.presentation
 
 import android.content.Intent
 import android.text.format.Formatter
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.applist.AppListItem
-import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticPreparationPresentation
-import java.util.concurrent.Executors
-import com.dpis.module.diagnostics.Session
-import com.dpis.module.diagnostics.device.TargetAppLauncher
-import com.dpis.module.diagnostics.PackageActions
-import com.dpis.module.diagnostics.FeedbackDiagnosticPageRequest
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.Coordinator
 import com.dpis.module.diagnostics.ExportBuilder
 import com.dpis.module.diagnostics.FeedbackDiagnosticDuration
-import com.dpis.module.diagnostics.Coordinator
+import com.dpis.module.diagnostics.FeedbackDiagnosticPageRequest
+import com.dpis.module.diagnostics.PackageActions
+import com.dpis.module.diagnostics.Session
+import com.dpis.module.diagnostics.device.TargetAppLauncher
+import java.util.concurrent.Executors
 
 /**
  * Sole Activity-facing owner for feedback diagnostics.
@@ -240,6 +239,7 @@ class FeedbackDiagnosticActivitySession(
             versionName: String,
             durationEnabled: Boolean,
             durationSeconds: Int,
+            perfettoEnabled: Boolean,
         ): Boolean = session.start(
             Coordinator.Request.fromPersisted(
                 item,
@@ -249,6 +249,7 @@ class FeedbackDiagnosticActivitySession(
             ),
             durationEnabled,
             durationSeconds,
+            perfettoEnabled,
         )
 
         override fun diagnosticPackage(): ExportBuilder.DiagnosticPackage? =
