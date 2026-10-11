@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.4.0](https://github.com/Kwensiu/DPIS/compare/v2.3.1...v2.4.0) (2026-10-11)
+
+
+### Features
+
+* make Perfetto trace capture optional and optimize export and config ([d895036](https://github.com/Kwensiu/DPIS/commit/d895036edfb40a47b4759c25aff1bc1f3cec0e7f))
+
+
+### Bug Fixes
+
+* leave system-owned fullscreen configuration unchanged ([63e7e4e](https://github.com/Kwensiu/DPIS/commit/63e7e4ea94460a51c37cbea78d86c5fc17f2e5b6))
+
+
+### Refactoring
+
+* J2K from about to hooks ([#150](https://github.com/Kwensiu/DPIS/issues/150)) ([531315d](https://github.com/Kwensiu/DPIS/commit/531315d7387d9f3a775ec502fab27ed99e53310d))
+
 ## [2.3.1](https://github.com/Kwensiu/DPIS/compare/v2.3.0...v2.3.1) (2026-10-05)
 
 
