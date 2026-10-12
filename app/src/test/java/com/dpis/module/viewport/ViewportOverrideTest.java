@@ -1,16 +1,66 @@
 package com.dpis.module;
 
-import com.dpis.module.viewport.VirtualDisplayOverride;
-
-import com.dpis.module.viewport.ViewportOverride;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
 
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.VirtualDisplayOverride;
+
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-
 public class ViewportOverrideTest {
+    @Test
+    public void fullscreenMaxBoundsSupplyThePhysicalHeight() {
+        ViewportOverride.FullDisplayDp source = ViewportOverride.fullscreenSourceDp(
+                360, 736, 480, 1080, 2376, false);
+        assertEquals(360, source.widthDp);
+        assertEquals(792, source.heightDp);
+
+        Configuration config = new Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 736;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+
+        ViewportOverride.Result result = ViewportOverride.derive(
+                config, 320, false, null, 1080, 2376, false);
+
+        assertEquals(320, result.widthDp);
+        assertEquals(704, result.heightDp);
+        assertEquals(320, result.smallestWidthDp);
+        assertEquals(540, result.densityDpi);
+
+        ViewportOverride.Result appFrame = ViewportOverride.derive(config, 320);
+        assertEquals(654, appFrame.heightDp);
+    }
+
+    @Test
+    public void unknownWindowModeDoesNotExpandToTheFullDisplay() {
+        assertFalse(ViewportOverride.expandsToMaxBounds(null));
+        assertTrue(ViewportOverride.expandsToMaxBounds(0));
+        assertTrue(ViewportOverride.expandsToMaxBounds(1));
+        assertFalse(ViewportOverride.expandsToMaxBounds(5));
+    }
+
+    @Test
+    public void smallerWindowKeepsTheReportedFrame() {
+        Configuration config = new Configuration();
+        config.screenWidthDp = 360;
+        config.screenHeightDp = 480;
+        config.smallestScreenWidthDp = 360;
+        config.densityDpi = 480;
+
+        ViewportOverride.Result result = ViewportOverride.derive(
+                config, 320, false, null, 1080, 2376, true);
+
+        assertEquals(320, result.widthDp);
+        assertEquals(427, result.heightDp);
+        assertEquals(540, result.densityDpi);
+    }
+
     @Test
     public void derivesHeightAndSmallestWidthFromConfiguredWidth() {
         Configuration config = new Configuration();

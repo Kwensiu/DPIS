@@ -12,13 +12,13 @@ import org.junit.Test
 
 class RelativeViewportOwnershipTest {
     @Test
-    fun autoRelativeTargetDefersWhenSystemHooksAreEnabled() {
+    fun autoRelativeTargetRemainsAppOwnedUntilSystemResultIsPublished() {
         val store = DpisConfigStore(FakePrefs())
         store.setTargetViewportSpec("com.example.target", ViewportTargetSpec.relativeScale(120000))
         store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.AUTO)
         store.setSystemServerHooksEnabled(true)
 
-        assertTrue(RelativeViewportOwnership.shouldDefer(store, "com.example.target"))
+        assertFalse(RelativeViewportOwnership.shouldDefer(store, "com.example.target"))
     }
 
     @Test
@@ -69,12 +69,12 @@ class RelativeViewportOwnershipTest {
     }
 
     @Test
-    fun fullscreenPhysicalConfigurationStaysWithSystemServer() {
+    fun fullscreenConfigurationStaysInTheAppUntilSystemServerPublishes() {
         val packageName = "com.example.target"
         val store = systemOwnedStore(packageName)
         val target = ViewportTargetSpec.relativeScale(120000)
 
-        assertTrue(
+        assertFalse(
             RelativeViewportOwnership.shouldDefer(
                 store,
                 packageName,
@@ -96,7 +96,7 @@ class RelativeViewportOwnershipTest {
             ),
         )
 
-        assertTrue(
+        assertFalse(
             RelativeViewportOwnership.shouldDefer(
                 store,
                 packageName,
@@ -104,12 +104,40 @@ class RelativeViewportOwnershipTest {
                 configuration(360, 792),
             ),
         )
-        assertTrue(
+        assertFalse(
             RelativeViewportOwnership.shouldDefer(
                 store,
                 packageName,
                 null,
                 configuration(432, 950, 400),
+            ),
+        )
+    }
+
+    @Test
+    fun publishedSystemServerResultOwnsFullscreenConfiguration() {
+        val packageName = "com.example.target.system"
+        val store = systemOwnedStore(packageName)
+        val target = ViewportTargetSpec.relativeScale(120000)
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                target,
+                400,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(432, 950, 432, 400),
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+
+        assertTrue(
+            RelativeViewportOwnership.shouldDefer(
+                store,
+                packageName,
+                null,
+                configuration(360, 792),
             ),
         )
     }

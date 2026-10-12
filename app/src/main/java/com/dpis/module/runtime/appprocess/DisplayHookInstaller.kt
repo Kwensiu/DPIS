@@ -12,6 +12,8 @@ import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.EffectiveModeResolver
+import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertyBridge
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -183,6 +185,9 @@ object DisplayHookInstaller {
         if (metrics == null) {
             return
         }
+        if (currentPackageUsesCompatViewport()) {
+            return
+        }
         val routeName = "display_metrics_override"
         val currentPackageName = resolveCurrentPackageName()
         recordViewportProbeAtMostEvery(
@@ -242,8 +247,11 @@ object DisplayHookInstaller {
         metrics.densityDpi = override.densityDpi
         metrics.density = DensityOverride.densityFromDpi(override.densityDpi)
         metrics.scaledDensity = metrics.density * fontScale
+        // Real metrics already carry the physical display surface. Replacing it
+        // with the last app-window result (for example 1080x2208 instead of
+        // 1080x2376) makes the renderer see inconsistent physical bounds.
         val surface = if (forcesDisplayPixels(sourceTag)) {
-            intArrayOf(override.widthPx, override.heightPx)
+            intArrayOf(originalWidthPixels, originalHeightPixels)
         } else {
             surfacePixels(
                 originalWidthPixels,
@@ -294,6 +302,9 @@ object DisplayHookInstaller {
         if (point == null) {
             return
         }
+        if (currentPackageUsesCompatViewport()) {
+            return
+        }
         val routeName = "display_size_override"
         val currentPackageName = resolveCurrentPackageName()
         recordViewportProbeAtMostEvery(
@@ -333,8 +344,10 @@ object DisplayHookInstaller {
         }
         val originalX = point.x
         val originalY = point.y
+        // getRealSize is a physical display query; keep the callback's own
+        // pixels even when a window-scoped viewport record is cached.
         val surface = if (forcesDisplayPixels(sourceTag)) {
-            intArrayOf(override.widthPx, override.heightPx)
+            intArrayOf(originalX, originalY)
         } else {
             surfacePixels(originalX, originalY, override.widthPx, override.heightPx)
         }
@@ -365,6 +378,9 @@ object DisplayHookInstaller {
     @JvmStatic
     fun applyDisplayInfo(displayInfo: Any?, sourceTag: String) {
         if (displayInfo == null) {
+            return
+        }
+        if (currentPackageUsesCompatViewport()) {
             return
         }
         val routeName = "display_info_override"
@@ -404,36 +420,26 @@ object DisplayHookInstaller {
             )
             return
         }
-        val appSurface = surfacePixels(
-            readIntField(displayInfo, "appWidth") ?: 0,
-            readIntField(displayInfo, "appHeight") ?: 0,
-            override.widthPx,
-            override.heightPx,
-        )
+        // DisplayInfo is the physical display. Keep this callback's geometry.
+        // A cached window such as 1080x2208 must not replace 1080x2376.
+        val originalLogicalWidth = readIntField(displayInfo, "logicalWidth") ?: 0
+        val originalLogicalHeight = readIntField(displayInfo, "logicalHeight") ?: 0
+        val originalAppWidth = readIntField(displayInfo, "appWidth") ?: 0
+        val originalAppHeight = readIntField(displayInfo, "appHeight") ?: 0
         var changed = false
         changed = changed or writeIntField(displayInfo, "logicalDensityDpi", override.densityDpi)
-        changed = changed or writeIntField(displayInfo, "logicalWidth", override.widthPx)
-        changed = changed or writeIntField(displayInfo, "logicalHeight", override.heightPx)
-        changed = changed or writeIntField(displayInfo, "appWidth", appSurface[0])
-        changed = changed or writeIntField(displayInfo, "appHeight", appSurface[1])
-        changed = changed or writeIntField(displayInfo, "smallestNominalAppWidth", appSurface[0])
-        changed =
-            changed or writeIntField(displayInfo, "smallestNominalAppHeight", appSurface[1])
-        changed = changed or writeIntField(displayInfo, "largestNominalAppWidth", appSurface[0])
-        changed =
-            changed or writeIntField(displayInfo, "largestNominalAppHeight", appSurface[1])
         if (!changed) {
             recordViewportSkipAtMostEvery(
                 routeName,
                 ("source=" + sourceTag + ", reason=stable_target"
-                        + ", logical=" + override.widthPx + "x" + override.heightPx
+                        + ", logical=" + originalLogicalWidth + "x" + originalLogicalHeight
                         + ", densityDpi=" + override.densityDpi)
             )
             return
         }
         val message = ("Display override(" + sourceTag + "): package="
-                + safeValue(effectivePackageName) + ", logical=" + override.widthPx + "x"
-                + override.heightPx + ", app=" + appSurface[0] + "x" + appSurface[1]
+                + safeValue(effectivePackageName) + ", logical=" + originalLogicalWidth + "x"
+                + originalLogicalHeight + ", app=" + originalAppWidth + "x" + originalAppHeight
                 + ", densityDpi=" + override.densityDpi)
         if (logIfChanged(effectivePackageName + ":displayInfo:" + sourceTag, message)) {
             RuntimeHotPathEvents.applied(
@@ -441,10 +447,10 @@ object DisplayHookInstaller {
                 "viewport",
                 routeName,
                 ("source=" + sourceTag
-                        + ", logicalWidth=" + override.widthPx
-                        + ", logicalHeight=" + override.heightPx
-                        + ", appWidth=" + appSurface[0]
-                        + ", appHeight=" + appSurface[1]
+                        + ", logicalWidth=" + originalLogicalWidth
+                        + ", logicalHeight=" + originalLogicalHeight
+                        + ", appWidth=" + originalAppWidth
+                        + ", appHeight=" + originalAppHeight
                         + ", densityDpi=" + override.densityDpi)
             )
         }
@@ -483,7 +489,7 @@ object DisplayHookInstaller {
         if (!targetSpec.isEnabled) {
             targetSpec = store.getTargetViewportSpec(packageName)
         }
-        if (targetSpec == null || !targetSpec.isEnabled) {
+        if (!targetSpec.isEnabled) {
             return null
         }
         if (targetSpec.isRelativeScale) {
@@ -585,6 +591,25 @@ object DisplayHookInstaller {
             return null
         }
         return cached.result
+    }
+
+    /** Explicit compat, and auto with the system hook off, leave Display unchanged. */
+    private fun currentPackageUsesCompatViewport(): Boolean {
+        val store = targetStore ?: return false
+        val packageName = targetPackageName ?: return false
+        val effectivePackageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
+            store, packageName,
+        )
+        val effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
+            store, effectivePackageName,
+        ) ?: return false
+        if (effectivePackageName.isNullOrBlank()) {
+            return false
+        }
+        return EffectiveModeResolver.resolveViewportMode(
+            effectiveStore.getTargetViewportApplyMode(effectivePackageName),
+            effectiveStore.isSystemServerHooksEnabled(),
+        ) == ViewportApplyMode.COMPAT
     }
 
     /** Screen callbacks stay on the display. App-area callbacks may be a window. */

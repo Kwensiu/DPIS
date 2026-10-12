@@ -32,6 +32,7 @@ class ResourcesReadStableDensityTest {
 
     @After
     fun tearDown() {
+        DensityOverride.resetProcessBitmapDensityForTest()
         RuntimeEvents.cancel()
         RuntimeHotPathEvents.resetForTest()
         ResourcesReadHookInstaller.resetHotPathSamplerForTest()
@@ -41,6 +42,53 @@ class ResourcesReadStableDensityTest {
         WindowBoundsState.clearForTest()
         ResourcesFontScheduler.clearForTest()
         ResourcesMetricsReadReuse.clearForTest()
+    }
+
+    @Test
+    fun physicalConfigurationReadKeepsTheViewportBitmapDensity() {
+        DensityOverride.resetProcessBitmapDensityForTest()
+        DensityOverride.alignProcessBitmapDensity(540)
+        val config = Configuration()
+        config.densityDpi = 480
+        config.screenWidthDp = 360
+        config.screenHeightDp = 736
+        config.smallestScreenWidthDp = 360
+        config.fontScale = 1.0f
+        val metrics = DisplayMetrics()
+        metrics.densityDpi = 540
+        metrics.density = 3.375f
+        metrics.scaledDensity = 3.375f
+        metrics.widthPixels = 1080
+        metrics.heightPixels = 2376
+
+        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, PACKAGE_NAME)
+
+        assertEquals(540, DensityOverride.processBitmapDensityDpi())
+    }
+
+    @Test
+    fun resolvedViewportDensityBecomesTheProcessBitmapDensity() {
+        DensityOverride.resetProcessBitmapDensityForTest()
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(320, 704, 320, 540, 1080, 2376),
+        )
+        val config = Configuration()
+        config.densityDpi = 540
+        config.screenWidthDp = 320
+        config.screenHeightDp = 704
+        config.smallestScreenWidthDp = 320
+        config.fontScale = 1.0f
+        val metrics = DisplayMetrics()
+        metrics.densityDpi = 480
+        metrics.density = 3.0f
+        metrics.scaledDensity = 3.0f
+        metrics.widthPixels = 1080
+        metrics.heightPixels = 2376
+
+        ResourcesReadHookInstaller.applyMetricsOverride(metrics, config, PACKAGE_NAME)
+
+        assertEquals(540, metrics.densityDpi)
+        assertEquals(540, DensityOverride.processBitmapDensityDpi())
     }
 
     @Test

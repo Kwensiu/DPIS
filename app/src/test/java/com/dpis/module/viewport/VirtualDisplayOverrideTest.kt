@@ -143,7 +143,7 @@ class VirtualDisplayOverrideTest {
     @Test
     fun realMetricsRestoreDisplayPixelsAndAlignScaledDensity() {
         publishRelativeDisplay()
-        val metrics = displayMetrics(1080, 1600, 400, 3.0f)
+        val metrics = displayMetrics(1080, 2376, 400, 3.0f)
 
         DisplayHookInstaller.applyDisplayMetrics(metrics, "getRealMetrics")
 
@@ -152,6 +152,67 @@ class VirtualDisplayOverrideTest {
         assertEquals(400, metrics.densityDpi.toLong())
         assertEquals(2.5f, metrics.density, 0.001f)
         assertEquals(2.5f, metrics.scaledDensity, 0.001f)
+    }
+
+    @Test
+    fun autoWithoutSystemHooksLeavesDisplayUntouched() {
+        publishTargetRecord(ViewportApplyMode.AUTO, systemHooksEnabled = false)
+        val metrics = displayMetrics(10, 10, 480, 3.0f)
+
+        DisplayHookInstaller.applyDisplayMetrics(metrics, "getMetrics")
+
+        assertEquals(10, metrics.widthPixels.toLong())
+        assertEquals(10, metrics.heightPixels.toLong())
+        assertEquals(480, metrics.densityDpi.toLong())
+        assertEquals(3.0f, metrics.density, 0.001f)
+    }
+
+    @Test
+    fun compatDisplayLeavesTheCallbackUntouched() {
+        publishTargetRecord(ViewportApplyMode.COMPAT)
+        val metrics = displayMetrics(10, 10, 480, 3.0f)
+
+        DisplayHookInstaller.applyDisplayMetrics(metrics, "getMetrics")
+
+        assertEquals(10, metrics.widthPixels.toLong())
+        assertEquals(10, metrics.heightPixels.toLong())
+        assertEquals(480, metrics.densityDpi.toLong())
+        assertEquals(3.0f, metrics.density, 0.001f)
+
+        val realMetrics = displayMetrics(1080, 2376, 480, 3.0f)
+        DisplayHookInstaller.applyDisplayMetrics(realMetrics, "getRealMetrics")
+
+        assertEquals(1080, realMetrics.widthPixels.toLong())
+        assertEquals(2376, realMetrics.heightPixels.toLong())
+        assertEquals(480, realMetrics.densityDpi.toLong())
+
+        val point = Point()
+        point.x = 10
+        point.y = 10
+        DisplayHookInstaller.applyPoint(point, "getSize")
+        assertEquals(10, point.x.toLong())
+        assertEquals(10, point.y.toLong())
+
+        val displayInfo = CallbackDisplayInfo()
+        DisplayHookInstaller.applyDisplayInfo(displayInfo, "getDisplayInfo")
+        assertEquals(480, displayInfo.logicalDensityDpi.toLong())
+        assertEquals(1080, displayInfo.logicalWidth.toLong())
+        assertEquals(2376, displayInfo.logicalHeight.toLong())
+        assertEquals(1080, displayInfo.appWidth.toLong())
+        assertEquals(2208, displayInfo.appHeight.toLong())
+    }
+
+    @Test
+    fun realSizeKeepsPhysicalDisplayPixelsWhenWindowRecordIsCached() {
+        publishTargetRecord()
+        val point = Point()
+        point.x = 1080
+        point.y = 2376
+
+        DisplayHookInstaller.applyPoint(point, "getRealSize")
+
+        assertEquals(1080, point.x.toLong())
+        assertEquals(2376, point.y.toLong())
     }
 
     @Test
@@ -342,10 +403,17 @@ class VirtualDisplayOverrideTest {
         )
     }
 
-    private fun publishTargetRecord() {
+    private fun publishTargetRecord(
+        applyMode: String? = null,
+        systemHooksEnabled: Boolean = true,
+    ) {
         val store = DpisConfigStore(FakePrefs())
         val targetSpec = ViewportTargetSpec.absoluteDp(300)
         store.setTargetViewportSpec("com.max.xiaoheihe", targetSpec)
+        store.setSystemServerHooksEnabled(systemHooksEnabled)
+        if (applyMode != null) {
+            store.setTargetViewportApplyMode("com.max.xiaoheihe", applyMode)
+        }
         DisplayHookInstaller.setTargetStoreForLegacy(store)
         VirtualDisplayState.publish(
             "com.max.xiaoheihe",
@@ -374,6 +442,19 @@ class VirtualDisplayOverrideTest {
             null,
             null,
         )
+    }
+
+    private class CallbackDisplayInfo {
+        @JvmField
+        var logicalDensityDpi: Int = 480
+        @JvmField
+        var logicalWidth: Int = 1080
+        @JvmField
+        var logicalHeight: Int = 2376
+        @JvmField
+        var appWidth: Int = 1080
+        @JvmField
+        var appHeight: Int = 2208
     }
 
     companion object {

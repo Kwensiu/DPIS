@@ -1,42 +1,26 @@
 package com.dpis.module.runtime.systemserver;
 
-import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-import com.dpis.module.config.PerAppDisplayConfigSource;
-
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
-
-
+import com.dpis.module.SourceSmokeTestPaths;
 import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
-
-import com.dpis.module.*;
-
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
-
+import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
-
+import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
 import com.dpis.module.viewport.ViewportRuntimeRecord;
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportOverride;
 import com.dpis.module.viewport.ViewportSourceSnapshot;
 import com.dpis.module.viewport.ViewportTargetSpec;
-
-import com.dpis.module.hooks.HookDomainOverride;
-
-import com.dpis.module.runtime.probe.DebugPackageOverride;
 
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
 
 public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
     @Test
@@ -283,7 +267,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertTrue(nextMethodIndex > methodIndex);
 
         String method = source.substring(methodIndex, nextMethodIndex);
-        assertTrue(method.contains("resolveMarkerGatedEnvironment("));
+        assertTrue(method.contains("resolveLaunchViewportEnvironment("));
         assertTrue(method.contains("applyConfiguration(configuration, environment)"));
         assertTrue(method.contains("applyLaunchActivityItemConfigurationFields("));
         assertTrue(source.contains("applyLaunchActivityItemObject(source, chain.getThisObject())"));
@@ -297,7 +281,7 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         assertTrue(source.contains("private static boolean hasSystemServerViewportOverride"));
         assertTrue(source.contains("if (ViewportApplyMode.SYSTEM.equals(mode))"));
         assertTrue(source.contains("ViewportApplyMode.AUTO.equals(mode)"));
-        assertTrue(source.contains("&& !config.targetViewportSpec.isRelativeScale()"));
+        assertTrue(source.contains("return ViewportApplyMode.AUTO.equals(mode);"));
         assertTrue(source.contains("boolean applyViewport = environment != null"));
         assertTrue(source.contains("hasSystemServerViewportOverride(config);"));
         assertTrue(source.contains("if (!hasSystemServerViewportOverride(config))"));
@@ -696,28 +680,21 @@ public class SystemServerDisplayEnvironmentInstallerMutationPolicyTest {
         }
     }
 
-    private static final class FakeLayoutParams {
-        @SuppressWarnings("unused")
-        private final String packageName;
-        @SuppressWarnings("unused")
-        private final int type;
+    private record FakeLayoutParams(@SuppressWarnings("unused") String packageName,
+                                    @SuppressWarnings("unused") int type) {
+            private FakeLayoutParams(String packageName) {
+                this(packageName, 0);
+            }
 
-        private FakeLayoutParams(String packageName) {
-            this(packageName, 0);
+            private FakeLayoutParams(String packageName, int type) {
+                this.packageName = packageName;
+                this.type = type;
+            }
         }
 
-        private FakeLayoutParams(String packageName, int type) {
-            this.packageName = packageName;
-            this.type = type;
+    private record FakePackageOwner(@SuppressWarnings("unused") String packageName) {
+            private FakePackageOwner(String packageName) {
+                this.packageName = packageName;
+            }
         }
-    }
-
-    private static final class FakePackageOwner {
-        @SuppressWarnings("unused")
-        private final String packageName;
-
-        private FakePackageOwner(String packageName) {
-            this.packageName = packageName;
-        }
-    }
 }

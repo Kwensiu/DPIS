@@ -1,38 +1,33 @@
 package com.dpis.module;
 
-import com.dpis.module.config.PerAppDisplayConfigSource;
-
-import com.dpis.module.config.ConfigSnapshotLoader;
-
-
-import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.viewport.PerAppDisplayEnvironment;
-import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
-
-import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
-import com.dpis.module.viewport.ViewportOverride;
-import com.dpis.module.viewport.ViewportSourceSnapshot;
-
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.util.Log;
 
+import com.dpis.module.config.ConfigSnapshotLoader;
+import com.dpis.module.config.PerAppDisplayConfigSource;
+import com.dpis.module.diagnostics.DpisLog;
+import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.runtime.probe.RuntimeClock;
 import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
 import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Objects;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
-import com.dpis.module.diagnostics.DpisLog;
 
 final class LegacySystemServerHookInstaller {
     private static final int MAX_PACKAGE_RECURSION_DEPTH = 5;
@@ -421,6 +416,12 @@ final class LegacySystemServerHookInstaller {
         if (configuration == null || config == null || !config.hasViewportOverride()) {
             return null;
         }
+        // Compat is stripped before delivery. If one still arrives, leave it.
+        // See PerAppDisplayConfigSource.
+        if (ViewportApplyMode.COMPAT.equals(
+                ViewportApplyMode.normalize(config.targetViewportMode))) {
+            return null;
+        }
         int widthPx = resolveWidthPx(configuration);
         int heightPx = resolveHeightPx(configuration);
         PerAppDisplayEnvironment alreadyApplied = resolveAlreadyAppliedEnvironment(
@@ -629,59 +630,51 @@ final class LegacySystemServerHookInstaller {
         return matchesCurrentConfiguration(configuration, marker);
     }
 
-    private static final class ConfigurationMarker implements ViewportRuntimeMarkerBridge.ConfigurationLike {
-        private final Configuration configuration;
-
-        ConfigurationMarker(Configuration configuration) {
-            this.configuration = configuration;
-        }
+    private record ConfigurationMarker(
+            Configuration configuration) implements ViewportRuntimeMarkerBridge.ConfigurationLike {
 
         @Override
-        public int widthDp() {
-            return configuration.screenWidthDp;
+            public int widthDp() {
+                return configuration.screenWidthDp;
+            }
+
+            @Override
+            public int heightDp() {
+                return configuration.screenHeightDp;
+            }
+
+            @Override
+            public int smallestWidthDp() {
+                return configuration.smallestScreenWidthDp;
+            }
+
+            @Override
+            public int densityDpi() {
+                return configuration.densityDpi;
+            }
         }
+
+    private record EnvironmentMarker(
+            PerAppDisplayEnvironment environment) implements ViewportRuntimeMarkerBridge.ConfigurationLike {
 
         @Override
-        public int heightDp() {
-            return configuration.screenHeightDp;
-        }
+            public int widthDp() {
+                return environment.widthDp;
+            }
 
-        @Override
-        public int smallestWidthDp() {
-            return configuration.smallestScreenWidthDp;
-        }
+            @Override
+            public int heightDp() {
+                return environment.heightDp;
+            }
 
-        @Override
-        public int densityDpi() {
-            return configuration.densityDpi;
-        }
-    }
+            @Override
+            public int smallestWidthDp() {
+                return environment.smallestWidthDp;
+            }
 
-    private static final class EnvironmentMarker implements ViewportRuntimeMarkerBridge.ConfigurationLike {
-        private final PerAppDisplayEnvironment environment;
-
-        EnvironmentMarker(PerAppDisplayEnvironment environment) {
-            this.environment = environment;
+            @Override
+            public int densityDpi() {
+                return environment.densityDpi;
+            }
         }
-
-        @Override
-        public int widthDp() {
-            return environment.widthDp;
-        }
-
-        @Override
-        public int heightDp() {
-            return environment.heightDp;
-        }
-
-        @Override
-        public int smallestWidthDp() {
-            return environment.smallestWidthDp;
-        }
-
-        @Override
-        public int densityDpi() {
-            return environment.densityDpi;
-        }
-    }
 }

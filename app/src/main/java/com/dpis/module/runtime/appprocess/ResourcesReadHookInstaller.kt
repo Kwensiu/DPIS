@@ -919,6 +919,9 @@ object ResourcesReadHookInstaller {
             targetDensityDpi = applied.densityDpi
             densitySource = "virtual-display-state"
         }
+        val viewportDensityKnown =
+            (localViewportResult != null && localViewportResult.densityDpi > 0) ||
+                    (applied != null && applied.densityDpi > 0)
         targetDensity = DensityOverride.densityFromDpi(targetDensityDpi)
         targetScaledDensity = DensityOverride.scaledDensityFrom(targetDensityDpi, fontScale)
         metricsChanged = metricsChanged
@@ -929,6 +932,11 @@ object ResourcesReadHookInstaller {
             metrics.densityDpi = targetDensityDpi
             metrics.density = targetDensity
             metrics.scaledDensity = targetScaledDensity
+            // A still-physical configuration must not reset the process bitmap
+            // density. Only a resolved viewport density may replace it.
+            if (viewportDensityKnown) {
+                DensityOverride.alignProcessBitmapDensity(targetDensityDpi)
+            }
         }
         if (applied != null) {
             if (metrics.widthPixels != applied.widthPx || metrics.heightPixels != applied.heightPx) {

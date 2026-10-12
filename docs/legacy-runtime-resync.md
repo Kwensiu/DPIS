@@ -562,3 +562,13 @@ process. Legacy inherits this boundary.
   animates from the physical width while the toolbar and card use the published
   width. The clicks do not change WindowMetrics, so the shared viewport route
   cannot see those frames. No Chrome-only route was added.
+- 2026-10-11: A system-mode preference without a current system_server result
+  marker no longer suppresses the app-process fullscreen fallback. The app route
+  defers only after a current marker with system_server provenance; this keeps
+  AUTO effective when system hooks are enabled but their mutation route did not run.
+- 2026-10-12: Shared with Modern. AUTO relative launch is applied in modern
+  system_server from physical max bounds. Explicit compat is stripped before
+  delivery. A system_server launch write stopped the cover-edge stretch and
+  was not kept, because compat must not require a system-framework hook.
+  Legacy still skips a compat viewport if one arrives. Compat Display
+  callbacks stay untouched, including density.

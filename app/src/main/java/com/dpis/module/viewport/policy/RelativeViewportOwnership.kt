@@ -26,10 +26,10 @@ object RelativeViewportOwnership {
     )
 
     /**
-     * Fullscreen configuration stays with system_server, including one that is
-     * still physical. Resource creation and configuration updates in the app
-     * process do not rewrite it. A smaller window is still scaled here,
-     * because system_server copies the full display result onto it.
+     * Fullscreen configuration stays with system_server only after that
+     * process publishes the current relative result. Until then the app
+     * process scales it. A smaller window is still scaled here, because
+     * system_server copies the full display result onto it.
      */
     @JvmStatic
     fun shouldDefer(
@@ -73,10 +73,15 @@ object RelativeViewportOwnership {
         ) {
             return false
         }
-        return ViewportApplyMode.SYSTEM == EffectiveModeResolver.resolveViewportMode(
+        if (ViewportApplyMode.SYSTEM != EffectiveModeResolver.resolveViewportMode(
             store.getTargetViewportApplyMode(packageName),
             true,
-        )
+            )
+        ) {
+            return false
+        }
+        return relativeResult(store, packageName)?.provenance ==
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER
     }
 
     /**

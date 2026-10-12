@@ -1,66 +1,41 @@
 package com.dpis.module.runtime.systemserver;
 
-import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
-
-import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller;
-
-import com.dpis.module.config.PerAppDisplayConfigSource;
-
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
-
-import com.dpis.module.config.ConfigSnapshotLoader;
-
-import com.dpis.module.config.ConfigSnapshot;
-
-import com.dpis.module.config.DpisConfigStore;
-
-
-
-
-import com.dpis.module.fonts.FontApplyMode;
-
-
-
-import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
-
-import com.dpis.module.runtime.appprocess.WindowFrameOverride;
-
-import com.dpis.module.diagnostics.device.RuntimeTransport;
-
-import com.dpis.module.*;
-
-import com.dpis.module.viewport.PerAppDisplayEnvironment;
-
-import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
-import com.dpis.module.viewport.ViewportRuntimeMarkerProbe;
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportConfigurationScope;
-import com.dpis.module.viewport.ViewportOverride;
-import com.dpis.module.viewport.ViewportSourceSnapshot;
-
-import com.dpis.module.hooks.HookRuntimePolicy;
-import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
-
-import com.dpis.module.runtime.probe.DebugPackageOverride;
-import com.dpis.module.runtime.ProcessScopedInstallGate;
-import com.dpis.module.runtime.probe.RuntimeClock;
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
-
-import android.content.res.Configuration;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Binder;
 import android.os.IBinder;
 
-import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
-import com.dpis.module.runtime.systemserver.ReflectionProbeCache;
-import com.dpis.module.runtime.systemserver.SystemServerPackageUidResolver;
+import com.dpis.module.config.ConfigSnapshotLoader;
+import com.dpis.module.config.DpisConfigStore;
+import com.dpis.module.config.PerAppDisplayConfigSource;
+import com.dpis.module.diagnostics.DpisLog;
+import com.dpis.module.diagnostics.device.RuntimeTransport;
+import com.dpis.module.fonts.FontApplyMode;
+import com.dpis.module.hooks.HookRuntimePolicy;
+import com.dpis.module.runtime.ConfigStoreFactory;
+import com.dpis.module.runtime.ProcessScopedInstallGate;
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
+import com.dpis.module.runtime.appprocess.WindowFrameOverride;
+import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
+import com.dpis.module.runtime.hookapi.ModernApiCapabilities;
+import com.dpis.module.runtime.probe.DebugPackageOverride;
+import com.dpis.module.runtime.probe.RuntimeClock;
+import com.dpis.module.viewport.PerAppDisplayEnvironment;
+import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportConfigurationScope;
+import com.dpis.module.viewport.ViewportOverride;
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
+import com.dpis.module.viewport.ViewportRuntimeMarkerProbe;
+import com.dpis.module.viewport.ViewportSourceSnapshot;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,8 +45,6 @@ import java.util.StringJoiner;
 import java.util.function.Predicate;
 
 import io.github.libxposed.api.XposedInterface;
-import com.dpis.module.runtime.ConfigStoreFactory;
-import com.dpis.module.diagnostics.DpisLog;
 
 @SuppressWarnings("java:S1872")
 public final class SystemServerDisplayEnvironmentInstaller {
@@ -340,9 +313,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
     static String findPackageNameForTest(Object self, Object... args) {
         List<Object> values = new ArrayList<>();
         if (args != null) {
-            for (Object arg : args) {
-                values.add(arg);
-            }
+            Collections.addAll(values, args);
         }
         return findPackageName(self, values);
     }
@@ -352,9 +323,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
                                                   Object... args) {
         List<Object> values = new ArrayList<>();
         if (args != null) {
-            for (Object arg : args) {
-                values.add(arg);
-            }
+            Collections.addAll(values, args);
         }
         return resolveConfiguredPackage(self, values, packageName -> {
             if (packageName == null || hasConfig == null || !hasConfig.test(packageName)) {
@@ -370,9 +339,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
                                                           Object... args) {
         List<Object> values = new ArrayList<>();
         if (args != null) {
-            for (Object arg : args) {
-                values.add(arg);
-            }
+            Collections.addAll(values, args);
         }
         return resolveConfiguredPackageForEntry(entryName, self, values, packageName -> {
             if (packageName == null || hasConfig == null || !hasConfig.test(packageName)) {
@@ -831,19 +798,11 @@ public final class SystemServerDisplayEnvironmentInstaller {
         }
         PerAppDisplayEnvironment environment = null;
         if (hasSystemServerViewportOverride(config)) {
-            int widthPx = resolveWidthPx(baseConfiguration, null);
-            int heightPx = resolveHeightPx(baseConfiguration, null);
-            environment = resolveAlreadyAppliedRelativeScaleEnvironment(
-                    packageName, baseConfiguration, widthPx, heightPx, config);
-            if (environment == null) {
-                environment = PerAppDisplayOverrideCalculator.calculate(
-                        baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
-            }
-            environment = resolveMarkerGatedEnvironment(
-                    "launch-activity-item",
+            environment = resolveLaunchViewportEnvironment(
                     packageName,
-                    new Snapshot(baseConfiguration, null, null),
-                    environment,
+                    baseConfiguration,
+                    resolveWidthPx(baseConfiguration, null),
+                    resolveHeightPx(baseConfiguration, null),
                     config);
         }
         String beforeSummary = DpisLog.isLoggingEnabled()
@@ -909,7 +868,6 @@ public final class SystemServerDisplayEnvironmentInstaller {
     private static String findActivityInfoPackage(List<Object> args) {
         for (Object arg : args) {
             if (arg instanceof ActivityInfo activityInfo
-                    && activityInfo.packageName != null
                     && isLikelyPackageName(activityInfo.packageName)) {
                 return activityInfo.packageName;
             }
@@ -960,33 +918,25 @@ public final class SystemServerDisplayEnvironmentInstaller {
         }
         ActivityInfo activityInfo = readLaunchActivityInfo(launchActivityItem);
         String packageName = activityInfo != null ? activityInfo.packageName : null;
-        if (packageName == null || !isLikelyPackageName(packageName)) {
+        if (!isLikelyPackageName(packageName)) {
             return;
         }
         packageName = resolveLaunchActivityItemPackage(
                 source::get, packageName, launchActivityItem);
         PerAppDisplayConfig config = selectConfigForSystemServerEntry(
                 "launch-activity-item", source.get(packageName));
-        if (config == null || !hasSystemServerViewportOverride(config)) {
+        if (!hasSystemServerViewportOverride(config)) {
             return;
         }
         Configuration baseConfiguration = readLaunchActivityConfiguration(launchActivityItem);
         if (baseConfiguration == null) {
             return;
         }
-        int widthPx = resolveWidthPx(baseConfiguration, null);
-        int heightPx = resolveHeightPx(baseConfiguration, null);
-        PerAppDisplayEnvironment environment = resolveAlreadyAppliedRelativeScaleEnvironment(
-                packageName, baseConfiguration, widthPx, heightPx, config);
-        if (environment == null) {
-            environment = PerAppDisplayOverrideCalculator.calculate(
-                    baseConfiguration, widthPx, heightPx, config.targetViewportSpec);
-        }
-        environment = resolveMarkerGatedEnvironment(
-                "launch-activity-item",
+        PerAppDisplayEnvironment environment = resolveLaunchViewportEnvironment(
                 packageName,
-                new Snapshot(baseConfiguration, null, null),
-                environment,
+                baseConfiguration,
+                resolveWidthPx(baseConfiguration, null),
+                resolveHeightPx(baseConfiguration, null),
                 config);
         if (environment == null) {
             return;
@@ -1422,7 +1372,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
                                                                      Snapshot before,
                                                                      Snapshot after,
                                                                      PerAppDisplayConfig config) {
-        if (config == null || !hasSystemServerViewportOverride(config)) {
+        if (!hasSystemServerViewportOverride(config)) {
             return null;
         }
         Configuration configuration = after.configuration != null
@@ -1534,6 +1484,75 @@ public final class SystemServerDisplayEnvironmentInstaller {
                 configuration.screenWidthDp, configuration.screenHeightDp);
         int resultCompare = Integer.compare(widthDp, heightDp);
         return sourceCompare == 0 || resultCompare == 0 || sourceCompare == resultCompare;
+    }
+
+    /**
+     * LaunchActivityItem is hooked before and after construction. The second
+     * pass must keep the first result: dp rebuilt from the density the first
+     * pass wrote does not invert the scale.
+     */
+    private static PerAppDisplayEnvironment resolveLaunchViewportEnvironment(
+            String packageName,
+            Configuration baseConfiguration,
+            int widthPx,
+            int heightPx,
+            PerAppDisplayConfig config) {
+        if (baseConfiguration == null || config == null) {
+            return null;
+        }
+        PerAppDisplayEnvironment alreadyApplied = resolveAlreadyAppliedRelativeScaleEnvironment(
+                packageName, baseConfiguration, widthPx, heightPx, config);
+        if (alreadyApplied != null) {
+            return alreadyApplied;
+        }
+        if (alreadyAtAbsoluteTarget(baseConfiguration, config)) {
+            return environmentKeepingCurrentDp(baseConfiguration, widthPx, heightPx);
+        }
+        Configuration physicalConfiguration = configurationForPhysicalDisplay(
+                baseConfiguration, widthPx, heightPx);
+        PerAppDisplayEnvironment environment = PerAppDisplayOverrideCalculator.calculate(
+                physicalConfiguration, widthPx, heightPx, config.targetViewportSpec);
+        return resolveMarkerGatedEnvironment(
+                "launch-activity-item",
+                packageName,
+                new Snapshot(baseConfiguration, null, null),
+                environment,
+                config);
+    }
+
+    private static boolean alreadyAtAbsoluteTarget(Configuration configuration,
+                                                   PerAppDisplayConfig config) {
+        if (configuration == null || config == null
+                || !config.targetViewportSpec.isAbsoluteDp()) {
+            return false;
+        }
+        int targetWidthDp = config.targetViewportSpec.absoluteWidthDp();
+        return targetWidthDp > 0
+                && configuration.smallestScreenWidthDp == targetWidthDp
+                && configuration.screenWidthDp > 0
+                && configuration.screenHeightDp > 0
+                && configuration.densityDpi > 0;
+    }
+
+    private static PerAppDisplayEnvironment environmentKeepingCurrentDp(
+            Configuration configuration, int widthPx, int heightPx) {
+        return new PerAppDisplayEnvironment(
+                configuration.screenWidthDp,
+                configuration.screenHeightDp,
+                configuration.smallestScreenWidthDp,
+                configuration.densityDpi,
+                widthPx,
+                heightPx);
+    }
+
+    static PerAppDisplayEnvironment resolveLaunchViewportEnvironmentForTest(
+            String packageName,
+            Configuration configuration,
+            int widthPx,
+            int heightPx,
+            PerAppDisplayConfig config) {
+        return resolveLaunchViewportEnvironment(
+                packageName, configuration, widthPx, heightPx, config);
     }
 
     private static PerAppDisplayEnvironment resolveAlreadyAppliedRelativeScaleEnvironment(
@@ -1753,10 +1772,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
                 && !isSystemWindowOwnerPackage(packageName)) {
             return false;
         }
-        if (containsDifferentSystemWindowOwner(identity.ownerPackages, packageName)) {
-            return false;
-        }
-        return true;
+        return !containsDifferentSystemWindowOwner(identity.ownerPackages, packageName);
     }
 
     private static boolean isSystemWindowType(Integer windowType) {
@@ -1838,19 +1854,16 @@ public final class SystemServerDisplayEnvironmentInstaller {
         return null;
     }
 
-    private static final class RelayoutWindowIdentity {
-        final Set<String> ownerPackages;
-        final Integer windowType;
+    private record RelayoutWindowIdentity(Set<String> ownerPackages, Integer windowType) {
+            private RelayoutWindowIdentity(Set<String> ownerPackages, Integer windowType) {
+                this.ownerPackages = ownerPackages != null ? ownerPackages : Set.of();
+                this.windowType = windowType;
+            }
 
-        RelayoutWindowIdentity(Set<String> ownerPackages, Integer windowType) {
-            this.ownerPackages = ownerPackages != null ? ownerPackages : Set.of();
-            this.windowType = windowType;
+            static RelayoutWindowIdentity empty() {
+                return new RelayoutWindowIdentity(Set.of(), null);
+            }
         }
-
-        static RelayoutWindowIdentity empty() {
-            return new RelayoutWindowIdentity(Set.of(), null);
-        }
-    }
 
     private static PerAppDisplayConfig selectConfigForSystemServer(
             PerAppDisplayConfig config) {
@@ -1894,8 +1907,9 @@ public final class SystemServerDisplayEnvironmentInstaller {
         if (ViewportApplyMode.SYSTEM.equals(mode)) {
             return true;
         }
-        return ViewportApplyMode.AUTO.equals(mode)
-                && !config.targetViewportSpec.isRelativeScale();
+        // AUTO, including relative scale, launches from the physical display.
+        // Explicit compat does not. See PerAppDisplayConfigSource.
+        return ViewportApplyMode.AUTO.equals(mode);
     }
 
     private static boolean hasSystemServerFontOverride(PerAppDisplayConfig config) {
@@ -2278,6 +2292,10 @@ public final class SystemServerDisplayEnvironmentInstaller {
         if (frame != null && frame.width() > 0) {
             return frame.width();
         }
+        Rect maxBounds = resolveConfigurationMaxBounds(configuration);
+        if (maxBounds != null && maxBounds.width() > 0) {
+            return maxBounds.width();
+        }
         if (configuration == null || configuration.screenWidthDp <= 0 || configuration.densityDpi <= 0) {
             return 0;
         }
@@ -2288,10 +2306,59 @@ public final class SystemServerDisplayEnvironmentInstaller {
         if (frame != null && frame.height() > 0) {
             return frame.height();
         }
+        Rect maxBounds = resolveConfigurationMaxBounds(configuration);
+        if (maxBounds != null && maxBounds.height() > 0) {
+            return maxBounds.height();
+        }
         if (configuration == null || configuration.screenHeightDp <= 0 || configuration.densityDpi <= 0) {
             return 0;
         }
         return Math.round(configuration.screenHeightDp * (configuration.densityDpi / 160.0f));
+    }
+
+    private static Configuration configurationForPhysicalDisplay(
+            Configuration source, int widthPx, int heightPx) {
+        if (source == null || widthPx <= 0 || heightPx <= 0 || source.densityDpi <= 0) {
+            return source;
+        }
+        Configuration physical = new Configuration(source);
+        // The copy constructor used in tests leaves densityDpi at 0. Scale from
+        // the incoming density on both the device and the JVM.
+        physical.densityDpi = source.densityDpi;
+        physical.screenWidthDp = Math.max(1, Math.round(widthPx * 160.0f / source.densityDpi));
+        physical.screenHeightDp = Math.max(1, Math.round(heightPx * 160.0f / source.densityDpi));
+        physical.smallestScreenWidthDp = Math.min(
+                physical.screenWidthDp, physical.screenHeightDp);
+        return physical;
+    }
+
+    /**
+     * Launch configurations expose app bounds in screenHeightDp; max bounds retain the physical display.
+     */
+    private static Rect resolveConfigurationMaxBounds(Configuration configuration) {
+        if (configuration == null) {
+            return null;
+        }
+        try {
+            Object windowConfiguration = readField(configuration, "windowConfiguration");
+            if (windowConfiguration == null) {
+                windowConfiguration = Configuration.class
+                        .getMethod("getWindowConfiguration")
+                        .invoke(configuration);
+            }
+            if (windowConfiguration == null) {
+                return null;
+            }
+            Object bounds = readField(windowConfiguration, "mMaxBounds");
+            if (bounds == null) {
+                bounds = windowConfiguration.getClass()
+                        .getMethod("getMaxBounds")
+                        .invoke(windowConfiguration);
+            }
+            return bounds instanceof Rect ? new Rect((Rect) bounds) : null;
+        } catch (ReflectiveOperationException ignored) {
+            return null;
+        }
     }
 
     private static Configuration toConfiguration(PerAppDisplayEnvironment environment) {
@@ -2373,10 +2440,7 @@ public final class SystemServerDisplayEnvironmentInstaller {
             }
         }
         String fallback = extractPackageFromText(String.valueOf(target));
-        if (fallback != null) {
-            return fallback;
-        }
-        return null;
+        return fallback;
     }
 
     private static Configuration findConfiguration(Object self, List<Object> args) {
@@ -2687,93 +2751,63 @@ public final class SystemServerDisplayEnvironmentInstaller {
         return Character.isLowerCase(trimmed.charAt(0));
     }
 
-    private static final class Snapshot {
-        final Configuration configuration;
-        final Rect frame;
-        final Object displayInfo;
-
-        Snapshot(Configuration configuration, Rect frame, Object displayInfo) {
-            this.configuration = configuration;
-            this.frame = frame;
-            this.displayInfo = displayInfo;
-        }
+    private record Snapshot(Configuration configuration, Rect frame, Object displayInfo) {
     }
 
-    private static final class ConfigurationMarker implements ViewportRuntimeMarkerBridge.ConfigurationLike {
-        private final Configuration configuration;
-
-        ConfigurationMarker(Configuration configuration) {
-            this.configuration = configuration;
-        }
+    private record ConfigurationMarker(
+            Configuration configuration) implements ViewportRuntimeMarkerBridge.ConfigurationLike {
 
         @Override
-        public int widthDp() {
-            return configuration.screenWidthDp;
+            public int widthDp() {
+                return configuration.screenWidthDp;
+            }
+
+            @Override
+            public int heightDp() {
+                return configuration.screenHeightDp;
+            }
+
+            @Override
+            public int smallestWidthDp() {
+                return configuration.smallestScreenWidthDp;
+            }
+
+            @Override
+            public int densityDpi() {
+                return configuration.densityDpi;
+            }
         }
+
+    private record EnvironmentMarker(
+            PerAppDisplayEnvironment environment) implements ViewportRuntimeMarkerBridge.ConfigurationLike {
 
         @Override
-        public int heightDp() {
-            return configuration.screenHeightDp;
-        }
+            public int widthDp() {
+                return environment.widthDp;
+            }
 
-        @Override
-        public int smallestWidthDp() {
-            return configuration.smallestScreenWidthDp;
-        }
+            @Override
+            public int heightDp() {
+                return environment.heightDp;
+            }
 
-        @Override
-        public int densityDpi() {
-            return configuration.densityDpi;
-        }
-    }
+            @Override
+            public int smallestWidthDp() {
+                return environment.smallestWidthDp;
+            }
 
-    private static final class EnvironmentMarker implements ViewportRuntimeMarkerBridge.ConfigurationLike {
-        private final PerAppDisplayEnvironment environment;
-
-        EnvironmentMarker(PerAppDisplayEnvironment environment) {
-            this.environment = environment;
+            @Override
+            public int densityDpi() {
+                return environment.densityDpi;
+            }
         }
-
-        @Override
-        public int widthDp() {
-            return environment.widthDp;
-        }
-
-        @Override
-        public int heightDp() {
-            return environment.heightDp;
-        }
-
-        @Override
-        public int smallestWidthDp() {
-            return environment.smallestWidthDp;
-        }
-
-        @Override
-        public int densityDpi() {
-            return environment.densityDpi;
-        }
-    }
 
     private interface ConfigLookup {
         PerAppDisplayConfig find(String packageName);
     }
 
-    private static final class ResolvedPackage {
-        final String packageName;
-        final PerAppDisplayConfig config;
-        final String candidatePackagesSummary;
-        final String fallbackFromPackage;
-
-        ResolvedPackage(String packageName,
-                        PerAppDisplayConfig config,
-                        String candidatePackagesSummary,
-                        String fallbackFromPackage) {
-            this.packageName = packageName;
-            this.config = config;
-            this.candidatePackagesSummary = candidatePackagesSummary;
-            this.fallbackFromPackage = fallbackFromPackage;
-        }
+    private record ResolvedPackage(String packageName, PerAppDisplayConfig config,
+                                   String candidatePackagesSummary, String fallbackFromPackage) {
     }
 
     private static void logDisplayInfoProbe(String entryName, String packageName, Object displayInfo,

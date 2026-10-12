@@ -1231,3 +1231,19 @@ not change route selection, mutation policy, or evidence semantics.
   stays flush because it has one absolute width. Chrome 154 at 120% on 1080x2376
   never changed WindowMetrics away from 1080x2376 during the clicks, so no shared
   viewport write can reach those frames. No Chrome-only route was added.
+- 2026-10-11: A system-mode preference without a current system_server result
+  marker no longer suppresses the app-process fullscreen fallback. The app route
+  defers only after a current marker with system_server provenance; this keeps
+  AUTO effective when system hooks are enabled but their mutation route did not run.
+- 2026-10-12: AUTO relative launch, including the first Activity configuration,
+  is applied in system_server from physical max bounds. LaunchActivityItem runs
+  that calculation before and after construction; the second pass keeps the
+  first result. Explicit compat stays off that route. Applying it at launch
+  stopped video-cover edges stretching on the right and bottom, because the
+  process then started at the target density. App-process Display density,
+  bitmap default density, and fullscreen height from max bounds did not. The
+  launch write was removed: compat must not require a system-framework hook.
+  Legacy launch still does not apply a compat viewport. Compat Display
+  callbacks stay untouched, including density. On other modes, getRealMetrics,
+  getRealSize, and DisplayInfo keep the callback geometry instead of a cached
+  shorter window.

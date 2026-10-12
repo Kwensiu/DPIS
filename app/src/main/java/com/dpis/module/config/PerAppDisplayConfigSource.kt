@@ -1,7 +1,6 @@
 package com.dpis.module.config
 
 import android.os.SystemClock
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainDecision
@@ -38,6 +37,20 @@ class PerAppDisplayConfigSource(
         var targetViewportSpec =
             if (runtimeTargetSpec.isEnabled()) runtimeTargetSpec else packageConfig.targetViewportSpec
         val viewportMode = ViewportApplyMode.normalize(packageConfig.targetViewportMode)
+        // Explicit compat is not delivered to system_server.
+        //
+        // On 2026-10-12, compat ratio and width modes stretched the right and
+        // bottom edges of video covers. The stretch stopped when modern
+        // system_server applied the compat viewport at launch from the physical
+        // display's max bounds, so the process started at the target density.
+        // Writing Display density, aligning the process bitmap density, and
+        // scaling fullscreen height from max bounds inside the app did not.
+        //
+        // That launch write is not kept. Compat is for a process that does not
+        // hook the system framework. The fix works only when system_server is
+        // hooked, so keeping it would make compat depend on the hook it exists
+        // to avoid. System and AUTO already launch through system_server when
+        // that hook is enabled.
         if (viewportMode == ViewportApplyMode.COMPAT || viewportMode == ViewportApplyMode.OFF) {
             targetViewportSpec = ViewportTargetSpec.off()
         }

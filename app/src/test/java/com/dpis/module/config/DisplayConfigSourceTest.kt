@@ -1,11 +1,9 @@
 package com.dpis.module.config
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.FakePrefs
 
+import com.dpis.module.FakePrefs
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverrideStore
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig
 import com.dpis.module.viewport.ViewportApplyMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -161,6 +159,30 @@ class DisplayConfigSourceTest {
         assertNotNull(config)
         assertTrue(config!!.hasViewportOverride())
         assertEquals(360, config.targetViewportWidthDp())
+    }
+
+    @Test
+    fun compatViewportIsNotDeliveredAsASystemServerOverride() {
+        val store = DpisConfigStore(FakePrefs())
+        assertTrue(store.setTargetViewportWidthDp("com.example.target", 320))
+        assertTrue(store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.COMPAT))
+
+        assertNull(PerAppDisplayConfigSource(store).get("com.example.target"))
+    }
+
+    @Test
+    fun compatFontConfigDoesNotCarryAViewportOverride() {
+        val store = DpisConfigStore(FakePrefs())
+        assertTrue(store.setTargetViewportWidthDp("com.example.target", 320))
+        assertTrue(store.setTargetViewportApplyMode("com.example.target", ViewportApplyMode.COMPAT))
+        assertTrue(store.setTargetFontScalePercent("com.example.target", 125))
+
+        val config = PerAppDisplayConfigSource(store).get("com.example.target")
+
+        assertNotNull(config)
+        assertFalse(config!!.hasViewportOverride())
+        assertEquals(ViewportApplyMode.COMPAT, config.targetViewportMode)
+        assertEquals(125, config.targetFontScalePercent)
     }
 
     @Test

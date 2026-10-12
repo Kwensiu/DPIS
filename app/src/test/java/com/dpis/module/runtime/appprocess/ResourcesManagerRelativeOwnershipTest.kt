@@ -20,7 +20,7 @@ import org.junit.Test
 
 class ResourcesManagerRelativeOwnershipTest {
     @Test
-    fun systemOwnedFullscreenConfigurationStaysWithSystemServer() {
+    fun systemOwnedFullscreenConfigurationFallsBackUntilSystemResultExists() {
         val packageName = "com.example.target"
         val config = Configuration().apply {
             screenWidthDp = 360
@@ -45,10 +45,10 @@ class ResourcesManagerRelativeOwnershipTest {
             "ResourcesManager",
         )
 
-        assertEquals(360, config.screenWidthDp)
-        assertEquals(792, config.screenHeightDp)
-        assertEquals(360, config.smallestScreenWidthDp)
-        assertEquals(480, config.densityDpi)
+        assertEquals(432, config.screenWidthDp)
+        assertEquals(950, config.screenHeightDp)
+        assertEquals(432, config.smallestScreenWidthDp)
+        assertEquals(400, config.densityDpi)
 
         ResourcesManagerHookInstaller.applyResourceOverrides(
             config,
@@ -57,10 +57,10 @@ class ResourcesManagerRelativeOwnershipTest {
             "ResourcesManager",
         )
 
-        assertEquals(360, config.screenWidthDp)
-        assertEquals(792, config.screenHeightDp)
-        assertEquals(360, config.smallestScreenWidthDp)
-        assertEquals(480, config.densityDpi)
+        assertEquals(432, config.screenWidthDp)
+        assertEquals(950, config.screenHeightDp)
+        assertEquals(432, config.smallestScreenWidthDp)
+        assertEquals(400, config.densityDpi)
     }
 
     @Test

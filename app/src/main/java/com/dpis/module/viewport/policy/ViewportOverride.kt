@@ -24,8 +24,45 @@ object ViewportOverride {
     ): Result? {
         if (config == null || targetWidthDp <= 0) return null
         if (windowScoped) return deriveWindowScoped(config, stableTarget)
-        val sourceWidth = config.screenWidthDp.takeIf { it > 0 } ?: targetWidthDp
-        val sourceHeight = config.screenHeightDp.takeIf { it > 0 } ?: targetWidthDp
+        val maxBounds = readMaxBounds(config)
+        return derive(
+            config,
+            targetWidthDp,
+            false,
+            null,
+            maxBounds?.width() ?: 0,
+            maxBounds?.height() ?: 0,
+            !expandsToMaxBounds(readWindowingMode(config)),
+        )
+    }
+
+    /** Fullscreen screenHeightDp is the app frame. Max bounds are the physical display. */
+    @JvmStatic
+    fun derive(
+        config: Configuration?,
+        targetWidthDp: Int,
+        windowScoped: Boolean,
+        stableTarget: VirtualDisplayOverride.Result?,
+        maxWidthPx: Int,
+        maxHeightPx: Int,
+        smallerWindow: Boolean,
+    ): Result? {
+        if (config == null || targetWidthDp <= 0) return null
+        if (windowScoped) return deriveWindowScoped(config, stableTarget)
+        val fullDisplay = fullscreenSourceDp(
+            config.screenWidthDp,
+            config.screenHeightDp,
+            config.densityDpi,
+            maxWidthPx,
+            maxHeightPx,
+            smallerWindow,
+        )
+        val sourceWidth = fullDisplay?.widthDp
+            ?: config.screenWidthDp.takeIf { it > 0 }
+            ?: targetWidthDp
+        val sourceHeight = fullDisplay?.heightDp
+            ?: config.screenHeightDp.takeIf { it > 0 }
+            ?: targetWidthDp
         val sourceSmallest = config.smallestScreenWidthDp.takeIf { it > 0 }
             ?: minOf(sourceWidth, sourceHeight)
         val viewportScale = targetWidthDp.toFloat() / sourceSmallest.toFloat()
@@ -41,6 +78,73 @@ object ViewportOverride {
             0
         }
         return Result(targetWidth, targetHeight, targetWidthDp, targetDensityDpi)
+    }
+
+    class FullDisplayDp(
+        @JvmField val widthDp: Int,
+        @JvmField val heightDp: Int,
+    )
+
+    @JvmStatic
+    fun fullscreenSourceDp(
+        screenWidthDp: Int,
+        screenHeightDp: Int,
+        densityDpi: Int,
+        maxWidthPx: Int,
+        maxHeightPx: Int,
+        smallerWindow: Boolean,
+    ): FullDisplayDp? {
+        if (smallerWindow || densityDpi <= 0 || maxWidthPx <= 0 || maxHeightPx <= 0) {
+            return null
+        }
+        val widthDp = maxOf(1, kotlin.math.round(maxWidthPx * 160f / densityDpi).toInt())
+        val heightDp = maxOf(1, kotlin.math.round(maxHeightPx * 160f / densityDpi).toInt())
+        if (widthDp <= screenWidthDp + 1 && heightDp <= screenHeightDp + 1) {
+            return null
+        }
+        return FullDisplayDp(widthDp, heightDp)
+    }
+
+    /**
+     * Max bounds are the whole display. Expand only when the window mode is
+     * known to be fullscreen. An unreadable mode must not give a split window
+     * that full height.
+     */
+    @JvmStatic
+    fun expandsToMaxBounds(windowingMode: Int?): Boolean =
+        windowingMode != null && windowingMode <= 1
+
+    private fun readWindowingMode(config: Configuration?): Int? {
+        val windowConfiguration = readWindowConfiguration(config) ?: return null
+        return try {
+            val method = windowConfiguration.javaClass.getMethod("getWindowingMode")
+            method.invoke(windowConfiguration) as? Int
+        } catch (_: ReflectiveOperationException) {
+            null
+        }
+    }
+
+    private fun readMaxBounds(config: Configuration?): android.graphics.Rect? {
+        val windowConfiguration = readWindowConfiguration(config) ?: return null
+        return try {
+            val bounds = windowConfiguration.javaClass.getMethod("getMaxBounds")
+                .invoke(windowConfiguration)
+            bounds as? android.graphics.Rect
+        } catch (_: ReflectiveOperationException) {
+            null
+        }
+    }
+
+    private fun readWindowConfiguration(config: Configuration?): Any? {
+        if (config == null) return null
+        return try {
+            val field = Configuration::class.java.getDeclaredField("windowConfiguration")
+            field.isAccessible = true
+            field.get(config) ?: Configuration::class.java.getMethod("getWindowConfiguration")
+                .invoke(config)
+        } catch (_: ReflectiveOperationException) {
+            null
+        }
     }
 
     @JvmStatic

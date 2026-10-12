@@ -392,6 +392,7 @@ object ResourcesImplHookInstaller {
                 metrics.scaledDensity = DensityOverride.scaledDensityFrom(
                     stableResult.densityDpi, config.fontScale
                 )
+                DensityOverride.alignProcessBitmapDensity(stableResult.densityDpi)
                 metrics.widthPixels = stableResult.widthPx
                 metrics.heightPixels = stableResult.heightPx
                 val detail = ("source=ResourcesImpl"
@@ -429,6 +430,7 @@ object ResourcesImplHookInstaller {
                     metrics.scaledDensity = DensityOverride.scaledDensityFrom(
                         stableResult.densityDpi, config.fontScale
                     )
+                    DensityOverride.alignProcessBitmapDensity(stableResult.densityDpi)
                     metrics.widthPixels = stableResult.widthPx
                     metrics.heightPixels = stableResult.heightPx
                 }
@@ -479,6 +481,7 @@ object ResourcesImplHookInstaller {
             metrics.densityDpi = result.densityDpi
             metrics.density = targetDensity
             metrics.scaledDensity = targetScaledDensity
+            DensityOverride.alignProcessBitmapDensity(result.densityDpi)
             if (publishableSharedResult != null) {
                 metrics.widthPixels = publishableSharedResult.widthPx
                 metrics.heightPixels = publishableSharedResult.heightPx
