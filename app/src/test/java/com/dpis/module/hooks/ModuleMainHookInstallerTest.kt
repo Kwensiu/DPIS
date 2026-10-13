@@ -11,7 +11,7 @@ class ModuleMainHookInstallerTest {
     fun moduleMainUsesExplicitSystemServerPolicyGuard() {
         val source: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
 
-        Assert.assertTrue(source.contains("SystemServerMutationPolicy.shouldInstallSystemServerHooks("))
+        Assert.assertTrue(source.contains("MutationPolicy.shouldInstallSystemServerHooks("))
         Assert.assertTrue(source.contains("public void onSystemServerStarting(SystemServerStartingParam param)"))
         Assert.assertTrue(source.contains("public void onPackageLoaded(PackageLoadedParam param)"))
         Assert.assertTrue(source.contains("onPackageLoaded enter: process="))
@@ -216,7 +216,7 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(moduleMain.contains("\"module-loaded-fallback\""))
         Assert.assertTrue(moduleMain.contains("\"package-ready\""))
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
                 .contains("HyperOsRustProcessHookInstaller.install(")
         )
         Assert.assertFalse(
@@ -366,14 +366,14 @@ class ModuleMainHookInstallerTest {
         )
         Assert.assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName);"))
         Assert.assertTrue(moduleMain.contains("system_server hot reload replay enter"))
-        Assert.assertTrue(moduleMain.contains("SystemServerDisplayEnvironmentInstaller.resetForHotReload();"))
+        Assert.assertTrue(moduleMain.contains("HookInstaller.resetForHotReload();"))
         Assert.assertTrue(moduleMain.contains("\"hot-reload\""))
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
                 .contains("apiCapabilities.applyStableHookId(")
         )
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
                 .contains("static void resetForHotReload()")
         )
         Assert.assertTrue(
@@ -381,7 +381,7 @@ class ModuleMainHookInstallerTest {
                 .contains("fun resetAll()")
         )
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerHookCatalog.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookCatalog.kt")
                 .contains("system_server_launch_activity_item")
         )
     }
@@ -389,14 +389,14 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun systemServerHookDoesNotRetryOriginalAfterProceedThrows() {
-        val installer: String =
-            read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
+        val callback: String =
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookCallback.kt")
 
-        Assert.assertTrue(installer.contains("boolean proceedAttempted = false;"))
-        Assert.assertTrue(installer.contains("proceedAttempted = true;"))
-        Assert.assertTrue(installer.contains("if (proceedAttempted)"))
-        Assert.assertTrue(installer.contains("throw throwable;"))
-        Assert.assertTrue(installer.contains("return chain.proceed();"))
+        Assert.assertTrue(callback.contains("var proceedAttempted = false"))
+        Assert.assertTrue(callback.contains("proceedAttempted = true"))
+        Assert.assertTrue(callback.contains("if (proceedAttempted)"))
+        Assert.assertTrue(callback.contains("throw throwable"))
+        Assert.assertTrue(callback.contains("return chain.proceed()"))
     }
 
     @Test
@@ -411,7 +411,7 @@ class ModuleMainHookInstallerTest {
                 .contains("DPIS_DIAG")
         )
         Assert.assertFalse(
-            read("src/main/java/com/dpis/module/runtime/systemserver/SystemServerDisplayEnvironmentInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
                 .contains("DPIS_DIAG")
         )
     }

@@ -180,7 +180,7 @@ DPIS viewport target package
   |     |     |
   |     |     +-- entry: app/src/modern/java/com/dpis/module/ModuleMain.java
   |     |     +-- system_server route:
-  |     |     |     runtime.systemserver.SystemServerDisplayEnvironmentInstaller
+  |     |     |     runtime.systemserver.HookInstaller
   |     |     +-- app-process route:
   |     |           runtime.appprocess.AppProcessHookInstaller
   |     |           runtime.appprocess.ResourcesManagerHookInstaller
@@ -284,7 +284,7 @@ compat projection route. This keeps relative-scale targets from falling back to
 off when system hooks are unavailable.
 
 legacy does not currently install the shared modern
-`runtime.systemserver.SystemServerDisplayEnvironmentInstaller`, so `config-dispatch` and
+`runtime.systemserver.HookInstaller`, so `config-dispatch` and
 `display-manager-info` are not active legacy system_server routes. The
 legacy system_server installer keeps only the launch-time Configuration
 route and the HyperOS Rust process environment route.

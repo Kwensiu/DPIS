@@ -3,6 +3,7 @@ package com.dpis.module
 import com.dpis.module.config.ConfigSnapshot
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.PackageConfigSnapshot
+import com.dpis.module.config.PerAppDisplayConfig
 import com.dpis.module.config.PerAppDisplayConfigSource
 import com.dpis.module.config.PerAppDisplayConfigSource.PackageFallbackProvider
 import com.dpis.module.config.PerAppDisplayConfigSource.SnapshotProvider
@@ -12,7 +13,6 @@ import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
 import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller
 import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertyBridge.parseOverrideValueForTest
 import com.dpis.module.viewport.ViewportPropertyBridge.propertyNameForPackage

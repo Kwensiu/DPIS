@@ -1,15 +1,14 @@
 package com.dpis.module.runtime.systemserver;
 
+import com.dpis.module.config.PerAppDisplayConfig;
+import com.dpis.module.config.PerAppDisplayConfigSource;
+import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.hyperos.HyperOsRustProcessArgPolicy;
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge;
 
-import com.dpis.module.diagnostics.DpisLog;
-import com.dpis.module.config.PerAppDisplayConfigSource;
-
-
+import java.io.File;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.io.File;
 import java.util.List;
 
 import io.github.libxposed.api.XposedInterface;

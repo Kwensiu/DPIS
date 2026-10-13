@@ -2,10 +2,14 @@ package com.dpis.module.runtime.systemserver;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.Configuration;
 
+import com.dpis.module.config.PerAppDisplayConfig;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.hooks.HookDomainOverride;
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
@@ -17,23 +21,20 @@ import com.dpis.module.viewport.ViewportTargetSpec;
 
 import org.junit.Test;
 
-public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
-    @Test
-    public void keepsPreEnvironmentWhenPostEnvironmentMissing() {
-        String selected = SystemServerDisplayEnvironmentInstaller.selectEnvironmentSourceForTest(
-                true,
-                false
-        );
-        assertEquals("pre", selected);
+public class ViewportSelectionTest {
+    private static PerAppDisplayEnvironment launch(String packageName,
+                                                   Configuration configuration,
+                                                   PerAppDisplayConfig config) {
+        return HookInstaller
+                .resolveLaunchViewportEnvironment(
+                        packageName, configuration, 1080, 2376, config);
     }
 
     @Test
-    public void prefersPostEnvironmentWhenAvailable() {
-        String selected = SystemServerDisplayEnvironmentInstaller.selectEnvironmentSourceForTest(
-                true,
-                true
-        );
-        assertEquals("post", selected);
+    public void keepsPreEnvironmentWhenPostEnvironmentMissing() {
+        PerAppDisplayEnvironment pre = new PerAppDisplayEnvironment(320, 704, 320, 540, 1080, 2376);
+
+        assertSame(pre, HookCallback.chooseEffectiveEnvironment(pre, null));
     }
 
     private static PerAppDisplayConfig launchConfig(ViewportTargetSpec spec) {
@@ -45,6 +46,14 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                 FontApplyMode.OFF,
                 false,
                 HookDomainOverride.automatic());
+    }
+
+    @Test
+    public void prefersPostEnvironmentWhenAvailable() {
+        PerAppDisplayEnvironment pre = new PerAppDisplayEnvironment(320, 704, 320, 540, 1080, 2376);
+        PerAppDisplayEnvironment post = new PerAppDisplayEnvironment(360, 736, 360, 480, 1080, 2376);
+
+        assertSame(post, HookCallback.chooseEffectiveEnvironment(pre, post));
     }
 
     @Test
@@ -70,11 +79,30 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                         "s",
                         1000L);
 
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .isAlreadyAppliedRelativeScaleMarkerForTest(
+        assertTrue(RelativeViewport
+                .isAlreadyApplied(
                         configuration,
                         ViewportSourceSnapshot.SCOPE_DISPLAY,
                         ViewportRuntimeMarkerBridge.ParseResult.hit(record, 10L)));
+    }
+
+    private static Configuration panelConfiguration(int densityDpi) {
+        Configuration configuration = new Configuration();
+        configuration.densityDpi = densityDpi;
+        configuration.screenWidthDp = Math.round(1080 * 160f / densityDpi);
+        configuration.screenHeightDp = Math.round(2376 * 160f / densityDpi);
+        configuration.smallestScreenWidthDp = Math.min(
+                configuration.screenWidthDp, configuration.screenHeightDp);
+        return configuration;
+    }
+
+    private static Configuration configurationFrom(PerAppDisplayEnvironment environment) {
+        Configuration configuration = new Configuration();
+        configuration.screenWidthDp = environment.widthDp;
+        configuration.screenHeightDp = environment.heightDp;
+        configuration.smallestScreenWidthDp = environment.smallestWidthDp;
+        configuration.densityDpi = environment.densityDpi;
+        return configuration;
     }
 
     @Test
@@ -100,38 +128,11 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                         "s",
                         1000L);
 
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .isAlreadyAppliedRelativeScaleMarkerForTest(
+        assertFalse(RelativeViewport
+                .isAlreadyApplied(
                         configuration,
                         ViewportSourceSnapshot.SCOPE_DISPLAY,
                         ViewportRuntimeMarkerBridge.ParseResult.hit(record, 10L)));
-    }
-
-    private static Configuration panelConfiguration(int densityDpi) {
-        Configuration configuration = new Configuration();
-        configuration.densityDpi = densityDpi;
-        configuration.screenWidthDp = Math.round(1080 * 160f / densityDpi);
-        configuration.screenHeightDp = Math.round(2376 * 160f / densityDpi);
-        configuration.smallestScreenWidthDp = Math.min(
-                configuration.screenWidthDp, configuration.screenHeightDp);
-        return configuration;
-    }
-
-    private static Configuration configurationFrom(PerAppDisplayEnvironment environment) {
-        Configuration configuration = new Configuration();
-        configuration.screenWidthDp = environment.widthDp;
-        configuration.screenHeightDp = environment.heightDp;
-        configuration.smallestScreenWidthDp = environment.smallestWidthDp;
-        configuration.densityDpi = environment.densityDpi;
-        return configuration;
-    }
-
-    private static PerAppDisplayEnvironment launch(String packageName,
-                                                   Configuration configuration,
-                                                   PerAppDisplayConfig config) {
-        return SystemServerDisplayEnvironmentInstaller
-                .resolveLaunchViewportEnvironmentForTest(
-                        packageName, configuration, 1080, 2376, config);
     }
 
     @Test
@@ -198,22 +199,14 @@ public class SystemServerDisplayEnvironmentInstallerEnvironmentSelectionTest {
                 HookDomainOverride.automatic()
         );
 
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(fontOnlyEmulation));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(fontOnlyRewrite));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(viewport));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(autoViewport));
-        assertFalse(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(compatViewport));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(relativeViewport));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(explicitSystemRelativeViewport));
-        assertTrue(SystemServerDisplayEnvironmentInstaller
-                .shouldUseConfigInSystemServerForTest(relativeViewportWithFont));
+        assertNotNull(ConfigSelection.selectConfigForSystemServerEntry(null, fontOnlyEmulation));
+        assertNull(ConfigSelection.selectConfigForSystemServerEntry(null, fontOnlyRewrite));
+        assertNotNull(ConfigSelection.selectConfigForSystemServerEntry(null, viewport));
+        assertNotNull(ConfigSelection.selectConfigForSystemServerEntry(null, autoViewport));
+        assertNull(ConfigSelection.selectConfigForSystemServerEntry(null, compatViewport));
+        assertNotNull(ConfigSelection.selectConfigForSystemServerEntry(null, relativeViewport));
+        assertNotNull(ConfigSelection.selectConfigForSystemServerEntry(null, explicitSystemRelativeViewport));
+        assertNotNull(ConfigSelection.selectConfigForSystemServerEntry(null, relativeViewportWithFont));
     }
 
     @Test

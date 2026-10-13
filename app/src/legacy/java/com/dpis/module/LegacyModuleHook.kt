@@ -23,7 +23,7 @@ import com.dpis.module.runtime.appprocess.ResourcesReadHookInstaller
 import com.dpis.module.runtime.appprocess.WindowFrameOverride
 import com.dpis.module.runtime.font.ForceTextSizeHookRuntime
 import com.dpis.module.runtime.font.PaintTextSizeFallbackHookInstaller
-import com.dpis.module.runtime.systemserver.SystemServerProcess
+import com.dpis.module.runtime.systemserver.HostProcess
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
 import de.robv.android.xposed.IXposedHookLoadPackage
@@ -52,7 +52,7 @@ class LegacyModuleHook : IXposedHookLoadPackage, IXposedHookZygoteInit {
             lpparam.classLoader,
             "legacy-handle-load-package"
         )
-        if (SystemServerProcess.isSystemServer(lpparam.processName, packageName)) {
+        if (HostProcess.isSystemServer(lpparam.processName, packageName)) {
             DpisLog.setLoggingEnabled(LegacyConfigStoreFactory.create().isGlobalLogEnabled())
             compatDebugLog(
                 ("legacy handleLoadPackage: package=" + packageName

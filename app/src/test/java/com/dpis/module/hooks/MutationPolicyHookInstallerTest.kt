@@ -2,18 +2,18 @@ package com.dpis.module
 
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy
+import com.dpis.module.runtime.systemserver.MutationPolicy
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class SystemServerMutationPolicyHookInstallerTest {
+class MutationPolicyHookInstallerTest {
     @Test
     fun skipsSystemServerInstallerEntryWhenHooksDisabled() {
         val policy = createPolicy(true, false)
 
         assertFalse(
-            SystemServerMutationPolicy.shouldInstallSystemServerHooks(
+            MutationPolicy.shouldInstallSystemServerHooks(
                 "android",
                 "android",
                 policy
@@ -26,7 +26,7 @@ class SystemServerMutationPolicyHookInstallerTest {
         val policy = createPolicy(true, true)
 
         assertTrue(
-            SystemServerMutationPolicy.shouldInstallSystemServerHooks(
+            MutationPolicy.shouldInstallSystemServerHooks(
                 "android",
                 "android",
                 policy
@@ -39,7 +39,7 @@ class SystemServerMutationPolicyHookInstallerTest {
         val policy = createPolicy(false, true)
 
         assertFalse(
-            SystemServerMutationPolicy.shouldInstallSystemServerHooks(
+            MutationPolicy.shouldInstallSystemServerHooks(
                 "com.max.xiaoheihe",
                 "com.max.xiaoheihe",
                 policy,

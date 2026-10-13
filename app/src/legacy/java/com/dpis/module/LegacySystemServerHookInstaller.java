@@ -5,12 +5,12 @@ import android.content.res.Configuration;
 import android.util.Log;
 
 import com.dpis.module.config.ConfigSnapshotLoader;
+import com.dpis.module.config.PerAppDisplayConfig;
 import com.dpis.module.config.PerAppDisplayConfigSource;
 import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.runtime.probe.RuntimeClock;
-import com.dpis.module.runtime.systemserver.ConfigSnapshotRefreshPolicy;
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
+import com.dpis.module.runtime.systemserver.ConfigRefreshTtl;
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
 import com.dpis.module.viewport.PerAppDisplayOverrideCalculator;
 import com.dpis.module.viewport.ViewportApplyMode;
@@ -76,7 +76,7 @@ final class LegacySystemServerHookInstaller {
                         new PerAppDisplayConfigSource.RefreshingSnapshotProvider(
                                 () -> ConfigSnapshotLoader.fromStore(
                                         LegacyConfigStoreFactory.createSystemServer()),
-                                ConfigSnapshotRefreshPolicy.SYSTEM_SERVER_TTL_MILLIS));
+                                ConfigRefreshTtl.SYSTEM_SERVER_TTL_MILLIS));
         boolean systemServerHooksEnabled = source.isSystemServerHooksEnabled();
         int hookedCount = 0;
         int constructorHookCount = 0;

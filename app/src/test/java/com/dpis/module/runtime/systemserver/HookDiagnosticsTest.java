@@ -1,24 +1,22 @@
 package com.dpis.module.runtime.systemserver;
 
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
-
-import com.dpis.module.*;
+import static org.junit.Assert.assertEquals;
 
 import android.content.res.Configuration;
 import android.os.Binder;
 import android.os.IBinder;
+
+import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
 
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-
-public class SystemServerDisplayDiagnosticsTest {
+public class HookDiagnosticsTest {
     @Test
     public void formatsProbeLog() {
-        String message = SystemServerDisplayDiagnostics.buildProbeLog(
+        String message = HookDiagnostics.buildProbeLog(
                 "config-dispatch",
                 "com.max.xiaoheihe",
                 "config{widthDp=360,heightDp=736,smallestWidthDp=360,densityDpi=480}",
@@ -39,7 +37,7 @@ public class SystemServerDisplayDiagnosticsTest {
         configuration.densityDpi = 480;
         configuration.fontScale = 1.25f;
 
-        String summary = SystemServerDisplayDiagnostics.describeState(configuration, null);
+        String summary = HookDiagnostics.describeState(configuration, null);
 
         assertEquals(
                 "config{widthDp=360,heightDp=736,smallestWidthDp=360,densityDpi=480,fontScale=1.25}",
@@ -48,7 +46,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void findsPackageNameFromNestedObject() {
-        String packageName = SystemServerDisplayEnvironmentInstaller.findPackageNameForTest(
+        String packageName = PackageNames.findPackageNameForTest(
                 null,
                 new PackageHolder(new WindowRecord("com.max.xiaoheihe")));
 
@@ -57,7 +55,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void findsPackageNameFromIntentStyleMethod() {
-        String packageName = SystemServerDisplayEnvironmentInstaller.findPackageNameForTest(
+        String packageName = PackageNames.findPackageNameForTest(
                 null,
                 new IntentStyleCarrier("com.max.xiaoheihe"));
 
@@ -66,7 +64,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void findsPackageNameFromComponentStyleMethod() {
-        String packageName = SystemServerDisplayEnvironmentInstaller.findPackageNameForTest(
+        String packageName = PackageNames.findPackageNameForTest(
                 null,
                 new IntentCarrier(new ComponentCarrier("com.max.xiaoheihe")));
 
@@ -75,7 +73,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void describesUnavailableActualSummaryInProbeLog() {
-        String message = SystemServerDisplayDiagnostics.buildProbeLog(
+        String message = HookDiagnostics.buildProbeLog(
                 "session-relayout",
                 "com.max.xiaoheihe",
                 null,
@@ -89,7 +87,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void formatsDisabledByGateLog() {
-        String message = SystemServerDisplayDiagnostics.buildGateDisabledLog(false, true);
+        String message = HookDiagnostics.buildGateDisabledLog(false, true);
 
         assertEquals(
                 "system_server hooks disabled: totalEnabled=false, safeMode=true",
@@ -98,7 +96,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void formatsPackageReadyStateLog() {
-        String message = SystemServerDisplayDiagnostics.buildPackageReadyStateLog(
+        String message = HookDiagnostics.buildPackageReadyStateLog(
                 "android",
                 "com.android.providers.settings",
                 true,
@@ -106,13 +104,13 @@ public class SystemServerDisplayDiagnosticsTest {
 
         assertEquals(
                 "system_server package ready: process=android, package=com.android.providers.settings, moduleLoadedObserved=true, installAttempted=false, marker="
-                        + SystemServerDisplayDiagnostics.BUILD_MARKER,
+                        + HookDiagnostics.BUILD_MARKER,
                 message);
     }
 
     @Test
     public void formatsPackageResolveMissLog() {
-        String message = SystemServerDisplayDiagnostics.buildPackageResolveMissLog(
+        String message = HookDiagnostics.buildPackageResolveMissLog(
                 "activity-start",
                 "com.android.server.wm.ActivityStarter",
                 "0:com.android.server.wm.ActivityStarter$Request",
@@ -126,7 +124,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void formatsInterceptEnterLog() {
-        String message = SystemServerDisplayDiagnostics.buildInterceptEnterLog(
+        String message = HookDiagnostics.buildInterceptEnterLog(
                 "activity-start",
                 "com.android.server.wm.ActivityStarter",
                 "0:com.android.server.wm.ActivityStarter$Request",
@@ -139,7 +137,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void formatsConfigMissLog() {
-        String message = SystemServerDisplayDiagnostics.buildConfigMissLog(
+        String message = HookDiagnostics.buildConfigMissLog(
                 "activity-start",
                 "com.android.launcher",
                 "com.max.xiaoheihe",
@@ -152,7 +150,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void formatsConfigMissLogWithoutSourceState() {
-        String message = SystemServerDisplayDiagnostics.buildConfigMissLog(
+        String message = HookDiagnostics.buildConfigMissLog(
                 "activity-start",
                 "com.android.launcher",
                 "com.max.xiaoheihe");
@@ -164,7 +162,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void resolvesConfiguredPackageFromCandidateText() {
-        String packageName = SystemServerDisplayEnvironmentInstaller.resolveConfiguredPackageForTest(
+        String packageName = ConfiguredPackage.resolveConfiguredPackageForTest(
                 new PackageCarrier("android.graphics"),
                 "com.max.xiaoheihe"::equals,
                 new WindowTextCarrier("Window{u0 com.max.xiaoheihe/com.max.xiaoheihe.SplashActivity}"));
@@ -174,14 +172,14 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void windowMaintenanceDoesNotFallbackToAppPackageFromSystemUiWindowText() {
-        String displayPolicyPackage = SystemServerDisplayEnvironmentInstaller
+        String displayPolicyPackage = ConfiguredPackage
                 .resolveConfiguredPackageForEntryForTest(
                         "display-policy-layout",
                         new PackageCarrier("com.android.systemui"),
                         "com.android.chrome"::equals,
                         new WindowTextCarrier("Window{u0 com.android.systemui/NotificationShade "
                                 + "for com.android.chrome}"));
-        String relayoutPackage = SystemServerDisplayEnvironmentInstaller
+        String relayoutPackage = ConfiguredPackage
                 .resolveConfiguredPackageForEntryForTest(
                         "relayout-dispatch",
                         new PackageCarrier("com.android.systemui"),
@@ -195,7 +193,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void configDispatchStillFallsBackToConfiguredPackageFromText() {
-        String packageName = SystemServerDisplayEnvironmentInstaller
+        String packageName = ConfiguredPackage
                 .resolveConfiguredPackageForEntryForTest(
                         "config-dispatch",
                         new PackageCarrier("android.graphics"),
@@ -213,7 +211,7 @@ public class SystemServerDisplayDiagnosticsTest {
         FakeWindowManagerService windowManagerService = new FakeWindowManagerService();
         windowManagerService.mWindowMap.put(client.asBinder(), windowState);
 
-        String packageName = SystemServerDisplayEnvironmentInstaller
+        String packageName = ConfiguredPackage
                 .resolveRelayoutWindowPackageForTest(
                         windowManagerService,
                         java.util.List.of(client),
@@ -230,7 +228,7 @@ public class SystemServerDisplayDiagnosticsTest {
         FakeWindowManagerService windowManagerService = new FakeWindowManagerService();
         windowManagerService.mWindowMap.put(client.asBinder(), windowState);
 
-        String packageName = SystemServerDisplayEnvironmentInstaller
+        String packageName = ConfiguredPackage
                 .resolveRelayoutWindowPackageForTest(
                         windowManagerService,
                         java.util.List.of(session, client),
@@ -241,7 +239,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void resolvesConfiguredWebApkOwnerFromChromeCarrierText() {
-        String packageName = SystemServerDisplayEnvironmentInstaller.resolveConfiguredPackageForTest(
+        String packageName = ConfiguredPackage.resolveConfiguredPackageForTest(
                 new PackageCarrier("com.android.chrome"),
                 "org.chromium.webapk.a5e359e2ce8b830bb_v2"::equals,
                 new WindowTextCarrier("Intent { cmp=com.android.chrome/"
@@ -255,7 +253,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void launchActivityItemPrefersConfiguredWebApkOwnerFromChromeCarrierText() {
-        String packageName = SystemServerDisplayEnvironmentInstaller
+        String packageName = ConfiguredPackage
                 .resolveLaunchActivityItemPackageForTest(
                         "com.android.chrome",
                         "org.chromium.webapk.a5e359e2ce8b830bb_v2"::equals,
@@ -269,7 +267,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void launchActivityItemKeepsChromeWhenWebApkOwnerIsUnconfigured() {
-        String packageName = SystemServerDisplayEnvironmentInstaller
+        String packageName = ConfiguredPackage
                 .resolveLaunchActivityItemPackageForTest(
                         "com.android.chrome",
                         "com.android.chrome"::equals,
@@ -283,7 +281,7 @@ public class SystemServerDisplayDiagnosticsTest {
 
     @Test
     public void formatsConfigFallbackLog() {
-        String message = SystemServerDisplayDiagnostics.buildConfigFallbackLog(
+        String message = HookDiagnostics.buildConfigFallbackLog(
                 "display-policy-layout",
                 "android.graphics",
                 "com.max.xiaoheihe",
@@ -294,82 +292,35 @@ public class SystemServerDisplayDiagnosticsTest {
                 message);
     }
 
-    private static final class PackageHolder {
-        final Object record;
-
-        PackageHolder(Object record) {
-            this.record = record;
-        }
+    private record PackageHolder(Object record) {
     }
 
-    private static final class WindowRecord {
-        final String packageName;
-
-        WindowRecord(String packageName) {
-            this.packageName = packageName;
-        }
+    private record WindowRecord(String packageName) {
     }
 
-    private static final class IntentStyleCarrier {
-        private final String targetPackage;
-
-        IntentStyleCarrier(String targetPackage) {
-            this.targetPackage = targetPackage;
-        }
+    private record IntentStyleCarrier(String targetPackage) {
 
         public String getPackage() {
-            return targetPackage;
+                return targetPackage;
+            }
         }
+
+    private record IntentCarrier(Object component) {
     }
 
-    private static final class IntentCarrier {
-        private final Object component;
-
-        private IntentCarrier(Object component) {
-            this.component = component;
-        }
-
-        public Object getComponent() {
-            return component;
-        }
+    private record ComponentCarrier(String packageName) {
     }
 
-    private static final class ComponentCarrier {
-        private final String packageName;
-
-        private ComponentCarrier(String packageName) {
-            this.packageName = packageName;
-        }
-
-        public String getPackageName() {
-            return packageName;
-        }
+    private record PackageCarrier(String packageName) {
     }
 
-    private static final class PackageCarrier {
-        private final String packageName;
-
-        private PackageCarrier(String packageName) {
-            this.packageName = packageName;
-        }
-
-        public String getPackageName() {
-            return packageName;
-        }
-    }
-
-    private static final class WindowTextCarrier {
-        private final String text;
-
-        private WindowTextCarrier(String text) {
-            this.text = text;
-        }
+    private record WindowTextCarrier(String text) {
 
         @Override
-        public String toString() {
-            return text;
+            public String toString() {
+                return text;
+            }
         }
-    }
 
     private static final class FakeWindowManagerService {
         final Map<Object, Object> mWindowMap = new HashMap<>();
@@ -391,13 +342,6 @@ public class SystemServerDisplayDiagnosticsTest {
         }
     }
 
-    private static final class FakeWindowState {
-        final Object mClient;
-        final String packageName;
-
-        private FakeWindowState(Object client, String packageName) {
-            this.mClient = client;
-            this.packageName = packageName;
-        }
+    private record FakeWindowState(Object mClient, String packageName) {
     }
 }

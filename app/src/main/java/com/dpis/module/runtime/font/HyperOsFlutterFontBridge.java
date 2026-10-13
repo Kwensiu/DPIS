@@ -1,9 +1,8 @@
 package com.dpis.module.runtime.font;
 
+import com.dpis.module.config.PerAppDisplayConfig;
 import com.dpis.module.diagnostics.DpisLog;
 import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.runtime.systemserver.PerAppDisplayConfig;
 
 import java.lang.reflect.Method;
 import java.util.Locale;

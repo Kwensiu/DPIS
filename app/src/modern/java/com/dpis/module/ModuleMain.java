@@ -15,10 +15,10 @@ import com.dpis.module.diagnostics.RuntimeEvents;
 
 import com.dpis.module.runtime.lifecycle.ModuleRuntimeStateReporter;
 import com.dpis.module.runtime.lifecycle.XposedSelfActivation;
-import com.dpis.module.runtime.systemserver.SystemServerDisplayDiagnostics;
-import com.dpis.module.runtime.systemserver.SystemServerDisplayEnvironmentInstaller;
-import com.dpis.module.runtime.systemserver.SystemServerMutationPolicy;
-import com.dpis.module.runtime.systemserver.SystemServerProcess;
+import com.dpis.module.runtime.systemserver.HookDiagnostics;
+import com.dpis.module.runtime.systemserver.HookInstaller;
+import com.dpis.module.runtime.systemserver.MutationPolicy;
+import com.dpis.module.runtime.systemserver.HostProcess;
 
 import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
 
@@ -78,17 +78,17 @@ public final class ModuleMain extends XposedModule {
         configStore = ConfigStoreFactory.createForXposedHost(this);
         DpisLog.setLoggingEnabled(configStore.isGlobalLogEnabled());
         String message = "module loaded: process=" + param.getProcessName()
-                + ", marker=" + SystemServerDisplayDiagnostics.BUILD_MARKER;
-        if (SystemServerProcess.isSystemServer(param.getProcessName(), "")) {
+                + ", marker=" + HookDiagnostics.BUILD_MARKER;
+        if (HostProcess.isSystemServer(param.getProcessName(), "")) {
             ModuleRuntimeStateReporter.reportSystemServerLoaded();
         }
-        SystemServerDisplayDiagnostics.recordPending(
+        HookDiagnostics.recordPending(
                 message);
         DpisLog.i(message);
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + message);
         try {
             ModernAppSpecificRouteInstaller.handleModuleLoaded(this, param.getProcessName());
-            if (SystemServerProcess.isSystemServer(param.getProcessName(), "")) {
+            if (HostProcess.isSystemServer(param.getProcessName(), "")) {
                 HookRuntimePolicy policy = resolveSystemServerRuntimePolicy(
                         configStore, param.getProcessName());
                 maybeInstallSystemServerHooks(configStore, policy, param.getProcessName(), "android",
@@ -109,7 +109,7 @@ public final class ModuleMain extends XposedModule {
     public void onSystemServerStarting(SystemServerStartingParam param) {
         DpisConfigStore store = getOrCreateConfigStore();
         String processName = currentProcessName;
-        if (!SystemServerProcess.isSystemServer(processName, "android")) {
+        if (!HostProcess.isSystemServer(processName, "android")) {
             processName = "system";
         }
         HookRuntimePolicy policy = resolveSystemServerRuntimePolicy(store, processName);
@@ -155,7 +155,7 @@ public final class ModuleMain extends XposedModule {
         DpisLog.setLoggingEnabled(appProcessPolicy.globalLogEnabled);
         log(android.util.Log.INFO, "DPIS", BRIDGE_LOG_PREFIX + "package ready: process=" + currentProcessName
                 + ", package=" + param.getPackageName());
-        SystemServerDisplayDiagnostics.flushPending();
+        HookDiagnostics.flushPending();
         maybeInstallSystemServerHooks(store, systemPolicy, currentProcessName, param.getPackageName(),
                 null,
                 "package-ready");
@@ -238,12 +238,12 @@ public final class ModuleMain extends XposedModule {
     }
 
     private void replaySystemServerAfterHotReload(DpisConfigStore store, String processName) {
-        if (!SystemServerProcess.isSystemServer(processName, "")) {
+        if (!HostProcess.isSystemServer(processName, "")) {
             DpisLog.i("system_server hot reload skipped: process=" + processName);
             return;
         }
         bridgeHotReloadLog("system_server hot reload replay enter: process=" + processName);
-        SystemServerDisplayEnvironmentInstaller.resetForHotReload();
+        HookInstaller.resetForHotReload();
         systemServerInstallAttempted = false;
         HookRuntimePolicy policy = resolveSystemServerRuntimePolicy(store, processName);
         maybeInstallSystemServerHooks(
@@ -300,7 +300,7 @@ public final class ModuleMain extends XposedModule {
                     + (classLoader == null));
             return;
         }
-        if (SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+        if (HostProcess.isSystemServer(currentProcessName, packageName)) {
             bridgeHotReloadLog("package-ready hot reload replay skipped system process: process="
                     + currentProcessName + ", package=" + packageName);
             return;
@@ -333,7 +333,7 @@ public final class ModuleMain extends XposedModule {
 
     private void maybeInstallAppProcessFromModuleLoaded(DpisConfigStore store, String processName) {
         rawBridgeLog("module-loaded app hook install enter: process=" + processName);
-        if (SystemServerProcess.isSystemServer(processName, "")) {
+        if (HostProcess.isSystemServer(processName, "")) {
             rawBridgeLog("module-loaded app hook install skipped system process: process="
                     + processName);
             return;
@@ -373,7 +373,7 @@ public final class ModuleMain extends XposedModule {
             String packageName) {
         rawBridgeLog("package-loaded app hook install enter: process=" + processName
                 + ", package=" + packageName);
-        if (SystemServerProcess.isSystemServer(processName, packageName)) {
+        if (HostProcess.isSystemServer(processName, packageName)) {
             rawBridgeLog("package-loaded app hook install skipped system process: process="
                     + processName + ", package=" + packageName);
             return;
@@ -539,7 +539,7 @@ public final class ModuleMain extends XposedModule {
         if (classLoader == null || packageName == null) {
             return;
         }
-        if (SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+        if (HostProcess.isSystemServer(currentProcessName, packageName)) {
             return;
         }
         ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, packageName);
@@ -564,7 +564,7 @@ public final class ModuleMain extends XposedModule {
     private void retryTypefaceHooksWithPackageReady(DpisConfigStore store,
             ConfigSnapshot snapshot,
             String packageName) {
-        if (SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+        if (HostProcess.isSystemServer(currentProcessName, packageName)) {
             return;
         }
         ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, packageName);
@@ -582,7 +582,7 @@ public final class ModuleMain extends XposedModule {
             ClassLoader classLoader,
             String packageName) {
         if (classLoader == null || packageName == null
-                || SystemServerProcess.isSystemServer(currentProcessName, packageName)) {
+                || HostProcess.isSystemServer(currentProcessName, packageName)) {
             return;
         }
         ModulePackagePlan packagePlan = ModulePackagePlan.resolve(snapshot, packageName);
@@ -625,7 +625,7 @@ public final class ModuleMain extends XposedModule {
 
     private HookRuntimePolicy resolveSystemServerRuntimePolicy(DpisConfigStore store,
             String processName) {
-        if (SystemServerProcess.isSystemServer(processName, "")) {
+        if (HostProcess.isSystemServer(processName, "")) {
             // Reaching the system process is the runtime scope proof. XposedService
             // is a UI-side capability and may be unavailable inside hooked runtime
             // processes, so keep this path tied to the stored user switch.
@@ -659,7 +659,7 @@ public final class ModuleMain extends XposedModule {
         if (systemServerInstallAttempted) {
             return;
         }
-        if (!SystemServerMutationPolicy.shouldInstallSystemServerHooks(
+        if (!MutationPolicy.shouldInstallSystemServerHooks(
                 processName,
                 packageName,
                 policy)) {
@@ -671,8 +671,8 @@ public final class ModuleMain extends XposedModule {
             }
             systemServerInstallAttempted = true;
             try {
-                SystemServerDisplayEnvironmentInstaller.InstallResult result =
-                        SystemServerDisplayEnvironmentInstaller.install(
+                HookInstaller.InstallResult result =
+                        HookInstaller.install(
                         this, store, getModernApiCapabilities(), systemServerClassLoader);
                 systemServerInstallAttempted = result.isComplete();
                 String message = "system_server installer "
@@ -719,7 +719,7 @@ public final class ModuleMain extends XposedModule {
             if (firstPackageReadyLogged) {
                 return;
             }
-            DpisLog.i(SystemServerDisplayDiagnostics.buildPackageReadyStateLog(
+            DpisLog.i(HookDiagnostics.buildPackageReadyStateLog(
                     currentProcessName,
                     packageName,
                     moduleLoadedObserved,

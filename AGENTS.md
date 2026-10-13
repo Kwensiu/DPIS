@@ -142,7 +142,7 @@ module paths or optimized code.
   for multiline declarations/calls. Java continues to use 4-space indentation
   and the surrounding brace/wrapping style.
 - Naming:
-  - Classes: `PascalCase` (e.g., `SystemServerMutationPolicy`)
+  - Classes: `PascalCase` (e.g., `MutationPolicy`)
   - Methods/fields: `camelCase`
   - Constants: `UPPER_SNAKE_CASE`
 - Choose concise, specific names. Do not repeat package, feature, or type

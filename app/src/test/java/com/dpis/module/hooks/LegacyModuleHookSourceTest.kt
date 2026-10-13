@@ -62,7 +62,7 @@ class LegacyModuleHookSourceTest {
         assertTrue(source.contains("getDeclaredMethod(\"getConfiguration\")"))
         assertTrue(source.contains("getDeclaredMethod(\"getDisplayMetrics\")"))
         assertTrue(source.contains("getDeclaredMethod(\"getSystem\")"))
-        assertTrue(source.contains("SystemServerProcess.isSystemServer"))
+        assertTrue(source.contains("HostProcess.isSystemServer"))
         assertTrue(source.contains("installSystemServerHooksForLegacy()"))
         assertTrue(source.contains("LegacySystemServerHookInstaller.install"))
         assertTrue(

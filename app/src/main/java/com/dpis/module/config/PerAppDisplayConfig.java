@@ -1,12 +1,9 @@
-package com.dpis.module.runtime.systemserver;
+package com.dpis.module.config;
 
 import com.dpis.module.fonts.FontApplyMode;
-
-import com.dpis.module.viewport.ViewportApplyMode;
-import com.dpis.module.viewport.ViewportOverride;
-import com.dpis.module.viewport.ViewportTargetSpec;
-
 import com.dpis.module.hooks.HookDomainOverride;
+import com.dpis.module.viewport.ViewportApplyMode;
+import com.dpis.module.viewport.ViewportTargetSpec;
 
 public final class PerAppDisplayConfig {
     public final String packageName;

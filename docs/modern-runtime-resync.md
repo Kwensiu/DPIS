@@ -140,7 +140,9 @@ Viewport mode
 
   system
     -> libxposed system_server route
-    -> runtime.systemserver.SystemServerDisplayEnvironmentInstaller owns system-side viewport mutation
+    -> runtime.systemserver.HookInstaller installs the route
+    -> ConfigSelection admits system and auto, including relative scale
+    -> LaunchActivityItemApply and EnvironmentWrite apply the viewport
     -> target selection is field-aware for each system_server entry
     -> app-process Resources bridge remains installed for resource sync/fallback
     -> app-process Display / WindowMetrics supplement is skipped
@@ -152,8 +154,7 @@ Viewport mode
 Font mode
   system
     -> internal system_server_font domain
-    -> runtime.systemserver.SystemServerDisplayEnvironmentInstaller writes Configuration.fontScale
-       only at launch-activity-item
+    -> FontScale writes Configuration.fontScale only at launch-activity-item
     -> internal app-process semantic supplements:
        activity_thread_font, resources_font, webview_text_zoom
 
@@ -227,7 +228,7 @@ later size still must.
 
 As of 2026-08-14, Modern `system_server` viewport mutations and selected skip
 outcomes publish target-package-scoped `runtime-transport` evidence. Emission
-shares the existing `SystemServerHookLogGate`, so diagnostic collection adds no
+shares the existing `HookLogGate`, so diagnostic collection adds no
 second high-frequency callback stream. A transport event with
 `route=system_server` and `stage=mutation_applied` proves the gated mutation
 log was emitted; `stage=skipped` records bounded marker, relayout, and
@@ -328,10 +329,10 @@ DPIS modern target package
   +-- system_server route
   |     |
   |     +-- guard:
-  |     |     runtime.systemserver.SystemServerMutationPolicy.shouldInstallSystemServerHooks
+  |     |     runtime.systemserver.MutationPolicy.shouldInstallSystemServerHooks
   |     |
   |     +-- installer:
-  |     |     runtime.systemserver.SystemServerDisplayEnvironmentInstaller.install
+  |     |     runtime.systemserver.HookInstaller.install
   |     |
   |     +-- source:
   |     |     PerAppDisplayConfigSource
@@ -578,7 +579,7 @@ Detailed app-specific runtime evidence lives in
   |
   +-- app/src/modern/java/com/dpis/module/ModuleMain.java
   +-- libxposed XposedModule lifecycle
-  +-- runtime.systemserver.SystemServerDisplayEnvironmentInstaller installation through XposedInterface
+  +-- runtime.systemserver.HookInstaller installation through XposedInterface
   +-- API 102 target enhancements are optional: stable hook ids and hot-reload
       callbacks run only when the host framework exposes the API 102 lifecycle
 
