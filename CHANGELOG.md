@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.3.2](https://github.com/Kwensiu/DPIS/compare/v2.3.1...v2.3.2) (2026-10-13)
+
+
+### Features
+
+* make Perfetto trace capture optional and optimize export and config ([d895036](https://github.com/Kwensiu/DPIS/commit/d895036edfb40a47b4759c25aff1bc1f3cec0e7f))
+
+
+### Bug Fixes
+
+* apply the system launch viewport once and leave compat in the app ([8f30036](https://github.com/Kwensiu/DPIS/commit/8f30036f190456e8c02b6635bc1bb29c542db485))
+* leave system-owned fullscreen configuration unchanged ([63e7e4e](https://github.com/Kwensiu/DPIS/commit/63e7e4ea94460a51c37cbea78d86c5fc17f2e5b6))
+
+
+### Refactoring
+
+* J2K from about to hooks ([#150](https://github.com/Kwensiu/DPIS/issues/150)) ([531315d](https://github.com/Kwensiu/DPIS/commit/531315d7387d9f3a775ec502fab27ed99e53310d))
+
+
+### Documentation
+
+* add dpis-test-semantics agent skill ([6f9e43b](https://github.com/Kwensiu/DPIS/commit/6f9e43b7d26c4d40ff397003d23cd511f43c89f3))
+
 ## [2.3.1](https://github.com/Kwensiu/DPIS/compare/v2.3.0...v2.3.1) (2026-10-05)
 
 
