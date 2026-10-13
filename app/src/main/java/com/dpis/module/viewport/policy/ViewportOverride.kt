@@ -1,5 +1,6 @@
 package com.dpis.module.viewport
 
+import android.annotation.SuppressLint
 import android.content.res.Configuration
 import java.lang.reflect.Field
 
@@ -135,6 +136,7 @@ object ViewportOverride {
         }
     }
 
+    @SuppressLint("BlockedPrivateApi")
     private fun readWindowConfiguration(config: Configuration?): Any? {
         if (config == null) return null
         return try {
