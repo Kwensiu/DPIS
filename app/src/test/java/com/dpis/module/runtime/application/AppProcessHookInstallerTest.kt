@@ -436,7 +436,7 @@ class AppProcessHookInstallerTest {
     fun typefaceInstallerIsIndependentFromResourcesHookGate() {
         val source =
             read("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
-        val moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         assertTrue(source.contains("TypefaceOverrideHookInstaller.install("))
         assertTrue(source.contains("ModernApiCapabilitiesResolver.fromXposed(xposed)"))

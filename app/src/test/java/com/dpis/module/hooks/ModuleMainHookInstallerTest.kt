@@ -9,39 +9,39 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainUsesExplicitSystemServerPolicyGuard() {
-        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(source.contains("MutationPolicy.shouldInstallSystemServerHooks("))
-        Assert.assertTrue(source.contains("public void onSystemServerStarting(SystemServerStartingParam param)"))
-        Assert.assertTrue(source.contains("public void onPackageLoaded(PackageLoadedParam param)"))
+        Assert.assertTrue(source.contains("override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam)"))
+        Assert.assertTrue(source.contains("override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam)"))
         Assert.assertTrue(source.contains("onPackageLoaded enter: process="))
         Assert.assertTrue(source.contains("system_server starting hook install enter"))
-        Assert.assertTrue(source.contains("bridgeRuntimeLog(\"system_server starting hook install enter"))
+        Assert.assertTrue(source.contains("bridgeRuntimeLog(\n            \"system_server starting hook install enter:"))
         Assert.assertTrue(source.contains("\"system-server-starting\""))
         Assert.assertTrue(source.contains("\"module-loaded\""))
         Assert.assertTrue(source.contains("\"package-loaded\""))
         Assert.assertTrue(source.contains("resolveSystemServerRuntimePolicy("))
         Assert.assertTrue(source.contains("resolveHookedRuntimePolicy("))
         Assert.assertTrue(source.contains("HookRuntimePolicy.fromStore(store)"))
-        Assert.assertTrue(source.contains("HookRuntimePolicy appProcessPolicy = resolveHookedRuntimePolicy(store);"))
-        Assert.assertTrue(source.contains("installAppProcessHooksIfConfigured(store, appProcessPolicy, snapshot"))
-        Assert.assertTrue(source.contains("HookRuntimePolicy policy = resolveHookedRuntimePolicy(store);"))
+        Assert.assertTrue(source.contains("val appProcessPolicy = resolveHookedRuntimePolicy(store)"))
+        Assert.assertTrue(source.contains("installAppProcessHooksIfConfigured("))
+        Assert.assertTrue(source.contains("val policy = resolveHookedRuntimePolicy(store)"))
         Assert.assertTrue(source.contains("installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot"))
-        Assert.assertTrue(source.contains("String processName = resolveCurrentProcessName();"))
-        Assert.assertTrue(source.contains("maybeInstallAppProcessFromPackageLoaded(store, processName, param.getPackageName())"))
+        Assert.assertTrue(source.contains("val processName = resolveCurrentProcessName()"))
+        Assert.assertTrue(source.contains("maybeInstallAppProcessFromPackageLoaded(store, processName, param.packageName)"))
         Assert.assertTrue(source.contains("Application.getProcessName()"))
-        Assert.assertTrue(source.contains("new File(\"/proc/self/cmdline\").toPath()"))
+        Assert.assertTrue(source.contains("File(\"/proc/self/cmdline\").toPath()"))
         Assert.assertTrue(source.contains("package-loaded app hook install enter"))
         Assert.assertTrue(source.contains("package-loaded app hook install skipped system process"))
         Assert.assertTrue(source.contains("package-loaded app hook install failed"))
-        Assert.assertTrue(source.contains("Do not downgrade route planning just because"))
-        Assert.assertTrue(source.contains("maybeInstallSystemServerHooks(store, systemPolicy, currentProcessName"))
-        Assert.assertTrue(source.contains("param != null ? param.getClassLoader() : null"))
-        Assert.assertTrue(source.contains("getModernApiCapabilities(), systemServerClassLoader"))
-        Assert.assertTrue(source.contains("maybeInstallSystemServerHooks(configStore, policy, param.getProcessName()"))
+        Assert.assertTrue(source.contains("A hooked process already proves module scope"))
+        Assert.assertTrue(source.contains("systemPolicy,"))
+        Assert.assertTrue(source.contains("param?.classLoader"))
+        Assert.assertTrue(source.contains("param.classLoader"))
+        Assert.assertTrue(source.contains("maybeInstallSystemServerHooks(\n            store,"))
         Assert.assertTrue(source.contains("system_server installer "))
-        Assert.assertTrue(source.contains("bridgeRuntimeLog(message);"))
-        Assert.assertTrue(source.contains("result.hasInstalledHooks() ? \"ready\" : \"no-hooks\""))
+        Assert.assertTrue(source.contains("bridgeRuntimeLog(message)"))
+        Assert.assertTrue(source.contains("if (result.hasInstalledHooks()) \"ready\" else \"no-hooks\""))
         Assert.assertTrue(source.contains("ModulePackagePlan.resolve("))
         Assert.assertFalse(
             SourceSmokeTestPaths.exists(
@@ -51,7 +51,7 @@ class ModuleMainHookInstallerTest {
                 "com",
                 "dpis",
                 "module",
-                "ModuleMain.java"
+                "ModuleMain.kt"
             )
         )
     }
@@ -59,7 +59,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainDoesNotAliasChromeToWebApkOwnerInAppProcess() {
-        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(source.contains("packageNameFromProcessName(processName)"))
         Assert.assertFalse(source.contains(WebApkCarrierResolver.WEBAPK_PACKAGE_EXTRA))
@@ -69,12 +69,12 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainInstallsChromeChromiumViewportProbeOnlyWhenDebugPropertyMatches() {
-        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
-        Assert.assertTrue(source.contains("installChromiumViewportProbe(param.getPackageName(), param.getClassLoader())"))
-        Assert.assertTrue(source.contains("private void installChromiumViewportProbe(String packageName, ClassLoader classLoader)"))
+        Assert.assertTrue(source.contains("installChromiumViewportProbe(param.packageName, param.classLoader)"))
+        Assert.assertTrue(source.contains("private fun installChromiumViewportProbe(packageName: String?, classLoader: ClassLoader?)"))
         Assert.assertTrue(source.contains("ChromiumViewportProbeHookInstaller.install(this, classLoader)"))
-        Assert.assertTrue(source.contains("WebApkRuntimeOwnerBridge.CHROME_PACKAGE.equals(packageName)"))
+        Assert.assertTrue(source.contains("WebApkRuntimeOwnerBridge.CHROME_PACKAGE != packageName"))
         Assert.assertTrue(source.contains("debug.dpis.webapk.chromium_probe_package"))
         Assert.assertTrue(source.contains("DebugPackageOverride.matches(PROP_CHROMIUM_VIEWPORT_PROBE_PACKAGE"))
     }
@@ -82,7 +82,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainDelegatesAppSpecificRoutes() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handlePackageReady("))
         Assert.assertTrue(
@@ -98,11 +98,11 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun modernModuleMainMarksSelfProcessForHomeActivation() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(moduleMain.contains("XposedSelfActivation.markIfSelfPackage("))
-        Assert.assertTrue(moduleMain.contains("param.getPackageName()"))
-        Assert.assertTrue(moduleMain.contains("param.getClassLoader()"))
+        Assert.assertTrue(moduleMain.contains("param.packageName"))
+        Assert.assertTrue(moduleMain.contains("param.classLoader"))
         Assert.assertTrue(moduleMain.contains("libxposed-package-ready"))
         Assert.assertFalse(moduleMain.contains("DpisApplication.markXposedSelfLoaded();"))
     }
@@ -184,7 +184,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainConfiguresHyperOsFlutterNativeFontHook() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
         val build: String = read("build.gradle.kts")
         val flutterInstaller: String =
             read("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java")
@@ -206,7 +206,7 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(moduleMain.contains("installAppProcessHooksIfConfigured(runtimeStore, policy, snapshot, packageName,"))
         Assert.assertTrue(moduleMain.contains("module-loaded app hook install enter"))
         Assert.assertTrue(moduleMain.contains("module-loaded app hook install failed"))
-        Assert.assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handleModuleLoaded(this, param.getProcessName())"))
+        Assert.assertTrue(moduleMain.contains("ModernAppSpecificRouteInstaller.handleModuleLoaded(this, param.processName)"))
         Assert.assertTrue(moduleMain.contains("rawBridgeLog("))
         Assert.assertTrue(moduleMain.contains("module-loaded app config fallback"))
         Assert.assertTrue(moduleMain.contains("module-loaded app config unavailable"))
@@ -237,14 +237,14 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainRetriesFlutterHooksWithAppClassLoaderFromPackageReady() {
-        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val source: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(source.contains("retryFlutterHooksWithAppClassLoader("))
-        Assert.assertTrue(source.contains("param.getClassLoader()"))
+        Assert.assertTrue(source.contains("param.classLoader"))
         Assert.assertTrue(source.contains("FlutterSettingsFontHookInstaller.retryWithAppClassLoader("))
         Assert.assertTrue(source.contains("resolveDebugFontOverrideForPackage(packageName)"))
         Assert.assertTrue(source.contains("packagePlan.buildExecutionPlan("))
-        Assert.assertTrue(source.contains("HookExecutionPlan executionPlan"))
+        Assert.assertTrue(source.contains("val executionPlan"))
         Assert.assertTrue(source.contains("!packagePlan.targetDpisEnabled || !packagePlan.fontScaleActive"))
         Assert.assertTrue(source.contains("packagePlan.flutterSettingsFontEnabled"))
         Assert.assertTrue(source.contains("packagePlan.hyperOsNativeFlutterFontEnabled"))
@@ -253,7 +253,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun hyperOsNativeFlutterDoesNotBypassAppProcessInstaller() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
         val appProcessInstaller: String =
             read("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
 
@@ -268,7 +268,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun modernUsesApi101BaselineWithApi102HotReloadAndHookIds() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
         val resourcesRead: String =
             read("src/main/java/com/dpis/module/runtime/resources/ResourcesReadHookInstaller.kt")
         val resourcesImpl: String =
@@ -284,14 +284,14 @@ class ModuleMainHookInstallerTest {
         val resolver: String =
             read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilitiesResolver.kt")
 
-        Assert.assertTrue(moduleMain.contains("onHotReloading(XposedModuleInterface.HotReloadingParam param)"))
-        Assert.assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"))
-        Assert.assertTrue(moduleMain.contains("restoreHotReloadState(savedState)"))
+        Assert.assertTrue(moduleMain.contains("onHotReloading(param: XposedModuleInterface.HotReloadingParam)"))
+        Assert.assertTrue(moduleMain.contains("onHotReloaded(param: XposedModuleInterface.HotReloadedParam)"))
+        Assert.assertTrue(moduleMain.contains("restoreHotReloadState(param.getSavedInstanceState())"))
         Assert.assertTrue(moduleMain.contains("replayPackageReadySupplementsAfterHotReload("))
-        Assert.assertTrue(moduleMain.contains("AppProcessHotReloadResetter.resetAll();"))
+        Assert.assertTrue(moduleMain.contains("AppProcessHotReloadResetter.resetAll()"))
         Assert.assertFalse(moduleMain.contains("ModernHookRegistry"))
-        Assert.assertTrue(moduleMain.contains("private volatile ModernApiCapabilities modernApiCapabilities;"))
-        Assert.assertTrue(moduleMain.contains("private ModernApiCapabilities getModernApiCapabilities()"))
+        Assert.assertTrue(moduleMain.contains("private var modernApiCapabilities"))
+        Assert.assertTrue(moduleMain.contains("private fun getModernApiCapabilities()"))
         Assert.assertTrue(moduleMain.contains("ModernApiCapabilitiesResolver.fromXposed(this)"))
         Assert.assertTrue(capabilities.contains("interface ModernApiCapabilities"))
         Assert.assertTrue(capabilities.contains("supportsStableHookIds()"))
@@ -369,9 +369,9 @@ class ModuleMainHookInstallerTest {
             read("src/modern/java/com/dpis/module/wechat/WechatDpiRouteCoordinator.kt")
                 .contains("supportsHotReloadCallbacks()")
         )
-        Assert.assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName);"))
+        Assert.assertTrue(moduleMain.contains("replaySystemServerAfterHotReload(store, currentProcessName)"))
         Assert.assertTrue(moduleMain.contains("system_server hot reload replay enter"))
-        Assert.assertTrue(moduleMain.contains("HookInstaller.resetForHotReload();"))
+        Assert.assertTrue(moduleMain.contains("HookInstaller.resetForHotReload()"))
         Assert.assertTrue(moduleMain.contains("\"hot-reload\""))
         Assert.assertTrue(
             read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.kt")
@@ -408,7 +408,7 @@ class ModuleMainHookInstallerTest {
     @Throws(IOException::class)
     fun issueSpecificDiagnosticsDoNotRemainInRuntimeSources() {
         Assert.assertFalse(
-            read("src/modern/java/com/dpis/module/ModuleMain.java")
+            read("src/modern/java/com/dpis/module/ModuleMain.kt")
                 .contains("DPIS_DIAG")
         )
         Assert.assertFalse(
@@ -424,7 +424,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun temporaryProbesAndPackerReferencesDoNotRemainInRuntimeSources() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
         val flutterInstaller: String =
             read("src/main/java/com/dpis/module/runtime/font/FlutterSettingsFontHookInstaller.java")
 
@@ -478,7 +478,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainUsesPackagePlanHookEligibilityGate() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(moduleMain.contains("if (!packagePlan.shouldInstallHooks())"))
         Assert.assertFalse(
@@ -516,7 +516,7 @@ class ModuleMainHookInstallerTest {
     @Test
     @Throws(IOException::class)
     fun moduleMainAllowsPackageOwnedSecondaryProcessesForViewportHooks() {
-        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.kt")
 
         Assert.assertTrue(moduleMain.contains("!processName.startsWith(packagePlan.packageName + \":\")"))
     }

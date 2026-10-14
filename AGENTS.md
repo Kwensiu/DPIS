@@ -130,10 +130,12 @@ module paths or optimized code.
   dialogs, sheets, list rows, navigation surfaces, and reusable controls with
   Jetpack Compose and Kotlin; do not add new XML/View UI unless an external API
   makes Compose impractical and the exception is documented in the change.
-- When a task materially changes an existing Java class, migrate that class to
-  Kotlin when the conversion stays within the task's ownership boundary. Keep
-  Java-callable signatures stable with tools such as `@JvmStatic`, explicit
-  interfaces, and nullable types where existing Java callers require them.
+- When converting a Java class to Kotlin, keep Java-callable signatures stable
+  only where existing Java callers or an explicit framework, reflection, JNI,
+  or external binary contract requires it. Kotlin-internal calls do not justify
+  `@JvmStatic` or `@JvmField` by themselves; avoid preserving unused Java ABI
+  surface. Use `@JvmStatic`, `@JvmField`, explicit interfaces, and nullable
+  types where those contracts require them.
 - Do not turn a focused change into a repository-wide language migration.
   Flavor-specific Xposed entrypoints, reflection-sensitive hooks, JNI-facing
   code, or classes with externally observed JVM signatures may remain Java

@@ -179,7 +179,7 @@ DPIS viewport target package
   |     |
   |     +-- modern
   |     |     |
-  |     |     +-- entry: app/src/modern/java/com/dpis/module/ModuleMain.java
+  |     |     +-- entry: app/src/modern/java/com/dpis/module/ModuleMain.kt
   |     |     +-- system_server route:
   |     |     |     runtime.systemserver.HookInstaller
   |     |     +-- app-process route:

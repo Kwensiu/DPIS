@@ -257,7 +257,7 @@ class HyperOsFlutterFontHookConfigTest {
         val source: String =
             readSource("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java")
         val nativeSource: String = readSource("src/main/cpp/dpis_native.cpp")
-        val moduleMain: String = readSource("src/modern/java/com/dpis/module/ModuleMain.java")
+        val moduleMain: String = readSource("src/modern/java/com/dpis/module/ModuleMain.kt")
         val appProcessInstaller: String =
             readSource("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
 

@@ -26,7 +26,6 @@ import java.lang.reflect.Modifier
 @Suppress("java:S1872")
 class HookInstaller private constructor() {
     companion object {
-        @JvmField
         val CONFIGURATION_FIELD_NAMES = arrayOf(
             "mergedConfiguration",
             "mLastReportedConfiguration",
@@ -40,7 +39,6 @@ class HookInstaller private constructor() {
         private val installedEntries = LinkedHashSet<String>()
         private var installedPid = -1
 
-        @JvmStatic
         fun resetForHotReload() {
             synchronized(HookInstaller::class.java) {
                 installedPid = -1
@@ -48,14 +46,12 @@ class HookInstaller private constructor() {
             }
         }
 
-        @JvmStatic
         fun install(
             xposed: XposedInterface,
             store: DpisConfigStore?,
             apiCapabilities: ModernApiCapabilities,
         ): InstallResult = install(xposed, store, apiCapabilities, null)
 
-        @JvmStatic
         fun install(
             xposed: XposedInterface,
             store: DpisConfigStore?,
@@ -343,7 +339,6 @@ class HookInstaller private constructor() {
         private fun matchesAnyMethodName(method: Method, methodNames: Array<String>): Boolean =
             methodNames.any { it == method.name }
 
-        @JvmStatic
         fun resolveLaunchViewportEnvironment(
             packageName: String?,
             baseConfiguration: Configuration?,
@@ -358,17 +353,16 @@ class HookInstaller private constructor() {
             config,
         )
 
-        @JvmStatic
         fun configuredUid(packageName: String?, callingUid: Int): Int =
             PACKAGE_UID_RESOLVER.resolve(packageName, callingUid)
     }
 
     class InstallResult(
-        @JvmField val installedCount: Int,
-        @JvmField val missingCount: Int,
-        @JvmField val alreadyInstalled: Boolean,
-        @JvmField val installedEntries: String,
-        @JvmField val missingEntries: String,
+        val installedCount: Int,
+        val missingCount: Int,
+        val alreadyInstalled: Boolean,
+        val installedEntries: String,
+        val missingEntries: String,
     ) {
         constructor(installedCount: Int, missingCount: Int, alreadyInstalled: Boolean) :
                 this(installedCount, missingCount, alreadyInstalled, "", "")

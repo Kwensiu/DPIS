@@ -302,7 +302,7 @@ DPIS modern target package
   |
   +-- entry
   |     |
-  |     +-- app/src/modern/java/com/dpis/module/ModuleMain.java
+  |     +-- app/src/modern/java/com/dpis/module/ModuleMain.kt
   |           |
   |           +-- onModuleLoaded
   |           |     |
@@ -577,7 +577,7 @@ Detailed app-specific runtime evidence lives in
 ```text
 101-only
   |
-  +-- app/src/modern/java/com/dpis/module/ModuleMain.java
+  +-- app/src/modern/java/com/dpis/module/ModuleMain.kt
   +-- libxposed XposedModule lifecycle
   +-- runtime.systemserver.HookInstaller installation through XposedInterface
   +-- API 102 target enhancements are optional: stable hook ids and hot-reload
