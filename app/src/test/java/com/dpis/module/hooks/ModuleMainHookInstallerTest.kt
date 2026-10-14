@@ -216,7 +216,7 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(moduleMain.contains("\"module-loaded-fallback\""))
         Assert.assertTrue(moduleMain.contains("\"package-ready\""))
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.kt")
                 .contains("HyperOsRustProcessHookInstaller.install(")
         )
         Assert.assertFalse(
@@ -374,19 +374,19 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(moduleMain.contains("HookInstaller.resetForHotReload();"))
         Assert.assertTrue(moduleMain.contains("\"hot-reload\""))
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.kt")
                 .contains("apiCapabilities.applyStableHookId(")
         )
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
-                .contains("static void resetForHotReload()")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.kt")
+                .contains("fun resetForHotReload()")
         )
         Assert.assertTrue(
             read("src/main/java/com/dpis/module/runtime/application/AppProcessHotReloadResetter.kt")
                 .contains("fun resetAll()")
         )
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/systemserver/HookCatalog.kt")
+            read("src/main/java/com/dpis/module/runtime/systemserver/hook/HookCatalog.kt")
                 .contains("system_server_launch_activity_item")
         )
     }
@@ -395,7 +395,7 @@ class ModuleMainHookInstallerTest {
     @Throws(IOException::class)
     fun systemServerHookDoesNotRetryOriginalAfterProceedThrows() {
         val callback: String =
-            read("src/main/java/com/dpis/module/runtime/systemserver/HookCallback.kt")
+            read("src/main/java/com/dpis/module/runtime/systemserver/hook/HookCallback.kt")
 
         Assert.assertTrue(callback.contains("var proceedAttempted = false"))
         Assert.assertTrue(callback.contains("proceedAttempted = true"))
@@ -416,7 +416,7 @@ class ModuleMainHookInstallerTest {
                 .contains("DPIS_DIAG")
         )
         Assert.assertFalse(
-            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java")
+            read("src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.kt")
                 .contains("DPIS_DIAG")
         )
     }

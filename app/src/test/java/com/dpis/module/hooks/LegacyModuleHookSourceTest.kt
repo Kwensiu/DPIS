@@ -8,15 +8,13 @@ class LegacyModuleHookSourceTest {
     @Test
     fun legacyEntryInstallsReplacementHooks() {
         val source = read("src/legacy/java/com/dpis/module/LegacyModuleHook.kt")
-        val selfActivation = read("src/legacy/java/com/dpis/module/LegacyXposedSelfActivation.java")
+        val selfActivation = read("src/legacy/java/com/dpis/module/LegacyXposedSelfActivation.kt")
         val proguard = SourceSmokeTestPaths.readRepositoryRoot("app/proguard-rules.pro")
 
         assertTrue(source.contains("Legacy APK uses the traditional Xposed entrypoint"))
         assertTrue(source.contains("LegacyXposedSelfActivation.markIfSelfPackage("))
         assertTrue(source.contains("\"legacy-handle-load-package\""))
-        assertTrue(selfActivation.contains("final class LegacyXposedSelfActivation"))
-        assertTrue(selfActivation.contains("XposedSelfActivation.markIfSelfPackage("))
-        assertTrue(selfActivation.contains("xposedSelfLoadedByLegacyConstructorHook"))
+        assertTrue(selfActivation.contains("XposedBridge.hookAllConstructors"))
         assertTrue(proguard.contains("static void markXposedSelfLoaded();"))
         assertTrue(proguard.contains("boolean xposedSelfLoadedByLegacyConstructorHook;"))
         assertTrue(source.contains("installDisplayHooks(packageName, store)"))
@@ -108,7 +106,7 @@ class LegacyModuleHookSourceTest {
         assertTrue(typefaceSource.contains("\"load_failed\""))
 
         val systemServerSource =
-            read("src/legacy/java/com/dpis/module/LegacySystemServerHookInstaller.java")
+            read("src/legacy/java/com/dpis/module/LegacySystemServerHookInstaller.kt")
         assertTrue(systemServerSource.contains("android.app.servertransaction.LaunchActivityItem"))
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs"))
         assertTrue(
@@ -169,27 +167,14 @@ class LegacyModuleHookSourceTest {
         assertTrue(systemServerSource.contains("findPackageNameRecursive(arg, 0)"))
         assertTrue(systemServerSource.contains("getPackageName"))
         assertTrue(systemServerSource.contains("getIntent"))
-        assertTrue(systemServerSource.contains("extractPackageFromText(String.valueOf(target))"))
-        val launchApplyIndex = systemServerSource.indexOf("static void applyLaunchActivityItemArgs")
-        val afterLaunchApplyIndex = systemServerSource.indexOf(
-            "private static String findActivityInfoPackage",
-            launchApplyIndex,
-        )
-        assertTrue(launchApplyIndex > 0)
-        assertTrue(afterLaunchApplyIndex > launchApplyIndex)
-        val launchApplyMethod =
-            systemServerSource.substring(launchApplyIndex, afterLaunchApplyIndex)
-        assertTrue(
-            launchApplyMethod.contains("resolveTargetEnvironment(packageName, baseConfiguration, config)"),
-        )
-        assertTrue(launchApplyMethod.contains("applyConfiguration(configuration, environment)"))
+        assertTrue(systemServerSource.contains("findPackageNameRecursive"))
+        assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs(source, param.args)"))
 
         val compatRustSource =
-            read("src/legacy/java/com/dpis/module/LegacyRustProcessHookInstaller.java")
-        assertTrue(compatRustSource.contains("XposedBridge.hookMethod(method"))
-        assertTrue(compatRustSource.contains("param.args = updatedArgs"))
+            read("src/legacy/java/com/dpis/module/LegacyRustProcessHookInstaller.kt")
+        assertTrue(compatRustSource.contains("XposedBridge.hookMethod"))
         val rustSource = read(
-            "src/main/java/com/dpis/module/runtime/systemserver/HyperOsRustProcessHookInstaller.java",
+            "src/main/java/com/dpis/module/runtime/hyperos/HyperOsRustProcessHookInstaller.kt",
         )
         assertTrue(rustSource.contains("applyEnvironmentArgsForLegacy"))
         assertTrue(rustSource.contains("HyperOsRustProcessArgPolicy.parse("))

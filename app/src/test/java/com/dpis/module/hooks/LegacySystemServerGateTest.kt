@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.runtime.systemserver.LegacySystemServerGate
+import com.dpis.module.runtime.systemserver.process.LegacySystemServerGate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

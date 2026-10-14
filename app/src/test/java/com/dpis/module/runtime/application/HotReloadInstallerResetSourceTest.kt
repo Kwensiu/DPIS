@@ -44,9 +44,9 @@ class HotReloadInstallerResetSourceTest {
             "installedPid = -1",
         )
         assertSourceContains(
-            "src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.java",
-            "public static void resetForHotReload()",
-            "installedPid = -1;",
+            "src/main/java/com/dpis/module/runtime/systemserver/HookInstaller.kt",
+            "fun resetForHotReload()",
+            "installedPid = -1",
         )
         assertSourceContains(
             "src/main/java/com/dpis/module/runtime/font/TypefaceOverrideHookInstaller.kt",

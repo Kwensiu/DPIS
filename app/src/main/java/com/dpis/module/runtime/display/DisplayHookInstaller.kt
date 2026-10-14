@@ -234,7 +234,7 @@ object DisplayHookInstaller {
         val originalWidthPixels = metrics.widthPixels
         val originalHeightPixels = metrics.heightPixels
         if (override.densityDpi > 0 && override.widthPx > 0 && override.heightPx > 0) {
-            val targetSpec = effectiveStore.getTargetViewportSpec(effectivePackageName!!)
+            val targetSpec = effectiveStore!!.getTargetViewportSpec(effectivePackageName!!)
             if (targetSpec.isEnabled) {
                 RUNTIME_FALLBACK_OVERRIDES.put(
                     effectivePackageName,

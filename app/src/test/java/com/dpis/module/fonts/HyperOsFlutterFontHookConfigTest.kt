@@ -12,7 +12,7 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
 import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller
-import com.dpis.module.runtime.systemserver.HyperOsRustProcessHookInstaller
+import com.dpis.module.runtime.hyperos.HyperOsRustProcessHookInstaller
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertyBridge.parseOverrideValueForTest
 import com.dpis.module.viewport.ViewportPropertyBridge.propertyNameForPackage

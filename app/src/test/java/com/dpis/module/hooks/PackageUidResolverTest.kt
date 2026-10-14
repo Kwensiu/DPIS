@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.runtime.systemserver.PackageUidResolver
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger

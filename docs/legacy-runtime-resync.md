@@ -318,9 +318,11 @@ legacy system font mode
 They are not saved in the custom hook-chain override, and restoring the hook
 chain returns only to the compat/field-rewrite recommended template.
 
-System-server route implementation classes now live under `runtime.systemserver`. Flavor entry points still use the same install,
-diagnostic, policy, and process-check protocols; this is package
-classification only, not a route behavior change.
+System-server route implementation classes now live under `runtime.systemserver`, split into stable
+entry protocols and focused `hook`, `selection`, `mutation`, `viewport`, `diagnostics`,
+`reflection`, and `process` responsibilities. The HyperOS Rust-process installer lives under the
+existing `runtime.hyperos` package. Flavor entry points still use the same protocols; this is
+package classification only, not a route behavior change.
 
 ## Experiment Ledger
 
