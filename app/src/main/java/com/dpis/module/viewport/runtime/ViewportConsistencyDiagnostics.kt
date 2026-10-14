@@ -3,7 +3,7 @@ package com.dpis.module.viewport
 import android.graphics.Rect
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.diagnostics.device.RuntimeTransport
-import com.dpis.module.runtime.appprocess.WindowFrameOverride
+import com.dpis.module.runtime.window.WindowFrameOverride
 import java.util.concurrent.ConcurrentHashMap
 
 /** Low-frequency snapshots that correlate physical window bounds with virtual display state. */

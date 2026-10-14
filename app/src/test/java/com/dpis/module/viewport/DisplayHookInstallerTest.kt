@@ -1,7 +1,7 @@
 package com.dpis.module
 
 import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.runtime.appprocess.DisplayHookInstaller
+import com.dpis.module.runtime.display.DisplayHookInstaller
 import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge

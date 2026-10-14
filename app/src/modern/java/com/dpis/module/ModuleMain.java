@@ -20,18 +20,18 @@ import com.dpis.module.runtime.systemserver.HookInstaller;
 import com.dpis.module.runtime.systemserver.MutationPolicy;
 import com.dpis.module.runtime.systemserver.HostProcess;
 
-import com.dpis.module.runtime.appprocess.WebApkRuntimeOwnerBridge;
+import com.dpis.module.runtime.webapk.WebApkRuntimeOwnerBridge;
 
-import com.dpis.module.runtime.appprocess.AppProcessHotReloadResetter;
+import com.dpis.module.runtime.application.AppProcessHotReloadResetter;
 
-import com.dpis.module.runtime.appprocess.AppProcessHookInstaller;
+import com.dpis.module.runtime.application.AppProcessHookInstaller;
 
 import com.dpis.module.runtime.font.DebugFontOverride;
 import com.dpis.module.runtime.font.FlutterSettingsFontHookInstaller;
 import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller;
 import com.dpis.module.fonts.PublishedFontFileResolver;
 
-import com.dpis.module.runtime.appprocess.ChromiumViewportProbeHookInstaller;
+import com.dpis.module.runtime.chromium.ChromiumViewportProbeHookInstaller;
 
 import com.dpis.module.hooks.HookExecutionPlan;
 import com.dpis.module.hooks.HookRuntimePolicy;

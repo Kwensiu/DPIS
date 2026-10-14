@@ -5,7 +5,7 @@ import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.hooks.HookExecutionPlan
 import com.dpis.module.hooks.HookExecutionPlanner
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.appprocess.AppProcessHookInstaller
+import com.dpis.module.runtime.application.AppProcessHookInstaller
 import com.dpis.module.runtime.font.DebugFontOverride
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec

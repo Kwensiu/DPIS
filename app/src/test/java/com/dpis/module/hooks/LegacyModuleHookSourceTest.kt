@@ -199,7 +199,7 @@ class LegacyModuleHookSourceTest {
         assertFalse(rustSource.contains("HyperOsFlutterFontBridge.clearTarget(packageName);"))
 
         val resourcesReadSource = read(
-            "src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.kt",
+            "src/main/java/com/dpis/module/runtime/resources/ResourcesConfigurationRead.kt",
         )
         assertTrue(resourcesReadSource.contains("DPIS_VIEWPORT legacy auto fallback success: package="))
         assertTrue(resourcesReadSource.contains("sourceTag.startsWith(\"LegacyResourcesRead(\")"))

@@ -153,7 +153,8 @@ protocols; the move only classifies ActivityThread, Resources font scheduling,
 TextView/Paint field rewrite, WebView, typeface replacement, Flutter, and
 diagnostic font routes under their runtime owner package.
 The shared app-process viewport/window route implementation now lives under
-`runtime.appprocess`. Flavor entry points still call the same
+`runtime.application, runtime.resources, runtime.display, runtime.window, runtime.webapk, runtime.chromium`.
+Flavor entry points still call the same
 install/reset/apply protocols; the move is package classification only and does
 not change route selection, mutation policy, or evidence semantics.
 
@@ -182,11 +183,11 @@ DPIS viewport target package
   |     |     +-- system_server route:
   |     |     |     runtime.systemserver.HookInstaller
   |     |     +-- app-process route:
-  |     |           runtime.appprocess.AppProcessHookInstaller
-  |     |           runtime.appprocess.ResourcesManagerHookInstaller
-  |     |           runtime.appprocess.ResourcesImplHookInstaller
-  |     |           runtime.appprocess.ResourcesReadHookInstaller
-  |     |           runtime.appprocess.DisplayHookInstaller / runtime.appprocess.WindowMetricsHookInstaller
+  |     |           runtime.application.AppProcessHookInstaller
+  |     |           runtime.resources.ResourcesManagerHookInstaller
+  |     |           runtime.resources.ResourcesImplHookInstaller
+  |     |           runtime.resources.ResourcesReadHookInstaller
+  |     |           runtime.display.DisplayHookInstaller / runtime.window.WindowMetricsHookInstaller
   |     |
   |     +-- legacy
   |           |
@@ -217,6 +218,8 @@ DPIS viewport target package
   |                 |
   |                 +-- Resources.getConfiguration / getDisplayMetrics / getSystem
   |                 |     read-time compensation
+  |                 |     configuration: ResourcesConfigurationRead
+  |                 |     display metrics: ResourcesMetricsRead
   |                 |
   |                 +-- Display.getMetrics / getRealMetrics / getSize / getRealSize / getDisplayInfo
   |                 |     app-process display supplement
@@ -426,7 +429,8 @@ process. Legacy inherits this boundary.
   `ResourcesManager` override, `ResourcesImpl` observe/override/stable target,
   and `ResourcesRead` configuration/display-metrics overrides.
 - 2026-06-21: shared app-process viewport diagnostics now include first-hit plus
-  counted-sample `runtime.appprocess.DisplayHookInstaller` and `runtime.appprocess.WindowMetricsHookInstaller`
+  counted-sample `runtime.display.DisplayHookInstaller` and
+  `runtime.window.WindowMetricsHookInstaller`
   runtime-hotpath evidence. Repeated callback evidence carries `hitCount` and
   `suppressedCount`, aimed at rapid-scrolling repros where callback hit versus
   skipped supplement behavior needs to be separated before drawing conclusions.

@@ -1,15 +1,13 @@
 package com.dpis.module;
 
-import com.dpis.module.runtime.appprocess.DisplayHookInstaller;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import com.dpis.module.runtime.probe.CallerTrace;
 
 import org.junit.Test;
 
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class CallerTraceTest {
     @Test

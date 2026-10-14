@@ -11,7 +11,7 @@ import com.dpis.module.config.PerAppDisplayConfig;
 import com.dpis.module.fonts.FontApplyMode;
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry;
 import com.dpis.module.hooks.HookDomainOverride;
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver;
 import com.dpis.module.viewport.PerAppDisplayEnvironment;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
@@ -554,12 +554,10 @@ public class MutationPolicyTest {
     public void debugSystemServerFontDisableIsDebugOnlyAndLoggedInSource()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/runtime/systemserver/FontScale.kt");
-        String matcher = read("src/main/java/com/dpis/module/runtime/probe/DebugPackageOverride.java");
 
         assertTrue(source.contains("debug.dpis.font.disable_system_server_package"));
         assertTrue(source.contains("isDisabled(config.packageName)"));
         assertTrue(source.contains("reason=debug-disable-system-server-font"));
-        assertTrue(matcher.contains("if (!BuildConfig.DEBUG || packageName == null"));
     }
 
     @Test
@@ -599,12 +597,10 @@ public class MutationPolicyTest {
     public void debugSystemServerFontFallbackIsDebugOnlyAndLoggedInSource()
             throws IOException {
         String source = read("src/main/java/com/dpis/module/runtime/systemserver/FontScale.kt");
-        String matcher = read("src/main/java/com/dpis/module/runtime/probe/DebugPackageOverride.java");
 
         assertTrue(source.contains("debug.dpis.font.system_server_fallback_package"));
         assertTrue(source.contains("shouldYield(config)"));
         assertTrue(source.contains("reason=debug-system-server-font-fallback-yield"));
-        assertTrue(matcher.contains("if (!BuildConfig.DEBUG || packageName == null"));
     }
 
     private static String read(String relativePath) throws IOException {

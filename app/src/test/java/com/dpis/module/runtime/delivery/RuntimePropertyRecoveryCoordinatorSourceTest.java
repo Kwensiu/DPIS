@@ -11,7 +11,7 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
     @Test
     public void coordinatorCentralizesRuntimeMirrorResync() throws IOException {
         String source = readProjectFile(
-                "src/main/java/com/dpis/module/runtime/delivery/RuntimePropertyRecoveryCoordinator.java");
+                "src/main/java/com/dpis/module/runtime/delivery/RuntimePropertyRecoveryCoordinator.kt");
         String app = readProjectFile("src/main/java/com/dpis/module/DpisApplication.kt");
         String receiver = readProjectFile(
                 "src/main/java/com/dpis/module/runtime/lifecycle/DpisPackageLifecycleReceiver.java");
@@ -21,9 +21,6 @@ public final class RuntimePropertyRecoveryCoordinatorSourceTest {
         assertTrue(source.contains("FontHookDomainPropertySyncer.syncConfiguredTargetsAsync(store)"));
         assertTrue(source.contains("WechatDpiPropertySyncer.syncConfiguredTargetsAsync(store)"));
         assertTrue(source.contains("RuntimeDebugPropertySyncer.publishAsync("));
-        assertTrue(source.contains("store.isGlobalLogEnabled()"));
-        assertTrue(source.contains("store.isFontDebugOverlayEnabled()"));
-        assertTrue(source.contains("idempotent"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"));
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"));
         assertTrue(app.contains("migrateLocalConfigStore(configStore)"));

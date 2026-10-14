@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.runtime.appprocess.ViewRootProbeHookInstaller
+import com.dpis.module.runtime.window.ViewRootProbeHookInstaller
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -2,7 +2,7 @@ package com.dpis.module.viewport
 
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver
 
 object ViewportModePolicy {
     @JvmStatic

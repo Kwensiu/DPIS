@@ -3,7 +3,7 @@ package com.dpis.module.runtime.systemserver
 import android.content.pm.ActivityInfo
 import com.dpis.module.config.PerAppDisplayConfig
 import com.dpis.module.config.PerAppDisplayConfigSource
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver
 import java.util.Objects
 import java.util.function.Predicate
 

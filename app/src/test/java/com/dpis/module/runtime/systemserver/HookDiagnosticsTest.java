@@ -6,7 +6,7 @@ import android.content.res.Configuration;
 import android.os.Binder;
 import android.os.IBinder;
 
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver;
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver;
 
 import org.junit.Test;
 

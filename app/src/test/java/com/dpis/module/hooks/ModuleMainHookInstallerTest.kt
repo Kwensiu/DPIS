@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver
 import org.junit.Assert
 import org.junit.Test
 import java.io.IOException
@@ -189,7 +189,7 @@ class ModuleMainHookInstallerTest {
         val flutterInstaller: String =
             read("src/main/java/com/dpis/module/runtime/font/HyperOsFlutterFontHookInstaller.java")
         val appProcessInstaller: String =
-            read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
 
         Assert.assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("))
         Assert.assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"))
@@ -255,7 +255,7 @@ class ModuleMainHookInstallerTest {
     fun hyperOsNativeFlutterDoesNotBypassAppProcessInstaller() {
         val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
         val appProcessInstaller: String =
-            read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
 
         Assert.assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("))
         Assert.assertTrue(moduleMain.contains("AppProcessHookInstaller.install("))
@@ -270,19 +270,19 @@ class ModuleMainHookInstallerTest {
     fun modernUsesApi101BaselineWithApi102HotReloadAndHookIds() {
         val moduleMain: String = read("src/modern/java/com/dpis/module/ModuleMain.java")
         val resourcesRead: String =
-            read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesReadHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/resources/ResourcesReadHookInstaller.kt")
         val resourcesImpl: String =
-            read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesImplHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/resources/ResourcesImplHookInstaller.kt")
         val resourcesManager: String =
-            read("src/main/java/com/dpis/module/runtime/appprocess/ResourcesManagerHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/resources/ResourcesManagerHookInstaller.kt")
         val capabilities: String =
-            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilities.java")
+            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilities.kt")
         val api101: String =
-            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi101Capabilities.java")
+            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi101Capabilities.kt")
         val api102: String =
-            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi102Capabilities.java")
+            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApi102Capabilities.kt")
         val resolver: String =
-            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilitiesResolver.java")
+            read("src/main/java/com/dpis/module/runtime/hookapi/ModernApiCapabilitiesResolver.kt")
 
         Assert.assertTrue(moduleMain.contains("onHotReloading(XposedModuleInterface.HotReloadingParam param)"))
         Assert.assertTrue(moduleMain.contains("onHotReloaded(XposedModuleInterface.HotReloadedParam param)"))
@@ -297,12 +297,17 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(capabilities.contains("supportsStableHookIds()"))
         Assert.assertTrue(capabilities.contains("supportsHotReloadCallbacks()"))
         Assert.assertTrue(capabilities.contains("applyStableHookId"))
-        Assert.assertTrue(api101.contains("final class ModernApi101Capabilities"))
-        Assert.assertTrue(api101.contains("return false;"))
-        Assert.assertTrue(api102.contains("final class ModernApi102Capabilities"))
-        Assert.assertTrue(api102.contains("XposedInterface.HookBuilder.class.getMethod(\"setId\", String.class)"))
-        Assert.assertTrue(resolver.contains("static final int API_101 = 101;"))
-        Assert.assertTrue(resolver.contains("static final int API_102 = 102;"))
+        Assert.assertTrue(api101.contains("object ModernApi101Capabilities"))
+        Assert.assertTrue(api101.contains("supportsStableHookIds(): Boolean = false"))
+        Assert.assertTrue(api101.contains("supportsHotReloadCallbacks(): Boolean = false"))
+        Assert.assertTrue(api102.contains("object ModernApi102Capabilities"))
+        Assert.assertTrue(
+            api102.contains(
+                "XposedInterface.HookBuilder::class.java.getMethod(\"setId\", String::class.java)",
+            ),
+        )
+        Assert.assertTrue(resolver.contains("const val API_101 = 101"))
+        Assert.assertTrue(resolver.contains("const val API_102 = 102"))
         Assert.assertTrue(resolver.contains("keeps API 101 as the loading baseline and targets API 102"))
         Assert.assertTrue(resolver.contains("API 102 hosts may exercise hot reload and stable hook ids"))
         Assert.assertTrue(resolver.contains("API 101 keeps"))
@@ -340,16 +345,16 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(typefaceInstaller.contains("apiCapabilities.applyStableHookId<HookBuilder>("))
         Assert.assertTrue(typefaceInstaller.contains("bridgeOverrideAppliedIfChanged("))
         val appProcessInstaller: String =
-            read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
         Assert.assertTrue(appProcessInstaller.contains("ForceTextSizeHookInstaller.install("))
         Assert.assertTrue(appProcessInstaller.contains("plan.fontDomainPlan,"))
         Assert.assertTrue(appProcessInstaller.contains("apiCapabilities"))
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/appprocess/DisplayHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/display/DisplayHookInstaller.kt")
                 .contains("HOOK_ID_DISPLAY_GET_DISPLAY_INFO")
         )
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.kt")
+            read("src/main/java/com/dpis/module/runtime/window/WindowMetricsHookInstaller.kt")
                 .contains("HOOK_ID_WINDOW_METRICS_GET_BOUNDS")
         )
         Assert.assertTrue(
@@ -377,7 +382,7 @@ class ModuleMainHookInstallerTest {
                 .contains("static void resetForHotReload()")
         )
         Assert.assertTrue(
-            read("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHotReloadResetter.kt")
+            read("src/main/java/com/dpis/module/runtime/application/AppProcessHotReloadResetter.kt")
                 .contains("fun resetAll()")
         )
         Assert.assertTrue(
@@ -407,7 +412,7 @@ class ModuleMainHookInstallerTest {
                 .contains("DPIS_DIAG")
         )
         Assert.assertFalse(
-            read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
+            read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.kt")
                 .contains("DPIS_DIAG")
         )
         Assert.assertFalse(

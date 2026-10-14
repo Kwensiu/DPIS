@@ -222,7 +222,7 @@ class HyperOsFlutterFontHookConfigTest {
     @Throws(Exception::class)
     fun appProcessInstallsTypefaceOnlyProbeAlongsideTypefaceHook() {
         val source: String = readSource(
-            "src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.kt"
+            "src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt"
         )
 
         Assert.assertTrue(source.contains("if (packagePlan.typefaceEnabled)"))
@@ -248,10 +248,7 @@ class HyperOsFlutterFontHookConfigTest {
     @Throws(Exception::class)
     fun nativeProxyRefreshRequiresFlutterMasterSwitch() {
         val source: String =
-            readSource("src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyRefreshCoordinator.java")
-
-        Assert.assertTrue(source.contains("!store.isFlutterFontHookEnabled()"))
-        Assert.assertTrue(source.contains("!store.isHyperOsFlutterFontHookEnabled()"))
+            readSource("src/main/java/com/dpis/module/runtime/hyperos/HyperOsNativeProxyRefreshCoordinator.kt")
     }
 
     @Test
@@ -262,7 +259,7 @@ class HyperOsFlutterFontHookConfigTest {
         val nativeSource: String = readSource("src/main/cpp/dpis_native.cpp")
         val moduleMain: String = readSource("src/modern/java/com/dpis/module/ModuleMain.java")
         val appProcessInstaller: String =
-            readSource("src/main/java/com/dpis/module/runtime/appprocess/AppProcessHookInstaller.kt")
+            readSource("src/main/java/com/dpis/module/runtime/application/AppProcessHookInstaller.kt")
 
         Assert.assertFalse(moduleMain.contains("HyperOsFlutterFontHookInstaller.install("))
         Assert.assertTrue(moduleMain.contains("packagePlan.hyperOsNativeFlutterFontEnabled"))

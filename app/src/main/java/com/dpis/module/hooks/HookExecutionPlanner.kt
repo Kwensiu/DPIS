@@ -4,8 +4,8 @@ import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookArbitration
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.fonts.hookdomain.PackageFontHookDomainDefaults
-import com.dpis.module.runtime.appprocess.ResourcesReadHookPolicy
 import com.dpis.module.runtime.font.DebugFontOverride
+import com.dpis.module.runtime.resources.ResourcesReadHookPolicy
 import com.dpis.module.viewport.EffectiveModeResolver
 import com.dpis.module.viewport.ViewportApplyMode
 

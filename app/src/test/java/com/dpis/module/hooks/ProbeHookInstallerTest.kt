@@ -2,8 +2,8 @@ package com.dpis.module
 
 import android.content.res.Configuration
 import android.util.DisplayMetrics
-import com.dpis.module.runtime.appprocess.ResourcesProbeHookInstaller
-import com.dpis.module.runtime.appprocess.ViewRootProbeHookInstaller
+import com.dpis.module.runtime.resources.ResourcesProbeHookInstaller
+import com.dpis.module.runtime.window.ViewRootProbeHookInstaller
 import com.dpis.module.viewport.DensityOverride
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -58,7 +58,7 @@ class ProbeHookInstallerTest {
         configuration.densityDpi = 480
 
         val overridden =
-            ResourcesProbeHookInstaller.createOverriddenConfiguration(configuration, 200)
+            ResourcesProbeHookInstaller.createOverriddenConfiguration(configuration, 200)!!
 
         assertNotSame(configuration, overridden)
         assertEquals(200, overridden.screenWidthDp)
@@ -77,7 +77,7 @@ class ProbeHookInstallerTest {
         metrics.scaledDensity = 3.45f
 
         val overridden =
-            ResourcesProbeHookInstaller.createOverriddenDisplayMetrics(metrics, 200, 1.15f)
+            ResourcesProbeHookInstaller.createOverriddenDisplayMetrics(metrics, 200, 1.15f)!!
 
         assertNotSame(metrics, overridden)
         assertEquals(1080, overridden.widthPixels)

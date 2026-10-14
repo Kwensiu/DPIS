@@ -1,6 +1,6 @@
 package com.dpis.module
 
-import com.dpis.module.runtime.appprocess.WindowSessionProbeHookInstaller
+import com.dpis.module.runtime.window.WindowSessionProbeHookInstaller
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

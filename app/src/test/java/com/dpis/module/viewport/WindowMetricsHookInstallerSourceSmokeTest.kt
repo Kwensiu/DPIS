@@ -11,7 +11,7 @@ class WindowMetricsHookInstallerSourceSmokeTest {
     fun runtimeHotpathEvidenceKeepsPackageRouteAndStages() {
         val source = String(
             Files.readAllBytes(
-                Path.of("src/main/java/com/dpis/module/runtime/appprocess/WindowMetricsHookInstaller.kt"),
+                Path.of("src/main/java/com/dpis/module/runtime/window/WindowMetricsHookInstaller.kt"),
             ),
             StandardCharsets.UTF_8,
         )

@@ -3,8 +3,8 @@ package com.dpis.module.runtime.systemserver
 import android.content.res.Configuration
 import android.graphics.Rect
 import com.dpis.module.config.PerAppDisplayConfig
-import com.dpis.module.runtime.appprocess.WindowFrameOverride
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
+import com.dpis.module.runtime.window.WindowFrameOverride
 import com.dpis.module.viewport.PerAppDisplayEnvironment
 import com.dpis.module.viewport.ViewportOverride
 

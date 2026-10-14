@@ -1,6 +1,6 @@
 package com.dpis.module.runtime.systemserver
 
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver
 
 /** Package names found on system_server hook arguments. */
 object PackageNames {

@@ -3,8 +3,8 @@ package com.dpis.module.viewport
 import android.content.res.Configuration
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.hooks.HookRuntimePolicy
-import com.dpis.module.runtime.appprocess.WebApkCarrierResolver
 import com.dpis.module.runtime.probe.RuntimeClock
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver
 import com.dpis.module.viewport.window.WindowBoundsState
 import kotlin.math.round
 

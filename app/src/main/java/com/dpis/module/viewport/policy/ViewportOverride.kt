@@ -1,6 +1,5 @@
 package com.dpis.module.viewport
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
 import java.lang.reflect.Field
 
@@ -25,7 +24,7 @@ object ViewportOverride {
     ): Result? {
         if (config == null || targetWidthDp <= 0) return null
         if (windowScoped) return deriveWindowScoped(config, stableTarget)
-        val maxBounds = readMaxBounds(config)
+        val maxBounds = FullscreenWindowBounds.maxBounds(config)
         return derive(
             config,
             targetWidthDp,
@@ -33,7 +32,7 @@ object ViewportOverride {
             null,
             maxBounds?.width() ?: 0,
             maxBounds?.height() ?: 0,
-            !expandsToMaxBounds(readWindowingMode(config)),
+            !expandsToMaxBounds(FullscreenWindowBounds.windowingMode(config)),
         )
     }
 
@@ -114,40 +113,6 @@ object ViewportOverride {
     @JvmStatic
     fun expandsToMaxBounds(windowingMode: Int?): Boolean =
         windowingMode != null && windowingMode <= 1
-
-    private fun readWindowingMode(config: Configuration?): Int? {
-        val windowConfiguration = readWindowConfiguration(config) ?: return null
-        return try {
-            val method = windowConfiguration.javaClass.getMethod("getWindowingMode")
-            method.invoke(windowConfiguration) as? Int
-        } catch (_: ReflectiveOperationException) {
-            null
-        }
-    }
-
-    private fun readMaxBounds(config: Configuration?): android.graphics.Rect? {
-        val windowConfiguration = readWindowConfiguration(config) ?: return null
-        return try {
-            val bounds = windowConfiguration.javaClass.getMethod("getMaxBounds")
-                .invoke(windowConfiguration)
-            bounds as? android.graphics.Rect
-        } catch (_: ReflectiveOperationException) {
-            null
-        }
-    }
-
-    @SuppressLint("BlockedPrivateApi")
-    private fun readWindowConfiguration(config: Configuration?): Any? {
-        if (config == null) return null
-        return try {
-            val field = Configuration::class.java.getDeclaredField("windowConfiguration")
-            field.isAccessible = true
-            field.get(config) ?: Configuration::class.java.getMethod("getWindowConfiguration")
-                .invoke(config)
-        } catch (_: ReflectiveOperationException) {
-            null
-        }
-    }
 
     @JvmStatic
     fun deriveWindowScoped(

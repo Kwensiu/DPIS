@@ -7,7 +7,7 @@ import com.dpis.module.diagnostics.Coordinator
 import com.dpis.module.diagnostics.RuntimeEvents
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.fonts.FontApplyMode
-import com.dpis.module.runtime.appprocess.DisplayHookInstaller
+import com.dpis.module.runtime.display.DisplayHookInstaller
 import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportOverride

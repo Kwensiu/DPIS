@@ -1,7 +1,7 @@
 package com.dpis.module.hooks
 
 import com.dpis.module.fonts.hookdomain.FontHookArbitration
-import com.dpis.module.runtime.appprocess.ResourcesReadHookPolicy
+import com.dpis.module.runtime.resources.ResourcesReadHookPolicy
 
 class HookExecutionPlan(
     @JvmField val fontMode: FontMode,

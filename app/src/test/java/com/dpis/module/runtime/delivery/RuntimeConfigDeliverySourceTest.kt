@@ -3,13 +3,12 @@ package com.dpis.module
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.runtime.ConfigStoreFactory
-import com.dpis.module.config.DpisConfigStore
 
 class RuntimeConfigDeliverySourceTest {
     @Test
     fun centralizesRemoteDeliveryResyncAfterRealConfigSaves() {
-        val delivery = read("src/main/java/com/dpis/module/runtime/delivery/RuntimeConfigDelivery.java")
+        val delivery =
+            read("src/main/java/com/dpis/module/runtime/delivery/RuntimeConfigDelivery.kt")
         val mainActivity = read("src/main/java/com/dpis/module/MainActivity.kt")
         val runtimeLaunch = read(
             "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
@@ -27,9 +26,9 @@ class RuntimeConfigDeliverySourceTest {
         val systemHooks = read("src/main/java/com/dpis/module/settings/SystemHooksToggleController.java")
         val systemSettings = read("src/main/java/com/dpis/module/settings/presentation/SystemServerSettingsPageController.kt")
 
-        assertTrue(delivery.contains("public static void setLocalSnapshotReloader(Runnable reloader)"))
-        assertTrue(delivery.contains("public static void publishLocalSnapshotAfterSave()"))
-        assertTrue(delivery.contains("localSnapshotReloader.run();"))
+        assertTrue(delivery.contains("fun setLocalSnapshotReloader(reloader: Runnable?)"))
+        assertTrue(delivery.contains("fun publishLocalSnapshotAfterSave()"))
+        assertTrue(delivery.contains("localSnapshotReloader.run()"))
         assertTrue(
             read("src/main/java/com/dpis/module/DpisApplication.kt").contains(
                 "RuntimeConfigDelivery.setLocalSnapshotReloader(Runnable { reloadConfigStore() })",
@@ -60,16 +59,16 @@ class RuntimeConfigDeliverySourceTest {
 
     @Test
     fun activeFontLibraryStoreUsesLocalPreferencesOnly() {
-        val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.java")
+        val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.kt")
         val activeFontFactory = activeFontLibraryFactoryBlock(factory)
 
-        assertTrue(activeFontFactory.contains("return createLocalFontLibraryStore(context);"))
+        assertTrue(activeFontFactory.contains("= createLocalFontLibraryStore(context)"))
         assertFalse(activeFontFactory.contains("getRemotePreferences"))
     }
 
     private fun activeFontLibraryFactoryBlock(source: String): String {
-        val start = source.indexOf("static FontLibraryStore createLocalUiFontLibraryStore(")
-        return source.substring(start, source.indexOf("static DpisConfigStore createForXposedHost", start))
+        val start = source.indexOf("fun createLocalUiFontLibraryStore(")
+        return source.substring(start, source.indexOf("fun createForXposedHost", start))
     }
 
     private fun occurrences(value: String, needle: String): Int {

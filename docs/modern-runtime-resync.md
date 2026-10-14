@@ -149,7 +149,7 @@ Viewport mode
 
   compat
     -> libxposed app-process route
-    -> runtime.appprocess.AppProcessHookInstaller owns Resources / Display / WindowMetrics hooks
+    -> runtime.application.AppProcessHookInstaller owns Resources / Display / WindowMetrics hooks
 
 Font mode
   system
@@ -372,38 +372,38 @@ DPIS modern target package
         |     HookExecutionPlanner.buildPlan
         |
         +-- installer:
-              runtime.appprocess.AppProcessHookInstaller.install
+              runtime.application.AppProcessHookInstaller.install
                 |
-                +-- runtime.appprocess.ResourcesManagerHookInstaller
+                +-- runtime.resources.ResourcesManagerHookInstaller
                 |     ResourcesManager.applyConfigurationToResources
                 |     ResourcesManager.updateResourcesForActivity
                 |     ResourcesManager create/get resource methods
                 |     ResourcesKey override fill
                 |
-                +-- runtime.appprocess.ResourcesImplHookInstaller
+                +-- runtime.resources.ResourcesImplHookInstaller
                 |     ResourcesImpl.updateConfiguration
                 |
-                +-- runtime.appprocess.ResourcesReadHookInstaller
-                |     Resources.getConfiguration
-                |     Resources.getDisplayMetrics
+                +-- runtime.resources.ResourcesReadHookInstaller
+                |     Resources.getConfiguration -> ResourcesConfigurationRead
+                |     Resources.getDisplayMetrics -> ResourcesMetricsRead
                 |     Resources.getSystem
                 |
-                +-- runtime.appprocess.DisplayHookInstaller
+                +-- runtime.display.DisplayHookInstaller
                 |     Display.getMetrics
                 |     Display.getRealMetrics
                 |     Display.getSize
                 |     Display.getRealSize
                 |     Display.getDisplayInfo
                 |
-                +-- runtime.appprocess.WindowMetricsHookInstaller
+                +-- runtime.window.WindowMetricsHookInstaller
                 |     WindowMetrics.getBounds
                 |
                 +-- system-font semantic supplements
                 |     ActivityThreadFontHookInstaller
                 |       ActivityThread.handleBindApplication
-                |     runtime.appprocess.ResourcesManagerHookInstaller
-                |     runtime.appprocess.ResourcesImplHookInstaller
-                |     runtime.appprocess.ResourcesReadHookInstaller
+                |     runtime.resources.ResourcesManagerHookInstaller
+                |     runtime.resources.ResourcesImplHookInstaller
+                |     runtime.resources.ResourcesReadHookInstaller
                 |     WebViewFontHookInstaller
                 |
                 +-- compat-font field-rewrite routes
@@ -592,12 +592,12 @@ Detailed app-specific runtime evidence lives in
 
 shared
   |
-  +-- runtime.appprocess.AppProcessHookInstaller
+  +-- runtime.application.AppProcessHookInstaller
   +-- HookExecutionPlanner
-  +-- runtime.appprocess.ResourcesManagerHookInstaller
-  +-- runtime.appprocess.ResourcesImplHookInstaller
-  +-- runtime.appprocess.ResourcesReadHookInstaller
-  +-- runtime.appprocess.DisplayHookInstaller / runtime.appprocess.WindowMetricsHookInstaller
+  +-- runtime.resources.ResourcesManagerHookInstaller
+  +-- runtime.resources.ResourcesImplHookInstaller
+  +-- runtime.resources.ResourcesReadHookInstaller
+  +-- runtime.display.DisplayHookInstaller / runtime.window.WindowMetricsHookInstaller
   +-- ViewportModePolicy / EffectiveModeResolver
 ```
 
@@ -687,9 +687,10 @@ see those frames. A Chrome-only snapshot route was not added.
 
 - Changes under `app/src/main/java/` are shared and must be reviewed for both
   100 and 101.
-- Any change to `runtime.appprocess.ResourcesManagerHookInstaller`, `runtime.appprocess.ResourcesImplHookInstaller`,
-  `runtime.appprocess.ResourcesReadHookInstaller`, `runtime.appprocess.DisplayHookInstaller`,
-  `runtime.appprocess.WindowMetricsHookInstaller`, `HookExecutionPlanner`, or
+- Any change to `runtime.resources.ResourcesManagerHookInstaller`,
+  `runtime.resources.ResourcesImplHookInstaller`,
+  `runtime.resources.ResourcesReadHookInstaller`, `runtime.display.DisplayHookInstaller`,
+  `runtime.window.WindowMetricsHookInstaller`, `HookExecutionPlanner`, or
   `ViewportModePolicy` is a 101-impacting change.
 - For 101 system route, require system_server install evidence plus
   callback/mutation evidence. `hook ready` alone is not enough.
@@ -759,7 +760,7 @@ see those frames. A Chrome-only snapshot route was not added.
   trade is deferred as not worth the risk of a visual double-apply regression
   on spanned text.
 
-- 2026-07-03: `runtime.appprocess.ResourcesReadHookInstaller` viewport override hot path
+- 2026-07-03: `runtime.resources.ResourcesReadHookInstaller` viewport override hot path
   (`Resources.getConfiguration` / `getDisplayMetrics`) optimized via two
   caches addressing issue #54 item 6. (1) `ViewportConfigurationScope` now
   caches the `Configuration.windowConfiguration` `Field` and the
@@ -837,8 +838,8 @@ see those frames. A Chrome-only snapshot route was not added.
   `ResourcesManager` config override, `ResourcesImpl` observe/override/stable
   target, and `ResourcesRead` configuration/display-metrics overrides.
 - 2026-06-21: shared app-process viewport diagnostics now also emit first-hit
-  plus counted-sample runtime-hotpath evidence from `runtime.appprocess.DisplayHookInstaller` and
-  `runtime.appprocess.WindowMetricsHookInstaller`. Repeated callback evidence includes `hitCount`
+  plus counted-sample runtime-hotpath evidence from `runtime.display.DisplayHookInstaller` and
+  `runtime.window.WindowMetricsHookInstaller`. Repeated callback evidence includes `hitCount`
   and `suppressedCount`, so rapid-scrolling repros can distinguish callback hit,
   stable-target/no-record skip, and actual display/window mutation without
   flooding LSPosed logs.
@@ -1123,7 +1124,8 @@ see those frames. A Chrome-only snapshot route was not added.
   renderer/device-scale impact still experimental until native evidence exists.
 
 The shared app-process viewport/window route implementation now lives under
-`runtime.appprocess`. Flavor entry points still call the same
+`runtime.application, runtime.resources, runtime.display, runtime.window, runtime.webapk, runtime.chromium`.
+Flavor entry points still call the same
 install/reset/apply protocols; the move is package classification only and does
 not change route selection, mutation policy, or evidence semantics.
 
