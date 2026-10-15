@@ -13,6 +13,7 @@ import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.ViewportConfigurationScope
 import com.dpis.module.viewport.ViewportOverride
@@ -40,6 +41,35 @@ object ResourcesReadHookInstaller {
     private val LAST_MESSAGES = ConcurrentHashMap<String, String>()
     private val HOTPATH_SAMPLER = RuntimeHotPathEvidenceSampler()
     private val reusedDisplayMetricsHits = AtomicInteger()
+
+    internal fun retainPublishedDisplay(
+        store: DpisConfigStore?,
+        packageName: String?,
+        config: Configuration,
+        routeName: String,
+        sourceTag: String,
+        mode: String,
+    ): Boolean {
+        val densityBefore = config.densityDpi
+        if (!RelativeViewportOwnership.retainPublishedDisplay(store, packageName, config) ||
+            config.densityDpi == densityBefore
+        ) {
+            return false
+        }
+        RuntimeHotPathEvents.applied(
+            packageName,
+            "viewport",
+            routeName,
+            "source=" + sourceTag
+                    + ", mode=" + mode + ", scope=display"
+                    + ", widthDp=" + config.screenWidthDp + "->" + config.screenWidthDp
+                    + ", heightDp=" + config.screenHeightDp + "->" + config.screenHeightDp
+                    + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                    + "->" + config.smallestScreenWidthDp
+                    + ", densityDpi=" + densityBefore + "->" + config.densityDpi,
+        )
+        return true
+    }
 
     @JvmStatic
     fun resetForHotReload() {

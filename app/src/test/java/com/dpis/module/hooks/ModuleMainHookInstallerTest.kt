@@ -142,7 +142,7 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(wechatRoute.contains("param.classLoader"))
         Assert.assertTrue(wechatRoute.contains("param.applicationInfo"))
         Assert.assertTrue(wechatRoute.contains("describeClassLoaderForLog("))
-        Assert.assertTrue(wechatRoute.contains("alongside generic hooks"))
+        Assert.assertTrue(wechatRoute.contains("evaluated with generic hooks"))
         Assert.assertTrue(installer.contains("applicationInfo: ApplicationInfo?"))
         Assert.assertFalse(installer.contains("installFromLoadedClass("))
         Assert.assertFalse(installer.contains("WechatDpiRouteMode.useV1123CompatRoute()"))

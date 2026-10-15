@@ -9,6 +9,7 @@ import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.font.ResourcesFontScheduler
 import com.dpis.module.runtime.webapk.WebApkRuntimeOwnerBridge
 import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportOverride
@@ -137,7 +138,12 @@ internal object ResourcesMetricsRead {
         val localViewportResult =
             resolveLocalMetricsViewportResult(config, packageName, store, effectiveWindowScoped)
         if (localViewportResult != null && localViewportResult.densityDpi > 0) {
-            targetDensityDpi = localViewportResult.densityDpi
+            targetDensityDpi = RelativeViewportOwnership.publishedMetricsDensityDpi(
+                store,
+                packageName,
+                config,
+                localViewportResult.densityDpi,
+            )
             densitySource = "viewport-target"
         }
         val applied = VirtualDisplayReuse.forMetrics(

@@ -199,7 +199,7 @@ class LegacyModuleHookSourceTest {
         assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.packageName)"))
         assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.processName)"))
         assertTrue(router.contains("WechatDpiLegacyHookInstaller.install(lpparam)"))
-        assertTrue(router.contains("alongside generic hooks"))
+        assertTrue(router.contains("evaluated with generic hooks"))
         assertTrue(installer.contains("WechatDpiMethodLocator.locate("))
         assertTrue(installer.contains("WechatDpiRuntime.detached(metrics, dpi)"))
         assertTrue(installer.contains("let(param::setResult)"))

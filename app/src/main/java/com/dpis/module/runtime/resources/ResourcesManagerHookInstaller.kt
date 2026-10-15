@@ -10,6 +10,7 @@ import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.font.FontScaleOverride
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.probe.DebugPackageOverride
+import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.webapk.WebApkRuntimeOwnerBridge
 import com.dpis.module.viewport.RelativeViewportOwnership
@@ -483,6 +484,14 @@ object ResourcesManagerHookInstaller {
         // configuration, including one that is still physical, stays with
         // system_server. A smaller window is still scaled here.
         if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
+            ResourcesReadHookInstaller.retainPublishedDisplay(
+                store,
+                packageName,
+                config,
+                "resources_manager_config_override",
+                sourceTag,
+                "config",
+            )
             recordViewportSkip(
                 packageName,
                 "resources_manager_config_override",
@@ -496,6 +505,32 @@ object ResourcesManagerHookInstaller {
         val originalSmallestWidthDp = config.smallestScreenWidthDp
         val originalDensityDpi = config.densityDpi
         if (originalWidthDp <= 0 && originalHeightDp <= 0 && originalDensityDpi <= 0) {
+            val seeded = publishedActivityViewport(store, packageName)
+            if (seeded != null && sourceTag.contains("createResourcesForActivity")) {
+                val seededResult = seeded
+                ViewportOverride.apply(config, seededResult)
+                val seededDetail = ("source=" + sourceTag
+                        + ", mode=config, scope=display"
+                        + ", widthDp=0->" + seededResult.widthDp
+                        + ", heightDp=0->" + seededResult.heightDp
+                        + ", smallestWidthDp=0->" + seededResult.smallestWidthDp
+                        + ", densityDpi=0->" + seededResult.densityDpi
+                        + ", fontScale=" + fontScale.original + "->" + config.fontScale)
+                if (logIfChanged(
+                        packageName + ":" + sourceTag + ":activity-seed",
+                        "DPIS_VIEWPORT " + sourceTag + " activity seed: package=" + packageName
+                                + ", " + seededDetail,
+                    )
+                ) {
+                    RuntimeHotPathEvents.applied(
+                        packageName,
+                        "viewport",
+                        "resources_manager_config_override",
+                        seededDetail,
+                    )
+                }
+                return
+            }
             if (fontScale.changed) {
                 val fontMessage = ("DPIS_FONT " + sourceTag + " override: package="
                         + packageName + ", fontScale "
@@ -685,6 +720,39 @@ object ResourcesManagerHookInstaller {
                 detail
             )
         }
+    }
+
+    private fun publishedActivityViewport(
+        store: DpisConfigStore?,
+        packageName: String?,
+    ): ViewportOverride.Result? {
+        val current = VirtualDisplayState.get()
+        if (current != null && current.widthDp > 0 && current.densityDpi > 0) {
+            return ViewportOverride.Result(
+                current.widthDp,
+                current.heightDp,
+                current.smallestWidthDp,
+                current.densityDpi,
+            )
+        }
+        if (packageName.isNullOrBlank()) return null
+        val spec = store?.getTargetViewportSpec(packageName)?.takeIf { it.isEnabled }
+            ?: return null
+        val marker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            spec.fingerprint(),
+            RuntimeClock.crossProcessMarkerMillis(),
+        )
+        val record = marker.record
+        if (!marker.hit || record == null || record.resultWidthDp <= 0 || record.resultDensityDpi <= 0) {
+            return null
+        }
+        return ViewportOverride.Result(
+            record.resultWidthDp,
+            record.resultHeightDp,
+            record.resultSmallestWidthDp,
+            record.resultDensityDpi,
+        )
     }
 
     private fun logIfChanged(key: String?, message: String): Boolean {

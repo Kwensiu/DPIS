@@ -13,6 +13,11 @@ import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportSourceSnapshot
 import com.dpis.module.viewport.ViewportTargetSpec
+import com.dpis.module.viewport.window.WindowScopeDecision
+import com.dpis.module.viewport.window.WindowScopeDetector
+import com.dpis.module.viewport.window.WindowScopeInput
+import com.dpis.module.viewport.window.WindowScopeKind
+import com.dpis.module.viewport.window.WindowScopeResolver
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -55,6 +60,56 @@ class ViewportSelectionTest {
         val post = PerAppDisplayEnvironment(360, 736, 360, 480, 1080, 2376)
 
         assertSame(post, HookCallback.chooseEffectiveEnvironment(pre, post))
+    }
+
+    @Test
+    fun fullScreenWindowLaunchKeepsRelativeScale() {
+        WindowScopeResolver.register(object : WindowScopeDetector {
+            override fun detect(input: WindowScopeInput) =
+                WindowScopeDecision(WindowScopeKind.WINDOW)
+        })
+        try {
+            val packageName = "com.example.fullscreen-window"
+            val config = launchConfig(ViewportTargetSpec.relativeScale(150000))
+            val first = launch(packageName, panelConfiguration(480), config)
+
+            assertEquals(540, first.smallestWidthDp)
+            assertEquals(320, first.densityDpi)
+
+            val second = launch(packageName, configurationFrom(first), config)
+            assertEquals(540, second.smallestWidthDp)
+            assertEquals(320, second.densityDpi)
+        } finally {
+            WindowScopeResolver.resetForTest()
+        }
+    }
+
+    @Test
+    fun smallerWindowLaunchDoesNotTakeRelativeScale() {
+        WindowScopeResolver.register(object : WindowScopeDetector {
+            override fun detect(input: WindowScopeInput) =
+                WindowScopeDecision(WindowScopeKind.WINDOW)
+        })
+        try {
+            val configuration = Configuration().apply {
+                screenWidthDp = 200
+                screenHeightDp = 400
+                smallestScreenWidthDp = 200
+                densityDpi = 480
+            }
+
+            assertNull(
+                HookInstaller.resolveLaunchViewportEnvironment(
+                    "com.example.small-window",
+                    configuration,
+                    1080,
+                    2376,
+                    launchConfig(ViewportTargetSpec.relativeScale(150000)),
+                ),
+            )
+        } finally {
+            WindowScopeResolver.resetForTest()
+        }
     }
 
     @Test

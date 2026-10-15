@@ -135,6 +135,14 @@ object ResourcesImplHookInstaller {
         )
         val fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale)
         if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
+            ResourcesReadHookInstaller.retainPublishedDisplay(
+                store,
+                packageName,
+                config,
+                "resources_impl_override",
+                "ResourcesImpl",
+                "metrics",
+            )
             val sample = HOTPATH_SAMPLER.sample(
                 "skip|" + packageName + "|resources_impl_override|system_server_owns_relative_viewport",
                 "source=ResourcesImpl, reason=system_server_owns_relative_viewport",

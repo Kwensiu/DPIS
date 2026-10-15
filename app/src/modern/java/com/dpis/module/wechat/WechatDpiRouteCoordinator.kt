@@ -40,7 +40,7 @@ object WechatDpiRouteCoordinator {
                 WechatDpiInstallPhase.PACKAGE_READY,
             )
         }
-        DpisLog.i("modern app-specific route installed alongside generic hooks: package=" +
+        DpisLog.i("modern app-specific route evaluated with generic hooks: package=" +
             WechatDpiConfig.PACKAGE_NAME + ", process=" + processName)
         return false
     }
@@ -127,7 +127,7 @@ object WechatDpiRouteCoordinator {
     @JvmStatic
     fun shouldSuppressModuleLoadedGenericHooks(packageName: String?, processName: String?): Boolean {
         if (!WechatDpiConfig.appliesTo(packageName)) return false
-        DpisLog.i("modern app-specific route allowing generic hooks alongside: package=${WechatDpiConfig.PACKAGE_NAME}, process=$processName")
+        DpisLog.i("modern generic hooks remain enabled for app-specific route evaluation: package=${WechatDpiConfig.PACKAGE_NAME}, process=$processName")
         return false
     }
 }

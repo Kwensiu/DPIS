@@ -61,6 +61,14 @@ internal object ResourcesConfigurationRead {
         if (sourceTag.startsWith("ResourcesRead(getConfiguration)")
             && RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)
         ) {
+            ResourcesReadHookInstaller.retainPublishedDisplay(
+                store,
+                packageName,
+                config,
+                "resources_read_configuration_override",
+                sourceTag,
+                "config",
+            )
             ResourcesReadHookInstaller.recordConfigurationSkip(
                 packageName,
                 "system_server_owns_relative_viewport",

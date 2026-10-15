@@ -102,10 +102,19 @@ object LaunchActivityItemViewport {
             config.targetViewportSpec.fingerprint(),
             RuntimeClock.crossProcessMarkerMillis(),
         )
-        if (!RelativeViewport.isAlreadyApplied(configuration, scope, marker)) {
-            return null
+        if (RelativeViewport.isAlreadyApplied(configuration, scope, marker)) {
+            return environmentKeepingCurrentDp(configuration, widthPx, heightPx)
         }
-        return environmentKeepingCurrentDp(configuration, widthPx, heightPx)
+        if (scope == ViewportSourceSnapshot.SCOPE_WINDOW &&
+            RelativeViewport.isAlreadyApplied(
+                configuration,
+                ViewportSourceSnapshot.SCOPE_DISPLAY,
+                marker,
+            )
+        ) {
+            return environmentKeepingCurrentDp(configuration, widthPx, heightPx)
+        }
+        return null
     }
 
     private fun configurationForPhysicalDisplay(
@@ -117,8 +126,8 @@ object LaunchActivityItemViewport {
             return source
         }
         val physical = Configuration(source)
-        // The copy constructor used in tests leaves densityDpi at 0. Scale from
-        // the incoming density on both the device and the JVM.
+        // The copy constructor used in tests can leave densityDpi at zero;
+        // preserve the incoming density before deriving the physical display.
         physical.densityDpi = source.densityDpi
         physical.screenWidthDp =
             (widthPx * 160.0f / source.densityDpi).roundToInt().coerceAtLeast(1)

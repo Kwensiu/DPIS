@@ -52,6 +52,65 @@ class ResourcesManagerHookInstallerTest {
     }
 
     @Test
+    fun emptyActivityConfigurationReceivesThePublishedViewport() {
+        VirtualDisplayState.set(VirtualDisplayOverride.Result(540, 1188, 540, 320, 1080, 2376))
+        val activity = Configuration()
+        val other = Configuration()
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            activity,
+            null,
+            "com.example.activity",
+            "ResourcesManagerCreate(createResourcesForActivity)",
+        )
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            other,
+            null,
+            "com.example.activity",
+            "ResourcesManagerCreate(createBaseTokenResources)",
+        )
+
+        assertEquals(540, activity.screenWidthDp)
+        assertEquals(1188, activity.screenHeightDp)
+        assertEquals(320, activity.densityDpi)
+        assertEquals(0, other.screenWidthDp)
+        assertEquals(0, other.densityDpi)
+    }
+
+    @Test
+    fun emptyActivityConfigurationUsesThePublishedMarkerWhenVirtualDisplayStateIsMissing() {
+        val packageName = "com.example.activity.marker"
+        val spec = ViewportTargetSpec.relativeScale(150000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(packageName, spec)
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                spec,
+                540,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(540, 1188, 540, 320),
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        VirtualDisplayState.set(null)
+        val activity = Configuration()
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            activity,
+            store,
+            packageName,
+            "ResourcesManagerCreate(createResourcesForActivity)",
+        )
+
+        assertEquals(540, activity.screenWidthDp)
+        assertEquals(1188, activity.screenHeightDp)
+        assertEquals(320, activity.densityDpi)
+    }
+
+    @Test
     fun nullConfigurationRecordsFeedbackDiagnosticSkip() {
         RuntimeEvents.start(PACKAGE_NAME, request())
 

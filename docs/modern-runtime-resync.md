@@ -19,6 +19,75 @@ This is the living tracker for the Modern viewport/runtime investigation.
 - Keep the tree and ledger aligned: when a route moves between active and
   inactive use, update both the route tree and the experiment ledger.
 
+## 2026-10-15 WeChat Relative Ownership Adjustment
+
+Status: active.
+
+The diagnostic package showed a configuration such as `379dp x 834dp at
+456dpi` whose density-scaled pixels still matched the physical `1080 x 2376`
+display, while `WindowBoundsState` retained a shorter active-window record.
+The app-process resource bridge incorrectly treated that configuration as a
+window and repeatedly rewrote it toward the `540dp` system result. When a
+system-server relative result is published, a configuration that reconstructs
+the current display pixels is now treated as display-owned before active-window
+classification. Genuine smaller-window configurations remain app-process
+owned.
+
+The follow-up package showed why the first adjustment was insufficient: the
+app-process `VirtualDisplayState` could still contain `1080 x 2208` while
+`WindowMetrics` had already reported the physical `1080 x 2376` display. The
+ownership check now prefers the package's recorded display baseline before
+falling back to that shared state. The display callback also skips a density
+already published by system_server, preventing a second `320 -> 213` rewrite.
+The package was configured at `150%` in this capture, so no device result is
+claimed from it.
+
+A newer diagnostic capture showed that `Resources` can observe the same
+system-server configuration in two stages: first `540dp x 1188dp` with the old
+`456dpi`, then the matching `320dpi`. It can also run before a
+`WindowMetrics` callback records `1080 x 2376`. The shared ownership policy
+now reconstructs display pixels directly from the fresh system-server marker
+and treats the published result dimensions as system-owned during that
+short-lived density transition. This prevents `ResourcesRead` and
+`ResourcesImpl` from alternately rewriting `379dp` and `540dp`; genuinely
+shorter physical windows still do not match the marker baseline and remain
+app-process owned. Unit tests cover both timing cases. Device behavior remains
+unverified until this build is installed and a new diagnostic package is
+captured.
+
+Pack `dpis-diagnostic-com.tencent.mm-20261015-095005-202` is viewport `150%` /
+auto with no saved WeChat DPI. The main process skipped every
+`Resources.getConfiguration` with `system_server_owns_relative_viewport`.
+`:push` and the appbrand processes still rewrote `360dp -> 540dp`. The same
+physical pixels fit both widths, so a pixel match was treating the source
+width as already published. The app process now scales a configuration that
+is still at the source width. It leaves a configuration alone only after that
+object already shows the published width and height. Pack
+`20261015-100754` then showed the main process writing `540dp -> 379dp` at
+density `456` because a full-display window already had the target width.
+That width is kept, and the density becomes the one that fits `1080x2376`.
+A shorter window keeps the density it already has. Width mode is visible
+because the launch configuration is already the target width. Relative scale
+above 100% was dropped when that same full-screen launch configuration was
+classified as a window, so the process still started at the physical width.
+A full-screen window now keeps the relative result at launch. A smaller
+window still does not publish a new baseline. Pack `20261015-113519` then
+showed the main process already at `540dp`, with density still `456` until a
+later write, and `createResourcesForActivity` skipped as an empty
+configuration. That empty activity configuration now receives the published
+viewport from virtual-display state or, when that state is absent, from the
+published marker. Other empty resource creation does not. Pack
+`20261015-114920` still skipped the activity create because
+`virtualDisplayState=none` while the marker already reported `540dp`. Pack
+`20261015-194315` filled that empty activity configuration
+`0 -> 540dp` at density `320`. The main process still read an existing
+`540dp` configuration whose density was `456` until the later rewrite,
+`Display.getMetrics` stayed skipped as `system_server_owns_relative_viewport`,
+and the window stayed `1080x2376` with `virtualDisplayState=none`. A
+configuration that already has the published width and height now receives
+the published density, and that result is kept as the process virtual
+display. It is not scaled again.
+
 ## Current Question
 
 How does the Modern APK route viewport and font runtime changes through
@@ -614,6 +683,7 @@ superseded.
 
 | Date       | Route                             | Change                                                                                                                                                                                                                            | Status                                  | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 |------------|-----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2026-10-15 | WeChat DPI                        | WeChat getters install only for a saved WeChat DPI. Viewport width and font scale stay on the generic routes. Published width keeps that density on generic metrics.                                                                | active / shared                         | Pack `20261015-092844`: viewport 150% auto, no WeChat DPI. `wechat_dpi` skipped. Generic metrics wrote 456→320 then viewport-target wrote 320→456.                                                                                                                          | Do not feed viewport or font results into the WeChat route.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | 2026-10-01 | WeChat DPI                        | WeChat density returns an independent metrics copy and no longer writes Resources metrics                                                                                                                                         | active / shared                         | Pack `20261001-005830-2` showed Resources reads rewriting WeChat `480` back to viewport `362`. Recovery on `ResourcesImpl.updateConfiguration` and activity resume was that write                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Viewport remains the owner of window metrics. Font stays on text setters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | 2026-10-01 | WeChat DPI                        | Add static route for WeChat 8.0.78 / versionCode 3180 on `le5.f` getters `d` and `e`                                                                                                                                              | active / shared, device class confirmed | Pack `20261001-005830-2` installed 2 DexKit hooks and applied `le5.f#e`. The Tinker class has exactly two no-arg DisplayMetrics methods, `d` and `e`. Bottom-tab scale stays off                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Package-ready can install this version without the APK-wide scan. Mutator `l` and target-field `g`/`k` stay out                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | 2026-10-01 | shared app-process font           | SP field rewrite does not multiply when the view's scaledDensity already carries the target font factor                                                                                                                           | active / device confirmed               | Xiaohongshu 130% pack `20261001-003852-2`: `textview_sp_rewrite` skipped 121, including `scaled_density_at_target` at density 2.5625, scaledDensity 3.33125, px 46.6375. The previous `46.64 → 60.63` pair is gone. Remaining SP applies are system 125% conversions times 1.3, such as 44.84375 → 58.29687                                                                                                                                                                                                                                                                                                                                                               | Absolute `35.875 → 46.6375` still scales once. A system 1.25 ratio is not treated as the 1.30 target                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1252,3 +1322,8 @@ not change route selection, mutation policy, or evidence semantics.
   callbacks stay untouched, including density. On other modes, getRealMetrics,
   getRealSize, and DisplayInfo keep the callback geometry instead of a cached
   shorter window.
+- 2026-10-15: Viewport width and font scale stay on the generic routes.
+  Pack `20261015-095005` skipped the main-process configuration because a
+  pixel match cannot tell `360dp` at `480dpi` from `540dp` at `320dpi`.
+  The app scales a configuration that is still at the source width, and
+  leaves it alone only after the published width and height are present.

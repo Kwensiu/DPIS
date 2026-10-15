@@ -9,6 +9,8 @@ import com.dpis.module.viewport.PerAppDisplayOverrideCalculator
 import com.dpis.module.viewport.ViewportConfigurationScope
 import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportSourceSnapshot
+import kotlin.math.abs
+import kotlin.math.round
 
 /**
  * Relative scale on system_server. A current marker keeps the configuration.
@@ -83,7 +85,9 @@ object RelativeViewport {
         if (canApplyWindowScopedMarkerResult(packageName, source, environment, config)) {
             return environment
         }
-        if (publish(packageName, source, environment, config)) {
+        val displaySizedWindow = ViewportConfigurationScope.isWindowScoped(source) &&
+                coversEnvironmentPixels(source, environment)
+        if (publish(packageName, source, environment, config, displaySizedWindow)) {
             return environment
         }
         HookLog.logRelativeMarkerPublishFailed(
@@ -250,23 +254,44 @@ object RelativeViewport {
         return environmentMatchesMarkerResult(environment, marker)
     }
 
+    /**
+     * A full-screen window reconstructs the same pixels as the display. It is
+     * the launch configuration WeChat reads, so the relative result is written
+     * there and recorded as the display baseline. A smaller window is not.
+     */
+    private fun coversEnvironmentPixels(
+        source: Configuration?,
+        environment: PerAppDisplayEnvironment?,
+    ): Boolean {
+        if (source == null || environment == null || source.densityDpi <= 0 ||
+            source.screenWidthDp <= 0 || source.screenHeightDp <= 0 ||
+            environment.widthPx <= 0 || environment.heightPx <= 0
+        ) {
+            return false
+        }
+        val density = source.densityDpi / 160f
+        val width = round(source.screenWidthDp * density).toInt()
+        val height = round(source.screenHeightDp * density).toInt()
+        return abs(width - environment.widthPx) <= 1 && abs(height - environment.heightPx) <= 1
+    }
+
     private fun publish(
         packageName: String?,
         source: Configuration?,
         environment: PerAppDisplayEnvironment?,
         config: PerAppDisplayConfig?,
+        displaySizedWindow: Boolean = false,
     ): Boolean {
         if (source == null || environment == null || config == null ||
             !config.targetViewportSpec.isEnabled()
         ) {
             return false
         }
-        if (config.targetViewportSpec.isRelativeScale() &&
-            ViewportConfigurationScope.isWindowScoped(source)
-        ) {
+        val windowScoped = ViewportConfigurationScope.isWindowScoped(source)
+        if (config.targetViewportSpec.isRelativeScale() && windowScoped && !displaySizedWindow) {
             return false
         }
-        val scope = if (ViewportConfigurationScope.isWindowScoped(source)) {
+        val scope = if (windowScoped && !displaySizedWindow) {
             ViewportSourceSnapshot.SCOPE_WINDOW
         } else {
             ViewportSourceSnapshot.SCOPE_DISPLAY

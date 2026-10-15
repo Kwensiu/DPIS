@@ -285,9 +285,18 @@ object WindowBoundsState {
         return width > display.widthPx || height > display.heightPx
     }
 
+    /** True when these pixels match the package's known display baseline. */
+    fun matchesDisplayPixels(packageName: String?, width: Int, height: Int): Boolean {
+        if (width <= 0 || height <= 0) return false
+        val baseline = synchronized(this) { states[packageName]?.displayBaseline }
+        if (baseline != null && matchesDisplay(width, height, baseline)) return true
+        return matchesDisplayPixels(width, height)
+    }
+
     /** True when these pixels are the stored display, within one pixel. */
     @JvmStatic
     fun matchesDisplayPixels(width: Int, height: Int): Boolean {
+        if (width <= 0 || height <= 0) return false
         val display = displayPixels() ?: return false
         return matchesDisplay(width, height, display)
     }

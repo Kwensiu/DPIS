@@ -64,7 +64,7 @@ class ResourcesManagerRelativeOwnershipTest {
     }
 
     @Test
-    fun publishedFullscreenResultStaysOutOfResourceCreation() {
+    fun sourceWidthStillScalesOnceAfterTheResultIsPublished() {
         val packageName = "com.example.target"
         val targetSpec = ViewportTargetSpec.relativeScale(120000)
         val store = DpisConfigStore(FakePrefs()).also {
@@ -99,10 +99,54 @@ class ResourcesManagerRelativeOwnershipTest {
             "ResourcesManagerCreate(createBaseTokenResources)",
         )
 
-        assertEquals(360, config.screenWidthDp)
-        assertEquals(792, config.screenHeightDp)
-        assertEquals(360, config.smallestScreenWidthDp)
-        assertEquals(480, config.densityDpi)
+        assertEquals(432, config.screenWidthDp)
+        assertEquals(950, config.screenHeightDp)
+        assertEquals(432, config.smallestScreenWidthDp)
+        assertEquals(400, config.densityDpi)
+    }
+
+    @Test
+    fun publishedDimensionsReceiveThePublishedDensity() {
+        val packageName = "com.example.target.density"
+        val targetSpec = ViewportTargetSpec.relativeScale(150000)
+        val store = DpisConfigStore(FakePrefs()).also {
+            it.setTargetViewportSpec(packageName, targetSpec)
+            it.setTargetViewportApplyMode(packageName, ViewportApplyMode.AUTO)
+            it.setSystemServerHooksEnabled(true)
+        }
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                540,
+                ViewportSourceSnapshot.systemDisplayInfo(360, 792, 360, 480, 1080, 2376),
+                ViewportOverride.Result(540, 1188, 540, 320),
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        val config = Configuration().apply {
+            screenWidthDp = 540
+            screenHeightDp = 1188
+            smallestScreenWidthDp = 540
+            densityDpi = 456
+            fontScale = 1.0f
+        }
+
+        ResourcesManagerHookInstaller.applyResourceOverrides(
+            config,
+            store,
+            packageName,
+            "ResourcesManager",
+        )
+
+        assertEquals(540, config.screenWidthDp)
+        assertEquals(1188, config.screenHeightDp)
+        assertEquals(320, config.densityDpi)
+        assertEquals(320, VirtualDisplayState.get()!!.densityDpi)
+        assertEquals(1080, VirtualDisplayState.get()!!.widthPx)
+        assertEquals(2376, VirtualDisplayState.get()!!.heightPx)
     }
 
     @Test

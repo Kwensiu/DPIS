@@ -10,6 +10,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.quirks.WechatDpiMethodLocator
 import com.dpis.module.quirks.WechatDpiPropertyBridge
+import com.dpis.module.quirks.WechatDpiRoutePolicy
 import com.dpis.module.quirks.WechatDpiRuntime
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
@@ -23,16 +24,27 @@ internal object WechatDpiLegacyHookInstaller {
     private val mutationLogged = AtomicBoolean(false)
 
     @JvmStatic
-    fun install(loadPackage: XC_LoadPackage.LoadPackageParam?) {
-        val classLoader = loadPackage?.classLoader ?: return
-        if (!hooked.compareAndSet(false, true)) return
-        if (!installRoute(classLoader, loadPackage)) hooked.set(false)
+    fun install(loadPackage: XC_LoadPackage.LoadPackageParam?): Boolean {
+        val classLoader = loadPackage?.classLoader ?: return false
+        if (!hooked.compareAndSet(false, true)) return true
+        if (!installRoute(classLoader, loadPackage)) {
+            hooked.set(false)
+            return false
+        }
+        return true
     }
 
     private fun installRoute(
         classLoader: ClassLoader,
         loadPackage: XC_LoadPackage.LoadPackageParam
     ): Boolean {
+        if (!WechatDpiRoutePolicy.shouldInstallDedicatedRoute(loadPackage.packageName)) {
+            RuntimeHotPathEvents.event(
+                WechatDpiConfig.PACKAGE_NAME, "wechat_dpi", "displaymetrics", "skipped",
+                "reason=no_density_target",
+            )
+            return false
+        }
         val versionCode = resolveWechatVersionCode(loadPackage)
         val result = WechatDpiMethodLocator.locate(classLoader, loadPackage.appInfo, versionCode)
         if (result.methods.isEmpty()) {
@@ -102,7 +114,7 @@ internal object WechatDpiLegacyHookInstaller {
     private fun methodName(method: Method): String = "${method.declaringClass.name}#${method.name}"
 
     private fun applyWechatDpi(metrics: DisplayMetrics, methodName: String): DisplayMetrics? {
-        val dpi = WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME)
+        val dpi = WechatDpiRoutePolicy.targetDpi(WechatDpiConfig.PACKAGE_NAME) ?: return null
         val detached = WechatDpiRuntime.detached(metrics, dpi) ?: return null
         if (mutationLogged.compareAndSet(false, true)) {
             DpisLog.i("legacy WeChat DPI applied: method=$methodName, targetDpi=$dpi, densityDpi ${metrics.densityDpi} -> ${detached.densityDpi}, density ${metrics.density} -> ${detached.density}, scaledDensity ${metrics.scaledDensity} -> ${detached.scaledDensity}")

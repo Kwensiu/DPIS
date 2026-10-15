@@ -10,6 +10,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
 import com.dpis.module.quirks.WechatDpiMethodLocator
 import com.dpis.module.quirks.WechatDpiPropertyBridge
+import com.dpis.module.quirks.WechatDpiRoutePolicy
 import com.dpis.module.quirks.WechatDpiRoutes
 import com.dpis.module.quirks.WechatDpiRuntime
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
@@ -36,7 +37,10 @@ internal object WechatDpiModernHookInstaller {
         packageName: String?,
         phase: WechatDpiInstallPhase,
     ): WechatDpiInstallOutcome {
-        if (!WechatDpiConfig.appliesTo(packageName) || xposed == null || classLoader == null) {
+        if (!WechatDpiConfig.appliesTo(packageName) ||
+            !WechatDpiRoutePolicy.shouldInstallDedicatedRoute(packageName) ||
+            xposed == null || classLoader == null
+        ) {
             return WechatDpiInstallOutcome.SKIPPED
         }
         val resolvedPackageName = packageName ?: return WechatDpiInstallOutcome.SKIPPED
@@ -200,7 +204,7 @@ internal object WechatDpiModernHookInstaller {
         methodName: String,
         phase: WechatDpiInstallPhase
     ): DisplayMetrics? {
-        val targetDpi = WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME)
+        val targetDpi = WechatDpiRoutePolicy.targetDpi(WechatDpiConfig.PACKAGE_NAME) ?: return null
         val detached = WechatDpiRuntime.detached(metrics, targetDpi) ?: return null
         if (mutationLogged.compareAndSet(false, true)) {
             val detail =

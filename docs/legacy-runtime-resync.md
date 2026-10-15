@@ -21,6 +21,51 @@ This is the living tracker for the Legacy viewport/runtime investigation.
 - Keep the tree and ledger aligned: when a route moves between active and
   inactive use, update both the route tree and the experiment ledger.
 
+## 2026-10-15 WeChat Relative Ownership Adjustment
+
+Status: active.
+
+The diagnostic package showed a configuration such as `379dp x 834dp at
+456dpi` whose density-scaled pixels still matched the physical `1080 x 2376`
+display, while `WindowBoundsState` retained a shorter active-window record.
+The app-process resource bridge incorrectly treated that configuration as a
+window and repeatedly rewrote it toward the `540dp` system result. When a
+system-server relative result is published, a configuration that reconstructs
+the current display pixels is now treated as display-owned before active-window
+classification. Genuine smaller-window configurations remain app-process
+owned.
+
+The follow-up package showed why the first adjustment was insufficient: the
+app-process `VirtualDisplayState` could still contain `1080 x 2208` while
+`WindowMetrics` had already reported the physical `1080 x 2376` display. The
+ownership check now prefers the package's recorded display baseline before
+falling back to that shared state. The display callback also skips a density
+already published by system_server, preventing a second `320 -> 213` rewrite.
+The package was configured at `150%` in this capture, so no device result is
+claimed from it.
+
+A newer diagnostic capture showed that `Resources` can observe the same
+system-server configuration in two stages: first `540dp x 1188dp` with the old
+`456dpi`, then the matching `320dpi`. It can also run before a
+`WindowMetrics` callback records `1080 x 2376`. The shared ownership policy
+now reconstructs display pixels directly from the fresh system-server marker
+and treats the published result dimensions as system-owned during that
+short-lived density transition. This prevents `ResourcesRead` and
+`ResourcesImpl` from alternately rewriting `379dp` and `540dp`; genuinely
+shorter physical windows still do not match the marker baseline and remain
+app-process owned. Unit tests cover both timing cases. Device behavior remains
+unverified until this build is installed and a new diagnostic package is
+captured.
+
+Pack `dpis-diagnostic-com.tencent.mm-20261015-095005-202` skipped the main
+WeChat configuration while side processes still rewrote `360dp` to `540dp`.
+Shared with Modern: a source-width configuration stays on the generic app
+path. Pixel equality is not treated as the published result. A full-display
+window that already has the target width keeps that width instead of falling
+back to the physical `379dp`. A shorter window keeps its existing density. A full-screen launch
+configuration classified as a window still receives the relative result, so
+the process starts at the target width. A smaller window does not.
+
 ## Route Map
 
 ## Window Semantics
@@ -578,3 +623,8 @@ process. Legacy inherits this boundary.
   was not kept, because compat must not require a system-framework hook.
   Legacy still skips a compat viewport if one arrives. Compat Display
   callbacks stay untouched, including density.
+- 2026-10-15: Shared with Modern. A configuration still at the source width
+  is scaled on the generic app path. It is left alone only after it shows
+  the published width and height. When that width and height are already
+  published but the density is still physical, the app process writes the
+  published density and keeps that display result. It does not scale again.

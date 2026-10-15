@@ -25,18 +25,20 @@ object LegacyAppSpecificRouteInstaller {
                 "process=${lpparam.processName}",
             )
             try {
-                WechatDpiLegacyHookInstaller.install(lpparam)
+                val installed = WechatDpiLegacyHookInstaller.install(lpparam)
                 DpisLog.i(
                     "legacy WeChat DPI route install attempted: package=${lpparam.packageName}, " +
-                            "process=${lpparam.processName}",
+                            "process=${lpparam.processName}, installed=$installed",
                 )
-                RuntimeHotPathEvents.event(
-                    lpparam.packageName,
-                    "wechat_dpi",
-                    "legacy_load_package",
-                    "mutation_candidate",
-                    "installAttempted=true, process=${lpparam.processName}",
-                )
+                if (installed) {
+                    RuntimeHotPathEvents.event(
+                        lpparam.packageName,
+                        "wechat_dpi",
+                        "legacy_load_package",
+                        "mutation_candidate",
+                        "installAttempted=true, process=${lpparam.processName}",
+                    )
+                }
             } catch (throwable: Throwable) {
                 DpisLog.e(
                     "legacy WeChat DPI route install failed: package=${lpparam.packageName}, " +
@@ -55,7 +57,7 @@ object LegacyAppSpecificRouteInstaller {
             }
         }
         DpisLog.i(
-            "legacy app-specific route installed alongside generic hooks: " +
+            "legacy app-specific route evaluated with generic hooks: " +
                     "package=${WechatDpiConfig.PACKAGE_NAME}, process=${lpparam.processName}",
         )
         return false

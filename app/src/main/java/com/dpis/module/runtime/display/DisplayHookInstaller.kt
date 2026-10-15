@@ -22,6 +22,7 @@ import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.VirtualDisplayOverride
 import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.RelativeViewportOwnership
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedInterface.HookBuilder
 import io.github.libxposed.api.XposedInterface.Hooker
@@ -215,6 +216,20 @@ object DisplayHookInstaller {
         val effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
             targetStore, effectivePackageName
         )
+        if (RelativeViewportOwnership.metricsCarryRelativeResult(
+                effectiveStore,
+                effectivePackageName,
+                metrics.densityDpi,
+                metrics.widthPixels,
+                metrics.heightPixels,
+            )
+        ) {
+            recordViewportSkipAtMostEvery(
+                routeName,
+                "source=$sourceTag, reason=system_server_owns_relative_viewport",
+            )
+            return
+        }
         var override = resolvePackageScopedOverride(
             effectivePackageName, effectiveStore
         )

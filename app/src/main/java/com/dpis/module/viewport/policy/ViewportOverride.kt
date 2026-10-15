@@ -135,11 +135,11 @@ object ViewportOverride {
         if (targetWidthDp > 0 && config.smallestScreenWidthDp > 0 && config.densityDpi > 0 &&
             (stableTarget == null || stableTarget.smallestWidthDp != targetWidthDp)
         ) {
-            densityDpi = maxOf(
-                1,
-                kotlin.math.round(
-                    config.densityDpi * config.smallestScreenWidthDp.toFloat() / targetWidthDp,
-                ).toInt(),
+            densityDpi = densityForWindowTarget(
+                config,
+                targetWidthDp,
+                physicalWidthPx,
+                physicalHeightPx,
             )
         }
         if (densityDpi <= 0) {
@@ -149,6 +149,33 @@ object ViewportOverride {
         val widthDp = maxOf(1, kotlin.math.round(physicalWidthPx / density).toInt())
         val heightDp = maxOf(1, kotlin.math.round(physicalHeightPx / density).toInt())
         return Result(widthDp, heightDp, minOf(widthDp, heightDp), densityDpi)
+    }
+
+    /**
+     * A width that is already the target cannot be scaled again by
+     * `density * width / target`. When that width and the physical pixels
+     * share an aspect, the density is the one that fits those pixels.
+     * A shorter window keeps the density it already has.
+     */
+    private fun densityForWindowTarget(
+        config: Configuration,
+        targetWidthDp: Int,
+        physicalWidthPx: Int,
+        physicalHeightPx: Int,
+    ): Int {
+        val scaledFromSource = maxOf(
+            1,
+            kotlin.math.round(
+                config.densityDpi * config.smallestScreenWidthDp.toFloat() / targetWidthDp,
+            ).toInt(),
+        )
+        if (config.smallestScreenWidthDp != targetWidthDp || config.screenWidthDp != targetWidthDp) {
+            return scaledFromSource
+        }
+        val fitted = kotlin.math.round(physicalWidthPx * 160f / targetWidthDp).toInt()
+        if (fitted <= 0 || config.screenHeightDp <= 0) return scaledFromSource
+        val fittedHeight = kotlin.math.round(physicalHeightPx * 160f / fitted).toInt()
+        return if (kotlin.math.abs(fittedHeight - config.screenHeightDp) <= 1) fitted else scaledFromSource
     }
 
     private fun deriveWindowScoped(

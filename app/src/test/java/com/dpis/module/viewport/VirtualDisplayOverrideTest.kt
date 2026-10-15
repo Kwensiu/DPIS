@@ -94,6 +94,47 @@ class VirtualDisplayOverrideTest {
     }
 
     @Test
+    fun samePublishedDensityOnShortWindowStillRunsDisplayOverride() {
+        val packageName = "com.max.xiaoheihe"
+        val targetSpec = ViewportTargetSpec.relativeScale(120000)
+        val store = DpisConfigStore(FakePrefs())
+        store.setTargetViewportSpec(packageName, targetSpec)
+        store.setSystemServerHooksEnabled(true)
+        DisplayHookInstaller.setTargetStoreForLegacy(store)
+        ViewportRuntimeMarkerBridge.publish(
+            packageName,
+            ViewportRuntimeMarkerBridge.createRecord(
+                packageName,
+                targetSpec,
+                540,
+                ViewportSourceSnapshot.systemDisplayInfo(379, 834, 379, 456, 1080, 2376),
+                ViewportOverride.Result(540, 1188, 540, 320),
+                ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                RuntimeClock.crossProcessMarkerMillis(),
+            ),
+        )
+        RuntimeEvents.start(packageName, request())
+        val metrics = DisplayMetrics().apply {
+            widthPixels = 1080
+            heightPixels = 2208
+            densityDpi = 320
+            density = 2.0f
+            scaledDensity = 2.0f
+        }
+
+        DisplayHookInstaller.applyDisplayMetrics(metrics, "getMetrics")
+
+        val events = RuntimeEvents.stopSnapshot()
+        assertTrue(
+            events.any { event ->
+                event.contains("route=viewport") &&
+                        event.contains("stage=applied") &&
+                        event.contains("display_metrics_override")
+            },
+        )
+    }
+
+    @Test
     fun displayMetricsOverrideRecordsViewportHotpathEvidence() {
         publishTargetRecord()
         RuntimeEvents.start("com.max.xiaoheihe", request())
@@ -114,6 +155,7 @@ class VirtualDisplayOverrideTest {
             },
         )
     }
+
 
     @Test
     fun displayMetricsProbeEvidenceIncludesCountedSamples() {

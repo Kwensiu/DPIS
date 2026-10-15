@@ -11,7 +11,7 @@
     <string name="dialog_wechat_dpi_hint">微信 DPI 200-1000</string>
     <string name="dialog_wechat_dpi_help_button">微信 DPI 说明</string>
     <string name="dialog_wechat_dpi_help_title">微信 DPI</string>
-    <string name="dialog_wechat_dpi_help_message">使用微信专用 DisplayMetrics 路线调整微信界面密度，独立于通用 DPI 与视口链路。
+    <string name="dialog_wechat_dpi_help_message">这里只走微信自己的 DisplayMetrics 路线。界面比例和字体缩放仍走通用路径。
 
 调整范围：200-1000
 

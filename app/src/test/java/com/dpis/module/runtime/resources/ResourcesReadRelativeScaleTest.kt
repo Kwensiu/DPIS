@@ -50,7 +50,7 @@ class ResourcesReadRelativeScaleTest {
     }
 
     @Test
-    fun systemOwnedFullscreenReadLeavesPhysicalAndScaledConfigurationsUnchanged() {
+    fun systemOwnedFullscreenReadScalesSourceAndKeepsPublishedResultStable() {
         val targetSpec = ViewportTargetSpec.relativeScale(120000)
         val store = DpisConfigStore(FakePrefs())
         store.setTargetViewportSpec(PACKAGE_NAME, targetSpec)
@@ -96,10 +96,10 @@ class ResourcesReadRelativeScaleTest {
             "ResourcesRead(getConfiguration)",
         )
 
-        assertEquals(360, physical.screenWidthDp)
-        assertEquals(792, physical.screenHeightDp)
-        assertEquals(360, physical.smallestScreenWidthDp)
-        assertEquals(480, physical.densityDpi)
+        assertEquals(432, physical.screenWidthDp)
+        assertEquals(950, physical.screenHeightDp)
+        assertEquals(432, physical.smallestScreenWidthDp)
+        assertEquals(400, physical.densityDpi)
         assertEquals(432, scaled.screenWidthDp)
         assertEquals(950, scaled.screenHeightDp)
         assertEquals(432, scaled.smallestScreenWidthDp)
