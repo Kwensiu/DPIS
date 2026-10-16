@@ -205,6 +205,38 @@ class ResourcesReadStableDensityTest {
     }
 
     @Test
+    fun displayConfigurationDoesNotReplaceUnscopedShortWindowMetrics() {
+        VirtualDisplayState.set(
+            VirtualDisplayOverride.Result(720, 1584, 720, 240, 1080, 2376),
+        )
+        val config = Configuration().apply {
+            densityDpi = 240
+            screenWidthDp = 720
+            screenHeightDp = 1584
+            smallestScreenWidthDp = 720
+            fontScale = 1.0f
+        }
+        val metrics = DisplayMetrics().apply {
+            densityDpi = 240
+            density = 1.5f
+            scaledDensity = 1.5f
+            widthPixels = 1080
+            heightPixels = 2208
+        }
+
+        ResourcesReadHookInstaller.applyMetricsOverride(
+            null,
+            metrics,
+            config,
+            PACKAGE_NAME,
+        )
+
+        assertEquals(240, metrics.densityDpi)
+        assertEquals(1080, metrics.widthPixels)
+        assertEquals(2208, metrics.heightPixels)
+    }
+
+    @Test
     fun windowScopedMetricsDoNotReuseDisplayVirtualPixels() {
         VirtualDisplayState.set(
             VirtualDisplayOverride.Result(540, 1188, 540, 320, 1080, 2376),

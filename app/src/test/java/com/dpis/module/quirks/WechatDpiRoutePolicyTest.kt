@@ -28,6 +28,28 @@ class WechatDpiRoutePolicyTest {
     }
 
     @Test
+    fun viewportDensityOwnerSuppressesDedicatedWeChatDpiRoute() {
+        assertFalse(
+            WechatDpiRoutePolicy.shouldInstallDedicatedRoute(
+                "com.tencent.mm",
+                dedicatedDpiConfigured = true,
+                viewportDensityOwner = true,
+            ),
+        )
+    }
+
+    @Test
+    fun disabledViewportLeavesDedicatedWeChatDpiRouteAvailable() {
+        assertTrue(
+            WechatDpiRoutePolicy.shouldInstallDedicatedRoute(
+                "com.tencent.mm",
+                dedicatedDpiConfigured = true,
+                viewportDensityOwner = false,
+            ),
+        )
+    }
+
+    @Test
     fun anotherPackageNeverInstalls() {
         assertFalse(
             WechatDpiRoutePolicy.shouldInstallDedicatedRoute(

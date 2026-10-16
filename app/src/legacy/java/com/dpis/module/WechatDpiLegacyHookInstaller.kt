@@ -25,7 +25,17 @@ internal object WechatDpiLegacyHookInstaller {
 
     @JvmStatic
     fun install(loadPackage: XC_LoadPackage.LoadPackageParam?): Boolean {
-        val classLoader = loadPackage?.classLoader ?: return false
+        val classLoader = loadPackage?.classLoader
+        if (classLoader == null) {
+            RuntimeHotPathEvents.event(
+                WechatDpiConfig.PACKAGE_NAME,
+                "wechat_dpi",
+                "displaymetrics",
+                "skipped",
+                "reason=missing_class_loader",
+            )
+            return false
+        }
         if (!hooked.compareAndSet(false, true)) return true
         if (!installRoute(classLoader, loadPackage)) {
             hooked.set(false)
@@ -38,10 +48,18 @@ internal object WechatDpiLegacyHookInstaller {
         classLoader: ClassLoader,
         loadPackage: XC_LoadPackage.LoadPackageParam
     ): Boolean {
-        if (!WechatDpiRoutePolicy.shouldInstallDedicatedRoute(loadPackage.packageName)) {
+        val dedicatedDpiConfigured =
+            WechatDpiRoutePolicy.targetDpi(loadPackage.packageName) != null
+        val viewportDensityOwner =
+            WechatDpiRoutePolicy.viewportDensityOwner(loadPackage.packageName)
+        if (!dedicatedDpiConfigured || viewportDensityOwner) {
             RuntimeHotPathEvents.event(
                 WechatDpiConfig.PACKAGE_NAME, "wechat_dpi", "displaymetrics", "skipped",
-                "reason=no_density_target",
+                "reason=" + if (viewportDensityOwner) {
+                    "viewport_density_owner"
+                } else {
+                    "no_density_target"
+                },
             )
             return false
         }

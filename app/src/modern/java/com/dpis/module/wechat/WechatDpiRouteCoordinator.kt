@@ -73,13 +73,46 @@ object WechatDpiRouteCoordinator {
         processName: String?,
         phase: WechatDpiInstallPhase,
     ) {
-        if (xposed == null || packageName == null || classLoader == null) return
+        if (xposed == null || packageName == null || classLoader == null) {
+            val detail = "reason=missing_xposed_or_class_loader, xposed=${xposed != null}, " +
+                    "packageName=${packageName != null}, classLoader=${classLoader != null}, " +
+                    "process=$processName"
+            DpisLog.i(
+                "modern WeChat DPI route skipped before installer: package=$packageName, " +
+                        "process=$processName, $detail",
+            )
+            RuntimeHotPathEvents.event(
+                packageName ?: WechatDpiConfig.PACKAGE_NAME,
+                "wechat_dpi",
+                phase.routeName,
+                "skipped",
+                detail,
+            )
+            return
+        }
         val source = phase.routeName
         DpisLog.i("modern WeChat DPI route enter: package=$packageName, process=$processName, source=$source")
         xposed.log(Log.INFO, DpisLog.TAG, "DPIS modern WeChat DPI route enter: package=$packageName, process=$processName, source=$source")
         RuntimeHotPathEvents.event(packageName, "wechat_dpi", source, "route_callback_entered", "source=$source, process=$processName")
+        xposed.log(
+            Log.INFO,
+            DpisLog.TAG,
+            "DPIS modern WeChat route checkpoint: stage=before_installer, " +
+                    "package=$packageName, process=$processName, phase=$source, " +
+                    "classLoader=${
+                        WechatDpiModernHookInstaller.describeClassLoaderForLog(
+                            classLoader
+                        )
+                    }",
+        )
         try {
             val outcome = WechatDpiModernHookInstaller.install(xposed, classLoader, applicationInfo, packageName, phase)
+            xposed.log(
+                Log.INFO,
+                DpisLog.TAG,
+                "DPIS modern WeChat route checkpoint: stage=after_installer, " +
+                        "package=$packageName, process=$processName, phase=$source, outcome=$outcome",
+            )
             DpisLog.i("modern WeChat DPI route install attempted: package=$packageName, process=$processName, source=$source, outcome=$outcome, classLoader=${WechatDpiModernHookInstaller.describeClassLoaderForLog(classLoader)}")
             RuntimeHotPathEvents.event(packageName, "wechat_dpi", source, installOutcomeStage(outcome), "outcome=$outcome, process=$processName")
         } catch (throwable: Throwable) {

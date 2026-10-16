@@ -4,12 +4,9 @@ import android.content.res.Configuration
 import com.dpis.module.viewport.window.WindowBoundsState
 import kotlin.math.abs
 
-/**
- * A cached virtual display may fill a later metrics read only when it is the
- * same logical viewport. A shorter cache must not replace the surface this
- * callback already reported.
- */
 object VirtualDisplayReuse {
+    private const val DISPLAY_PIXEL_TOLERANCE = 1
+
     @JvmStatic
     fun forMetrics(
         packageName: String?,
@@ -19,11 +16,13 @@ object VirtualDisplayReuse {
         metricsHeightPixels: Int,
     ): VirtualDisplayOverride.Result? {
         val current = VirtualDisplayState.get()
-        if (configurationMatchesMetrics(config, metricsWidthPixels, metricsHeightPixels) &&
-            current != null &&
+        if (current != null &&
+            configurationMatchesDisplay(config, current) &&
             current.widthPx == metricsWidthPixels &&
-            abs(current.heightPx - metricsHeightPixels) > 1
+            abs(current.heightPx - metricsHeightPixels) > DISPLAY_PIXEL_TOLERANCE
         ) {
+            // The callback configuration explains a different surface. Keep
+            // that surface; the cached result belongs to the display baseline.
             return null
         }
         if (windowScoped || WindowBoundsState.hasActiveWindow(packageName)) {
@@ -38,20 +37,19 @@ object VirtualDisplayReuse {
         return current
     }
 
-    private fun configurationMatchesMetrics(
+    private fun configurationMatchesDisplay(
         config: Configuration,
-        metricsWidthPixels: Int,
-        metricsHeightPixels: Int,
+        display: VirtualDisplayOverride.Result,
     ): Boolean {
         if (config.densityDpi <= 0 || config.screenWidthDp <= 0 ||
-            config.screenHeightDp <= 0 || metricsWidthPixels <= 0 || metricsHeightPixels <= 0
+            config.screenHeightDp <= 0 || display.widthPx <= 0 || display.heightPx <= 0
         ) {
             return false
         }
         val density = config.densityDpi / 160f
         val configurationWidthPixels = kotlin.math.round(config.screenWidthDp * density).toInt()
         val configurationHeightPixels = kotlin.math.round(config.screenHeightDp * density).toInt()
-        return abs(configurationWidthPixels - metricsWidthPixels) <= 1 &&
-                abs(configurationHeightPixels - metricsHeightPixels) <= 1
+        return abs(configurationWidthPixels - display.widthPx) <= DISPLAY_PIXEL_TOLERANCE &&
+                abs(configurationHeightPixels - display.heightPx) <= DISPLAY_PIXEL_TOLERANCE
     }
 }

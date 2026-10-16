@@ -1,0 +1,607 @@
+package com.dpis.module.runtime.resources
+
+
+import android.content.res.Configuration
+import android.util.DisplayMetrics
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.diagnostics.RuntimeHotPathEvents
+import com.dpis.module.hooks.HookRuntimePolicy
+import com.dpis.module.runtime.font.FontScaleOverride
+import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
+import com.dpis.module.runtime.webapk.WebApkCarrierResolver
+import com.dpis.module.runtime.webapk.WebApkRuntimeOwnerBridge
+import com.dpis.module.viewport.DensityOverride
+import com.dpis.module.viewport.RelativeViewportOwnership
+import com.dpis.module.viewport.TargetViewportWidthResolver
+import com.dpis.module.viewport.ViewportConfigurationScope
+import com.dpis.module.viewport.ViewportDebugReporter
+import com.dpis.module.viewport.ViewportModePolicy
+import com.dpis.module.viewport.ViewportOverride
+import com.dpis.module.viewport.ViewportResolvedTarget
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
+import com.dpis.module.viewport.ViewportRuntimeMarkerProbe
+import com.dpis.module.viewport.ViewportRuntimeRecord
+import com.dpis.module.viewport.ViewportSourceSnapshot
+import com.dpis.module.viewport.ViewportTargetResolution
+import com.dpis.module.viewport.VirtualDisplayPlan
+import com.dpis.module.viewport.VirtualDisplayState
+import com.dpis.module.viewport.window.WindowBoundsState
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
+
+object ResourcesImplOverrideEngine {
+    private val LAST_MESSAGES = ConcurrentHashMap<String, String>()
+    private val HOTPATH_SAMPLER = RuntimeHotPathEvidenceSampler()
+
+    fun apply(
+        packageName: String?,
+        config: Configuration?,
+        metrics: DisplayMetrics?,
+        store: DpisConfigStore?,
+        policy: HookRuntimePolicy? = null,
+    ) {
+        applyDensityOverride(packageName, config, metrics, store, policy, null)
+    }
+
+    fun applyForTest(
+        packageName: String?,
+        config: Configuration?,
+        metrics: DisplayMetrics?,
+        store: DpisConfigStore?,
+        windowScoped: Boolean,
+    ) {
+        applyDensityOverride(packageName, config, metrics, store, null, windowScoped)
+    }
+
+    private fun applyDensityOverride(
+        packageName: String?,
+        config: Configuration?,
+        metrics: DisplayMetrics?,
+        store: DpisConfigStore?,
+        policy: HookRuntimePolicy?,
+        windowScopedOverride: Boolean?
+    ) {
+        var packageName = packageName
+        var store = store
+        packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(store, packageName)
+        store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(store, packageName)
+        if (config == null) {
+            logIfChanged(packageName + ":skip", "ResourcesImpl skip: config is null")
+            return
+        }
+        val fontScale = FontScaleOverride.resolveForResources(
+            store, packageName, config.fontScale
+        )
+        val fontScaleApplied = FontScaleOverride.applyToConfiguration(config, fontScale)
+        if (RelativeViewportOwnership.shouldDefer(store, packageName, policy, config)) {
+            ResourcesReadHookInstaller.retainPublishedDisplay(
+                store,
+                packageName,
+                config,
+                "resources_impl_override",
+                "ResourcesImpl",
+                "metrics",
+            )
+            val sample = HOTPATH_SAMPLER.sample(
+                "skip|" + packageName + "|resources_impl_override|system_server_owns_relative_viewport",
+                "source=ResourcesImpl, reason=system_server_owns_relative_viewport",
+            )
+            if (sample.emit) {
+                RuntimeHotPathEvents.skipped(
+                    packageName,
+                    "viewport",
+                    "resources_impl_override",
+                    sample.detail,
+                )
+            }
+            return
+        }
+        if (!ViewportConfigurationScope.isValidDisplayConfiguration(config)) {
+            logIfChanged(
+                packageName + ":invalid-config",
+                ("ResourcesImpl viewport skip: invalid display configuration"
+                        + ", widthDp=" + config.screenWidthDp
+                        + ", heightDp=" + config.screenHeightDp
+                        + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                        + ", densityDpi=" + config.densityDpi
+                        + ", fontScale=" + config.fontScale)
+            )
+            return
+        }
+        val originalWidthDp = config.screenWidthDp
+        val originalHeightDp = config.screenHeightDp
+        val originalSmallestWidthDp = config.smallestScreenWidthDp
+        val originalDensityDpi = config.densityDpi
+        val originalWidthPixels = metrics?.widthPixels ?: -1
+        val originalHeightPixels = metrics?.heightPixels ?: -1
+        val source = ViewportSourceSnapshot.fromConfiguration(
+            ViewportSourceSnapshot.ORIGIN_RESOURCES_IMPL, config, metrics
+        )
+        val resolution =
+            TargetViewportWidthResolver.resolve(store, packageName, source)
+        val targetViewportWidth = if (resolution.hasTarget())
+            resolution.effectiveSmallestWidthDp
+        else
+            null
+        if (targetViewportWidth != null && resolution.spec.isEnabled) {
+            ViewportRuntimeMarkerProbe.observeAppProcessProbe(
+                packageName, resolution.spec, "ResourcesImpl"
+            )
+        }
+        var windowScoped = if (windowScopedOverride != null) {
+            windowScopedOverride
+        } else {
+            ViewportConfigurationScope.isWindowScoped(config)
+                    || WindowBoundsState.hasActiveWindow(packageName)
+                    || WindowBoundsState.matchesWindowConfiguration(packageName, config)
+        }
+        val ownPixelsMatchDisplay = metrics != null &&
+                WindowBoundsState.matchesDisplayPixels(metrics.widthPixels, metrics.heightPixels)
+        if (ownPixelsMatchDisplay) {
+            windowScoped = false
+        }
+        if (!windowScoped && differsFromPublishedDisplay(packageName, config, resolution)) {
+            windowScoped = true
+        }
+        val sourceWidthPx = if (metrics != null) metrics.widthPixels else 0
+        val sourceHeightPx = if (metrics != null) metrics.heightPixels else 0
+        val physicalWindowBounds = if (windowScoped) {
+            if (metrics != null && metrics.widthPixels > 0 && metrics.heightPixels > 0) {
+                WindowBoundsState.pixelsForCallback(
+                    packageName, metrics.widthPixels, metrics.heightPixels,
+                )
+            } else {
+                WindowBoundsState.pixelsForConfiguration(packageName, config)
+            }
+        } else {
+            null
+        }
+        val stableTarget =
+            ViewportResolvedTarget.virtualDisplayResult(resolution, targetViewportWidth)
+        val stableTargetForResult =
+            if (stableTarget != null && targetViewportWidth != null && stableTarget.smallestWidthDp == targetViewportWidth && originalDensityDpi != stableTarget.densityDpi)
+                stableTarget
+            else
+                null
+        val pixelDerivedTarget =
+            if (!windowScoped && stableTargetForResult == null && targetViewportWidth != null && resolution.spec.isAbsoluteDp
+                && originalDensityDpi > 0 && (originalSmallestWidthDp != targetViewportWidth
+                        || (metrics != null && originalDensityDpi != metrics.densityDpi))
+            )
+                VirtualDisplayPlan.deriveAbsoluteResultFromPhysicalPixels(
+                    originalWidthDp,
+                    originalHeightDp,
+                    originalSmallestWidthDp,
+                    sourceWidthPx,
+                    sourceHeightPx,
+                    targetViewportWidth
+                )
+            else
+                null
+        val trustedDisplayVirtualTarget =
+            if (stableTargetForResult != null) stableTargetForResult else pixelDerivedTarget
+        val resolvedRecordResult =
+            ViewportResolvedTarget.viewportResult(resolution, windowScoped, config)
+        val windowLikeBorrowResult =
+            resolveWindowLikeBorrowResult(config, resolution, windowScoped)
+        val appProcessWindowMetricsResult =
+            if (windowScoped && resolution.isAppProcessBorrowTarget)
+                physicalWindowBounds?.let { bounds ->
+                    ViewportOverride.deriveWindowScoped(
+                        config,
+                        targetViewportWidth ?: 0,
+                        stableTarget,
+                        bounds.width,
+                        bounds.height,
+                    )
+                } ?: ViewportResolvedTarget.appProcessWindowMetricsResult(
+                    config, resolution, targetViewportWidth, stableTarget
+                )
+            else
+                null
+        val windowOwnsThisCallback =
+            windowScoped && physicalWindowBounds != null && !ownPixelsMatchDisplay
+        val trustedDisplayViewportResult =
+            if (resolution.isAppProcessBorrowTarget || windowOwnsThisCallback)
+                null
+            else
+                ViewportResolvedTarget.viewportResult(trustedDisplayVirtualTarget)
+        val selection = ResourcesImplResultSelector.select(
+            windowLikeBorrow = windowLikeBorrowResult,
+            appProcessWindowMetrics = appProcessWindowMetricsResult,
+            publishedRecord = resolvedRecordResult,
+            trustedDisplay = trustedDisplayViewportResult,
+        ) {
+            if (physicalWindowBounds != null) {
+                ViewportOverride.deriveWindowScoped(
+                    config,
+                    targetViewportWidth ?: 0,
+                    stableTarget,
+                    physicalWindowBounds.width,
+                    physicalWindowBounds.height,
+                )
+            } else {
+                ViewportOverride.derive(
+                    config,
+                    targetViewportWidth ?: 0,
+                    windowScoped,
+                    stableTarget,
+                )
+            }
+        }
+        val result = selection.result
+        val usesWindowLikeBorrow =
+            selection.source == ResourcesImplResultSelector.Source.WINDOW_LIKE_BORROW
+        val usesAppProcessWindowMetrics =
+            selection.source == ResourcesImplResultSelector.Source.APP_PROCESS_WINDOW_METRICS
+        if (result == null) {
+            val originalScaledDensity = if (metrics != null) metrics.scaledDensity else -1f
+            val metricsApplied = applyScaledDensityIfChanged(metrics, config)
+            if (fontScaleApplied || metricsApplied) {
+                val detail = ("source=ResourcesImpl"
+                        + ", widthDp=" + originalWidthDp
+                        + ", heightDp=" + originalHeightDp
+                        + ", smallestWidthDp=" + originalSmallestWidthDp
+                        + ", densityDpi=" + originalDensityDpi
+                        + ", fontScale=" + fontScale.original + "->" + config.fontScale
+                        + ", scaledDensity=" + originalScaledDensity + "->"
+                        + (if (metrics != null) metrics.scaledDensity else -1f))
+                if (logIfChanged(
+                        packageName + ":observe",
+                        ("DPIS_VIEWPORT ResourcesImpl observe: widthDp=" + originalWidthDp
+                                + ", heightDp=" + originalHeightDp
+                                + ", smallestWidthDp=" + originalSmallestWidthDp
+                                + ", densityDpi=" + originalDensityDpi
+                                + ", fontScale=" + fontScale.original + " -> " + config.fontScale
+                                + ", scaledDensity=" + originalScaledDensity + " -> "
+                                + (if (metrics != null) metrics.scaledDensity else -1f))
+                    )
+                ) {
+                    RuntimeHotPathEvents.applied(
+                        packageName,
+                        "viewport",
+                        "resources_impl_observe",
+                        detail
+                    )
+                }
+            }
+            return
+        }
+        val needsViewportUpdate =
+            result.widthDp != originalWidthDp || result.heightDp != originalHeightDp ||
+                    result.smallestWidthDp != originalSmallestWidthDp ||
+                    (result.densityDpi > 0 && result.densityDpi != originalDensityDpi)
+        if (needsViewportUpdate && !windowScoped) {
+            // Keep the first display-scoped relative result available across
+            // hook/classloader boundaries so a later callback cannot compound it.
+            ViewportRuntimeMarkerBridge.publishRelativeResultIfChanged(
+                packageName, resolution, source, result, windowScoped
+            )
+        }
+        val applyToConfiguration = ViewportModePolicy.shouldApplyConfigurationOverride(
+            policy, store, packageName, resolution, needsViewportUpdate
+        )
+                && !usesAppProcessWindowMetrics
+        val sharedResult =
+            if (trustedDisplayVirtualTarget != null)
+                trustedDisplayVirtualTarget
+            else
+                VirtualDisplayPlan.derivePublishableResult(
+                    originalWidthDp,
+                    originalHeightDp,
+                    originalSmallestWidthDp,
+                    originalDensityDpi,
+                    sourceWidthPx,
+                    sourceHeightPx,
+                    result.smallestWidthDp
+                )
+        val publishableSharedResult = if (windowScoped) null else sharedResult
+        val canPublishFromResourcesImpl =
+            !usesWindowLikeBorrow && !usesAppProcessWindowMetrics && shouldPublishResourcesImplResult(
+                packageName,
+                resolution,
+                needsViewportUpdate
+            )
+        if (canPublishFromResourcesImpl && publishableSharedResult != null) {
+            val canPublishState = VirtualDisplayState.setUnlessDerivedFromTargetConfig(
+                publishableSharedResult, originalSmallestWidthDp, targetViewportWidth
+            )
+            if (canPublishState && resolution.spec.isEnabled && source != null) {
+                VirtualDisplayState.publish(
+                    packageName,
+                    resolution.spec,
+                    source,
+                    result,
+                    publishableSharedResult,
+                    ViewportRuntimeRecord.PROVENANCE_APP_PROCESS
+                )
+            }
+        }
+        if (canPublishFromResourcesImpl) {
+            val viewportMode = ViewportModePolicy.resolve(store, packageName)
+            ViewportDebugReporter.report(
+                store,
+                packageName,
+                viewportMode,
+                originalWidthDp,
+                originalHeightDp,
+                originalDensityDpi,
+                result,
+                publishableSharedResult,
+                applyToConfiguration
+            )
+        }
+        if (!needsViewportUpdate) {
+            val stableResult =
+                VirtualDisplayState.getStableTargetResult(
+                    originalSmallestWidthDp, targetViewportWidth
+                )
+            if (usesWindowLikeBorrow
+                && stableResult != null && stableResult.densityDpi > 0 && metrics != null
+            ) {
+                metrics.densityDpi = stableResult.densityDpi
+                metrics.density = DensityOverride.densityFromDpi(stableResult.densityDpi)
+                metrics.scaledDensity = DensityOverride.scaledDensityFrom(
+                    stableResult.densityDpi, config.fontScale
+                )
+                DensityOverride.alignProcessBitmapDensity(stableResult.densityDpi)
+                metrics.widthPixels = stableResult.widthPx
+                metrics.heightPixels = stableResult.heightPx
+                val detail = ("source=ResourcesImpl"
+                        + ", widthDp=" + config.screenWidthDp
+                        + ", heightDp=" + config.screenHeightDp
+                        + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                        + ", metricsDensityDpi=" + metrics.densityDpi
+                        + ", inputMetricsWidthPx=" + originalWidthPixels
+                        + ", inputMetricsHeightPx=" + originalHeightPixels
+                        + ", metricsWidthPx=" + metrics.widthPixels
+                        + ", metricsHeightPx=" + metrics.heightPixels)
+                if (logIfChanged(
+                        packageName + ":window-like-borrow",
+                        ("DPIS_VIEWPORT ResourcesImpl window-like borrow: widthDp="
+                                + config.screenWidthDp
+                                + ", heightDp=" + config.screenHeightDp
+                                + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                                + ", metricsDensityDpi=" + metrics.densityDpi
+                                + ", metricsWidthPx=" + metrics.widthPixels
+                                + ", metricsHeightPx=" + metrics.heightPixels)
+                    )
+                ) {
+                    RuntimeHotPathEvents.applied(
+                        packageName,
+                        "viewport",
+                        "resources_impl_window_like_borrow",
+                        detail
+                    )
+                }
+                return
+            }
+            if (result.densityDpi <= 0 && stableResult != null && stableResult.densityDpi > 0 && config.densityDpi != stableResult.densityDpi) {
+                config.densityDpi = stableResult.densityDpi
+                if (metrics != null) {
+                    metrics.densityDpi = stableResult.densityDpi
+                    metrics.density = DensityOverride.densityFromDpi(stableResult.densityDpi)
+                    metrics.scaledDensity = DensityOverride.scaledDensityFrom(
+                        stableResult.densityDpi, config.fontScale
+                    )
+                    DensityOverride.alignProcessBitmapDensity(stableResult.densityDpi)
+                    metrics.widthPixels = stableResult.widthPx
+                    metrics.heightPixels = stableResult.heightPx
+                }
+                val detail = ("source=ResourcesImpl"
+                        + ", widthDp=" + config.screenWidthDp
+                        + ", heightDp=" + config.screenHeightDp
+                        + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                        + ", densityDpi=" + originalDensityDpi + "->" + config.densityDpi
+                        + ", metricsDensityDpi=" + (if (metrics != null) metrics.densityDpi else -1)
+                        + ", inputMetricsWidthPx=" + originalWidthPixels
+                        + ", inputMetricsHeightPx=" + originalHeightPixels
+                        + ", metricsWidthPx=" + (if (metrics != null) metrics.widthPixels else -1)
+                        + ", metricsHeightPx=" + (if (metrics != null) metrics.heightPixels else -1))
+                if (logIfChanged(
+                        packageName + ":stable-target",
+                        ("DPIS_VIEWPORT ResourcesImpl stable target: widthDp="
+                                + config.screenWidthDp
+                                + ", heightDp=" + config.screenHeightDp
+                                + ", smallestWidthDp=" + config.smallestScreenWidthDp
+                                + ", densityDpi " + originalDensityDpi
+                                + " -> " + config.densityDpi
+                                + ", metricsDensityDpi="
+                                + (if (metrics != null) metrics.densityDpi else -1)
+                                + ", metricsWidthPx="
+                                + (if (metrics != null) metrics.widthPixels else -1)
+                                + ", metricsHeightPx="
+                                + (if (metrics != null) metrics.heightPixels else -1))
+                    )
+                ) {
+                    RuntimeHotPathEvents.applied(
+                        packageName,
+                        "viewport",
+                        "resources_impl_stable_target",
+                        detail
+                    )
+                }
+                return
+            }
+            applyScaledDensityIfChanged(metrics, config)
+            return
+        }
+        if (applyToConfiguration) {
+            ViewportOverride.apply(config, result)
+        }
+        val targetDensity = DensityOverride.densityFromDpi(result.densityDpi)
+        val targetScaledDensity = DensityOverride.scaledDensityFrom(
+            result.densityDpi, config.fontScale
+        )
+        if (metrics != null) {
+            metrics.densityDpi = result.densityDpi
+            metrics.density = targetDensity
+            metrics.scaledDensity = targetScaledDensity
+            DensityOverride.alignProcessBitmapDensity(result.densityDpi)
+            if (publishableSharedResult != null) {
+                metrics.widthPixels = publishableSharedResult.widthPx
+                metrics.heightPixels = publishableSharedResult.heightPx
+            } else if (windowScoped && !ownPixelsMatchDisplay) {
+                physicalWindowBounds?.let { bounds ->
+                    metrics.widthPixels = bounds.width
+                    metrics.heightPixels = bounds.height
+                }
+            }
+        }
+        val modeLabel = if (applyToConfiguration) "config" else "metrics"
+        val detail = ("source=ResourcesImpl"
+                + ", mode=" + modeLabel
+                + ", scope=" + (if (windowScoped) "window" else "display")
+                + ", widthDp=" + originalWidthDp + "->" + result.widthDp
+                + ", heightDp=" + originalHeightDp + "->" + result.heightDp
+                + ", smallestWidthDp=" + originalSmallestWidthDp + "->" + result.smallestWidthDp
+                + ", densityDpi=" + originalDensityDpi + "->" + result.densityDpi
+                + ", fontScale=" + fontScale.original + "->" + config.fontScale
+                + ", metricsDensityDpi=" + (if (metrics != null) metrics.densityDpi else -1)
+                + ", inputMetricsWidthPx=" + originalWidthPixels
+                + ", inputMetricsHeightPx=" + originalHeightPixels
+                + ", metricsWidthPx=" + (if (metrics != null) metrics.widthPixels else -1)
+                + ", metricsHeightPx=" + (if (metrics != null) metrics.heightPixels else -1))
+
+        if (logIfChanged(
+                packageName + ":override",
+                ("DPIS_VIEWPORT ResourcesImpl (" + modeLabel + ") override: scope="
+                        + (if (windowScoped) "window" else "display")
+                        + ", widthDp "
+                        + originalWidthDp + " -> " + result.widthDp
+                        + ", heightDp " + originalHeightDp + " -> " + result.heightDp
+                        + ", smallestWidthDp " + originalSmallestWidthDp + " -> "
+                        + result.smallestWidthDp
+                        + ", resolution=" + describeResolution(resolution)
+                        + ", densityDpi " + originalDensityDpi + " -> " + result.densityDpi
+                        + ", fontScale " + fontScale.original + " -> " + config.fontScale
+                        + ", metricsDensityDpi=" + (if (metrics != null) metrics.densityDpi else -1)
+                        + ", metricsWidthPx=" + (if (metrics != null) metrics.widthPixels else -1)
+                        + ", metricsHeightPx=" + (if (metrics != null) metrics.heightPixels else -1))
+            )
+        ) {
+            RuntimeHotPathEvents.applied(
+                packageName,
+                "viewport",
+                "resources_impl_override",
+                detail
+            )
+        }
+    }
+
+    private fun logIfChanged(key: String?, message: String): Boolean {
+        if (key == null) {
+            DpisLog.i(message)
+            return true
+        }
+        val previous = LAST_MESSAGES.put(key, message)
+        if (message != previous) {
+            DpisLog.i(message)
+            return true
+        }
+        return false
+    }
+
+    private fun applyScaledDensityIfChanged(
+        metrics: DisplayMetrics?,
+        config: Configuration?
+    ): Boolean {
+        if (metrics == null || config == null) {
+            return false
+        }
+        val baseDensityDpi = if (metrics.densityDpi > 0) metrics.densityDpi else config.densityDpi
+        if (baseDensityDpi <= 0) {
+            return false
+        }
+        val targetScaledDensity = DensityOverride.scaledDensityFrom(
+            baseDensityDpi,
+            config.fontScale
+        )
+        if (abs(metrics.scaledDensity - targetScaledDensity) <= FontScaleOverride.EPSILON) {
+            return false
+        }
+        metrics.scaledDensity = targetScaledDensity
+        return true
+    }
+
+    fun shouldPublishResourcesImplResultForTest(
+        packageName: String?,
+        resolution: ViewportTargetResolution?,
+        needsViewportUpdate: Boolean
+    ): Boolean {
+        return shouldPublishResourcesImplResult(packageName, resolution, needsViewportUpdate)
+    }
+
+    private fun shouldPublishResourcesImplResult(
+        packageName: String?,
+        resolution: ViewportTargetResolution?,
+        needsViewportUpdate: Boolean
+    ): Boolean {
+        if (resolution == null || resolution.spec == null || !resolution.spec.isEnabled) {
+            return false
+        }
+        if (resolution.isAppProcessDisplayBorrowTarget
+            && !WebApkCarrierResolver.isWebApkOwnerPackage(packageName)
+        ) {
+            return false
+        }
+        if (needsViewportUpdate) {
+            return true
+        }
+        return resolution.spec.isAbsoluteDp
+    }
+
+    private fun differsFromPublishedDisplay(
+        packageName: String?,
+        config: Configuration,
+        resolution: ViewportTargetResolution,
+    ): Boolean {
+        if (config.screenWidthDp <= 0 || config.screenHeightDp <= 0) {
+            return false
+        }
+        val reference = ViewportConfigurationScope.publishedRelativeResult(packageName, resolution)
+            ?: return false
+        return ViewportConfigurationScope.isDifferentDisplayAspect(
+            config.screenWidthDp,
+            config.screenHeightDp,
+            reference.widthDp,
+            reference.heightDp,
+        )
+    }
+
+    private fun resolveWindowLikeBorrowResult(
+        config: Configuration?,
+        resolution: ViewportTargetResolution?,
+        windowScoped: Boolean
+    ): ViewportOverride.Result? {
+        if (config == null || windowScoped
+            || resolution == null || resolution.record == null || resolution.record.viewportResult == null || resolution.spec == null || !resolution.spec.isRelativeScale
+        ) {
+            return null
+        }
+        val displayResult = resolution.record.viewportResult
+        val matchesTargetWidth = config.screenWidthDp == displayResult.widthDp
+                && config.smallestScreenWidthDp == displayResult.smallestWidthDp
+        val shorterThanDisplay = config.screenHeightDp > 0
+                && config.screenHeightDp < displayResult.heightDp
+        if (!matchesTargetWidth || !shorterThanDisplay) {
+            return null
+        }
+        return ViewportOverride.Result(
+            config.screenWidthDp,
+            config.screenHeightDp,
+            config.smallestScreenWidthDp,
+            displayResult.densityDpi
+        )
+    }
+
+    private fun describeResolution(resolution: ViewportTargetResolution?): String {
+        if (resolution == null) {
+            return "none"
+        }
+        return ("{reason=" + resolution.reason
+                + ",target=" + resolution.effectiveSmallestWidthDp
+                + ",record=" + (if (resolution.record != null) "yes" else "no") + "}")
+    }
+}

@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.os.Build
 import android.util.DisplayMetrics
+import android.util.Log
 import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.RuntimeHotPathEvents
@@ -37,15 +38,79 @@ internal object WechatDpiModernHookInstaller {
         packageName: String?,
         phase: WechatDpiInstallPhase,
     ): WechatDpiInstallOutcome {
-        if (!WechatDpiConfig.appliesTo(packageName) ||
-            !WechatDpiRoutePolicy.shouldInstallDedicatedRoute(packageName) ||
-            xposed == null || classLoader == null
-        ) {
+        if (!WechatDpiConfig.appliesTo(packageName)) {
             return WechatDpiInstallOutcome.SKIPPED
         }
         val resolvedPackageName = packageName ?: return WechatDpiInstallOutcome.SKIPPED
+        xposed?.log(
+            Log.INFO,
+            DpisLog.TAG,
+            "DPIS modern WeChat DPI checkpoint: stage=install_entered, " +
+                    "package=$resolvedPackageName, phase=${phase.routeName}",
+        )
+        if (xposed == null || classLoader == null) {
+            RuntimeHotPathEvents.event(
+                resolvedPackageName,
+                "wechat_dpi",
+                phase.routeName,
+                "skipped",
+                "reason=missing_xposed_or_class_loader, xposed=" + (xposed != null) +
+                        ", classLoader=" + (classLoader != null),
+            )
+            return WechatDpiInstallOutcome.SKIPPED
+        }
+        val dedicatedDpi = WechatDpiRoutePolicy.targetDpi(resolvedPackageName)
+        xposed.log(
+            Log.INFO,
+            DpisLog.TAG,
+            "DPIS modern WeChat DPI checkpoint: stage=dedicated_dpi_resolved, " +
+                    "package=$resolvedPackageName, targetDpi=$dedicatedDpi",
+        )
+        val dedicatedDpiConfigured = dedicatedDpi != null
+        val viewportDensityOwner =
+            WechatDpiRoutePolicy.viewportDensityOwner(resolvedPackageName)
+        xposed.log(
+            Log.INFO,
+            DpisLog.TAG,
+            "DPIS modern WeChat DPI checkpoint: stage=viewport_owner_resolved, " +
+                    "package=$resolvedPackageName, viewportDensityOwner=$viewportDensityOwner",
+        )
+        if (!dedicatedDpiConfigured || viewportDensityOwner) {
+            RuntimeHotPathEvents.event(
+                resolvedPackageName,
+                "wechat_dpi",
+                phase.routeName,
+                "skipped",
+                "reason=" + if (viewportDensityOwner) {
+                    "viewport_density_owner"
+                } else {
+                    "no_density_target"
+                },
+            )
+            return WechatDpiInstallOutcome.SKIPPED
+        }
+        RuntimeHotPathEvents.event(
+            resolvedPackageName,
+            "wechat_dpi",
+            phase.routeName,
+            "install_guard_passed",
+            "targetDpi=" + dedicatedDpi,
+        )
         val versionCode = resolveWechatVersionCode(applicationInfo, packageName)
         val staticRoute = WechatDpiRoutes.forVersionCode(versionCode)
+        xposed.log(
+            Log.INFO,
+            DpisLog.TAG,
+            "DPIS modern WeChat DPI checkpoint: stage=locator_started, " +
+                    "package=$resolvedPackageName, versionCode=$versionCode, allowsDexKit=${phase.allowsDexKit}",
+        )
+        RuntimeHotPathEvents.event(
+            resolvedPackageName,
+            "wechat_dpi",
+            phase.routeName,
+            "locator_started",
+            "versionCode=" + versionCode + ", allowsDexKit=" + phase.allowsDexKit,
+        )
         val locator = WechatDpiMethodLocator.locate(
             classLoader,
             applicationInfo,
@@ -106,9 +171,9 @@ internal object WechatDpiModernHookInstaller {
                     "$HOOK_ID_DENSITY_PREFIX${method.declaringClass.name}_${method.name}",
                 ).intercept { chain ->
                     val result = chain.proceed()
-                    logWechatDpiCallback(method, result, phase)
+                    logWechatDpiCallback(xposed, method, result, phase)
                     if (result is DisplayMetrics) {
-                        applyWechatDpi(result, methodName(method), phase) ?: result
+                        applyWechatDpi(xposed, result, methodName(method), phase) ?: result
                     } else {
                         result
                     }
@@ -119,6 +184,13 @@ internal object WechatDpiModernHookInstaller {
                 "modern WeChat DPI hook ready: ${methodNames(methods)}, installed=$installed, " +
                         "locator=${locator.source.logName}, versionCode=$versionCode, configuredDpi=" +
                         WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME),
+            )
+            xposed.log(
+                Log.INFO,
+                DpisLog.TAG,
+                "DPIS modern WeChat DPI displaymetrics hook_ready: attempt=${phase.routeName}, " +
+                        "methods=${methodNames(methods)}, installed=$installed, " +
+                        "locator=${locator.source.logName}, versionCode=$versionCode",
             )
             RuntimeHotPathEvents.event(
                 WechatDpiConfig.PACKAGE_NAME,
@@ -180,7 +252,12 @@ internal object WechatDpiModernHookInstaller {
         )
     }
 
-    private fun logWechatDpiCallback(method: Method, result: Any?, phase: WechatDpiInstallPhase) {
+    private fun logWechatDpiCallback(
+        xposed: XposedInterface,
+        method: Method,
+        result: Any?,
+        phase: WechatDpiInstallPhase,
+    ) {
         if (!callbackLogged.compareAndSet(false, true)) return
         val detail =
             "attempt=${phase.routeName}, method=${methodName(method)}, firstCallbackMethod=${method.name}, " +
@@ -190,6 +267,11 @@ internal object WechatDpiModernHookInstaller {
                         )
                     }"
         DpisLog.i("modern WeChat DPI callback hit: $detail")
+        xposed.log(
+            Log.INFO,
+            DpisLog.TAG,
+            "DPIS modern WeChat DPI displaymetrics callback: $detail",
+        )
         RuntimeHotPathEvents.event(
             WechatDpiConfig.PACKAGE_NAME,
             "wechat_dpi",
@@ -200,6 +282,7 @@ internal object WechatDpiModernHookInstaller {
     }
 
     private fun applyWechatDpi(
+        xposed: XposedInterface,
         metrics: DisplayMetrics,
         methodName: String,
         phase: WechatDpiInstallPhase
@@ -210,6 +293,11 @@ internal object WechatDpiModernHookInstaller {
             val detail =
                 "attempt=${phase.routeName}, method=$methodName, targetDpi=$targetDpi, densityDpi=${metrics.densityDpi}->${detached.densityDpi}, density=${metrics.density}->${detached.density}"
             DpisLog.i("modern WeChat DPI applied: $detail")
+            xposed.log(
+                Log.INFO,
+                DpisLog.TAG,
+                "DPIS modern WeChat DPI displaymetrics mutation: $detail",
+            )
             RuntimeHotPathEvents.event(
                 WechatDpiConfig.PACKAGE_NAME,
                 "wechat_dpi",
