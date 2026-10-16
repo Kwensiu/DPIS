@@ -60,6 +60,28 @@ class WechatDpiRoutePolicyTest {
     }
 
     @Test
+    fun emptyPackageNeverOwnsViewportDensity() {
+        assertFalse(WechatDpiRoutePolicy.viewportDensityOwner(null))
+        assertFalse(WechatDpiRoutePolicy.viewportDensityOwner("com.example.other"))
+    }
+
+    @Test
+    fun invalidSavedDpiIsRejected() {
+        assertNull(WechatDpiRoutePolicy.targetDpi(100))
+    }
+
+    @Test
+    fun emptyPackageCannotInstallDedicatedRoute() {
+        assertFalse(
+            WechatDpiRoutePolicy.shouldInstallDedicatedRoute(
+                null,
+                dedicatedDpiConfigured = true,
+                viewportDensityOwner = false,
+            ),
+        )
+    }
+
+    @Test
     fun savedWeChatDpiIsTheGetterDensity() {
         assertEquals(480, WechatDpiRoutePolicy.targetDpi(480))
     }
