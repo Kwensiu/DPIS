@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.3.3](https://github.com/Kwensiu/DPIS/compare/v2.3.2...v2.3.3) (2026-10-17)
+
+
+### Bug Fixes
+
+* allow windowConfiguration reflection in the release lint ([90d4e41](https://github.com/Kwensiu/DPIS/commit/90d4e41ff0f1383892ad9f598da705efeac5b196))
+* refine editor sheet sizing and dismissal ([82cd32c](https://github.com/Kwensiu/DPIS/commit/82cd32c74400d45700bacbc6957901579cefcd5b))
+* stabilize editor sheet expansion ([e26523d](https://github.com/Kwensiu/DPIS/commit/e26523d3509ff30e6def6f3aedd2c0dc43ff656c))
+* stabilize system viewport ownership routes ([d7b11ee](https://github.com/Kwensiu/DPIS/commit/d7b11eea01f6f285411f2494820ea678921dfe5a))
+
+
+### Refactoring
+
+* migrate modern module entrypoint to Kotlin ([f85e0be](https://github.com/Kwensiu/DPIS/commit/f85e0be7fcab70ec07f885f05482de112a66872f))
+* migrate runtime boundaries to Kotlin ([0df9941](https://github.com/Kwensiu/DPIS/commit/0df99417b78b5359671d24ee484ce23293665f27))
+* reorganize runtime packages and migrate helpers ([3cad9f3](https://github.com/Kwensiu/DPIS/commit/3cad9f3021f50b84727406ee53fdb97470a14478))
+* split ResourcesImpl viewport ownership ([583ca08](https://github.com/Kwensiu/DPIS/commit/583ca0866b2a820aedc9c5a4d323399988689da1))
+* split the system_server route into focused types ([736fcc2](https://github.com/Kwensiu/DPIS/commit/736fcc223ecae2e6fc0a7f171ee5ac3ded5b7cc4))
+
 ## [2.3.2](https://github.com/Kwensiu/DPIS/compare/v2.3.1...v2.3.2) (2026-10-13)
 
 
