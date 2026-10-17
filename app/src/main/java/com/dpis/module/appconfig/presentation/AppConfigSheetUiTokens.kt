@@ -16,6 +16,9 @@ internal object AppConfigSheetUiTokens {
     // content-owned, while the chrome alone owns the vertical separation above it.
     // The editor keeps a single bottom reserve for the save action and the system gesture handle
     // on both the app sheet and the template sheet.
+    // The main editor starts with the primary controls and save action visible. The full sheet
+    // remains draggable so the advanced section appears when the user expands it.
+    const val MainCollapsedPeekFraction = 0.56f
     val ContentPadding = PaddingValues(start = 20.dp, top = 0.dp, end = 20.dp, bottom = 20.dp)
     val HeaderToFirstInputGap = 12.dp
     val AppIconSize = 56.dp

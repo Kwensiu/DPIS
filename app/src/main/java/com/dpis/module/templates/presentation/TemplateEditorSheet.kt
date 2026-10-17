@@ -10,16 +10,16 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
@@ -39,24 +39,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.res.stringResource
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 import com.dpis.module.ui.presentation.editor.EditorSheetScaffoldFrame
 import com.dpis.module.ui.presentation.editor.LocalTextInputFocusBoundary
 import com.dpis.module.ui.presentation.editor.TextInputFocusBoundary
-import com.dpis.module.ui.presentation.editor.clearTextInputFocusOutside
-import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.platform.LocalFocusManager
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -119,7 +113,7 @@ internal fun TemplateEditorSheet(
     }
 
     fun returnToMainCollapsed() {
-        if (!destination.isChildPage() || returnToMainPending) return
+        if (!destination.isChildPage || returnToMainPending) return
         returnToMainPending = true
         hasExpandedOnce = false
         mainCollapsedContentBottom?.let { contentBottom = it }
@@ -139,8 +133,8 @@ internal fun TemplateEditorSheet(
     }
     BackHandler(onBack = ::dismissWithAnimation)
     LaunchedEffect(destination) {
-        val wasChild = previousDestination.isChildPage()
-        val isChild = destination.isChildPage()
+        val wasChild = previousDestination.isChildPage
+        val isChild = destination.isChildPage
         childPageTransitionActive = wasChild && isChild
         if (isChild) returnToMainPending = false
         if (wasChild && !isChild) hasExpandedOnce = false
@@ -173,7 +167,7 @@ internal fun TemplateEditorSheet(
         // handle drag gestures here exposes its unused expanded anchor as a small, misleading
         // upward movement. Child editors are the only template destinations that can scroll the
         // sheet between partial and expanded states.
-        val sheetSwipeEnabled = destination.isChildPage() && !sheetMotionInProgress
+        val sheetSwipeEnabled = destination.isChildPage && !sheetMotionInProgress
 
         CompositionLocalProvider(LocalTextInputFocusBoundary provides inputFocusBoundary) {
             TemplateEditorSheetScaffold(
@@ -192,12 +186,12 @@ internal fun TemplateEditorSheet(
             onReturnToMain = ::returnToMainCollapsed,
             onContentBottomMeasured = { measuredAnchor ->
                 if (measuredAnchor > 0.dp &&
-                    ((!returnToMainPending && destination.isChildPage()) ||
-                        (!destination.isChildPage() &&
+                    ((!returnToMainPending && destination.isChildPage) ||
+                        (!destination.isChildPage &&
                             (!returnToMainPending && !hasExpandedOnce || mainCollapsedContentBottom == null)))
                 ) {
                     contentBottom = measuredAnchor
-                    if (!destination.isChildPage()) mainCollapsedContentBottom = measuredAnchor
+                    if (!destination.isChildPage) mainCollapsedContentBottom = measuredAnchor
                 }
             },
                 focusManager = focusManager,

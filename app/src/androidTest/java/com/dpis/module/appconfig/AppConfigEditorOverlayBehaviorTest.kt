@@ -3,12 +3,12 @@ package com.dpis.module.appconfig
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Text
-import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,36 +16,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeDown
-import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
 import com.dpis.module.appconfig.presentation.AppConfigEditorOverlay
-import com.dpis.module.appconfig.presentation.AppConfigSheetScrimTestTag
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.appconfig.presentation.TypefacePickerManageTestTag
 import com.dpis.module.appconfig.presentation.TypefacePickerSystemListTestTag
+import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
+import com.dpis.module.fonts.presentation.HookChainEditorPage
 import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.viewport.ViewportApplyMode
-import java.util.concurrent.atomic.AtomicBoolean
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
-import com.dpis.module.fonts.presentation.HookChainEditorPage
-import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(AndroidJUnit4::class)
 class AppConfigEditorOverlayBehaviorTest {
@@ -66,6 +65,13 @@ class AppConfigEditorOverlayBehaviorTest {
         }
     }
 
+    @Test
+    fun mainEditorStartsWithPrimaryControlsWithoutShowingAdvancedActions() {
+        showOverlayStartingInHook(ConfigEditorDestination.MAIN)
+
+        composeRule.onNodeWithTag(MainEditorTag).assertExists()
+        composeRule.onNodeWithTag(AdvancedEditorTag).assertIsNotDisplayed()
+    }
     @Test
     fun directHookBackRestoresCollapsedMainWithoutAdvancedContent() {
         val destination = showOverlayStartingInHook(ConfigEditorDestination.MAIN)
@@ -194,7 +200,7 @@ class AppConfigEditorOverlayBehaviorTest {
         composeRule.runOnUiThread {
             destination.value = ConfigEditorDestination.MAIN
         }
-        // Let MAIN publish the return target and start partialExpand(), but do not finish it.
+        // Let MAIN publish the return target, but do not finish the transition.
         composeRule.mainClock.advanceTimeByFrame()
 
         composeRule.runOnUiThread {
@@ -219,7 +225,9 @@ class AppConfigEditorOverlayBehaviorTest {
                     destination = currentDestination,
                     modifier = Modifier.fillMaxSize(),
                     mainContent = {
-                        Box(Modifier.fillMaxSize().clickable { })
+                        Box(Modifier
+                            .fillMaxSize()
+                            .clickable { })
                     },
                     hookContent = { Text("Hook") },
                     typefaceContent = {
@@ -281,11 +289,12 @@ class AppConfigEditorOverlayBehaviorTest {
     }
 
     @Test
-    fun scrimDismissClosesTheWholeEditorSession() {
+    fun modalSheetDismissalClosesEditorSession() {
         val dismissed = AtomicBoolean(false)
         showOverlayStartingInHook(ConfigEditorDestination.MAIN, dismissed)
-
-        composeRule.onNodeWithTag(AppConfigSheetScrimTestTag).performClick()
+        composeRule.runOnUiThread {
+            composeRule.activity.onBackPressedDispatcher.onBackPressed()
+        }
         composeRule.waitUntil(timeoutMillis = 3_000) { dismissed.get() }
     }
 

@@ -289,8 +289,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(templateSheet.contains("rememberStandardBottomSheetState("))
         assertTrue(templateSheet.contains("EditorSheetScaffoldFrame("))
         assertTrue(templateSheet.contains("bottomSheetState.partialExpand()"))
-        assertTrue(templateSheet.contains(
-                "destination.isChildPage() && !sheetMotionInProgress"))
+        assertTrue(templateSheet.contains("destination.isChildPage && !sheetMotionInProgress"))
         val editorSheetBody = workspace.substringAfter("val editorSheetBody")
                 .substringBefore("\n    Box(")
         assertFalse(editorSheetBody.contains("topSafePadding"))
@@ -431,7 +430,8 @@ class ComposeShellSourceSmokeTest {
         assertTrue(coordinator.contains(
                 "configuration.orientation == Configuration.ORIENTATION_LANDSCAPE"))
         assertTrue(coordinator.contains("if (twoPane) return@BoxWithConstraints"))
-        assertTrue(overlay.contains("rememberBottomSheetScaffoldState("))
+        assertTrue(overlay.contains("rememberStandardBottomSheetState("))
+        assertFalse(overlay.contains("skipPartiallyExpanded = true"))
         assertTrue(overlay.contains("EditorSheetScaffoldFrame("))
         assertTrue(overlay.contains("bottomSheetState.hide()"))
         assertTrue(coordinator.contains("AppConfigWizardHint("))
@@ -570,7 +570,6 @@ class ComposeShellSourceSmokeTest {
         val appOverlay = read(
                 "src/main/java/com/dpis/module/appconfig/presentation/AppConfigEditorOverlay.kt")
         assertTrue(appOverlay.contains("onReturnToMain"))
-        assertTrue(appOverlay.contains("bottomSheetState.partialExpand()"))
         assertTrue(viewModel.contains("var editingDestination: ConfigEditorDestination"))
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
