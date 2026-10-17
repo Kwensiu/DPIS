@@ -16,7 +16,10 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(source.contains("override fun onPackageLoaded(param: XposedModuleInterface.PackageLoadedParam)"))
         Assert.assertTrue(source.contains("onPackageLoaded enter: process="))
         Assert.assertTrue(source.contains("system_server starting hook install enter"))
-        Assert.assertTrue(source.contains("bridgeRuntimeLog(\n            \"system_server starting hook install enter:"))
+        Assert.assertTrue(source.contains("bridgeRuntimeLog("))
+        Assert.assertTrue(source.contains(
+            "system_server starting hook install enter: process=\$processName"
+        ))
         Assert.assertTrue(source.contains("\"system-server-starting\""))
         Assert.assertTrue(source.contains("\"module-loaded\""))
         Assert.assertTrue(source.contains("\"package-loaded\""))
@@ -38,7 +41,8 @@ class ModuleMainHookInstallerTest {
         Assert.assertTrue(source.contains("systemPolicy,"))
         Assert.assertTrue(source.contains("param?.classLoader"))
         Assert.assertTrue(source.contains("param.classLoader"))
-        Assert.assertTrue(source.contains("maybeInstallSystemServerHooks(\n            store,"))
+        Assert.assertTrue(source.contains("maybeInstallSystemServerHooks("))
+        Assert.assertTrue(source.contains("store,"))
         Assert.assertTrue(source.contains("system_server installer "))
         Assert.assertTrue(source.contains("bridgeRuntimeLog(message)"))
         Assert.assertTrue(source.contains("if (result.hasInstalledHooks()) \"ready\" else \"no-hooks\""))
