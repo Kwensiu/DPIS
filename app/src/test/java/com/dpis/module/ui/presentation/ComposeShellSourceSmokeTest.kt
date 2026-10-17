@@ -284,7 +284,7 @@ class ComposeShellSourceSmokeTest {
         assertTrue(editor.contains("animateSize = animateDestinationSize"))
         assertTrue(editor.contains("edgeToEdgeContentBottomPadding("))
         assertTrue(workspace.contains("TemplateEditorSheet("))
-        assertTrue(workspace.contains("mainCollapsedPeekFraction = if (editorKind == EDITOR_GLOBAL)"))
+        assertTrue(workspace.contains("content = editorSheetBody"))
         val editorSheetBody = workspace.substringAfter("val editorSheetBody")
                 .substringBefore("\n    Box(")
         assertFalse(editorSheetBody.contains("topSafePadding"))

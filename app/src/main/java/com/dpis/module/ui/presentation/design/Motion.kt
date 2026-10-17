@@ -1,10 +1,6 @@
 package com.dpis.module.ui.presentation.design
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.material3.MotionScheme
 import androidx.compose.ui.unit.Dp
 
 /** Shared motion durations used by more than one Compose surface. */
@@ -25,23 +21,4 @@ internal object ComposeMotionTokens {
         dampingRatio = 0.82f,
         stiffness = 450f,
     )
-
-    val EditorSheetMotionScheme = object : MotionScheme {
-        private fun <T> animationSpec(durationMillis: Int): FiniteAnimationSpec<T> = tween(
-            durationMillis = durationMillis,
-            easing = FastOutSlowInEasing,
-        )
-
-        override fun <T> defaultSpatialSpec(): FiniteAnimationSpec<T> = animationSpec(360)
-
-        override fun <T> fastSpatialSpec(): FiniteAnimationSpec<T> = animationSpec(300)
-
-        override fun <T> slowSpatialSpec(): FiniteAnimationSpec<T> = animationSpec(440)
-
-        override fun <T> defaultEffectsSpec(): FiniteAnimationSpec<T> = animationSpec(300)
-
-        override fun <T> fastEffectsSpec(): FiniteAnimationSpec<T> = animationSpec(240)
-
-        override fun <T> slowEffectsSpec(): FiniteAnimationSpec<T> = animationSpec(380)
-    }
 }

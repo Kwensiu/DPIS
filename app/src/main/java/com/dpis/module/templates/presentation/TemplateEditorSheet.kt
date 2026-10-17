@@ -2,7 +2,6 @@ package com.dpis.module.templates.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -70,7 +69,6 @@ internal fun TemplateEditorSheet(
     content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit,
     overlayContent: @Composable BoxScope.() -> Unit = {},
     dismissRequest: Int = 0,
-    mainCollapsedPeekFraction: Float = TemplateSheetUiTokens.MainCollapsedPeekFraction,
 ) {
     @Suppress("DEPRECATION")
     val bottomSheetState = rememberStandardBottomSheetState(
@@ -90,12 +88,6 @@ internal fun TemplateEditorSheet(
     var previousDestination by remember { mutableStateOf(destination) }
     var childPageTransitionActive by remember { mutableStateOf(false) }
     var returnToMainPending by remember { mutableStateOf(false) }
-    val scrimAlpha by animateFloatAsState(
-        targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
-        animationSpec = ComposeMotionTokens.EditorSheetMotionScheme.defaultEffectsSpec<Float>(),
-        label = "template-editor-sheet-scrim",
-    )
-
     fun dismissWithAnimation() {
         if (dismissalInProgress) return
         dismissalInProgress = true
@@ -144,20 +136,20 @@ internal fun TemplateEditorSheet(
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val statusBarTopInset = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
         val minPeekHeight = maxHeight * 0.3f
-        val maxPeekHeight = maxHeight * 0.75f
         val sheetViewportHeight = (
             maxHeight - statusBarTopInset - AppConfigSheetUiTokens.ExpandedTopClearance
         ).coerceAtLeast(maxHeight * 0.75f)
-        val targetPeekHeight = if (!destination.isChildPage) {
-            (maxHeight * mainCollapsedPeekFraction)
-                .coerceIn(minPeekHeight, maxPeekHeight)
+        val maxPeekHeight = sheetViewportHeight
+        val collapsedContentBottom = if (destination.isChildPage) {
+            contentBottom
         } else {
-            contentBottom?.let {
-                (it + AppConfigSheetUiTokens.TopChromeHeight +
-                        AppConfigSheetUiTokens.CollapsedBottomClearance)
-                    .coerceIn(minPeekHeight, maxPeekHeight)
-            } ?: 0.dp
+            mainCollapsedContentBottom
         }
+        val targetPeekHeight = collapsedContentBottom?.let {
+            (it + AppConfigSheetUiTokens.TopChromeHeight +
+                    AppConfigSheetUiTokens.CollapsedBottomClearance)
+                .coerceIn(minPeekHeight, maxPeekHeight)
+        } ?: 0.dp
         val measuredPeekHeight by animateDpAsState(
             targetValue = targetPeekHeight,
             animationSpec = when {
@@ -169,35 +161,36 @@ internal fun TemplateEditorSheet(
             label = "template-editor-sheet-peek-height",
         )
         val sheetMotionInProgress = measuredPeekHeight != targetPeekHeight || returnToMainPending
+        val sheetPeekHeight = if (dismissalInProgress) targetPeekHeight else measuredPeekHeight
         val sheetSwipeEnabled = !sheetMotionInProgress
 
         CompositionLocalProvider(LocalTextInputFocusBoundary provides inputFocusBoundary) {
             TemplateEditorSheetScaffold(
-            scaffoldState = scaffoldState,
-            bottomSheetState = bottomSheetState,
-            scrimInteractionSource = scrimInteractionSource,
-            scrimAlpha = scrimAlpha,
-            measuredPeekHeight = measuredPeekHeight,
-            sheetViewportHeight = sheetViewportHeight,
-            sheetSwipeEnabled = sheetSwipeEnabled,
-            returnToMainPending = returnToMainPending,
-            topChrome = topChrome,
-            content = content,
-            overlayContent = overlayContent,
-            onDismiss = ::dismissWithAnimation,
-            onReturnToMain = ::returnToMainCollapsed,
-            onContentBottomMeasured = { measuredAnchor ->
-                if (measuredAnchor > 0.dp &&
-                    ((!returnToMainPending && destination.isChildPage) ||
-                        (!destination.isChildPage &&
-                            (!returnToMainPending && !hasExpandedOnce || mainCollapsedContentBottom == null)))
-                ) {
-                    contentBottom = measuredAnchor
-                    if (!destination.isChildPage) mainCollapsedContentBottom = measuredAnchor
-                }
-            },
+                scaffoldState = scaffoldState,
+                bottomSheetState = bottomSheetState,
+                scrimInteractionSource = scrimInteractionSource,
+                measuredPeekHeight = sheetPeekHeight,
+                sheetViewportHeight = sheetViewportHeight,
+                sheetSwipeEnabled = sheetSwipeEnabled,
+                returnToMainPending = returnToMainPending,
                 focusManager = focusManager,
                 inputFocusBoundary = inputFocusBoundary,
+                topChrome = topChrome,
+                content = content,
+                overlayContent = overlayContent,
+                onDismiss = ::dismissWithAnimation,
+                onReturnToMain = ::returnToMainCollapsed,
+                onContentBottomMeasured = { measuredAnchor ->
+                    if (measuredAnchor > 0.dp &&
+                        ((!returnToMainPending && destination.isChildPage) ||
+                            (!destination.isChildPage &&
+                                (!returnToMainPending && !hasExpandedOnce ||
+                                    mainCollapsedContentBottom == null)))
+                    ) {
+                        contentBottom = measuredAnchor
+                        if (!destination.isChildPage) mainCollapsedContentBottom = measuredAnchor
+                    }
+                },
             )
         }
 
@@ -272,7 +265,6 @@ private fun TemplateEditorSheetScaffold(
     scaffoldState: androidx.compose.material3.BottomSheetScaffoldState,
     bottomSheetState: androidx.compose.material3.SheetState,
     scrimInteractionSource: MutableInteractionSource,
-    scrimAlpha: Float,
     measuredPeekHeight: Dp,
     sheetViewportHeight: Dp,
     sheetSwipeEnabled: Boolean,
@@ -290,7 +282,6 @@ private fun TemplateEditorSheetScaffold(
         scaffoldState = scaffoldState,
         bottomSheetState = bottomSheetState,
         scrimInteractionSource = scrimInteractionSource,
-        scrimAlpha = scrimAlpha,
         sheetPeekHeight = measuredPeekHeight,
         sheetViewportHeight = sheetViewportHeight,
         sheetSwipeEnabled = sheetSwipeEnabled && !returnToMainPending,

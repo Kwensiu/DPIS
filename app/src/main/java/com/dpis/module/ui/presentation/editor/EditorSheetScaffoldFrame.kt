@@ -1,10 +1,13 @@
 package com.dpis.module.ui.presentation.editor
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +20,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -38,7 +43,6 @@ internal fun EditorSheetScaffoldFrame(
     scaffoldState: BottomSheetScaffoldState,
     bottomSheetState: SheetState,
     scrimInteractionSource: MutableInteractionSource,
-    scrimAlpha: Float,
     sheetPeekHeight: Dp,
     sheetViewportHeight: Dp,
     sheetSwipeEnabled: Boolean,
@@ -51,33 +55,34 @@ internal fun EditorSheetScaffoldFrame(
     onContentBottomMeasured: (Dp) -> Unit,
     onReturnToMain: () -> Unit,
 ) {
+    val scrimAlpha by animateFloatAsState(
+        targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
+        animationSpec = tween(durationMillis = ComposeMotionTokens.SHEET_SETTLE_DURATION_MILLIS),
+        label = "editor-sheet-scrim",
+    )
     val sheetExpanded = bottomSheetState.currentValue == SheetValue.Expanded &&
         bottomSheetState.targetValue == SheetValue.Expanded
 
     Box(
         Modifier
             .fillMaxSize()
-            // The boundary must share the exact coordinate space receiving pointer events.
-            // Keeping it on this root lets taps on every sheet layer transfer focus correctly.
             .clearTextInputFocusOutside(focusManager, inputFocusBoundary),
     ) {
-        MaterialTheme(motionScheme = ComposeMotionTokens.EditorSheetMotionScheme) {
-            EditorSheetScaffoldContent(
-                scaffoldState = scaffoldState,
-                bottomSheetState = bottomSheetState,
-                scrimInteractionSource = scrimInteractionSource,
-                scrimAlpha = scrimAlpha,
-                sheetPeekHeight = sheetPeekHeight,
-                sheetViewportHeight = sheetViewportHeight,
-                sheetSwipeEnabled = sheetSwipeEnabled,
-                topChrome = topChrome,
-                content = content,
-                overlayContent = overlayContent,
-                onDismiss = onDismiss,
-                onContentBottomMeasured = onContentBottomMeasured,
-                onReturnToMain = onReturnToMain,
-            )
-        }
+        EditorSheetScaffoldContent(
+            scaffoldState = scaffoldState,
+            bottomSheetState = bottomSheetState,
+            scrimInteractionSource = scrimInteractionSource,
+            scrimAlpha = scrimAlpha,
+            sheetPeekHeight = sheetPeekHeight,
+            sheetViewportHeight = sheetViewportHeight,
+            sheetSwipeEnabled = sheetSwipeEnabled,
+            topChrome = topChrome,
+            content = content,
+            overlayContent = overlayContent,
+            onDismiss = onDismiss,
+            onContentBottomMeasured = onContentBottomMeasured,
+            onReturnToMain = onReturnToMain,
+        )
     }
 }
 

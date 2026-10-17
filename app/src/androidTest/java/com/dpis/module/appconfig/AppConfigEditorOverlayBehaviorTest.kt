@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,6 +16,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -27,6 +30,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipe
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dpis.module.R
@@ -70,6 +74,17 @@ class AppConfigEditorOverlayBehaviorTest {
         showOverlayStartingInHook(ConfigEditorDestination.MAIN)
 
         composeRule.onNodeWithTag(MainEditorTag).assertExists()
+        composeRule.onNodeWithTag(AdvancedEditorTag).assertIsNotDisplayed()
+    }
+
+    @Test
+    fun mainEditorKeepsSaveActionVisibleWhenWechatDpiAddsAnotherInputRow() {
+        showOverlayStartingInHook(
+            ConfigEditorDestination.MAIN,
+            saveActionOffset = 420.dp,
+        )
+
+        composeRule.onNodeWithTag(SaveActionTag).assertIsDisplayed()
         composeRule.onNodeWithTag(AdvancedEditorTag).assertIsNotDisplayed()
     }
 
@@ -312,7 +327,8 @@ class AppConfigEditorOverlayBehaviorTest {
     private fun showOverlayStartingInHook(
         initialDestination: ConfigEditorDestination,
         dismissed: AtomicBoolean = AtomicBoolean(false),
-        expandedContentOwnsHeight: AtomicBoolean? = null
+        expandedContentOwnsHeight: AtomicBoolean? = null,
+        saveActionOffset: Dp? = null,
     ): androidx.compose.runtime.MutableState<ConfigEditorDestination> {
         val destination = mutableStateOf(initialDestination)
         composeRule.setContent {
@@ -346,10 +362,25 @@ class AppConfigEditorOverlayBehaviorTest {
                             onBack = returnToMain
                         )
                     } else {
-                        LaunchedEffect(Unit) { reportAdvancedAnchor(320.dp) }
+                        val density = androidx.compose.ui.platform.LocalDensity.current
+                        if (saveActionOffset == null) {
+                            LaunchedEffect(Unit) { reportAdvancedAnchor(320.dp) }
+                        }
                         Column {
                             Text("Main editor", Modifier.testTag(MainEditorTag))
-                            Spacer(Modifier.height(400.dp))
+                            Spacer(Modifier.height(saveActionOffset ?: 400.dp))
+                            if (saveActionOffset != null) {
+                                Button(onClick = {}, modifier = Modifier.testTag(SaveActionTag)) {
+                                    Text("Save")
+                                }
+                                HorizontalDivider(
+                                    Modifier.onGloballyPositioned { coordinates ->
+                                        with(density) {
+                                            reportAdvancedAnchor(coordinates.positionInParent().y.toDp())
+                                        }
+                                    }
+                                )
+                            }
                             Text("Advanced editor", Modifier.testTag(AdvancedEditorTag))
                         }
                     }
@@ -404,6 +435,7 @@ class AppConfigEditorOverlayBehaviorTest {
         const val MainEditorTag = "app-editor-main"
         const val SheetChromeTag = "app-editor-sheet-chrome"
         const val AdvancedEditorTag = "app-editor-advanced"
+        const val SaveActionTag = "app-editor-save-action"
         const val TypefaceTargetButtonTag = "typeface-target-button"
     }
 }

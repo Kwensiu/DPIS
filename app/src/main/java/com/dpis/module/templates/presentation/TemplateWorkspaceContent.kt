@@ -438,11 +438,6 @@ internal fun TemplateWorkspaceContent(
                     },
                     content = editorSheetBody,
                     dismissRequest = editorDismissRequest,
-                    mainCollapsedPeekFraction = if (editorKind == EDITOR_GLOBAL) {
-                        TemplateSheetUiTokens.GlobalPrefillCollapsedPeekFraction
-                    } else {
-                        TemplateSheetUiTokens.TemplateCollapsedPeekFraction
-                    },
                 )
             }
         } else {

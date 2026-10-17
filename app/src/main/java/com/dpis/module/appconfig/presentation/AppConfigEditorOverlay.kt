@@ -2,7 +2,6 @@ package com.dpis.module.appconfig.presentation
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxScope
@@ -70,12 +69,6 @@ fun AppConfigEditorOverlay(
     var returnToMainPending by remember { mutableStateOf(false) }
     // BottomSheetScaffold has no modal scrim. Its target changes at the same instant as the
     // standard show/hide animation begins, so use it as the shared visibility timeline.
-    val scrimAlpha by animateFloatAsState(
-        targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
-        animationSpec = ComposeMotionTokens.EditorSheetMotionScheme.defaultEffectsSpec<Float>(),
-        label = "app-config-sheet-scrim"
-    )
-
     fun dismissWithAnimation() {
         if (dismissalInProgress) return
         dismissalInProgress = true
@@ -92,7 +85,7 @@ fun AppConfigEditorOverlay(
         if (!destination.isChildPage || returnToMainPending) return
         returnToMainPending = true
         hasExpandedOnce = false
-        // MAIN uses a stable fixed peek height, so no retained content anchor is needed.
+        // MAIN keeps the divider after Save as its retained collapsed anchor.
         onReturnToMain()
     }
 
@@ -137,17 +130,12 @@ fun AppConfigEditorOverlay(
         val sheetViewportHeight = (
             maxHeight - statusBarTopInset - AppConfigSheetUiTokens.ExpandedTopClearance
         ).coerceAtLeast(maxHeight * 0.75f)
-        // Keep the main editor at a stable initial viewport. The full sheet remains draggable,
-        // so expanding moves the whole surface and reveals the advanced actions below it.
-        val targetPeekHeight = if (!destination.isChildPage) {
-            (maxHeight * AppConfigSheetUiTokens.MainCollapsedPeekFraction)
+        // The divider after Save is the collapsed edge: primary actions stay visible while
+        // advanced actions remain below the sheet until the user expands it.
+        val targetPeekHeight = advancedAnchor?.let {
+            (it + AppConfigSheetUiTokens.TopChromeHeight)
                 .coerceIn(minPeekHeight, maxPeekHeight)
-        } else {
-            advancedAnchor?.let {
-                (it + AppConfigSheetUiTokens.TopChromeHeight)
-                    .coerceIn(minPeekHeight, maxPeekHeight)
-            } ?: 0.dp
-        }
+        } ?: 0.dp
         val measuredPeekHeight by animateDpAsState(
             targetValue = targetPeekHeight,
             // The first measured anchor must be ready before opening; later changes animate.
@@ -161,38 +149,36 @@ fun AppConfigEditorOverlay(
         )
         val sheetMotionInProgress = measuredPeekHeight != targetPeekHeight ||
             returnToMainPending
+        val sheetPeekHeight = if (dismissalInProgress) targetPeekHeight else measuredPeekHeight
 
         CompositionLocalProvider(LocalTextInputFocusBoundary provides inputFocusBoundary) {
             AppConfigSheetScaffold(
-            scaffoldState = scaffoldState,
-            bottomSheetState = bottomSheetState,
-            scrimInteractionSource = scrimInteractionSource,
-            scrimAlpha = scrimAlpha,
-            measuredPeekHeight = measuredPeekHeight,
-            sheetViewportHeight = sheetViewportHeight,
-            sheetMotionInProgress = sheetMotionInProgress,
-            destination = destination,
-            returnToMainPending = returnToMainPending,
-            focusManager = focusManager,
-            inputFocusBoundary = inputFocusBoundary,
-            topChrome = topChrome,
-            content = content,
-            overlayContent = overlayContent,
-            onDismiss = ::dismissWithAnimation,
-            onReturnToMainCollapsed = ::returnToMainCollapsed,
-            onAdvancedAnchorMeasured = { measuredAnchor ->
-                // The first measured anchor is only needed to size child pages. MAIN uses the stable
-                // fixed peek height above, so content changes do not move its initial viewport.
-                if (measuredAnchor > 0.dp &&
-                    (
-                        (!returnToMainPending && destination.isChildPage) ||
-                            (!destination.isChildPage &&
-                                    (!returnToMainPending && !hasExpandedOnce))
+                scaffoldState = scaffoldState,
+                bottomSheetState = bottomSheetState,
+                scrimInteractionSource = scrimInteractionSource,
+                measuredPeekHeight = sheetPeekHeight,
+                sheetViewportHeight = sheetViewportHeight,
+                sheetMotionInProgress = sheetMotionInProgress,
+                destination = destination,
+                returnToMainPending = returnToMainPending,
+                focusManager = focusManager,
+                inputFocusBoundary = inputFocusBoundary,
+                topChrome = topChrome,
+                content = content,
+                overlayContent = overlayContent,
+                onDismiss = ::dismissWithAnimation,
+                onReturnToMainCollapsed = ::returnToMainCollapsed,
+                onAdvancedAnchorMeasured = { measuredAnchor ->
+                    if (measuredAnchor > 0.dp &&
+                        !dismissalInProgress &&
+                        (
+                            (!returnToMainPending && destination.isChildPage) ||
+                                (!destination.isChildPage && !hasExpandedOnce && !returnToMainPending)
                         )
-                ) {
-                    advancedAnchor = measuredAnchor
-                }
-            }
+                    ) {
+                        advancedAnchor = measuredAnchor
+                    }
+                },
             )
         }
 
@@ -221,15 +207,21 @@ fun AppConfigEditorOverlay(
                 returnToMainPending = false
             }
         }
-    }
-    // Do not animate from a provisional 50% peek height. The editor measures its advanced
-    // divider while hidden, then enters once the legacy collapsed edge is known and stable.
-    LaunchedEffect(advancedAnchor) {
-        if (advancedAnchor != null
-                && bottomSheetState.currentValue == SheetValue.Hidden
-                && bottomSheetState.targetValue == SheetValue.Hidden
-                && !dismissalInProgress) {
-            bottomSheetState.partialExpand()
+        LaunchedEffect(
+            advancedAnchor,
+            measuredPeekHeight,
+            targetPeekHeight,
+            bottomSheetState.currentValue,
+            bottomSheetState.targetValue,
+        ) {
+            if (advancedAnchor != null &&
+                measuredPeekHeight == targetPeekHeight &&
+                bottomSheetState.currentValue == SheetValue.Hidden &&
+                bottomSheetState.targetValue == SheetValue.Hidden &&
+                !dismissalInProgress
+            ) {
+                bottomSheetState.partialExpand()
+            }
         }
     }
 }
@@ -244,7 +236,6 @@ private fun AppConfigSheetScaffold(
     scaffoldState: BottomSheetScaffoldState,
     bottomSheetState: SheetState,
     scrimInteractionSource: MutableInteractionSource,
-    scrimAlpha: Float,
     measuredPeekHeight: Dp,
     sheetViewportHeight: Dp,
     sheetMotionInProgress: Boolean,
@@ -263,7 +254,6 @@ private fun AppConfigSheetScaffold(
         scaffoldState = scaffoldState,
         bottomSheetState = bottomSheetState,
         scrimInteractionSource = scrimInteractionSource,
-        scrimAlpha = scrimAlpha,
         sheetPeekHeight = measuredPeekHeight,
         sheetViewportHeight = sheetViewportHeight,
         sheetSwipeEnabled = !sheetMotionInProgress,
