@@ -31,8 +31,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -44,27 +44,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.R
+import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-
-import com.dpis.module.templates.QuickTemplateStore
-
-import com.dpis.module.templates.TemplateEditorForm
-
-import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
-import com.dpis.module.ui.presentation.design.rememberClickAction
-import com.dpis.module.ui.presentation.workspace.WorkspaceTwoPaneMinWidth
-import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
-import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.fonts.presentation.HookChainEditorPage
+import com.dpis.module.templates.QuickTemplateStore
+import com.dpis.module.templates.TemplateEditorForm
+import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
 import com.dpis.module.ui.dialog.ModalDialog
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -443,6 +438,11 @@ internal fun TemplateWorkspaceContent(
                     },
                     content = editorSheetBody,
                     dismissRequest = editorDismissRequest,
+                    mainCollapsedPeekFraction = if (editorKind == EDITOR_GLOBAL) {
+                        TemplateSheetUiTokens.GlobalPrefillCollapsedPeekFraction
+                    } else {
+                        TemplateSheetUiTokens.TemplateCollapsedPeekFraction
+                    },
                 )
             }
         } else {

@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -73,7 +72,7 @@ fun AppConfigEditorOverlay(
     // standard show/hide animation begins, so use it as the shared visibility timeline.
     val scrimAlpha by animateFloatAsState(
         targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
-        animationSpec = tween(durationMillis = ComposeMotionTokens.SHEET_SETTLE_DURATION_MILLIS),
+        animationSpec = ComposeMotionTokens.EditorSheetMotionScheme.defaultEffectsSpec<Float>(),
         label = "app-config-sheet-scrim"
     )
 

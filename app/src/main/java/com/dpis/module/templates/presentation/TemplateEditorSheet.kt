@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -71,6 +70,7 @@ internal fun TemplateEditorSheet(
     content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit,
     overlayContent: @Composable BoxScope.() -> Unit = {},
     dismissRequest: Int = 0,
+    mainCollapsedPeekFraction: Float = TemplateSheetUiTokens.MainCollapsedPeekFraction,
 ) {
     @Suppress("DEPRECATION")
     val bottomSheetState = rememberStandardBottomSheetState(
@@ -92,7 +92,7 @@ internal fun TemplateEditorSheet(
     var returnToMainPending by remember { mutableStateOf(false) }
     val scrimAlpha by animateFloatAsState(
         targetValue = if (bottomSheetState.targetValue == SheetValue.Hidden) 0f else 0.32f,
-        animationSpec = tween(durationMillis = ComposeMotionTokens.SHEET_SETTLE_DURATION_MILLIS),
+        animationSpec = ComposeMotionTokens.EditorSheetMotionScheme.defaultEffectsSpec<Float>(),
         label = "template-editor-sheet-scrim",
     )
 
@@ -148,10 +148,16 @@ internal fun TemplateEditorSheet(
         val sheetViewportHeight = (
             maxHeight - statusBarTopInset - AppConfigSheetUiTokens.ExpandedTopClearance
         ).coerceAtLeast(maxHeight * 0.75f)
-        val targetPeekHeight = contentBottom?.let {
-            (it + AppConfigSheetUiTokens.TopChromeHeight +
-                AppConfigSheetUiTokens.CollapsedBottomClearance).coerceIn(minPeekHeight, maxPeekHeight)
-        } ?: 0.dp
+        val targetPeekHeight = if (!destination.isChildPage) {
+            (maxHeight * mainCollapsedPeekFraction)
+                .coerceIn(minPeekHeight, maxPeekHeight)
+        } else {
+            contentBottom?.let {
+                (it + AppConfigSheetUiTokens.TopChromeHeight +
+                        AppConfigSheetUiTokens.CollapsedBottomClearance)
+                    .coerceIn(minPeekHeight, maxPeekHeight)
+            } ?: 0.dp
+        }
         val measuredPeekHeight by animateDpAsState(
             targetValue = targetPeekHeight,
             animationSpec = when {
@@ -163,11 +169,7 @@ internal fun TemplateEditorSheet(
             label = "template-editor-sheet-peek-height",
         )
         val sheetMotionInProgress = measuredPeekHeight != targetPeekHeight || returnToMainPending
-        // A template's main form has one deliberately fixed partial anchor. Letting Material
-        // handle drag gestures here exposes its unused expanded anchor as a small, misleading
-        // upward movement. Child editors are the only template destinations that can scroll the
-        // sheet between partial and expanded states.
-        val sheetSwipeEnabled = destination.isChildPage && !sheetMotionInProgress
+        val sheetSwipeEnabled = !sheetMotionInProgress
 
         CompositionLocalProvider(LocalTextInputFocusBoundary provides inputFocusBoundary) {
             TemplateEditorSheetScaffold(
@@ -233,7 +235,9 @@ internal fun TemplateEditorSheet(
 @Composable
 internal fun TemplateEditorSheetChrome(showUnsaved: Boolean) {
     Box(
-        modifier = Modifier.fillMaxWidth().height(AppConfigSheetUiTokens.TopChromeHeight),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(AppConfigSheetUiTokens.TopChromeHeight),
         contentAlignment = Alignment.Center,
     ) {
         if (showUnsaved) {

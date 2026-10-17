@@ -72,6 +72,17 @@ class AppConfigEditorOverlayBehaviorTest {
         composeRule.onNodeWithTag(MainEditorTag).assertExists()
         composeRule.onNodeWithTag(AdvancedEditorTag).assertIsNotDisplayed()
     }
+
+    @Test
+    fun mainEditorCanBeDraggedToRevealAdvancedActions() {
+        showOverlayStartingInHook(ConfigEditorDestination.MAIN)
+
+        composeRule.onNodeWithTag(SheetChromeTag).performTouchInput {
+            swipe(start = center.copy(y = center.y + 120f), end = center, durationMillis = 400)
+        }
+
+        composeRule.onNodeWithTag(AdvancedEditorTag).assertIsDisplayed()
+    }
     @Test
     fun directHookBackRestoresCollapsedMainWithoutAdvancedContent() {
         val destination = showOverlayStartingInHook(ConfigEditorDestination.MAIN)

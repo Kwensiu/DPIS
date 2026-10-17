@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 
 /**
  * Stable interaction frame shared by app and template editor sheets.
@@ -59,6 +60,50 @@ internal fun EditorSheetScaffoldFrame(
             // The boundary must share the exact coordinate space receiving pointer events.
             // Keeping it on this root lets taps on every sheet layer transfer focus correctly.
             .clearTextInputFocusOutside(focusManager, inputFocusBoundary),
+    ) {
+        MaterialTheme(motionScheme = ComposeMotionTokens.EditorSheetMotionScheme) {
+            EditorSheetScaffoldContent(
+                scaffoldState = scaffoldState,
+                bottomSheetState = bottomSheetState,
+                scrimInteractionSource = scrimInteractionSource,
+                scrimAlpha = scrimAlpha,
+                sheetPeekHeight = sheetPeekHeight,
+                sheetViewportHeight = sheetViewportHeight,
+                sheetSwipeEnabled = sheetSwipeEnabled,
+                topChrome = topChrome,
+                content = content,
+                overlayContent = overlayContent,
+                onDismiss = onDismiss,
+                onContentBottomMeasured = onContentBottomMeasured,
+                onReturnToMain = onReturnToMain,
+            )
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun EditorSheetScaffoldContent(
+    scaffoldState: BottomSheetScaffoldState,
+    bottomSheetState: SheetState,
+    scrimInteractionSource: MutableInteractionSource,
+    scrimAlpha: Float,
+    sheetPeekHeight: Dp,
+    sheetViewportHeight: Dp,
+    sheetSwipeEnabled: Boolean,
+    topChrome: @Composable () -> Unit,
+    content: @Composable ColumnScope.((Dp) -> Unit, Boolean, () -> Unit) -> Unit,
+    overlayContent: @Composable BoxScope.() -> Unit,
+    onDismiss: () -> Unit,
+    onContentBottomMeasured: (Dp) -> Unit,
+    onReturnToMain: () -> Unit,
+) {
+    val sheetExpanded = bottomSheetState.currentValue == SheetValue.Expanded &&
+            bottomSheetState.targetValue == SheetValue.Expanded
+
+    Box(
+        Modifier
+            .fillMaxSize(),
     ) {
         Box(
             Modifier
@@ -106,8 +151,6 @@ internal fun EditorSheetScaffoldFrame(
                 }
             },
         ) {
-            // BottomSheetScaffold is a standard (non-modal) sheet. Its content slot owns the
-            // area above the sheet so an empty-space tap can dismiss the editor consistently.
             Box(
                 Modifier
                     .fillMaxSize()
