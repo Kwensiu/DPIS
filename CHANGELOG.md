@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.4](https://github.com/Kwensiu/DPIS/compare/v2.3.3...v2.3.4) (2026-10-18)
+
+
+### Bug Fixes
+
+* anchor editor sheets to primary actions ([8696a77](https://github.com/Kwensiu/DPIS/commit/8696a77c57aec745bd9425aac770ff9a307c6e46))
+
 ## [2.3.3](https://github.com/Kwensiu/DPIS/compare/v2.3.2...v2.3.3) (2026-10-17)
 
 
