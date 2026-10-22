@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.graphics.drawable.Drawable
 import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.config.PackageIdentity
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.hooks.SystemFrameworkScope
 import com.dpis.module.viewport.ViewportApplyMode
@@ -48,6 +49,18 @@ object InstalledAppCatalogPolicy {
                 )
             }.let(::sortedCatalog)
 
+    @JvmStatic
+    fun filterInstalledPackagesForUser(
+        packages: List<PackageInfo>,
+        userId: Int,
+    ): List<PackageInfo> {
+        if (userId < 0) return emptyList()
+        return packages.filter { packageInfo ->
+            val uid = packageInfo.applicationInfo?.uid ?: return@filter false
+            uid >= 0 && uid / PER_USER_RANGE == userId
+        }
+    }
+
         @JvmStatic
         fun resolveCatalogItemLabels(
             items: List<InstalledAppCatalogItem>,
@@ -62,11 +75,14 @@ object InstalledAppCatalogPolicy {
                 }
             }.let(::sortedCatalog)
 
+    private const val PER_USER_RANGE = 100000
+
         private fun sortedCatalog(items: List<InstalledAppCatalogItem>): List<InstalledAppCatalogItem> =
             items.sortedWith(
                 compareBy<InstalledAppCatalogItem> { it.label.lowercase(Locale.ROOT) }
                     .thenBy { it.packageName },
             )
+
 
         @JvmStatic
         fun persistableLabelRecords(
@@ -148,7 +164,7 @@ object InstalledAppCatalogPolicy {
             return store.getConfiguredPackages().filterNotNull().toSet()
                 .filterTo(HashSet()) {
                     !SystemFrameworkScope.isFrameworkScopePackage(it) &&
-                        store.hasUserVisiblePackageConfig(it)
+                            store.hasUserVisiblePackageConfig(store.packageIdentity(it))
                 }
         }
 
@@ -234,6 +250,7 @@ object InstalledAppCatalogPolicy {
             installed: Boolean,
             icon: Drawable?,
         ): AppListItem {
+            val identity = store?.packageIdentity(packageName)
             val viewportWidth = store?.getTargetViewportWidthDp(packageName)
             val viewportScale = store?.getTargetViewportScaleMilliPercent(packageName)
             val targetSpec = store?.getTargetViewportSpec(packageName) ?: ViewportTargetSpec.off()
@@ -247,12 +264,11 @@ object InstalledAppCatalogPolicy {
             val wechatDpi = store?.getWechatDpi(packageName)
             val dpisEnabled = store?.isTargetDpisEnabled(packageName) != false
             val inScope = scopePackages?.contains(packageName) == true
-            val configured = isUserVisibleConfiguredPackage(
-                store,
-                packageName,
-                scopeKnown,
-                inScope,
-            )
+            val configured = if (store != null && identity != null) {
+                isUserVisibleConfiguredPackage(store, identity, scopeKnown, inScope)
+            } else {
+                isUserVisibleConfiguredPackage(null, packageName, scopeKnown, inScope)
+            }
             return AppListItem(
                 label,
                 packageName,
@@ -296,7 +312,9 @@ object InstalledAppCatalogPolicy {
                 // A disabled-only override is intentionally omitted from the configured-app
                 // page, but it still carries the user's effective enable state. Decode every
                 // real package record here so the All Apps page can offer Enable correctly.
-                val hasStoredPackageState = store?.hasRealPackageConfig(item.packageName) == true
+                val identity = store?.packageIdentity(item.packageName)
+                val hasStoredPackageState =
+                    identity != null && store?.hasRealPackageConfig(identity) == true
                 val listItem =
                     if (item.packageName in configuredPackages || hasStoredPackageState) {
                     createAppListItem(
@@ -340,6 +358,15 @@ object InstalledAppCatalogPolicy {
             }
             return result
         }
+
+    fun isUserVisibleConfiguredPackage(
+        store: DpisConfigStore?,
+        identity: PackageIdentity,
+        scopeKnown: Boolean,
+        inScope: Boolean,
+    ): Boolean =
+        !SystemFrameworkScope.isFrameworkScopePackage(identity.packageName) &&
+                ((scopeKnown && inScope) || store?.hasUserVisiblePackageConfig(identity) == true)
 
         @JvmStatic
         fun isUserVisibleConfiguredPackage(

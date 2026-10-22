@@ -2,14 +2,19 @@ package com.dpis.module
 
 import android.app.Application
 import android.content.Context
-import com.dpis.module.diagnostics.DpisLog.AppLogSink
+import com.dpis.module.appconfig.XposedConfigReadiness
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.config.RuntimeConfigSnapshotPublisher
 import com.dpis.module.diagnostics.DpisAppLogStore
-import com.dpis.module.runtime.hyperos.HyperOsNativeProxyAssetExporter
+import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.diagnostics.DpisLog.AppLogSink
 import com.dpis.module.fonts.TypefaceCatalogCache.preload
 import com.dpis.module.root.RootAccessProbe
+import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.delivery.RuntimePropertyInstallCleanup
 import com.dpis.module.runtime.delivery.RuntimePropertyRecoveryCoordinator
+import com.dpis.module.runtime.hyperos.HyperOsNativeProxyAssetExporter
 import com.dpis.module.updates.presentation.UpdatePackageInstaller
 import com.google.android.material.color.DynamicColors
 import io.github.libxposed.service.XposedService
@@ -17,9 +22,6 @@ import io.github.libxposed.service.XposedServiceHelper
 import io.github.libxposed.service.XposedServiceHelper.OnServiceListener
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.Volatile
-import com.dpis.module.runtime.ConfigStoreFactory
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.diagnostics.DpisLog
 
 class DpisApplication : Application(), OnServiceListener {
     interface ServiceStateListener {
@@ -76,14 +78,12 @@ class DpisApplication : Application(), OnServiceListener {
 
     override fun onServiceBind(service: XposedService) {
         val localStore = ConfigStoreFactory.createLocalModuleConfigStore(this)
-        val runtimeDeliveryStore =
-            ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service)
         migrateLocalConfigStore(localStore)
-        migrateLocalConfigStore(runtimeDeliveryStore)
-        configStore = ConfigStoreFactory.createLocalUiModuleConfigStore(this, service)
-        DpisLog.setLoggingEnabled(configStore!!.isGlobalLogEnabled())
-        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)
+        configStore = localStore
         xposedService = service
+        DpisLog.setLoggingEnabled(localStore.isGlobalLogEnabled())
+        publishRuntimeConfig(localStore, service)
+        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)
         notifyServiceStateChanged()
     }
 
@@ -146,6 +146,19 @@ class DpisApplication : Application(), OnServiceListener {
         }
 
         @JvmStatic
+        fun isXposedConfigReady(): Boolean {
+            val flavor = BuildConfig.FLAVOR
+            val remoteConfigAvailable =
+                flavor == XposedConfigReadiness.MODERN_FLAVOR &&
+                        ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(xposedService) != null
+            return XposedConfigReadiness.isReady(
+                flavor,
+                remoteConfigAvailable,
+                flavor == XposedConfigReadiness.LEGACY_FLAVOR && isXposedSelfLoaded(),
+            )
+        }
+
+        @JvmStatic
         fun getActiveHookConfigStore(context: Context?): DpisConfigStore? {
             val sharedStore: DpisConfigStore? = configStore
             if (sharedStore != null) {
@@ -154,11 +167,7 @@ class DpisApplication : Application(), OnServiceListener {
             if (context == null) {
                 return null
             }
-            val service: XposedService? = xposedService
-            return if (service != null)
-                ConfigStoreFactory.createLocalUiModuleConfigStore(context, service)
-            else
-                ConfigStoreFactory.createLocalModuleConfigStore(context)
+            return ConfigStoreFactory.createLocalModuleConfigStore(context)
         }
 
         fun reloadConfigStore() {
@@ -169,18 +178,10 @@ class DpisApplication : Application(), OnServiceListener {
             val service: XposedService? = xposedService
             val localStore = ConfigStoreFactory.createLocalModuleConfigStore(application)
             migrateLocalConfigStore(localStore)
-            migrateLocalConfigStore(
-                ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(
-                    service
-                )
-            )
-            val refreshedStore = if (service != null)
-                ConfigStoreFactory.createLocalUiModuleConfigStore(application, service)
-            else
-                ConfigStoreFactory.createLocalModuleConfigStore(application)
-            configStore = refreshedStore
-            DpisLog.setLoggingEnabled(refreshedStore.isGlobalLogEnabled())
-            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)
+            configStore = localStore
+            DpisLog.setLoggingEnabled(localStore.isGlobalLogEnabled())
+            publishRuntimeConfig(localStore, service)
+            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)
             notifyServiceStateChanged()
         }
 
@@ -209,17 +210,24 @@ class DpisApplication : Application(), OnServiceListener {
             }
             store.migrateLegacyWechatDpi()
             store.migrateLegacyPackageConfigToAggregated()
+            store.migratePackageConfigToUserScoped()
         }
 
-        @JvmStatic
-        private fun publishRuntimeConfig(from: DpisConfigStore?, to: DpisConfigStore?) {
-            if (from == null || to == null || from == to) {
+        private fun publishRuntimeConfig(from: DpisConfigStore, service: XposedService?) {
+            if (service == null) return
+            val runtimeStore = ConfigStoreFactory.createRuntimeDeliveryModuleConfigStore(service)
+            if (runtimeStore == null) {
+                DpisLog.w("Xposed runtime preferences unavailable; local config remains active")
                 return
             }
-            // LSPosed remote preferences are a runtime delivery copy, not a migration
-            // source or backup. Publish only runtime-shared config from the local store.
-            val snapshot = from.snapshotRuntimeDelivery()
-            to.replaceAll(snapshot)
+            if (RuntimeConfigSnapshotPublisher.publish(from, runtimeStore)) {
+                DpisLog.i(
+                    "runtime config projection: source=local, " +
+                            "destination=libxposed_remote, result=published",
+                )
+            } else {
+                DpisLog.w("Xposed runtime config publish failed; local config remains active")
+            }
         }
     }
 }

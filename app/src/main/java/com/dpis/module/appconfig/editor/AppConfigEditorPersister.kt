@@ -1,5 +1,6 @@
 package com.dpis.module.appconfig.editor
 
+import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
@@ -14,6 +15,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 class AppConfigEditorPersister(
     private val saveHandler: AppConfigSaveHandler,
     private val systemHooksEnabled: () -> Boolean,
+    private val xposedConfigReady: () -> Boolean,
     private val configStore: () -> DpisConfigStore?,
 ) : ComposeAppEditorSaveWorkflow.Persister {
     override fun persist(
@@ -21,21 +23,26 @@ class AppConfigEditorPersister(
         draft: EditorDraft,
         viewport: ViewportTargetSpec,
         fontPercent: Int?,
-    ): AppConfigSaveHandler.Result = saveHandler.saveResolved(
-        item,
-        viewport,
-        draft.viewportMode,
-        draft.viewportApplyMode,
-        draft.viewportApplyModeResetRequested,
-        fontPercent,
-        draft.fontMode,
-        draft.selectedTypefaceId,
-        draft.draftFontHookDomainsRaw,
-        draft.fontHookDomainsResetRequested,
-        draft.viewportScaleInput,
-        draft.viewportAbsoluteInput,
-        systemHooksEnabled(),
-        configStore(),
-        null,
-    )
+    ): AppConfigSaveHandler.Result {
+        if (!xposedConfigReady()) {
+            return AppConfigSaveHandler.Result.failure(R.string.system_settings_save_failed)
+        }
+        return saveHandler.saveResolved(
+            item,
+            viewport,
+            draft.viewportMode,
+            draft.viewportApplyMode,
+            draft.viewportApplyModeResetRequested,
+            fontPercent,
+            draft.fontMode,
+            draft.selectedTypefaceId,
+            draft.draftFontHookDomainsRaw,
+            draft.fontHookDomainsResetRequested,
+            draft.viewportScaleInput,
+            draft.viewportAbsoluteInput,
+            systemHooksEnabled(),
+            configStore(),
+            null,
+        )
+    }
 }

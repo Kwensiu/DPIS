@@ -165,6 +165,81 @@ fun collectPackageNamesFromSavedState(
         }
     }
 }
+    fun collectPackageConfigMigrationNames(values: Map<String, *>?): Set<String> {
+        if (values.isNullOrEmpty()) return emptySet()
+        val names = LinkedHashSet<String>()
+        for (key in values.keys) {
+            if (isLegacyPackageConfigNamespaceKey(key)) {
+                for (spec in PACKAGE_CONFIG_KEYS) {
+                    val packageName = spec.packageNameFromStorageKey(key, false) ?: continue
+                    if (PackageIdentity.isValidPackageName(packageName)) names += packageName
+                }
+            }
+            for (spec in PACKAGE_AGGREGATED_CONFIG_KEYS) {
+                val packageName = spec.packageNameFromStorageKey(key, false) ?: continue
+                if (PackageIdentity.isValidPackageName(packageName)) names += packageName
+            }
+        }
+        return names
+    }
+
+    private val GLOBAL_FONT_CONFIG_KEYS = setOf(
+        "font.debug.selected_mode",
+        "font.debug.selected_window",
+        "font.flutter_hook_enabled",
+        "font.flutter_settings_hook_enabled",
+        "font.hyperos_flutter_hook_enabled",
+    )
+
+    fun isLegacyPackageConfigNamespaceKey(key: String): Boolean {
+        val separator = key.indexOf('.')
+        if (separator <= 0) return false
+        val domain = key.substring(0, separator)
+        if (domain !in setOf("viewport", "font", "target", "wechat")) return false
+        if (domain == "font" && key in GLOBAL_FONT_CONFIG_KEYS) return false
+        if (isLegacyPackageConfigKey(key)) return true
+
+        val body = key.substring(separator + 1)
+        return body.indices
+            .filter { body[it] == '.' }
+            .any { split ->
+                PackageIdentity.isValidPackageName(body.substring(0, split)) &&
+                        split < body.lastIndex
+            }
+    }
+
+    fun shouldIncludeLegacyPackageConfigRuntimeEntry(
+        key: String,
+        value: Any?,
+        values: Map<*, *>,
+    ): Boolean {
+        for (index in PACKAGE_CONFIG_KEYS.indices) {
+            val legacySpec = PACKAGE_CONFIG_KEYS[index]
+            val packageName =
+                legacySpec.packageNameFromStorageKey(key, requireApplicablePackage = false)
+                    ?: continue
+            if (!PackageIdentity.isValidPackageName(packageName)) return false
+            if (key.startsWith("wechat.") && !WechatDpiConfig.appliesTo(packageName)) return false
+            if (normalizeLegacyPackageConfigValue(key, value) == null) return false
+            val packageKey = PACKAGE_AGGREGATED_CONFIG_KEYS[index].keyForPackage(packageName)
+            val packageValue = values[packageKey]
+            return normalizeLegacyPackageConfigValue(key, packageValue) == null
+        }
+        return false
+    }
+
+    fun isValidAggregatedPackageConfigEntry(key: String, value: Any?): Boolean {
+        for (index in PACKAGE_AGGREGATED_CONFIG_KEYS.indices) {
+            val packageSpec = PACKAGE_AGGREGATED_CONFIG_KEYS[index]
+            val packageName = packageSpec.packageNameFromStorageKey(key, false) ?: continue
+            if (!PackageIdentity.isValidPackageName(packageName)) return false
+            if (key.endsWith(".app.wechat_dpi") && !WechatDpiConfig.appliesTo(packageName)) return false
+            val legacyKey = PACKAGE_CONFIG_KEYS[index].keyForPackage(packageName)
+            return normalizeLegacyPackageConfigValue(legacyKey, value) != null
+        }
+        return false
+    }
+
 fun collectLegacyPackageConfigNames(values: MutableMap<String, *>?): LinkedHashSet<String?> {
     val packages = LinkedHashSet<String?>()
     if (values == null || values.isEmpty()) {

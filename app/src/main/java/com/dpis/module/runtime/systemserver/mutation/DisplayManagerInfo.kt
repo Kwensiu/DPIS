@@ -2,6 +2,7 @@ package com.dpis.module.runtime.systemserver.mutation
 
 import android.content.res.Configuration
 import android.os.Binder
+import com.dpis.module.config.PackageIdentity
 import com.dpis.module.config.PerAppDisplayConfig
 import com.dpis.module.config.PerAppDisplayConfigSource
 import com.dpis.module.diagnostics.DpisLog
@@ -9,6 +10,7 @@ import com.dpis.module.runtime.systemserver.HookInstaller
 import com.dpis.module.runtime.systemserver.diagnostics.HookLog
 import com.dpis.module.runtime.systemserver.reflection.Reflection
 import com.dpis.module.runtime.systemserver.selection.ConfigSelection
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.runtime.systemserver.viewport.RelativeViewport
 import com.dpis.module.viewport.PerAppDisplayEnvironment
 import com.dpis.module.viewport.PerAppDisplayOverrideCalculator
@@ -23,13 +25,22 @@ object DisplayManagerInfo {
             return
         }
         val callingUid = Binder.getCallingUid()
-        val packageName = configuredPackage(source, callingUid)
+        val userId = PackageUidResolver.userIdFromUid(callingUid)
+        if (userId == null) {
+            logSkip(entryName, "uid-not-configured", callingUid, null, displayInfo)
+            return
+        }
+        val packageName = configuredPackage(source, callingUid, userId)
         if (packageName == null) {
             logSkip(entryName, "uid-not-configured", callingUid, null, displayInfo)
             return
         }
+        val lookup = source.inspect(PackageIdentity(packageName, userId))
+        if (DpisLog.isLoggingEnabled()) {
+            HookLog.logSourceLookup(entryName, lookup)
+        }
         val config = ConfigSelection.selectConfigForSystemServerEntry(
-            entryName, source.get(packageName),
+            entryName, lookup.config,
         )
         if (config == null) {
             logSkip(entryName, "no-viewport-config", callingUid, packageName, displayInfo)
@@ -58,6 +69,18 @@ object DisplayManagerInfo {
             config,
         )
         if (!EnvironmentWrite.applyDisplayInfo(displayInfo, applyEnvironment)) {
+            if (DpisLog.isLoggingEnabled()) {
+                HookLog.logMutationOutcome(
+                    entryName,
+                    packageName,
+                    userId,
+                    "unchanged",
+                    "display_info",
+                    beforeSummary,
+                    HookLog.describeDisplayInfo(displayInfo),
+                    HookLog.describeEnvironment(environment),
+                )
+            }
             return
         }
         if (DpisLog.isLoggingEnabled()) {
@@ -77,22 +100,25 @@ object DisplayManagerInfo {
         }
     }
 
-    private fun configuredPackage(source: PerAppDisplayConfigSource, callingUid: Int): String? {
-        if (callingUid <= 0) {
-            return null
-        }
+    private fun configuredPackage(
+        source: PerAppDisplayConfigSource,
+        callingUid: Int,
+        userId: Int,
+    ): String? {
+        if (callingUid <= 0) return null
         var fallbackPackage: String? = null
         for (packageName in source.getConfiguredPackages()) {
-            if (HookInstaller.configuredUid(packageName, callingUid) != callingUid) {
+            val configuredName = packageName ?: continue
+            if (HookInstaller.configuredUid(configuredName, callingUid) != callingUid) {
                 continue
             }
             if (ConfigSelection.selectConfigForSystemServerEntry(
-                    "display-manager-info", source.get(packageName),
+                    "display-manager-info", source.get(PackageIdentity(configuredName, userId)),
                 ) != null
             ) {
-                return packageName
+                return configuredName
             }
-            fallbackPackage = packageName
+            fallbackPackage = configuredName
         }
         return fallbackPackage
     }

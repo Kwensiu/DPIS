@@ -1,5 +1,7 @@
 package com.dpis.module
 
+import android.content.pm.ActivityInfo
+import android.content.pm.ApplicationInfo
 import com.dpis.module.config.ConfigSnapshot
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.PackageConfigSnapshot
@@ -10,6 +12,7 @@ import com.dpis.module.config.PerAppDisplayConfigSource.SnapshotProvider
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
 import com.dpis.module.hooks.HookDomainOverride
+import com.dpis.module.hyperos.HyperOsRustProcessArgPolicy
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
 import com.dpis.module.runtime.font.HyperOsFlutterFontHookInstaller
 import com.dpis.module.runtime.hyperos.HyperOsRustProcessHookInstaller
@@ -87,10 +90,11 @@ class HyperOsFlutterFontHookConfigTest {
         val app: String = readSource("src/main/java/com/dpis/module/DpisApplication.kt")
 
         Assert.assertTrue(factory.contains("fun create(packageName: String?): DpisConfigStore"))
-        Assert.assertTrue(factory.contains("RuntimePropertyConfigPreferences(packageName, route)"))
+        Assert.assertTrue(factory.contains("RuntimePropertyConfigPreferences(packageName, route, ownerUserId)"))
         Assert.assertTrue(factory.contains("AutoViewportRuntimeRoute.ANY_ENABLED_TARGET"))
         Assert.assertFalse(factory.contains("CompatConfigProviderPreferences"))
-        Assert.assertTrue(prefs.contains("ViewportPropertyBridge.readTargetSpec(packageName)"))
+        Assert.assertTrue(prefs.contains("val targetUserId = userId ?: runCatching"))
+        Assert.assertTrue(prefs.contains("}.getOrDefault(0)"))
         Assert.assertTrue(prefs.contains("HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)"))
         Assert.assertTrue(prefs.contains("HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)"))
         Assert.assertTrue(prefs.contains("targetSpec.absoluteWidthDp()"))
@@ -102,15 +106,15 @@ class HyperOsFlutterFontHookConfigTest {
         Assert.assertTrue(app.contains("fun getActiveHookConfigStore(context: Context?): DpisConfigStore?"))
         Assert.assertTrue(app.contains("if (context == null)"))
         Assert.assertTrue(app.contains("return null"))
-        Assert.assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"))
+        Assert.assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)"))
     }
 
 
     @Test
     fun viewportBridgePropertyNameUsesStablePackageHash() {
         Assert.assertEquals(
-            "debug.dpis.vp.a55b5fe1",
-            propertyNameForPackage("com.miui.gallery")
+            "debug.dpis.vp.0.a55b5fe1",
+            propertyNameForPackage("com.miui.gallery", 0)
         )
     }
 
@@ -150,11 +154,77 @@ class HyperOsFlutterFontHookConfigTest {
         Assert.assertFalse(shouldClear)
     }
 
+    fun rustProcessLookupUsesTheTargetActivityUser() {
+        val requestedUsers = mutableListOf<Int>()
+        val source = PerAppDisplayConfigSource(
+            SnapshotProvider { ConfigSnapshot.empty() },
+            PackageFallbackProvider { packageName, userId ->
+                requestedUsers += userId
+                PackageConfigSnapshot(
+                    packageName,
+                    true,
+                    null,
+                    ViewportApplyMode.OFF,
+                    300,
+                    FontApplyMode.FIELD_REWRITE,
+                    null,
+                    false,
+                    false,
+                    true,
+                    HookDomainOverride(
+                        true,
+                        setOf(FontHookDomainRegistry.ID_HYPEROS_NATIVE_FLUTTER),
+                        emptySet(),
+                    ),
+                )
+            },
+        )
+        val activityInfo = ActivityInfo().apply {
+            packageName = "com.miui.gallery"
+            applicationInfo = ApplicationInfo().also {
+                it.packageName = packageName
+                it.uid = 999 * 100000 + 10042
+            }
+        }
+        val args = MutableList<Any?>(22) { null }.apply {
+            this[HyperOsRustProcessArgPolicy.PACKAGE_NAME_INDEX] = "com.miui.gallery"
+            this[2] = activityInfo
+            this[HyperOsRustProcessArgPolicy.BINARY_PATH_INDEX] = "/missing/libapp.so"
+            this[HyperOsRustProcessArgPolicy.ENVIRONMENTS_INDEX] = ""
+        }
+
+        HyperOsRustProcessHookInstaller.applyEnvironmentArgsForLegacy(source, args)
+
+        Assert.assertEquals(listOf(999), requestedUsers)
+    }
+
+    @Test
+    fun rustProcessLookupFailsClosedWithoutPackageAssociatedUid() {
+        val fallbackCalls = mutableListOf<String>()
+        val source = PerAppDisplayConfigSource(
+            SnapshotProvider { ConfigSnapshot.empty() },
+            PackageFallbackProvider { packageName, _ ->
+                fallbackCalls += packageName
+                null
+            },
+        )
+        val args = MutableList<Any?>(22) { null }.apply {
+            this[HyperOsRustProcessArgPolicy.PACKAGE_NAME_INDEX] = "com.miui.gallery"
+            this[HyperOsRustProcessArgPolicy.BINARY_PATH_INDEX] = "/data/app/libapp.so"
+            this[HyperOsRustProcessArgPolicy.ENVIRONMENTS_INDEX] = ""
+        }
+
+        val result = HyperOsRustProcessHookInstaller.applyEnvironmentArgsForLegacy(source, args)
+
+        Assert.assertNull(result)
+        Assert.assertTrue(fallbackCalls.isEmpty())
+    }
+
     @Test
     fun rustProcessEnvironmentRequiresNativeDomain() {
         val source = PerAppDisplayConfigSource(
             SnapshotProvider { ConfigSnapshot.empty() },
-            PackageFallbackProvider { packageName ->
+            PackageFallbackProvider { packageName, _ ->
                 PackageConfigSnapshot(
                     packageName,
                     true,

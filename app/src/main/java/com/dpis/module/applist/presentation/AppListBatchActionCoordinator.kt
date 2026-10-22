@@ -9,7 +9,6 @@ import com.dpis.module.applist.AppListSelectionController
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.quirks.WechatDpiPropertySyncer
-import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.settings.ScopeRequestGate
 import com.dpis.module.viewport.ViewportPropertySyncer
@@ -19,6 +18,8 @@ import io.github.libxposed.service.XposedService
 class AppListBatchActionCoordinator(
     private val host: Host,
     private val selection: AppListSelectionController,
+    private val xposedConfigReady: () -> Boolean,
+    private val publishRuntimeConfig: () -> Unit,
 ) {
     interface Host {
         fun configStore(): DpisConfigStore?
@@ -50,6 +51,10 @@ class AppListBatchActionCoordinator(
     }
 
     fun reset(selectedItems: List<AppListItem>) {
+        if (!xposedConfigReady()) {
+            host.showToast(R.string.system_settings_save_failed)
+            return
+        }
         val packages = selection.beginBatch()
         if (packages.isEmpty()) return
         host.publishSelection()
@@ -62,6 +67,12 @@ class AppListBatchActionCoordinator(
             return
         }
         host.runInBackground(Runnable {
+            if (!xposedConfigReady()) {
+                host.runOnUiThread(Runnable {
+                    complete(R.string.app_list_batch_reset_failed)
+                })
+                return@Runnable
+            }
             val store = host.configStore()
             if (store == null || !store.clearTargetPackageConfigs(resettable)) {
                 host.runOnUiThread(Runnable {
@@ -75,7 +86,7 @@ class AppListBatchActionCoordinator(
                 ViewportPropertySyncer.clearTargetAsync(packageName)
                 WechatDpiPropertySyncer.publishDpiAsync(packageName, null)
             }
-            RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
+            publishRuntimeConfig()
             host.runOnUiThread(Runnable {
                 complete(
                     R.string.app_list_batch_reset_result,
@@ -87,6 +98,10 @@ class AppListBatchActionCoordinator(
     }
 
     fun setConfigsEnabled(enabled: Boolean, selectedItems: List<AppListItem>) {
+        if (!xposedConfigReady()) {
+            host.showToast(R.string.system_settings_save_failed)
+            return
+        }
         val packages = selection.beginBatch()
         if (packages.isEmpty()) return
         host.publishSelection()
@@ -109,6 +124,10 @@ class AppListBatchActionCoordinator(
             return
         }
         host.runInBackground(Runnable {
+            if (!xposedConfigReady()) {
+                host.runOnUiThread(Runnable { complete(R.string.app_list_batch_config_failed) })
+                return@Runnable
+            }
             val store = host.configStore()
             if (store == null) {
                 host.runOnUiThread(Runnable { complete(R.string.app_list_batch_config_failed) })
@@ -125,7 +144,7 @@ class AppListBatchActionCoordinator(
                     }
                 }
             }
-            RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
+            publishRuntimeConfig()
             host.runOnUiThread(Runnable {
                 host.publishDpisEnabled(updatedPackages, enabled)
                 complete(

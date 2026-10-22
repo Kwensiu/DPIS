@@ -4,6 +4,8 @@ import com.dpis.module.config.PerAppDisplayConfigSource
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.hyperos.HyperOsRustProcessArgPolicy
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
+import com.dpis.module.runtime.systemserver.selection.PackageNames
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import io.github.libxposed.api.XposedInterface
 import java.io.File
 import java.lang.reflect.Modifier
@@ -82,7 +84,9 @@ class HyperOsRustProcessHookInstaller private constructor() {
                 return null
             }
             val parsed = HyperOsRustProcessArgPolicy.parse(args) ?: return null
-            val config = source.get(parsed.packageName) ?: return null
+            val uid = PackageNames.findUid(parsed.packageName, null, args) ?: return null
+            val userId = PackageUidResolver.userIdFromUid(uid) ?: return null
+            val config = source.get(parsed.packageName, userId) ?: return null
             val fontScalePercent = config.targetFontScalePercent
             if (fontScalePercent == null ||
                 !HyperOsRustProcessArgPolicy.shouldRewrite(

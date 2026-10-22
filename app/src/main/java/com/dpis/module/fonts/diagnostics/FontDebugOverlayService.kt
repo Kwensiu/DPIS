@@ -20,11 +20,12 @@ import android.view.View.OnTouchListener
 import android.view.WindowManager
 import android.widget.TextView
 import android.widget.Toast
-import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.DpisApplication
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
+import com.dpis.module.fonts.device.FontDebugLogcatBridge
+import com.dpis.module.runtime.ConfigStoreFactory
 import java.util.Locale
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -32,7 +33,6 @@ import kotlin.concurrent.Volatile
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import com.dpis.module.fonts.device.FontDebugLogcatBridge
 
 class FontDebugOverlayService : Service() {
     private val handler = Handler(Looper.getMainLooper())
@@ -72,10 +72,7 @@ class FontDebugOverlayService : Service() {
         super.onCreate()
         store = DpisApplication.getConfigStore()
         if (store == null) {
-            store = ConfigStoreFactory.createLocalUiModuleConfigStore(
-                this,
-                DpisApplication.xposedService
-            )
+            store = ConfigStoreFactory.createLocalModuleConfigStore(this)
         }
         if (!Settings.canDrawOverlays(this)) {
             stopSelf()
@@ -145,7 +142,7 @@ class FontDebugOverlayService : Service() {
 
         overlayRoot = overlayTextView
         gestureDetector = GestureDetector(this, OverlayGestureListener())
-        gestureDetector!!.setIsLongpressEnabled(true)
+        gestureDetector!!.isLongpressEnabled = true
         overlayRoot!!.setOnTouchListener(DragTouchListener())
 
         layoutParams = WindowManager.LayoutParams(

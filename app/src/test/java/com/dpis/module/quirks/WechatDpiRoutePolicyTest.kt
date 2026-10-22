@@ -66,28 +66,26 @@ class WechatDpiRoutePolicyTest {
     }
 
     @Test
-    fun invalidSavedDpiIsRejected() {
-        assertNull(WechatDpiRoutePolicy.targetDpi(100))
-    }
+    fun savedDpiIsResolvedFromTheRequestedAndroidUser() {
+        val packageName = "com.tencent.mm"
+        val values = mapOf(
+            WechatDpiPropertyBridge.propertyNameForPackage(packageName, 0) to "500",
+            WechatDpiPropertyBridge.propertyNameForPackage(packageName, 999) to "700",
+        )
 
-    @Test
-    fun emptyPackageCannotInstallDedicatedRoute() {
-        assertFalse(
-            WechatDpiRoutePolicy.shouldInstallDedicatedRoute(
-                null,
-                dedicatedDpiConfigured = true,
-                viewportDensityOwner = false,
-            ),
+        assertEquals(
+            700,
+            WechatDpiPropertyBridge.readDpiForTest(packageName, 999) { values[it] },
         )
     }
 
     @Test
-    fun savedWeChatDpiIsTheGetterDensity() {
-        assertEquals(480, WechatDpiRoutePolicy.targetDpi(480))
+    fun nonWeChatPackageCannotResolveDedicatedDpi() {
+        assertNull(WechatDpiRoutePolicy.targetDpi("com.example.other", 0))
     }
 
     @Test
     fun emptyWeChatDpiLeavesTheGetterUnchanged() {
-        assertNull(WechatDpiRoutePolicy.targetDpi(0))
+        assertNull(WechatDpiRoutePolicy.targetDpi("com.tencent.mm", 0))
     }
 }

@@ -1,10 +1,12 @@
 package com.dpis.module
 
 import android.content.SharedPreferences
+import android.os.Process
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.RuntimePropertyConfigPreferences
 import com.dpis.module.fonts.FontLibraryStore
 import com.dpis.module.runtime.XSharedPreferencesAdapter
-import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 
 /** Legacy-only owner of the classic Xposed preference compatibility boundary. */
 object LegacyConfigStoreFactory {
@@ -12,7 +14,7 @@ object LegacyConfigStoreFactory {
     fun createFontLibrary(): FontLibraryStore = FontLibraryStore(legacyPreferences(), null)
 
     @JvmStatic
-    fun create(): DpisConfigStore = DpisConfigStore(legacyPreferences())
+    fun create(): DpisConfigStore = DpisConfigStore(legacyPreferences(), currentUserId())
 
     @JvmStatic
     fun createSystemServer(): DpisConfigStore = create()
@@ -30,8 +32,15 @@ object LegacyConfigStoreFactory {
         route: RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute,
     ): DpisConfigStore {
         val legacy = legacyPreferences()
-        if (packageName.isNullOrBlank()) return DpisConfigStore(legacy)
-        return DpisConfigStore(RuntimePropertyConfigPreferences(packageName, route), legacy)
+        val ownerUserId = currentUserId()
+        if (packageName.isNullOrBlank()) return DpisConfigStore(legacy, ownerUserId)
+        val runtimePreferences = RuntimePropertyConfigPreferences(packageName, route, ownerUserId)
+        return DpisConfigStore(runtimePreferences, legacy, null, runtimePreferences, ownerUserId)
+    }
+
+    private fun currentUserId(): Int =
+        checkNotNull(PackageUidResolver.userIdFromUid(Process.myUid())) {
+            "Cannot resolve Legacy runtime archive owner"
     }
 
     private fun legacyPreferences(): SharedPreferences =

@@ -1,19 +1,20 @@
 package com.dpis.module.runtime.presentation
 
+import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.R
-import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.appconfig.AppConfigProcessAction
+import com.dpis.module.appconfig.AppConfigSaveHandler
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.runtime.hyperos.HyperOsNativeProxyFacade
+import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.process.presentation.ProcessActionConfirm
 import com.dpis.module.process.presentation.ProcessActionHandler
-import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.quirks.WechatDpiEditor
-import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
+import com.dpis.module.runtime.hyperos.HyperOsNativeProxyFacade
+import com.dpis.module.ui.presentation.MainComposeShellHost
 import com.dpis.module.viewport.ViewportPropertySyncer
 
 /**
@@ -32,6 +33,10 @@ class RuntimeLaunchSession(
     )
 
     fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
+        if (!DpisApplication.isXposedConfigReady()) {
+            activity.showToast(R.string.system_settings_save_failed)
+            return false
+        }
         val store = activity.hookConfigStore
         if (store == null || packageName == null) {
             activity.showToast(R.string.status_save_requires_init)

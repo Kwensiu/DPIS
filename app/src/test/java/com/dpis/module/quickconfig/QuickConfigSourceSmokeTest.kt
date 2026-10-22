@@ -85,6 +85,8 @@ class QuickConfigSourceSmokeTest {
 
         Assert.assertTrue(editor.contains("ComposeAppEditorSaveWorkflow("))
         Assert.assertTrue(editor.contains("AppConfigEditorPersister("))
+        Assert.assertTrue(editor.contains("DpisApplication::isXposedConfigReady"))
+        Assert.assertTrue(editor.contains("if (!DpisApplication.isXposedConfigReady())"))
         Assert.assertTrue(editor.contains("WechatDpiEditor.applyAfterPersist("))
         Assert.assertTrue(editor.contains("draft.wechatDpiInput"))
         Assert.assertTrue(editor.contains("draft.dpisEnabled"))

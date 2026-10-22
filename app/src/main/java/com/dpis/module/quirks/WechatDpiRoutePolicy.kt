@@ -1,6 +1,8 @@
 package com.dpis.module.quirks
 
+import android.os.Process
 import com.dpis.module.appconfig.WechatDpiConfig
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertyBridge
 
@@ -16,6 +18,7 @@ object WechatDpiRoutePolicy {
     ): Boolean = WechatDpiConfig.appliesTo(packageName) &&
             dedicatedDpiConfigured && !viewportDensityOwner
 
+
     fun shouldInstallDedicatedRoute(
         packageName: String?,
         dedicatedDpiConfigured: Boolean,
@@ -25,23 +28,40 @@ object WechatDpiRoutePolicy {
         viewportDensityOwner(packageName),
     )
 
-    fun shouldInstallDedicatedRoute(packageName: String?): Boolean =
-        shouldInstallDedicatedRoute(
+    fun shouldInstallDedicatedRoute(packageName: String?): Boolean {
+        if (!WechatDpiConfig.appliesTo(packageName)) return false
+        val userId = currentUserId() ?: return false
+        return shouldInstallDedicatedRoute(
             packageName,
-            WechatDpiConfig.normalize(WechatDpiPropertyBridge.readDpi(packageName)) != null,
+            WechatDpiConfig.normalize(WechatDpiPropertyBridge.readDpi(packageName, userId)) != null,
+            viewportDensityOwner(packageName, userId),
         )
+    }
 
     fun viewportDensityOwner(packageName: String?): Boolean {
         if (!WechatDpiConfig.appliesTo(packageName)) return false
-        val targetSpec = ViewportPropertyBridge.readTargetSpec(packageName)
+        val userId = currentUserId() ?: return false
+        return viewportDensityOwner(packageName, userId)
+    }
+
+    private fun viewportDensityOwner(packageName: String?, userId: Int): Boolean {
+        val targetSpec = ViewportPropertyBridge.readTargetSpec(packageName, userId)
         return targetSpec.isEnabled &&
-                ViewportApplyMode.isEnabled(ViewportPropertyBridge.readCompatMode(packageName))
+                ViewportApplyMode.isEnabled(
+                    ViewportPropertyBridge.readCompatMode(
+                        packageName,
+                        userId
+                    )
+                )
     }
 
-    fun targetDpi(dedicatedDpi: Int): Int? = WechatDpiConfig.normalize(dedicatedDpi)
+    private fun currentUserId(): Int = runCatching {
+        PackageUidResolver.userIdFromUid(Process.myUid())
+    }.getOrNull() ?: 0
 
-    fun targetDpi(packageName: String?): Int? {
+    fun targetDpi(packageName: String?, userId: Int): Int? {
         if (!WechatDpiConfig.appliesTo(packageName)) return null
-        return targetDpi(WechatDpiPropertyBridge.readDpi(packageName))
+        return WechatDpiConfig.normalize(WechatDpiPropertyBridge.readDpi(packageName, userId))
     }
+
 }

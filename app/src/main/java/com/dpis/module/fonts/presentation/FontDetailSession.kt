@@ -34,10 +34,7 @@ class FontDetailSession(
             activity,
             DpisApplication.xposedService,
         )
-        configStore = ConfigStoreFactory.createFontLibraryConfigStore(
-            activity,
-            DpisApplication.xposedService,
-        )
+        configStore = ConfigStoreFactory.createFontLibraryConfigStore(activity)
         return refreshDetails()
     }
 

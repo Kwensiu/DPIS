@@ -3,6 +3,7 @@ package com.dpis.module
 import android.app.Application
 import android.content.pm.ApplicationInfo
 import android.os.Build
+import android.os.Process
 import com.dpis.module.config.ConfigSnapshot
 import com.dpis.module.config.ConfigSnapshotLoader
 import com.dpis.module.config.DpisConfigStore
@@ -31,6 +32,7 @@ import com.dpis.module.runtime.probe.DebugPackageOverride
 import com.dpis.module.runtime.systemserver.HookDiagnostics
 import com.dpis.module.runtime.systemserver.HookInstaller
 import com.dpis.module.runtime.systemserver.HostProcess
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.runtime.systemserver.MutationPolicy
 import com.dpis.module.runtime.webapk.WebApkRuntimeOwnerBridge
 import io.github.libxposed.api.XposedModule
@@ -424,9 +426,9 @@ class ModuleMain : XposedModule() {
         var runtimeStore = createModuleLoadedAppProcessStore(store, packageName)
         var snapshot = ConfigSnapshotLoader.fromStore(runtimeStore)
         var source = "module-loaded"
-        if (!snapshot.isConfigured(packageName)) {
+        if (!snapshot.isConfigured(packageName, runtimeStore.packageConfigOwnerUserId())) {
             val fallbackSnapshot = ConfigSnapshotLoader.fromStore(store)
-            if (!fallbackSnapshot.isConfigured(packageName)) {
+            if (!fallbackSnapshot.isConfigured(packageName, store.packageConfigOwnerUserId())) {
                 rawBridgeLog(
                     "module-loaded app config unavailable: process=$processName, package=$packageName, " +
                         "propertyPackages=${snapshot.getConfiguredPackages()}, " +
@@ -489,11 +491,15 @@ class ModuleMain : XposedModule() {
         if (packageName.isNullOrBlank()) {
             return fallbackStore
         }
+        val userId = checkNotNull(PackageUidResolver.userIdFromUid(Process.myUid())) {
+            "Cannot resolve current app-process user"
+        }
         return DpisConfigStore(
             RuntimePropertyConfigPreferences(
                 packageName,
                 RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET,
             ),
+            userId,
         )
     }
 
@@ -509,8 +515,7 @@ class ModuleMain : XposedModule() {
         }
         var packagePlan = ModulePackagePlan.resolve(snapshot, requestedPackageName)
         val packageName = packagePlan.packageName
-        if (!snapshot.isConfigured(packageName)) {
-            DpisLog.i("package not configured: package=$packageName")
+        if (!snapshot.isConfigured(packageName, store.packageConfigOwnerUserId())) {
             return
         }
         if (!packagePlan.targetDpisEnabled) {

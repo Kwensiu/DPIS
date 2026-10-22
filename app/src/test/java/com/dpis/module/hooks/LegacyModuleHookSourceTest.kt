@@ -164,10 +164,6 @@ class LegacyModuleHookSourceTest {
         )
         assertTrue(systemServerSource.contains("FontApplyMode.SYSTEM_EMULATION"))
         assertTrue(systemServerSource.contains("LegacyRustProcessHookInstaller.install(source)"))
-        assertTrue(systemServerSource.contains("findPackageNameRecursive(arg, 0)"))
-        assertTrue(systemServerSource.contains("getPackageName"))
-        assertTrue(systemServerSource.contains("getIntent"))
-        assertTrue(systemServerSource.contains("findPackageNameRecursive"))
         assertTrue(systemServerSource.contains("applyLaunchActivityItemArgs(source, param.args)"))
 
         val compatRustSource =

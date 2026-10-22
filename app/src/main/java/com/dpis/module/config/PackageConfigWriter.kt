@@ -14,13 +14,22 @@ internal class PackageConfigWriter(
     private val persistence: PackageConfigPersistence,
     private val configuredPackages: () -> MutableSet<String?>,
     private val hasAnyAfterRemoving: (String?, Array<out String?>) -> Boolean,
-    private val commit: (SharedPreferences.Editor.() -> Unit) -> Boolean,
+    private val commitPreferenceAction: (SharedPreferences.Editor.() -> Unit) -> Boolean,
     private val primaryPreferences: SharedPreferences,
+    private val ownerUserId: Int,
     private val legacyWechatDpi: () -> Int?,
     private val containsPrimary: (String?) -> Boolean,
     private val containsEffective: (String?) -> Boolean,
     private val readPrimaryValue: (PackageConfigKeySpec, String?) -> Any?
 ) {
+    private val commitUnmirrored: (SharedPreferences.Editor.() -> Unit) -> Boolean =
+        commitPreferenceAction
+    private val commit: (SharedPreferences.Editor.() -> Unit) -> Boolean = { action ->
+        commitPreferenceAction {
+            action(IdentityMirroringEditor(this, persistence, ownerUserId))
+        }
+    }
+
     fun setViewportWidth(packageName: String, widthDp: Int): Boolean {
         val normalized = persistence.normalizeViewportWidth(widthDp) ?: return clearViewport(packageName)
         return commitWithConfiguredPackage(packageName) {
@@ -268,9 +277,13 @@ internal class PackageConfigWriter(
         val target = WechatDpiConfig.PACKAGE_NAME
         val officialKey = persistence.keyForWechatDpi(target)
         if (legacy == null || containsEffective(officialKey)) {
-            return if (containsEffective(persistence.LEGACY_WECHAT_DPI_KEY)) commit { remove(persistence.LEGACY_WECHAT_DPI_KEY) } else true
+            return if (containsEffective(persistence.LEGACY_WECHAT_DPI_KEY)) commitUnmirrored {
+                remove(
+                    persistence.LEGACY_WECHAT_DPI_KEY
+                )
+            } else true
         }
-        return commitWithConfiguredPackage(target) {
+        return commitUnmirrored {
             remove(persistence.LEGACY_WECHAT_DPI_KEY)
             putInt(officialKey, legacy)
             putInt(persistence.keyForPackageWechatDpi(target), legacy)
@@ -280,21 +293,185 @@ internal class PackageConfigWriter(
     fun migrateLegacyPackageConfigToAggregated(): Boolean {
         val packages = persistence.collectLegacyPackageConfigNames(primaryPreferences.all)
         if (packages.isEmpty()) return true
-        return commit {
-            packages.forEach { packageName ->
-                packageName ?: return@forEach
-                persistence.PACKAGE_CONFIG_KEYS.indices.forEach { index ->
+        val source = primaryPreferences.all
+        return commitUnmirrored {
+            for (packageName in packages.filterNotNull()) {
+                if (!PackageIdentity.isValidPackageName(packageName)) continue
+                val identity = PackageIdentity(packageName, ownerUserId)
+                for (index in persistence.PACKAGE_CONFIG_KEYS.indices) {
                     val legacySpec = persistence.PACKAGE_CONFIG_KEYS[index]
                     val packageSpec = persistence.PACKAGE_AGGREGATED_CONFIG_KEYS[index]
                     val legacyKey = legacySpec.keyForPackage(packageName)
                     val packageKey = packageSpec.keyForPackage(packageName)
-                    val value = persistence.normalizeLegacyPackageConfigValue(legacyKey, readPrimaryValue(legacySpec, legacyKey))
-                    if (legacySpec.appliesTo(packageName) && value != null && !primaryPreferences.contains(packageKey)) {
-                        persistence.putTypedValue(this, packageKey, value)
+                    val legacyRaw = source[legacyKey] ?: continue
+                    val legacyValue =
+                        persistence.normalizeLegacyPackageConfigValue(legacyKey, legacyRaw)
+                    val packageRaw = source[packageKey]
+                    val packageValue =
+                        persistence.normalizeLegacyPackageConfigValue(legacyKey, packageRaw)
+
+                    if (legacyKey.startsWith("wechat.") &&
+                        !WechatDpiConfig.appliesTo(packageName)
+                    ) continue
+
+                    when {
+                        packageValue != null && legacyValue == packageValue -> remove(legacyKey)
+                        packageValue != null && legacyValue != null -> {
+                            if (preserveResidual(
+                                    identity,
+                                    "legacy",
+                                    legacyKey,
+                                    packageName,
+                                    legacyRaw
+                                )
+                            ) {
+                                remove(legacyKey)
+                            }
+                        }
+
+                        packageRaw == null && legacyValue != null -> {
+                            persistence.putTypedValue(this, packageKey, legacyValue)
+                            remove(legacyKey)
+                        }
+
+                        packageRaw != null && packageValue == null && legacyValue != null -> {
+                            val aggregatePreserved = preserveResidual(
+                                identity,
+                                "aggregate",
+                                packageKey,
+                                packageName,
+                                packageRaw,
+                            )
+                            if (aggregatePreserved) {
+                                persistence.putTypedValue(this, packageKey, legacyValue)
+                                remove(legacyKey)
+                            }
+                        }
+
+                        else -> Unit
                     }
                 }
-                persistence.removePackageConfigKeys(this, packageName, persistence.PACKAGE_CONFIG_KEYS)
             }
+        }
+    }
+
+    private fun SharedPreferences.Editor.preserveResidual(
+        identity: PackageIdentity,
+        sourceKind: String,
+        sourceKey: String,
+        packageName: String,
+        value: Any?,
+    ): Boolean {
+        val normalized = persistence.normalizeValue(value) ?: return false
+        val domain = sourceKey.substringBefore('.')
+        val fieldPrefix = if (sourceKind == "legacy") {
+            "$domain.$packageName."
+        } else {
+            "package_config.$packageName."
+        }
+        if (!sourceKey.startsWith(fieldPrefix)) return false
+        val fieldName = sourceKey.removePrefix(fieldPrefix)
+        if (fieldName.isEmpty()) return false
+        val residualField = if (sourceKind == "legacy") {
+            "$sourceKind.$domain.$fieldName"
+        } else {
+            "$sourceKind.$fieldName"
+        }
+        val residualKey = identity.packageConfigResidualKey(residualField)
+        if (primaryPreferences.contains(residualKey)) {
+            return primaryPreferences.all[residualKey] == normalized
+        }
+        persistence.putTypedValue(this, residualKey, normalized)
+        return true
+    }
+
+    fun migratePackageConfigToUserScoped(): Boolean {
+        val hasExistingOwner = primaryPreferences.contains(PACKAGE_IDENTITY_MIGRATION_OWNER_USER_ID)
+        val existingOwner = if (hasExistingOwner) {
+            try {
+                primaryPreferences.getInt(PACKAGE_IDENTITY_MIGRATION_OWNER_USER_ID, -1)
+            } catch (_: ClassCastException) {
+                return false
+            }
+        } else {
+            -1
+        }
+        if (hasExistingOwner && existingOwner != ownerUserId) return false
+        if (ownerUserId < 0) return false
+
+        val packages = persistence.collectPackageConfigMigrationNames(primaryPreferences.all)
+        val snapshot = primaryPreferences.all
+        val pendingMigration = packages.any { packageName ->
+            if (!PackageIdentity.isValidPackageName(packageName)) return@any false
+            persistence.PACKAGE_AGGREGATED_CONFIG_KEYS.indices.any { index ->
+                val legacySpec = persistence.PACKAGE_CONFIG_KEYS[index]
+                val packageSpec = persistence.PACKAGE_AGGREGATED_CONFIG_KEYS[index]
+                if (!packageSpec.appliesTo(packageName)) return@any false
+                val legacyKey = legacySpec.keyForPackage(packageName)
+                val packageKey = packageSpec.keyForPackage(packageName)
+                val field = packageKey.removePrefix("package_config.$packageName.")
+                    .takeIf { it.isNotEmpty() && it != packageKey } ?: return@any false
+                val identity = PackageIdentity(packageName, ownerUserId)
+                val scopedValue = persistence.normalizeLegacyPackageConfigValue(
+                    legacyKey,
+                    readPrimaryValue(packageSpec, identity.packageConfigKey(field)),
+                )
+                val packageValue = persistence.normalizeLegacyPackageConfigValue(
+                    legacyKey,
+                    readPrimaryValue(packageSpec, packageKey),
+                )
+                val legacyValue = persistence.normalizeLegacyPackageConfigValue(
+                    legacyKey,
+                    readPrimaryValue(legacySpec, legacyKey),
+                )
+                scopedValue == null && (packageValue != null || legacyValue != null)
+            }
+        }
+        if (hasExistingOwner && !pendingMigration) return true
+        return commitUnmirrored {
+            packages.filter(PackageIdentity::isValidPackageName).forEach { packageName ->
+                persistence.PACKAGE_AGGREGATED_CONFIG_KEYS.indices.forEach { index ->
+                    val legacySpec = persistence.PACKAGE_CONFIG_KEYS[index]
+                    val packageSpec = persistence.PACKAGE_AGGREGATED_CONFIG_KEYS[index]
+
+                    val legacyKey = legacySpec.keyForPackage(packageName)
+                    val packageKey = packageSpec.keyForPackage(packageName)
+                    if (legacyKey.startsWith("wechat.") &&
+                        !WechatDpiConfig.appliesTo(packageName)
+                    ) return@forEach
+                    val fieldPrefix = "package_config.$packageName."
+                    val field = packageKey.removePrefix(fieldPrefix)
+                        .takeIf { it.isNotEmpty() && it != packageKey }
+                        ?: return@forEach
+                    val identity = PackageIdentity(packageName, ownerUserId)
+                    val scopedKey = identity.packageConfigKey(field)
+                    val scopedValue = persistence.normalizeLegacyPackageConfigValue(
+                        legacyKey,
+                        readPrimaryValue(packageSpec, scopedKey),
+                    )
+                    if (scopedValue != null) return@forEach
+
+                    val packageValue = persistence.normalizeLegacyPackageConfigValue(
+                        legacyKey,
+                        readPrimaryValue(packageSpec, packageKey),
+                    )
+                    val legacyValue = persistence.normalizeLegacyPackageConfigValue(
+                        legacyKey,
+                        readPrimaryValue(legacySpec, legacyKey),
+                    )
+                    val value = packageValue ?: legacyValue ?: return@forEach
+
+                    if (primaryPreferences.contains(scopedKey)) {
+                        val invalidScopedValue = snapshot[scopedKey]
+                        val residualKey = identity.packageConfigResidualKey(field)
+                        if (invalidScopedValue != null && !primaryPreferences.contains(residualKey)) {
+                            persistence.putTypedValue(this, residualKey, invalidScopedValue)
+                        }
+                    }
+                    persistence.putTypedValue(this, scopedKey, value)
+                }
+            }
+            putInt(PACKAGE_IDENTITY_MIGRATION_OWNER_USER_ID, ownerUserId)
         }
     }
 
@@ -423,5 +600,50 @@ internal class PackageConfigWriter(
         val legacyPermille = AppConfigInput.toLegacyScalePermille(scaleMilliPercent)
         putInt(persistence.keyForViewportScalePermille(packageName), legacyPermille)
         putInt(persistence.keyForPackageViewportScalePermille(packageName), legacyPermille)
+    }
+}
+
+private class IdentityMirroringEditor(
+    private val delegate: SharedPreferences.Editor,
+    private val persistence: PackageConfigPersistence,
+    private val ownerUserId: Int,
+) : SharedPreferences.Editor by delegate {
+    override fun putString(key: String?, value: String?): SharedPreferences.Editor {
+        delegate.putString(key, value)
+        scopedKey(key)?.let { delegate.putString(it, value) }
+        return this
+    }
+
+    override fun putInt(key: String?, value: Int): SharedPreferences.Editor {
+        delegate.putInt(key, value)
+        scopedKey(key)?.let { delegate.putInt(it, value) }
+        return this
+    }
+
+    override fun putBoolean(key: String?, value: Boolean): SharedPreferences.Editor {
+        delegate.putBoolean(key, value)
+        scopedKey(key)?.let { delegate.putBoolean(it, value) }
+        return this
+    }
+
+    override fun remove(key: String?): SharedPreferences.Editor {
+        delegate.remove(key)
+        scopedKey(key)?.let(delegate::remove)
+        return this
+    }
+
+    private fun scopedKey(key: String?): String? {
+        if (key == null || !key.startsWith("package_config.")) return null
+        for (spec in persistence.PACKAGE_AGGREGATED_CONFIG_KEYS) {
+            val packageName = spec.packageNameFromStorageKey(key, requireApplicablePackage = false)
+                ?: continue
+            if (!PackageIdentity.isValidPackageName(packageName)) return null
+            if (key.endsWith(".app.wechat_dpi") && !WechatDpiConfig.appliesTo(packageName)) return null
+            val prefix = "package_config.$packageName."
+            val field =
+                key.removePrefix(prefix).takeIf { it.isNotEmpty() && it != key } ?: return null
+            return PackageIdentity(packageName, ownerUserId).packageConfigKey(field)
+        }
+        return null
     }
 }
