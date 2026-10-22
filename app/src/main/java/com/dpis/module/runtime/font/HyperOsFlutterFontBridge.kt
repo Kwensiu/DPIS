@@ -3,141 +3,151 @@ package com.dpis.module.runtime.font
 import com.dpis.module.config.PerAppDisplayConfig
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontApplyMode
-import java.util.Locale
+import com.dpis.module.fonts.FontPropertyKeys
 
 object HyperOsFlutterFontBridge {
-    private const val PROPERTY_PREFIX = "debug.dpis.font."
-    private const val FORCE_PROPERTY_PREFIX = "debug.dpis.forcefont."
-    private const val COMPAT_FONT_PROPERTY_PREFIX = "debug.dpis.compatfont."
-
-    // compatfont.* is non-zero only for system emulation; fontmode.* lets
-    // legacy interpret forcefont.* as field_rewrite when needed.
-    private const val COMPAT_FONT_MODE_PROPERTY_PREFIX = "debug.dpis.fontmode."
-    private const val TYPEFACE_PROPERTY_PREFIX = "debug.dpis.typeface."
-    private const val RUST_BINARY_PROPERTY_PREFIX = "debug.dpis.rustbin."
-    private const val PERSIST_FORCE_PROPERTY_PREFIX = "persist.debug.dpis.forcefont."
-    private const val PERSIST_COMPAT_FONT_PROPERTY_PREFIX = "persist.debug.dpis.compatfont."
-    private const val PERSIST_COMPAT_FONT_MODE_PROPERTY_PREFIX = "persist.debug.dpis.fontmode."
-    private const val PERSIST_TYPEFACE_PROPERTY_PREFIX = "persist.debug.dpis.typeface."
+    @JvmStatic
+    fun propertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "font")
 
     @JvmStatic
-    fun propertyNameForPackage(packageName: String): String =
-        PROPERTY_PREFIX + propertySuffix(packageName)
+    fun forcePropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "forcefont")
 
     @JvmStatic
-    fun forcePropertyNameForPackage(packageName: String): String =
-        FORCE_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun compatFontPropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "compatfont")
 
     @JvmStatic
-    fun compatFontPropertyNameForPackage(packageName: String): String =
-        COMPAT_FONT_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun compatFontModePropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "fontmode")
 
     @JvmStatic
-    fun compatFontModePropertyNameForPackage(packageName: String): String =
-        COMPAT_FONT_MODE_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun typefacePropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "typeface")
 
     @JvmStatic
-    fun typefacePropertyNameForPackage(packageName: String): String =
-        TYPEFACE_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun persistentForcePropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "forcefont", true)
 
     @JvmStatic
-    fun persistentForcePropertyNameForPackage(packageName: String): String =
-        PERSIST_FORCE_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun persistentCompatFontPropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "compatfont", true)
 
     @JvmStatic
-    fun persistentCompatFontPropertyNameForPackage(packageName: String): String =
-        PERSIST_COMPAT_FONT_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun persistentCompatFontModePropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "fontmode", true)
 
     @JvmStatic
-    fun persistentCompatFontModePropertyNameForPackage(packageName: String): String =
-        PERSIST_COMPAT_FONT_MODE_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun persistentTypefacePropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "typeface", true)
 
     @JvmStatic
-    fun persistentTypefacePropertyNameForPackage(packageName: String): String =
-        PERSIST_TYPEFACE_PROPERTY_PREFIX + propertySuffix(packageName)
-
-    @JvmStatic
-    fun readForceFontScalePercent(packageName: String): Int? =
+    fun readForceFontScalePercent(
+        packageName: String,
+        userId: Int,
+        reader: (String) -> String = ::readSystemProperty
+    ): Int? =
         readPositiveIntProperty(
-            forcePropertyNameForPackage(packageName),
-            persistentForcePropertyNameForPackage(packageName),
+            forcePropertyNameForPackage(packageName, userId),
+            persistentForcePropertyNameForPackage(packageName, userId),
+            reader,
         )
 
     @JvmStatic
-    fun readCompatFontScalePercent(packageName: String?): Int? {
+    fun readCompatFontScalePercent(
+        packageName: String?,
+        userId: Int,
+        reader: (String) -> String = ::readSystemProperty
+    ): Int? {
         if (packageName.isNullOrEmpty()) return null
         return readPositiveIntProperty(
-            compatFontPropertyNameForPackage(packageName),
-            persistentCompatFontPropertyNameForPackage(packageName),
+            compatFontPropertyNameForPackage(packageName, userId),
+            persistentCompatFontPropertyNameForPackage(packageName, userId),
+            reader,
         )
     }
 
     @JvmStatic
-    fun readCompatFontMode(packageName: String?): String {
+    fun readCompatFontMode(
+        packageName: String?,
+        userId: Int,
+        reader: (String) -> String = ::readSystemProperty
+    ): String {
         if (packageName.isNullOrEmpty()) return FontApplyMode.OFF
         return FontApplyMode.normalize(
             readPropertyWithPersistentFallback(
-                compatFontModePropertyNameForPackage(packageName),
-                persistentCompatFontModePropertyNameForPackage(packageName),
+                compatFontModePropertyNameForPackage(packageName, userId),
+                persistentCompatFontModePropertyNameForPackage(packageName, userId),
+                reader,
             ),
         )
     }
 
     @JvmStatic
-    fun readTypefaceId(packageName: String?): String? {
+    fun readTypefaceId(
+        packageName: String?,
+        userId: Int,
+        reader: (String) -> String = ::readSystemProperty
+    ): String? {
         if (packageName.isNullOrEmpty()) return null
         val value = readPropertyWithPersistentFallback(
-            typefacePropertyNameForPackage(packageName),
-            persistentTypefacePropertyNameForPackage(packageName),
+            typefacePropertyNameForPackage(packageName, userId),
+            persistentTypefacePropertyNameForPackage(packageName, userId),
+            reader,
         )
         if (value.isNullOrBlank() || value.trim() == "0") return null
         return value.trim()
     }
 
-    private fun propertySuffix(packageName: String): String =
-        String.format(Locale.US, "%08x", packageName.hashCode())
-
-    private fun readPositiveIntProperty(key: String, persistentKey: String): Int? =
-        readPropertyWithPersistentFallback(key, persistentKey)?.trim()?.toIntOrNull()
+    private fun readPositiveIntProperty(
+        key: String,
+        persistentKey: String,
+        reader: (String) -> String
+    ): Int? =
+        readPropertyWithPersistentFallback(key, persistentKey, reader).trim().toIntOrNull()
             ?.takeIf { it > 0 }
 
     @JvmStatic
-    fun rustBinaryPropertyNameForPackage(packageName: String): String =
-        RUST_BINARY_PROPERTY_PREFIX + propertySuffix(packageName)
+    fun rustBinaryPropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "rustbin")
 
     @JvmStatic
-    fun publishTarget(packageName: String?, config: PerAppDisplayConfig?) {
+    fun publishTarget(packageName: String?, config: PerAppDisplayConfig?, userId: Int) {
         if (packageName.isNullOrEmpty() || config == null ||
             !config.hyperOsFlutterFontHookEnabled ||
             config.targetFontScalePercent == null || config.targetFontScalePercent <= 0
         ) {
-            if (shouldClearOnPublishTargetSkip(packageName, config)) clearTarget(packageName)
+            if (shouldClearOnPublishTargetSkip(packageName, config)) clearTarget(
+                packageName,
+                userId
+            )
             return
         }
         setSystemProperty(
-            propertyNameForPackage(packageName),
+            propertyNameForPackage(packageName, userId),
             config.targetFontScalePercent.toString()
         )
     }
 
     @JvmStatic
-    fun publishRustProxyTarget(packageName: String?, config: PerAppDisplayConfig?) {
+    fun publishRustProxyTarget(packageName: String?, config: PerAppDisplayConfig?, userId: Int) {
         if (packageName.isNullOrEmpty() || config == null ||
             config.targetFontScalePercent == null || config.targetFontScalePercent <= 0
         ) {
-            clearTarget(packageName)
+            clearTarget(packageName, userId)
             return
         }
         setSystemProperty(
-            propertyNameForPackage(packageName),
+            propertyNameForPackage(packageName, userId),
             config.targetFontScalePercent.toString()
         )
     }
 
     @JvmStatic
-    fun clearTarget(packageName: String?) {
+    fun clearTarget(packageName: String?, userId: Int) {
         if (packageName.isNullOrEmpty()) return
-        val assignments = clearTargetAssignments(packageName)
+        val assignments = clearTargetAssignments(packageName, userId)
         var index = 0
         while (index < assignments.size) {
             setSystemProperty(assignments[index], assignments[index + 1])
@@ -146,10 +156,10 @@ object HyperOsFlutterFontBridge {
     }
 
     @JvmStatic
-    fun clearNativeTarget(packageName: String?) {
+    fun clearNativeTarget(packageName: String?, userId: Int) {
         if (packageName.isNullOrEmpty()) return
-        setSystemProperty(propertyNameForPackage(packageName), "0")
-        setSystemProperty(rustBinaryPropertyNameForPackage(packageName), "0")
+        setSystemProperty(propertyNameForPackage(packageName, userId), "0")
+        setSystemProperty(rustBinaryPropertyNameForPackage(packageName, userId), "0")
     }
 
     @JvmStatic
@@ -159,20 +169,20 @@ object HyperOsFlutterFontBridge {
     ): Boolean = shouldClearOnPublishTargetSkip(packageName, config)
 
     @JvmStatic
-    fun clearTargetAssignmentsForTest(packageName: String): Array<String> =
-        clearTargetAssignments(packageName)
+    fun clearTargetAssignmentsForTest(packageName: String, userId: Int): Array<String> =
+        clearTargetAssignments(packageName, userId)
 
-    private fun clearTargetAssignments(packageName: String): Array<String> = arrayOf(
-        propertyNameForPackage(packageName), "0",
-        forcePropertyNameForPackage(packageName), "0",
-        compatFontPropertyNameForPackage(packageName), "0",
-        compatFontModePropertyNameForPackage(packageName), FontApplyMode.OFF,
-        persistentForcePropertyNameForPackage(packageName), "0",
-        persistentCompatFontPropertyNameForPackage(packageName), "0",
-        persistentCompatFontModePropertyNameForPackage(packageName), FontApplyMode.OFF,
-        typefacePropertyNameForPackage(packageName), "0",
-        persistentTypefacePropertyNameForPackage(packageName), "0",
-        rustBinaryPropertyNameForPackage(packageName), "0",
+    private fun clearTargetAssignments(packageName: String, userId: Int): Array<String> = arrayOf(
+        propertyNameForPackage(packageName, userId), "0",
+        forcePropertyNameForPackage(packageName, userId), "0",
+        compatFontPropertyNameForPackage(packageName, userId), "0",
+        compatFontModePropertyNameForPackage(packageName, userId), FontApplyMode.OFF,
+        persistentForcePropertyNameForPackage(packageName, userId), "0",
+        persistentCompatFontPropertyNameForPackage(packageName, userId), "0",
+        persistentCompatFontModePropertyNameForPackage(packageName, userId), FontApplyMode.OFF,
+        typefacePropertyNameForPackage(packageName, userId), "0",
+        persistentTypefacePropertyNameForPackage(packageName, userId), "0",
+        rustBinaryPropertyNameForPackage(packageName, userId), "0",
     )
 
     private fun shouldClearOnPublishTargetSkip(
@@ -182,9 +192,9 @@ object HyperOsFlutterFontBridge {
             config.targetFontScalePercent == null || config.targetFontScalePercent <= 0
 
     @JvmStatic
-    fun publishRustBinaryPath(packageName: String?, binaryPath: String?) {
+    fun publishRustBinaryPath(packageName: String?, binaryPath: String?, userId: Int) {
         if (packageName.isNullOrEmpty() || binaryPath.isNullOrEmpty()) return
-        setSystemProperty(rustBinaryPropertyNameForPackage(packageName), binaryPath)
+        setSystemProperty(rustBinaryPropertyNameForPackage(packageName, userId), binaryPath)
     }
 
     private fun setSystemProperty(key: String, value: String) {
@@ -210,8 +220,12 @@ object HyperOsFlutterFontBridge {
         ""
     }
 
-    private fun readPropertyWithPersistentFallback(key: String, persistentKey: String): String {
-        val value = readSystemProperty(key)
-        return if (value.isNotBlank()) value else readSystemProperty(persistentKey)
+    private fun readPropertyWithPersistentFallback(
+        key: String,
+        persistentKey: String,
+        reader: (String) -> String,
+    ): String {
+        val value = reader(key)
+        return if (value.isNotBlank()) value else reader(persistentKey)
     }
 }

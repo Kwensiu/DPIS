@@ -100,7 +100,7 @@ class QuickConfigSourceSmokeTest {
         Assert.assertFalse(activity.contains("HyperOsNativeProxyBindMounter.createPlan"))
         Assert.assertFalse(activity.contains("executeHyperOsNativeProxyMount("))
         Assert.assertTrue(activity.contains("executeDialogProcessAction(item, action)"))
-        Assert.assertTrue(editor.contains("FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)"))
+        Assert.assertTrue(editor.contains("FontRuntimePropertySyncer.clearTargetAsync(targetPackageName, store.packageConfigOwnerUserId())"))
         Assert.assertFalse(activity.contains("quick_config_open_main_for_advanced"))
         Assert.assertFalse(activity.contains("showMainAppToast"))
         Assert.assertFalse(activity.contains("publishAfterSave(item.packageName)\n                finish()"))

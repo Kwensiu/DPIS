@@ -302,8 +302,14 @@ internal class QuickConfigComposeEditor(
             return false
         }
         if (!enabled) {
-            FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)
-            FontHookDomainPropertySyncer.clearTargetAsync(targetPackageName)
+            FontRuntimePropertySyncer.clearTargetAsync(
+                targetPackageName,
+                store.packageConfigOwnerUserId()
+            )
+            FontHookDomainPropertySyncer.clearTargetAsync(
+                targetPackageName,
+                store.packageConfigOwnerUserId()
+            )
             ViewportPropertySyncer.clearTargetAsync(targetPackageName)
         }
         activity.showToast(

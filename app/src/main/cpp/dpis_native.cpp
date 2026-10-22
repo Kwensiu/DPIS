@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <sys/system_properties.h>
 #include <unistd.h>
+#include "font_property_keys.h"
 
 #include <atomic>
 #include <cmath>
@@ -94,6 +95,8 @@ void *g_original_weather_configuration_font_scale = nullptr;
 std::atomic<int> g_target_font_percent{100};
 std::atomic<bool> g_enabled{false};
 std::atomic<bool> g_configured_from_jni{false};
+    std::mutex g_font_identity_mutex;
+    std::string g_font_package;
 std::atomic<bool> g_create_hooked{false};
 std::atomic<bool> g_push_style_hooked{false};
 std::atomic<bool> g_generic_get_scaled_font_size_hooked{false};
@@ -948,12 +951,17 @@ std::string sibling_original_rust_binary_path() {
 #endif
 }
 
-uint32_t java_string_hash(const std::string &text) {
-    uint32_t hash = 0;
-    for (unsigned char ch : text) {
-        hash = hash * 31u + ch;
+    std::string current_font_package() {
+        {
+            std::lock_guard<std::mutex> lock(g_font_identity_mutex);
+            if (!g_font_package.empty()) return g_font_package;
     }
-    return hash;
+        auto package = read_environment("DPIS_PACKAGE");
+        if (package.empty()) package = read_proc_cmdline_value("DPIS_PACKAGE");
+        if (!package.empty()) return package;
+        auto process = current_process_name();
+        // App subprocesses share their package config, not a process-name key.
+        return process.substr(0, process.find(':'));
 }
 
 void log_property_config_source(const std::string &process,
@@ -983,34 +991,17 @@ void refresh_property_config() {
     if (process.empty()) {
         return;
     }
-    char key[PROP_NAME_MAX] = {};
-    uint32_t process_hash = java_string_hash(process);
-    std::snprintf(key, sizeof(key), "debug.dpis.forcefont.%08x", process_hash);
-    std::string source = key;
-    std::string value = read_system_property(key);
-    if (value.empty()) {
-        source = "debug.dpis.forcefont";
-        value = read_system_property("debug.dpis.forcefont");
-    }
-    bool configured_from_jni = g_configured_from_jni.load(std::memory_order_relaxed);
-    if (value.empty() && !configured_from_jni) {
-        source = "env:DPIS_FONT_SCALE_PERCENT";
-        value = read_environment("DPIS_FONT_SCALE_PERCENT");
-    }
-    if (value.empty() && !configured_from_jni) {
-        source = "cmdline:DPIS_FONT_SCALE_PERCENT";
-        value = read_proc_cmdline_value("DPIS_FONT_SCALE_PERCENT");
-    }
-    if (value.empty() && !configured_from_jni) {
-        std::snprintf(key, sizeof(key), "debug.dpis.font.%08x", process_hash);
-        source = key;
-        value = read_system_property(key);
-    }
-    if (value.empty()) {
+    const auto package_name = current_font_package();
+    const uint32_t user_id = static_cast<uint32_t>(getuid()) / 100000u;
+    const bool configured_from_jni = g_configured_from_jni.load(std::memory_order_relaxed);
+    const auto config = dpis::select_font_config(
+            package_name, user_id, configured_from_jni,
+            read_system_property, read_environment, read_proc_cmdline_value);
+    if (config.value.empty()) {
         return;
     }
-    int percent = std::atoi(value.c_str());
-    log_property_config_source(process, source, value, percent, configured_from_jni);
+    int percent = std::atoi(config.value.c_str());
+    log_property_config_source(process, config.source, config.value, percent, configured_from_jni);
     if (percent <= 0) {
         g_enabled.store(false, std::memory_order_relaxed);
         return;
@@ -1690,18 +1681,13 @@ void *load_original_rust_binary() {
         log_info("HyperOS proxy original load skipped: empty process");
         return nullptr;
     }
-    std::string path = read_environment("DPIS_RUST_BINARY");
-    if (path.empty()) {
-        path = sibling_original_rust_binary_path();
-    }
-    if (path.empty()) {
-        char key[PROP_NAME_MAX] = {};
-        std::snprintf(key, sizeof(key), "debug.dpis.rustbin.%08x", java_string_hash(process));
-        path = read_system_property(key);
-        if (path.empty() || path == "0") {
-            log_info("HyperOS proxy original load skipped: missing property " + std::string(key));
-            return nullptr;
-        }
+    const auto path = dpis::original_rust_binary(
+            current_font_package(), static_cast<uint32_t>(getuid()) / 100000u,
+            read_environment("DPIS_RUST_BINARY"), sibling_original_rust_binary_path(),
+            read_system_property);
+    if (path.empty() || path == "0") {
+        log_info("HyperOS proxy original load skipped: missing user-scoped binary path");
+        return nullptr;
     }
     void *handle = dlopen(path.c_str(), RTLD_NOW | RTLD_GLOBAL);
     const char *error = dlerror();
@@ -2082,8 +2068,12 @@ Java_com_dpis_module_runtime_font_HyperOsFlutterFontHookInstaller_configure(JNIE
             : nullptr;
     g_target_font_percent.store(target_font_scale_percent, std::memory_order_relaxed);
     g_enabled.store(enabled == JNI_TRUE, std::memory_order_relaxed);
-    g_configured_from_jni.store(true, std::memory_order_relaxed);
     std::string package_text = package_chars != nullptr ? package_chars : "unknown";
+    {
+        std::lock_guard<std::mutex> lock(g_font_identity_mutex);
+        g_font_package = package_chars != nullptr ? package_chars : "";
+    }
+    g_configured_from_jni.store(true, std::memory_order_relaxed);
     if (package_chars != nullptr) {
         env->ReleaseStringUTFChars(package_name, package_chars);
     }

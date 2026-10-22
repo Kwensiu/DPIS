@@ -187,27 +187,23 @@ class LegacyModuleHookSourceTest {
         assertTrue(resourcesReadSource.contains("ViewportApplyMode.AUTO !="))
     }
 
+    // Policy, locator and metrics behavior have callable tests; Xposed wiring needs source anchors.
     @Test
     fun legacyAppSpecificRouteInstallerOwnsWechatDpiRoute() {
         val router = read("src/legacy/java/com/dpis/module/LegacyAppSpecificRouteInstaller.kt")
-        val installer = read("src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt")
+        assertTrue(router.contains("WechatDpiLegacyHookInstaller.install("))
+    }
 
-        assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.packageName)"))
-        assertTrue(router.contains("WechatDpiConfig.appliesTo(lpparam.processName)"))
-        assertTrue(router.contains("WechatDpiLegacyHookInstaller.install(lpparam)"))
-        assertTrue(router.contains("evaluated with generic hooks"))
+    @Test
+    fun legacyWechatRouteUsesTheSharedMethodLocator() {
+        val installer = read("src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt")
         assertTrue(installer.contains("WechatDpiMethodLocator.locate("))
-        assertTrue(installer.contains("WechatDpiRuntime.detached(metrics, dpi)"))
-        assertTrue(installer.contains("let(param::setResult)"))
-        assertTrue(installer.contains("result.source.logName"))
-        assertFalse(installer.contains("WechatDpiRoutes.forVersionCode(versionCode)"))
-        assertFalse(installer.contains("findDisplayMetricsMethods(densityManagerClass)"))
-        assertTrue(installer.contains("XposedBridge.hookMethod(metricsMethod"))
-        assertTrue(installer.contains("applyWechatDpi(metrics"))
-        assertFalse(installer.contains("XposedBridge.hookMethod(targetGetter"))
-        assertFalse(installer.contains("installSetterHook("))
-        assertFalse(installer.contains("XposedBridge.hookAllConstructors"))
-        assertTrue(installer.contains("afterHookedMethod"))
+    }
+
+    @Test
+    fun legacyWechatRouteInterceptsTheGetterAfterItReturns() {
+        val installer = read("src/legacy/java/com/dpis/module/WechatDpiLegacyHookInstaller.kt")
+        assertTrue(installer.contains("override fun afterHookedMethod("))
     }
 
     private fun read(relativePath: String): String = SourceSmokeTestPaths.read(relativePath)

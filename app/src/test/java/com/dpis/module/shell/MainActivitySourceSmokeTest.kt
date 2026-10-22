@@ -775,7 +775,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(
             runtimeLaunch.contains(
-                "FontRuntimePropertySyncer.clearTargetAsync(packageName)"
+                "FontRuntimePropertySyncer.clearTargetAsync(packageName, store.packageConfigOwnerUserId())"
             )
         )
         assertFalse(

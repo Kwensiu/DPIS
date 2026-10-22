@@ -23,29 +23,34 @@ object RuntimeDebugPropertyBridge {
         PERSIST_PROP_FONT_DEBUG_OVERLAY_ENABLED
 
     @JvmStatic
-    fun readGlobalLogEnabled(): Boolean =
+    @JvmOverloads
+    fun readGlobalLogEnabled(reader: (String) -> String = ::readSystemProperty): Boolean =
         readBooleanWithPersistentFallback(
             PROP_GLOBAL_LOG_ENABLED,
             PERSIST_PROP_GLOBAL_LOG_ENABLED,
             false,
+            reader,
         )
 
     @JvmStatic
-    fun readFontDebugOverlayEnabled(): Boolean =
+    @JvmOverloads
+    fun readFontDebugOverlayEnabled(reader: (String) -> String = ::readSystemProperty): Boolean =
         readBooleanWithPersistentFallback(
             PROP_FONT_DEBUG_OVERLAY_ENABLED,
             PERSIST_PROP_FONT_DEBUG_OVERLAY_ENABLED,
             false,
+            reader,
         )
 
     private fun readBooleanWithPersistentFallback(
         key: String,
         persistentKey: String,
         defaultValue: Boolean,
+        reader: (String) -> String,
     ): Boolean {
-        var value = readSystemProperty(key)
+        var value = reader(key)
         if (value.isNullOrBlank()) {
-            value = readSystemProperty(persistentKey)
+            value = reader(persistentKey)
         }
         if (value.isNullOrBlank()) {
             return defaultValue

@@ -40,6 +40,7 @@ object EnvironmentWrite {
         displayInfo: Any?,
         environment: PerAppDisplayEnvironment?,
         config: PerAppDisplayConfig?,
+        userId: Int,
     ): Boolean {
         var changed = false
         // Field baseline is owned by MutationPolicy.shouldApplyMutationField.
@@ -62,7 +63,7 @@ object EnvironmentWrite {
         ) {
             val fontChanged = FontScale.apply(configuration, config)
             if (fontChanged && config != null) {
-                HyperOsFlutterFontBridge.publishTarget(config.packageName, config)
+                HyperOsFlutterFontBridge.publishTarget(config.packageName, config, userId)
             }
             changed = changed or fontChanged
         }

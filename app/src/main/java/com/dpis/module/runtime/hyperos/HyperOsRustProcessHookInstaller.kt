@@ -105,8 +105,12 @@ class HyperOsRustProcessHookInstaller private constructor() {
             // This property is diagnostic/fallback only. Full /data/app/... Rust binary
             // paths can exceed Android's system property limit; the environment remains
             // available to the native proxy at process start.
-            HyperOsFlutterFontBridge.publishRustBinaryPath(parsed.packageName, parsed.binaryPath)
-            HyperOsFlutterFontBridge.publishRustProxyTarget(parsed.packageName, config)
+            HyperOsFlutterFontBridge.publishRustBinaryPath(
+                parsed.packageName,
+                parsed.binaryPath,
+                userId
+            )
+            HyperOsFlutterFontBridge.publishRustProxyTarget(parsed.packageName, config, userId)
             val proxyLibraryPath = resolveProxyLibraryPath(parsed.binaryPath)
             if (proxyLibraryPath.isNullOrEmpty()) {
                 DpisLog.i(

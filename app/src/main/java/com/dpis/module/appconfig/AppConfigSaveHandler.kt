@@ -331,15 +331,20 @@ class AppConfigSaveHandler {
         }
 
         private fun publishFontHookDomainsAfterSave(packageName: String?, store: DpisConfigStore?) {
+            if (store == null) return
             val override = HookDomainOverrideStore(store).read(packageName)
             if (override.customPathEnabled) {
                 FontHookDomainPropertySyncer.publishTargetAsync(
                     packageName,
-                    override.enabledKnownDomains
+                    override.enabledKnownDomains,
+                    store.packageConfigOwnerUserId(),
                 )
                 return
             }
-            FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+            FontHookDomainPropertySyncer.clearTargetAsync(
+                packageName,
+                store.packageConfigOwnerUserId()
+            )
         }
 
         private fun isDefaultPackageState(

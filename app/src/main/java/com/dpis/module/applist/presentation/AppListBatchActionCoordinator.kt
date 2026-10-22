@@ -81,8 +81,14 @@ class AppListBatchActionCoordinator(
                 return@Runnable
             }
             resettable.forEach { packageName ->
-                FontRuntimePropertySyncer.clearTargetAsync(packageName)
-                FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+                FontRuntimePropertySyncer.clearTargetAsync(
+                    packageName,
+                    store.packageConfigOwnerUserId()
+                )
+                FontHookDomainPropertySyncer.clearTargetAsync(
+                    packageName,
+                    store.packageConfigOwnerUserId()
+                )
                 ViewportPropertySyncer.clearTargetAsync(packageName)
                 WechatDpiPropertySyncer.publishDpiAsync(packageName, null)
             }
@@ -138,8 +144,14 @@ class AppListBatchActionCoordinator(
                 if (store.setTargetDpisEnabled(packageName, enabled)) {
                     updatedPackages += packageName
                     if (!enabled) {
-                        FontRuntimePropertySyncer.clearTargetAsync(packageName)
-                        FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+                        FontRuntimePropertySyncer.clearTargetAsync(
+                            packageName,
+                            store.packageConfigOwnerUserId()
+                        )
+                        FontHookDomainPropertySyncer.clearTargetAsync(
+                            packageName,
+                            store.packageConfigOwnerUserId()
+                        )
                         ViewportPropertySyncer.clearTargetAsync(packageName)
                     }
                 }

@@ -114,15 +114,30 @@ object QuickTemplateApplyAdapters {
                     checkNotNull(plan.fontScalePercent),
                     plan.fontApplyMode,
                     plan.hyperOsNativeFontHookEnabled,
+                    store.packageConfigOwnerUserId(),
                 )
             } else {
-                FontRuntimePropertySyncer.clearFontScaleTargetAsync(packageName)
+                FontRuntimePropertySyncer.clearFontScaleTargetAsync(
+                    packageName,
+                    store.packageConfigOwnerUserId()
+                )
             }
-            FontRuntimePropertySyncer.publishTypefaceTargetAsync(packageName, plan.typefaceId)
+            FontRuntimePropertySyncer.publishTypefaceTargetAsync(
+                packageName,
+                plan.typefaceId,
+                store.packageConfigOwnerUserId()
+            )
             if (plan.publishFontHookDomains) {
-                FontHookDomainPropertySyncer.publishTargetAsync(packageName, plan.fontHookDomains)
+                FontHookDomainPropertySyncer.publishTargetAsync(
+                    packageName,
+                    plan.fontHookDomains,
+                    store.packageConfigOwnerUserId()
+                )
             } else {
-                FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+                FontHookDomainPropertySyncer.clearTargetAsync(
+                    packageName,
+                    store.packageConfigOwnerUserId()
+                )
             }
         }
     }

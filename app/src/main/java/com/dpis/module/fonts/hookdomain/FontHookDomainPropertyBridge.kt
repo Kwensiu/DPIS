@@ -1,6 +1,7 @@
 package com.dpis.module.fonts.hookdomain
 
 import com.dpis.module.hooks.HookDomainOverride
+import com.dpis.module.fonts.FontPropertyKeys
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -8,28 +9,31 @@ import java.security.NoSuchAlgorithmException
 import java.util.Locale
 
 object FontHookDomainPropertyBridge {
-    private const val PROPERTY_PREFIX = "debug.dpis.hookdomains."
-    private const val PERSIST_PROPERTY_PREFIX = "persist.debug.dpis.hookdomains."
     private const val VALUE_VERSION_PREFIX = "v2:"
     private const val PACKAGE_CHECK_HEX_LENGTH = 12
 
     // Property names carry a stable package hash so global system properties do not expose names.
     @JvmStatic
-    fun propertyNameForPackage(packageName: String): String =
-        PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode())
+    fun propertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "hookdomains")
 
     @JvmStatic
-    fun persistentPropertyNameForPackage(packageName: String): String =
-        PERSIST_PROPERTY_PREFIX + String.format(Locale.US, "%08x", packageName.hashCode())
+    fun persistentPropertyNameForPackage(packageName: String, userId: Int): String =
+        FontPropertyKeys.name(packageName, userId, "hookdomains", true)
 
     @JvmStatic
-    fun readOverride(packageName: String?): HookDomainOverride {
+    fun readOverride(
+        packageName: String?,
+        userId: Int,
+        reader: (String) -> String = ::readSystemProperty,
+    ): HookDomainOverride {
         if (packageName.isNullOrBlank()) {
             return HookDomainOverride.automatic()
         }
         val raw = readPropertyWithPersistentFallback(
-            propertyNameForPackage(packageName),
-            persistentPropertyNameForPackage(packageName),
+            propertyNameForPackage(packageName, userId),
+            persistentPropertyNameForPackage(packageName, userId),
+            reader,
         )
         return parseOverrideValue(packageName, raw)
     }
@@ -115,9 +119,13 @@ object FontHookDomainPropertyBridge {
         }
     }
 
-    private fun readPropertyWithPersistentFallback(key: String, persistentKey: String): String {
-        val value = readSystemProperty(key)
-        return if (!value.isNullOrBlank()) value else readSystemProperty(persistentKey)
+    private fun readPropertyWithPersistentFallback(
+        key: String,
+        persistentKey: String,
+        reader: (String) -> String,
+    ): String {
+        val value = reader(key)
+        return if (value.isNotBlank()) value else reader(persistentKey)
     }
 
     private fun readSystemProperty(key: String): String {

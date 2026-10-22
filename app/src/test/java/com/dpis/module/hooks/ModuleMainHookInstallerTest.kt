@@ -528,14 +528,10 @@ class ModuleMainHookInstallerTest {
 
     @Test
     @Throws(IOException::class)
-    fun nativeFontHookUsesRustEnvironmentAsRuntimeFontSource() {
-        val nativeSource: String = read("src/main/cpp/dpis_native.cpp")
-
-        Assert.assertTrue(nativeSource.contains("DPIS_FONT_SCALE_PERCENT"))
-        Assert.assertTrue(nativeSource.contains("std::getenv"))
-        Assert.assertTrue(nativeSource.contains("read_proc_cmdline_value"))
-        Assert.assertTrue(nativeSource.contains("value == \"false\" || value == \"disabled\""))
-        Assert.assertTrue(nativeSource.contains("return g_enabled.load(std::memory_order_relaxed)"))
+    fun nativeFontHookDelegatesToTheTestedTransportPolicy() {
+        // Android/JNI glue is not runnable in the JVM; selection is tested by the native behavior test.
+        val nativeSource = read("src/main/cpp/dpis_native.cpp")
+        Assert.assertTrue(nativeSource.contains("dpis::select_font_config("))
     }
 
     companion object {

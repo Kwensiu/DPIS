@@ -142,7 +142,7 @@ class FontDebugOverlayService : Service() {
 
         overlayRoot = overlayTextView
         gestureDetector = GestureDetector(this, OverlayGestureListener())
-        gestureDetector!!.isLongpressEnabled = true
+        gestureDetector!!.setIsLongpressEnabled(true)
         overlayRoot!!.setOnTouchListener(DragTouchListener())
 
         layoutParams = WindowManager.LayoutParams(

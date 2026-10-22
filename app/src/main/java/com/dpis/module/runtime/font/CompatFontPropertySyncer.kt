@@ -6,23 +6,33 @@ import com.dpis.module.runtime.transport.RootCommandRunner
 
 object CompatFontPropertySyncer {
     @JvmStatic
-    fun publishTargetAsync(packageName: String?, fontScalePercent: Int) =
-        publishTargetAsync(packageName, fontScalePercent, FontApplyMode.SYSTEM_EMULATION)
-
-    @JvmStatic
-    fun publishTargetAsync(packageName: String?, fontScalePercent: Int, mode: String?) {
+    fun publishTargetAsync(
+        packageName: String?,
+        fontScalePercent: Int,
+        mode: String?,
+        userId: Int
+    ) {
         if (packageName.isNullOrBlank() || fontScalePercent <= 0) return
         Thread(
-            { runRootCommand(buildCompatConfigCommand(packageName, fontScalePercent, mode)) },
+            {
+                runRootCommand(
+                    buildCompatConfigCommand(
+                        packageName,
+                        fontScalePercent,
+                        mode,
+                        userId
+                    )
+                )
+            },
             "DPIS-compat-font-property-publisher",
         ).apply { isDaemon = true }.start()
     }
 
     @JvmStatic
-    fun clearTargetAsync(packageName: String?) {
+    fun clearTargetAsync(packageName: String?, userId: Int) {
         if (packageName.isNullOrBlank()) return
         Thread(
-            { runRootCommand(buildClearCommand(packageName)) },
+            { runRootCommand(buildClearCommand(packageName, userId)) },
             "DPIS-compat-font-property-cleaner",
         ).apply { isDaemon = true }.start()
     }
@@ -42,7 +52,14 @@ object CompatFontPropertySyncer {
                     fontScalePercent != null && fontScalePercent > 0
                 ) fontScalePercent else 0
                 if (command.isNotEmpty()) command.append("; ")
-                command.append(buildCompatConfigCommand(packageName, value, mode))
+                command.append(
+                    buildCompatConfigCommand(
+                        packageName,
+                        value,
+                        mode,
+                        store.packageConfigOwnerUserId()
+                    )
+                )
             }
             if (command.isNotEmpty()) runRootCommand(command.toString())
         }, "DPIS-compat-font-property-syncer").apply { isDaemon = true }.start()
@@ -57,12 +74,14 @@ object CompatFontPropertySyncer {
         packageName: String,
         fontScalePercent: Int,
         mode: String?,
-    ): String = buildCompatConfigCommand(packageName, fontScalePercent, mode)
+        userId: Int,
+    ): String = buildCompatConfigCommand(packageName, fontScalePercent, mode, userId)
 
     private fun buildCompatConfigCommand(
         packageName: String,
         fontScalePercent: Int,
         mode: String?,
+        userId: Int,
     ): String {
         val normalizedMode = FontApplyMode.normalize(mode)
         val enabled = fontScalePercent > 0 && FontApplyMode.isEnabled(normalizedMode)
@@ -77,22 +96,28 @@ object CompatFontPropertySyncer {
         } else 0
         val compatMode = if (enabled) normalizedMode else FontApplyMode.OFF
         return buildSetCommandPair(
-            HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
-            HyperOsFlutterFontBridge.persistentCompatFontPropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName, userId),
+            HyperOsFlutterFontBridge.persistentCompatFontPropertyNameForPackage(
+                packageName,
+                userId
+            ),
             systemEmulationValue,
         ) + "; " + buildSetCommandPair(
-            HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName),
-            HyperOsFlutterFontBridge.persistentCompatFontModePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName, userId),
+            HyperOsFlutterFontBridge.persistentCompatFontModePropertyNameForPackage(
+                packageName,
+                userId
+            ),
             compatMode,
         ) + "; " + buildSetCommandPair(
-            HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName),
-            HyperOsFlutterFontBridge.persistentForcePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName, userId),
+            HyperOsFlutterFontBridge.persistentForcePropertyNameForPackage(packageName, userId),
             forceFontValue,
         )
     }
 
-    private fun buildClearCommand(packageName: String) =
-        buildCompatConfigCommand(packageName, 0, FontApplyMode.OFF)
+    private fun buildClearCommand(packageName: String, userId: Int) =
+        buildCompatConfigCommand(packageName, 0, FontApplyMode.OFF, userId)
 
     private fun buildSetCommand(property: String, fontScalePercent: Int) =
         buildSetCommand(property, fontScalePercent.toString())

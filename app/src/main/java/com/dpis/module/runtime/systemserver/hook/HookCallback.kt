@@ -167,6 +167,7 @@ object HookCallback {
                 }
                 return chain.proceed()
             }
+            val targetUserId = resolvedUserId ?: return chain.proceed()
             if (loggingEnabled && resolvedPackage.fallbackFromPackage != null) {
                 HookLog.logConfigFallback(
                     entryName,
@@ -201,6 +202,7 @@ object HookCallback {
                     before.displayInfo,
                     applyEnvironment,
                     config,
+                    targetUserId,
                 )
                 changed = changed or EnvironmentWrite.applyConfigDispatch(
                     entryName,
@@ -286,6 +288,7 @@ object HookCallback {
                     after.displayInfo,
                     applyEnvironment,
                     config,
+                    targetUserId,
                 )
                 val hasMutationTarget = applyEnvironment != null ||
                         ConfigSelection.hasSystemServerFontOverride(config)

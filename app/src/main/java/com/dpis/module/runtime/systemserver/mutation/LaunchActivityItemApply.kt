@@ -120,7 +120,7 @@ object LaunchActivityItemApply {
                 changed or applyLaunchActivityItemConfigurationFields(activityItem, environment)
         }
         if (fontChanged) {
-            HyperOsFlutterFontBridge.publishTarget(packageName, config)
+            HyperOsFlutterFontBridge.publishTarget(packageName, config, userId)
             FontScale.report(packageName, beforeFontScale, baseConfiguration.fontScale)
         }
         if (changed && DpisLog.isLoggingEnabled()) {

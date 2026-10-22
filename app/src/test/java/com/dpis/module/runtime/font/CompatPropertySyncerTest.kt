@@ -9,7 +9,7 @@ class CompatPropertySyncerTest {
     @Test
     fun fontSyncPublishesCompatModeWithoutEnablingSystemEmulation() {
         val command = CompatFontPropertySyncer.buildCompatConfigCommandForTest(
-            "com.max.xiaoheihe", 200, FontApplyMode.FIELD_REWRITE,
+            "com.max.xiaoheihe", 200, FontApplyMode.FIELD_REWRITE, 0
         )
         assertEquals(expectedCommand("0", "field_rewrite", "200"), command)
     }
@@ -17,7 +17,7 @@ class CompatPropertySyncerTest {
     @Test
     fun fontSystemEmulationPublishesRuntimeValueAndMode() {
         val command = CompatFontPropertySyncer.buildCompatConfigCommandForTest(
-            "com.max.xiaoheihe", 200, FontApplyMode.SYSTEM_EMULATION,
+            "com.max.xiaoheihe", 200, FontApplyMode.SYSTEM_EMULATION, 0
         )
         assertEquals(expectedCommand("200", "system_emulation", "0"), command)
     }
@@ -27,13 +27,13 @@ class CompatPropertySyncerTest {
         assertEquals(
             expectedCommand("0", "off", "0"),
             CompatFontPropertySyncer.buildCompatConfigCommandForTest(
-                "com.max.xiaoheihe", 200, FontApplyMode.OFF,
+                "com.max.xiaoheihe", 200, FontApplyMode.OFF, 0
             ),
         )
         assertEquals(
             expectedCommand("0", "off", "0"),
             CompatFontPropertySyncer.buildCompatConfigCommandForTest(
-                "com.max.xiaoheihe", 0, FontApplyMode.FIELD_REWRITE,
+                "com.max.xiaoheihe", 0, FontApplyMode.FIELD_REWRITE, 0
             ),
         )
     }
@@ -44,17 +44,17 @@ class CompatPropertySyncerTest {
             assertEquals(
                 expectedCommand("0", "field_rewrite", percent.toString()),
                 CompatFontPropertySyncer.buildCompatConfigCommandForTest(
-                    "com.max.xiaoheihe", percent, FontApplyMode.FIELD_REWRITE,
+                    "com.max.xiaoheihe", percent, FontApplyMode.FIELD_REWRITE, 0
                 ),
             )
         }
     }
 
     private fun expectedCommand(compatFont: String, mode: String, forceFont: String): String =
-        "setprop 'debug.dpis.compatfont.eab4efd3' '$compatFont'; " +
-            "setprop 'persist.debug.dpis.compatfont.eab4efd3' '$compatFont'; " +
-            "setprop 'debug.dpis.fontmode.eab4efd3' '$mode'; " +
-            "setprop 'persist.debug.dpis.fontmode.eab4efd3' '$mode'; " +
-            "setprop 'debug.dpis.forcefont.eab4efd3' '$forceFont'; " +
-            "setprop 'persist.debug.dpis.forcefont.eab4efd3' '$forceFont'"
+        "setprop 'debug.dpis.compatfont.0.eab4efd3' '$compatFont'; " +
+                "setprop 'persist.debug.dpis.compatfont.0.eab4efd3' '$compatFont'; " +
+                "setprop 'debug.dpis.fontmode.0.eab4efd3' '$mode'; " +
+                "setprop 'persist.debug.dpis.fontmode.0.eab4efd3' '$mode'; " +
+                "setprop 'debug.dpis.forcefont.0.eab4efd3' '$forceFont'; " +
+                "setprop 'persist.debug.dpis.forcefont.0.eab4efd3' '$forceFont'"
 }

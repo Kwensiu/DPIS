@@ -47,8 +47,14 @@ class RuntimeLaunchSession(
             return false
         }
         if (!enabled) {
-            FontRuntimePropertySyncer.clearTargetAsync(packageName)
-            FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+            FontRuntimePropertySyncer.clearTargetAsync(
+                packageName,
+                store.packageConfigOwnerUserId()
+            )
+            FontHookDomainPropertySyncer.clearTargetAsync(
+                packageName,
+                store.packageConfigOwnerUserId()
+            )
             ViewportPropertySyncer.clearTargetAsync(packageName)
         }
         activity.showToast(
