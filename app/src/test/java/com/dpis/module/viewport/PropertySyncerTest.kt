@@ -1,12 +1,69 @@
 package com.dpis.module.viewport
 
-import com.dpis.module.viewport.ViewportApplyMode
-import com.dpis.module.viewport.ViewportPropertySyncer
-import com.dpis.module.viewport.ViewportTargetSpec
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class PropertySyncerTest {
+    @Test
+    fun viewportPropertiesArePublishedToTheSelectedAndroidUserNamespace() {
+        val primaryUser = ViewportPropertySyncer.buildCompatConfigCommandForTest(
+            "com.max.xiaoheihe",
+            ViewportTargetSpec.relativeScale(80000),
+            ViewportApplyMode.SYSTEM,
+            0,
+        )
+        val multiAppUser = ViewportPropertySyncer.buildCompatConfigCommandForTest(
+            "com.max.xiaoheihe",
+            ViewportTargetSpec.relativeScale(160000),
+            ViewportApplyMode.SYSTEM,
+            999,
+        )
+
+        assertEquals(expectedCommand("0", "relative_scale", "80000", "0", "system", 0), primaryUser)
+        assertEquals(
+            expectedCommand("0", "relative_scale", "160000", "0", "system", 999),
+            multiAppUser
+        )
+    }
+
+    @Test
+    fun viewportReadUsesOnlyTheRequestedAndroidUserNamespace() {
+        val properties = mapOf(
+            ViewportPropertyBridge.propertyNameForPackage("com.example.browser", 0) to "360",
+            ViewportPropertyBridge.targetTypePropertyNameForPackage(
+                "com.example.browser",
+                0
+            ) to "absolute_dp",
+            ViewportPropertyBridge.compatModePropertyNameForPackage(
+                "com.example.browser",
+                0
+            ) to "system",
+            ViewportPropertyBridge.propertyNameForPackage("com.example.browser", 999) to "720",
+            ViewportPropertyBridge.targetTypePropertyNameForPackage(
+                "com.example.browser",
+                999
+            ) to "absolute_dp",
+            ViewportPropertyBridge.compatModePropertyNameForPackage(
+                "com.example.browser",
+                999
+            ) to "system",
+        )
+        val reader: (String) -> String? = properties::get
+
+        assertEquals(
+            ViewportTargetSpec.absoluteDp(360),
+            ViewportPropertyBridge.readTargetSpecForTest("com.example.browser", 0, reader),
+        )
+        assertEquals(
+            ViewportTargetSpec.absoluteDp(720),
+            ViewportPropertyBridge.readTargetSpecForTest("com.example.browser", 999, reader),
+        )
+        assertEquals(
+            ViewportTargetSpec.off(),
+            ViewportPropertyBridge.readTargetSpecForTest("com.example.browser", 10, reader),
+        )
+    }
+
     @Test
     fun viewportSyncPublishesCompatConfigWithoutEnablingSystemEmulation() {
         val command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
@@ -26,7 +83,10 @@ class PropertySyncerTest {
     @Test
     fun viewportRelativeScalePublishesScaleWithoutWidthOnlyValues() {
         val command = ViewportPropertySyncer.buildCompatConfigCommandForTest(
-            "com.max.xiaoheihe", ViewportTargetSpec.relativeScale(125000), ViewportApplyMode.SYSTEM,
+            "com.max.xiaoheihe",
+            ViewportTargetSpec.relativeScale(125000),
+            ViewportApplyMode.SYSTEM,
+            0,
         )
         assertEquals(expectedCommand("0", "relative_scale", "125000", "0", "system"), command)
     }
@@ -64,16 +124,23 @@ class PropertySyncerTest {
     }
 
     private fun expectedCommand(
-        viewport: String, targetType: String, scalePermille: String, compatConfig: String, mode: String,
-    ): String =
-        "setprop 'debug.dpis.vp.eab4efd3' '$viewport'; " +
-            "setprop 'persist.debug.dpis.vp.eab4efd3' '$viewport'; " +
-            "setprop 'debug.dpis.vptype.eab4efd3' '$targetType'; " +
-            "setprop 'persist.debug.dpis.vptype.eab4efd3' '$targetType'; " +
-            "setprop 'debug.dpis.vpscale.eab4efd3' '$scalePermille'; " +
-            "setprop 'persist.debug.dpis.vpscale.eab4efd3' '$scalePermille'; " +
-            "setprop 'debug.dpis.vpcfg.eab4efd3' '$compatConfig'; " +
-            "setprop 'persist.debug.dpis.vpcfg.eab4efd3' '$compatConfig'; " +
-            "setprop 'debug.dpis.vpmode.eab4efd3' '$mode'; " +
-            "setprop 'persist.debug.dpis.vpmode.eab4efd3' '$mode'"
+        viewport: String,
+        targetType: String,
+        scalePermille: String,
+        compatConfig: String,
+        mode: String,
+        userId: Int = 0,
+    ): String {
+        val propertyHash = "$userId.eab4efd3"
+        return "setprop 'debug.dpis.vp.$propertyHash' '$viewport'; " +
+                "setprop 'persist.debug.dpis.vp.$propertyHash' '$viewport'; " +
+                "setprop 'debug.dpis.vptype.$propertyHash' '$targetType'; " +
+                "setprop 'persist.debug.dpis.vptype.$propertyHash' '$targetType'; " +
+                "setprop 'debug.dpis.vpscale.$propertyHash' '$scalePermille'; " +
+                "setprop 'persist.debug.dpis.vpscale.$propertyHash' '$scalePermille'; " +
+                "setprop 'debug.dpis.vpcfg.$propertyHash' '$compatConfig'; " +
+                "setprop 'persist.debug.dpis.vpcfg.$propertyHash' '$compatConfig'; " +
+                "setprop 'debug.dpis.vpmode.$propertyHash' '$mode'; " +
+                "setprop 'persist.debug.dpis.vpmode.$propertyHash' '$mode'"
+    }
 }

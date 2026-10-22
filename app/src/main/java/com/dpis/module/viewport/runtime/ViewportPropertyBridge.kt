@@ -1,5 +1,6 @@
 package com.dpis.module.viewport
 
+import android.os.Process
 import java.lang.reflect.Method
 import java.util.Locale
 
@@ -19,73 +20,89 @@ object ViewportPropertyBridge {
     private const val PERSIST_COMPAT_MODE_PROPERTY_PREFIX = "persist.debug.dpis.vpmode."
 
     @JvmStatic
-    fun propertyNameForPackage(packageName: String) = PROPERTY_PREFIX + hash(packageName)
+    fun propertyNameForPackage(packageName: String, userId: Int = currentUserId()) =
+        PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun compatConfigPropertyNameForPackage(packageName: String) =
-        COMPAT_CONFIG_PROPERTY_PREFIX + hash(packageName)
+    fun compatConfigPropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = COMPAT_CONFIG_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun targetTypePropertyNameForPackage(packageName: String) =
-        TARGET_TYPE_PROPERTY_PREFIX + hash(packageName)
+    fun targetTypePropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = TARGET_TYPE_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun scalePropertyNameForPackage(packageName: String) = SCALE_PROPERTY_PREFIX + hash(packageName)
+    fun scalePropertyNameForPackage(packageName: String, userId: Int = currentUserId()) =
+        SCALE_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun compatModePropertyNameForPackage(packageName: String) =
-        COMPAT_MODE_PROPERTY_PREFIX + hash(packageName)
+    fun compatModePropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = COMPAT_MODE_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun persistentPropertyNameForPackage(packageName: String) =
-        PERSIST_PROPERTY_PREFIX + hash(packageName)
+    fun persistentPropertyNameForPackage(packageName: String, userId: Int = currentUserId()) =
+        PERSIST_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun persistentCompatConfigPropertyNameForPackage(packageName: String) =
-        PERSIST_COMPAT_CONFIG_PROPERTY_PREFIX + hash(packageName)
+    fun persistentCompatConfigPropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = PERSIST_COMPAT_CONFIG_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun persistentTargetTypePropertyNameForPackage(packageName: String) =
-        PERSIST_TARGET_TYPE_PROPERTY_PREFIX + hash(packageName)
+    fun persistentTargetTypePropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = PERSIST_TARGET_TYPE_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun persistentScalePropertyNameForPackage(packageName: String) =
-        PERSIST_SCALE_PROPERTY_PREFIX + hash(packageName)
+    fun persistentScalePropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = PERSIST_SCALE_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun persistentCompatModePropertyNameForPackage(packageName: String) =
-        PERSIST_COMPAT_MODE_PROPERTY_PREFIX + hash(packageName)
+    fun persistentCompatModePropertyNameForPackage(
+        packageName: String,
+        userId: Int = currentUserId(),
+    ) = PERSIST_COMPAT_MODE_PROPERTY_PREFIX + hash(packageName, userId)
 
     @JvmStatic
-    fun readTargetWidthDp(packageName: String?): Int? = packageName?.takeIf { it.isNotEmpty() }
-        ?.let {
-            readOverrideValue(
-                propertyNameForPackage(it),
-                persistentPropertyNameForPackage(it)
-            )
-        }
-
-    @JvmStatic
-    fun readCompatConfigWidthDp(packageName: String?): Int? =
+    fun readTargetWidthDp(packageName: String?, userId: Int = currentUserId()): Int? =
         packageName?.takeIf { it.isNotEmpty() }?.let {
             readOverrideValue(
-                compatConfigPropertyNameForPackage(it),
-                persistentCompatConfigPropertyNameForPackage(it)
+                propertyNameForPackage(it, userId),
+                persistentPropertyNameForPackage(it, userId),
             )
         }
 
     @JvmStatic
-    fun readTargetSpec(packageName: String?): ViewportTargetSpec {
+    fun readCompatConfigWidthDp(packageName: String?, userId: Int = currentUserId()): Int? =
+        packageName?.takeIf { it.isNotEmpty() }?.let {
+            readOverrideValue(
+                compatConfigPropertyNameForPackage(it, userId),
+                persistentCompatConfigPropertyNameForPackage(it, userId),
+            )
+        }
+
+    @JvmStatic
+    fun readTargetSpec(packageName: String?, userId: Int = currentUserId()): ViewportTargetSpec {
         if (packageName.isNullOrEmpty()) return ViewportTargetSpec.off()
         val type = readPropertyWithPersistentFallback(
-            targetTypePropertyNameForPackage(packageName),
-            persistentTargetTypePropertyNameForPackage(packageName)
+            targetTypePropertyNameForPackage(packageName, userId),
+            persistentTargetTypePropertyNameForPackage(packageName, userId),
         )
-        val widthDp = readTargetWidthDp(packageName)
-        val compatConfigWidthDp = readCompatConfigWidthDp(packageName)
+        val widthDp = readTargetWidthDp(packageName, userId)
+        val compatConfigWidthDp = readCompatConfigWidthDp(packageName, userId)
         val scale = readOverrideValue(
-            scalePropertyNameForPackage(packageName),
-            persistentScalePropertyNameForPackage(packageName)
+            scalePropertyNameForPackage(packageName, userId),
+            persistentScalePropertyNameForPackage(packageName, userId),
         )
         return ViewportPropertyProjection.decode(
             widthDp,
@@ -97,12 +114,12 @@ object ViewportPropertyBridge {
     }
 
     @JvmStatic
-    fun readCompatMode(packageName: String?): String =
+    fun readCompatMode(packageName: String?, userId: Int = currentUserId()): String =
         if (packageName.isNullOrEmpty()) ViewportApplyMode.OFF else ViewportApplyMode.normalize(
             readPropertyWithPersistentFallback(
-                compatModePropertyNameForPackage(packageName),
-                persistentCompatModePropertyNameForPackage(packageName)
-            )
+                compatModePropertyNameForPackage(packageName, userId),
+                persistentCompatModePropertyNameForPackage(packageName, userId),
+            ),
         )
 
     @JvmStatic
@@ -131,5 +148,44 @@ object ViewportPropertyBridge {
         ""
     }
 
-    private fun hash(packageName: String) = String.format(Locale.US, "%08x", packageName.hashCode())
+    @JvmStatic
+    fun readTargetSpecForTest(
+        packageName: String,
+        userId: Int,
+        reader: (String) -> String?,
+    ): ViewportTargetSpec {
+        val names = propertyNamesForPackage(packageName, userId)
+        return ViewportPropertyProjection.decode(
+            parseOverrideValue(reader(names.targetWidth)),
+            reader(names.targetType),
+            parseOverrideValue(reader(names.scale)),
+            parseOverrideValue(reader(names.compatConfigWidth)),
+            reader(names.compatMode),
+        ).targetSpec
+    }
+
+    private data class PropertyNames(
+        val targetWidth: String,
+        val targetType: String,
+        val scale: String,
+        val compatConfigWidth: String,
+        val compatMode: String,
+    )
+
+    private fun propertyNamesForPackage(packageName: String, userId: Int) = PropertyNames(
+        propertyNameForPackage(packageName, userId),
+        targetTypePropertyNameForPackage(packageName, userId),
+        scalePropertyNameForPackage(packageName, userId),
+        compatConfigPropertyNameForPackage(packageName, userId),
+        compatModePropertyNameForPackage(packageName, userId),
+    )
+
+    private fun currentUserId(): Int = runCatching {
+        Process.myUid() / PER_USER_RANGE
+    }.getOrDefault(0)
+
+    private fun hash(packageName: String, userId: Int) =
+        "$userId." + String.format(Locale.US, "%08x", packageName.hashCode())
+
+    private const val PER_USER_RANGE = 100000
 }

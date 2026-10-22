@@ -104,7 +104,7 @@ class LegacyModuleManifestMetadataTest {
         assertTrue(manifest.contains("android.intent.action.BOOT_COMPLETED"))
         assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"))
         assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"))
-        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"))
+        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)"))
     }
 
     private fun read(path: String): String = SourceSmokeTestPaths.read(path)

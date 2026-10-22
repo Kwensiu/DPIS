@@ -1,6 +1,7 @@
 package com.dpis.module.templates
 
 import java.util.Collections
+import java.util.function.BooleanSupplier
 
 /**
  * Coordinates applying a saved quick-template value to selected packages.
@@ -12,8 +13,14 @@ import java.util.Collections
  */
 class QuickTemplateApplyCoordinator<T>(
     private val configWriter: ConfigWriter<T?>?,
-    private val runtimePublisher: RuntimePublisher<T?>?
+    private val runtimePublisher: RuntimePublisher<T?>?,
+    private val xposedConfigReady: BooleanSupplier,
 ) {
+    internal constructor(
+        configWriter: ConfigWriter<T?>?,
+        runtimePublisher: RuntimePublisher<T?>?,
+    ) : this(configWriter, runtimePublisher, BooleanSupplier { true })
+
     interface Template<T> {
         fun selectedPackages(): MutableSet<String?>?
 
@@ -60,6 +67,12 @@ class QuickTemplateApplyCoordinator<T>(
         targets = filterPackages(targets, targetPackageFilter)
         if (targets.isEmpty()) {
             return Result.Companion.noSelection()
+        }
+        if (!xposedConfigReady.asBoolean) {
+            return Result.Companion.failure(
+                ArrayList<String?>(),
+                ArrayList(targets),
+            )
         }
         val successfulPackages = ArrayList<String?>()
         val failedPackages = ArrayList<String?>()

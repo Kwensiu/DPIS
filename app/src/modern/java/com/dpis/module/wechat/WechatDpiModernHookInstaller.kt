@@ -59,7 +59,10 @@ internal object WechatDpiModernHookInstaller {
             )
             return WechatDpiInstallOutcome.SKIPPED
         }
-        val dedicatedDpi = WechatDpiRoutePolicy.targetDpi(resolvedPackageName)
+        val dedicatedDpi = WechatDpiRoutePolicy.targetDpi(
+            resolvedPackageName,
+            applicationInfo?.uid?.div(100000) ?: 0,
+        )
         xposed.log(
             Log.INFO,
             DpisLog.TAG,
@@ -123,6 +126,7 @@ internal object WechatDpiModernHookInstaller {
             classLoader,
             phase,
             staticRoute?.bottomTabIconScaleEnabled == true,
+            applicationInfo,
         )
         if (locator.methods.isEmpty()) {
             val deferred = !phase.allowsDexKit
@@ -145,7 +149,7 @@ internal object WechatDpiModernHookInstaller {
             )
             return if (deferred) WechatDpiInstallOutcome.DEFERRED else WechatDpiInstallOutcome.SKIPPED
         }
-        return if (installDensityHooks(xposed, locator, versionCode, phase)) {
+        return if (installDensityHooks(xposed, locator, versionCode, phase, applicationInfo)) {
             WechatDpiInstallOutcome.INSTALLED
         } else {
             WechatDpiInstallOutcome.SKIPPED
@@ -157,6 +161,7 @@ internal object WechatDpiModernHookInstaller {
         locator: WechatDpiMethodLocator.Result,
         versionCode: Long,
         phase: WechatDpiInstallPhase,
+        applicationInfo: ApplicationInfo?,
     ): Boolean {
         val methods = locator.methods
         val classes = markUnhookedClasses(methods)
@@ -171,9 +176,10 @@ internal object WechatDpiModernHookInstaller {
                     "$HOOK_ID_DENSITY_PREFIX${method.declaringClass.name}_${method.name}",
                 ).intercept { chain ->
                     val result = chain.proceed()
-                    logWechatDpiCallback(xposed, method, result, phase)
+                    logWechatDpiCallback(xposed, method, result, phase, applicationInfo)
                     if (result is DisplayMetrics) {
-                        applyWechatDpi(xposed, result, methodName(method), phase) ?: result
+                        applyWechatDpi(xposed, result, methodName(method), phase, applicationInfo)
+                            ?: result
                     } else {
                         result
                     }
@@ -183,7 +189,10 @@ internal object WechatDpiModernHookInstaller {
             DpisLog.i(
                 "modern WeChat DPI hook ready: ${methodNames(methods)}, installed=$installed, " +
                         "locator=${locator.source.logName}, versionCode=$versionCode, configuredDpi=" +
-                        WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME),
+                        WechatDpiPropertyBridge.readDpi(
+                            WechatDpiConfig.PACKAGE_NAME,
+                            applicationInfo?.uid?.div(100000) ?: 0,
+                        ),
             )
             xposed.log(
                 Log.INFO,
@@ -257,13 +266,15 @@ internal object WechatDpiModernHookInstaller {
         method: Method,
         result: Any?,
         phase: WechatDpiInstallPhase,
+        applicationInfo: ApplicationInfo?,
     ) {
         if (!callbackLogged.compareAndSet(false, true)) return
         val detail =
             "attempt=${phase.routeName}, method=${methodName(method)}, firstCallbackMethod=${method.name}, " +
                     "result=${result?.javaClass?.name ?: "null"}, configuredDpi=${
                         WechatDpiPropertyBridge.readDpi(
-                            WechatDpiConfig.PACKAGE_NAME
+                            WechatDpiConfig.PACKAGE_NAME,
+                            applicationInfo?.uid?.div(100000) ?: 0,
                         )
                     }"
         DpisLog.i("modern WeChat DPI callback hit: $detail")
@@ -285,9 +296,13 @@ internal object WechatDpiModernHookInstaller {
         xposed: XposedInterface,
         metrics: DisplayMetrics,
         methodName: String,
-        phase: WechatDpiInstallPhase
+        phase: WechatDpiInstallPhase,
+        applicationInfo: ApplicationInfo?,
     ): DisplayMetrics? {
-        val targetDpi = WechatDpiRoutePolicy.targetDpi(WechatDpiConfig.PACKAGE_NAME) ?: return null
+        val targetDpi = WechatDpiRoutePolicy.targetDpi(
+            WechatDpiConfig.PACKAGE_NAME,
+            applicationInfo?.uid?.div(100000) ?: 0,
+        ) ?: return null
         val detached = WechatDpiRuntime.detached(metrics, targetDpi) ?: return null
         if (mutationLogged.compareAndSet(false, true)) {
             val detail =

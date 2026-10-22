@@ -10,6 +10,7 @@ import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.systemserver.selection.ConfigRefreshTtl
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.viewport.PerAppDisplayEnvironment
 import com.dpis.module.viewport.PerAppDisplayOverrideCalculator
 import com.dpis.module.viewport.ViewportApplyMode
@@ -24,15 +25,9 @@ import kotlin.math.roundToInt
 
 internal object LegacySystemServerHookInstaller {
     private const val MAX_PACKAGE_RECURSION_DEPTH = 5
-    private val PACKAGE_STRING_METHOD_NAMES = arrayOf(
-        "getOwningPackage", "getPackageName", "getPackage", "getOpPackageName",
-    )
     private val PACKAGE_OBJECT_METHOD_NAMES = arrayOf(
         "getIntent", "getComponent", "getActivityInfo", "getApplicationInfo", "getRequest",
         "getTargetActivity", "getOrigActivity", "getRealActivity",
-    )
-    private val PACKAGE_STRING_FIELD_NAMES = arrayOf(
-        "packageName", "mPackageName", "package", "launchedFromPackage",
     )
     private val PACKAGE_OBJECT_FIELD_NAMES = arrayOf(
         "intent", "mIntent", "component", "mComponent", "activityInfo", "applicationInfo",
@@ -112,12 +107,18 @@ internal object LegacySystemServerHookInstaller {
             logDebug("legacy system_server launch-activity-item skipped: reason=hooks-disabled")
             return
         }
-        val packageName = findActivityInfoPackage(args)
-        if (packageName == null) {
+        val activityInfo = findActivityInfo(args)
+        if (activityInfo == null || activityInfo.packageName.isNullOrBlank()) {
             logDebug("legacy system_server launch-activity-item skipped: reason=package-unresolved")
             return
         }
-        val config = source.get(packageName) ?: run {
+        val packageName = activityInfo.packageName
+        val userId = userIdFrom(activityInfo)
+            ?: run {
+                logDebug("legacy system_server launch-activity-item skipped: package=$packageName, reason=user-unresolved")
+                return
+            }
+        val config = source.get(packageName, userId) ?: run {
             logDebug("legacy system_server launch-activity-item skipped: package=$packageName, reason=config-missing")
             return
         }
@@ -155,8 +156,13 @@ internal object LegacySystemServerHookInstaller {
         if (source == null || launchActivityItem == null) return
         val activityInfo = readLaunchActivityInfo(launchActivityItem)
         val packageName = activityInfo?.packageName ?: return
-        if (!isLikelyPackageName(packageName)) return
-        val config = source.get(packageName) ?: return
+        if (packageName.isNullOrBlank()) return
+        val userId = userIdFrom(activityInfo)
+            ?: run {
+                logDebug("legacy system_server launch-activity-item skipped: package=$packageName, reason=user-unresolved")
+                return
+            }
+        val config = source.get(packageName, userId) ?: return
         val baseConfiguration = readLaunchActivityConfiguration(launchActivityItem) ?: return
         val environment = if (config.hasViewportOverride()) {
             resolveTargetEnvironment(packageName, baseConfiguration, config)
@@ -179,56 +185,34 @@ internal object LegacySystemServerHookInstaller {
         }
     }
 
-    private fun findActivityInfoPackage(args: Array<Any?>): String? {
+    private fun userIdFrom(activityInfo: ActivityInfo): Int? =
+        activityInfo.applicationInfo?.uid
+            ?.takeIf { it > 0 }
+            ?.let(PackageUidResolver::userIdFromUid)
+
+    private fun findActivityInfo(args: Array<Any?>): ActivityInfo? {
         for (arg in args) {
-            if (arg is ActivityInfo && !arg.packageName.isNullOrBlank()) return arg.packageName
+            if (arg is ActivityInfo) return arg
         }
         for (arg in args) {
-            findPackageNameRecursive(arg, 0)?.let { return it }
+            findActivityInfoRecursive(arg, 0)?.let { return it }
         }
         return null
     }
 
-    private fun findPackageNameRecursive(target: Any?, depth: Int): String? {
+    private fun findActivityInfoRecursive(target: Any?, depth: Int): ActivityInfo? {
         if (target == null || depth > MAX_PACKAGE_RECURSION_DEPTH) return null
-        if (target is ActivityInfo && !target.packageName.isNullOrBlank()) return target.packageName
-        if (target is String && isLikelyPackageName(target)) return target
-        for (methodName in PACKAGE_STRING_METHOD_NAMES) {
-            invokeStringMethod(target, methodName)?.let { return it }
-        }
+        if (target is ActivityInfo) return target
         for (methodName in PACKAGE_OBJECT_METHOD_NAMES) {
-            findPackageNameRecursive(
+            findActivityInfoRecursive(
                 invokeObjectMethod(target, methodName),
                 depth + 1
             )?.let { return it }
         }
-        for (fieldName in PACKAGE_STRING_FIELD_NAMES) {
-            val value = readField(target, fieldName)
-            if (value is String && isLikelyPackageName(value)) return value
-        }
         for (fieldName in PACKAGE_OBJECT_FIELD_NAMES) {
-            findPackageNameRecursive(readField(target, fieldName), depth + 1)?.let { return it }
+            findActivityInfoRecursive(readField(target, fieldName), depth + 1)?.let { return it }
         }
-        for (field in target.javaClass.declaredFields) {
-            if (field.type.isPrimitive || field.type.isEnum) continue
-            try {
-                field.isAccessible = true
-                val nested = field.get(target)
-                if (nested == null || nested === target || field.name == "this\$0") continue
-                findPackageNameRecursive(nested, depth + 1)?.let { return it }
-            } catch (_: ReflectiveOperationException) {
-                // Continue probing inaccessible fields.
-            }
-        }
-        return extractPackageFromText(target.toString())
-    }
-
-    private fun invokeStringMethod(target: Any, methodName: String): String? = try {
-        val method = target.javaClass.getMethod(methodName)
-        if (method.parameterCount != 0 || method.returnType != String::class.java) return null
-        (method.invoke(target) as? String)?.takeIf(::isLikelyPackageName)
-    } catch (_: ReflectiveOperationException) {
-        null
+        return null
     }
 
     private fun invokeObjectMethod(target: Any, methodName: String): Any? = try {
@@ -250,17 +234,6 @@ internal object LegacySystemServerHookInstaller {
             }
         }
         return null
-    }
-
-    private fun isLikelyPackageName(value: String?): Boolean =
-        !value.isNullOrBlank() && value.indexOf('.') > 0 &&
-                !value.contains(' ') && !value.contains('/') &&
-                Character.isJavaIdentifierStart(value[0])
-
-    private fun extractPackageFromText(value: String?): String? {
-        if (value.isNullOrBlank()) return null
-        return value.split(Regex("[^A-Za-z0-9_.$]+"))
-            .firstOrNull(::isLikelyPackageName)
     }
 
     private fun findFirstConfiguration(args: Array<Any?>): Configuration? =

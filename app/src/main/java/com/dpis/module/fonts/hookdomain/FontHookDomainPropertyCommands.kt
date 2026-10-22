@@ -3,26 +3,29 @@ package com.dpis.module.fonts.hookdomain
 /** Builds shell commands that publish per-package font hook-domain overrides. */
 internal object FontHookDomainPropertyCommands {
     @JvmStatic
-    fun buildPublish(packageName: String, enabledKnownDomains: Set<String>): String {
+    fun buildPublish(packageName: String, enabledKnownDomains: Set<String>, userId: Int): String {
         val value =
             FontHookDomainPropertyBridge.encodeOverrideValue(packageName, enabledKnownDomains)
         return buildSetCommand(
-            FontHookDomainPropertyBridge.propertyNameForPackage(packageName),
+            FontHookDomainPropertyBridge.propertyNameForPackage(packageName, userId),
             value
         ) +
                 "; " + buildSetCommand(
             FontHookDomainPropertyBridge.persistentPropertyNameForPackage(
-                packageName
+                packageName, userId
             ), value
         )
     }
 
     @JvmStatic
-    fun buildClear(packageName: String): String =
-        buildSetCommand(FontHookDomainPropertyBridge.propertyNameForPackage(packageName), "0") +
+    fun buildClear(packageName: String, userId: Int): String =
+        buildSetCommand(
+            FontHookDomainPropertyBridge.propertyNameForPackage(packageName, userId),
+            "0"
+        ) +
                 "; " + buildSetCommand(
             FontHookDomainPropertyBridge.persistentPropertyNameForPackage(
-                packageName
+                packageName, userId
             ), "0"
         )
 

@@ -85,6 +85,8 @@ class QuickConfigSourceSmokeTest {
 
         Assert.assertTrue(editor.contains("ComposeAppEditorSaveWorkflow("))
         Assert.assertTrue(editor.contains("AppConfigEditorPersister("))
+        Assert.assertTrue(editor.contains("DpisApplication::isXposedConfigReady"))
+        Assert.assertTrue(editor.contains("if (!DpisApplication.isXposedConfigReady())"))
         Assert.assertTrue(editor.contains("WechatDpiEditor.applyAfterPersist("))
         Assert.assertTrue(editor.contains("draft.wechatDpiInput"))
         Assert.assertTrue(editor.contains("draft.dpisEnabled"))
@@ -98,7 +100,17 @@ class QuickConfigSourceSmokeTest {
         Assert.assertFalse(activity.contains("HyperOsNativeProxyBindMounter.createPlan"))
         Assert.assertFalse(activity.contains("executeHyperOsNativeProxyMount("))
         Assert.assertTrue(activity.contains("executeDialogProcessAction(item, action)"))
-        Assert.assertTrue(editor.contains("FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)"))
+        val normalizedEditor = editor.replace(Regex("\\s+"), " ")
+        Assert.assertTrue(
+            normalizedEditor.contains(
+                "FontRuntimePropertySyncer.clearTargetAsync( targetPackageName, store.packageConfigOwnerUserId() )"
+            )
+        )
+        Assert.assertTrue(
+            normalizedEditor.contains(
+                "FontHookDomainPropertySyncer.clearTargetAsync( targetPackageName, store.packageConfigOwnerUserId() )"
+            )
+        )
         Assert.assertFalse(activity.contains("quick_config_open_main_for_advanced"))
         Assert.assertFalse(activity.contains("showMainAppToast"))
         Assert.assertFalse(activity.contains("publishAfterSave(item.packageName)\n                finish()"))

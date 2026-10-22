@@ -1,7 +1,6 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.FakePrefs
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -33,7 +32,7 @@ class PreferenceReadFallbackTest {
             delegate.getString(key, defValue)
 
         override fun getStringSet(key: String, defValues: Set<String>?): Set<String>? =
-            delegate.getStringSet(key, defValues)
+            delegate.getStringSet(key, defValues?.toMutableSet())
 
         override fun getInt(key: String, defValue: Int): Int {
             if (key in intReadFailureKeys) {

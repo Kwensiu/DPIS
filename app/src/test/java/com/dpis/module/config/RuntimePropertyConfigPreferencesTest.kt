@@ -1,7 +1,5 @@
 package com.dpis.module.config
 
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.FakePrefs
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -84,12 +82,12 @@ class RuntimePropertyConfigPreferencesTest {
 
     @Test
     fun emptyRuntimeMirrorDoesNotMarkPackageConfiguredFromGlobalFlagsOnly() {
-        val store = DpisConfigStore(
-            RuntimePropertyConfigPreferences(
-                "com.example.alwaysrunning",
-                RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET,
-            ),
+        val runtimePreferences = RuntimePropertyConfigPreferences(
+            "com.example.alwaysrunning",
+            RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET,
+            0,
         )
+        val store = DpisConfigStore(runtimePreferences, 0)
 
         assertFalse(
             ConfigSnapshotLoader.fromStore(store).isConfigured("com.example.alwaysrunning"),

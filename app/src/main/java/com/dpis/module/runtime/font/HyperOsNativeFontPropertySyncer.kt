@@ -7,11 +7,11 @@ import com.dpis.module.runtime.transport.RootCommandRunner
 
 object HyperOsNativeFontPropertySyncer {
     @JvmStatic
-    fun publishForceFontTargetAsync(packageName: String?, fontScalePercent: Int) {
+    fun publishForceFontTargetAsync(packageName: String?, fontScalePercent: Int, userId: Int) {
         if (packageName.isNullOrBlank() || fontScalePercent <= 0) return
         // Native proxies prefer forcefont so value-only changes can bypass stale
         // system_server RustProcess env values after a same-version module update.
-        val fontProperty = HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName)
+        val fontProperty = HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName, userId)
         Thread(
             { publishPropertyWithRoot(fontProperty, fontScalePercent) },
             "DPIS-hyperos-property-publisher",
@@ -19,13 +19,14 @@ object HyperOsNativeFontPropertySyncer {
     }
 
     @JvmStatic
-    fun clearFontTargetAsync(packageName: String?) {
+    fun clearFontTargetAsync(packageName: String?, userId: Int) {
         if (packageName.isNullOrBlank()) return
-        HyperOsFlutterFontBridge.clearTarget(packageName)
-        val fontProperty = HyperOsFlutterFontBridge.propertyNameForPackage(packageName)
-        val forceFontProperty = HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName)
+        HyperOsFlutterFontBridge.clearTarget(packageName, userId)
+        val fontProperty = HyperOsFlutterFontBridge.propertyNameForPackage(packageName, userId)
+        val forceFontProperty =
+            HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName, userId)
         val rustBinaryProperty =
-            HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(packageName)
+            HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(packageName, userId)
         Thread(
             { clearPropertiesWithRoot(fontProperty, forceFontProperty, rustBinaryProperty) },
             "DPIS-hyperos-property-cleaner",
@@ -54,7 +55,11 @@ object HyperOsNativeFontPropertySyncer {
                 fontScalePercent != null && fontScalePercent > 0 &&
                 shouldPublishForceFontOnRecovery(store, packageName, fontMode)
             ) {
-                publishForceFontTargetAsync(packageName, fontScalePercent)
+                publishForceFontTargetAsync(
+                    packageName,
+                    fontScalePercent,
+                    store.packageConfigOwnerUserId()
+                )
             }
         }
     }
@@ -76,6 +81,7 @@ object HyperOsNativeFontPropertySyncer {
     }
 
     private fun clearFontTargets(store: DpisConfigStore, packages: LinkedHashSet<String?>) {
+        val userId = store.packageConfigOwnerUserId()
         val command = StringBuilder()
         for (rawPackageName in packages) {
             val packageName = rawPackageName ?: continue
@@ -85,23 +91,23 @@ object HyperOsNativeFontPropertySyncer {
             // native path must not erase an active legacy field rewrite.
             val preserveForceFont = shouldPreserveCompatForceFont(store, packageName)
             if (!preserveForceFont) {
-                HyperOsFlutterFontBridge.clearTarget(packageName)
+                HyperOsFlutterFontBridge.clearTarget(packageName, userId)
             } else {
-                HyperOsFlutterFontBridge.clearNativeTarget(packageName)
+                HyperOsFlutterFontBridge.clearNativeTarget(packageName, userId)
             }
             appendClearCommand(
                 command,
-                HyperOsFlutterFontBridge.propertyNameForPackage(packageName)
+                HyperOsFlutterFontBridge.propertyNameForPackage(packageName, userId)
             )
             if (!preserveForceFont) {
                 appendClearCommand(
                     command,
-                    HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName)
+                    HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName, userId)
                 )
             }
             appendClearCommand(
                 command,
-                HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(packageName)
+                HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(packageName, userId)
             )
         }
         if (command.isNotEmpty()) runRootCommand(command.toString())

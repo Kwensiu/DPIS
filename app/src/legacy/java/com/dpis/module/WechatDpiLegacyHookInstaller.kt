@@ -49,7 +49,10 @@ internal object WechatDpiLegacyHookInstaller {
         loadPackage: XC_LoadPackage.LoadPackageParam
     ): Boolean {
         val dedicatedDpiConfigured =
-            WechatDpiRoutePolicy.targetDpi(loadPackage.packageName) != null
+            WechatDpiRoutePolicy.targetDpi(
+                loadPackage.packageName,
+                loadPackage.appInfo?.uid?.div(100000) ?: 0,
+            ) != null
         val viewportDensityOwner =
             WechatDpiRoutePolicy.viewportDensityOwner(loadPackage.packageName)
         if (!dedicatedDpiConfigured || viewportDensityOwner) {
@@ -73,12 +76,13 @@ internal object WechatDpiLegacyHookInstaller {
             )
             return false
         }
-        return installWechatDpiHook(result, versionCode)
+        return installWechatDpiHook(result, versionCode, loadPackage.appInfo?.uid?.div(100000) ?: 0)
     }
 
     private fun installWechatDpiHook(
         locatorResult: WechatDpiMethodLocator.Result,
-        versionCode: Long
+        versionCode: Long,
+        userId: Int,
     ): Boolean {
         val methods = locatorResult.methods
         if (methods.isEmpty()) return false
@@ -96,13 +100,18 @@ internal object WechatDpiLegacyHookInstaller {
                                 "route_callback_entered",
                                 "method=${methodName(metricsMethod)}, configuredDpi=${
                                     WechatDpiPropertyBridge.readDpi(
-                                        WechatDpiConfig.PACKAGE_NAME
+                                        WechatDpiConfig.PACKAGE_NAME,
+                                        userId,
                                     )
                                 }",
                             )
                         }
                         val metrics = param.result as? DisplayMetrics ?: return
-                        applyWechatDpi(metrics, methodName(metricsMethod))?.let(param::setResult)
+                        applyWechatDpi(
+                            metrics,
+                            methodName(metricsMethod),
+                            userId
+                        )?.let(param::setResult)
                     }
                 })
                 installed++
@@ -131,8 +140,15 @@ internal object WechatDpiLegacyHookInstaller {
 
     private fun methodName(method: Method): String = "${method.declaringClass.name}#${method.name}"
 
-    private fun applyWechatDpi(metrics: DisplayMetrics, methodName: String): DisplayMetrics? {
-        val dpi = WechatDpiRoutePolicy.targetDpi(WechatDpiConfig.PACKAGE_NAME) ?: return null
+    private fun applyWechatDpi(
+        metrics: DisplayMetrics,
+        methodName: String,
+        userId: Int,
+    ): DisplayMetrics? {
+        val dpi = WechatDpiRoutePolicy.targetDpi(
+            WechatDpiConfig.PACKAGE_NAME,
+            userId,
+        ) ?: return null
         val detached = WechatDpiRuntime.detached(metrics, dpi) ?: return null
         if (mutationLogged.compareAndSet(false, true)) {
             DpisLog.i("legacy WeChat DPI applied: method=$methodName, targetDpi=$dpi, densityDpi ${metrics.densityDpi} -> ${detached.densityDpi}, density ${metrics.density} -> ${detached.density}, scaledDensity ${metrics.scaledDensity} -> ${detached.scaledDensity}")

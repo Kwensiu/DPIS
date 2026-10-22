@@ -2,6 +2,7 @@ package com.dpis.module
 
 import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -11,6 +12,8 @@ class PackageUidResolverTest {
     fun derivesUserIdFromCallingUid() {
         assertEquals(0, PackageUidResolver.userIdFromUid(10042))
         assertEquals(10, PackageUidResolver.userIdFromUid(1010042))
+        assertEquals(0, PackageUidResolver.userIdFromUid(0))
+        assertNull(PackageUidResolver.userIdFromUid(-1))
     }
 
     @Test

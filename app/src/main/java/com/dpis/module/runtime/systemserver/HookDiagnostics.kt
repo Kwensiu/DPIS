@@ -32,9 +32,23 @@ object HookDiagnostics {
                 ", method=$methodName"
 
     @JvmStatic
+    fun buildHookMethodSelectedLog(entryName: String?, methodSignature: String?): String =
+        "system_server hook method selected: entry=" + safeSummary(entryName) +
+                ", method=" + safeSummary(methodSignature)
+
+    @JvmStatic
+    fun buildHookConstructorSelectedLog(
+        entryName: String?,
+        constructorSignature: String?,
+    ): String =
+        "system_server hook constructor selected: entry=" + safeSummary(entryName) +
+                ", constructor=" + safeSummary(constructorSignature)
+
+    @JvmStatic
     fun buildGateDisabledLog(totalEnabled: Boolean, safeModeEnabled: Boolean): String =
         "system_server hooks disabled: totalEnabled=$totalEnabled" +
                 ", safeMode=$safeModeEnabled"
+
 
     @JvmStatic
     fun buildPackageReadyStateLog(

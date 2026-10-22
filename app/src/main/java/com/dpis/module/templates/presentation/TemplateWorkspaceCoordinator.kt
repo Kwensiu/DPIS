@@ -4,9 +4,9 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import com.dpis.module.ui.ConfigEditorDestination
-import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.DpisApplication
 import com.dpis.module.R
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.templates.BatchScopeRequestCoordinator
 import com.dpis.module.templates.GlobalPrefillSaveHandler
 import com.dpis.module.templates.GlobalPrefillStore
@@ -25,6 +25,7 @@ import com.dpis.module.templates.TemplateEditorDraft
 import com.dpis.module.templates.TemplateEditorForm
 import com.dpis.module.templates.TemplateWorkspacePresentationSource
 import com.dpis.module.templates.TemplateWorkspaceStateCodec
+import com.dpis.module.ui.ConfigEditorDestination
 
 /**
  * Owns template-workspace presentation, mutations, and the retained editor route.
@@ -383,7 +384,10 @@ class TemplateWorkspaceCoordinator @JvmOverloads constructor(
             publish()
             return
         }
-        val coordinator = QuickTemplateApplyAdapters.from(host.hookConfigStore())
+        val coordinator = QuickTemplateApplyAdapters.from(
+            host.hookConfigStore(),
+            DpisApplication::isXposedConfigReady,
+        )
         val installedOnly = QuickTemplateApplyCoordinator.TargetPackageFilter { packageName ->
             packageName != null && host.isInstalledTemplateTargetPackage(packageName)
         }

@@ -12,6 +12,7 @@ object FontRuntimePropertySyncer {
         fontScalePercent: Int,
         mode: String?,
         hyperOsNativeFontHookEnabled: Boolean,
+        userId: Int,
     ) {
         if (packageName.isNullOrBlank() || fontScalePercent <= 0) return
         Thread(
@@ -21,7 +22,8 @@ object FontRuntimePropertySyncer {
                         packageName,
                         fontScalePercent,
                         mode,
-                        hyperOsNativeFontHookEnabled
+                        hyperOsNativeFontHookEnabled,
+                        userId,
                     ),
                 )
             },
@@ -30,28 +32,28 @@ object FontRuntimePropertySyncer {
     }
 
     @JvmStatic
-    fun publishTypefaceTargetAsync(packageName: String?, typefaceId: String?) {
+    fun publishTypefaceTargetAsync(packageName: String?, typefaceId: String?, userId: Int) {
         if (packageName.isNullOrBlank()) return
         Thread(
-            { runRootCommand(buildTypefaceCommand(packageName, typefaceId)) },
+            { runRootCommand(buildTypefaceCommand(packageName, typefaceId, userId)) },
             "DPIS-typeface-runtime-property-publisher",
         ).apply { isDaemon = true }.start()
     }
 
     @JvmStatic
-    fun clearTargetAsync(packageName: String?) {
+    fun clearTargetAsync(packageName: String?, userId: Int) {
         if (packageName.isNullOrBlank()) return
         Thread(
-            { runRootCommand(buildClearTargetCommand(packageName)) },
+            { runRootCommand(buildClearTargetCommand(packageName, userId)) },
             "DPIS-font-runtime-property-cleaner",
         ).apply { isDaemon = true }.start()
     }
 
     @JvmStatic
-    fun clearFontScaleTargetAsync(packageName: String?) {
+    fun clearFontScaleTargetAsync(packageName: String?, userId: Int) {
         if (packageName.isNullOrBlank()) return
         Thread(
-            { runRootCommand(buildClearFontScaleCommand(packageName)) },
+            { runRootCommand(buildClearFontScaleCommand(packageName, userId)) },
             "DPIS-font-scale-runtime-property-cleaner",
         ).apply { isDaemon = true }.start()
     }
@@ -81,26 +83,34 @@ object FontRuntimePropertySyncer {
         fontScalePercent: Int,
         mode: String?,
         hyperOsNativeFontHookEnabled: Boolean,
+        userId: Int,
     ): String =
-        buildTargetCommand(packageName, fontScalePercent, mode, hyperOsNativeFontHookEnabled)
+        buildTargetCommand(
+            packageName,
+            fontScalePercent,
+            mode,
+            hyperOsNativeFontHookEnabled,
+            userId
+        )
 
     @JvmStatic
-    fun buildClearTargetCommandForTest(packageName: String): String =
-        buildClearTargetCommand(packageName)
+    fun buildClearTargetCommandForTest(packageName: String, userId: Int): String =
+        buildClearTargetCommand(packageName, userId)
 
     @JvmStatic
-    fun buildClearFontScaleCommandForTest(packageName: String): String =
-        buildClearFontScaleCommand(packageName)
+    fun buildClearFontScaleCommandForTest(packageName: String, userId: Int): String =
+        buildClearFontScaleCommand(packageName, userId)
 
     @JvmStatic
-    fun buildTypefaceCommandForTest(packageName: String, typefaceId: String?): String =
-        buildTypefaceCommand(packageName, typefaceId)
+    fun buildTypefaceCommandForTest(packageName: String, typefaceId: String?, userId: Int): String =
+        buildTypefaceCommand(packageName, typefaceId, userId)
 
     private fun buildTargetCommand(
         packageName: String,
         fontScalePercent: Int,
         mode: String?,
         hyperOsNativeFontHookEnabled: Boolean,
+        userId: Int,
     ): String {
         val normalizedMode = FontApplyMode.normalize(mode)
         val enabled = fontScalePercent > 0 && FontApplyMode.isEnabled(normalizedMode)
@@ -115,46 +125,61 @@ object FontRuntimePropertySyncer {
         ) fontScalePercent else 0
         val compatMode = if (enabled) normalizedMode else FontApplyMode.OFF
         return buildSetCommand(
-            HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.compatFontPropertyNameForPackage(packageName, userId),
             systemEmulationValue,
         ) + "; " + buildSetCommand(
-            HyperOsFlutterFontBridge.persistentCompatFontPropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.persistentCompatFontPropertyNameForPackage(
+                packageName,
+                userId
+            ),
             systemEmulationValue,
         ) + "; " + buildSetCommand(
-            HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.compatFontModePropertyNameForPackage(packageName, userId),
             compatMode,
         ) + "; " + buildSetCommand(
-            HyperOsFlutterFontBridge.persistentCompatFontModePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.persistentCompatFontModePropertyNameForPackage(
+                packageName,
+                userId
+            ),
             compatMode,
         ) + "; " + buildSetCommand(
-            HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.forcePropertyNameForPackage(packageName, userId),
             forceFontValue,
         ) + "; " + buildSetCommand(
-            HyperOsFlutterFontBridge.persistentForcePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.persistentForcePropertyNameForPackage(packageName, userId),
             forceFontValue,
         )
     }
 
-    private fun buildClearTargetCommand(packageName: String) =
-        buildClearFontScaleCommand(packageName) + "; " + buildTypefaceCommand(packageName, null)
+    private fun buildClearTargetCommand(packageName: String, userId: Int) =
+        buildClearFontScaleCommand(packageName, userId) + "; " + buildTypefaceCommand(
+            packageName,
+            null,
+            userId
+        )
 
-    private fun buildClearFontScaleCommand(packageName: String) =
-        buildSetCommand(HyperOsFlutterFontBridge.propertyNameForPackage(packageName), 0) +
+    private fun buildClearFontScaleCommand(packageName: String, userId: Int) =
+        buildSetCommand(HyperOsFlutterFontBridge.propertyNameForPackage(packageName, userId), 0) +
                 "; " + buildSetCommand(
             HyperOsFlutterFontBridge.rustBinaryPropertyNameForPackage(
-                packageName
+                packageName, userId
             ), 0
         ) +
-                "; " + buildTargetCommand(packageName, 0, FontApplyMode.OFF, false)
+                "; " + buildTargetCommand(packageName, 0, FontApplyMode.OFF, false, userId)
 
-    private fun buildTypefaceCommand(packageName: String, typefaceId: String?): String {
+    private fun buildTypefaceCommand(
+        packageName: String,
+        typefaceId: String?,
+        userId: Int
+    ): String {
         val value = if (typefaceId.isNullOrBlank()) "0" else typefaceId.trim()
         return buildSetCommand(
-            HyperOsFlutterFontBridge.typefacePropertyNameForPackage(packageName),
+            HyperOsFlutterFontBridge.typefacePropertyNameForPackage(packageName, userId),
             value
         ) +
                 "; " + buildSetCommand(
-            HyperOsFlutterFontBridge.persistentTypefacePropertyNameForPackage(packageName), value,
+            HyperOsFlutterFontBridge.persistentTypefacePropertyNameForPackage(packageName, userId),
+            value,
         )
     }
 
@@ -170,6 +195,7 @@ object FontRuntimePropertySyncer {
     }
 
     private fun buildTargetCommands(packageName: String, store: DpisConfigStore): String {
+        val userId = store.packageConfigOwnerUserId()
         val fontScalePercent = store.getTargetFontScalePercent(packageName)
         val mode = store.getTargetFontApplyMode(packageName)
         val typefaceId = if (store.isTargetDpisEnabled(packageName)) {
@@ -186,9 +212,10 @@ object FontRuntimePropertySyncer {
                 value,
                 mode,
                 FontHookDomainDecision.isHyperOsNativeFlutterEnabled(store, packageName),
+                userId,
             ),
         )
-        appendCommand(command, buildTypefaceCommand(packageName, typefaceId))
+        appendCommand(command, buildTypefaceCommand(packageName, typefaceId, userId))
         return command.toString()
     }
 

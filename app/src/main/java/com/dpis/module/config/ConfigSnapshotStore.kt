@@ -4,6 +4,7 @@ import com.dpis.module.viewport.ViewportTargetSpec
 
 interface ConfigSnapshotStore {
     fun getConfiguredPackages(): MutableSet<String?>
+    fun packageConfigOwnerUserId(): Int
     fun isTargetDpisEnabled(packageName: String): Boolean
     fun getTargetViewportSpec(packageName: String): ViewportTargetSpec
     fun getTargetViewportApplyMode(packageName: String): String?

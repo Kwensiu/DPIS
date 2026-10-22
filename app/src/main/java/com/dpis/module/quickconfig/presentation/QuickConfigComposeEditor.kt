@@ -1,10 +1,12 @@
 package com.dpis.module.quickconfig.presentation
 
 import android.content.Context
+import com.dpis.module.DpisApplication
 import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigPrefillPreview.resolveForEditor
 import com.dpis.module.appconfig.AppConfigProcessAction
 import com.dpis.module.appconfig.AppConfigSaveHandler
+import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.appconfig.editor.AppConfigEditorPersister
 import com.dpis.module.appconfig.editor.AppConfigEditorSession
 import com.dpis.module.appconfig.editor.ComposeAppEditorSaveWorkflow
@@ -13,7 +15,6 @@ import com.dpis.module.appconfig.editor.EditorActions.create
 import com.dpis.module.appconfig.editor.EditorDraft
 import com.dpis.module.appconfig.editor.EditorPresentation
 import com.dpis.module.appconfig.editor.EditorPresentationFactory
-import com.dpis.module.appconfig.WechatDpiConfig
 import com.dpis.module.appconfig.presentation.AppConfigTypefaceLabels
 import com.dpis.module.applist.AppListItem
 import com.dpis.module.config.DpisConfigStore
@@ -23,12 +24,12 @@ import com.dpis.module.fonts.hookdomain.FontHookDomainPropertySyncer
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry.automaticCustomizableDomains
 import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.hooks.HookDomainOverrideStore
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.quickconfig.QuickConfigActivity
 import com.dpis.module.quickconfig.QuickConfigEditorSession
 import com.dpis.module.quirks.WechatDpiEditor
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
-import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.ui.ConfigEditorDestination
 import com.dpis.module.viewport.ViewportPropertySyncer
@@ -52,6 +53,7 @@ internal class QuickConfigComposeEditor(
         AppConfigEditorPersister(
             saveHandler,
             { activity.isSystemHookEnabled },
+            DpisApplication::isXposedConfigReady,
             { activity.hookConfigStore },
         ),
         QuickConfigPostSaveEffects(),
@@ -289,6 +291,10 @@ internal class QuickConfigComposeEditor(
     }
 
     private fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean {
+        if (!DpisApplication.isXposedConfigReady()) {
+            activity.showToast(R.string.system_settings_save_failed)
+            return false
+        }
         val targetPackageName = packageName ?: return false
         val store = activity.hookConfigStore
         if (store == null || !store.setTargetDpisEnabled(targetPackageName, enabled)) {
@@ -296,8 +302,14 @@ internal class QuickConfigComposeEditor(
             return false
         }
         if (!enabled) {
-            FontRuntimePropertySyncer.clearTargetAsync(targetPackageName)
-            FontHookDomainPropertySyncer.clearTargetAsync(targetPackageName)
+            FontRuntimePropertySyncer.clearTargetAsync(
+                targetPackageName,
+                store.packageConfigOwnerUserId()
+            )
+            FontHookDomainPropertySyncer.clearTargetAsync(
+                targetPackageName,
+                store.packageConfigOwnerUserId()
+            )
             ViewportPropertySyncer.clearTargetAsync(targetPackageName)
         }
         activity.showToast(

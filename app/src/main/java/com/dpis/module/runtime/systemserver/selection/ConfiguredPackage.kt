@@ -135,12 +135,16 @@ object ConfiguredPackage {
     ): String? = launchPackage(configWhen(hasConfig), primaryPackage, textSource)
 
     @JvmStatic
-    fun fromSource(source: PerAppDisplayConfigSource?, args: List<*>?): String? =
-        launchPackage(
-            if (source != null) Lookup { source.get(it) } else null,
-            activityInfoPackage(args),
+    fun fromSource(source: PerAppDisplayConfigSource?, args: List<*>?): String? {
+        val packageName = activityInfoPackage(args)
+        val uid = PackageNames.findUid(packageName, null, args.orEmpty()) ?: return null
+        val userId = PackageUidResolver.userIdFromUid(uid) ?: return null
+        return launchPackage(
+            if (source != null) Lookup { source.get(it, userId) } else null,
+            packageName,
             args,
         )
+    }
 
     private fun listed(args: Array<out Any?>?): List<Any?> {
         val values = ArrayList<Any?>()

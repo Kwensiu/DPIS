@@ -1,5 +1,6 @@
 package com.dpis.module.wechat
 
+import android.content.pm.ApplicationInfo
 import android.graphics.Bitmap
 import android.graphics.Rect
 import android.view.View
@@ -32,7 +33,8 @@ object WechatDpiModernBottomTabHookInstaller {
         xposed: XposedInterface?,
         classLoader: ClassLoader?,
         phase: WechatDpiInstallPhase,
-        scaleCompensationEnabled: Boolean
+        scaleCompensationEnabled: Boolean,
+        applicationInfo: ApplicationInfo?,
     ) {
         if (xposed == null || classLoader == null) return
         val viewClass = try {
@@ -71,7 +73,10 @@ object WechatDpiModernBottomTabHookInstaller {
                     val view = chain.thisObject
                     if (callbackLogged.compareAndSet(false, true)) {
                         val detail = "method=${methodName(initMethod)}, configuredDpi=${
-                            WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME)
+                            WechatDpiPropertyBridge.readDpi(
+                                WechatDpiConfig.PACKAGE_NAME,
+                                applicationInfo?.uid?.div(100000) ?: 0,
+                            )
                         }"
                         DpisLog.i("modern WeChat DPI bottom tab icon callback hit: $detail")
                         RuntimeHotPathEvents.event(
@@ -82,7 +87,7 @@ object WechatDpiModernBottomTabHookInstaller {
                             detail
                         )
                     }
-                    val configuredDpi = configuredDpiOrNull()
+                    val configuredDpi = configuredDpiOrNull(applicationInfo)
                     if (view != null && scaleField != null && configuredDpi != null && scaleCompensationEnabled) {
                         val oldScale = scaleField.getFloat(view)
                         val targetScale = WechatDpiRuntime.bottomTabIconScale(configuredDpi)
@@ -228,8 +233,11 @@ object WechatDpiModernBottomTabHookInstaller {
     private fun isScaleField(field: Field): Boolean =
         field.type == Float::class.javaPrimitiveType && !Modifier.isStatic(field.modifiers)
 
-    private fun configuredDpiOrNull(): Int? =
-        WechatDpiPropertyBridge.readDpi(WechatDpiConfig.PACKAGE_NAME).takeIf { it > 0 }
+    private fun configuredDpiOrNull(applicationInfo: ApplicationInfo?): Int? =
+        WechatDpiPropertyBridge.readDpi(
+            WechatDpiConfig.PACKAGE_NAME,
+            applicationInfo?.uid?.div(100000) ?: 0,
+        ).takeIf { it > 0 }
 
     private fun methodName(method: Method): String = "${method.declaringClass.name}#${method.name}"
 }

@@ -18,23 +18,23 @@ import com.dpis.module.config.DpisConfigStore;
 public class HyperOsNativeFontPropertySyncerTest {
     @Test
     public void shellQuoteEscapesSingleQuotes() {
-        assertEquals("'debug.dpis.forcefont.a55b5fe1'",
-                HyperOsNativeFontPropertySyncer.shellQuoteForTest("debug.dpis.forcefont.a55b5fe1"));
+        assertEquals("'test.property'",
+                HyperOsNativeFontPropertySyncer.shellQuoteForTest("test.property"));
         assertEquals("'a'\\''b'", HyperOsNativeFontPropertySyncer.shellQuoteForTest("a'b"));
         assertEquals("''", HyperOsNativeFontPropertySyncer.shellQuoteForTest(""));
     }
     @Test
-    public void buildPublishCommandSetsForceFontPropertyOnly() {
-        assertEquals("setprop 'debug.dpis.forcefont.a55b5fe1' '300'",
+    public void publishCommandEscapesTheProvidedPropertyAndValue() {
+        assertEquals("setprop 'test.property' '300'",
                 HyperOsNativeFontPropertySyncer.buildPublishCommandForTest(
-                        "debug.dpis.forcefont.a55b5fe1", 300));
+                        "test.property", 300));
     }
 
     @Test
-    public void compatFontCommandUsesSeparateProperty() {
-        assertEquals("setprop 'debug.dpis.compatfont.a55b5fe1' '200'",
+    public void compatCommandUsesTheProvidedProperty() {
+        assertEquals("setprop 'test.property' '200'",
                 CompatFontPropertySyncer.buildSetCommandForTest(
-                        "debug.dpis.compatfont.a55b5fe1", 200));
+                        "test.property", 200));
     }
 
     @Test

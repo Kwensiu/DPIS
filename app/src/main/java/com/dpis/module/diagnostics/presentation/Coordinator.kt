@@ -58,7 +58,7 @@ class Coordinator private constructor(
         fun diagnosticCacheDirectory(): String? = null
     }
 
-    class Request(
+    class Request @JvmOverloads constructor(
         packageName: String?,
         label: String?,
         versionName: String?,
@@ -72,7 +72,9 @@ class Coordinator private constructor(
         fontApplyMode: String?,
         typefaceId: String?,
         fontHookDomainsRaw: String?,
-        wechatDpi: Int?
+        wechatDpi: Int?,
+        dpisUserId: Int? = null,
+        targetUserId: Int? = null,
     ) {
         @JvmField val packageName = valueOrEmpty(packageName)
         @JvmField val label = valueOrEmpty(label)
@@ -84,6 +86,8 @@ class Coordinator private constructor(
         @JvmField val typefaceId = normalizeNullableString(typefaceId)
         @JvmField val fontHookDomainsRaw = normalizeNullableString(fontHookDomainsRaw)
         @JvmField val wechatDpi = wechatDpi
+        @JvmField val dpisUserId = dpisUserId
+        @JvmField val targetUserId = targetUserId
 
         fun isValid(): Boolean = packageName.isNotBlank()
 
@@ -128,6 +132,7 @@ class Coordinator private constructor(
                 if (store == null || packageName.isBlank() || item == null) {
                     return from(item, draft, versionName)
                 }
+                val ownerUserId = store.packageConfigOwnerUserId()
                 return Request(
                     packageName,
                     item.label,
@@ -142,7 +147,9 @@ class Coordinator private constructor(
                     store.getTargetFontApplyMode(packageName),
                     store.getTargetTypefaceId(packageName),
                     store.getTargetFontHookDomainsRaw(packageName),
-                    store.getWechatDpi(packageName)
+                    store.getWechatDpi(packageName),
+                    ownerUserId,
+                    ownerUserId.takeIf { item.installed },
                 )
             }
         }
@@ -453,7 +460,13 @@ class Coordinator private constructor(
         private fun summaryInput(request: Request?): SummaryBuilder.Input? = request?.let {
             SummaryBuilder.Input(it.packageName, it.label, it.versionName, it.scopeKnown, it.inScope,
                 it.dpisEnabled, it.previewFromGlobalPrefill, viewportSummary(it), it.viewportApplyMode,
-                it.fontScalePercent, it.fontApplyMode, it.typefaceId, it.fontHookDomainsRaw)
+                it.fontScalePercent,
+                it.fontApplyMode,
+                it.typefaceId,
+                it.fontHookDomainsRaw,
+                it.dpisUserId,
+                it.targetUserId
+            )
         }
 
         @JvmStatic

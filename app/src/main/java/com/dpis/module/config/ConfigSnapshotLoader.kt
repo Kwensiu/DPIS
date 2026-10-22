@@ -35,6 +35,7 @@ object ConfigSnapshotLoader {
             store.hasSystemServerHooksEnabled(),
             store.hasSystemServerSafeModeEnabled(),
             store.hasGlobalLogEnabled(),
+            store.packageConfigOwnerUserId(),
         )
     }
 }

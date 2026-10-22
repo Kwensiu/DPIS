@@ -14,6 +14,7 @@ import com.dpis.module.fonts.TypefaceCatalogCache
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
+import com.dpis.module.runtime.transport.ProcessUser
 import com.dpis.module.settings.LocalizedActivity
 
 /**
@@ -34,10 +35,7 @@ class FontDetailSession(
             activity,
             DpisApplication.xposedService,
         )
-        configStore = ConfigStoreFactory.createFontLibraryConfigStore(
-            activity,
-            DpisApplication.xposedService,
-        )
+        configStore = ConfigStoreFactory.createFontLibraryConfigStore(activity)
         return refreshDetails()
     }
 
@@ -198,7 +196,11 @@ class FontDetailSession(
             showToast(R.string.font_library_restore_app_font_failed)
             return
         }
-        FontRuntimePropertySyncer.publishTypefaceTargetAsync(dialog.packageName, null)
+        FontRuntimePropertySyncer.publishTypefaceTargetAsync(
+            dialog.packageName,
+            null,
+            ProcessUser.currentUserId()
+        )
         RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
         refreshDetails()
     }
@@ -267,6 +269,7 @@ class FontDetailSession(
             FontRuntimePropertySyncer.publishTypefaceTargetAsync(
                 reference.packageName,
                 if (restoreOriginal) reference.typefaceId else null,
+                ProcessUser.currentUserId(),
             )
         }
     }

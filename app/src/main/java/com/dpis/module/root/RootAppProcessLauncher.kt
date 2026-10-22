@@ -13,7 +13,7 @@ class RootAppProcessLauncher(private val context: Context) {
         if (!isSafePackageName(packageName)) {
             return ShellResult(-1, "root stop unavailable")
         }
-        return runSuCommand("am force-stop " + packageName)
+        return runSuCommand(buildForceStopCommand(packageName!!, currentUserId()))
     }
 
     fun start(packageName: String?): ShellResult {
@@ -25,10 +25,7 @@ class RootAppProcessLauncher(private val context: Context) {
             return ShellResult(-1, "launcher activity not found")
         }
         return runSuCommand(
-            ("am start --user current"
-                    + " -a android.intent.action.MAIN"
-                    + " -c android.intent.category.LAUNCHER"
-                    + " -n " + shellQuote(launchComponent.flattenToShortString()))
+            buildStartCommand(currentUserId(), launchComponent.flattenToShortString()),
         )
     }
 
@@ -39,6 +36,8 @@ class RootAppProcessLauncher(private val context: Context) {
         }
         return start(packageName)
     }
+
+    private fun currentUserId(): Int = context.applicationInfo.uid / USER_ID_RANGE
 
     private fun resolveLaunchComponent(packageName: String): ComponentName? {
         val launchIntent = context.packageManager
@@ -96,6 +95,7 @@ class RootAppProcessLauncher(private val context: Context) {
     }
 
     companion object {
+        private const val USER_ID_RANGE = 100000
         private val SAFE_PACKAGE_PATTERN: Pattern =
             Pattern.compile("[A-Za-z0-9_]++(?:\\.[A-Za-z0-9_]++)++")
 
@@ -106,6 +106,15 @@ class RootAppProcessLauncher(private val context: Context) {
         fun shellQuoteForTest(value: String): String {
             return shellQuote(value)
         }
+
+        internal fun buildForceStopCommand(packageName: String, userId: Int): String =
+            "am force-stop --user $userId $packageName"
+
+        internal fun buildStartCommand(userId: Int, flattenedComponent: String): String =
+            "am start --user $userId" +
+                    " -a android.intent.action.MAIN" +
+                    " -c android.intent.category.LAUNCHER" +
+                    " -n " + shellQuote(flattenedComponent)
 
         private fun shellQuote(value: String): String {
             return "'" + value.replace("'", "'\\''") + "'"

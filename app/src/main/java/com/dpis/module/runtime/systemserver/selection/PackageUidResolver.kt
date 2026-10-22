@@ -28,7 +28,7 @@ class PackageUidResolver(
         if (packageName.isNullOrBlank() || callingUid <= 0) {
             return -1
         }
-        val userId = userIdFromUid(callingUid)
+        val userId = userIdFromUid(callingUid) ?: return -1
         val now = clock.nowMillis()
         val key = Key(packageName, userId)
         val cached = cache[key]
@@ -179,9 +179,9 @@ class PackageUidResolver(
         private const val UID_MISS = Int.MIN_VALUE
 
         @JvmStatic
-        fun userIdFromUid(uid: Int): Int {
-            if (uid <= 0) {
-                return 0
+        fun userIdFromUid(uid: Int): Int? {
+            if (uid < 0) {
+                return null
             }
             try {
                 val userHandle = android.os.UserHandle::class.java

@@ -58,6 +58,43 @@ class RuntimeConfigDeliverySourceTest {
     }
 
     @Test
+    fun packageConfigMutationEntrypointsUseReadinessBoundaries() {
+        val mainWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt",
+        )
+        val templateWorkspace = read(
+            "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt",
+        )
+        val backupHost = read(
+            "src/main/java/com/dpis/module/backup/presentation/ConfigBackupHost.kt",
+        )
+
+        assertTrue(mainWiring.contains("DpisApplication::isXposedConfigReady"))
+        assertTrue(templateWorkspace.contains("DpisApplication::isXposedConfigReady"))
+        val restoreReadyStart = backupHost.indexOf("private fun restoreReady(")
+        val asyncRestoreGate = backupHost.indexOf(
+            "ConfigRestoreReadiness.runIfReady(",
+            restoreReadyStart,
+        )
+        val backupWrite = backupHost.indexOf("coordinator(store).restore(uri)", asyncRestoreGate)
+        assertTrue(restoreReadyStart >= 0)
+        assertTrue(asyncRestoreGate > restoreReadyStart)
+        assertTrue(backupWrite > asyncRestoreGate)
+    }
+
+    @Test
+    fun serviceBindingKeepsLocalConfigCanonicalAndPublishesOutward() {
+        val application = read("src/main/java/com/dpis/module/DpisApplication.kt")
+        val start = application.indexOf("override fun onServiceBind(")
+        val end = application.indexOf("override fun onServiceDied(", start)
+        val serviceBind = application.substring(start, end)
+
+        assertTrue(serviceBind.contains("ConfigStoreFactory.createLocalModuleConfigStore(this)"))
+        assertTrue(serviceBind.contains("configStore = localStore"))
+        assertTrue(serviceBind.contains("publishRuntimeConfig(localStore, service)"))
+    }
+
+    @Test
     fun activeFontLibraryStoreUsesLocalPreferencesOnly() {
         val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.kt")
         val activeFontFactory = activeFontLibraryFactoryBlock(factory)

@@ -5,11 +5,12 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
-import com.dpis.module.R
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
+import com.dpis.module.R
+import com.dpis.module.backup.ConfigRestoreReadiness
 import com.dpis.module.backup.ModuleScopeSnapshotPolicy
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.templates.QuickTemplateStore
 import com.dpis.module.ui.dialog.ConfirmDialog
 import java.util.Date
@@ -128,28 +129,45 @@ class ConfigBackupHost(
     }
 
     private fun restore(uri: Uri?) {
+        val started = ConfigRestoreReadiness.runIfReady(
+            DpisApplication::isXposedConfigReady,
+        ) { restoreReady(uri) }
+        if (!started) port.showToast(R.string.system_settings_save_failed)
+    }
+
+    private fun restoreReady(uri: Uri?) {
         val store = port.configStore()
         if (store == null) {
             port.showToast(R.string.status_save_requires_init)
             return
         }
         Thread({
-            val result = coordinator(store).restore(uri)
-            port.runOnUiThread {
-                if (!result.isSuccess()) {
-                    port.showToast(
-                        if (result.code == ConfigBackupCoordinator.Code.INVALID_FILE) {
-                            R.string.config_backup_import_invalid
-                        } else {
-                            R.string.config_backup_import_failed
-                        },
-                    )
+            val restored = ConfigRestoreReadiness.runIfReady(
+                DpisApplication::isXposedConfigReady,
+            ) {
+                val result = coordinator(store).restore(uri)
+                port.runOnUiThread {
+                    if (!result.isSuccess()) {
+                        port.showToast(
+                            if (result.code == ConfigBackupCoordinator.Code.INVALID_FILE) {
+                                R.string.config_backup_import_invalid
+                            } else {
+                                R.string.config_backup_import_failed
+                            },
+                        )
+                        port.publishPresentationState()
+                        return@runOnUiThread
+                    }
+                    port.showToast(R.string.config_backup_import_success)
                     port.publishPresentationState()
-                    return@runOnUiThread
+                    port.onRestoreSucceeded(result.moduleScope)
                 }
-                port.showToast(R.string.config_backup_import_success)
-                port.publishPresentationState()
-                port.onRestoreSucceeded(result.moduleScope)
+            }
+            if (!restored) {
+                port.runOnUiThread {
+                    port.showToast(R.string.system_settings_save_failed)
+                    port.publishPresentationState()
+                }
             }
         }, "dpis-config-backup-import").start()
     }

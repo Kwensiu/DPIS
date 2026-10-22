@@ -331,6 +331,9 @@ class MainActivitySourceSmokeTest {
         val coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppCatalogCoordinator.kt"
         )
+        val appSource = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppSource.kt"
+        )
         val iconSource = read("src/main/java/com/dpis/module/applist/presentation/InstalledAppIcon.kt")
         val workspaceSource = read("src/main/java/com/dpis/module/applist/presentation/AppListContent.kt")
 
@@ -343,7 +346,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             loadSession.contains("catalogCoordinator.loadInstalledApps(")
         )
-        assertTrue(coordinatorSource.contains("getInstalledPackages(0)"))
+        assertTrue(coordinatorSource.contains("getInstalledAppSource()"))
+        assertTrue(appSource.contains("getInstalledPackages(0)"))
         assertFalse(coordinatorSource.contains("getInstalledApplications("))
         assertFalse(coordinatorSource.contains("GET_META_DATA"))
         assertTrue(
@@ -681,6 +685,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(hostWiring.contains("ComposeAppEditorController(viewModel, gateway, saveWorkflow)"))
         assertTrue(hostWiring.contains("AppConfigEditorPersister("))
         assertTrue(hostWiring.contains("gateway::systemHooksEnabled"))
+        assertTrue(hostWiring.contains("DpisApplication::isXposedConfigReady"))
         assertTrue(hostWiring.contains("activity::hookConfigStore"))
         assertTrue(hostWiring.contains("MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator)"))
         assertFalse(hostWiring.contains("setSaveWorkflow"))
@@ -694,13 +699,11 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("AppConfigSheetSession("))
         assertFalse(source.contains("LandAppDetailSession("))
         assertFalse(source.contains("EditorDraftSession("))
-        assertTrue(
-            read(
-                "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
-            ).contains(
-                "fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean"
-            )
+        val runtimeLaunchSession = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
+        assertTrue(runtimeLaunchSession.contains("fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean"))
+        assertTrue(runtimeLaunchSession.contains("if (!DpisApplication.isXposedConfigReady())"))
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
@@ -770,9 +773,15 @@ class MainActivitySourceSmokeTest {
             read("src/main/java/com/dpis/module/appconfig/editor/AppConfigEditorPersister.kt")
                 .contains("saveHandler.saveResolved(")
         )
+        val normalizedRuntimeLaunch = runtimeLaunch.replace(Regex("\\s+"), " ")
         assertTrue(
-            runtimeLaunch.contains(
-                "FontRuntimePropertySyncer.clearTargetAsync(packageName)"
+            normalizedRuntimeLaunch.contains(
+                "FontRuntimePropertySyncer.clearTargetAsync( packageName, store.packageConfigOwnerUserId() )"
+            )
+        )
+        assertTrue(
+            normalizedRuntimeLaunch.contains(
+                "FontHookDomainPropertySyncer.clearTargetAsync( packageName, store.packageConfigOwnerUserId() )"
             )
         )
         assertFalse(
@@ -847,7 +856,7 @@ class MainActivitySourceSmokeTest {
         )
         assertTrue(
             source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"
+                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)"
             )
         )
         assertFalse(

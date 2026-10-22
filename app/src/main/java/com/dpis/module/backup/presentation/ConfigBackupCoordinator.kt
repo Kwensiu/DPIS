@@ -2,6 +2,7 @@ package com.dpis.module.backup.presentation
 
 import android.content.ContentResolver
 import android.net.Uri
+import com.dpis.module.backup.BackupReplaceStage
 import com.dpis.module.backup.ConfigBackupCodec
 import com.dpis.module.backup.ConfigBackupRestorePolicy
 import com.dpis.module.config.DpisConfigStore
@@ -75,7 +76,16 @@ class ConfigBackupCoordinator(
             .toMap(LinkedHashMap<String, Any?>())
             .also { templateStore.copyToBackup(it) }
         val configEntries = ConfigBackupRestorePolicy.configEntries(incoming)
-        if (!configStore.replaceBackup(configEntries)) return Result.failure(Code.RESTORE_ERROR)
+        val replaceResult = configStore.replaceBackupResult(configEntries)
+        if (!replaceResult.isSuccess()) {
+            return Result.failure(
+                if (replaceResult.failedStage == BackupReplaceStage.ROLLBACK) {
+                    Code.ROLLBACK_ERROR
+                } else {
+                    Code.RESTORE_ERROR
+                },
+            )
+        }
         if (!QuickTemplateStore.containsTemplateEntries(incoming) || templateStore.restoreFromBackup(incoming)) {
             return Result.success(document.moduleScope)
         }

@@ -12,6 +12,17 @@ import org.junit.Test
 
 class ViewportRuntimeMarkerBridgeTest {
     @Test
+    fun markerPropertyNamesAreIsolatedByAndroidUser() {
+        val primaryUser = ViewportRuntimeMarkerBridge.propertyNameForPackage(TEST_PACKAGE_NAME, 0)
+        val multiAppUser =
+            ViewportRuntimeMarkerBridge.propertyNameForPackage(TEST_PACKAGE_NAME, 999)
+
+        assertTrue(primaryUser.startsWith("debug.dpis.vprtm.0."))
+        assertTrue(multiAppUser.startsWith("debug.dpis.vprtm.999."))
+        assertFalse(primaryUser == multiAppUser)
+    }
+
+    @Test
     fun markerValueFitsSystemPropertyLimit() {
         val record = marker(TEST_PACKAGE_NAME, 1_000L)
 

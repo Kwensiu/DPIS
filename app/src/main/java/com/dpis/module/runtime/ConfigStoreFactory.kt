@@ -1,12 +1,14 @@
 package com.dpis.module.runtime
 
 import android.content.Context
+import android.os.Process
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.fonts.FontLibraryConfigStore
 import com.dpis.module.fonts.FontLibraryStore
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.service.XposedService
 import java.io.File
@@ -17,13 +19,15 @@ object ConfigStoreFactory {
 
     @JvmStatic
     fun createLocalModuleConfigStore(context: Context): DpisConfigStore {
-        val legacySharedPrefsFile = legacySharedPrefsFile(context)
+        val ownerUserId = PackageUidResolver.userIdFromUid(context.applicationInfo.uid)
+            ?: throw IllegalStateException("Cannot resolve module archive owner")
         val store = DpisConfigStore(
             context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE),
-            legacySharedPrefsFile,
+            legacySharedPrefsFile(context),
+            ownerUserId,
         )
         if (BuildConfig.FLAVOR == "legacy") {
-            store.importSharedPreferencesXml(legacySharedPrefsFile)
+            store.importSharedPreferencesXml(legacySharedPrefsFile(context))
         }
         return store
     }
@@ -49,43 +53,6 @@ object ConfigStoreFactory {
         return true
     }
 
-    @JvmStatic
-    fun createLocalUiModuleConfigStore(
-        context: Context,
-        service: XposedService?,
-    ): DpisConfigStore {
-        val legacySharedPrefsFile = legacySharedPrefsFile(context)
-        val localPreferences =
-            context.getSharedPreferences(DpisConfigStore.GROUP, Context.MODE_PRIVATE)
-        var preferences = localPreferences
-        var usingRemote = false
-        if (BuildConfig.FLAVOR == "modern" && service != null) {
-            try {
-                service.getRemotePreferences(DpisConfigStore.GROUP)?.let {
-                    preferences = it
-                    usingRemote = true
-                }
-            } catch (_: Throwable) {
-                // Remote preferences are unavailable; keep the app-local store.
-            }
-        }
-        val store = DpisConfigStore(
-            preferences,
-            null,
-            legacySharedPrefsFile,
-            localPreferences,
-        )
-        if (BuildConfig.FLAVOR == "modern" && usingRemote &&
-            !store.hasAnyUserVisiblePackageConfig()
-        ) {
-            store.importSharedPreferencesXml(legacySharedPrefsFile)
-        }
-        if (BuildConfig.FLAVOR == "legacy" && !usingRemote) {
-            store.importSharedPreferencesXml(legacySharedPrefsFile)
-        }
-        return store
-    }
-
     private fun legacySharedPrefsFile(context: Context): File =
         File(
             File(context.applicationInfo.dataDir, "shared_prefs"),
@@ -96,7 +63,10 @@ object ConfigStoreFactory {
     fun createRuntimeDeliveryModuleConfigStore(service: XposedService?): DpisConfigStore? {
         if (service == null) return null
         return try {
-            service.getRemotePreferences(DpisConfigStore.GROUP)?.let(::DpisConfigStore)
+            val userId = PackageUidResolver.userIdFromUid(Process.myUid()) ?: return null
+            service.getRemotePreferences(DpisConfigStore.GROUP)?.let {
+                DpisConfigStore(it, userId)
+            }
         } catch (_: Throwable) {
             // Remote preferences are unavailable.
             null
@@ -126,9 +96,8 @@ object ConfigStoreFactory {
     @JvmStatic
     fun createFontLibraryConfigStore(
         context: Context,
-        service: XposedService?,
     ): FontLibraryConfigStore {
-        val store = createLocalUiModuleConfigStore(context, service)
+        val store = createLocalModuleConfigStore(context)
         return FontLibraryConfigStore(
             object : FontLibraryConfigStore.Delegate {
                 override fun clearTargetTypefaceId(packageName: String?): Boolean =
@@ -160,7 +129,9 @@ object ConfigStoreFactory {
             // The Modern runtime has no classic-preferences fallback.
             null
         }
-        return remotePreferences?.let(::DpisConfigStore)
+        val userId = PackageUidResolver.userIdFromUid(Process.myUid())
+            ?: throw UnsupportedOperationException("Cannot resolve runtime archive owner")
+        return remotePreferences?.let { DpisConfigStore(it, userId) }
             ?: throw UnsupportedOperationException(
                 "Modern runtime requires libxposed remote preferences",
             )

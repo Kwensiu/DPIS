@@ -4,6 +4,8 @@ import com.dpis.module.config.PerAppDisplayConfigSource
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.hyperos.HyperOsRustProcessArgPolicy
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
+import com.dpis.module.runtime.systemserver.selection.PackageNames
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import io.github.libxposed.api.XposedInterface
 import java.io.File
 import java.lang.reflect.Modifier
@@ -82,7 +84,9 @@ class HyperOsRustProcessHookInstaller private constructor() {
                 return null
             }
             val parsed = HyperOsRustProcessArgPolicy.parse(args) ?: return null
-            val config = source.get(parsed.packageName) ?: return null
+            val uid = PackageNames.findUid(parsed.packageName, null, args) ?: return null
+            val userId = PackageUidResolver.userIdFromUid(uid) ?: return null
+            val config = source.get(parsed.packageName, userId) ?: return null
             val fontScalePercent = config.targetFontScalePercent
             if (fontScalePercent == null ||
                 !HyperOsRustProcessArgPolicy.shouldRewrite(
@@ -101,8 +105,12 @@ class HyperOsRustProcessHookInstaller private constructor() {
             // This property is diagnostic/fallback only. Full /data/app/... Rust binary
             // paths can exceed Android's system property limit; the environment remains
             // available to the native proxy at process start.
-            HyperOsFlutterFontBridge.publishRustBinaryPath(parsed.packageName, parsed.binaryPath)
-            HyperOsFlutterFontBridge.publishRustProxyTarget(parsed.packageName, config)
+            HyperOsFlutterFontBridge.publishRustBinaryPath(
+                parsed.packageName,
+                parsed.binaryPath,
+                userId
+            )
+            HyperOsFlutterFontBridge.publishRustProxyTarget(parsed.packageName, config, userId)
             val proxyLibraryPath = resolveProxyLibraryPath(parsed.binaryPath)
             if (proxyLibraryPath.isNullOrEmpty()) {
                 DpisLog.i(

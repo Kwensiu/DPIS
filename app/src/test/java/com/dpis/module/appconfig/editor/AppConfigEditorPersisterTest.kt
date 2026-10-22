@@ -10,6 +10,7 @@ import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportTargetSpec
 import com.dpis.module.viewport.ViewportTargetType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,6 +35,7 @@ class AppConfigEditorPersisterTest {
         )
         val persister = AppConfigEditorPersister(
             AppConfigSaveHandler(),
+            { true },
             { true },
             { store },
         )
@@ -66,5 +68,47 @@ class AppConfigEditorPersisterTest {
         assertEquals(140, store.getTargetFontScalePercent(item.packageName))
         assertEquals(FontApplyMode.SYSTEM_EMULATION, store.getTargetFontApplyMode(item.packageName))
         assertEquals(ViewportApplyMode.AUTO, store.getTargetViewportApplyMode(item.packageName))
+    }
+
+    @Test
+    fun disconnectedXposedPathLeavesPreviouslySavedPackageConfigUnchanged() {
+        val store = DpisConfigStore(FakePrefs())
+        val item = AppListItem(
+            "Example",
+            "com.example.app",
+            false,
+            true,
+            null,
+            ViewportApplyMode.OFF,
+            null,
+            FontApplyMode.OFF,
+            null,
+            true,
+            false,
+            false,
+            null,
+        )
+        assertTrue(
+            store.setTargetViewportSpec(item.packageName, ViewportTargetSpec.relativeScale(80000)),
+        )
+        val persister = AppConfigEditorPersister(
+            AppConfigSaveHandler(),
+            { true },
+            { false },
+            { store },
+        )
+
+        val result = persister.persist(
+            item,
+            EditorDraft.fromItem(item),
+            ViewportTargetSpec.relativeScale(120000),
+            null,
+        )
+
+        assertFalse(result.success)
+        assertEquals(
+            ViewportTargetSpec.relativeScale(80000),
+            store.getTargetViewportSpec(item.packageName),
+        )
     }
 }

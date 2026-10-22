@@ -57,12 +57,12 @@ class FontHookDomainPropertyBridgeTest {
     @Test
     fun propertyNamesUseStablePackageHash() {
         assertEquals(
-            "debug.dpis.hookdomains.0b666619",
-            FontHookDomainPropertyBridge.propertyNameForPackage(TEST_PACKAGE_NAME),
+            "debug.dpis.hookdomains.0.0b666619",
+            FontHookDomainPropertyBridge.propertyNameForPackage(TEST_PACKAGE_NAME, 0),
         )
         assertEquals(
-            "persist.debug.dpis.hookdomains.0b666619",
-            FontHookDomainPropertyBridge.persistentPropertyNameForPackage(TEST_PACKAGE_NAME),
+            "persist.debug.dpis.hookdomains.0.0b666619",
+            FontHookDomainPropertyBridge.persistentPropertyNameForPackage(TEST_PACKAGE_NAME, 0),
         )
     }
 

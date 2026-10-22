@@ -135,7 +135,7 @@ class SystemServerSettingsLayoutSmokeTest {
         dialogLayout.assertContainsAll("DialogChrome.SurfacePadding", ".weight(1f, fill = false)", "LocalSpacing.current")
         read("src/main/java/com/dpis/module/DpisApplication.kt").assertContainsAll(
             "fun reloadConfigStore()",
-            "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)",
+            "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)",
             "notifyServiceStateChanged()"
         )
     }
