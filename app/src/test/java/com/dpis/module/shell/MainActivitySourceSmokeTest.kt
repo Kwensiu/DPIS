@@ -773,9 +773,15 @@ class MainActivitySourceSmokeTest {
             read("src/main/java/com/dpis/module/appconfig/editor/AppConfigEditorPersister.kt")
                 .contains("saveHandler.saveResolved(")
         )
+        val normalizedRuntimeLaunch = runtimeLaunch.replace(Regex("\\s+"), " ")
         assertTrue(
-            runtimeLaunch.contains(
-                "FontRuntimePropertySyncer.clearTargetAsync(packageName, store.packageConfigOwnerUserId())"
+            normalizedRuntimeLaunch.contains(
+                "FontRuntimePropertySyncer.clearTargetAsync( packageName, store.packageConfigOwnerUserId() )"
+            )
+        )
+        assertTrue(
+            normalizedRuntimeLaunch.contains(
+                "FontHookDomainPropertySyncer.clearTargetAsync( packageName, store.packageConfigOwnerUserId() )"
             )
         )
         assertFalse(
