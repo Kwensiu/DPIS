@@ -95,16 +95,18 @@ class LegacyModuleManifestMetadataTest {
 
     @Test
     @Throws(IOException::class)
-    fun bootFlowResynchronizesConfiguredTargets() {
+    fun lifecycleRecoveryRequiresCompletedOnboardingAndDetectedRoot() {
         val manifest = read("src/main/AndroidManifest.xml")
         val app = read("src/main/java/com/dpis/module/DpisApplication.kt")
         val receiver =
             read("src/main/java/com/dpis/module/runtime/lifecycle/DpisPackageLifecycleReceiver.java")
         assertTrue(manifest.contains("android.permission.RECEIVE_BOOT_COMPLETED"))
         assertTrue(manifest.contains("android.intent.action.BOOT_COMPLETED"))
-        assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"))
-        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"))
-        assertTrue(app.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)"))
+        assertTrue(receiver.contains("DpisApplication.isOnboardingCompleted()"))
+        assertTrue(receiver.contains("RootAccessProbe.refreshAsync"))
+        assertTrue(receiver.contains("RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(recoveryStore)"))
+        assertTrue(app.contains("if (hasCompletedOnboarding())"))
+        assertTrue(app.contains("initializeRootRuntime(localStore)"))
     }
 
     private fun read(path: String): String = SourceSmokeTestPaths.read(path)

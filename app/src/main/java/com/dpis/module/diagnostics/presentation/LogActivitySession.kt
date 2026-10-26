@@ -19,10 +19,6 @@ import com.dpis.module.diagnostics.LogReadResult
 import com.dpis.module.diagnostics.device.LsposedLogReader
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.diagnostics.presentation.LogActivityHost
-import com.dpis.module.diagnostics.presentation.LogPresentation
-import com.dpis.module.diagnostics.presentation.LogUiEntry
-import com.dpis.module.diagnostics.presentation.LogUiState
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -30,7 +26,6 @@ import java.io.OutputStream
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.LinkedHashMap
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.zip.ZipEntry
@@ -447,12 +442,12 @@ class LogActivitySession(
 
     private fun readLsposedLogsWhenRootAvailable(refreshRootAccess: Boolean): LogReadResult {
         var rootAccess = if (refreshRootAccess) {
-            RootAccessProbe.probe()
+            RootAccessProbe.refreshBlocking()
         } else {
             RootAccessProbe.cachedResult()
         }
         if (!refreshRootAccess && rootAccess.status == RootAccessProbe.Status.UNKNOWN) {
-            rootAccess = RootAccessProbe.probe()
+            rootAccess = RootAccessProbe.refreshBlocking()
         }
         if (rootAccess.status != RootAccessProbe.Status.AVAILABLE) {
             return LogReadResult(

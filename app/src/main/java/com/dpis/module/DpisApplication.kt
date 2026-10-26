@@ -2,6 +2,8 @@ package com.dpis.module
 
 import android.app.Application
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import com.dpis.module.appconfig.XposedConfigReadiness
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.RuntimeConfigSnapshotPublisher
@@ -9,6 +11,8 @@ import com.dpis.module.diagnostics.DpisAppLogStore
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.DpisLog.AppLogSink
 import com.dpis.module.fonts.TypefaceCatalogCache.preload
+import com.dpis.module.onboarding.OnboardingCoordinator
+import com.dpis.module.onboarding.OnboardingStore
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
@@ -21,6 +25,7 @@ import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
 import io.github.libxposed.service.XposedServiceHelper.OnServiceListener
 import java.util.concurrent.CopyOnWriteArraySet
+import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
 class DpisApplication : Application(), OnServiceListener {
@@ -30,9 +35,18 @@ class DpisApplication : Application(), OnServiceListener {
 
     var xposedSelfLoadedByLegacyConstructorHook: Boolean = false
 
+    private val rootStateListener = Consumer<RootAccessProbe.Result> { result ->
+        if (result.status == RootAccessProbe.Status.AVAILABLE) {
+            Handler(Looper.getMainLooper()).post { onRootAccessDetected() }
+        } else {
+            Handler(Looper.getMainLooper()).post { notifyServiceStateChanged() }
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         instance = this
+        RootAccessProbe.addStateListener(rootStateListener)
         val appLogStore = DpisAppLogStore(this)
         DpisLog.setAppLogSink(AppLogSink { level: String?, message: String? ->
             appLogStore.record(
@@ -41,7 +55,6 @@ class DpisApplication : Application(), OnServiceListener {
             )
         })
         DpisLog.i("app process started")
-        RootAccessProbe.warmUpAsync()
         DynamicColors.applyToActivitiesIfAvailable(this)
         HyperOsNativeProxyAssetExporter.exportBundledNativeProxyLibrary(
             this,
@@ -56,24 +69,38 @@ class DpisApplication : Application(), OnServiceListener {
         preload(this)
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this)
         migrateLocalConfigStore(configStore)
-        // A reinstall creates a fresh preference namespace but does not remove system properties
-        // left by the previous installation. Clear only those per-package mirrors once, before
-        // the current store is replayed by the normal recovery coordinator.
         val initializedStore: DpisConfigStore? = configStore
         if (initializedStore == null) {
             DpisLog.e(
                 "app config store initialization returned null",
                 IllegalStateException("config store unavailable")
             )
-            RuntimePropertyInstallCleanup.initializeAsync(this)
         } else {
             DpisLog.setLoggingEnabled(initializedStore.isGlobalLogEnabled())
-            RuntimePropertyInstallCleanup.initializeAsync(this, Runnable {
-                RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(initializedStore)
-            })
+            if (hasCompletedOnboarding()) {
+                initializeRootRuntime(initializedStore)
+            }
         }
         XposedServiceHelper.registerListener(this)
         UpdatePackageInstaller.clearStaleUpdateCache(this, UPDATE_CACHE_STARTUP_MAX_AGE_MS)
+    }
+
+    private fun hasCompletedOnboarding(): Boolean =
+        OnboardingStore(
+            getSharedPreferences(OnboardingStore.PREFS_NAME, MODE_PRIVATE),
+            OnboardingCoordinator.REQUIRED_TERMS_VERSION,
+        ).read().completed
+
+    private fun initializeRootRuntime(store: DpisConfigStore) {
+        publishRuntimeConfig(store, xposedService)
+        if (!hasCompletedOnboarding() ||
+            RootAccessProbe.cachedResult().status != RootAccessProbe.Status.AVAILABLE
+        ) {
+            return
+        }
+        RuntimePropertyInstallCleanup.initializeAsync(this, Runnable {
+            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)
+        })
     }
 
     override fun onServiceBind(service: XposedService) {
@@ -82,15 +109,20 @@ class DpisApplication : Application(), OnServiceListener {
         configStore = localStore
         xposedService = service
         DpisLog.setLoggingEnabled(localStore.isGlobalLogEnabled())
-        publishRuntimeConfig(localStore, service)
-        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)
+        if (hasCompletedOnboarding()) {
+            initializeRootRuntime(localStore)
+        }
         notifyServiceStateChanged()
     }
 
     override fun onServiceDied(service: XposedService) {
         configStore = ConfigStoreFactory.createLocalModuleConfigStore(this)
         DpisLog.setLoggingEnabled(configStore!!.isGlobalLogEnabled())
-        RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)
+        if (hasCompletedOnboarding() &&
+            RootAccessProbe.cachedResult().status == RootAccessProbe.Status.AVAILABLE
+        ) {
+            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)
+        }
         xposedService = null
         notifyServiceStateChanged()
     }
@@ -118,6 +150,27 @@ class DpisApplication : Application(), OnServiceListener {
 
         @Volatile
         private var xposedSelfLoaded = false
+
+        @JvmStatic
+        fun onOnboardingCompleted() {
+            val application = instance ?: return
+            val store = configStore ?: return
+            application.initializeRootRuntime(store)
+            notifyServiceStateChanged()
+        }
+
+        @JvmStatic
+        fun onRootAccessDetected() {
+            val application = instance ?: return
+            val store = configStore ?: return
+            if (application.hasCompletedOnboarding()) {
+                application.initializeRootRuntime(store)
+            }
+            notifyServiceStateChanged()
+        }
+
+        @JvmStatic
+        fun isOnboardingCompleted(): Boolean = instance?.hasCompletedOnboarding() ?: false
 
         @JvmStatic
         fun getConfigStore(): DpisConfigStore {
@@ -175,13 +228,13 @@ class DpisApplication : Application(), OnServiceListener {
             if (application == null) {
                 return
             }
-            val service: XposedService? = xposedService
             val localStore = ConfigStoreFactory.createLocalModuleConfigStore(application)
             migrateLocalConfigStore(localStore)
             configStore = localStore
             DpisLog.setLoggingEnabled(localStore.isGlobalLogEnabled())
-            publishRuntimeConfig(localStore, service)
-            RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)
+            if (application.hasCompletedOnboarding()) {
+                application.initializeRootRuntime(localStore)
+            }
             notifyServiceStateChanged()
         }
 

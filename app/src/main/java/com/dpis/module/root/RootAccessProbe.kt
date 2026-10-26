@@ -4,8 +4,8 @@ import com.dpis.module.runtime.transport.SecureProcessLauncher
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
@@ -17,15 +17,30 @@ object RootAccessProbe {
             + "; echo DPIS_KSU_KERNEL_VER_CODE=\$KSU_KERNEL_VER_CODE"
             + "; echo DPIS_MAGISK_VER=\$MAGISK_VER"
             + "; echo DPIS_MAGISK_VER_CODE=\$MAGISK_VER_CODE")
-    private const val PROBE_TIMEOUT_MS = 3000L
+    private const val PROBE_TIMEOUT_MS = 30_000L
 
     @Volatile
     private var cachedResult: Result = Result.Companion.unknown()
-    private val probeInFlight = AtomicBoolean(false)
+    private val refreshLock = Any()
+    private val probeLock = Any()
+    private val refreshCallbacks = ArrayList<Consumer<Result?>>()
+    private var refreshInFlight = false
+    private var refreshAgain = false
+    private val stateListeners = CopyOnWriteArraySet<Consumer<Result>>()
 
     @JvmStatic
     fun cachedResult(): Result {
         return cachedResult
+    }
+
+    @JvmStatic
+    fun addStateListener(listener: Consumer<Result>) {
+        stateListeners.add(listener)
+    }
+
+    @JvmStatic
+    fun removeStateListener(listener: Consumer<Result>) {
+        stateListeners.remove(listener)
     }
 
     @JvmStatic
@@ -36,24 +51,65 @@ object RootAccessProbe {
     /** Rechecks authorization without requiring an activity or process restart.  */
     @JvmStatic
     fun refreshAsync(callback: Consumer<Result?>?) {
-        if (!probeInFlight.compareAndSet(false, true)) {
+        enqueueRefresh(callback, ::refreshBlocking) { task ->
+            Thread(task, "dpis-root-access-probe").start()
+        }
+    }
+
+    internal fun refreshAsyncForTest(
+        callback: Consumer<Result?>?,
+        probe: () -> Result,
+        executor: (() -> Unit) -> Unit,
+    ) {
+        enqueueRefresh(callback, probe, executor)
+    }
+
+    private fun enqueueRefresh(
+        callback: Consumer<Result?>?,
+        probe: () -> Result,
+        executor: (() -> Unit) -> Unit,
+    ) {
+        val launch = synchronized(refreshLock) {
+            if (callback != null) refreshCallbacks.add(callback)
+            if (refreshInFlight) {
+                refreshAgain = true
+                false
+            } else {
+                refreshInFlight = true
+                true
+            }
+        }
+        if (launch) executor { runRefreshes(probe) }
+    }
+
+    private fun runRefreshes(probe: () -> Result) {
+        while (true) {
+            val result = runCatching(probe).getOrElse { Result.unavailable() }
+            val callbacks: List<Consumer<Result?>>
+            val runAgain: Boolean
+            synchronized(refreshLock) {
+                runAgain = refreshAgain
+                refreshAgain = false
+                if (runAgain) {
+                    callbacks = emptyList()
+                } else {
+                    callbacks = refreshCallbacks.toList()
+                    refreshCallbacks.clear()
+                    refreshInFlight = false
+                }
+            }
+            if (runAgain) continue
+            callbacks.forEach { callback -> runCatching { callback.accept(result) } }
             return
         }
-        Thread(Runnable {
-            var result: Result?
-            try {
-                result = probe()
-            } finally {
-                probeInFlight.set(false)
-            }
-            if (callback != null) {
-                callback.accept(result)
-            }
-        }, "dpis-root-access-probe").start()
     }
 
     @JvmStatic
-    fun probe(): Result {
+    fun refreshBlocking(): Result = synchronized(probeLock) {
+        probe()
+    }
+
+    private fun probe(): Result {
         var process: Process? = null
         try {
             val startedProcess = SecureProcessLauncher.start("su", "-c", PROBE_COMMAND)
@@ -75,6 +131,8 @@ object RootAccessProbe {
         } catch (ignored: InterruptedException) {
             Thread.currentThread().interrupt()
             return cachedResult
+        } catch (ignored: Throwable) {
+            return cache(Result.Companion.unavailable())
         } finally {
             if (process != null) {
                 process.destroy()
@@ -83,16 +141,21 @@ object RootAccessProbe {
     }
 
     private fun cache(result: Result?): Result {
-        cachedResult = if (result != null) result else Result.Companion.unknown()
+        val previous = cachedResult
+        cachedResult = result ?: Result.Companion.unknown()
+        if (previous.status != cachedResult.status || previous.provider != cachedResult.provider) {
+            stateListeners.forEach { listener ->
+                runCatching { listener.accept(cachedResult) }
+            }
+        }
         return cachedResult
     }
 
-    /** Records successful use of a root shell without replacing a known provider name.  */
+    /** Records successful use of a root shell without replacing a known provider name. */
     @JvmStatic
     fun recordSuccessfulRootCommand() {
-        val current = cachedResult
-        if (current.status != Status.AVAILABLE) {
-            cachedResult = Result.Companion.available("su")
+        if (cachedResult.status != Status.AVAILABLE) {
+            cache(Result.Companion.available("su"))
         }
     }
 

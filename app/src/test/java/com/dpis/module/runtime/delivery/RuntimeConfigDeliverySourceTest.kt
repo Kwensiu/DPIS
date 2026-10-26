@@ -71,19 +71,14 @@ class RuntimeConfigDeliverySourceTest {
 
         assertTrue(mainWiring.contains("DpisApplication::isXposedConfigReady"))
         assertTrue(templateWorkspace.contains("DpisApplication::isXposedConfigReady"))
-        val restoreReadyStart = backupHost.indexOf("private fun restoreReady(")
-        val asyncRestoreGate = backupHost.indexOf(
-            "ConfigRestoreReadiness.runIfReady(",
-            restoreReadyStart,
-        )
-        val backupWrite = backupHost.indexOf("coordinator(store).restore(uri)", asyncRestoreGate)
-        assertTrue(restoreReadyStart >= 0)
-        assertTrue(asyncRestoreGate > restoreReadyStart)
-        assertTrue(backupWrite > asyncRestoreGate)
+        assertTrue(backupHost.contains("private fun runRestoreIfReady("))
+        assertTrue(backupHost.contains("ConfigRestoreReadiness.runIfReady(DpisApplication::isXposedConfigReady, restore)"))
+        assertTrue(backupHost.contains("port.allowRestoreBeforeRuntimeReady()"))
+        assertTrue(backupHost.contains("coordinator(store).restore(uri)"))
     }
 
     @Test
-    fun serviceBindingKeepsLocalConfigCanonicalAndPublishesOutward() {
+    fun serviceBindingPublishesConfigAfterTermsEvenWithoutRoot() {
         val application = read("src/main/java/com/dpis/module/DpisApplication.kt")
         val start = application.indexOf("override fun onServiceBind(")
         val end = application.indexOf("override fun onServiceDied(", start)
@@ -91,7 +86,14 @@ class RuntimeConfigDeliverySourceTest {
 
         assertTrue(serviceBind.contains("ConfigStoreFactory.createLocalModuleConfigStore(this)"))
         assertTrue(serviceBind.contains("configStore = localStore"))
-        assertTrue(serviceBind.contains("publishRuntimeConfig(localStore, service)"))
+        assertTrue(serviceBind.contains("if (hasCompletedOnboarding())"))
+        assertTrue(serviceBind.contains("initializeRootRuntime(localStore)"))
+        val rootRuntime = application.substringAfter("private fun initializeRootRuntime(")
+        val publish = rootRuntime.indexOf("publishRuntimeConfig(store, xposedService)")
+        val rootGate =
+            rootRuntime.indexOf("RootAccessProbe.cachedResult().status != RootAccessProbe.Status.AVAILABLE")
+        assertTrue(publish >= 0)
+        assertTrue(rootGate > publish)
     }
 
     @Test

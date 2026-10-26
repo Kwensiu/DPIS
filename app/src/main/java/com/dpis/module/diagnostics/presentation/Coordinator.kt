@@ -355,7 +355,7 @@ class Coordinator private constructor(
         scheduleForegroundCheck()
     }
 
-    private fun ensureRootAccess(): RootAccessProbe.Result = RootAccessProbe.probe()
+    private fun ensureRootAccess(): RootAccessProbe.Result = RootAccessProbe.refreshBlocking()
 
     private fun scheduleForegroundCheck() {
         activeHandler.postDelayed(::checkForegroundPackage, FOREGROUND_CHECK_INTERVAL_MS)
