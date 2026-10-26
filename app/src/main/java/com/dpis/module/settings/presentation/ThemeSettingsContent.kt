@@ -26,6 +26,146 @@ import com.dpis.module.ui.presentation.workspace.AnimatedConditionalItem
 import com.dpis.module.ui.presentation.workspace.SecondaryPageScaffold
 import kotlin.math.roundToInt
 
+@Composable
+internal fun ThemeAppearanceSettingsSection(
+    mode: String,
+    dynamicColorEnabled: Boolean,
+    themeColor: String,
+    paletteStyle: String,
+    colorSpecification: String,
+    interfaceScalePercent: Int? = null,
+    onModeSelected: (String) -> Unit,
+    onDynamicColorChanged: (Boolean) -> Unit,
+    onThemeColorSelected: (String) -> Unit,
+    onPaletteStyleSelected: (String) -> Unit,
+    onColorSpecificationSelected: (String) -> Unit,
+    onInterfaceScaleChanged: (Int) -> Unit = {},
+) {
+    var showModeDialog by rememberSaveable { mutableStateOf(false) }
+    var showPaletteDialog by rememberSaveable { mutableStateOf(false) }
+    var showSpecificationDialog by rememberSaveable { mutableStateOf(false) }
+    var showScaleDialog by rememberSaveable { mutableStateOf(false) }
+    var pendingScale by remember(interfaceScalePercent) {
+        mutableFloatStateOf(interfaceScalePercent?.toFloat() ?: 100f)
+    }
+    val appearanceTotal = if (dynamicColorEnabled) 4 else 5
+    val total = appearanceTotal + if (interfaceScalePercent != null) 1 else 0
+    ThemeSettingsSection(R.string.settings_theme_section_appearance) {
+        ThemeChoiceMenuAnchor(
+            expanded = showModeDialog,
+            options = themeModeOptions,
+            selected = mode,
+            onDismiss = { showModeDialog = false },
+            onSelected = {
+                onModeSelected(it)
+                showModeDialog = false
+            },
+        ) {
+            ThemeSettingsEntry(
+                icon = R.drawable.ic_routine_24,
+                title = R.string.settings_theme_mode_label,
+                summary = R.string.settings_theme_mode_hint,
+                value = themeModeLabel(mode),
+                index = 0,
+                total = total,
+                onClick = { showModeDialog = true },
+            )
+        }
+        ThemeDynamicColorRow(
+            checked = dynamicColorEnabled,
+            onCheckedChange = onDynamicColorChanged,
+            index = 1,
+            total = total,
+        )
+        AnimatedConditionalItem(visible = !dynamicColorEnabled) {
+            ThemeColorRow(
+                selectedColor = themeColor,
+                paletteStyle = paletteStyle,
+                colorSpecification = colorSpecification,
+                onColorSelected = onThemeColorSelected,
+                index = 2,
+                total = total,
+            )
+        }
+        ThemeChoiceMenuAnchor(
+            expanded = showPaletteDialog,
+            options = paletteStyleOptions,
+            selected = paletteStyle,
+            onDismiss = { showPaletteDialog = false },
+            onSelected = {
+                onPaletteStyleSelected(it)
+                showPaletteDialog = false
+            },
+        ) {
+            ThemeStaticOptionRow(
+                icon = R.drawable.ic_style_24,
+                title = R.string.settings_theme_palette_style_label,
+                value = paletteStyleLabel(paletteStyle),
+                index = if (dynamicColorEnabled) 2 else 3,
+                total = total,
+                onClick = { showPaletteDialog = true },
+            )
+        }
+        ThemeChoiceMenuAnchor(
+            expanded = showSpecificationDialog,
+            options = if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
+                colorSpecificationOptions
+            } else {
+                colorSpecificationOptions.take(1)
+            },
+            selected = colorSpecification,
+            onDismiss = { showSpecificationDialog = false },
+            onSelected = {
+                onColorSpecificationSelected(it)
+                showSpecificationDialog = false
+            },
+        ) {
+            ThemeStaticOptionRow(
+                icon = R.drawable.ic_design_services_24,
+                title = R.string.settings_theme_color_spec_label,
+                value = colorSpecificationLabel(paletteStyle, colorSpecification),
+                index = if (dynamicColorEnabled) 3 else 4,
+                total = total,
+                onClick = { showSpecificationDialog = true },
+            )
+        }
+        if (interfaceScalePercent != null) {
+            ThemeInterfaceScaleRow(
+                pendingScale = pendingScale,
+                onPendingScaleChanged = { pendingScale = it },
+                onScaleChanged = onInterfaceScaleChanged,
+                onClick = { showScaleDialog = true },
+                index = if (dynamicColorEnabled) 4 else 5,
+                total = if (dynamicColorEnabled) 5 else 6,
+            )
+        }
+    }
+    if (showScaleDialog && interfaceScalePercent != null) {
+        val scaleInputBoundary = rememberTextInputFocusBoundary()
+        ModalDialog(
+            onDismissRequest = { showScaleDialog = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
+            imeFocusBoundary = scaleInputBoundary,
+        ) {
+            InterfaceScaleDialogContent(
+                initialPercent = pendingScale.roundToInt(),
+                minimumPercent = AppUiScaleManager.MIN_SCALE_PERCENT,
+                maximumPercent = AppUiScaleManager.MAX_SCALE_PERCENT,
+                inputFocusBoundary = scaleInputBoundary,
+                onCancel = { showScaleDialog = false },
+                onSave = {
+                    showScaleDialog = false
+                    pendingScale = it.toFloat()
+                    onInterfaceScaleChanged(it)
+                },
+            )
+        }
+    }
+}
+
 /** The first focused page in Theme settings; further appearance controls can join this list. */
 @Composable
 fun ThemeSettingsContent(
@@ -49,107 +189,26 @@ fun ThemeSettingsContent(
     onPredictiveBackChanged: (Boolean) -> Unit = {},
     onBack: () -> Unit,
 ) {
-    var showModeDialog by rememberSaveable { mutableStateOf(false) }
-    var showPaletteDialog by rememberSaveable { mutableStateOf(false) }
-    var showSpecificationDialog by rememberSaveable { mutableStateOf(false) }
-    var showScaleDialog by rememberSaveable { mutableStateOf(false) }
     var showStartupPageDialog by rememberSaveable { mutableStateOf(false) }
-    var pendingScale by remember(interfaceScalePercent) {
-        mutableFloatStateOf(interfaceScalePercent.toFloat())
-    }
     SecondaryPageScaffold(
         titleRes = R.string.settings_theme_settings_title,
         onBack = onBack,
     ) {
         item {
-            ThemeSettingsSection(R.string.settings_theme_section_appearance) {
-                ThemeChoiceMenuAnchor(
-                    expanded = showModeDialog,
-                    options = themeModeOptions,
-                    selected = mode,
-                    onDismiss = { showModeDialog = false },
-                    onSelected = {
-                        onModeSelected(it)
-                        showModeDialog = false
-                    },
-                ) {
-                    ThemeSettingsEntry(
-                        icon = R.drawable.ic_routine_24,
-                        title = R.string.settings_theme_mode_label,
-                        summary = R.string.settings_theme_mode_hint,
-                        value = themeModeLabel(mode),
-                        index = 0,
-                        total = if (dynamicColorEnabled) 5 else 6,
-                        onClick = { showModeDialog = true },
-                    )
-                }
-                ThemeDynamicColorRow(
-                    checked = dynamicColorEnabled,
-                    onCheckedChange = onDynamicColorChanged,
-                    index = 1,
-                    total = if (dynamicColorEnabled) 5 else 6,
-                )
-                AnimatedConditionalItem(visible = !dynamicColorEnabled) {
-                    ThemeColorRow(
-                        selectedColor = themeColor,
-                        paletteStyle = paletteStyle,
-                        colorSpecification = colorSpecification,
-                        onColorSelected = onThemeColorSelected,
-                        index = 2,
-                        total = 6,
-                    )
-                }
-                ThemeChoiceMenuAnchor(
-                    expanded = showPaletteDialog,
-                    options = paletteStyleOptions,
-                    selected = paletteStyle,
-                    onDismiss = { showPaletteDialog = false },
-                    onSelected = {
-                        onPaletteStyleSelected(it)
-                        showPaletteDialog = false
-                    },
-                ) {
-                    ThemeStaticOptionRow(
-                        icon = R.drawable.ic_style_24,
-                        title = R.string.settings_theme_palette_style_label,
-                        value = paletteStyleLabel(paletteStyle),
-                        index = if (dynamicColorEnabled) 2 else 3,
-                        total = if (dynamicColorEnabled) 5 else 6,
-                        onClick = { showPaletteDialog = true },
-                    )
-                }
-                ThemeChoiceMenuAnchor(
-                    expanded = showSpecificationDialog,
-                    options = if (ColorSchemeFactory.supports2025Specification(paletteStyle)) {
-                        colorSpecificationOptions
-                    } else {
-                        colorSpecificationOptions.take(1)
-                    },
-                    selected = colorSpecification,
-                    onDismiss = { showSpecificationDialog = false },
-                    onSelected = {
-                        onColorSpecificationSelected(it)
-                        showSpecificationDialog = false
-                    },
-                ) {
-                    ThemeStaticOptionRow(
-                        icon = R.drawable.ic_design_services_24,
-                        title = R.string.settings_theme_color_spec_label,
-                        value = colorSpecificationLabel(paletteStyle, colorSpecification),
-                        index = if (dynamicColorEnabled) 3 else 4,
-                        total = if (dynamicColorEnabled) 5 else 6,
-                        onClick = { showSpecificationDialog = true },
-                    )
-                }
-                ThemeInterfaceScaleRow(
-                    pendingScale = pendingScale,
-                    onPendingScaleChanged = { pendingScale = it },
-                    onScaleChanged = onInterfaceScaleChanged,
-                    onClick = { showScaleDialog = true },
-                    index = if (dynamicColorEnabled) 4 else 5,
-                    total = if (dynamicColorEnabled) 5 else 6,
-                )
-            }
+            ThemeAppearanceSettingsSection(
+                mode = mode,
+                dynamicColorEnabled = dynamicColorEnabled,
+                themeColor = themeColor,
+                paletteStyle = paletteStyle,
+                colorSpecification = colorSpecification,
+                interfaceScalePercent = interfaceScalePercent,
+                onModeSelected = onModeSelected,
+                onDynamicColorChanged = onDynamicColorChanged,
+                onThemeColorSelected = onThemeColorSelected,
+                onPaletteStyleSelected = onPaletteStyleSelected,
+                onColorSpecificationSelected = onColorSpecificationSelected,
+                onInterfaceScaleChanged = onInterfaceScaleChanged,
+            )
         }
         item {
             ThemeSettingsSection(R.string.settings_theme_section_page) {
@@ -208,30 +267,6 @@ fun ThemeSettingsContent(
                     },
                 )
             }
-        }
-    }
-    if (showScaleDialog) {
-        val scaleInputBoundary = rememberTextInputFocusBoundary()
-        ModalDialog(
-            onDismissRequest = { showScaleDialog = false },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false,
-            ),
-            imeFocusBoundary = scaleInputBoundary,
-        ) {
-            InterfaceScaleDialogContent(
-                initialPercent = pendingScale.roundToInt(),
-                minimumPercent = AppUiScaleManager.MIN_SCALE_PERCENT,
-                maximumPercent = AppUiScaleManager.MAX_SCALE_PERCENT,
-                inputFocusBoundary = scaleInputBoundary,
-                onCancel = { showScaleDialog = false },
-                onSave = {
-                    showScaleDialog = false
-                    pendingScale = it.toFloat()
-                    onInterfaceScaleChanged(it)
-                },
-            )
         }
     }
     if (showStartupPageDialog) {

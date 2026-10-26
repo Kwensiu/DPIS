@@ -110,6 +110,10 @@ class HomeWorkspaceSession(
                 secondaryNavigation.open(SecondaryDestination.Donate)
             }
 
+            override fun refreshRootAccess() {
+                RootAccessProbe.refreshAsync(null)
+            }
+
             override fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout) {
                 HomeWorkspaceLayoutStore(activity).save(layout)
                 bindHomeWorkspace()

@@ -47,8 +47,8 @@ class MainActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        assertTrue(activity.contains("MainUpdateSession(this) {"))
-        assertTrue(activity.contains("startupSession.bindHomeWorkspaceIfVisible()"))
+        assertTrue(activity.contains("MainUpdateSession("))
+        assertTrue(activity.contains("onHomeUpdateStateChanged = { startupSession.bindHomeWorkspaceIfVisible() }"))
         assertTrue(updateSession.contains("private val updateStateStore by lazy"))
         assertTrue(updateSession.contains("private val releaseNotesController by lazy"))
         assertTrue(updateSession.contains("private val promptCoordinator by lazy"))
@@ -450,7 +450,19 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun startupDisclaimerUsesMaterialDialogAndPersistsConsent() {
+    fun installedAppCatalogCannotRequestPermissionBeforeOnboardingOrAppWorkspace() {
+        val source = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt",
+        )
+
+        assertTrue(source.contains("if (!canLoadInstalledApps())"))
+        assertTrue(source.contains("DpisApplication.isOnboardingCompleted()"))
+        assertTrue(source.contains("MainUiState.WorkspaceMode.APP"))
+        assertTrue(source.contains("if (shouldReload && canLoadInstalledApps())"))
+    }
+
+    @Test
+    fun runtimeReloadAdviceUsesComposeModalAndLocalizedNotice() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val launch = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
@@ -495,31 +507,36 @@ class MainActivitySourceSmokeTest {
         assertFalse(runtimeMessage.contains("Rust"))
         assertFalse(zhRuntimeMessage.contains("HyperOS"))
         assertFalse(zhRuntimeMessage.contains("Rust"))
-        assertTrue(launch.contains("updateSession.maybeShowStartupDisclaimerDialog()"))
-        assertTrue(
-            launch.contains("if (!updateSession.maybeShowStartupDisclaimerDialog()) {")
-        )
-        val updateSession = read(
-            "src/main/java/com/dpis/module/updates/presentation/MainUpdateSession.kt"
-        )
-        assertTrue(
-            updateSession.contains("fun maybeShowStartupDisclaimerDialog(): Boolean")
-        )
-        assertTrue(
-            updateSession.contains(
-                "object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance"
-            )
-        )
-        assertTrue(updateSession.contains("startupDisclaimerStore(activity)"))
-        assertTrue(updateSession.contains("store.isAccepted"))
-        assertTrue(updateSession.contains("store.setAccepted(true)"))
-        assertFalse(updateSession.contains("fun applyLargeDialogWidth("))
-        assertFalse(updateSession.contains("DialogWindowSizer"))
-        val disclaimerBlock = updateSession.substring(
-            updateSession.indexOf("fun maybeShowStartupDisclaimerDialog(): Boolean"),
-            updateSession.indexOf("fun maybeCheckForUpdatesOnStartup()")
-        )
-        assertFalse(disclaimerBlock.contains("DpisConfigStore"))
+    }
+
+    @Test
+    fun startupDefersAppListPermissionUntilAppWorkspaceEntryAndOnboardingCompletion() {
+        val startup = read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
+        val launch = startup.substringAfter("fun launch(savedInstanceState: Bundle?)")
+            .substringBefore("fun consumeSkipNextImmediateServiceReload")
+        val dispatch = startup.substringAfter("fun dispatch(action: MainUiAction?)")
+            .substringBefore("fun requestAppsLoad()")
+        val request = startup.substringAfter("fun requestAppsLoad()")
+            .substringBefore("fun dispatchInstalledAppsLoad")
+
+        assertFalse(launch.contains("requestAppsLoad()"))
+        assertTrue(dispatch.contains("action is MainUiAction.WorkspaceModeChanged"))
+        assertTrue(dispatch.contains("action.workspaceMode == MainUiState.WorkspaceMode.APP"))
+        assertTrue(request.contains("!DpisApplication.isOnboardingCompleted()"))
+        assertTrue(request.contains("requestLoad(false)"))
+    }
+
+    @Test
+    fun startupDialogsKeepOnboardingBeforeReloadAdviceAndPendingUpdates() {
+        val startup = read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
+        val dialogs = startup.substringAfter("fun continueStartupDialogs()")
+            .substringBefore("fun requireUiState()")
+
+        assertTrue(dialogs.indexOf("maybeShowOnboarding()") < dialogs.indexOf("maybeShowModuleRuntimeReloadAdvice()"))
+        assertTrue(dialogs.indexOf("maybeShowModuleRuntimeReloadAdvice()") < dialogs.indexOf("showPendingPromptIfAny()"))
+        assertTrue(dialogs.contains("maybeCheckForUpdatesOnStartup()"))
+        assertTrue(startup.contains("setOnboardingCompletedHandler {"))
+        assertTrue(startup.contains("continueStartupDialogs()"))
     }
 
     @Test
@@ -578,22 +595,6 @@ class MainActivitySourceSmokeTest {
         assertTrue(primaryStatus.contains("state.updateState.subtitle(context)"))
         assertFalse(primaryStatus.contains("if (!disabled) {\n                    Text("))
         assertTrue(compose.contains("state.actions.checkForUpdates()"))
-    }
-
-    @Test
-    fun startupDisclaimerComposeKeepsMandatoryAcceptContract() {
-        val source = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
-
-        assertTrue(source.contains("fun StartupDisclaimerDialog("))
-        assertTrue(source.contains("R.string.startup_disclaimer_title"))
-        assertTrue(source.contains("R.string.startup_disclaimer_message"))
-        assertTrue(source.contains("R.string.startup_disclaimer_checkbox_text"))
-        assertTrue(source.contains("R.string.startup_disclaimer_accept_button"))
-        assertTrue(source.contains("dismissOnBackPress = false"))
-        assertTrue(source.contains("dismissOnClickOutside = false"))
-        assertTrue(source.contains("DialogChrome.HorizontalPadding"))
-        assertFalse(source.contains("startup_disclaimer_exit_button"))
-        assertFalse(source.contains("R.dimen."))
     }
 
     @Test
@@ -844,31 +845,13 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun applicationSyncsHyperOsNativeFontTargetsOnStartup() {
-        val source = read(
-            "src/main/java/com/dpis/module/DpisApplication.kt"
-        )
+    fun startupRootRecoveryRequiresCompletedOnboardingAndCapabilityCheck() {
+        val source = read("src/main/java/com/dpis/module/DpisApplication.kt")
 
-        assertTrue(
-            source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)"
-            )
-        )
-        assertFalse(
-            source.contains(
-                "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"
-            )
-        )
-        assertFalse(
-            source.contains(
-                "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, runtimeDeliveryStore)"
-            )
-        )
+        assertTrue(source.contains("if (hasCompletedOnboarding())"))
+        assertTrue(source.contains("initializeRootRuntime(initializedStore)"))
+        assertTrue(source.contains("RootAccessProbe.cachedResult().status != RootAccessProbe.Status.AVAILABLE"))
+        assertFalse(source.contains("RootAccessProbe.warmUpAsync()"))
     }
 
     @Test
@@ -893,9 +876,10 @@ class MainActivitySourceSmokeTest {
                 "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"
             )
         )
+        assertTrue(receiver.contains("RootAccessProbe.refreshAsync"))
         assertTrue(
             receiver.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"
+                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(recoveryStore)"
             )
         )
     }

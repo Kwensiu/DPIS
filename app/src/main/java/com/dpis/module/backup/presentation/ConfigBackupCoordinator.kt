@@ -51,6 +51,24 @@ class ConfigBackupCoordinator(
         }
     }
 
+    fun snapshotCurrentEntries(): Map<String, Any?> {
+        val entries = LinkedHashMap<String, Any?>()
+        configStore.snapshotBackup().entries.forEach { (key, value) ->
+            if (key != null) entries[key] = value
+        }
+        templateStore.copyToBackup(entries)
+        return entries
+    }
+
+    fun restoreEntries(entries: Map<String, Any?>): Boolean {
+        val mutableEntries = LinkedHashMap(entries)
+        val configRestored = configStore.replaceBackup(
+            ConfigBackupRestorePolicy.configEntries(mutableEntries),
+        )
+        val templatesRestored = templateStore.restoreFromBackup(mutableEntries)
+        return configRestored && templatesRestored
+    }
+
     fun restore(uri: Uri?): Result {
         if (uri == null) return Result.failure(Code.INVALID_FILE)
         val payload = try {

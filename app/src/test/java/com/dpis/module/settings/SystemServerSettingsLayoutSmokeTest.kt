@@ -1,5 +1,6 @@
 package com.dpis.module
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -99,44 +100,35 @@ class SystemServerSettingsLayoutSmokeTest {
             "SettingsComposeDialogs.showLanguage(",
             "backupHost.launchImportPicker()",
             "backupHost.confirmPendingImport()",
-            "backupHost.pendingImportUri",
-            "relaunchDpisTask()",
             "RestoreScopePromptStore(activity).replacePendingScope(moduleScope)",
             "RuntimeConfigDelivery.publishLocalSnapshotAfterSave()",
-            "Intent(activity, MainActivity::class.java)",
-            "Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK",
-            "finishAffinity()",
         )
+        assertFalse(source.contains("relaunchDpisTask()"))
+        assertFalse(source.contains("Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK"))
         backupHost.assertContainsAll(
             "fun launchImportPicker()",
-            "pendingImportUri = uri",
             "fun confirmPendingImport()",
             "coordinator(store).export(uri)",
             "coordinator(store).restore(uri)",
-            "ConfirmDialog.show(",
-            "R.string.config_backup_import_confirm_title",
         )
         read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceConfirmDialogs.kt").assertContainsAll(
-            "R.string.config_backup_import_confirm_title",
             "R.string.settings_hide_launcher_icon_confirm_title",
         )
         read("src/main/java/com/dpis/module/settings/presentation/SettingsWorkspaceContent.kt").assertContainsAll(
             "SettingsWorkspaceConfirmDialogs(",
-            "pendingImport = state?.pendingImportUri != null",
-            "onConfirmImport = onConfirmImport",
         )
         read("src/main/java/com/dpis/module/ui/presentation/wear/WearWorkspaceContent.kt").assertContainsAll(
             "SettingsWorkspaceConfirmDialogs(",
-            "pendingImport = state?.pendingImportUri != null",
-            "onConfirmImport = onConfirmImport",
         )
         source.assertNotContainsAll("android.os.Process.killProcess(android.os.Process.myPid())", "RootCommandRunner.run(\"reboot\")")
         dialogs.assertContainsAll("BackupActionsDialogContent(", "R.string.config_backup_export_action", "R.string.config_backup_import_action", "BackupActionTile(", "modifier.heightIn(min = 144.dp, max = 220.dp)", "ComposeOverlay.show(activity)", "ModalDialog(onDismissRequest = dismiss)")
         dialogLayout.assertContainsAll("DialogChrome.SurfacePadding", ".weight(1f, fill = false)", "LocalSpacing.current")
         read("src/main/java/com/dpis/module/DpisApplication.kt").assertContainsAll(
             "fun reloadConfigStore()",
-            "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(localStore)",
-            "notifyServiceStateChanged()"
+            "if (application.hasCompletedOnboarding())",
+            "application.initializeRootRuntime(localStore)",
+            "RootAccessProbe.cachedResult().status != RootAccessProbe.Status.AVAILABLE",
+            "notifyServiceStateChanged()",
         )
     }
 

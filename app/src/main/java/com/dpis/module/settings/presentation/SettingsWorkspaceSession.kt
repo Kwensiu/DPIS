@@ -2,9 +2,10 @@ package com.dpis.module.settings.presentation
 
 import android.app.Activity
 import android.content.Intent
+import com.dpis.module.MainActivity
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SettingsActions
+import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.ui.SecondaryDestination
 import com.dpis.module.ui.presentation.SecondaryNavigation
 
@@ -113,6 +114,10 @@ class SettingsWorkspaceSession(
 
     override fun clearCache() {
         ensureComposeController().clearCacheFromPresentation()
+    }
+
+    override fun restartOnboarding() {
+        (activity as MainActivity).updateSession.restartOnboarding()
     }
 
     override fun openAbout() {

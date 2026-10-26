@@ -12,38 +12,34 @@ import android.provider.Settings
 import android.widget.Toast
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
-import com.dpis.module.config.DpisConfigStore
-import com.dpis.module.diagnostics.DpisLog
-import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.MainActivity
 import com.dpis.module.R
-import com.dpis.module.settings.SettingsPresentationController
-import com.dpis.module.settings.SettingsUiState
-
 import com.dpis.module.applist.RestoreScopePromptStore
 import com.dpis.module.backup.presentation.ConfigBackupHost
+import com.dpis.module.config.DpisConfigStore
+import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.diagnostics.presentation.FontDebugComposeSheet
+import com.dpis.module.diagnostics.presentation.FontDebugComposeSheet.show
 import com.dpis.module.fonts.FontDebugDataDiagnostics
 import com.dpis.module.fonts.FontDebugDataDiagnostics.NoDataReason
 import com.dpis.module.fonts.FontDebugOverlayService
 import com.dpis.module.fonts.FontDebugStatsSchema
 import com.dpis.module.fonts.FontDebugStatsStore
-
+import com.dpis.module.hooks.SystemFrameworkScope
+import com.dpis.module.hooks.SystemHookState
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.runtime.delivery.RuntimeDebugPropertySyncer
 import com.dpis.module.settings.AppLocaleManager
-
 import com.dpis.module.settings.InterfaceScaleStore
 import com.dpis.module.settings.LauncherIconVisibilityStore
+import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.SafeCacheCleaner
-import com.dpis.module.hooks.SystemFrameworkScope
-import com.dpis.module.hooks.SystemHookState
+import com.dpis.module.settings.SettingsPresentationController
+import com.dpis.module.settings.SettingsUiState
 import com.dpis.module.settings.SystemHooksToggleController
 import com.dpis.module.settings.SystemHooksToggleController.ScopeGateway
-
 import com.dpis.module.settings.presentation.SettingsComposeDialogs.showBackupActions
-import com.dpis.module.diagnostics.presentation.FontDebugComposeSheet
-import com.dpis.module.diagnostics.presentation.FontDebugComposeSheet.show
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,7 +69,6 @@ class SystemServerSettingsPageController(
         activity,
         object : ConfigBackupHost.Port {
             override fun configStore(): DpisConfigStore? = store
-            override fun isComposeSurface(): Boolean = true
             override fun showToast(messageResId: Int) {
                 this@SystemServerSettingsPageController.showToast(messageResId)
             }
@@ -84,7 +79,8 @@ class SystemServerSettingsPageController(
                 if (BuildConfig.FLAVOR == "modern") {
                     RestoreScopePromptStore(activity).replacePendingScope(moduleScope)
                 }
-                relaunchDpisTask()
+                RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
+                publishPresentationState()
             }
             override fun runOnUiThread(action: Runnable) {
                 this@SystemServerSettingsPageController.runOnUiThread(action)
@@ -139,7 +135,7 @@ class SystemServerSettingsPageController(
             launcherIconVisibilityStore.isHidden(), interfaceScaleStore.percent,
             clearCacheInProgress, lastCacheUsage,
             getString(AppLocaleManager.selectedLabelResId(activity)),
-            backupHost.pendingImportUri,
+            null,
         )
     }
 
@@ -387,14 +383,6 @@ class SystemServerSettingsPageController(
             { backupHost.launchExportPicker() },
             { backupHost.launchImportPicker() },
         )
-    }
-
-    private fun relaunchDpisTask() {
-        RuntimeConfigDelivery.publishLocalSnapshotAfterSave()
-        val intent = Intent(activity, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        startActivity(intent)
-        finishAffinity()
     }
 
     private fun refreshComposeStoreState() {

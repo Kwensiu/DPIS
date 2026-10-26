@@ -2,8 +2,8 @@ package com.dpis.module.home.presentation
 
 import android.content.Intent
 import android.os.Build
-import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,7 +20,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -32,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,7 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -60,12 +56,11 @@ import com.dpis.module.home.HomeWorkspaceLayout
 import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.ui.presentation.design.LocalSpacing
-import com.dpis.module.ui.presentation.workspace.PageBarBehavior
-import com.dpis.module.ui.presentation.workspace.PageScaffold
-
-import com.dpis.module.ui.presentation.workspace.ToolbarIconButton
 import com.dpis.module.ui.presentation.design.dpisClickable
 import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.workspace.PageBarBehavior
+import com.dpis.module.ui.presentation.workspace.PageScaffold
+import com.dpis.module.ui.presentation.workspace.ToolbarIconButton
 import com.dpis.module.ui.presentation.workspace.rememberRestorableLazyListState
 
 private data class HomeCountItem(
@@ -144,7 +139,9 @@ fun HomeWorkspaceContent(
                 ) {
                     visibleCountItems.forEach { item ->
                         HomeCountCard(
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
                             titleRes = item.titleRes,
                             count = item.count,
                             editing = editing,
@@ -174,6 +171,7 @@ fun HomeWorkspaceContent(
                             !draftLayout.isVisible(HomeWorkspaceLayout.Item.BASIC_INFO),
                         )
                     },
+                    onRootAccessRefresh = state.actions::refreshRootAccess,
                 )
             }
             if (editing || draftLayout.isVisible(HomeWorkspaceLayout.Item.MODE_HELP)) item {
@@ -269,7 +267,9 @@ private fun HomePrimaryStatus(
     ) {
         Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(painterResource(if (disabled) R.drawable.ic_error_outline_24 else R.drawable.ic_check_24), null, tint = content)
-            Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Column(Modifier
+                .padding(start = 12.dp)
+                .weight(1f)) {
                 Text(stringResource(if (disabled) R.string.home_workspace_status_enable_in_lsposed else R.string.home_workspace_status_enabled), style = MaterialTheme.typography.titleMedium, color = content, fontWeight = FontWeight.Bold)
                 Text(
                     state.updateState.subtitle(context),
@@ -313,6 +313,7 @@ private fun HomeInfoCard(
     editing: Boolean,
     pendingHidden: Boolean,
     onClick: () -> Unit,
+    onRootAccessRefresh: () -> Unit,
 ) {
     val rootText = when (state.rootAccess.status) {
         RootAccessProbe.Status.AVAILABLE -> stringResource(R.string.home_workspace_info_root_available, state.rootAccess.provider)
@@ -322,25 +323,50 @@ private fun HomeInfoCard(
     val rows = listOf(
         R.string.home_workspace_info_version to stringResource(R.string.home_workspace_info_version_value, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE),
         R.string.home_workspace_info_system to stringResource(R.string.home_workspace_info_system_value, Build.VERSION.RELEASE, Build.VERSION.SDK_INT),
-        R.string.home_workspace_info_root to rootText,
-        R.string.home_workspace_info_device to listOf(Build.MANUFACTURER, Build.MODEL).filter { it.isNotBlank() }.distinct().joinToString(" ")
     )
     HomeEditableBlock(Modifier.fillMaxWidth(), editing, pendingHidden) { border ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .homeEditOutline(border, RoundedCornerShape(16.dp))
-                .then(if (editing) Modifier.dpisClickable(role = Role.Button, onClick = onClick) else Modifier),
+                .then(
+                    if (editing) Modifier.dpisClickable(
+                        role = Role.Button,
+                        onClick = onClick
+                    ) else Modifier
+                ),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             rows.forEachIndexed { index, (titleRes, value) ->
-                val shape = when (index) {
-                    0 -> RoundedCornerShape(16.dp, 16.dp, 3.dp, 3.dp)
-                    rows.lastIndex -> RoundedCornerShape(3.dp, 3.dp, 16.dp, 16.dp)
-                    else -> RoundedCornerShape(3.dp)
-                }
-                HomeInfoRow(titleRes, value, shape, pendingHidden)
+                HomeInfoRow(
+                    titleRes = titleRes,
+                    value = value,
+                    shape = RoundedCornerShape(
+                        topStart = if (index == 0) 16.dp else 3.dp,
+                        topEnd = if (index == 0) 16.dp else 3.dp,
+                        bottomStart = 3.dp,
+                        bottomEnd = 3.dp,
+                    ),
+                    pendingHidden = pendingHidden,
+                )
             }
+            HomeInfoRow(
+                titleRes = R.string.home_workspace_info_root,
+                value = rootText,
+                shape = RoundedCornerShape(3.dp),
+                pendingHidden = pendingHidden,
+                onClick = if (editing) null else onRootAccessRefresh,
+                testTag = "home-root-access-row",
+            )
+            HomeInfoRow(
+                titleRes = R.string.home_workspace_info_device,
+                value = listOf(Build.MANUFACTURER, Build.MODEL)
+                    .filter { it.isNotBlank() }
+                    .distinct()
+                    .joinToString(" "),
+                shape = RoundedCornerShape(3.dp, 3.dp, 16.dp, 16.dp),
+                pendingHidden = pendingHidden,
+            )
         }
     }
 }
@@ -351,21 +377,32 @@ private fun HomeInfoRow(
     value: String,
     shape: RoundedCornerShape,
     pendingHidden: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    testTag: String? = null,
 ) {
+    val cardModifier = Modifier
+        .fillMaxWidth()
+        .then(
+            onClick?.let { Modifier.dpisClickable(role = Role.Button, onClick = it) }
+                ?: Modifier,
+        )
+        .then(testTag?.let { Modifier.testTag(it) } ?: Modifier)
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = cardModifier,
         shape = shape,
-        colors = homeEditableColors(pendingHidden)
+        colors = homeEditableColors(pendingHidden),
     ) {
         Row(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = 44.dp)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(stringResource(titleRes), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-            Text(value, modifier = Modifier.padding(start = 16.dp).weight(1.2f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, modifier = Modifier
+                .padding(start = 16.dp)
+                .weight(1.2f), textAlign = TextAlign.End, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -382,7 +419,9 @@ private fun HomeNavigationEntry(
     HomeEditableBlock(Modifier.fillMaxWidth(), editing, pendingHidden) { border ->
         Card(
             onClick = hapticClick,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp),
             shape = RoundedCornerShape(12.dp),
             colors = homeEditableColors(pendingHidden),
             border = border,
@@ -407,14 +446,21 @@ private fun HomeFeedbackEntry(
 ) {
     HomeEditableBlock(Modifier.fillMaxWidth(), editing, pendingHidden) { border ->
         Card(
-            modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp),
             shape = RoundedCornerShape(12.dp),
             colors = homeEditableColors(pendingHidden),
             border = border,
         ) {
             Row(
                 Modifier
-                    .then(if (editing) Modifier.dpisClickable(role = Role.Button, onClick = onClick) else Modifier)
+                    .then(
+                        if (editing) Modifier.dpisClickable(
+                            role = Role.Button,
+                            onClick = onClick
+                        ) else Modifier
+                    )
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

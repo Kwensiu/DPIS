@@ -8,6 +8,7 @@ import android.net.Uri
 import com.dpis.module.BuildConfig
 import com.dpis.module.DpisApplication
 import com.dpis.module.R
+import com.dpis.module.backup.ConfigBackupRestorePolicy
 import com.dpis.module.backup.ConfigRestoreReadiness
 import com.dpis.module.backup.ModuleScopeSnapshotPolicy
 import com.dpis.module.config.DpisConfigStore
@@ -26,15 +27,16 @@ class ConfigBackupHost(
 ) {
     interface Port {
         fun configStore(): DpisConfigStore?
-        fun isComposeSurface(): Boolean
         fun showToast(messageResId: Int)
         fun publishPresentationState()
         fun onRestoreSucceeded(moduleScope: List<String>)
+        fun onRestoreStarted() = Unit
+        fun onRestoreFailed() = Unit
+        fun allowRestoreBeforeRuntimeReady(): Boolean = false
         fun runOnUiThread(action: Runnable)
     }
 
-    var pendingImportUri: Uri? = null
-        private set
+    private var pendingImportUri: Uri? = null
 
     fun launchExportPicker() {
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
@@ -63,30 +65,30 @@ class ConfigBackupHost(
         }
     }
 
-    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (resultCode != Activity.RESULT_OK || data?.data == null) {
-            return
+            return false
         }
-        val uri = data.data
-        when (requestCode) {
+        val uri = data.data ?: return false
+        return when (requestCode) {
             REQUEST_EXPORT -> {
                 export(uri)
                 port.publishPresentationState()
+                true
             }
             REQUEST_IMPORT -> {
-                if (port.isComposeSurface()) {
-                    pendingImportUri = uri
-                    port.publishPresentationState()
-                } else {
-                    showImportConfirm(uri)
-                }
+                inspectImport(uri)
+                true
             }
+
+            else -> false
         }
     }
 
     fun confirmPendingImport() {
-        val uri = pendingImportUri
+        val uri = pendingImportUri ?: return
         pendingImportUri = null
+        port.onRestoreStarted()
         restore(uri)
         port.publishPresentationState()
     }
@@ -96,16 +98,46 @@ class ConfigBackupHost(
         port.publishPresentationState()
     }
 
-    private fun showImportConfirm(uri: Uri?) {
+
+    private fun inspectImport(uri: Uri) {
+        Thread({
+            val requiresConfirmation = runCatching {
+                val payload = activity.contentResolver.openInputStream(uri)
+                    ?.use(ConfigBackupRestorePolicy::readLimited)
+                    ?: error("Backup file cannot be read")
+                val document = com.dpis.module.backup.ConfigBackupCodec.decodeDocument(payload)
+                val incoming = ConfigBackupRestorePolicy.configEntries(document.entries)
+                val hasTemplates = document.entries.keys.any { it.startsWith("template.") }
+                val hasRestorableEntries = incoming.isNotEmpty() || hasTemplates
+                port.configStore()?.snapshotBackup()?.entries?.isNotEmpty() == true &&
+                        hasRestorableEntries
+            }.getOrElse {
+                port.runOnUiThread {
+                    port.onRestoreFailed()
+                    port.showToast(R.string.config_backup_import_invalid)
+                }
+                return@Thread
+            }
+            port.runOnUiThread {
+                if (requiresConfirmation) {
+                    pendingImportUri = uri
+                    showImportConfirm()
+                } else {
+                    port.onRestoreStarted()
+                    restore(uri)
+                }
+                port.publishPresentationState()
+            }
+        }, "dpis-config-backup-inspect").start()
+    }
+
+    private fun showImportConfirm() {
         ConfirmDialog.show(
             activity,
             activity.getString(R.string.config_backup_import_confirm_title),
             activity.getString(R.string.config_backup_import_confirm_message),
-            {
-                restore(uri)
-                port.publishPresentationState()
-            },
-            port::publishPresentationState,
+            ::confirmPendingImport,
+            ::dismissPendingImport,
         )
     }
 
@@ -129,10 +161,11 @@ class ConfigBackupHost(
     }
 
     private fun restore(uri: Uri?) {
-        val started = ConfigRestoreReadiness.runIfReady(
-            DpisApplication::isXposedConfigReady,
-        ) { restoreReady(uri) }
-        if (!started) port.showToast(R.string.system_settings_save_failed)
+        val started = runRestoreIfReady { restoreReady(uri) }
+        if (!started) {
+            port.onRestoreFailed()
+            port.showToast(R.string.system_settings_save_failed)
+        }
     }
 
     private fun restoreReady(uri: Uri?) {
@@ -142,12 +175,11 @@ class ConfigBackupHost(
             return
         }
         Thread({
-            val restored = ConfigRestoreReadiness.runIfReady(
-                DpisApplication::isXposedConfigReady,
-            ) {
+            val restored = runRestoreIfReady {
                 val result = coordinator(store).restore(uri)
                 port.runOnUiThread {
                     if (!result.isSuccess()) {
+                        port.onRestoreFailed()
                         port.showToast(
                             if (result.code == ConfigBackupCoordinator.Code.INVALID_FILE) {
                                 R.string.config_backup_import_invalid
@@ -165,11 +197,20 @@ class ConfigBackupHost(
             }
             if (!restored) {
                 port.runOnUiThread {
+                    port.onRestoreFailed()
                     port.showToast(R.string.system_settings_save_failed)
                     port.publishPresentationState()
                 }
             }
         }, "dpis-config-backup-import").start()
+    }
+
+    private fun runRestoreIfReady(restore: () -> Unit): Boolean {
+        if (port.allowRestoreBeforeRuntimeReady()) {
+            restore()
+            return true
+        }
+        return ConfigRestoreReadiness.runIfReady(DpisApplication::isXposedConfigReady, restore)
     }
 
     private fun coordinator(store: DpisConfigStore) = ConfigBackupCoordinator(
