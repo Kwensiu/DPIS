@@ -2,13 +2,11 @@ package com.dpis.module.updates.presentation
 
 import android.app.Activity
 import com.dpis.module.R
-import com.dpis.module.ui.dialog.StartupDisclaimerGate
 import com.dpis.module.updates.ReleaseNotesController
 import com.dpis.module.updates.ReleaseNotesMarkdownRenderer
 import com.dpis.module.updates.UpdatePromptPolicy
 import com.dpis.module.updates.UpdatePromptRequest
 import java.util.Locale
-import java.util.function.BooleanSupplier
 
 class UpdatePromptDialogCoordinator(
     private val activity: Activity,
@@ -29,24 +27,6 @@ class UpdatePromptDialogCoordinator(
         /** Clears the Activity-owned request when the user has ended the prompt. */
         fun onUpdatePromptDismissed()
         fun finishActivity()
-    }
-
-    interface StartupDisclaimerAcceptance {
-        fun isAccepted(): Boolean
-        fun markAccepted(): Boolean
-    }
-
-    fun maybeShowStartupDisclaimerDialog(
-        acceptance: StartupDisclaimerAcceptance?,
-        onAccepted: Runnable?
-    ): Boolean {
-        if (acceptance == null || acceptance.isAccepted() || !activityAlive()) return false
-        return StartupDisclaimerGate.show(
-            BooleanSupplier { acceptance.markAccepted() },
-            { host.showToast(R.string.startup_disclaimer_save_failed) },
-            { onAccepted?.run() },
-            { host.finishActivity() }
-        )
     }
 
     fun showUpdateAvailableDialog(

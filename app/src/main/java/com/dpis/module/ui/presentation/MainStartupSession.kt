@@ -11,7 +11,6 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticActivitySession
 import com.dpis.module.hooks.SystemScopeCoordinator
-import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.runtime.presentation.ModuleRuntimeReloadNoticeCoordinator
 import com.dpis.module.settings.PageSettingsStore
 import com.dpis.module.settings.presentation.getDefaultStartupPage
@@ -110,19 +109,13 @@ class MainStartupSession(
         mainWorkspaceSession.render(requireUiState())
         feedbackDiagnostic.restorePage()
         feedbackDiagnostic.attachHost()
-        // The service state callback is not guaranteed to fire on every Wear image.
-        // Request the catalog explicitly; MainViewModel coalesces any later service reload.
         activity.installedAppsLoadSession.attachPackageCatalogMonitor()
-        requestAppsLoad()
         if (restoreEditingSession(viewModel, retainedState)) {
             mainWorkspaceSession.restoreAppEditorForCurrentWorkspace()
         }
         mainWorkspaceSession.restoreWorkspaceEditorForCurrentConfiguration()
-        if (updateSession.showPendingPromptIfAny()) {
-            return
-        }
-        if (maybeShowModuleRuntimeReloadAdvice()) {
-            return
+        updateSession.setOnboardingCompletedHandler {
+            continueStartupDialogs()
         }
         continueStartupDialogs()
     }
@@ -141,8 +134,18 @@ class MainStartupSession(
     }
 
     fun continueStartupDialogs() {
-        if (!updateSession.maybeShowStartupDisclaimerDialog()) {
-            updateSession.maybeCheckForUpdatesOnStartup()
+        if (updateSession.maybeShowOnboarding()) {
+            return
+        }
+        if (maybeShowModuleRuntimeReloadAdvice()) {
+            return
+        }
+        if (updateSession.showPendingPromptIfAny()) {
+            return
+        }
+        updateSession.maybeCheckForUpdatesOnStartup()
+        if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.APP) {
+            requestAppsLoad()
         }
     }
 
@@ -160,10 +163,20 @@ class MainStartupSession(
         val viewModel = viewModel ?: return
         val requests = viewModel.dispatch(action)
         mainWorkspaceSession.render(viewModel.state)
+        if (action is MainUiAction.WorkspaceModeChanged &&
+            action.workspaceMode == MainUiState.WorkspaceMode.APP
+        ) {
+            requestAppsLoad()
+        }
         handleAppsLoadRequests(requests)
     }
 
     fun requestAppsLoad() {
+        if (!DpisApplication.isOnboardingCompleted() ||
+            requireUiState().workspaceMode != MainUiState.WorkspaceMode.APP
+        ) {
+            return
+        }
         activity.installedAppsLoadSession.requestLoad(false)
     }
 
@@ -246,7 +259,6 @@ class MainStartupSession(
     }
 
     fun onResume() {
-        maybeStartRootAccessProbe()
         hostWiringSession.toolsWorkspace?.onResume()
         hostWiringSession.settingsWorkspaceSession?.onResume()
     }
@@ -271,13 +283,12 @@ class MainStartupSession(
             mainWorkspaceSession.bindHomeWorkspace()
         }
         hostWiringSession.settingsWorkspaceSession?.onServiceStateChanged()
-        if (consumeSkipNextImmediateServiceReload()) {
-            return
-        }
-        requestAppsLoad()
+        consumeSkipNextImmediateServiceReload()
     }
 
     fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        val onboardingConsumed = updateSession.onActivityResult(requestCode, resultCode, data)
+        if (onboardingConsumed) return
         hostWiringSession.settingsWorkspaceSession?.onActivityResult(
             requestCode,
             resultCode,
@@ -314,16 +325,6 @@ class MainStartupSession(
             feedbackDiagnostic?.retainedState(),
             updateSession.pendingUpdatePrompt,
         )
-    }
-
-    private fun maybeStartRootAccessProbe() {
-        RootAccessProbe.refreshAsync {
-            activity.runOnUiThread {
-                if (requireUiState().workspaceMode == MainUiState.WorkspaceMode.HOME) {
-                    mainWorkspaceSession.bindHomeWorkspace()
-                }
-            }
-        }
     }
 
     fun restore(

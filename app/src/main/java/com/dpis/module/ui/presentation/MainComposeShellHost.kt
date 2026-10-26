@@ -7,13 +7,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,28 +27,26 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Density
-import com.dpis.module.MainActivity
-import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.settings.ThemeModeStore
-import com.dpis.module.ui.SecondaryDestination
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsAnimationCompat
 import androidx.core.view.WindowInsetsCompat
+import com.dpis.module.MainActivity
 import com.dpis.module.R
-import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticPreparationContent
 import com.dpis.module.diagnostics.presentation.FeedbackDiagnosticPreparationPresentation
-import com.dpis.module.ui.presentation.dialogs.MessageAlertDialog
+import com.dpis.module.onboarding.presentation.OnboardingGate
+import com.dpis.module.onboarding.presentation.OnboardingScreen
+import com.dpis.module.settings.AppLocaleManager
+import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.ui.MainComposeWorkspaceShell
+import com.dpis.module.ui.MainUiAction
+import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.dialog.ConfirmAlertDialog
-import com.dpis.module.ui.dialog.StartupDisclaimerDialog
-import com.dpis.module.ui.dialog.StartupDisclaimerGate
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
+import com.dpis.module.ui.presentation.dialogs.MessageAlertDialog
+import com.dpis.module.ui.presentation.editor.LocalTextInputFocusBoundary
 import com.dpis.module.ui.presentation.editor.imeWindowPan
 import com.dpis.module.ui.presentation.editor.rememberTextInputFocusBoundary
-import com.dpis.module.ui.presentation.editor.LocalTextInputFocusBoundary
-import java.util.function.BooleanSupplier
-import com.dpis.module.ui.MainUiState
-import com.dpis.module.ui.MainUiAction
-import com.dpis.module.ui.MainComposeWorkspaceShell
 
 /** Installs the Compose shell; domain state and actions remain Activity-owned. */
 class MainComposeShellHost(
@@ -60,7 +60,9 @@ class MainComposeShellHost(
 ) {
     private var state by mutableStateOf(initialState)
     private var diagnosticPreparation by mutableStateOf<FeedbackDiagnosticPreparationPresentation?>(null)
-    private var startupDisclaimer by mutableStateOf<StartupDisclaimerRequest?>(null)
+    private var onboardingRequest by mutableStateOf<OnboardingGate.Request?>(null)
+    private var startupReady by mutableStateOf(false)
+    private var onboardingEpoch by mutableIntStateOf(0)
     private var dialog by mutableStateOf<MainShellDialog?>(null)
     private var configurationEpoch by mutableIntStateOf(0)
     private var appearanceEpoch by mutableIntStateOf(0)
@@ -68,17 +70,20 @@ class MainComposeShellHost(
     init {
         composeView.setContent {
             val inputFocusBoundary = rememberTextInputFocusBoundary()
-            val disclaimerPresenter = remember {
-                StartupDisclaimerGate.Presenter {
-                        markAccepted,
-                        onSaveFailed,
-                        onAccepted,
-                        onBack,
-                    -> showStartupDisclaimer(markAccepted, onSaveFailed, onAccepted, onBack) }
+            val onboardingPresenter = remember {
+                object : OnboardingGate.Presenter {
+                    override fun show(request: OnboardingGate.Request): Boolean =
+                        showOnboarding(request)
+
+                    override fun dismiss() {
+                        onboardingRequest = null
+                    }
+                }
             }
-            DisposableEffect(disclaimerPresenter) {
-                StartupDisclaimerGate.bind(disclaimerPresenter)
-                onDispose { StartupDisclaimerGate.clear(disclaimerPresenter) }
+            DisposableEffect(onboardingPresenter) {
+                OnboardingGate.bind(onboardingPresenter)
+                startupReady = true
+                onDispose { OnboardingGate.clear(onboardingPresenter) }
             }
             val configurationEpoch = configurationEpoch
             val appearanceEpoch = appearanceEpoch
@@ -96,7 +101,7 @@ class MainComposeShellHost(
                     wrappedContext.resources.configuration.fontScale,
                 ),
             ) {
-            ComposeDesignSystem(
+                ComposeDesignSystem(
                 darkTheme = ThemeModeStore.resolveDarkTheme(
                     appearance.mode,
                     isSystemInDarkTheme(),
@@ -107,11 +112,11 @@ class MainComposeShellHost(
                 colorSpecification = appearance.colorSpecification,
             ) {
                 ProvideSecondaryNavigation(secondaryNavigation) {
-                androidx.compose.runtime.DisposableEffect(composeView, inputFocusBoundary) {
+                    androidx.compose.runtime.DisposableEffect(composeView, inputFocusBoundary) {
                     ViewCompat.setWindowInsetsAnimationCallback(
                         composeView,
                         object : WindowInsetsAnimationCompat.Callback(
-                            WindowInsetsAnimationCompat.Callback.DISPATCH_MODE_CONTINUE_ON_SUBTREE,
+                            DISPATCH_MODE_CONTINUE_ON_SUBTREE,
                         ) {
                             override fun onProgress(
                                 insets: WindowInsetsCompat,
@@ -150,57 +155,76 @@ class MainComposeShellHost(
                 androidx.compose.runtime.CompositionLocalProvider(
                     LocalTextInputFocusBoundary provides inputFocusBoundary,
                 ) {
-                Box(Modifier.fillMaxSize().imeWindowPan(inputFocusBoundary)) {
-                    val preparation = diagnosticPreparation
-                    BackHandler(enabled = preparation != null) {
-                        preparation?.back()
-                    }
-                    AnimatedContent(
-                        targetState = preparation,
-                        transitionSpec = {
-                            (fadeIn() + slideInHorizontally { it / 4 }) togetherWith
-                                (fadeOut() + slideOutHorizontally { -it / 6 })
-                        },
-                        label = "diagnostic-page-transition",
-                        modifier = Modifier.fillMaxSize(),
-                    ) { currentPreparation ->
-                        if (currentPreparation != null) {
-                            FeedbackDiagnosticPreparationContent(currentPreparation)
-                        } else {
-                            MainComposeWorkspaceShell(
-                                state = state,
-                                isCompactUi = isCompactUi,
-                                showCompactNavigation = !isCompactUi ||
-                                    !workspacePresentation.hasWearDetail(state.workspaceMode),
-                                dispatch = dispatch
-                            ) { padding ->
-                                if (isCompactUi) {
-                                    workspacePresentation.renderWear(state.workspaceMode, padding)
-                                    // Wear screens own their ScreenScaffold padding and round-screen shape.
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .imeWindowPan(inputFocusBoundary)
+                    ) {
+                        if (startupReady) {
+                            val preparation = diagnosticPreparation
+                            BackHandler(enabled = preparation != null) {
+                                preparation?.back()
+                            }
+                            AnimatedContent(
+                                targetState = preparation,
+                                transitionSpec = {
+                                    (fadeIn() + slideInHorizontally { it / 4 }) togetherWith
+                                            (fadeOut() + slideOutHorizontally { -it / 6 })
+                                },
+                                label = "diagnostic-page-transition",
+                                modifier = Modifier.fillMaxSize(),
+                            ) { currentPreparation ->
+                                if (currentPreparation != null) {
+                                    FeedbackDiagnosticPreparationContent(currentPreparation)
                                 } else {
-                                    workspacePresentation.render(state.workspaceMode, padding)
-                                    // Home domain state lives in MainActivity. This revision only invalidates
-                                    // the Compose presentation after its existing coordinator updates it.
+                                    MainComposeWorkspaceShell(
+                                        state = state,
+                                        isCompactUi = isCompactUi,
+                                        showCompactNavigation = !isCompactUi ||
+                                                !workspacePresentation.hasWearDetail(state.workspaceMode),
+                                        dispatch = dispatch,
+                                    ) { padding ->
+                                        if (isCompactUi) {
+                                            workspacePresentation.renderWear(
+                                                state.workspaceMode,
+                                                padding
+                                            )
+                                            // Wear screens own their ScreenScaffold padding and round-screen shape.
+                                        } else {
+                                            workspacePresentation.render(
+                                                state.workspaceMode,
+                                                padding
+                                            )
+                                            // Home domain state lives in MainActivity. This revision only invalidates
+                                            // the Compose presentation after its existing coordinator updates it.
+                                        }
+                                    }
+                                    workspacePresentation.RenderAppEditorOverlay(
+                                        state.workspaceMode,
+                                        isCompactUi
+                                    )
+                                    workspacePresentation.RenderTemplateEditorOverlay(
+                                        state.workspaceMode,
+                                        isCompactUi
+                                    )
                                 }
                             }
-                            workspacePresentation.RenderAppEditorOverlay(state.workspaceMode, isCompactUi)
-                            workspacePresentation.RenderTemplateEditorOverlay(state.workspaceMode, isCompactUi)
+                            onboardingRequest?.let { request ->
+                                val epoch = onboardingEpoch
+                                androidx.compose.runtime.key(epoch) {
+                                    OnboardingScreen(request)
+                                }
+                            }
+                            MainShellDialogHost(
+                                dialog = dialog,
+                                onDismiss = { dialog = null },
+                            )
                         }
                     }
-                    startupDisclaimer?.let { request ->
-                        StartupDisclaimerDialog(
-                            onAccept = { acceptStartupDisclaimer(request) },
-                            onBack = request.onBack,
-                        )
-                    }
-                    MainShellDialogHost(
-                        dialog = dialog,
-                        onDismiss = { dialog = null },
-                    )
-                }
                 }
             }
-            }
+                }
             }
         }
     }
@@ -228,30 +252,10 @@ class MainComposeShellHost(
         diagnosticPreparation = null
     }
 
-    /**
-     * Shows one mandatory first-start dialog at a time. Its view lifetime belongs to the root
-     * composition, so activity recreation cannot leave a detached platform dialog behind.
-     */
-    fun showStartupDisclaimer(
-        markAccepted: BooleanSupplier,
-        onSaveFailed: () -> Unit,
-        onAccepted: () -> Unit,
-        onBack: () -> Unit,
-    ): Boolean {
-        if (startupDisclaimer == null) {
-            startupDisclaimer = StartupDisclaimerRequest(markAccepted, onSaveFailed, onAccepted, onBack)
-        }
+    fun showOnboarding(request: OnboardingGate.Request): Boolean {
+        onboardingRequest = request
+        onboardingEpoch++
         return true
-    }
-
-    private fun acceptStartupDisclaimer(request: StartupDisclaimerRequest) {
-        if (!request.markAccepted.asBoolean) {
-            request.onSaveFailed()
-            return
-        }
-        // Clear before continuing startup work, which may synchronously request another dialog.
-        startupDisclaimer = null
-        request.onAccepted()
     }
 
     fun showFeedbackStartConfirm(message: String, confirmLabel: String, onConfirm: Runnable) {
@@ -290,13 +294,6 @@ class MainComposeShellHost(
     fun refreshSettings() = workspacePresentation.refreshSettings()
 
     fun refreshTemplates() = workspacePresentation.refreshTemplates()
-
-    private data class StartupDisclaimerRequest(
-        val markAccepted: BooleanSupplier,
-        val onSaveFailed: () -> Unit,
-        val onAccepted: () -> Unit,
-        val onBack: () -> Unit,
-    )
 
     private fun wrappedConfigurationContext(): android.content.Context {
         return wrapInterfaceScaleContext(AppLocaleManager.wrap(activity))
