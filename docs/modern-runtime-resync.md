@@ -1,6 +1,337 @@
-# Modern Runtime Resync
+## 2026-10-20 System-server diagnostic boundary instrumentation
+
+Status: diagnostic route and per-user viewport mutation are verified on device;
+remaining work is independent visual verification.
+
+The system_server diagnostic path now records, with existing low-frequency
+sampling and user-aware keys:
+
+- the actual Xposed interceptor dispatch before `HookCallback`, including the
+  matched hook method name; constructor dispatch for `launch-activity-item` is
+  logged separately because it bypasses `HookCallback`;
+- the exact selected method/constructor signatures at install time, sent directly
+  through the Modern LSPosed bridge;
+- the independent `display-manager-info` branch and hot-entry inspection skips;
+- package-associated UID evidence, including UID source type and derived user;
+- source lookup identity, snapshot owner/match, snapshot package hit, fallback
+  attempt/hit, result reason, and final viewport spec/mode;
+- policy filtering and mutation outcomes as `no_target`, `policy_skip`,
+  `changed`, or `unchanged`;
+- the separate `launch-activity-item` path, which does not pass through the
+  common `HookCallback` flow.
+
+The direct Xposed bridge was then added to low-frequency runtime dispatch and
+callback diagnostics. On PJZ110, build SHA-256
+`9c7ed9927c4663396fe22c26b4e1240e713b7c77b1bff4c01bf991899c622a43` produced the
+following two-user evidence:
+
+- `activity-start.execute`, `LaunchActivityItem` constructors,
+  `relayoutWindow`, `config-dispatch`, and `display-manager-info.getDisplayInfo`
+  all dispatch at runtime;
+- user 0 Chrome resolved UID `10488`, user `0`, and selected
+  `relative_scale:80000`. `launch-activity-item` changed configurations from
+  `360x792@480dpi` to `288x634@600dpi`; `display-manager-info` changed logical
+  density from `480` to `600`;
+- user 999 Chrome resolved UID `99910488`, user `999`, and selected
+  `relative_scale:160000`. `launch-activity-item` changed configurations from
+  `360x792@480dpi` to `576x1267@300dpi`; `display-manager-info` changed logical
+  density from `480` to `300`;
+- user 999's snapshot reported owner `0` and `ownerMatches=false`, but the
+  resulting lookup still selected the user 999 value `160000`, not user 0's
+  `80000`.
+
+The source contract is now explicit: `PerAppDisplayConfigSource.get` requires a
+target `userId`; matching snapshot owners can supply viewport config for any
+Android user, while that user's runtime property takes precedence. Invalid UID
+conversion fails closed. HyperOS Rust-process font setup requires UID evidence
+associated with the parsed package instead of using a default user lookup.
+
+This proves Modern system_server hook dispatch, target-user identity resolution,
+per-user selection, and actual configuration/display-info mutation on device.
+When `snapshotOwner=0` and `ownerMatches=false`, `snapshotPackageHit=true` only
+means the owner snapshot contains that package name; the snapshot config is not
+used. The observed `fallbackHit=true` selected the target user's `160000` value.
+
+Additional observed limitation: `activity-start`, `config-dispatch`, and
+`relayout-dispatch` sometimes report `uid_missing` for Chrome. The launch-item
+and display-manager-info routes independently resolve its package-associated UID
+and apply the correct per-user value. Legacy target-process
+`XSharedPreferences` readability remains a separate P4 investigation.
+
+## 2026-10-19 Multi-user configuration delivery probe
+
+Status: baseline probe recorded before the P1 local-authority change; device evidence
+is from the still-installed Modern build on `PJZ110` (`192.168.5.130:5555`).
+
+Evidence:
+
+- Android users 0 (`Kevin`) and 999 (`MultiApp`) were both running.
+- The installed DPIS APK was version 2.3.3 and its SHA-256 matched the local
+  `app-modern-debug.apk`; this was a Modern build.
+- DPIS had separate private preference paths for both users:
+  `/data/user/0/io.github.kwensiu.dpis/` and
+  `/data/user/999/io.github.kwensiu.dpis/`.
+- User 0's `dpi_config.xml` contained the package-only Chrome viewport config
+  (`relative_scale`, `80000` milli-percent). User 999's `dpi_config.xml`
+  contained only an empty `target_packages` set. No user-0 Chrome package config
+  was observed in user 999's local archive.
+- Pre-P1 source audit: `DpisApplication.onServiceBind` created local and remote
+  stores and migrated each store's package-key format, but did not call the
+  then-unused `publishRuntimeConfig(local, remote)`. The UI factory selected
+  remote preferences as primary when service was present, so package edits could
+  update remote without updating the local archive. A local XML import seeded
+  remote only if remote had no user-visible package config.
+- User 999 DPIS startup also logged `libxposedService=true`; its system hook
+  logged `serviceAvailable=true, scopeSelected=false`. This proves the UI
+  process can bind the service, but not that Chrome is selected/injected for
+  user 999.
+- A fresh user-0 Chrome cold start produced DPIS `module loaded`,
+  `onPackageLoaded`, and `package ready` LSPosed evidence. `package ready` is
+  reached after Modern obtains `createForXposedHost()` and reads a config
+  snapshot, so the remote-preferences API path was available in that process.
+  The logs do not identify a remote snapshot revision or package value.
+- The same Chrome launch logged `target app matched ...
+  source=module-loaded, targetViewportSpec=relative_scale:80000` from the
+  module-loaded property-backed store, followed by viewport application from
+  the published marker. This proves the property path supplied the 80% runtime
+  value; it does not prove the remote snapshot supplied that value.
+- Starting Chrome for user 999 produced a real `u999_a488` process, but the
+  current LSPosed module log contained no matching DPIS entry for UID
+  `99910488`. It does not prove that DPIS was injected into that Chrome process
+  or that the Modern remote snapshot was read there.
+
+Interpretation:
+
+- Android's per-user DPIS private storage provides a natural ownership
+  boundary for existing package-only local records. This is evidence for a
+  migration investigation, not proof that Legacy XML mirrors or backups have
+  the same ownership semantics.
+- P1 is now implemented in the working tree: UI stores remain local, existing
+  remote runtime keys seed only absent local keys once per user, local values
+  win conflicts, and each successful reload projects the local runtime snapshot
+  outward. Targeted and full debug unit tests pass, as do Modern/Legacy Debug
+  builds. The new build has not been installed, so none of this behavior is yet
+  device-verified; the device evidence above describes the pre-P1 APK.
+- Modern service availability is observable in both DPIS UI users, but the
+  probe did not observe a successful local-to-remote publication revision and
+  target-process read. `serviceAvailable` must not yet be treated as complete
+  configuration readiness.
+
+## 2026-10-19 P1 local-authority device verification
+
+Status: partial runtime verification; configuration publication is verified,
+but the target-process source of the effective Chrome value remains unproven.
+
+Evidence from `PJZ110` (`192.168.5.130:5555`):
+
+- Installed DPIS reports versionCode `20303` / versionName `2.3.3`. Its
+  `base.apk` SHA-256 matches local `app-modern-debug.apk`:
+  `d6487b5f7b467c31f7c90232cfb4ab8c5baa5bd1ef25bdbbb94569349f65d674`.
+- User 0 `dpi_config.xml` retains Chrome's `relative_scale`, `80000`
+  milli-percent config and has `runtime.remote_config_seed_complete_v1=true`.
+  No data was cleared. This confirms local preservation and one-time seed
+  completion, not remote publication by itself.
+- User 999's separate `dpi_config.xml` contains only an empty
+  `target_packages` set and no seed marker. No user-0 package settings were
+  observed in that user's local store.
+- User 0 DPIS `app_log.jsonl` records at 22:24:24:
+  `runtime config projection: source=local, destination=libxposed_remote,
+  result=published`.
+- At 22:43:08, a cold user-0 Chrome process (UID 10488) logged DPIS
+  `module loaded`, `onPackageLoaded`, and `package ready`. The latter confirms
+  the Modern `createForXposedHost()` remote-preferences config path reached its
+  snapshot initialization boundary. The logs do not include the snapshot value
+  or revision, so they do not prove the process read Chrome's 80% remote value.
+- No matching `source=module-loaded` 80% target/apply event was found in that
+  launch window. Do not attribute Chrome's effective 80% to remote preferences
+  from this probe; the property-backed route remains a possible source.
+- The user-999 file and prior stopped state were inspected only; no Chrome
+  injection claim is made for that user.
+
+Conclusion: P1 local authority and UI-to-remote publication are device-verified
+for user 0. Modern module entry and remote-store initialization are verified in
+user-0 Chrome, but value-specific remote consumption and visible 80% behavior
+are not. A follow-up needs explicit source/value evidence from the Chrome hook
+process (and, if effectiveness is claimed, runtime mutation/visible behavior).
+
+No app data was cleared. The only target action was an explicit Chrome
+force-stop and launcher intent for user 0; DPIS was opened through its resolved
+launcher Activity to capture application logs.
+
+No device configuration was edited and no APK was installed during this probe.
+
+## 2026-10-20 P1 remote snapshot source and value verification
+
+Status: Modern remote preference reads and app-process resource mutations are
+verified for users 0 and 999. The system_server route and screenshot-level
+pixel comparison were not part of this probe.
+
+Evidence from `PJZ110` (`192.168.5.130:5555`):
+
+- Installed Modern Debug APK SHA-256
+  `5fbc323e48422584043c9ec21df4efc42ecd242b8a9de1fc8d04bf2182a8a9d0`
+  matched the local `app-modern-debug.apk`.
+- The local per-user config archives contain different Chrome settings:
+  user 0 has `relative_scale:80000`, `mode=system`; user 999 has
+  `relative_scale:160000`, `mode=auto`.
+- For user 0, both transient and persistent Chrome `vpscale` properties were
+  temporarily set to `0`. After a cold start, the module logged
+  `module-loaded-fallback` and `targetViewportSpec=relative_scale:80000`.
+  The property-backed snapshot was empty, so this fallback came from the
+  Modern store created by `createForXposedHost()` using
+  `XposedInterface.getRemotePreferences()`.
+- That user-0 process logged a `ResourcesManager` mutation from
+  `360x792 @ 480dpi` to `288x634 @ 600dpi` for Chrome. This is app-process
+  resource-route evidence; `system hook resolve` still reported
+  `effective=false` in the Chrome process.
+- The same controlled check in user 999, with only that user's transient and
+  persistent Chrome `vpscale` properties set to `0`, logged
+  `module-loaded-fallback` and `targetViewportSpec=relative_scale:160000`.
+  Its `ResourcesManager` mutation targeted `576x1267 @ 300dpi`. The distinct
+  user-999 value confirms that the remote preference endpoint read by the
+  user-999 Chrome process is user-scoped rather than the user-0 snapshot.
+- User 0 properties were restored to `80000`; user 999 properties were
+  restored to `160000`. The temporary Chromium probe selector was cleared.
+  Both local XML archives remained unchanged. User 999 Chrome was relaunched
+  after restoring its property.
+
+This closes the P1 target-process source/value question for the app-process
+route: Modern Chrome can consume the per-user remote snapshot independently of
+the runtime-property mirror, and its `Resources` metrics were mutated from the
+remote value. This does not establish system_server effectiveness or provide a
+pixel-diff screenshot of the rendered page.
 
 This is the living tracker for the Modern viewport/runtime investigation.
+
+## 2026-10-20 User 999 Chrome without app-process entry
+
+Status: the system_server route applied the user-999 Chrome viewport during an
+explicit cold launch; no matching DPIS app-process entry was observed in the
+current LSPosed log window.
+
+Evidence from `PJZ110` (`192.168.5.130:5555`):
+
+- DPIS is installed for user 999, and Chrome ran as UID `99910488`. Package
+  installation in user 999 is separate from whether its app process loaded DPIS.
+- Chrome was force-stopped and explicitly launched with `--user 999`. At
+  `2026-10-20 20:35:47`, the LSPosed module log recorded the DPIS hook in
+  `system_server` resolving `com.android.chrome` to UID `99910488`, user `999`.
+- The same launch selected `relative_scale:160000`, `mode=system`, with
+  `snapshotOwner=0`, `ownerMatches=false`, and `fallbackHit=true`. The
+  `launch-activity-item` route changed the launch configuration from
+  `360x792@480dpi` to `576x1267@300dpi`; the `display-manager-info` route
+  changed logical density from `480` to `300`.
+- The current LSPosed log window contained no DPIS module-entry for the Chrome
+  app process around that launch. Treat this as no app-process entry observed,
+  not as proof that every possible app-process hook was absent.
+
+Interpretation:
+
+- Chrome app-process injection is not required for this observed launch-time
+  viewport mutation. DPIS is loaded in `system_server`; that hook resolves the
+  target Activity's UID/user and changes the configuration sent to Chrome.
+  Chrome then receives the changed configuration as an ordinary app process.
+- The selected user-999 value came from the target-user property fallback in
+  this system_server route. This is evidence of the existing per-user runtime
+  delivery path, not evidence that the primary UI has already committed the
+  user-999 archive through a centralized root-backed editor.
+- App-process scope remains necessary for behavior implemented only by hooks
+  installed inside the target app, such as app-specific Resources/WebView/font
+  routes that are not covered by system_server mutation. Package-level scope
+  must not be represented as per-user authorization.
+- Therefore, a separate DPIS UI instance in MultiApp is not needed for the
+  system_server viewport route. Whether the target app needs to be selected in
+  LSPosed depends on which app-process hooks are required; the package-scoped
+  selector does not itself establish user-specific config ownership.
+
+The active target was started explicitly; LSPosed scope was not changed and no
+configuration or persistent properties were edited.
+
+This is the living tracker for the Modern viewport/runtime investigation.
+
+## 2026-10-20 Compat mode requires target app scope
+
+Status: user-reported MultiApp behavior is consistent with the Modern
+app-process Compat route; target-process injection must be verified separately
+from the system_server System route.
+
+Device configuration reported by the user:
+
+- Chrome is selected in LSPosed from the primary-space DPIS configuration.
+- Chrome is not selected in LSPosed from the MultiApp DPIS configuration.
+- The Chrome viewport mode is Compat in both DPIS spaces.
+- MultiApp Chrome does not receive the expected Compat behavior.
+
+Interpretation:
+
+- Compat viewport behavior is implemented by hooks installed inside the target
+  app process. A system_server launch-configuration mutation does not install
+  or execute those app-process hooks.
+- The user report is consistent with MultiApp Chrome not loading DPIS because
+  that clone is not selected in its LSPosed scope. The report alone does not
+  establish the framework's exact scope matching behavior; confirm with the
+  user-999 Chrome module-entry and hook-install logs after changing scope.
+- This does not contradict the earlier user-999 System-mode probe: that result
+  was produced by system_server and target-user property fallback. It does not
+  prove that Compat works without Chrome app-process injection.
+- A DPIS UI clone is not needed for the system_server viewport route, but the
+  current app-process scope API is invoked through the active DPIS installation's
+  XposedService context. On PJZ110, the LSPosed scope database stores rows with
+  `user_id`, and the user-0 and user-999 package scopes differ. The API exposes
+  no explicit target-user argument; its effective scope belongs to the calling
+  DPIS Android user. Compat hooks in a clone therefore require the target
+  package scope to be enabled through that user context (or another explicitly
+  verified framework-supported mechanism). The primary-space instance cannot
+  request user-999 scope through the current API.
+
+Next verification: in the MultiApp DPIS instance, inspect/request Chrome scope,
+force-stop and explicitly relaunch user-999 Chrome, then require a DPIS module
+entry and Compat hook/mutation evidence before claiming success. The user-999
+scope row must be verified independently of user 0. Do not change LSPosed scope
+as part of a diagnostic run without the user's explicit action.
+
+This is the living tracker for the Modern viewport/runtime investigation.
+
+## 2026-10-20 Modern system_server per-user gate feasibility experiment
+
+Status: historical probe only. The temporary gate implementation and its
+experiment-only tests were removed after confirming per-user UI ownership. The
+system_server target-UID/user identity route and user-specific property fallback
+remain active; there is no current user-facing or runtime `user_gate` control.
+
+Historical probe implementation:
+
+- `UserPackageRuntimeGate` temporarily read a root-published property keyed by
+  `(packageName, targetUserId)`. Explicit `0` skipped both snapshot and
+  property-fallback lookup; a missing property preserved the pre-gate behavior.
+- Modern `HookInstaller` enabled that optional check. Legacy was unchanged.
+- The probe tested the gate's per-user selectivity. It did not establish a
+  centralized configuration owner or authorize one user's UI to edit another
+  user's archive.
+
+Device experiment on `PJZ110` (`192.168.5.130:5555`):
+
+- Installed Modern Debug APK SHA-256:
+  `1015e392bc255c01b7d472fe297410163f021d57a36237376f63afd73802c751`.
+- Set only user 999 Chrome gate to `0`, user 0 gate to `1`, rebooted so
+  system_server loaded the new hook, and explicitly cold-started Chrome in both
+  users. User 999 launched at `360x792@480dpi`; user 0 remained at
+  `288x634@600dpi` (`sw288dp`).
+- Reversed gates: user 0 `0`, user 999 `1`. User 0 launched at
+  `360x792@480dpi`; user 999 returned to `sw576dp` (`576x1267@300dpi`).
+- Existing archives remained unchanged: user 0 Chrome stays at
+  `relative_scale:80000`, user 999 at `relative_scale:160000`. Existing
+  viewport properties also remained unchanged.
+- Both gate properties were restored to explicit `1` (allowed) after the
+  experiment. Android `setprop` does not remove a persistent property by setting
+  an empty value. No archive edits were made. The probe proved only that the
+  temporary runtime gate could suppress one target user without changing saved
+  config; DPIS no longer reads these gate properties.
+
+The 2026-10-20 user/package gate experiment remains runtime-selection evidence,
+not a cross-user UI implementation plan. A primary-space editor for another
+user's archive is out of the current product scope; reconsider it only through
+a separate product decision and a verified LSPosed scope/persistence design.
 
 ## Living Document Rules
 
@@ -1327,3 +1658,132 @@ not change route selection, mutation policy, or evidence semantics.
   pixel match cannot tell `360dp` at `480dpi` from `540dp` at `320dpi`.
   The app scales a configuration that is still at the source width, and
   leaves it alone only after the published width and height are present.
+- 2026-10-22: MultiApp viewport runtime properties now include the Android user
+  ID in both transient and persistent keys. The system_server hook resolves
+  the target user from the target app UID; missing UID evidence skips config
+  selection instead of silently selecting user 0. Unit tests and Modern/Legacy
+  Debug builds pass. Device validation on PJZ110 confirmed user 0 Chrome at
+  80%, user 999 Chrome at 160%, and isolated runtime marker keys. MultiApp's
+  system hook remains ineffective (`scopeSelected=false`); initial zero-sized
+  resource callbacks were skipped, so visible 160% behavior is not yet proven.
+  Follow-up: after removing only user 999 Chrome scope, a captured `u999` Chrome
+  launch received system_server configuration `288x634 @ 600dpi` (user 0's 80%
+  target) while user 999 properties were off. The source was falling back to the
+  system_server user-0 package snapshot. Non-primary users now require their
+  own enabled runtime viewport target instead of inheriting that snapshot.
+  Verification remains mixed. One user-999 fresh-task run reached
+  `360x792 @ 480dpi`, but subsequent fresh-task runs again received
+  `288x634 @ 600dpi`. The running system_server still logs the old package-only
+  marker key (`debug.dpis.vprtm.0f493ae6`), showing that the installed module's
+  updated system_server code has not been consistently reloaded. Do not consider
+  the source fix device-verified until after system_server reload and repeated
+  fresh-task checks.
+
+- 2026-10-21 follow-up correction: the Chrome diagnostic captured at 12:25
+  showed `160% / Compat`, not System. The user confirmed this was a local
+  configuration mistake: the ratio had not been switched from Compat to System
+  or Auto. system_server correctly resolved that Compat config as
+  `viewport=off, mode=compat`; this is intentional because Compat is the
+  target-app process route and must not depend on a system-framework hook.
+  After changing Chrome's viewport mode to System and Auto, the user observed
+  the viewport take effect while Chrome itself remained outside LSPosed scope
+  and only the `system` framework scope was enabled. This confirms on-device
+  visible behavior for the System route, and AUTO when it selects the available
+  System route. It supersedes the earlier statement above that user 999's
+  visible 160% behavior was unproven; it does not change the separate finding
+  that Compat requires target-app scope. The 12:25 diagnostic did not contain
+  runtime font mutation evidence, so this correction does not claim diagnostic
+  proof for its observed font effect.
+
+- 2026-10-21 current-device per-user transport verification: using the same
+  PJZ110 ADB/root log channel, Chrome was force-stopped and explicitly launched
+  as user 0 and user 999 with the same launcher component. The LSPosed scope
+  database showed DPIS scoped to `system` for user 0 and to `com.android.chrome`
+  for user 999. system_server resolved UID `10488` to user 0 and selected
+  `relative_scale:80000 / auto`, applying `288x634 @ 600dpi`; it resolved UID
+  `99910488` to user 999 and selected `relative_scale:160000 / system`, applying
+  `576x1267 @ 300dpi`. User 0 produced no DPIS Chrome app-process entry, while
+  user 999 produced module-loaded, font-hook-ready, package-ready, and bind
+  override-applied entries. This confirms current-device viewport user
+  selection and the expected scope-dependent app-process entry.
+
+  The same launch applied `fontScale=2.0` to both users. Their private archives
+  contained different font values: user 0 `200%` and user 999 `60%`. Chrome's
+  hash was `0f493ae6`; the shared properties
+  `persist.debug.dpis.compatfont.0f493ae6=200` and
+  `persist.debug.dpis.fontmode.0f493ae6=system_emulation` have no user suffix.
+  `RuntimePropertyConfigPreferences` reads those package-hash-only font
+  properties for both target users, while viewport properties are user-scoped.
+  Therefore this run is device evidence that system-server font transport still
+  selects the shared 200% font value for user 999. Bind override logs alone do
+  not establish the final app-visible font size. Do not claim complete
+  per-user font isolation until the font property writer, reader, and native
+  consumers migrate together.
+
+## 2026-10-22 User-scoped font transport repair
+
+Status: implementation and unit/native transport tests pass; Modern Chrome
+system-server launch mutation is verified for both Android users. Device times
+below use UTC+08:00 (the check crossed midnight from October 21).
+
+All font scale/mode/typeface, hook-domain, native font, forcefont, and Rust
+binary property names now include the target user ID before the package hash,
+including user 0. Mutation APIs require explicit user identity. Store-backed
+UI/recovery paths use the private archive owner; system_server uses the
+already-resolved target UID/user rather than its own process identity.
+
+Legacy unscoped font properties are left untouched and ignored by new readers.
+They cannot be attributed to a saved-config owner and are not migration data.
+Opening each DPIS installation republishes that user's canonical archive into
+its scoped transient/persistent mirrors. Clearing a user affects only its own
+keys; clearing font scale preserves that user's independent typeface setting.
+
+Native proxy consumers use the process UID's Android user, preserve the package
+provided by JNI or the process-local Rust environment when available, and
+otherwise use the package part of the process name. Scoped forcefont overrides
+can replace JNI targets, including explicit zero; a missing scoped property
+does not replace JNI state. Without JNI, process-local environment/cmdline
+values precede the scoped native font property. Original Rust binary resolution
+keeps environment, sibling library, then scoped property precedence. No global
+or package-only forcefont fallback remains. Already deployed old proxy copies
+must be refreshed before testing this native contract; an APK upgrade alone
+is not proof that a target process loaded the new proxy.
+
+Device evidence on PJZ110 after Gradle Modern Debug installation and starting
+DPIS separately for users 0 and 999:
+
+- Scoped compatfont values are 200 for user 0 and 60 for user 999, both transient
+  and persistent. The old unscoped compatfont value deliberately remains 200.
+- At 00:09:38, Chrome UID 10488/user 0 selected 80000/AUTO and its launch
+  Configuration changed to 288x634@600dpi with fontScale=2.0.
+- At 00:09:43, Chrome UID 99910488/user 999 selected 160000/System with
+  snapshotOwner=0, ownerMatches=false, fallbackHit=true. Its launch Configuration
+  changed to 576x1267@300dpi with fontScale=0.6, not the legacy shared 2.0.
+- DisplayInfo density changed to 600 and 300 respectively. User 999 app-process
+  module entry and bind override were observed; no user-0 Chrome DPIS entry was
+  observed. Scope and saved configuration were not changed by this verification.
+
+Verification: full Modern/Legacy debug unit suites, both Debug APK builds, and
+Modern JaCoCo report passed. The native font property test executable passed on
+PJZ110, covering user separation, persistent fallback, explicit zero, unscoped
+key rejection, JNI/env/cmdline priority, and original-binary path priority.
+Legacy device behavior, deployed Gallery/Weather proxy effectiveness, and new
+visual/font screenshot comparison are not established by the Chrome run.
+
+The final reviewed Modern Debug APK has SHA-256
+`02389e88eb3dad4b2357b8b5acc3b3eca061369a56eba1c477f3a14c5ad3e6c3`;
+the installed APK and local build hashes matched. A second run reversed startup
+order: at 00:26:11 user 999 again received 576x1267@300dpi/fontScale=0.6; at
+00:26:20 user 0 again received 288x634@600dpi/fontScale=2.0. The unscoped
+persistent compatfont property remained 200 throughout. The debug-only restart
+control was also exercised without config extras: it restarted only user 999
+Chrome (PID 18214 to 19338), leaving user 0 Chrome PID 18904 unchanged. Debug
+restart now delegates to RootAppProcessLauncher rather than using monkey.
+
+The final tree passed all 1978 Modern and 1987 Legacy debug unit tests with no
+failures or skips. Release shrink validation was attempted but blocked by
+missing release-signing inputs. Android Studio supplemental analysis was not
+available because no compatible Studio bridge instance was running. Native
+transport was also rebuilt/tested with C++20, -Wall, -Wextra and -Werror; its
+temporary device executable was removed. HyperOS Gallery/Weather are not
+installed on this device, so their native app effects could not be tested.

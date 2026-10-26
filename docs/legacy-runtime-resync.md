@@ -66,6 +66,41 @@ back to the physical `379dp`. A shorter window keeps its existing density. A ful
 configuration classified as a window still receives the relative result, so
 the process starts at the target width. A smaller window does not.
 
+## 2026-10-20 Legacy system_server target-user selection
+
+Status: source and JVM behavior tests now require the target Activity's user
+identity before applying a launch-item viewport. Device effectiveness remains
+unverified.
+
+Legacy `LaunchActivityItem` argument and post-construction routes resolve the
+package through `ActivityInfo` and derive the Android user from its associated
+`ApplicationInfo.uid`. The config source is queried with `(packageName, userId)`;
+package-name-only parsing is not sufficient to select runtime config. If the
+activity UID is missing or invalid, the route leaves the launch configuration
+unchanged instead of defaulting to user 0. Shared `system_server` source lookups
+now require explicit user identity; a matching snapshot owner may provide its
+viewport config for any user, and that user's runtime properties take
+precedence. Invalid UID evidence fails closed. HyperOS Rust-process native font
+setup also requires UID evidence associated with the parsed package. Legacy
+unit tests cover user 0, user 999, missing UID, System mode, and Compat mode.
+Device effectiveness remains unverified.
+
+## 2026-10-22 User-scoped font property transport
+
+Status: shared implementation, full Legacy unit suite and Legacy Debug build
+pass; a Legacy device/module run remains unverified.
+
+Legacy property-backed stores pass the resolved process or target user to all
+font scale/mode/typeface and hook-domain reads. Shared system-server native
+publishers carry the target UID-derived user; native proxies read the process
+UID's user-scoped forcefont/font/Rust binary properties. Package-only legacy
+font properties are ignored for every user, not assigned to user 0. Each DPIS
+installation republishes its own saved archive after upgrade. Existing proxy
+copies need refresh from the upgraded module before native effectiveness can
+be claimed. This changes the transport identity, not the Legacy launch-only
+font scheduling or the separate unverified XSharedPreferences readability
+question. See the Modern October 22 record for shared transport/device evidence.
+
 ## Route Map
 
 ## Window Semantics
@@ -628,3 +663,16 @@ process. Legacy inherits this boundary.
   the published width and height. When that width and height are already
   published but the density is still physical, the app process writes the
   published density and keeps that display result. It does not scale again.
+- 2026-10-22: Shared with Modern. MultiApp viewport runtime properties and
+  runtime markers now include Android user ID in transient and persistent
+  namespaces. system_server resolves the target user from the target app UID
+  and skips selection when UID evidence is missing, rather than defaulting to
+  user 0. Unit tests and both Debug builds pass. PJZ110 confirmed distinct
+  Chrome 80%/160% values and marker namespaces; MultiApp system hook remains
+  ineffective (`scopeSelected=false`), and initial zero-sized resource callbacks
+  Device verification remains mixed: one fresh-task run reached
+  `360x792 @ 480dpi`, while subsequent fresh-task runs received
+  `288x634 @ 600dpi` again. system_server still logs the old package-only
+  marker key (`debug.dpis.vprtm.0f493ae6`), indicating the updated runtime has
+  not been consistently reloaded. Require system_server reload and repeated
+  fresh-task checks before considering the change device-verified.

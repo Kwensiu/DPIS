@@ -103,6 +103,33 @@ DPIS route fixes should prefer this order:
 4. Add a new independent route only when the existing route model cannot safely
    represent the behavior.
 
+## Runtime Property Identity And Upgrade
+
+Font scale/mode, typeface, custom hook domains, native font overrides and Rust
+binary paths use `debug.dpis.<field>.<userId>.<packageHash>` (and persistent
+mirrors where applicable). User 0 also has an explicit prefix. Store-backed
+publishing uses the DPIS archive owner; system_server uses the target Activity
+or app UID. Native consumers use their process UID's Android user, not the
+system-server publisher's identity.
+
+Unscoped legacy font properties are ignored and left untouched: their writer's
+user cannot be recovered safely. Opening each user's DPIS republishes that
+user's saved configuration. Missing properties must not copy another user's
+settings. Explicit zero/off prevents persistent positive values reappearing;
+clearing font scale does not clear the independently selected typeface.
+
+The native proxy uses the same scoped naming contract. Process-local JNI and
+Rust environment/cmdline values remain usable without inventing a shared
+property owner. Scoped forcefont, including zero, has priority over a JNI target;
+absence does not replace JNI state. Previously deployed proxy copies need to
+be refreshed from the upgraded module before testing native effectiveness.
+
+Native policy regression test: compile
+`app/src/test/cpp/font_property_keys_test.cpp` with C++17 and
+`-I app/src/main/cpp`; run the executable locally with a C++ toolchain, or build
+it with the Android NDK's target clang++ and run it through ADB. The test uses
+in-memory property readers, needs no Root, and does not mutate system properties.
+
 ## Imported Typeface Transport
 
 Typeface replacement is independent from font-scale mode selection. A configured

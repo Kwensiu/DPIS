@@ -2,6 +2,53 @@
 
 Use this reference for work rooted in `app/src/modern/java/`.
 
+For the verified API and Maven version details, see
+[Verified API Facts](#verified-api-facts-checked-2026-10-19) below.
+
+## Verified API Facts (Checked 2026-10-19)
+
+Maven Central metadata currently lists API and service `102.0.0` as latest.
+DPIS declares `io.github.libxposed:api:102.0.0` and
+`io.github.libxposed:service:101.0.0`; the service dependency is one release
+behind, but do not upgrade it unless the needed service API requires it.
+
+`XposedInterface.getRemotePreferences(String)` returns a framework-backed,
+read-only `SharedPreferences` view shared across processes. The framework must
+expose the remote-preferences capability (`PROP_CAP_REMOTE`). The module
+lifecycle exposes `ModuleLoadedParam.isSystemServer()`, so Modern can identify
+its system_server load context. These API facts establish that direct Modern
+hook-side config reads are supported; they do not prove vendor SELinux policy
+allows system_server to write arbitrary DPIS properties.
+
+The service-side `XposedService.getRemotePreferences(String)` is a separate
+writable service API. DPIS UI already uses it to publish its authoritative
+configuration; Modern hook runtimes use `XposedInterface.getRemotePreferences`
+to read that shared snapshot.
+
+Modern should read remote preferences as its primary config source. Property
+mirrors are separate compatibility/runtime transport and should only remain
+where an owning route is proven to require them. Legacy continues using its
+classic `XSharedPreferences` boundary; do not import LibXposed types into
+Legacy.
+
+Upstream references:
+
+- Maven API metadata: https://repo1.maven.org/maven2/io/github/libxposed/api/maven-metadata.xml
+- Maven service
+  metadata: https://repo1.maven.org/maven2/io/github/libxposed/service/maven-metadata.xml
+- API 102 Javadoc: https://javadoc.io/doc/io.github.libxposed/api/102.0.0/
+- Service 102 Javadoc: https://javadoc.io/doc/io.github.libxposed/service/102.0.0/
+- API reference: https://github.com/libxposed/api/tree/master/_autodocs
+- Service reference: https://github.com/libxposed/service/tree/master/_autodocs
+- Android system property
+  APIs: https://source.android.com/docs/core/architecture/configuration/sysprops-apis
+- Android property
+  permissions: https://source.android.com/docs/core/architecture/configuration/add-system-properties
+
+The same official API references are indexed in Context7 as `/libxposed/api`
+and `/libxposed/service`. Check Maven metadata and versioned Javadocs again
+before changing these version claims.
+
 ## Intent
 
 Treat libxposed as one evolving family with explicit capability selection
