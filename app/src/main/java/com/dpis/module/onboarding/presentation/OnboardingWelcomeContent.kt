@@ -374,12 +374,20 @@ internal fun WelcomeLanguageOverlay(
 private fun WelcomeCommunityLinks() {
     val context = LocalContext.current
     val links = listOf(
-        Triple(R.drawable.ic_qq_24, R.string.home_feedback_qq, R.string.home_feedback_qq_url),
-        Triple(R.drawable.ic_github_24, R.string.home_feedback_github, R.string.about_source_url),
+        Triple(
+            R.drawable.ic_qq_24,
+            stringResource(R.string.home_feedback_qq),
+            stringResource(R.string.home_feedback_qq_url),
+        ),
+        Triple(
+            R.drawable.ic_github_24,
+            stringResource(R.string.home_feedback_github),
+            stringResource(R.string.about_source_url),
+        ),
         Triple(
             R.drawable.ic_telegram_24,
-            R.string.home_feedback_telegram,
-            R.string.home_feedback_telegram_url,
+            stringResource(R.string.home_feedback_telegram),
+            stringResource(R.string.home_feedback_telegram_url),
         ),
     )
     BoxWithConstraints(
@@ -392,16 +400,16 @@ private fun WelcomeCommunityLinks() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             ) {
-                links.forEach { (iconRes, labelRes, urlRes) ->
+                links.forEach { (iconRes, label, url) ->
                     FilledIconButton(
                         onClick = {
-                            openExternalLink(context, context.getString(urlRes))
+                            openExternalLink(context, url)
                         },
                         colors = IconButtonDefaults.filledTonalIconButtonColors(),
                     ) {
                         Icon(
                             painter = painterResource(iconRes),
-                            contentDescription = context.getString(labelRes),
+                            contentDescription = label,
                         )
                     }
                 }
@@ -411,17 +419,17 @@ private fun WelcomeCommunityLinks() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
             ) {
-                links.forEach { (iconRes, labelRes, urlRes) ->
+                links.forEach { (iconRes, label, url) ->
                     FilledTonalButton(
                         onClick = {
-                            openExternalLink(context, context.getString(urlRes))
+                            openExternalLink(context, url)
                         },
                     ) {
                         Icon(
                             painter = painterResource(iconRes),
                             contentDescription = null,
                         )
-                        Text(context.getString(labelRes))
+                        Text(label)
                     }
                 }
             }
