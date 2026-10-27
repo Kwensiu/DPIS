@@ -144,6 +144,20 @@ class OnboardingTest {
     }
 
     @Test
+    fun completedOnboardingDoesNotReopenAfterNormalUpgradeStartup() {
+        val preferences = FakePrefs()
+        val completedBeforeUpgrade = coordinator(preferences)
+
+        assertTrue(completedBeforeUpgrade.acceptTerms())
+        assertTrue(completedBeforeUpgrade.complete())
+
+        val coordinatorAfterUpgrade = coordinator(preferences)
+
+        assertTrue(coordinatorAfterUpgrade.state().completed)
+        assertEquals(null, coordinatorAfterUpgrade.requiredStep())
+    }
+
+    @Test
     fun rootAvailabilityIsInformationalAndDoesNotBlockCompletion() {
         listOf(
             RootAccessProbe.Result.unknown(),
