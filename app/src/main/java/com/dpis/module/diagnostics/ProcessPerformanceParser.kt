@@ -84,6 +84,7 @@ internal object ProcessPerformanceParser {
                 "p95Us" -> summary.p95Us = numericValue
                 "p99Us" -> summary.p99Us = numericValue
                 "maxUs" -> summary.maxUs = numericValue
+                "pathCounts" -> parseCounts(field.substring(separator + 1), summary.pathCounts)
             }
         }
         return summary
@@ -142,6 +143,17 @@ internal object ProcessPerformanceParser {
         return tokenField(event, "route=")
     }
 
+    private fun parseCounts(value: String, target: MutableMap<String, Long>) {
+        for (entry in value.split('|')) {
+            val separator = entry.lastIndexOf(':')
+            if (separator <= 0) {
+                continue
+            }
+            target[entry.substring(0, separator)] =
+                entry.substring(separator + 1).toLongOrNull() ?: 0L
+        }
+    }
+
     private fun valueOrDefault(value: String?, fallback: String): String {
         val normalized = value?.trim().orEmpty()
         return normalized.ifEmpty { fallback }
@@ -191,5 +203,8 @@ internal object ProcessPerformanceParser {
 
         @JvmField
         var maxUs: Long = 0
+
+        @JvmField
+        val pathCounts: MutableMap<String, Long> = LinkedHashMap()
     }
 }

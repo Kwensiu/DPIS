@@ -11,7 +11,8 @@ class ProcessPerformanceParserTest {
                     "category=performance route=runtime stage=aggregate " +
                     "package=com.example.app message=process=com.example.app,pid=123;" +
                     "route=paint_fallback,calls=20,applied=3,skipped=17,kept=4," +
-                    "measuredCalls=3,sampleStride=50,p50Us=4,p95Us=20,p99Us=20,maxUs=30",
+                    "measuredCalls=3,sampleStride=50,p50Us=4,p95Us=20,p99Us=20,maxUs=30," +
+                    "pathCounts=fast_path_reused_metrics:17|slow_path_resolve:3",
             "08-12 23:00:01.000 source=runtime-transport " +
                     "category=performance route=runtime stage=aggregate " +
                     "package=com.example.app message=process=com.google.android.webview,pid=456;" +
@@ -27,6 +28,7 @@ class ProcessPerformanceParserTest {
         assertEquals(20L, result[0].routes["paint_fallback"]!!.calls)
         assertEquals(4L, result[0].routes["paint_fallback"]!!.kept)
         assertEquals(50, result[0].routes["paint_fallback"]!!.sampleStride)
+        assertEquals(17L, result[0].routes["paint_fallback"]!!.pathCounts["fast_path_reused_metrics"])
         assertEquals("com.google.android.webview", result[1].process)
         assertEquals("456", result[1].pid)
         assertEquals(2L, result[1].routes["webview_text_zoom"]!!.applied)

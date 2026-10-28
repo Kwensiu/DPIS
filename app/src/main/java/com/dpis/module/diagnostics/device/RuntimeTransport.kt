@@ -255,6 +255,17 @@ object RuntimeTransport {
                     first = false
                 }
             }
+            if (!snapshot.pathCounts.isEmpty()) {
+                message.append(",pathCounts=")
+                var firstPath = true
+                for (path in snapshot.pathCounts.entries) {
+                    if (!firstPath) {
+                        message.append('|')
+                    }
+                    message.append(path.key).append(':').append(path.value)
+                    firstPath = false
+                }
+            }
         }
         record("performance", "runtime", "aggregate", packageName, message.toString())
         RuntimeBridgeEvents.emitPerformance(message.toString())

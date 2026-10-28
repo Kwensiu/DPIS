@@ -121,12 +121,22 @@ object RuntimeHotPathEvents {
      * after percentiles describe the same timed region.
      */
     @JvmStatic
-    fun recordBodySample(packageName: String?, routeName: String?, durationNs: Long) {
+    fun recordBodySample(
+        packageName: String?,
+        routeName: String?,
+        durationNs: Long,
+        path: String? = null,
+    ) {
         if (!RuntimeTransport.isCaptureActive) {
             return
         }
         preparePerformanceSession()
-        performance.recordBodySample(routeName, durationNs, BODY_SAMPLE_STRIDE)
+        performance.recordBodySample(
+            routeName,
+            durationNs,
+            BODY_SAMPLE_STRIDE,
+            path,
+        )
         recordPerformanceIfDue(packageName)
     }
 

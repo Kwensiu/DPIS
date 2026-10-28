@@ -11,9 +11,11 @@ import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.TargetViewportWidthResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportConfigurationScope
+import com.dpis.module.viewport.ResourcesConfigurationReadReuse
 import com.dpis.module.viewport.ViewportModePolicy
 import com.dpis.module.viewport.ViewportOverride
 import com.dpis.module.viewport.ViewportResolvedTarget
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge
 import com.dpis.module.viewport.ViewportRuntimeMarkerProbe
 import com.dpis.module.viewport.ViewportRuntimeRecord
 import com.dpis.module.viewport.ViewportSourceSnapshot
@@ -21,7 +23,6 @@ import com.dpis.module.viewport.VirtualDisplayPlan
 import com.dpis.module.viewport.VirtualDisplayState
 import com.dpis.module.viewport.window.WindowBoundsState
 
-/** Resources configuration read. DisplayMetrics writes live in ResourcesMetricsRead. */
 internal object ResourcesConfigurationRead {
     fun apply(
         resourceScope: Any?,
@@ -56,6 +57,27 @@ internal object ResourcesConfigurationRead {
                             + fontScale.original + " -> " + config.fontScale),
                 )
             }
+            return
+        }
+        val configurationOverrideEnabled = ViewportModePolicy.shouldApplyConfigurationOverride(
+            policy, store, packageName,
+        )
+        if (configurationOverrideEnabled &&
+            ResourcesConfigurationReadReuse.matches(
+                resourceScope,
+                packageName,
+                config,
+                fontScale.effective,
+                viewportHandlingEnabled,
+                fontConfigurationOverrideEnabled,
+                policy,
+            )
+        ) {
+            ResourcesReadHookInstaller.recordConfigurationSkip(
+                packageName,
+                "stable_configuration_reused",
+                "source=" + sourceTag + ", reason=stable_configuration_reused",
+            )
             return
         }
         if (sourceTag.startsWith("ResourcesRead(getConfiguration)")
@@ -202,14 +224,29 @@ internal object ResourcesConfigurationRead {
         )
         if (!windowScoped && !resolution.isAppProcessBorrowTarget) {
             if (resolution.spec.isEnabled) {
-                VirtualDisplayState.publish(
+                val existingSystemRecord = VirtualDisplayState.findBySignature(
                     packageName,
                     resolution.spec,
-                    source,
-                    result,
-                    sharedResult,
-                    ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                    ViewportRuntimeMarkerBridge.configurationSignature(
+                        result.widthDp,
+                        result.heightDp,
+                        result.smallestWidthDp,
+                        result.densityDpi,
+                        ViewportSourceSnapshot.SCOPE_DISPLAY,
+                    ),
                 )
+                if (existingSystemRecord?.provenance !=
+                    ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER
+                ) {
+                    VirtualDisplayState.publish(
+                        packageName,
+                        resolution.spec,
+                        source,
+                        result,
+                        sharedResult,
+                        ViewportRuntimeRecord.PROVENANCE_APP_PROCESS,
+                    )
+                }
             } else if (sharedResult != null) {
                 VirtualDisplayState.setUnlessDerivedFromTargetConfig(
                     sharedResult, originalSmallestWidthDp, targetViewportWidth,
@@ -259,7 +296,29 @@ internal object ResourcesConfigurationRead {
                     )
                 }
             }
+            if (applyToConfiguration) {
+                ResourcesConfigurationReadReuse.remember(
+                    resourceScope,
+                    packageName,
+                    config,
+                    fontScale.effective,
+                    viewportHandlingEnabled,
+                    fontConfigurationOverrideEnabled,
+                    policy,
+                )
+            }
             return
+        }
+        if (applyToConfiguration) {
+            ResourcesConfigurationReadReuse.remember(
+                resourceScope,
+                packageName,
+                config,
+                fontScale.effective,
+                viewportHandlingEnabled,
+                fontConfigurationOverrideEnabled,
+                policy,
+            )
         }
         val detail = ("source=" + sourceTag
                 + ", mode=" + (if (applyToConfiguration) "config" else "metrics")

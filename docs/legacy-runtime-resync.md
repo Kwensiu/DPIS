@@ -1,4 +1,18 @@
-# Legacy Runtime Resync
+# App-process density projection baseline
+
+Shared Legacy resource and Display consumers now use
+`AppProcessDensityProjection` as the first app-process DPI boundary. It
+projects target density into the standard Resources and Display API results,
+keeps physical pixel dimensions unchanged, and preserves the incoming font
+scale factor.
+
+The Legacy route keeps system-server propagation and window ownership separate:
+`compat` consumes the projection directly; `system` and effective `auto` use it
+until a matching system result is available. Viewport-only configurations no
+longer require ResourcesManager or ResourcesImpl write hooks. This avoids
+re-entering configuration mutation for every app-process resource read while
+retaining the existing fallback for missing or incomplete system evidence.
+
 
 This is the living tracker for the Legacy viewport/runtime investigation.
 
@@ -21,7 +35,38 @@ This is the living tracker for the Legacy viewport/runtime investigation.
 - Keep the tree and ledger aligned: when a route moves between active and
   inactive use, update both the route tree and the experiment ledger.
 
-## 2026-10-15 WeChat Relative Ownership Adjustment
+# 2026-10-27 System route transaction observation on PJZ110
+
+Status: shared diagnostic instrumentation added; no Legacy system-route behavior
+was changed.
+
+The app-process `viewport_marker_app_consume` event now records marker
+provenance, elapsed id, source/result signatures, and the incoming
+Configuration signature. This gives Legacy and Modern resource consumers the
+same evidence boundary. The PJZ110 Bilibili capture observed only
+`provenance=a` and `app-process-borrow-target`; it did not exercise the Legacy
+system_server route. Do not use this capture as Legacy system-route evidence.
+
+## 2026-10-27 Bilibili near-100% auto ratio boundary deferred
+
+Status: shared runtime finding; observed and deferred.
+
+Bilibili captures show that the current route's performance depends more on
+metrics stability than on visible scale alone. Auto 101% produced about
+`77,617` main-process display-metrics calls, with `9,859` slow-path resolutions
+and output heights varying between approximately `2375` and `2378` pixels.
+Its longest main-thread input slice was about `213 ms`, mostly Running. Auto
+128% had about `192` slow-path resolutions and a longest input slice around
+`220 ms`. By contrast, the user's compat 128% capture had only `49` slow-path
+resolutions and a longest input slice around `98 ms`, and was reported as
+comparatively fluent.
+
+This is evidence for a near-100% rounding/state-boundary issue in the auto
+route, not proof that DPIS directly occupies the full input slice. The issue is
+deliberately deferred. Keep the captures and route counters as the baseline for
+a future stable-pixel-rounding change; do not mark the 101% route fixed or
+change shared ownership semantics based on this note alone.
+
 
 Status: active.
 

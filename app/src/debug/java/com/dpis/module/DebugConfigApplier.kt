@@ -9,6 +9,7 @@ import com.dpis.module.root.RootAppProcessLauncher
 import com.dpis.module.runtime.font.FontRuntimePropertySyncer
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertySyncer
+import com.dpis.module.viewport.ViewportTargetSpec
 
 internal object DebugConfigApplier {
     const val ACTION_SET_PACKAGE_CONFIG = "io.github.kwensiu.dpis.DEBUG_SET_PACKAGE_CONFIG"
@@ -16,6 +17,7 @@ internal object DebugConfigApplier {
 
     private const val EXTRA_PACKAGE = "package"
     private const val EXTRA_VIEWPORT_WIDTH_DP = "viewport_width_dp"
+    private const val EXTRA_VIEWPORT_SCALE_MILLI_PERCENT = "relative_scale_milli_percent"
     private const val EXTRA_VIEWPORT_MODE = "viewport_mode"
     private const val EXTRA_FONT_SCALE_PERCENT = "font_scale_percent"
     private const val EXTRA_FONT_MODE = "font_mode"
@@ -37,17 +39,32 @@ internal object DebugConfigApplier {
         val store = DpisApplication.getConfigStore()
         val userId = store.packageConfigOwnerUserId()
         var saved = true
-        if (intent.hasExtra(EXTRA_VIEWPORT_WIDTH_DP)) {
-            val widthDp = intent.getIntExtra(EXTRA_VIEWPORT_WIDTH_DP, 0)
+        if (intent.hasExtra(EXTRA_VIEWPORT_WIDTH_DP) ||
+            intent.hasExtra(EXTRA_VIEWPORT_SCALE_MILLI_PERCENT)
+        ) {
+            val scaleMilliPercent = intent.getIntExtra(
+                EXTRA_VIEWPORT_SCALE_MILLI_PERCENT,
+                0,
+            )
             val normalizedMode =
                 ViewportApplyMode.normalize(intent.getStringExtra(EXTRA_VIEWPORT_MODE))
-            if (widthDp > 0 && ViewportApplyMode.isEnabled(normalizedMode)) {
-                saved = store.setTargetViewportWidthDp(packageName, widthDp) && saved
+            if (scaleMilliPercent > 0 && ViewportApplyMode.isEnabled(normalizedMode)) {
+                saved = store.setTargetViewportSpec(
+                    packageName,
+                    ViewportTargetSpec.relativeScale(scaleMilliPercent),
+                ) && saved
                 saved = store.setTargetViewportApplyMode(packageName, normalizedMode) && saved
-                ViewportPropertySyncer.publishTargetAsync(packageName, widthDp, normalizedMode)
+                ViewportPropertySyncer.syncTarget(packageName, store)
             } else {
-                saved = store.clearTargetViewportWidthDp(packageName) && saved
-                ViewportPropertySyncer.clearTargetAsync(packageName)
+                val widthDp = intent.getIntExtra(EXTRA_VIEWPORT_WIDTH_DP, 0)
+                if (widthDp > 0 && ViewportApplyMode.isEnabled(normalizedMode)) {
+                    saved = store.setTargetViewportWidthDp(packageName, widthDp) && saved
+                    saved = store.setTargetViewportApplyMode(packageName, normalizedMode) && saved
+                    ViewportPropertySyncer.syncTarget(packageName, store)
+                } else {
+                    saved = store.clearTargetViewportWidthDp(packageName) && saved
+                    ViewportPropertySyncer.clearTargetAsync(packageName)
+                }
             }
         }
         if (intent.hasExtra(EXTRA_FONT_SCALE_PERCENT)) {

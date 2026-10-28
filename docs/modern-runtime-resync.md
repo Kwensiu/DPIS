@@ -1,4 +1,110 @@
-## 2026-10-20 System-server diagnostic boundary instrumentation
+# App-process density projection baseline
+
+The viewport app-process route now uses `AppProcessDensityProjection` as its
+first consumer-facing boundary. It projects the configured target density into
+`Resources.getConfiguration()`, `Resources.getDisplayMetrics()`,
+`Display.getMetrics()`, and `Display.getRealMetrics()` while preserving physical
+pixel dimensions and the existing font-scale factor.
+
+Ownership is deliberately split:
+
+- `compat` uses the projection directly and does not install viewport-only
+  `ResourcesManager` or `ResourcesImpl` write hooks.
+- `system` and effective `auto` use the projection as the app-process fallback
+  until a matching system-server result is present.
+- A matching system-server result is recognized by the existing ownership and
+  marker policy; the projection does not overwrite that result.
+- Window bounds, multi-window geometry, and system-server propagation remain
+  separate routes. The projection does not change `widthPixels`,
+  `heightPixels`, or `WindowMetrics` bounds.
+
+This is the maintained default route contract, not a debug experiment. The
+projection accepts both relative-scale and absolute-width target specs and
+computes density from the source configuration on each boundary, so rotation,
+configuration changes, and different Resources instances do not reuse a stale
+process-wide density value.
+
+
+Status: instrumentation added; system_server effectiveness remains blocked by
+runtime service/scope state.
+
+The debug Modern build now records an app-process `viewport_marker_app_consume`
+event at the `ResourcesImpl` boundary. It includes the marker elapsed id,
+provenance, source/result signatures, current Configuration signature, and
+whether the incoming Configuration already matches the published result. This
+is diagnostic-only and does not change route selection or mutation.
+
+After installing the build and rebooting PJZ110, the Bilibili probe showed the
+following boundary:
+
+- the marker observed by Bilibili had `provenance=a`, not `provenance=s`;
+- `ResourcesImpl` first consumed `461x1014@375` with a matching app-process
+  marker, then later received `360x736@480` and applied
+  `app-process-borrow-target` metrics/configuration work;
+- no Bilibili `launch-activity-item` or system-server viewport mutation was
+  observed;
+- the Bilibili/WebView processes reported
+  `serviceAvailable=false, scopeSelected=false, effective=false`, while the
+  DPIS UI process itself reported `serviceAvailable=true, scopeSelected=true,
+  effective=true` after opening the UI.
+
+Conclusion: this capture does not exercise the system route. The next runtime
+probe must first keep the Modern Xposed service/scope effective for the target
+process and then require a `provenance=s` marker plus system-server mutation
+before evaluating resource feedback or changing system ownership. Do not use
+this capture as evidence for system-route performance.
+
+Follow-up on 2026-10-27: the debug package-config broadcast originally used
+an asynchronous property projection, so an explicit `system` request could
+leave the Bilibili runtime property at `compat`. The debug path now calls the
+existing synchronous `ViewportPropertySyncer.syncTarget` after saving. On
+PJZ110, an explicit receiver broadcast verified `saved=true`,
+`viewportMode=system`, and both volatile and persistent mode properties equal
+to `system`. The matrix runner now uses the explicit receiver and user 0.
+
+The system-route transaction was then optimized after resolving an app-process
+record priority bug. `TargetViewportWidthResolver` now checks a fresh
+system-server marker whose source signature matches before consulting an older
+`VirtualDisplayState` record. With Bilibili configured as
+`relative_scale:128000`, `mode=system`, the final Modern Debug build logged
+`resolution={reason=system-marker-source,target=461,record=yes}` and did not log
+`app-process-borrow-target` for the verified ResourcesImpl display callbacks.
+The remaining metrics write is the necessary first synchronization from the
+physical `360x792@480` input to the system result `461x1014@375`; it reuses the
+system record instead of deriving or publishing an app-owned target again.
+
+
+Status: observed and deferred; do not treat as fixed.
+
+Three same-day Bilibili captures provide the current comparison:
+
+- `auto`, scale `128%`: main-process `resources_read_display_metrics_override`
+  recorded `62,613` calls, `62,421` fast-path reuse hits, `192` slow-path
+  resolutions, and a sampled maximum of `1.897 ms`. The longest main-thread
+  input slice was about `220 ms`, with the main thread Running for about
+  `212 ms` inside that slice.
+- `auto`, scale `101%`: the same route recorded `77,617` calls, only `67,758`
+  fast-path reuse hits, and `9,859` slow-path resolutions. The sampled maximum
+  was `4.496 ms`. Logs showed physical metrics oscillating around
+  `2208/2376` input pixels and `2375/2378` output pixels. The longest input
+  slice was about `213 ms`, with about `207 ms` Running.
+- `compat`, scale `128%`: the same route recorded `91,098` calls,
+  `91,049` fast-path reuse hits, and only `49` slow-path resolutions. The
+  longest input slice was about `98 ms`, with about `83 ms` Running. This
+  capture was reported as comparatively fluent by the user.
+
+The 101% capture therefore exposes a near-100% rounding/state boundary rather
+than a simple visual-scale cost. A small visual change can still cause repeated
+Resources metrics invalidation and slow-path resolution. The evidence does not
+prove that DPIS directly consumes the full input duration: the main thread is
+mostly Running, and no direct DPIS slice accounts for the long input event.
+
+Decision: defer the near-100% metrics stabilization fix for now. Keep the
+capture as a regression and investigation reference. Do not claim that the
+101% auto route is fixed; revisit only with a targeted policy for stable pixel
+rounding and a fresh 101%/128%/compat A/B capture. The current fast-path and
+configuration-reuse optimizations remain in place.
+
 
 Status: diagnostic route and per-user viewport mutation are verified on device;
 remaining work is independent visual verification.

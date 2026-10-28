@@ -123,6 +123,18 @@ object LaunchActivityItemApply {
             HyperOsFlutterFontBridge.publishTarget(packageName, config, userId)
             FontScale.report(packageName, beforeFontScale, baseConfiguration.fontScale)
         }
+        if (DpisLog.isLoggingEnabled()) {
+            HookLog.logMutationOutcome(
+                "launch-activity-item",
+                packageName,
+                userId,
+                if (changed) "changed" else "unchanged",
+                "viewport|font_scale",
+                beforeSummary,
+                describeConfigurationArgs(arguments),
+                HookLog.describeEnvironment(environment),
+            )
+        }
         if (changed && DpisLog.isLoggingEnabled()) {
             val message = "system_server launch-activity-item apply: package=" + packageName +
                     ", before=" + HookLog.safeToString(beforeSummary) +

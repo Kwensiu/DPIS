@@ -3,7 +3,9 @@ package com.dpis.module;
 import com.dpis.module.viewport.VirtualDisplayState;
 
 import com.dpis.module.viewport.TargetViewportWidthResolver;
+import com.dpis.module.viewport.ViewportRuntimeMarkerBridge;
 import com.dpis.module.viewport.ViewportRuntimeRecord;
+import com.dpis.module.runtime.probe.RuntimeClock;
 import com.dpis.module.viewport.ViewportApplyMode;
 import com.dpis.module.viewport.ViewportOverride;
 import com.dpis.module.viewport.ViewportSourceSnapshot;
@@ -182,6 +184,49 @@ public class TargetViewportWidthResolverTest {
         assertEquals(540, resolution.effectiveSmallestWidthDp);
         assertNotNull(resolution.record);
         assertEquals(320, resolution.record.viewportResult.densityDpi);
+    }
+
+    @Test
+    public void systemServerRecordIsReusedBeforeAppProcessBorrow() {
+        String packageName = "com.example.viewport.system";
+        ViewportTargetSpec targetSpec = ViewportTargetSpec.relativeScale(128000);
+        android.content.res.Configuration sourceConfiguration =
+                configuration(360, 792, 360, 480);
+        ViewportSourceSnapshot systemSource = ViewportSourceSnapshot.systemDisplayInfo(
+                360, 792, 360, 480, 1080, 2376);
+        VirtualDisplayState.publish(
+                packageName,
+                targetSpec,
+                systemSource,
+                new ViewportOverride.Result(461, 1014, 461, 375),
+                null,
+                ViewportRuntimeRecord.PROVENANCE_APP_PROCESS);
+        ViewportRuntimeMarkerBridge.publish(
+                packageName,
+                ViewportRuntimeMarkerBridge.createRecord(
+                        packageName,
+                        targetSpec,
+                        461,
+                        systemSource,
+                        new ViewportOverride.Result(461, 1014, 461, 375),
+                        ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                        RuntimeClock.crossProcessMarkerMillis()));
+        DpisConfigStore store = new DpisConfigStore(new FakePrefs());
+        store.setTargetViewportSpec(packageName, targetSpec);
+        store.setTargetViewportApplyMode(packageName, ViewportApplyMode.SYSTEM);
+        ViewportSourceSnapshot source = ViewportSourceSnapshot.fromConfiguration(
+                ViewportSourceSnapshot.ORIGIN_RESOURCES_IMPL,
+                sourceConfiguration,
+                null);
+
+        ViewportTargetResolution resolution =
+                TargetViewportWidthResolver.resolve(store, packageName, source);
+
+        assertEquals("system-marker-source", resolution.reason);
+        assertEquals(461, resolution.effectiveSmallestWidthDp);
+        assertNotNull(resolution.record);
+        assertEquals(ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER,
+                resolution.record.provenance);
     }
 
     @Test

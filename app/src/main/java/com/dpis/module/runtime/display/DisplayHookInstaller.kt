@@ -13,6 +13,7 @@ import com.dpis.module.runtime.probe.RuntimeClock
 import com.dpis.module.runtime.probe.RuntimeDiagnosticLogFingerprint
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
 import com.dpis.module.runtime.webapk.WebApkRuntimeOwnerBridge
+import com.dpis.module.viewport.AppProcessDensityProjection
 import com.dpis.module.viewport.DensityOverride
 import com.dpis.module.viewport.DisplayCallbackGeometry
 import com.dpis.module.viewport.EffectiveModeResolver
@@ -130,7 +131,9 @@ object DisplayHookInstaller {
             .intercept(Hooker { chain: XposedInterface.Chain? ->
                 val result = chain!!.proceed()
                 val metrics = chain.getArg(0) as DisplayMetrics?
-                applyDisplayMetrics(metrics, methodName)
+                if (!applyAppProcessDensityProjection(metrics)) {
+                    applyDisplayMetrics(metrics, methodName)
+                }
                 result
             })
     }
@@ -184,12 +187,18 @@ object DisplayHookInstaller {
         }
     }
 
+    private fun applyAppProcessDensityProjection(metrics: DisplayMetrics?): Boolean {
+        if (metrics == null) return false
+        val packageName = WebApkRuntimeOwnerBridge.resolveEffectivePackage(
+            targetStore, targetPackageName,
+        )
+        val store = WebApkRuntimeOwnerBridge.resolveEffectiveStore(targetStore, packageName)
+        return AppProcessDensityProjection.applyMetrics(metrics, packageName, store)
+    }
+
     @JvmStatic
     fun applyDisplayMetrics(metrics: DisplayMetrics?, sourceTag: String) {
         if (metrics == null) {
-            return
-        }
-        if (currentPackageUsesCompatViewport()) {
             return
         }
         val routeName = "display_metrics_override"
@@ -216,6 +225,9 @@ object DisplayHookInstaller {
         val effectiveStore = WebApkRuntimeOwnerBridge.resolveEffectiveStore(
             targetStore, effectivePackageName
         )
+        if (currentPackageUsesCompatViewport()) {
+            return
+        }
         if (RelativeViewportOwnership.metricsCarryRelativeResult(
                 effectiveStore,
                 effectivePackageName,
