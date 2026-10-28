@@ -269,12 +269,12 @@
     <string name="dialog_process_action_stop">стоп</string>
     <string name="dialog_dpis_enabled_status">Включено</string>
     <string name="dialog_dpis_disabled_status">Отключено</string>
-    <string name="startup_disclaimer_title">Предупреждение о рисках и отказ от ответственности</string>
+
     <string name="startup_disclaimer_message">Этот модуль работает в среде Root/LSPosed и может вызвать нестабильность системы, потерю данных, циклическую перезагрузку или блокировку учетной записи.\n\nПожалуйста, сделайте резервную копию своих данных. Вы принимаете на себя все риски, связанные с использованием этого модуля.\n\nРазработчик не несет ответственности за любой ущерб или потери, вызванные этим модулем.</string>
-    <string name="startup_disclaimer_checkbox_text">Я ознакомился с условиями и согласен с ними</string>
     <string name="startup_disclaimer_accept_button">Согласен, продолжить</string>
-    <string name="startup_disclaimer_save_failed">Не удалось сохранить согласие.</string>
+
     <string name="dialog_cancel_button">Закрыть</string>
+
     <string name="dialog_close_button">Закрыть</string>
     <string name="filter_sheet_title">Фильтр списка</string>
     <string name="app_filter_type">Тип приложения</string>

@@ -128,6 +128,14 @@ object ResourcesImplOverrideEngine {
             ViewportRuntimeMarkerProbe.observeAppProcessProbe(
                 packageName, resolution.spec, "ResourcesImpl"
             )
+            ViewportRuntimeMarkerProbe.observeAppProcessConfiguration(
+                packageName,
+                resolution.spec,
+                "ResourcesImpl",
+                config,
+                originalWidthPixels,
+                originalHeightPixels,
+            )
         }
         var windowScoped = if (windowScopedOverride != null) {
             windowScopedOverride
@@ -457,6 +465,7 @@ object ResourcesImplOverrideEngine {
                 + ", heightDp=" + originalHeightDp + "->" + result.heightDp
                 + ", smallestWidthDp=" + originalSmallestWidthDp + "->" + result.smallestWidthDp
                 + ", densityDpi=" + originalDensityDpi + "->" + result.densityDpi
+                + ", resolutionReason=" + (resolution.reason ?: "none")
                 + ", fontScale=" + fontScale.original + "->" + config.fontScale
                 + ", metricsDensityDpi=" + (if (metrics != null) metrics.densityDpi else -1)
                 + ", inputMetricsWidthPx=" + originalWidthPixels

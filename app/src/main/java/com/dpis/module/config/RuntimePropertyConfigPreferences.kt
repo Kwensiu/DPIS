@@ -1,12 +1,13 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
+import android.os.Process
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPropertyBridge
 import com.dpis.module.fonts.hookdomain.FontHookDomainRegistry
-import com.dpis.module.hooks.HookDomainOverride
 import com.dpis.module.runtime.delivery.RuntimeDebugPropertyBridge
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.viewport.ViewportApplyMode
 import com.dpis.module.viewport.ViewportPropertyBridge
 import com.dpis.module.viewport.ViewportTargetSpec
@@ -14,6 +15,9 @@ import com.dpis.module.viewport.ViewportTargetSpec
 class RuntimePropertyConfigPreferences @JvmOverloads constructor(
     private val packageName: String,
     route: AutoViewportRuntimeRoute = AutoViewportRuntimeRoute.NONE,
+    private val userId: Int? = null,
+    private val propertyReader: (String) -> String = ::readSystemProperty,
+    private val clock: () -> Long = System::currentTimeMillis,
 ) : SharedPreferences {
     private val autoViewportRuntimeRoute = route
     @Volatile private var cachedSnapshot: Map<String, Any>? = null
@@ -31,15 +35,19 @@ class RuntimePropertyConfigPreferences @JvmOverloads constructor(
 
     override fun getAll(): Map<String, *> {
         val cached = cachedSnapshot
-        val now = System.currentTimeMillis()
+        val now = clock()
         if (cached != null && now - cachedAtMillis < SNAPSHOT_TTL_MILLIS) return cached
 
         val values = LinkedHashMap<String, Any>()
-        val targetSpec = ViewportPropertyBridge.readTargetSpec(packageName)
+        val targetUserId = userId ?: runCatching {
+            PackageUidResolver.userIdFromUid(Process.myUid())
+        }.getOrNull()
+        if (targetUserId == null || targetUserId < 0) return emptyMap<String, Any>()
+        val targetSpec = ViewportPropertyBridge.readTargetSpec(packageName, targetUserId)
         var widthDp: Int? = targetSpec.absoluteWidthDp()
-        var viewportMode = ViewportPropertyBridge.readCompatMode(packageName)
+        var viewportMode = ViewportPropertyBridge.readCompatMode(packageName, targetUserId)
         if (widthDp == null || widthDp <= 0 || !ViewportApplyMode.isEnabled(viewportMode)) {
-            widthDp = ViewportPropertyBridge.readTargetWidthDp(packageName)
+            widthDp = ViewportPropertyBridge.readTargetWidthDp(packageName, targetUserId)
             if (targetSpec.isRelativeScale() && ViewportApplyMode.isEnabled(viewportMode)) {
                 widthDp = null
             } else {
@@ -48,18 +56,27 @@ class RuntimePropertyConfigPreferences @JvmOverloads constructor(
         }
         viewportMode = resolveRuntimeViewportMode(viewportMode, targetSpec, autoViewportRuntimeRoute)
 
-        var fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(packageName)
+        var fontScalePercent = HyperOsFlutterFontBridge.readCompatFontScalePercent(
+            packageName,
+            targetUserId,
+            propertyReader
+        )
         var forceFontScalePercent: Int? = null
         if (fontScalePercent == null || fontScalePercent <= 0) {
-            forceFontScalePercent = HyperOsFlutterFontBridge.readForceFontScalePercent(packageName)
+            forceFontScalePercent = HyperOsFlutterFontBridge.readForceFontScalePercent(
+                packageName,
+                targetUserId,
+                propertyReader
+            )
             fontScalePercent = forceFontScalePercent
         }
         val fontMode = resolveRuntimeFontMode(
             fontScalePercent,
-            HyperOsFlutterFontBridge.readCompatFontMode(packageName),
+            HyperOsFlutterFontBridge.readCompatFontMode(packageName, targetUserId, propertyReader),
             forceFontScalePercent,
         )
-        val typefaceId = HyperOsFlutterFontBridge.readTypefaceId(packageName)
+        val typefaceId =
+            HyperOsFlutterFontBridge.readTypefaceId(packageName, targetUserId, propertyReader)
         if (targetSpec.isEnabled() && ViewportApplyMode.isEnabled(viewportMode)) {
             values[viewportTargetTypeKey()] = targetSpec.type()
             if (targetSpec.isRelativeScale()) values[viewportScaleMilliPercentKey()] = targetSpec.scaleMilliPercent()
@@ -74,11 +91,12 @@ class RuntimePropertyConfigPreferences @JvmOverloads constructor(
 
         val hasPackageRuntimeConfig = values.isNotEmpty()
         values[ConfigPreferenceKeys.GLOBAL_LOG_ENABLED] =
-            RuntimeDebugPropertyBridge.readGlobalLogEnabled()
+            RuntimeDebugPropertyBridge.readGlobalLogEnabled(propertyReader)
         values[ConfigPreferenceKeys.FONT_DEBUG_OVERLAY_ENABLED] =
-            RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled()
+            RuntimeDebugPropertyBridge.readFontDebugOverlayEnabled(propertyReader)
         if (hasPackageRuntimeConfig) {
-            val override = FontHookDomainPropertyBridge.readOverride(packageName)
+            val override =
+                FontHookDomainPropertyBridge.readOverride(packageName, targetUserId, propertyReader)
             if (override.customPathEnabled) {
                 values[hookDomainsKey()] = FontHookDomainRegistry.orderedCustomizableSubset(
                     override.enabledKnownDomains,
@@ -132,6 +150,14 @@ class RuntimePropertyConfigPreferences @JvmOverloads constructor(
 
     companion object {
         private const val SNAPSHOT_TTL_MILLIS = 2_000L
+
+        private fun readSystemProperty(key: String): String = try {
+            Class.forName("android.os.SystemProperties")
+                .getDeclaredMethod("get", String::class.java, String::class.java)
+                .invoke(null, key, "") as? String ?: ""
+        } catch (_: Throwable) {
+            ""
+        }
 
         @JvmStatic
         fun resolveRuntimeFontModeForTest(

@@ -5,9 +5,9 @@ import android.content.Intent
 import android.widget.Toast
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.process.ProcessActionPolicy
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.root.RootAppProcessLauncher
-import com.dpis.module.process.ProcessActionPolicy
 
 class ProcessActionHandler(
     private val activity: Activity,
@@ -31,10 +31,23 @@ class ProcessActionHandler(
     private val rootLauncher = RootAppProcessLauncher(activity)
 
     fun execute(item: AppListItem, action: Action) {
-        if (ProcessActionPolicy.requiresRoot(action) && !hasRootAccess()) {
-            showToast(ProcessActionPolicy.rootRequiredMessageResId(action))
+        if (ProcessActionPolicy.requiresRoot(action)) {
+            RootAccessProbe.refreshAsync { result ->
+                activity.runOnUiThread {
+                    if (!isActivityAlive()) return@runOnUiThread
+                    if (result?.status != RootAccessProbe.Status.AVAILABLE) {
+                        showToast(ProcessActionPolicy.rootRequiredMessageResId(action))
+                    } else {
+                        executeAfterRootCheck(item, action)
+                    }
+                }
+            }
             return
         }
+        executeAfterRootCheck(item, action)
+    }
+
+    private fun executeAfterRootCheck(item: AppListItem, action: Action) {
         if (ProcessActionPolicy.requiresSystemAppConfirmation(item.systemApp, action)) {
             showSystemAppActionConfirmation(item, action)
             return
@@ -102,10 +115,6 @@ class ProcessActionHandler(
         return RootAppProcessLauncher.ShellResult(0, "")
     }
 
-    private fun hasRootAccess(): Boolean {
-        val result = RootAccessProbe.probe()
-        return result.status == RootAccessProbe.Status.AVAILABLE
-    }
 
     private fun showToast(messageResId: Int, vararg formatArgs: Any?) {
         if (!isActivityAlive()) return

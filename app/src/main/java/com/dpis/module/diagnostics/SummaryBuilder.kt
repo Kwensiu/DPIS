@@ -20,6 +20,8 @@ internal class SummaryBuilder {
             appendLine("# DPIS")
             appendLine("source: feedback-diagnostic-summary")
             appendLine("package: ${request.packageName}")
+            appendLine("dpisUserId: ${request.dpisUserId ?: UNKNOWN}")
+            appendLine("targetUserId: ${request.targetUserId ?: UNKNOWN}")
             appendLine("label: ${valueOrUnknown(request.label)}")
             appendLine("versionName: ${valueOrUnknown(request.versionName)}")
             appendLine("startedAt: ${formatTime(startedAtMillis)}")
@@ -83,6 +85,8 @@ internal class SummaryBuilder {
         fontApplyMode: String?,
         val typefaceId: String?,
         val fontHookDomainsRaw: String?,
+        val dpisUserId: Int? = null,
+        val targetUserId: Int? = null,
     ) {
         val packageName: String = normalizeOrUnknown(packageName)
         val viewportSummary: String = normalizeOrUnknown(viewportSummary)

@@ -133,7 +133,7 @@ class AppProcessHookInstallerTest {
     }
 
     @Test
-    fun viewportOnlyRouteKeepsResourcesImplHook() {
+    fun viewportOnlyRouteUsesAppProcessProjection() {
         val plan = HookExecutionPlanner.buildPlan(
             createPolicy(safeMode = false, systemHooksEnabled = false),
             true,
@@ -147,14 +147,14 @@ class AppProcessHookInstallerTest {
 
         assertTrue(plan.viewportEnabled)
         assertTrue(plan.resourcesHooksEnabled)
-        assertTrue(plan.resourcesWriteHooksEnabled)
-        assertTrue(plan.resourcesImplHookEnabled)
+        assertFalse(plan.resourcesWriteHooksEnabled)
+        assertFalse(plan.resourcesImplHookEnabled)
         assertTrue(plan.resourcesReadHooksEnabled)
         assertTrue(plan.resourcesReadPolicy.viewportHandlingEnabled)
         assertFalse(plan.resourcesReadPolicy.configurationFontOverrideEnabled)
         assertFalse(plan.resourcesReadPolicy.metricsTargetFontOverrideEnabled)
         assertFalse(plan.fontDomainPlan.resourcesFontEnabled)
-        assertTrue(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan))
+        assertFalse(AppProcessHookInstaller.shouldInstallResourcesImplHookForTest(plan))
     }
 
     @Test

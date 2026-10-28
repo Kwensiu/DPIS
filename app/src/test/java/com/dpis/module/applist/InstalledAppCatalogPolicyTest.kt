@@ -11,6 +11,67 @@ import java.util.Locale
 
 class InstalledAppCatalogPolicyTest {
     @Test
+    fun appListReadsSamePackageConfigFromTheStoreOwner() {
+        val prefs = com.dpis.module.FakePrefs()
+        val store = com.dpis.module.config.DpisConfigStore(prefs, 999)
+        val identity = com.dpis.module.config.PackageIdentity("com.example.app", 999)
+        assertTrue(
+            store.writePackageConfig(
+                identity,
+                com.dpis.module.config.PackageConfigValue(
+                    null,
+                    null,
+                    null,
+                    160,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                ),
+            ),
+        )
+
+        val item = InstalledAppCatalogPolicy.createAppListItem(
+            store,
+            emptySet(),
+            false,
+            "Example",
+            "com.example.app",
+            false,
+            false,
+            true,
+            null,
+        )
+
+        assertEquals(160, item.fontScalePercent)
+        assertTrue(item.configured)
+    }
+
+    @Test
+    fun packageManagerFallbackKeepsOnlyPackagesWithExplicitCurrentUserUid() {
+        val currentUserPackage = packageInfo("com.example.current", uid = 99910042)
+        val otherUserPackage = packageInfo("com.example.other", uid = 10042)
+        val unknownUserPackage = PackageInfo().apply {
+            packageName = "com.example.unknown"
+        }
+
+        val filtered = InstalledAppCatalogPolicy.filterInstalledPackagesForUser(
+            listOf(currentUserPackage, otherUserPackage, unknownUserPackage),
+            userId = 999,
+        )
+
+        assertEquals(listOf("com.example.current"), filtered.map { it.packageName })
+    }
+
+    @Test
+    fun packageManagerFallbackReturnsNoPackagesForInvalidUserIdentity() {
+        val packages = listOf(packageInfo("com.example.current", uid = 10042))
+
+        assertTrue(InstalledAppCatalogPolicy.filterInstalledPackagesForUser(packages, -1).isEmpty())
+    }
+
+    @Test
     fun buildCatalogSnapshotReusesMatchingCachedLabel() {
         val packageInfo = PackageInfo()
         packageInfo.packageName = "com.example.camera"
@@ -227,6 +288,14 @@ class InstalledAppCatalogPolicyTest {
         assertEquals(1, items.size)
         assertFalse(items[0].dpisEnabled)
         assertFalse(items[0].configured)
+    }
+
+    private fun packageInfo(packageName: String, uid: Int) = PackageInfo().apply {
+        this.packageName = packageName
+        applicationInfo = ApplicationInfo().apply {
+            this.packageName = packageName
+            this.uid = uid
+        }
     }
 
     private fun catalogItem(

@@ -10,7 +10,8 @@ open class PackageConfigStore internal constructor(
     private val preferences: SharedPreferences,
     private val fallbackPreferences: SharedPreferences?,
     private val legacySharedPrefsMirrorFile: File?,
-    localOnlyPreferences: SharedPreferences?
+    localOnlyPreferences: SharedPreferences?,
+    private val packageConfigOwnerUserId: Int,
 ) : ConfigSnapshotStore {
     private val localOnlyPreferences: SharedPreferences
     private val legacyPreferencesBridge = LegacySharedPreferencesBridge(preferences, legacySharedPrefsMirrorFile)
@@ -29,7 +30,12 @@ open class PackageConfigStore internal constructor(
         PackageConfigPresence(PACKAGE_CONFIG_KEYS, PACKAGE_AGGREGATED_CONFIG_KEYS, ::hasConfiguredValue)
     }
     private val packageReader by lazy {
-        PackageConfigReader(preferences, fallbackPreferences, PackageConfigPersistence())
+        PackageConfigReader(
+            preferences,
+            fallbackPreferences,
+            PackageConfigPersistence(),
+            packageConfigOwnerUserId,
+        )
     }
     private val packageWriter by lazy {
         PackageConfigWriter(
@@ -38,6 +44,7 @@ open class PackageConfigStore internal constructor(
             { packageName, removedKeys -> hasAnyPackageConfigAfterRemoving(packageName, *removedKeys) },
             preferenceAccess::commitBoth,
             preferences,
+            packageConfigOwnerUserId,
             { legacyWechatDpiForMigration },
             preferenceAccess::containsPrimary,
             preferenceAccess::contains,
@@ -63,6 +70,8 @@ open class PackageConfigStore internal constructor(
             Companion::putTypedValue,
             Companion::isLegacyPackageConfigKey,
             ::migrateLegacyPackageConfigToAggregated,
+            ::migratePackageConfigToUserScoped,
+            packageConfigOwnerUserId,
             legacyPreferencesBridge::mirror,
             preferenceAccess::commitBoth
         )
@@ -90,7 +99,7 @@ open class PackageConfigStore internal constructor(
         preferences: SharedPreferences,
         fallbackPreferences: SharedPreferences?,
         legacySharedPrefsMirrorFile: File?
-    ) : this(preferences, fallbackPreferences, legacySharedPrefsMirrorFile, preferences)
+    ) : this(preferences, fallbackPreferences, legacySharedPrefsMirrorFile, preferences, 0)
 
     override fun getConfiguredPackages(): MutableSet<String?> {
         return packageCatalog.configuredPackages()
@@ -342,6 +351,9 @@ open class PackageConfigStore internal constructor(
         return packageWriter.migrateLegacyPackageConfigToAggregated()
     }
 
+    fun migratePackageConfigToUserScoped(): Boolean =
+        packageWriter.migratePackageConfigToUserScoped()
+
     fun hasPrimaryTargetViewportWidthDp(packageName: String): Boolean {
         return preferenceAccess.containsPrimary(keyForViewportWidth(packageName))
     }
@@ -413,6 +425,11 @@ open class PackageConfigStore internal constructor(
         return hasAnyPackageConfigAfterRemoving(packageName)
     }
 
+    fun hasRealPackageConfig(identity: PackageIdentity): Boolean {
+        if (identity.userId != packageConfigOwnerUserId) return false
+        return hasRealPackageConfig(identity.packageName)
+    }
+
     fun hasUserVisiblePackageConfig(packageName: String?): Boolean {
         if (packageName == null || packageName.isBlank()) {
             return false
@@ -428,13 +445,35 @@ open class PackageConfigStore internal constructor(
         )
     }
 
+    fun hasUserVisiblePackageConfig(identity: PackageIdentity): Boolean {
+        if (identity.userId != packageConfigOwnerUserId) return false
+        return hasUserVisiblePackageConfig(identity.packageName)
+    }
+
     fun readPackageConfig(packageName: String?): PackageConfigValue {
-        return packageReader.packageConfig(packageName)
+        if (packageName.isNullOrBlank()) return PackageConfigValue.EMPTY
+        return readPackageConfig(PackageIdentity(packageName, packageConfigOwnerUserId))
+    }
+
+    fun readPackageConfig(identity: PackageIdentity): PackageConfigValue {
+        require(identity.userId == packageConfigOwnerUserId) { "identity owner does not match archive" }
+        return packageReader.packageConfig(identity)
     }
 
     fun writePackageConfig(packageName: String?, value: PackageConfigValue?): Boolean {
-        return packageWriter.writePackageConfig(packageName, value)
+        if (packageName.isNullOrBlank()) return false
+        return writePackageConfig(PackageIdentity(packageName, packageConfigOwnerUserId), value)
     }
+
+    fun writePackageConfig(identity: PackageIdentity, value: PackageConfigValue?): Boolean {
+        if (identity.userId != packageConfigOwnerUserId) return false
+        return packageWriter.writePackageConfig(identity.packageName, value)
+    }
+
+    override fun packageConfigOwnerUserId(): Int = packageConfigOwnerUserId
+
+    fun packageIdentity(packageName: String): PackageIdentity =
+        PackageIdentity(packageName, packageConfigOwnerUserId)
 
     fun readPackageTemplateConfigValue(packageName: String?): TemplateConfigValue {
         return packageReader.templateConfig(packageName)
@@ -484,6 +523,9 @@ open class PackageConfigStore internal constructor(
     fun snapshotRuntimeDelivery(): MutableMap<String?, Any?> {
         return snapshotRepository.snapshotRuntimeDelivery()
     }
+
+    fun mergeRuntimeDeliverySnapshotOnce(entries: MutableMap<String?, Any?>?): Boolean =
+        snapshotRepository.mergeRuntimeDeliverySnapshotOnce(entries)
 
     fun snapshotBackup(): MutableMap<String, Any?> {
         return snapshotRepository.snapshotBackup()

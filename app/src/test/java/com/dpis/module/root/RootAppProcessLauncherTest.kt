@@ -1,12 +1,7 @@
 package com.dpis.module.root
 
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.io.IOException
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
 
 class RootAppProcessLauncherTest {
     @Test
@@ -19,44 +14,19 @@ class RootAppProcessLauncherTest {
     }
 
     @Test
-    @Throws(IOException::class)
-    fun rootCommandsUseForceStopAndExplicitLauncherStart() {
-        val source: String =
-            readSource("src/main/java/com/dpis/module/root/RootAppProcessLauncher.kt")
-
-        Assert.assertTrue(source.contains("am force-stop \" + packageName"))
-        Assert.assertTrue(source.contains("am start --user current"))
-        Assert.assertTrue(source.contains("-a android.intent.action.MAIN"))
-        Assert.assertTrue(source.contains("-c android.intent.category.LAUNCHER"))
-        Assert.assertTrue(source.contains("flattenToShortString()"))
-        Assert.assertTrue(source.contains("isSafePackageName(packageName)"))
-        Assert.assertTrue(source.contains("SecureProcessLauncher.start(\"su\", \"-c\", command)"))
+    fun forceStopTargetsTheSameAndroidUserAsTheCallingApp() {
+        assertEquals(
+            "am force-stop --user 999 com.tencent.mm",
+            RootAppProcessLauncher.buildForceStopCommand("com.tencent.mm", 999),
+        )
     }
 
-    companion object {
-        @Throws(IOException::class)
-        private fun readSource(relativePath: String?): String {
-            return String(
-                Files.readAllBytes(resolveSourcePath(relativePath)),
-                StandardCharsets.UTF_8
-            )
-        }
-
-        @Throws(IOException::class)
-        private fun resolveSourcePath(relativePath: String?): Path? {
-            var current = Path.of("").toAbsolutePath()
-            while (current != null) {
-                val fromModuleRoot = current.resolve(relativePath)
-                if (Files.exists(fromModuleRoot)) {
-                    return fromModuleRoot
-                }
-                val fromRepositoryRoot = current.resolve("app").resolve(relativePath)
-                if (Files.exists(fromRepositoryRoot)) {
-                    return fromRepositoryRoot
-                }
-                current = current.parent
-            }
-            throw IOException("source path not found: " + relativePath)
-        }
+    @Test
+    fun launcherStartTargetsTheSameAndroidUserAsTheCallingApp() {
+        assertEquals(
+            "am start --user 999 -a android.intent.action.MAIN " +
+                    "-c android.intent.category.LAUNCHER -n 'com.tencent.mm/.ui.LauncherUI'",
+            RootAppProcessLauncher.buildStartCommand(999, "com.tencent.mm/.ui.LauncherUI"),
+        )
     }
 }

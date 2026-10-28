@@ -1,7 +1,10 @@
 package com.dpis.module.backup
 
 object BackupKeyPolicy {
-    private val localOnlyPrefixes = arrayOf("font.library.", "font.debug.", "runtime.")
+    private val localOnlyPrefixes = arrayOf(
+        "font.library.", "font.debug.", "runtime.",
+        "package_identity.", "package_identity_residual.",
+    )
     private val packageConfigFields = setOf(
         "viewport.width_dp", "viewport.target_type", "viewport.scale_permille",
         "viewport.scale_milli_percent", "viewport.mode", "font.scale_percent",

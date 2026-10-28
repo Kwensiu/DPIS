@@ -14,6 +14,7 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.InstalledAppCatalogPolicy
 import com.dpis.module.applist.ScopeState
 import com.dpis.module.diagnostics.DpisLog
+import com.dpis.module.ui.MainUiState
 import com.dpis.module.ui.MainViewModel
 
 /**
@@ -35,6 +36,7 @@ class InstalledAppsLoadSession(
 
     private var permissionRequestInFlight = false
     private var pendingLoadAfterPermission = false
+    private var pendingLoadAfterWorkspace = false
     private var permissionRequestCompleted = false
     private var packageChangesRegistered = false
 
@@ -67,6 +69,15 @@ class InstalledAppsLoadSession(
     }
 
     fun requestLoad(forceInstalledAppCatalogReload: Boolean) {
+        if (!canLoadInstalledApps()) {
+            if (DpisApplication.isOnboardingCompleted()) {
+                pendingLoadAfterWorkspace = true
+            }
+            DpisLog.i("app list load deferred before onboarding or outside app workspace")
+            return
+        }
+        val loadRequestedWhileOutsideWorkspace = pendingLoadAfterWorkspace
+        pendingLoadAfterWorkspace = false
         val permissionReady = ensurePermissionBeforeLoad()
         DpisLog.i(
             "app list load permission gate: ready=" + permissionReady
@@ -76,7 +87,7 @@ class InstalledAppsLoadSession(
             pendingLoadAfterPermission = true
             return
         }
-        dispatchInstalledAppsLoad(forceInstalledAppCatalogReload)
+        dispatchInstalledAppsLoad(forceInstalledAppCatalogReload || loadRequestedWhileOutsideWorkspace)
     }
 
     fun onRequestPermissionsResult(requestCode: Int): Boolean {
@@ -87,8 +98,10 @@ class InstalledAppsLoadSession(
         val shouldReload = pendingLoadAfterPermission
         pendingLoadAfterPermission = false
         permissionRequestCompleted = true
-        if (shouldReload) {
+        if (shouldReload && canLoadInstalledApps()) {
             dispatchInstalledAppsLoad(true)
+        } else if (shouldReload) {
+            pendingLoadAfterWorkspace = true
         }
         return true
     }
@@ -150,6 +163,11 @@ class InstalledAppsLoadSession(
             packageChangesRegistered = false
         }
     }
+
+    private fun canLoadInstalledApps(): Boolean =
+        DpisApplication.isOnboardingCompleted() &&
+                activity.startupSession.requireUiState().workspaceMode ==
+                MainUiState.WorkspaceMode.APP
 
     private fun loadInstalledApps(forceInstalledAppCatalogReload: Boolean): List<AppListItem> {
         val scopeState = loadScopeState()

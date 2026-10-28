@@ -1,9 +1,5 @@
 package com.dpis.module.ui.dialog
 
-import com.dpis.module.ui.presentation.design.ComposeDesignSystem
-import com.dpis.module.ui.presentation.design.rememberClickAction
-import com.dpis.module.ui.presentation.editor.outlinedWarningButtonColors
-
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -27,7 +24,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dpis.module.R
+import com.dpis.module.ui.presentation.design.ComposeDesignSystem
 import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.rememberClickAction
 
 /** Visual contract shared by ordinary phone/tablet dialogs with cancel/confirm actions. */
 internal object ConfirmDialogUiTokens {
@@ -101,7 +100,9 @@ internal fun ConfirmDialogContent(
     val cancelAction = rememberClickAction(onCancel)
     val confirmAction = rememberClickAction(onConfirm)
     Column(
-        modifier = Modifier.fillMaxWidth().padding(DialogChrome.SurfacePadding),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(DialogChrome.SurfacePadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
@@ -130,7 +131,9 @@ internal fun ConfirmDialogContent(
             // compact rounded-rectangle control language instead of pill-shaped full-width rows.
             OutlinedButton(
                 onClick = cancelAction,
-                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
@@ -139,9 +142,14 @@ internal fun ConfirmDialogContent(
             }
             OutlinedButton(
                 onClick = confirmAction,
-                modifier = Modifier.weight(1f).height(ConfirmDialogUiTokens.ActionHeight),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(ConfirmDialogUiTokens.ActionHeight),
                 shape = ConfirmDialogUiTokens.ActionShape,
-                colors = outlinedWarningButtonColors(),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 Text(text = confirmLabel ?: androidx.compose.ui.res.stringResource(

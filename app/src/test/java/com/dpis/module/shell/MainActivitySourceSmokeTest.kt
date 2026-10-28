@@ -47,8 +47,8 @@ class MainActivitySourceSmokeTest {
                 "src/main/java/com/dpis/module/home/presentation/HomeWorkspaceContent.kt"
         )
 
-        assertTrue(activity.contains("MainUpdateSession(this) {"))
-        assertTrue(activity.contains("startupSession.bindHomeWorkspaceIfVisible()"))
+        assertTrue(activity.contains("MainUpdateSession("))
+        assertTrue(activity.contains("onHomeUpdateStateChanged = { startupSession.bindHomeWorkspaceIfVisible() }"))
         assertTrue(updateSession.contains("private val updateStateStore by lazy"))
         assertTrue(updateSession.contains("private val releaseNotesController by lazy"))
         assertTrue(updateSession.contains("private val promptCoordinator by lazy"))
@@ -331,6 +331,9 @@ class MainActivitySourceSmokeTest {
         val coordinatorSource = read(
             "src/main/java/com/dpis/module/applist/presentation/InstalledAppCatalogCoordinator.kt"
         )
+        val appSource = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppSource.kt"
+        )
         val iconSource = read("src/main/java/com/dpis/module/applist/presentation/InstalledAppIcon.kt")
         val workspaceSource = read("src/main/java/com/dpis/module/applist/presentation/AppListContent.kt")
 
@@ -343,7 +346,8 @@ class MainActivitySourceSmokeTest {
         assertTrue(
             loadSession.contains("catalogCoordinator.loadInstalledApps(")
         )
-        assertTrue(coordinatorSource.contains("getInstalledPackages(0)"))
+        assertTrue(coordinatorSource.contains("getInstalledAppSource()"))
+        assertTrue(appSource.contains("getInstalledPackages(0)"))
         assertFalse(coordinatorSource.contains("getInstalledApplications("))
         assertFalse(coordinatorSource.contains("GET_META_DATA"))
         assertTrue(
@@ -446,7 +450,19 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun startupDisclaimerUsesMaterialDialogAndPersistsConsent() {
+    fun installedAppCatalogCannotRequestPermissionBeforeOnboardingOrAppWorkspace() {
+        val source = read(
+            "src/main/java/com/dpis/module/applist/presentation/InstalledAppsLoadSession.kt",
+        )
+
+        assertTrue(source.contains("if (!canLoadInstalledApps())"))
+        assertTrue(source.contains("DpisApplication.isOnboardingCompleted()"))
+        assertTrue(source.contains("MainUiState.WorkspaceMode.APP"))
+        assertTrue(source.contains("if (shouldReload && canLoadInstalledApps())"))
+    }
+
+    @Test
+    fun runtimeReloadAdviceUsesComposeModalAndLocalizedNotice() {
         val source = read("src/main/java/com/dpis/module/MainActivity.kt")
         val launch = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
@@ -491,31 +507,36 @@ class MainActivitySourceSmokeTest {
         assertFalse(runtimeMessage.contains("Rust"))
         assertFalse(zhRuntimeMessage.contains("HyperOS"))
         assertFalse(zhRuntimeMessage.contains("Rust"))
-        assertTrue(launch.contains("updateSession.maybeShowStartupDisclaimerDialog()"))
-        assertTrue(
-            launch.contains("if (!updateSession.maybeShowStartupDisclaimerDialog()) {")
-        )
-        val updateSession = read(
-            "src/main/java/com/dpis/module/updates/presentation/MainUpdateSession.kt"
-        )
-        assertTrue(
-            updateSession.contains("fun maybeShowStartupDisclaimerDialog(): Boolean")
-        )
-        assertTrue(
-            updateSession.contains(
-                "object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance"
-            )
-        )
-        assertTrue(updateSession.contains("startupDisclaimerStore(activity)"))
-        assertTrue(updateSession.contains("store.isAccepted"))
-        assertTrue(updateSession.contains("store.setAccepted(true)"))
-        assertFalse(updateSession.contains("fun applyLargeDialogWidth("))
-        assertFalse(updateSession.contains("DialogWindowSizer"))
-        val disclaimerBlock = updateSession.substring(
-            updateSession.indexOf("fun maybeShowStartupDisclaimerDialog(): Boolean"),
-            updateSession.indexOf("fun maybeCheckForUpdatesOnStartup()")
-        )
-        assertFalse(disclaimerBlock.contains("DpisConfigStore"))
+    }
+
+    @Test
+    fun startupDefersAppListPermissionUntilAppWorkspaceEntryAndOnboardingCompletion() {
+        val startup = read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
+        val launch = startup.substringAfter("fun launch(savedInstanceState: Bundle?)")
+            .substringBefore("fun consumeSkipNextImmediateServiceReload")
+        val dispatch = startup.substringAfter("fun dispatch(action: MainUiAction?)")
+            .substringBefore("fun requestAppsLoad()")
+        val request = startup.substringAfter("fun requestAppsLoad()")
+            .substringBefore("fun dispatchInstalledAppsLoad")
+
+        assertFalse(launch.contains("requestAppsLoad()"))
+        assertTrue(dispatch.contains("action is MainUiAction.WorkspaceModeChanged"))
+        assertTrue(dispatch.contains("action.workspaceMode == MainUiState.WorkspaceMode.APP"))
+        assertTrue(request.contains("!DpisApplication.isOnboardingCompleted()"))
+        assertTrue(request.contains("requestLoad(false)"))
+    }
+
+    @Test
+    fun startupDialogsKeepOnboardingBeforeReloadAdviceAndPendingUpdates() {
+        val startup = read("src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt")
+        val dialogs = startup.substringAfter("fun continueStartupDialogs()")
+            .substringBefore("fun requireUiState()")
+
+        assertTrue(dialogs.indexOf("maybeShowOnboarding()") < dialogs.indexOf("maybeShowModuleRuntimeReloadAdvice()"))
+        assertTrue(dialogs.indexOf("maybeShowModuleRuntimeReloadAdvice()") < dialogs.indexOf("showPendingPromptIfAny()"))
+        assertTrue(dialogs.contains("maybeCheckForUpdatesOnStartup()"))
+        assertTrue(startup.contains("setOnboardingCompletedHandler {"))
+        assertTrue(startup.contains("continueStartupDialogs()"))
     }
 
     @Test
@@ -574,22 +595,6 @@ class MainActivitySourceSmokeTest {
         assertTrue(primaryStatus.contains("state.updateState.subtitle(context)"))
         assertFalse(primaryStatus.contains("if (!disabled) {\n                    Text("))
         assertTrue(compose.contains("state.actions.checkForUpdates()"))
-    }
-
-    @Test
-    fun startupDisclaimerComposeKeepsMandatoryAcceptContract() {
-        val source = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
-
-        assertTrue(source.contains("fun StartupDisclaimerDialog("))
-        assertTrue(source.contains("R.string.startup_disclaimer_title"))
-        assertTrue(source.contains("R.string.startup_disclaimer_message"))
-        assertTrue(source.contains("R.string.startup_disclaimer_checkbox_text"))
-        assertTrue(source.contains("R.string.startup_disclaimer_accept_button"))
-        assertTrue(source.contains("dismissOnBackPress = false"))
-        assertTrue(source.contains("dismissOnClickOutside = false"))
-        assertTrue(source.contains("DialogChrome.HorizontalPadding"))
-        assertFalse(source.contains("startup_disclaimer_exit_button"))
-        assertFalse(source.contains("R.dimen."))
     }
 
     @Test
@@ -681,6 +686,7 @@ class MainActivitySourceSmokeTest {
         assertTrue(hostWiring.contains("ComposeAppEditorController(viewModel, gateway, saveWorkflow)"))
         assertTrue(hostWiring.contains("AppConfigEditorPersister("))
         assertTrue(hostWiring.contains("gateway::systemHooksEnabled"))
+        assertTrue(hostWiring.contains("DpisApplication::isXposedConfigReady"))
         assertTrue(hostWiring.contains("activity::hookConfigStore"))
         assertTrue(hostWiring.contains("MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator)"))
         assertFalse(hostWiring.contains("setSaveWorkflow"))
@@ -694,13 +700,11 @@ class MainActivitySourceSmokeTest {
         assertFalse(source.contains("AppConfigSheetSession("))
         assertFalse(source.contains("LandAppDetailSession("))
         assertFalse(source.contains("EditorDraftSession("))
-        assertTrue(
-            read(
-                "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
-            ).contains(
-                "fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean"
-            )
+        val runtimeLaunchSession = read(
+            "src/main/java/com/dpis/module/runtime/presentation/RuntimeLaunchSession.kt"
         )
+        assertTrue(runtimeLaunchSession.contains("fun setDpisEnabled(packageName: String?, enabled: Boolean): Boolean"))
+        assertTrue(runtimeLaunchSession.contains("if (!DpisApplication.isXposedConfigReady())"))
         val startup = read(
             "src/main/java/com/dpis/module/ui/presentation/MainStartupSession.kt"
         )
@@ -770,9 +774,15 @@ class MainActivitySourceSmokeTest {
             read("src/main/java/com/dpis/module/appconfig/editor/AppConfigEditorPersister.kt")
                 .contains("saveHandler.saveResolved(")
         )
+        val normalizedRuntimeLaunch = runtimeLaunch.replace(Regex("\\s+"), " ")
         assertTrue(
-            runtimeLaunch.contains(
-                "FontRuntimePropertySyncer.clearTargetAsync(packageName)"
+            normalizedRuntimeLaunch.contains(
+                "FontRuntimePropertySyncer.clearTargetAsync( packageName, store.packageConfigOwnerUserId() )"
+            )
+        )
+        assertTrue(
+            normalizedRuntimeLaunch.contains(
+                "FontHookDomainPropertySyncer.clearTargetAsync( packageName, store.packageConfigOwnerUserId() )"
             )
         )
         assertFalse(
@@ -835,31 +845,13 @@ class MainActivitySourceSmokeTest {
     }
 
     @Test
-    fun applicationSyncsHyperOsNativeFontTargetsOnStartup() {
-        val source = read(
-            "src/main/java/com/dpis/module/DpisApplication.kt"
-        )
+    fun startupRootRecoveryRequiresCompletedOnboardingAndCapabilityCheck() {
+        val source = read("src/main/java/com/dpis/module/DpisApplication.kt")
 
-        assertTrue(
-            source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(configStore)"
-            )
-        )
-        assertTrue(
-            source.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(refreshedStore)"
-            )
-        )
-        assertFalse(
-            source.contains(
-                "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, configStore)"
-            )
-        )
-        assertFalse(
-            source.contains(
-                "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(this, runtimeDeliveryStore)"
-            )
-        )
+        assertTrue(source.contains("if (hasCompletedOnboarding())"))
+        assertTrue(source.contains("initializeRootRuntime(initializedStore)"))
+        assertTrue(source.contains("RootAccessProbe.cachedResult().status != RootAccessProbe.Status.AVAILABLE"))
+        assertFalse(source.contains("RootAccessProbe.warmUpAsync()"))
     }
 
     @Test
@@ -884,9 +876,10 @@ class MainActivitySourceSmokeTest {
                 "HyperOsNativeProxyRefreshCoordinator.refreshConfiguredTargetsAsync(context, store)"
             )
         )
+        assertTrue(receiver.contains("RootAccessProbe.refreshAsync"))
         assertTrue(
             receiver.contains(
-                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(store)"
+                "RuntimePropertyRecoveryCoordinator.resyncConfiguredTargetsAsync(recoveryStore)"
             )
         )
     }
@@ -1005,7 +998,9 @@ class MainActivitySourceSmokeTest {
         assertFalse(workspace.contains("editorSheetVisible"))
         assertFalse(workspace.contains("editorSheetClosing"))
         assertTrue(workspace.contains("fun finishEditorClose()"))
-        assertTrue(shellHost.contains("RenderTemplateEditorOverlay(state.workspaceMode, isCompactUi)"))
+        assertTrue(shellHost.contains("RenderTemplateEditorOverlay("))
+        assertTrue(shellHost.contains("state.workspaceMode"))
+        assertTrue(shellHost.contains("isCompactUi"))
         assertTrue(coordinator.contains("TemplateEditorOverlayHost"))
         assertFalse(editorSurface.contains("sheetVisible"))
         assertFalse(editorSurface.contains("onSheetHidden"))

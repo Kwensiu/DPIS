@@ -338,9 +338,10 @@ actions should use the already-built package bytes instead of rebuilding.
 Diagnostic package file roles are distinct:
 
 - `diagnostic.txt` is the DPIS semantic analysis entry point. It should include
-  the manifest, app config, diagnostic plan, runtime summary, runtime density,
-  runtime anomalies, the complete `runtime-timeline`, runtime self-test status,
-  and raw-log file references.
+  the manifest, DPIS archive-owner `dpisUserId`, installed target package
+  `targetUserId` (or `unknown` when it cannot be established), app config,
+  diagnostic plan, runtime summary, runtime density, runtime anomalies, the
+  complete `runtime-timeline`, runtime self-test status, and raw-log file references.
 - `dpis-log.txt` is DPIS app-process log storage from `DpisAppLogStore`. Prefer
   entries from the diagnostic window. If none match but recent DPIS app logs
   exist, use a small, clearly labeled recent fallback instead of exporting days
@@ -389,28 +390,46 @@ draft-only values, runtime-target state, or preserved package-local preferences.
 workspace configured-apps card and by the Configured Apps list. These two UI
 surfaces must use the same inclusion rule.
 
-A package is user-visible configured when it has any saved user-preserved
-package-level state. This includes numeric viewport or font values, mode-only
-state, target-type-only state, hook-domain-only state, app-specific config such
-as WeChat DPI, explicit per-package `dpisEnabled=false` overrides, and saved
-configuration for apps that are no longer installed.
-Installed packages in the known active LSPosed scope are also user-visible
-configured for the home configured-apps card and Configured Apps list, even
-when they have no saved package-level values. Unknown scope state, such as
-Legacy builds without a scope service, must not be inferred as injected. This
-is UI state only; it must not create stored package config by itself.
+A **user-configured package** has saved user-preserved package-level state.
+This includes numeric viewport or font values, mode-only state, target-type-only
+state, hook-domain-only state, app-specific config such as WeChat DPI, explicit
+per-package `dpisEnabled=false` overrides, and saved configuration for apps that
+are no longer installed.
 
-Draft-only state is transient app-config-sheet state. It is not a user-visible
-configured package unless the user saves it as package-level state.
+A **scope-injected package** is installed for the current Android user and is
+in the known active LSPosed scope. This is injection status, not saved package
+configuration. The home configured-apps card and Configured Apps list include
+the union of user-configured packages and scope-injected packages. Scope-only
+entries must be presented as injected without saved values and must not create
+stored package config. Unknown scope state, such as Legacy builds without a
+scope service, must not be inferred as injected.
 
-Long-term package configuration storage should converge on one package-aggregated
-source of truth. Package UI, backup/restore, runtime snapshots, and counting
-rules should read from that aggregated package model rather than from scattered
-per-key indexes.
+Draft-only state is transient app-config-sheet state. It is not a
+user-configured package unless the user saves it as package-level state.
 
-The aggregated package model should be keyed by package name, not stored as an
-ordered package array. DPIS is per-app configuration; package name is the
-natural identity and lookup key.
+Long-term package configuration storage should converge on one sparse,
+user-scoped package source of truth. Package UI, backup/restore, runtime
+snapshots, and counting rules should read from that model rather than from
+scattered per-key indexes.
+
+The package identity is `(packageName, userId)`, where `userId` is the Android
+user that owns the installed app instance and its DPIS configuration. The same
+package installed for different users represents separate configuration
+identities. Each DPIS installation's UI shows only its current Android user's
+installation and configuration. Cross-user centralized editing is deferred as
+a separate experiment, not represented by read-only duplicate rows.
+
+Runtime package properties use the target Android user and package hash:
+viewport, WeChat DPI, font scale/mode/typeface, font hook-domain, and HyperOS
+native font/binary properties are user-scoped. system_server must pass the
+target app's UID-derived user; app-process native consumers use their own UID.
+Unscoped legacy font properties are not a fallback, even for user 0: their
+writer's user cannot be established. On upgrade, each DPIS installation
+re-publishes its own canonical private archive; never infer saved configuration
+from legacy properties or clear another user's mirrors. JNI and process-local
+Rust environment delivery remain distinct from shared property transport.
+Existing deployed native proxies must be refreshed from the upgraded module
+before claiming the new property contract for those native processes.
 
 `target_packages` is legacy migration evidence only. New package storage should
 not keep writing `target_packages` as a live index or source of truth.
@@ -419,6 +438,15 @@ Legacy migration should preserve contradictory or incomplete old per-key state
 as explicit package-local residual or draft-only state instead of silently
 dropping it. Preserved residual state is evidence for cleanup and diagnostics;
 it must not automatically become a runtime target.
+
+The existing `dpi_config` SharedPreferences file is private to the Android user
+that owns that DPIS installation. During package-identity migration, assign
+package-only records in that file to that same owner `userId`; do not copy a
+record to other users that have the same package installed. Runtime property
+mirrors are not a source for reconstructing missing saved package config.
+Portable backup import binds package-only entries to the importing DPIS user's
+identity. Remote runtime snapshots follow the calling Android user's Xposed
+preference endpoint and must retain the same owner identity.
 
 Mode-only, target-type-only, and hook-domain-only package state are
 user-preserved package preferences, not residual state. This includes viewport

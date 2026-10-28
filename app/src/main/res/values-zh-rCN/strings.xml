@@ -414,15 +414,74 @@
     <string name="dialog_process_action_stop">停止</string>
     <string name="dialog_dpis_enabled_status">已启用</string>
     <string name="dialog_dpis_disabled_status">已禁用</string>
-    <string name="startup_disclaimer_title">风险提示与免责声明</string>
+
     <string name="startup_disclaimer_message">本模块基于 Root/LSPosed 环境运行，可能导致系统不稳定、功能异常、数据丢失、设备变砖、无法开机或账号风控等风险。
 
 你应确认已备份重要数据，并自行承担安装、使用、卸载本模块产生的风险与后果。
 
 在法律允许范围内，开发者不对因使用或误用本模块造成的间接损失、数据损失、收益损失承担责任。</string>
-    <string name="startup_disclaimer_checkbox_text">我已阅读并同意</string>
     <string name="startup_disclaimer_accept_button">同意并继续</string>
-    <string name="startup_disclaimer_save_failed">记录同意状态失败，请重试</string>
+
+    <string name="onboarding_welcome_message">独立调节应用界面缩放与字体大小</string>
+    <string name="onboarding_feature_dpi_title">libxposed 102</string>
+    <string name="onboarding_feature_dpi_description">提供高效底层注入与开发</string>
+    <string name="onboarding_feature_scale_title">界面缩放模式</string>
+    <string name="onboarding_feature_scale_description">适配多种应用与使用习惯</string>
+    <string name="onboarding_feature_font_title">字体多链路</string>
+    <string name="onboarding_feature_font_description">统一调度覆盖不同字体</string>
+    <string name="onboarding_step">第 %1$d 步，共 %2$d 步</string>
+    <string name="onboarding_start">开始使用</string>
+    <string name="onboarding_terms_title">使用条款</string>
+    <string name="onboarding_terms_lead">欢迎使用 DPIS\n在开始配置前，请先了解以下内容</string>
+    <string name="onboarding_terms_risk_title">系统级修改</string>
+    <string name="onboarding_terms_risk_body">DPIS 会改变你选择的应用的界面渲染方式，并可能参与相关运行时处理。不同设备、系统版本和应用实现可能导致显示异常、应用崩溃、功能失效，极端情况下也可能影响系统启动。\n\n使用前建议备份重要数据，并保留可恢复设备的方式。</string>
+    <string name="onboarding_terms_privacy_title">本地处理与授权边界</string>
+    <string name="onboarding_terms_privacy_body">DPIS 的配置保存在本设备上。应用列表、Android 用户信息、诊断记录和前台应用信息只会在对应功能需要时使用。\n\n导出或分享诊断内容前，请先确认其中是否包含你不希望公开的信息。</string>
+    <string name="onboarding_terms_permissions_title">权限作用范围</string>
+    <string name="onboarding_terms_root_runtime_title">运行时配置</string>
+    <string name="onboarding_terms_root_runtime_body">在需要时，通过模块的运行时链路传输、重新加载和恢复选定的运行时配置。</string>
+    <string name="onboarding_terms_root_process_title">目标应用生命周期</string>
+    <string name="onboarding_terms_root_process_body">配置变更后重启或停止选定的目标应用，使其能够读取新的状态。</string>
+    <string name="onboarding_terms_root_diagnostics_title">诊断与 LSPosed 日志</string>
+    <string name="onboarding_terms_root_diagnostics_body">仅在你主动打开诊断或反馈流程时，收集诊断证据并读取 LSPosed 日志。</string>
+    <string name="onboarding_terms_root_scope_title">Android 用户与应用范围</string>
+    <string name="onboarding_terms_root_scope_body">识别目标 Android 用户，并在功能需要时解析跨用户的已安装应用范围。</string>
+    <string name="onboarding_terms_root_font_proxy_title">字体与 native proxy</string>
+    <string name="onboarding_terms_root_font_proxy_body">安装、同步和清理字体文件或运行时属性，并建立或回滚 HyperOS native proxy 兼容设置。</string>
+    <string name="onboarding_terms_app_list_title">已安装应用列表</string>
+    <string name="onboarding_terms_app_list_body">为应用工作区读取已安装应用。Root 可用时，也可能用于解析其他 Android 用户所属的应用。</string>
+    <string name="onboarding_terms_usage_title">使用情况访问</string>
+    <string name="onboarding_terms_usage_body">在使用 Quick Config 的前台应用功能时，识别当前处于前台的应用。</string>
+    <string name="onboarding_terms_open_source_title">兼容性与使用责任</string>
+    <string name="onboarding_terms_open_source_body">DPIS 不保证适配所有设备或应用，启用修改前请先确认兼容性，确保设备访问和恢复工具仍然可用，并判断预期收益是否值得承担相应风险。\n\nDPIS 不取代第三方应用和服务自身的条款、隐私政策或支持渠道。</string>
+    <string name="onboarding_permissions_title">权限与状态</string>
+    <string name="onboarding_permission_root_title">Root</string>
+    <string name="onboarding_permission_app_list_title">应用列表</string>
+    <string name="onboarding_permission_usage_title">使用情况</string>
+    <string name="onboarding_permission_optional">可选</string>
+    <string name="onboarding_permission_available">可用：%1$s</string>
+    <string name="onboarding_permission_available_short">可用</string>
+    <string name="onboarding_permission_unavailable">不可用</string>
+    <string name="onboarding_permission_checking">检测中…</string>
+    <string name="onboarding_finish">保存并进入</string>
+    <string name="onboarding_continue">暂时跳过</string>
+    <string name="onboarding_back_again_to_exit">再次返回以退出</string>
+    <string name="onboarding_configuration_title">配置与主题</string>
+    <string name="onboarding_configuration_message">恢复旧备份，调整新主题</string>
+    <string name="onboarding_configuration_backup_section">从备份恢复</string>
+    <string name="onboarding_configuration_import_title">导入 DPIS 备份</string>
+    <string name="onboarding_configuration_import_hint">选择一个 DPIS 备份包</string>
+    <string name="config_backup_import_in_progress">正在恢复配置…</string>
+    <string name="onboarding_configuration_scope_section">Modern 模块作用域</string>
+    <string name="onboarding_configuration_scope_title">恢复作用域</string>
+    <string name="onboarding_configuration_scope_hint">将备份中的应用申请加入作用域</string>
+    <string name="onboarding_configuration_scope_available">备份中的应用已准备好加入模块作用域。</string>
+    <string name="onboarding_configuration_scope_requesting">正在请求模块作用域…</string>
+    <string name="onboarding_configuration_scope_applied">模块作用域请求已完成。</string>
+    <string name="onboarding_configuration_scope_manual">请手动将恢复的应用加入模块作用域。</string>
+    <string name="onboarding_configuration_scope_pending">已有其他作用域请求正在处理。</string>
+    <string name="onboarding_configuration_scope_action">申请</string>
+    <string name="onboarding_configuration_scope_done">完成</string>
     <string name="dialog_cancel_button">关闭</string>
     <string name="dialog_close_button">关闭</string>
     <string name="filter_sheet_title">列表筛选</string>
@@ -628,6 +687,8 @@
     <string name="settings_clear_cache_cleaning">正在清理缓存…</string>
     <string name="settings_clear_cache_done">缓存清理完成</string>
     <string name="settings_clear_cache_legacy_public_file_blocked">旧版本的调试文件遗留在Download/DPIS目录需要手动删除</string>
+    <string name="settings_restart_onboarding_label">重启引导</string>
+    <string name="settings_restart_onboarding_hint">重新进行引导页配置</string>
     <string name="about_title">关于</string>
     <string name="about_version_format">版本：%1$s(%2$d)</string>
     <string name="about_link_source_title">查看源代码</string>

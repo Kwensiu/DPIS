@@ -9,6 +9,20 @@ import com.dpis.module.viewport.ViewportPropertyBridge
 import com.dpis.module.viewport.ViewportTargetSpec
 import java.util.function.Supplier
 
+data class ConfigLookupDiagnostics(
+    val identity: PackageIdentity,
+    val snapshotOwnerUserId: Int,
+    val snapshotOwnerMatches: Boolean,
+    val snapshotPackageHit: Boolean,
+    val fallbackAttempted: Boolean,
+    val fallbackHit: Boolean,
+    val config: PerAppDisplayConfig?,
+    val reason: String,
+) {
+    val targetViewportSpec = config?.targetViewportSpec
+    val targetViewportMode = config?.targetViewportMode
+}
+
 class PerAppDisplayConfigSource(
     private val snapshotProvider: SnapshotProvider?,
     private val packageFallbackProvider: PackageFallbackProvider?,
@@ -18,23 +32,86 @@ class PerAppDisplayConfigSource(
     }
 
     fun interface PackageFallbackProvider {
-        fun get(packageName: String): PackageConfigSnapshot?
+        fun get(packageName: String, userId: Int): PackageConfigSnapshot?
     }
+
 
     constructor(store: DpisConfigStore?) : this(ConfigSnapshotLoader.fromStore(store))
     constructor(snapshot: ConfigSnapshot?) : this(SnapshotProvider { snapshot })
     constructor(snapshotProvider: SnapshotProvider?) : this(snapshotProvider, null)
 
-    fun get(packageName: String?): PerAppDisplayConfig? {
-        val snapshot = getSnapshot()
-        var packageConfig = snapshot.getPackage(packageName)
-        if (packageConfig != null && !packageConfig.dpisEnabled) return null
-        getFallbackPackageConfig(packageName)?.let { packageConfig = it }
-        if (packageConfig == null || !packageConfig.dpisEnabled) return null
+    fun get(packageName: String?, userId: Int): PerAppDisplayConfig? {
+        if (packageName.isNullOrBlank() || userId < 0) return null
+        return get(PackageIdentity(packageName, userId))
+    }
 
-        val runtimeTargetSpec = ViewportPropertyBridge.readTargetSpec(packageName)
-        var targetViewportSpec =
-            if (runtimeTargetSpec.isEnabled()) runtimeTargetSpec else packageConfig.targetViewportSpec
+    fun get(identity: PackageIdentity): PerAppDisplayConfig? =
+        inspect(identity).config
+
+    fun inspect(identity: PackageIdentity): ConfigLookupDiagnostics {
+        val packageName = identity.packageName
+        val userId = identity.userId
+        val snapshot = getSnapshot()
+        val snapshotOwnerMatches = snapshot.ownerUserId == userId
+        val snapshotPackageHit = snapshot.getPackage(packageName) != null
+        var packageConfig = if (snapshotOwnerMatches) {
+            snapshot.getPackage(packageName, userId)
+        } else {
+            null
+        }
+        if (packageConfig != null && !packageConfig.dpisEnabled) {
+            return ConfigLookupDiagnostics(
+                identity,
+                snapshot.ownerUserId,
+                snapshotOwnerMatches,
+                snapshotPackageHit,
+                false,
+                false,
+                null,
+                "snapshot_disabled",
+            )
+        }
+        val fallbackAttempted = packageFallbackProvider != null
+        var fallbackHit = false
+        getFallbackPackageConfig(packageName, userId)?.let {
+            fallbackHit = true
+            packageConfig = it
+        }
+        if (packageConfig == null) {
+            return ConfigLookupDiagnostics(
+                identity,
+                snapshot.ownerUserId,
+                snapshotOwnerMatches,
+                snapshotPackageHit,
+                fallbackAttempted,
+                fallbackHit,
+                null,
+                if (!snapshotOwnerMatches && snapshotPackageHit) {
+                    "snapshot_owner_mismatch"
+                } else {
+                    "package_missing"
+                },
+            )
+        }
+        if (!packageConfig.dpisEnabled) {
+            return ConfigLookupDiagnostics(
+                identity,
+                snapshot.ownerUserId,
+                snapshotOwnerMatches,
+                snapshotPackageHit,
+                fallbackAttempted,
+                fallbackHit,
+                null,
+                "fallback_disabled",
+            )
+        }
+
+        val runtimeTargetSpec = ViewportPropertyBridge.readTargetSpec(packageName, userId)
+        var targetViewportSpec = if (runtimeTargetSpec.isEnabled()) {
+            runtimeTargetSpec
+        } else {
+            packageConfig.targetViewportSpec
+        }
         val viewportMode = ViewportApplyMode.normalize(packageConfig.targetViewportMode)
         // Explicit compat is not delivered to system_server.
         //
@@ -55,11 +132,22 @@ class PerAppDisplayConfigSource(
         }
         val fontConfigured = FontApplyMode.isEnabled(packageConfig.targetFontMode) &&
             packageConfig.targetFontScalePercent != null
-        if (!targetViewportSpec.isEnabled() && !fontConfigured) return null
+        if (!targetViewportSpec.isEnabled() && !fontConfigured) {
+            return ConfigLookupDiagnostics(
+                identity,
+                snapshot.ownerUserId,
+                snapshotOwnerMatches,
+                snapshotPackageHit,
+                fallbackAttempted,
+                fallbackHit,
+                null,
+                "no_effective_fields",
+            )
+        }
 
         val hyperOsNativeFlutterEnabled = FontHookDomainDecision
             .isHyperOsNativeFlutterEnabled(snapshot, packageConfig)
-        return PerAppDisplayConfig(
+        val config = PerAppDisplayConfig(
             packageName,
             targetViewportSpec,
             viewportMode,
@@ -67,6 +155,16 @@ class PerAppDisplayConfigSource(
             packageConfig.targetFontMode,
             hyperOsNativeFlutterEnabled,
             packageConfig.hookDomainOverride,
+        )
+        return ConfigLookupDiagnostics(
+            identity,
+            snapshot.ownerUserId,
+            snapshotOwnerMatches,
+            snapshotPackageHit,
+            fallbackAttempted,
+            fallbackHit,
+            config,
+            "matched",
         )
     }
 
@@ -76,11 +174,14 @@ class PerAppDisplayConfigSource(
     private fun getSnapshot(): ConfigSnapshot =
         snapshotProvider?.get() ?: ConfigSnapshot.empty()
 
-    private fun getFallbackPackageConfig(packageName: String?): PackageConfigSnapshot? =
+    private fun getFallbackPackageConfig(
+        packageName: String?,
+        userId: Int
+    ): PackageConfigSnapshot? =
         if (packageFallbackProvider == null || packageName.isNullOrBlank()) {
             null
         } else {
-            packageFallbackProvider.get(packageName)
+            packageFallbackProvider.get(packageName, userId)
         }
 
     companion object {
@@ -89,10 +190,13 @@ class PerAppDisplayConfigSource(
             snapshotProvider: SnapshotProvider?,
         ) = PerAppDisplayConfigSource(
             snapshotProvider,
-            PackageFallbackProvider { packageName ->
+            PackageFallbackProvider { packageName, userId ->
                 ConfigSnapshotLoader.fromStore(
-                    DpisConfigStore(RuntimePropertyConfigPreferences(packageName)),
-                ).getPackage(packageName)
+                    DpisConfigStore(
+                        RuntimePropertyConfigPreferences(packageName, userId = userId),
+                        userId,
+                    ),
+                ).getPackage(packageName, userId)
             },
         )
     }

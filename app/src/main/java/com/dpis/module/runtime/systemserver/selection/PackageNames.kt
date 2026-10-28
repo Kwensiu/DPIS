@@ -3,7 +3,11 @@ package com.dpis.module.runtime.systemserver.selection
 import com.dpis.module.runtime.systemserver.reflection.Reflection
 import com.dpis.module.runtime.webapk.WebApkCarrierResolver
 
-/** Package names found on system_server hook arguments. */
+data class PackageUidEvidence(
+    val uid: Int,
+    val source: String,
+)
+
 object PackageNames {
     private const val MAX_RECURSION_DEPTH = 5
     private val STRING_METHOD_NAMES = arrayOf(
@@ -47,6 +51,49 @@ object PackageNames {
         }
         return null
     }
+
+    @JvmStatic
+    fun findUid(packageName: String?, self: Any?, args: List<*>?): Int? =
+        findUidEvidence(packageName, self, args)?.uid
+
+    @JvmStatic
+    fun findUidEvidence(
+        packageName: String?,
+        self: Any?,
+        args: List<*>?,
+    ): PackageUidEvidence? =
+        findUidEvidenceRecursive(self, packageName, 0)
+            ?: args.orEmpty().firstNotNullOfOrNull {
+                findUidEvidenceRecursive(it, packageName, 0)
+            }
+
+    private fun findUidEvidenceRecursive(
+        target: Any?,
+        packageName: String?,
+        depth: Int,
+    ): PackageUidEvidence? {
+        if (target == null || depth > MAX_RECURSION_DEPTH) return null
+        if (target is android.content.pm.ApplicationInfo &&
+            target.packageName == packageName && target.uid > 0
+        ) {
+            return PackageUidEvidence(target.uid, "application_info")
+        }
+        if (target is android.content.pm.ActivityInfo && target.packageName == packageName) {
+            return target.applicationInfo?.uid?.takeIf { it > 0 }?.let {
+                PackageUidEvidence(it, "activity_info.application_info")
+            }
+        }
+        for (fieldName in OBJECT_FIELD_NAMES) {
+            findUidEvidenceRecursive(
+                Reflection.readField(target, fieldName),
+                packageName,
+                depth + 1
+            )
+                ?.let { return it }
+        }
+        return null
+    }
+
 
     @JvmStatic
     fun findPackageNameForTest(self: Any?, vararg args: Any?): String? {

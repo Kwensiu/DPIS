@@ -2,6 +2,7 @@ package com.dpis.module.runtime.systemserver.diagnostics
 
 import android.content.res.Configuration
 import android.graphics.Rect
+import com.dpis.module.config.ConfigLookupDiagnostics
 import com.dpis.module.config.PerAppDisplayConfig
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.diagnostics.device.RuntimeTransport
@@ -16,6 +17,232 @@ import java.util.StringJoiner
  * [HookLogGate] so a diagnostic session does not open a second stream.
  */
 object HookLog {
+    @Volatile
+    private var bridgeLogger: ((String) -> Unit)? = null
+
+    @JvmStatic
+    fun setBridgeLogger(logger: ((String) -> Unit)?) {
+        bridgeLogger = logger
+    }
+
+    @JvmStatic
+    fun logHookDispatch(entryName: String?, methodName: String) {
+        val message = "system_server hook dispatch: entry=" + safeToString(entryName) +
+                ", method=" + methodName
+        if (logIfChanged(
+                "hook-dispatch|$entryName|$methodName",
+                message,
+                resolveLogMinIntervalMs(entryName),
+            )
+        ) {
+            emitBridge(message)
+        }
+    }
+
+    @JvmStatic
+    fun logHookConstructorDispatch(entryName: String?, constructorName: String) {
+        val message = "system_server hook dispatch: entry=" + safeToString(entryName) +
+                ", constructor=" + constructorName
+        if (logIfChanged(
+                "hook-dispatch|$entryName|$constructorName",
+                message,
+                resolveLogMinIntervalMs(entryName),
+            )
+        ) {
+            emitBridge(message)
+        }
+    }
+
+    @JvmStatic
+    fun logHookSelection(message: String) {
+        emitBridge(message)
+    }
+
+    private fun emitBridge(message: String) {
+        bridgeLogger?.let { logger ->
+            try {
+                logger(message)
+            } catch (_: Throwable) {
+                // Diagnostic bridge output must not affect hook behavior.
+            }
+        }
+    }
+
+    private fun logBridgeIfChanged(key: String, message: String, minIntervalMs: Long) {
+        if (logIfChanged(key, message, minIntervalMs)) {
+            emitBridge(message)
+        }
+    }
+
+    @JvmStatic
+    fun callbackStageKey(
+        entryName: String?,
+        stage: String,
+        packageName: String?,
+        userId: Int?,
+    ): String =
+        "callback-stage|$entryName|$stage|${packageName ?: "unresolved"}|${userId ?: "unknown"}"
+
+    @JvmStatic
+    fun logCallbackStage(
+        entryName: String?,
+        stage: String,
+        packageName: String?,
+        userId: Int?,
+        detail: String,
+    ) {
+        val message = "system_server callback stage: entry=" + safeToString(entryName) +
+                ", stage=" + stage + ", package=" + safeToString(packageName) +
+                ", userId=" + safeToString(userId) + ", " + detail
+        if (PackageNames.isLikely(packageName)) {
+            logDiagnosticIfChanged(
+                callbackStageKey(entryName, stage, packageName, userId),
+                message,
+                resolveLogMinIntervalMs(entryName),
+                packageName,
+                stage,
+            )
+        } else {
+            logBridgeIfChanged(
+                callbackStageKey(entryName, stage, null, null),
+                message,
+                resolveLogMinIntervalMs(entryName),
+            )
+        }
+    }
+
+    @JvmStatic
+    fun logMutationOutcome(
+        entryName: String?,
+        packageName: String,
+        userId: Int,
+        status: String,
+        fields: String,
+        before: String?,
+        after: String?,
+        target: String,
+    ) {
+        val message = "system_server mutation outcome: entry=" + safeToString(entryName) +
+                ", package=" + packageName + ", userId=" + userId +
+                ", status=" + status + ", fields=" + fields +
+                ", before=" + safeToString(before) + ", after=" + safeToString(after) +
+                ", target=" + target
+        logDiagnosticIfChanged(
+            "mutation-outcome|$entryName|$packageName|$userId|$status|$fields",
+            message,
+            resolveLogMinIntervalMs(entryName),
+            packageName,
+            status,
+        )
+    }
+
+    @JvmStatic
+    fun logCallbackEntry(entryName: String?, loggingEnabled: Boolean, hooksEnabled: Boolean) {
+        logBridgeIfChanged(
+            "callback-entry|$entryName",
+            "system_server callback entry: entry=" + safeToString(entryName) +
+                    ", logging_enabled=" + loggingEnabled +
+                    ", hooks_enabled=" + hooksEnabled,
+            resolveLogMinIntervalMs(entryName),
+        )
+    }
+
+    @JvmStatic
+    fun logDisplayManagerBranch(entryName: String?) {
+        logBridgeIfChanged(
+            "callback-display-manager|$entryName",
+            "system_server display-manager branch: entry=" + safeToString(entryName),
+            resolveLogMinIntervalMs(entryName),
+        )
+    }
+
+    @JvmStatic
+    fun logIdentityMissing(
+        entryName: String?,
+        packageName: String?,
+        reason: String,
+    ) {
+        val message = "system_server identity missing: entry=" + safeToString(entryName) +
+                ", package=" + safeToString(packageName) + ", reason=" + reason
+        logDiagnosticIfChanged(
+            "identity-missing|$entryName|$packageName|$reason",
+            message,
+            resolveLogMinIntervalMs(entryName),
+            packageName,
+            "identity_missing",
+        )
+    }
+
+    @JvmStatic
+    fun logIdentityResolved(
+        entryName: String?,
+        packageName: String,
+        uid: Int,
+        userId: Int,
+        source: String,
+    ) {
+        val message = "system_server identity resolved: entry=" + safeToString(entryName) +
+                ", package=" + packageName + ", uid=" + uid + ", userId=" + userId +
+                ", source=" + source
+        logDiagnosticIfChanged(
+            "identity-resolved|$entryName|$packageName|$userId",
+            message,
+            resolveLogMinIntervalMs(entryName),
+            packageName,
+            "identity_resolved",
+        )
+    }
+
+    @JvmStatic
+    fun logSourceLookup(entryName: String?, diagnostics: ConfigLookupDiagnostics) {
+        val message = "system_server source lookup: entry=" + safeToString(entryName) +
+                ", package=" + diagnostics.identity.packageName +
+                ", userId=" + diagnostics.identity.userId +
+                ", snapshotOwner=" + diagnostics.snapshotOwnerUserId +
+                ", ownerMatches=" + diagnostics.snapshotOwnerMatches +
+                ", snapshotPackageHit=" + diagnostics.snapshotPackageHit +
+                ", fallbackAttempted=" + diagnostics.fallbackAttempted +
+                ", fallbackHit=" + diagnostics.fallbackHit +
+                ", result=" + diagnostics.reason +
+                ", viewport=" + safeToString(diagnostics.targetViewportSpec) +
+                ", mode=" + safeToString(diagnostics.targetViewportMode)
+        logDiagnosticIfChanged(
+            "source-lookup|$entryName|${diagnostics.identity.packageName}|${diagnostics.identity.userId}",
+            message,
+            resolveLogMinIntervalMs(entryName),
+            diagnostics.identity.packageName,
+            "source_lookup",
+        )
+    }
+
+    @JvmStatic
+    fun logPolicySkip(entryName: String?, packageName: String, userId: Int) {
+        logDiagnosticIfChanged(
+            "policy-skip|$entryName|$packageName|$userId",
+            "system_server config policy skip: entry=" + safeToString(entryName) +
+                    ", package=" + packageName + ", userId=" + userId,
+            resolveLogMinIntervalMs(entryName),
+            packageName,
+            "policy_skip",
+        )
+    }
+
+    @JvmStatic
+    fun logMutationUnchanged(
+        entryName: String?,
+        packageName: String,
+        field: String,
+    ) {
+        logDiagnosticIfChanged(
+            "mutation-unchanged|$entryName|$packageName|$field",
+            "system_server mutation unchanged: entry=" + safeToString(entryName) +
+                    ", package=" + packageName + ", field=" + field,
+            resolveLogMinIntervalMs(entryName),
+            packageName,
+            "unchanged",
+        )
+    }
+
     @JvmStatic
     fun logProbe(
         entryName: String?,
@@ -159,6 +386,13 @@ object HookLog {
             !PackageNames.isLikely(packageName)
         ) {
             return
+        }
+        bridgeLogger?.let { logger ->
+            try {
+                logger(message.orEmpty())
+            } catch (_: Throwable) {
+                // Diagnostic bridge output must not affect hook behavior.
+            }
         }
         RuntimeTransport.record(
             "runtime",

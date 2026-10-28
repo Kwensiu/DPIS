@@ -14,7 +14,9 @@ import com.dpis.module.viewport.ViewportTargetType
 internal class PackageConfigReader(
     private val preferences: SharedPreferences,
     private val fallbackPreferences: SharedPreferences?,
-    private val persistence: PackageConfigPersistence
+    private val persistence: PackageConfigPersistence,
+    private val ownerUserId: Int,
+    private val identity: PackageIdentity? = null,
 ) {
     fun viewportWidth(packageName: String): Int? {
         val value = packageNullableInt(
@@ -128,6 +130,17 @@ internal class PackageConfigReader(
         )
     }
 
+    fun packageConfig(identity: PackageIdentity): PackageConfigValue {
+        require(identity.userId == ownerUserId) { "identity owner does not match archive" }
+        return PackageConfigReader(
+            preferences,
+            fallbackPreferences,
+            persistence,
+            ownerUserId,
+            identity,
+        ).packageConfig(identity.packageName)
+    }
+
     fun packageConfig(packageName: String?): PackageConfigValue {
         if (packageName == null || packageName.isBlank()) return PackageConfigValue.EMPTY
         return PackageConfigValue(
@@ -194,7 +207,7 @@ internal class PackageConfigReader(
         key != null && (preferences.contains(key) || fallbackPreferences?.contains(key) == true)
 
     private fun containsPackageValue(legacyKey: String?, packageKey: String?): Boolean =
-        contains(legacyKey) || contains(packageKey)
+        contains(scopedPackageKey(packageKey)) || contains(legacyKey) || contains(packageKey)
 
     private fun <T> read(key: String?, reader: (SharedPreferences) -> T): T? {
         val source = when {
@@ -206,18 +219,41 @@ internal class PackageConfigReader(
     }
 
     private fun packageNullableInt(legacyKey: String?, packageKey: String?): Int? =
-        nullableInt(if (contains(legacyKey)) legacyKey else packageKey)
+        nullableInt(preferredPackageKey(legacyKey, packageKey))
 
-    private fun nullableInt(key: String?): Int? =
-        read(key) { it.getInt(key, 0) }
+    private fun nullableInt(key: String?): Int? = read(key) { it.getInt(key, 0) }
 
-    private fun packageString(legacyKey: String?, packageKey: String?, default: String?): String? =
-        read(if (contains(legacyKey)) legacyKey else packageKey) {
-            it.getString(if (contains(legacyKey)) legacyKey else packageKey, default)
-        } ?: default
+    private fun packageString(legacyKey: String?, packageKey: String?, default: String?): String? {
+        val key = preferredPackageKey(legacyKey, packageKey)
+        return read(key) { it.getString(key, default) } ?: default
+    }
 
-    private fun packageBoolean(legacyKey: String?, packageKey: String?, default: Boolean): Boolean =
-        read(if (contains(legacyKey)) legacyKey else packageKey) {
-            it.getBoolean(if (contains(legacyKey)) legacyKey else packageKey, default)
-        } ?: default
+    private fun packageBoolean(legacyKey: String?, packageKey: String?, default: Boolean): Boolean {
+        val key = preferredPackageKey(legacyKey, packageKey)
+        return read(key) { it.getBoolean(key, default) } ?: default
+    }
+
+    private fun preferredPackageKey(legacyKey: String?, packageKey: String?): String? =
+        scopedPackageKey(packageKey)?.takeIf(::contains)
+            ?: legacyKey?.takeIf(::contains)
+            ?: packageKey
+
+    private fun scopedPackageKey(packageKey: String?): String? {
+        if (packageKey == null) return null
+        val spec = persistence.PACKAGE_AGGREGATED_CONFIG_KEYS.firstOrNull {
+            it.packageNameFromStorageKey(packageKey, requireApplicablePackage = false) != null
+        } ?: return null
+        val parsedPackageName = spec.packageNameFromStorageKey(
+            packageKey,
+            requireApplicablePackage = false,
+        ) ?: return null
+        if (!PackageIdentity.isValidPackageName(parsedPackageName)) return null
+        if (identity != null && identity.packageName != parsedPackageName) return null
+        if (packageKey.endsWith(".app.wechat_dpi") && !WechatDpiConfig.appliesTo(parsedPackageName)) return null
+        val prefix = "package_config.$parsedPackageName."
+        val field = packageKey.removePrefix(prefix).takeIf { it.isNotEmpty() && it != packageKey }
+            ?: return null
+        return PackageIdentity(parsedPackageName, identity?.userId ?: ownerUserId)
+            .packageConfigKey(field)
+    }
 }

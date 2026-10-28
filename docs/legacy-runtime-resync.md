@@ -1,4 +1,18 @@
-# Legacy Runtime Resync
+# App-process density projection baseline
+
+Shared Legacy resource and Display consumers now use
+`AppProcessDensityProjection` as the first app-process DPI boundary. It
+projects target density into the standard Resources and Display API results,
+keeps physical pixel dimensions unchanged, and preserves the incoming font
+scale factor.
+
+The Legacy route keeps system-server propagation and window ownership separate:
+`compat` consumes the projection directly; `system` and effective `auto` use it
+until a matching system result is available. Viewport-only configurations no
+longer require ResourcesManager or ResourcesImpl write hooks. This avoids
+re-entering configuration mutation for every app-process resource read while
+retaining the existing fallback for missing or incomplete system evidence.
+
 
 This is the living tracker for the Legacy viewport/runtime investigation.
 
@@ -21,7 +35,38 @@ This is the living tracker for the Legacy viewport/runtime investigation.
 - Keep the tree and ledger aligned: when a route moves between active and
   inactive use, update both the route tree and the experiment ledger.
 
-## 2026-10-15 WeChat Relative Ownership Adjustment
+# 2026-10-27 System route transaction observation on PJZ110
+
+Status: shared diagnostic instrumentation added; no Legacy system-route behavior
+was changed.
+
+The app-process `viewport_marker_app_consume` event now records marker
+provenance, elapsed id, source/result signatures, and the incoming
+Configuration signature. This gives Legacy and Modern resource consumers the
+same evidence boundary. The PJZ110 Bilibili capture observed only
+`provenance=a` and `app-process-borrow-target`; it did not exercise the Legacy
+system_server route. Do not use this capture as Legacy system-route evidence.
+
+## 2026-10-27 Bilibili near-100% auto ratio boundary deferred
+
+Status: shared runtime finding; observed and deferred.
+
+Bilibili captures show that the current route's performance depends more on
+metrics stability than on visible scale alone. Auto 101% produced about
+`77,617` main-process display-metrics calls, with `9,859` slow-path resolutions
+and output heights varying between approximately `2375` and `2378` pixels.
+Its longest main-thread input slice was about `213 ms`, mostly Running. Auto
+128% had about `192` slow-path resolutions and a longest input slice around
+`220 ms`. By contrast, the user's compat 128% capture had only `49` slow-path
+resolutions and a longest input slice around `98 ms`, and was reported as
+comparatively fluent.
+
+This is evidence for a near-100% rounding/state-boundary issue in the auto
+route, not proof that DPIS directly occupies the full input slice. The issue is
+deliberately deferred. Keep the captures and route counters as the baseline for
+a future stable-pixel-rounding change; do not mark the 101% route fixed or
+change shared ownership semantics based on this note alone.
+
 
 Status: active.
 
@@ -65,6 +110,41 @@ window that already has the target width keeps that width instead of falling
 back to the physical `379dp`. A shorter window keeps its existing density. A full-screen launch
 configuration classified as a window still receives the relative result, so
 the process starts at the target width. A smaller window does not.
+
+## 2026-10-20 Legacy system_server target-user selection
+
+Status: source and JVM behavior tests now require the target Activity's user
+identity before applying a launch-item viewport. Device effectiveness remains
+unverified.
+
+Legacy `LaunchActivityItem` argument and post-construction routes resolve the
+package through `ActivityInfo` and derive the Android user from its associated
+`ApplicationInfo.uid`. The config source is queried with `(packageName, userId)`;
+package-name-only parsing is not sufficient to select runtime config. If the
+activity UID is missing or invalid, the route leaves the launch configuration
+unchanged instead of defaulting to user 0. Shared `system_server` source lookups
+now require explicit user identity; a matching snapshot owner may provide its
+viewport config for any user, and that user's runtime properties take
+precedence. Invalid UID evidence fails closed. HyperOS Rust-process native font
+setup also requires UID evidence associated with the parsed package. Legacy
+unit tests cover user 0, user 999, missing UID, System mode, and Compat mode.
+Device effectiveness remains unverified.
+
+## 2026-10-22 User-scoped font property transport
+
+Status: shared implementation, full Legacy unit suite and Legacy Debug build
+pass; a Legacy device/module run remains unverified.
+
+Legacy property-backed stores pass the resolved process or target user to all
+font scale/mode/typeface and hook-domain reads. Shared system-server native
+publishers carry the target UID-derived user; native proxies read the process
+UID's user-scoped forcefont/font/Rust binary properties. Package-only legacy
+font properties are ignored for every user, not assigned to user 0. Each DPIS
+installation republishes its own saved archive after upgrade. Existing proxy
+copies need refresh from the upgraded module before native effectiveness can
+be claimed. This changes the transport identity, not the Legacy launch-only
+font scheduling or the separate unverified XSharedPreferences readability
+question. See the Modern October 22 record for shared transport/device evidence.
 
 ## Route Map
 
@@ -628,3 +708,16 @@ process. Legacy inherits this boundary.
   the published width and height. When that width and height are already
   published but the density is still physical, the app process writes the
   published density and keeps that display result. It does not scale again.
+- 2026-10-22: Shared with Modern. MultiApp viewport runtime properties and
+  runtime markers now include Android user ID in transient and persistent
+  namespaces. system_server resolves the target user from the target app UID
+  and skips selection when UID evidence is missing, rather than defaulting to
+  user 0. Unit tests and both Debug builds pass. PJZ110 confirmed distinct
+  Chrome 80%/160% values and marker namespaces; MultiApp system hook remains
+  ineffective (`scopeSelected=false`), and initial zero-sized resource callbacks
+  Device verification remains mixed: one fresh-task run reached
+  `360x792 @ 480dpi`, while subsequent fresh-task runs received
+  `288x634 @ 600dpi` again. system_server still logs the old package-only
+  marker key (`debug.dpis.vprtm.0f493ae6`), indicating the updated runtime has
+  not been consistently reloaded. Require system_server reload and repeated
+  fresh-task checks before considering the change device-verified.

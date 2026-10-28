@@ -1,8 +1,8 @@
 package com.dpis.module.appconfig
 
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.R
 import com.dpis.module.applist.AppListItem
+import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.PackageConfigValue
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.fonts.hookdomain.FontHookDomainPresentation
@@ -35,7 +35,8 @@ class AppConfigSaveHandler {
             return Result.Companion.failure(R.string.status_save_requires_init)
         }
         try {
-            val originalPackageConfig = store.readPackageConfig(item.packageName)
+            val identity = store.packageIdentity(item.packageName)
+            val originalPackageConfig = store.readPackageConfig(identity)
             val viewportApplyMode: String? = resolveViewportApplyModeForSave(
                 store, item.packageName, currentViewportApplyMode,
                 viewportApplyModeResetRequested, viewportTargetSpec
@@ -330,15 +331,20 @@ class AppConfigSaveHandler {
         }
 
         private fun publishFontHookDomainsAfterSave(packageName: String?, store: DpisConfigStore?) {
+            if (store == null) return
             val override = HookDomainOverrideStore(store).read(packageName)
             if (override.customPathEnabled) {
                 FontHookDomainPropertySyncer.publishTargetAsync(
                     packageName,
-                    override.enabledKnownDomains
+                    override.enabledKnownDomains,
+                    store.packageConfigOwnerUserId(),
                 )
                 return
             }
-            FontHookDomainPropertySyncer.clearTargetAsync(packageName)
+            FontHookDomainPropertySyncer.clearTargetAsync(
+                packageName,
+                store.packageConfigOwnerUserId()
+            )
         }
 
         private fun isDefaultPackageState(

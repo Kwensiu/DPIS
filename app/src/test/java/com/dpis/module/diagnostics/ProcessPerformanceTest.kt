@@ -54,6 +54,7 @@ class ProcessPerformanceTest {
                 "resources_read_display_metrics_override",
                 call * 1_000L,
                 2,
+                if (call % 2 == 0) "fast_path_reused_metrics" else "slow_path_resolve",
             )
         }
 
@@ -63,5 +64,7 @@ class ProcessPerformanceTest {
         assertEquals(2, route.sampleStride)
         assertEquals(2L, route.p50Us)
         assertEquals(5L, route.maxUs)
+        assertEquals(2L, route.pathCounts["fast_path_reused_metrics"])
+        assertEquals(3L, route.pathCounts["slow_path_resolve"])
     }
 }

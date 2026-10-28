@@ -1,7 +1,7 @@
 package com.dpis.module.config
 
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.FakePrefs
+import com.dpis.module.backup.BackupReplaceStage
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.templates.GlobalPrefillStore
 import com.dpis.module.templates.QuickTemplateStore
@@ -17,6 +17,96 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BackupTest {
+    @Test
+    fun failedBackupRestoreRollsBackManagedScopedAndMarkerState() {
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs, 999)
+        prefs.edit()
+            .putInt("package_config.com.example.app.font.scale_percent", 140)
+            .commit()
+        assertTrue(store.migratePackageConfigToUserScoped())
+        val identity = PackageIdentity("com.example.app", 999)
+        val markerBefore = prefs.getInt(PACKAGE_IDENTITY_MIGRATION_OWNER_USER_ID, -1)
+
+        prefs.setCommitResults(true, false, true, true)
+        val result = store.replaceBackupResult(
+            mutableMapOf(
+                "package_config.com.example.app.font.scale_percent" to 160,
+                "package_config.com.example.app.font.typeface_id" to "incoming",
+            ),
+        )
+
+        assertFalse(result.isSuccess())
+        assertEquals(BackupReplaceStage.LEGACY_MIGRATION, result.failedStage)
+        assertEquals(140, prefs.getInt(identity.packageConfigKey("font.scale_percent"), 0))
+        assertFalse(prefs.contains(identity.packageConfigKey("font.typeface_id")))
+        assertEquals(markerBefore, prefs.getInt(PACKAGE_IDENTITY_MIGRATION_OWNER_USER_ID, -1))
+        assertEquals(140, prefs.getInt("package_config.com.example.app.font.scale_percent", 0))
+    }
+
+    @Test
+    fun failedRestoreRestoresLegacyOnlyPackageConfig() {
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs, 999)
+        prefs.edit()
+            .putInt("font.com.example.app.scale_percent", 140)
+            .commit()
+        prefs.setCommitResults(true, false, true, true)
+
+        val result = store.replaceBackupResult(
+            mutableMapOf("package_config.com.example.other.font.scale_percent" to 160),
+        )
+
+        assertFalse(result.isSuccess())
+        assertEquals(BackupReplaceStage.LEGACY_MIGRATION, result.failedStage)
+        assertEquals(140, prefs.getInt("font.com.example.app.scale_percent", 0))
+        assertFalse(prefs.contains("package_config.com.example.other.font.scale_percent"))
+    }
+
+    @Test
+    fun rollbackFailureIsReportedInsteadOfClaimingLegacyMigrationFailure() {
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs, 999)
+        prefs.edit()
+            .putInt("package_config.com.example.app.font.scale_percent", 140)
+            .commit()
+        assertTrue(store.migratePackageConfigToUserScoped())
+
+        prefs.setCommitResults(true, false, false)
+        val result = store.replaceBackupResult(
+            mutableMapOf("package_config.com.example.app.font.typeface_id" to "incoming"),
+        )
+
+        assertFalse(result.isSuccess())
+        assertEquals(BackupReplaceStage.ROLLBACK, result.failedStage)
+    }
+
+    @Test
+    fun portableBackupOmitsUserIdentityAndImportRebindsToArchiveOwner() {
+        val prefs = FakePrefs()
+        val store = DpisConfigStore(prefs, 999)
+        val identity = PackageIdentity("com.example.app", 999)
+        assertTrue(
+            store.writePackageConfig(
+                identity,
+                PackageConfigValue(null, null, null, 140, null, null, null, null, null),
+            ),
+        )
+
+        val exported = store.snapshotBackup()
+        assertEquals(140, exported["package_config.com.example.app.font.scale_percent"])
+        assertFalse(exported.keys.any { it.startsWith("package_identity.") })
+
+        assertTrue(
+            store.replaceBackup(
+                mutableMapOf("package_config.com.example.app.font.scale_percent" to 180),
+            ),
+        )
+
+        assertEquals(180, store.readPackageConfig(identity).fontScalePercent())
+        assertEquals(180, prefs.getInt(identity.packageConfigKey("font.scale_percent"), 0))
+    }
+
     @Test
     fun snapshotBackupExcludesFontLibraryMetadataButKeepsTypefaceSelection() {
         val prefs = FakePrefs()

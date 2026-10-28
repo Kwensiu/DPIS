@@ -2,7 +2,7 @@ package com.dpis.module.config
 
 import java.util.Collections
 
-class ConfigSnapshot(
+class ConfigSnapshot @JvmOverloads constructor(
     configuredPackages: Set<String?>?,
     packages: Map<String, PackageConfigSnapshot>?,
     @JvmField val systemServerHooksEnabled: Boolean,
@@ -11,6 +11,7 @@ class ConfigSnapshot(
     @JvmField val hasSystemServerHooksEnabled: Boolean,
     @JvmField val hasSystemServerSafeModeEnabled: Boolean,
     @JvmField val hasGlobalLogEnabled: Boolean,
+    @JvmField val ownerUserId: Int = 0,
 ) {
     private val configuredPackages: Set<String?> = Collections.unmodifiableSet(
         LinkedHashSet(configuredPackages ?: emptySet())
@@ -26,6 +27,12 @@ class ConfigSnapshot(
 
     fun isConfigured(packageName: String?): Boolean =
         packageName != null && configuredPackages.contains(packageName)
+
+    fun getPackage(packageName: String?, userId: Int): PackageConfigSnapshot? =
+        if (userId == ownerUserId) getPackage(packageName) else null
+
+    fun isConfigured(packageName: String?, userId: Int): Boolean =
+        userId == ownerUserId && isConfigured(packageName)
 
     fun isSystemServerHooksEnabled(): Boolean = systemServerHooksEnabled
     fun isSystemServerSafeModeEnabled(): Boolean = systemServerSafeModeEnabled

@@ -3,10 +3,19 @@ package com.dpis.module.updates.presentation
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.Process
+import android.provider.Settings
 import android.widget.Toast
 import com.dpis.module.BuildConfig
+import com.dpis.module.DpisApplication
 import com.dpis.module.R
+import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.home.HomeUpdateUiState
+import com.dpis.module.onboarding.OnboardingCoordinator
+import com.dpis.module.onboarding.OnboardingStore
+import com.dpis.module.onboarding.presentation.OnboardingConfigurationPresenter
+import com.dpis.module.onboarding.presentation.OnboardingGate
+import com.dpis.module.quickconfig.ForegroundAppResolver
 import com.dpis.module.settings.LocalizedActivity
 import com.dpis.module.updates.GitHubReleaseNotesFetcher
 import com.dpis.module.updates.ReleaseNotesCacheStore
@@ -31,6 +40,8 @@ import java.util.concurrent.Executors
 class MainUpdateSession(
     private val activity: LocalizedActivity,
     private val onHomeUpdateStateChanged: Runnable,
+    private val onAppearanceChanged: Runnable = Runnable {},
+    private val onConfigurationChanged: Runnable = Runnable {},
 ) {
     private val updateCoordinator = UpdateCoordinator()
     private val downloadExecutor = StartupUpdateDownloadExecutor(
@@ -72,6 +83,23 @@ class MainUpdateSession(
             releaseNotesController,
         )
     }
+    private val onboardingCoordinator by lazy {
+        OnboardingCoordinator(
+            OnboardingStore(
+                activity.getSharedPreferences(OnboardingStore.PREFS_NAME, 0),
+                OnboardingCoordinator.REQUIRED_TERMS_VERSION,
+                legacyTermsAccepted = startupDisclaimerStore(activity).isAccepted,
+            ),
+        )
+    }
+    private val onboardingConfiguration = OnboardingConfigurationPresenter(activity)
+
+    private var onOnboardingCompleted: (() -> Unit)? = null
+    private var onboardingVisible = false
+
+    fun setOnboardingCompletedHandler(handler: () -> Unit) {
+        onOnboardingCompleted = handler
+    }
 
     @Volatile
     var homeUpdateUiState: HomeUpdateUiState = HomeUpdateUiState.UP_TO_DATE
@@ -99,15 +127,54 @@ class MainUpdateSession(
         return true
     }
 
-    fun maybeShowStartupDisclaimerDialog(): Boolean {
-        val store = startupDisclaimerStore(activity)
-        return promptCoordinator.maybeShowStartupDisclaimerDialog(
-            object : UpdatePromptDialogCoordinator.StartupDisclaimerAcceptance {
-                override fun isAccepted(): Boolean = store.isAccepted
-                override fun markAccepted(): Boolean = store.setAccepted(true)
-            },
-            ::maybeCheckForUpdatesOnStartup,
+    fun restartOnboarding() {
+        onboardingCoordinator.restart()
+        OnboardingGate.clearRequest()
+        maybeShowOnboarding()
+    }
+
+    fun maybeShowOnboarding(): Boolean {
+        if (onboardingCoordinator.requiredStep() == null) {
+            onboardingVisible = false
+            return false
+        }
+        onboardingVisible = true
+        return OnboardingGate.show(
+            OnboardingGate.Request(
+                owner = onboardingCoordinator,
+                currentStep = { checkNotNull(onboardingCoordinator.requiredStep()) },
+                acceptTerms = onboardingCoordinator::acceptTerms,
+                persistStep = onboardingCoordinator::persistStep,
+                refreshRoot = { onResult ->
+                    onboardingCoordinator.refreshRootAsync { result ->
+                        activity.runOnUiThread {
+                            onResult(result)
+                        }
+                    }
+                },
+                isAppListAccessAvailable = ::hasAppListAccess,
+                requestAppListAccess = ::requestAppListAccess,
+                isUsageAccessAvailable = { ForegroundAppResolver.hasUsageAccess(activity) },
+                requestUsageAccess = ::requestUsageAccess,
+                configuration = onboardingConfiguration,
+                onAppearanceChanged = { onAppearanceChanged.run() },
+                onConfigurationChanged = { onConfigurationChanged.run() },
+                complete = onboardingCoordinator::complete,
+                onCompleted = {
+                    onboardingVisible = false
+                    OnboardingGate.clearRequest()
+                    DpisApplication.onOnboardingCompleted()
+                    onOnboardingCompleted?.invoke() ?: maybeCheckForUpdatesOnStartup()
+                },
+                onBack = { activity.finish() },
+            ),
         )
+    }
+
+
+    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        if (!onboardingVisible) return false
+        return onboardingConfiguration.onActivityResult(requestCode, resultCode, data)
     }
 
     fun maybeCheckForUpdatesOnStartup() {
@@ -123,6 +190,35 @@ class MainUpdateSession(
 
     fun shutdown() {
         downloadCoordinator.shutdown()
+    }
+
+    private fun hasAppListAccess(): Boolean {
+        if (!isAppListPermissionDeclared()) return true
+        return activity.checkPermission(
+            InstalledAppsLoadSession.XIAOMI_GET_INSTALLED_APPS_PERMISSION,
+            Process.myPid(),
+            Process.myUid(),
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestAppListAccess() {
+        if (!isAppListPermissionDeclared() || hasAppListAccess()) return
+        activity.requestPermissions(
+            arrayOf(InstalledAppsLoadSession.XIAOMI_GET_INSTALLED_APPS_PERMISSION),
+            InstalledAppsLoadSession.REQUEST_XIAOMI_GET_INSTALLED_APPS,
+        )
+    }
+
+    private fun isAppListPermissionDeclared(): Boolean = runCatching {
+        activity.packageManager.getPermissionInfo(
+            InstalledAppsLoadSession.XIAOMI_GET_INSTALLED_APPS_PERMISSION,
+            0,
+        )
+        true
+    }.getOrDefault(false)
+
+    private fun requestUsageAccess() {
+        activity.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
     }
 
     private fun applyHomeUpdateState(state: HomeUpdateUiState?) {

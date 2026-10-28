@@ -11,6 +11,7 @@ import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.runtime.ProcessScopedInstallGate
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hyperos.HyperOsRustProcessHookInstaller
+import com.dpis.module.runtime.systemserver.diagnostics.HookLog
 import com.dpis.module.runtime.systemserver.hook.HookCallback
 import com.dpis.module.runtime.systemserver.hook.HookCatalog
 import com.dpis.module.runtime.systemserver.hook.HookSpec
@@ -43,6 +44,7 @@ class HookInstaller private constructor() {
             synchronized(HookInstaller::class.java) {
                 installedPid = -1
                 installedEntries.clear()
+                HookLog.setBridgeLogger(null)
             }
         }
 
@@ -74,6 +76,9 @@ class HookInstaller private constructor() {
                         HookDiagnostics.buildInstallSkipLog("already-installed-synchronized"),
                     )
                     return InstallResult(0, 0, true)
+                }
+                HookLog.setBridgeLogger { message ->
+                    xposed.log(android.util.Log.INFO, DpisLog.TAG, "DPIS $message")
                 }
                 HookDiagnostics.recordPending(
                     HookDiagnostics.buildInstallEnterLog(store == null, installedPid != -1),
@@ -246,8 +251,15 @@ class HookInstaller private constructor() {
                                 .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                             hookSpec.hookIdFor(method),
                         ).intercept { chain ->
+                            HookLog.logHookDispatch(hookSpec.entryName, method.name)
                             HookCallback.handle(chain, source, hookSpec.entryName)
                         }
+                        val selectedLog = HookDiagnostics.buildHookMethodSelectedLog(
+                            hookSpec.entryName,
+                            method.toGenericString(),
+                        )
+                        HookLog.logHookSelection(selectedLog)
+                        DpisLog.i(selectedLog)
                         hooked = true
                     }
                     if (hooked) break
@@ -308,8 +320,18 @@ class HookInstaller private constructor() {
                         .setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE),
                     hookSpec.hookIdFor(constructor),
                 ).intercept { chain ->
+                    HookLog.logHookConstructorDispatch(
+                        hookSpec.entryName,
+                        constructor.toGenericString(),
+                    )
                     LaunchActivityItemApply.handleConstructor(source, chain)
                 }
+                val selectedLog = HookDiagnostics.buildHookConstructorSelectedLog(
+                    hookSpec.entryName,
+                    constructor.toGenericString(),
+                )
+                HookLog.logHookSelection(selectedLog)
+                DpisLog.i(selectedLog)
                 hooked = true
             }
             if (hooked) {

@@ -31,6 +31,7 @@ interface HomeWorkspaceActions {
     fun openTemplateWorkspace()
     fun openModeHelp()
     fun openDonate()
+    fun refreshRootAccess()
     fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout)
 
     companion object {
@@ -42,6 +43,7 @@ interface HomeWorkspaceActions {
             override fun openTemplateWorkspace() = Unit
             override fun openModeHelp() = Unit
             override fun openDonate() = Unit
+            override fun refreshRootAccess() = Unit
             override fun saveHomeWorkspaceLayout(layout: HomeWorkspaceLayout) = Unit
         }
     }

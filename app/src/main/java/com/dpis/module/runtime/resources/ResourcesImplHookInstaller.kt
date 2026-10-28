@@ -20,6 +20,7 @@ object ResourcesImplHookInstaller {
     @JvmStatic
     fun resetForHotReload() {
         hookInstalled = false
+        ResourcesMetricsReadReuse.clearForTest()
     }
 
     @JvmStatic

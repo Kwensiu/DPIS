@@ -63,6 +63,24 @@ class HookDiagnosticsTest {
     }
 
     @Test
+    fun formatsSelectedHookSignatures() {
+        assertEquals(
+            "system_server hook method selected: entry=activity-start, method=public void com.android.server.wm.ActivityStarter.execute()",
+            HookDiagnostics.buildHookMethodSelectedLog(
+                "activity-start",
+                "public void com.android.server.wm.ActivityStarter.execute()",
+            ),
+        )
+        assertEquals(
+            "system_server hook constructor selected: entry=launch-activity-item, constructor=public android.app.servertransaction.LaunchActivityItem(android.content.Intent)",
+            HookDiagnostics.buildHookConstructorSelectedLog(
+                "launch-activity-item",
+                "public android.app.servertransaction.LaunchActivityItem(android.content.Intent)",
+            ),
+        )
+    }
+
+    @Test
     fun formatsPackageResolutionAndInterceptDiagnostics() {
         assertEquals(
             "system_server package unresolved: entry=activity-start, this=com.android.server.wm.ActivityStarter, argClasses=0:com.android.server.wm.ActivityStarter\$Request, argPreview=0:Request{intent=Intent { cmp=com.max.xiaoheihe/.SplashActivity }}, textPackages=com.max.xiaoheihe",

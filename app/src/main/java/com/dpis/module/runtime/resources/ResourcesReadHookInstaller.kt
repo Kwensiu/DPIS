@@ -13,6 +13,7 @@ import com.dpis.module.hooks.HookRuntimePolicy
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.hookapi.ModernApiCapabilitiesResolver
 import com.dpis.module.runtime.probe.RuntimeHotPathEvidenceSampler
+import com.dpis.module.viewport.AppProcessDensityProjection
 import com.dpis.module.viewport.RelativeViewportOwnership
 import com.dpis.module.viewport.ResourcesMetricsReadReuse
 import com.dpis.module.viewport.ViewportConfigurationScope
@@ -179,6 +180,16 @@ object ResourcesReadHookInstaller {
                         return@Hooker result
                     }
                     val thisObject = chain.thisObject
+                    if (viewportReadHandlingEnabled &&
+                        AppProcessDensityProjection.applyConfiguration(
+                            result,
+                            packageName,
+                            store,
+                            runtimePolicy,
+                        )
+                    ) {
+                        return@Hooker result
+                    }
                     applyConfigurationOverride(
                         if (thisObject is Resources) thisObject else null,
                         result, packageName, store,
@@ -206,6 +217,9 @@ object ResourcesReadHookInstaller {
                     }
                     val thisObject = chain.thisObject
                     if (thisObject !is Resources) {
+                        return@Hooker result
+                    }
+                    if (AppProcessDensityProjection.applyMetrics(result, packageName, store)) {
                         return@Hooker result
                     }
                     INTERNAL_UPDATE.set(true)
@@ -244,6 +258,7 @@ object ResourcesReadHookInstaller {
                                 packageName,
                                 "resources_read_display_metrics_override",
                                 durationNs,
+                                if (reusedStableRead) "fast_path_reused_metrics" else "slow_path_resolve",
                             )
                             if (reusedStableRead) {
                                 recordReusedDisplayMetricsSkip(packageName)

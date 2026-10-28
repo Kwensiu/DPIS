@@ -70,6 +70,60 @@ object ViewportRuntimeMarkerProbe {
     }
 
     @JvmStatic
+    fun observeAppProcessConfiguration(
+        packageName: String?,
+        targetSpec: ViewportTargetSpec?,
+        sourceTag: String?,
+        configuration: Configuration?,
+        metricsWidthPixels: Int = -1,
+        metricsHeightPixels: Int = -1,
+    ) {
+        if (!BuildConfig.DEBUG || packageName == null || targetSpec == null ||
+            !targetSpec.isEnabled() || configuration == null
+        ) return
+        val now = RuntimeClock.crossProcessMarkerMillis()
+        val marker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            targetSpec.fingerprint(),
+            now,
+        )
+        val scope = if (ViewportConfigurationScope.isWindowScoped(configuration))
+            ViewportSourceSnapshot.SCOPE_WINDOW
+        else
+            ViewportSourceSnapshot.SCOPE_DISPLAY
+        val currentSignature = ViewportRuntimeMarkerBridge.configurationSignature(
+            configuration.screenWidthDp,
+            configuration.screenHeightDp,
+            configuration.smallestScreenWidthDp,
+            configuration.densityDpi,
+            scope,
+        )
+        val record = marker.record
+        val matches = record != null && currentSignature == record.resultSignature
+        val detail = "source=$sourceTag, stage=configuration_consumption" +
+                ", marker=${if (marker.hit) "hit" else "miss"}" +
+                ", markerAgeMs=${marker.ageMillis}" +
+                ", markerElapsedMs=${record?.elapsedRealtimeMillis ?: -1}" +
+                ", markerProvenance=${record?.provenance ?: "none"}" +
+                ", currentSig=$currentSignature" +
+                ", resultSig=${record?.resultSignature ?: "none"}" +
+                ", matchesResult=$matches" +
+                ", config=${configuration.screenWidthDp}x${configuration.screenHeightDp}@${configuration.densityDpi}" +
+                ", metrics=${metricsWidthPixels}x${metricsHeightPixels}"
+        if (logAtMostEvery(
+                "consume|$packageName|$sourceTag|$currentSignature|${record?.resultSignature}",
+            "DPIS_VIEWPORT_MARKER app consume: $detail",
+        )) {
+            RuntimeHotPathEvents.probe(
+                packageName,
+                "viewport",
+                "viewport_marker_app_consume",
+                detail,
+            )
+        }
+    }
+
+    @JvmStatic
     fun observeAppProcessProbe(packageName: String, targetSmallestWidthDp: Int, sourceTag: String) =
         observeAppProcessProbe(
             packageName,

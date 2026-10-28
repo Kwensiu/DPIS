@@ -1,9 +1,6 @@
 package com.dpis.module.config
 
 import android.content.SharedPreferences
-import com.dpis.module.config.ConfigPreferenceKeys
-import com.dpis.module.config.LegacySharedPreferencesBridge
-import com.dpis.module.config.PackageConfigStore
 import java.io.File
 import java.io.IOException
 
@@ -12,24 +9,67 @@ import java.io.IOException
  * package. The configuration implementation now lives with the config domain.
  */
 class DpisConfigStore : PackageConfigStore {
-    constructor(preferences: SharedPreferences) : super(preferences)
+    constructor(preferences: SharedPreferences) : super(preferences, null, null, null, 0)
 
     internal constructor(
         preferences: SharedPreferences,
         legacySharedPrefsMirrorFile: File?
-    ) : super(preferences, legacySharedPrefsMirrorFile)
+    ) : super(preferences, null, legacySharedPrefsMirrorFile, null, 0)
+
+    internal constructor(
+        preferences: SharedPreferences,
+        legacySharedPrefsMirrorFile: File?,
+        packageConfigOwnerUserId: Int,
+    ) : super(
+        preferences,
+        null,
+        legacySharedPrefsMirrorFile,
+        preferences,
+        packageConfigOwnerUserId,
+    )
+
+    internal constructor(
+        preferences: SharedPreferences,
+        packageConfigOwnerUserId: Int,
+    ) : super(
+        preferences,
+        null,
+        null,
+        preferences,
+        packageConfigOwnerUserId,
+    )
 
     internal constructor(
         preferences: SharedPreferences,
         fallbackPreferences: SharedPreferences?
-    ) : super(preferences, fallbackPreferences)
+    ) : super(preferences, fallbackPreferences, null, null, 0)
 
     internal constructor(
         preferences: SharedPreferences,
         fallbackPreferences: SharedPreferences?,
         legacySharedPrefsMirrorFile: File?,
         localOnlyPreferences: SharedPreferences?
-    ) : super(preferences, fallbackPreferences, legacySharedPrefsMirrorFile, localOnlyPreferences)
+    ) : super(
+        preferences,
+        fallbackPreferences,
+        legacySharedPrefsMirrorFile,
+        localOnlyPreferences,
+        0
+    )
+
+    internal constructor(
+        preferences: SharedPreferences,
+        fallbackPreferences: SharedPreferences?,
+        legacySharedPrefsMirrorFile: File?,
+        localOnlyPreferences: SharedPreferences?,
+        packageConfigOwnerUserId: Int,
+    ) : super(
+        preferences,
+        fallbackPreferences,
+        legacySharedPrefsMirrorFile,
+        localOnlyPreferences,
+        packageConfigOwnerUserId,
+    )
 
     companion object {
         const val GROUP: String = "dpi_config"

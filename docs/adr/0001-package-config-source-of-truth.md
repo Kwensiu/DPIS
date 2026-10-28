@@ -1,4 +1,4 @@
-# ADR 0001: Package-Aggregated Config Source Of Truth
+# ADR 0001: User-Scoped Package Config Source Of Truth
 
 ## Status
 
@@ -6,45 +6,43 @@ Accepted
 
 ## Context
 
-DPIS currently stores per-app configuration across scattered preference keys
-such as `viewport.<package>.*`, `font.<package>.*`, `dpis.<package>.*`,
-hook-domain keys, app-specific keys, and the legacy `target_packages` index.
-
-This structure makes package-state semantics ambiguous:
-
-- user-visible configured packages
-- runtime-target packages
-- stored package preferences
-- draft-only or mode-only package preferences
-- migration residue or contradictory old state
-
-The ambiguity caused inconsistent UI behavior such as configured-app counts and
-configured-app list membership diverging for the same package set.
+DPIS package configuration needs a stable identity across the app list,
+backup/restore, runtime delivery, and multi-user Android environments. A package
+name alone is insufficient when the same application is installed in multiple
+Android users: those installations may require different DPIS settings.
 
 ## Decision
 
-DPIS will converge on one sparse, package-aggregated config model keyed by
-package name.
+DPIS will converge on one sparse package config model keyed by
+`(packageName, userId)`.
 
-- The aggregated package model becomes the long-term source of truth for package
-  UI, backup and restore, runtime snapshots, and counting rules.
+- The pair is the stable identity for UI, backup/restore, runtime snapshots,
+  and configured-app counting.
 - `target_packages` remains migration evidence only and must not continue as a
   live source-of-truth index.
 - The model is sparse: only present blocks and values are stored for a package.
 - Optional package-specific blocks exist only when needed.
 - Minimal display metadata such as last known app label may be stored so
   uninstalled configured packages remain understandable.
+- Current install state is derived from the package manager for the same user,
+  not treated as a cached storage fact.
 
 DPIS package-state terminology is explicitly split:
 
-- `User-visible configured package`: a package with any saved user-preserved
-  package-level state. It is the inclusion rule for the home configured-apps
-  card and the Configured Apps list.
+- `User-configured package`: a package identity with saved user-preserved
+  package-level state, including uninstalled package identities.
+- `Scope-injected package`: an installed package identity in the known active
+  LSPosed scope for that Android user. This is injection status, not saved
+  package configuration.
+- The home configured-apps card and Configured Apps list show the union of
+  user-configured and scope-injected package identities. Scope-only entries
+  must be labeled as injected without saved values and must not create stored
+  package config.
 - `Stored package state`: any persisted package-local state.
 - `Runtime-target package`: package state that should affect runtime hooks or
   runtime snapshots.
 
-User-visible configured packages include numeric values, mode-only state,
+User-configured packages include numeric values, mode-only state,
 target-type-only state, hook-domain-only state, app-specific config, explicit
 `dpisEnabled=false` overrides, and saved configuration for apps that are no
 longer installed. Draft-only config-sheet state is transient and does not count
@@ -68,9 +66,9 @@ with no displayable numeric value.
 
 ### Positive
 
-- One package identity and one package object become the basis for UI and
-  runtime reasoning.
-- Backup and restore behavior becomes easier to interpret and migrate.
+- UI, backup/restore, runtime delivery, migration, and package listing share
+  one explicit Android user identity.
+- The same app can have independent settings in primary and cloned profiles.
 - Future cleanup of legacy scattered keys becomes tractable.
 - Mode-only and uninstalled package states can be represented intentionally
   instead of inferred ad hoc from raw keys.
@@ -80,7 +78,8 @@ with no displayable numeric value.
 - Migration from old scattered keys must be implemented carefully.
 - A repository or adapter layer is needed before the storage backend can be
   switched safely.
-- Existing code that reads scattered keys directly must be consolidated.
+- Existing package-only settings require a carefully defined migration into
+  user-scoped identities.
 
 ## Implementation Direction
 

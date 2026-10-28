@@ -56,9 +56,17 @@ class ProcessPerformance {
      * is not described only by its first samples.
      */
     @Synchronized
-    fun recordBodySample(route: String?, durationNs: Long, stride: Int) {
+    fun recordBodySample(
+        route: String?,
+        durationNs: Long,
+        stride: Int,
+        path: String? = null,
+    ) {
         val stats = stats(route)
         stats.calls++
+        if (!path.isNullOrBlank()) {
+            stats.pathCounts.merge(path, 1L) { current, added -> current + added }
+        }
         stats.sampleStride = stride
         val micros = durationMicros(durationNs)
         stats.maxUs = maxOf(stats.maxUs, micros)
@@ -89,6 +97,7 @@ class ProcessPerformance {
                 samples = ArrayList(stats.samples),
                 maxUs = stats.maxUs,
                 sampleStride = stats.sampleStride,
+                pathCounts = LinkedHashMap(stats.pathCounts),
             )
         }
         return copy
@@ -108,7 +117,10 @@ class ProcessPerformance {
         samples: List<Long>,
         @JvmField val maxUs: Long,
         @JvmField val sampleStride: Int,
+        pathCounts: Map<String, Long>,
     ) {
+        @JvmField
+        val pathCounts: Map<String, Long> = LinkedHashMap(pathCounts)
         @JvmField
         val measuredCalls: Long
 
@@ -149,6 +161,7 @@ class ProcessPerformance {
         val samples = ArrayList<Long>()
         var maxUs = 0L
         var sampleStride = 0
+        val pathCounts = LinkedHashMap<String, Long>()
     }
 
     private companion object {

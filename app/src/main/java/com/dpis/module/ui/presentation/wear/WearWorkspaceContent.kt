@@ -670,8 +670,6 @@ internal fun WearSettingsWorkspaceContent(
     onThemeSettings: () -> Unit,
     onLanguage: () -> Unit,
     onBackup: () -> Unit,
-    onConfirmImport: () -> Unit,
-    onDismissImport: () -> Unit,
     onClearCache: () -> Unit,
     onAbout: () -> Unit
 ) {
@@ -721,14 +719,11 @@ internal fun WearSettingsWorkspaceContent(
     }
     SettingsWorkspaceConfirmDialogs(
         hideLauncherVisible = hideLauncherVisible,
-        pendingImport = state?.pendingImportUri != null,
         onDismissHideLauncher = { hideLauncherVisible = false },
         onConfirmHideLauncher = {
             hideLauncherVisible = false
             onLauncherHiddenChanged(true)
         },
-        onDismissImport = onDismissImport,
-        onConfirmImport = onConfirmImport,
     )
 }
 

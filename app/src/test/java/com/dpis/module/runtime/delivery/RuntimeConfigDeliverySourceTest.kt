@@ -58,6 +58,45 @@ class RuntimeConfigDeliverySourceTest {
     }
 
     @Test
+    fun packageConfigMutationEntrypointsUseReadinessBoundaries() {
+        val mainWiring = read(
+            "src/main/java/com/dpis/module/ui/presentation/MainHostWiringSession.kt",
+        )
+        val templateWorkspace = read(
+            "src/main/java/com/dpis/module/templates/presentation/TemplateWorkspaceCoordinator.kt",
+        )
+        val backupHost = read(
+            "src/main/java/com/dpis/module/backup/presentation/ConfigBackupHost.kt",
+        )
+
+        assertTrue(mainWiring.contains("DpisApplication::isXposedConfigReady"))
+        assertTrue(templateWorkspace.contains("DpisApplication::isXposedConfigReady"))
+        assertTrue(backupHost.contains("private fun runRestoreIfReady("))
+        assertTrue(backupHost.contains("ConfigRestoreReadiness.runIfReady(DpisApplication::isXposedConfigReady, restore)"))
+        assertTrue(backupHost.contains("port.allowRestoreBeforeRuntimeReady()"))
+        assertTrue(backupHost.contains("coordinator(store).restore(uri)"))
+    }
+
+    @Test
+    fun serviceBindingPublishesConfigAfterTermsEvenWithoutRoot() {
+        val application = read("src/main/java/com/dpis/module/DpisApplication.kt")
+        val start = application.indexOf("override fun onServiceBind(")
+        val end = application.indexOf("override fun onServiceDied(", start)
+        val serviceBind = application.substring(start, end)
+
+        assertTrue(serviceBind.contains("ConfigStoreFactory.createLocalModuleConfigStore(this)"))
+        assertTrue(serviceBind.contains("configStore = localStore"))
+        assertTrue(serviceBind.contains("if (hasCompletedOnboarding())"))
+        assertTrue(serviceBind.contains("initializeRootRuntime(localStore)"))
+        val rootRuntime = application.substringAfter("private fun initializeRootRuntime(")
+        val publish = rootRuntime.indexOf("publishRuntimeConfig(store, xposedService)")
+        val rootGate =
+            rootRuntime.indexOf("RootAccessProbe.cachedResult().status != RootAccessProbe.Status.AVAILABLE")
+        assertTrue(publish >= 0)
+        assertTrue(rootGate > publish)
+    }
+
+    @Test
     fun activeFontLibraryStoreUsesLocalPreferencesOnly() {
         val factory = read("src/main/java/com/dpis/module/runtime/ConfigStoreFactory.kt")
         val activeFontFactory = activeFontLibraryFactoryBlock(factory)

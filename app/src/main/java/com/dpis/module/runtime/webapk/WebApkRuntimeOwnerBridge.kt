@@ -3,12 +3,14 @@ package com.dpis.module.runtime.webapk
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.os.Process
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.config.RuntimePropertyConfigPreferences
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.runtime.hookapi.ModernApiCapabilities
 import com.dpis.module.runtime.resources.ResourcesImplHookInstaller
 import com.dpis.module.runtime.resources.ResourcesManagerHookInstaller
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import io.github.libxposed.api.XposedInterface
 import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
@@ -80,13 +82,17 @@ class WebApkRuntimeOwnerBridge private constructor() {
                     !store.getTargetTypefaceId(owner).isNullOrBlank()
         }
 
-        private fun ownerStore(owner: String, fallbackStore: DpisConfigStore?): DpisConfigStore =
-            DpisConfigStore(
-                RuntimePropertyConfigPreferences(
-                    owner,
-                    RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET,
-                ),
+        private fun ownerStore(owner: String, fallbackStore: DpisConfigStore?): DpisConfigStore {
+            val ownerUserId = fallbackStore?.packageConfigOwnerUserId()
+                ?: PackageUidResolver.userIdFromUid(Process.myUid())
+                ?: throw IllegalStateException("Cannot resolve WebAPK runtime owner user")
+            val runtimePreferences = RuntimePropertyConfigPreferences(
+                owner,
+                RuntimePropertyConfigPreferences.AutoViewportRuntimeRoute.ANY_ENABLED_TARGET,
+                ownerUserId,
             )
+            return DpisConfigStore(runtimePreferences, ownerUserId)
+        }
 
         @JvmStatic
         fun installLifecycleHooks(

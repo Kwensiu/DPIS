@@ -2,6 +2,7 @@ package com.dpis.module.runtime.systemserver.hook
 
 import android.content.res.Configuration
 import android.graphics.Rect
+import com.dpis.module.config.PackageIdentity
 import com.dpis.module.config.PerAppDisplayConfig
 import com.dpis.module.config.PerAppDisplayConfigSource
 import com.dpis.module.diagnostics.DpisLog
@@ -9,12 +10,16 @@ import com.dpis.module.runtime.systemserver.HookDiagnostics
 import com.dpis.module.runtime.systemserver.MutationPolicy
 import com.dpis.module.runtime.systemserver.diagnostics.HookLog
 import com.dpis.module.runtime.systemserver.diagnostics.HookLogGate
+import com.dpis.module.runtime.systemserver.diagnostics.MutationDiagnosticPolicy
 import com.dpis.module.runtime.systemserver.mutation.DisplayManagerInfo
 import com.dpis.module.runtime.systemserver.mutation.EnvironmentWrite
+import com.dpis.module.runtime.systemserver.mutation.MutationField
 import com.dpis.module.runtime.systemserver.mutation.RelayoutWindow
 import com.dpis.module.runtime.systemserver.reflection.SnapshotProbe
 import com.dpis.module.runtime.systemserver.selection.ConfigSelection
 import com.dpis.module.runtime.systemserver.selection.ConfiguredPackage
+import com.dpis.module.runtime.systemserver.selection.PackageNames
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.runtime.systemserver.viewport.DisplayPixels
 import com.dpis.module.runtime.systemserver.viewport.RelativeViewport
 import com.dpis.module.viewport.PerAppDisplayEnvironment
@@ -45,15 +50,22 @@ object HookCallback {
         try {
             val thisObject = chain.thisObject
             val args = chain.args
-            if (!source.isSystemServerHooksEnabled()) {
+            val loggingEnabled = DpisLog.isLoggingEnabled()
+            val hooksEnabled = source.isSystemServerHooksEnabled()
+            if (loggingEnabled) {
+                HookLog.logCallbackEntry(entryName, loggingEnabled, hooksEnabled)
+            }
+            if (!hooksEnabled) {
                 return chain.proceed()
             }
             if (EntryRoute.isDisplayManagerInfo(entryName)) {
+                if (loggingEnabled) {
+                    HookLog.logDisplayManagerBranch(entryName)
+                }
                 val displayManagerResult = chain.proceed()
                 DisplayManagerInfo.apply(source, entryName, displayManagerResult)
                 return displayManagerResult
             }
-            val loggingEnabled = DpisLog.isLoggingEnabled()
 
             @Suppress("UNCHECKED_CAST")
             val currentConfiguredPackages =
@@ -68,20 +80,72 @@ object HookCallback {
                 currentConfiguredPackages,
             )
             if (!shouldInspectHotEntry) {
+                if (loggingEnabled) {
+                    HookLog.logCallbackStage(
+                        entryName,
+                        "inspection_skip",
+                        PackageNames.find(contextObject, contextArgs.orEmpty()),
+                        null,
+                        "reason=hot_entry_filter",
+                    )
+                }
                 return chain.proceed()
             }
             if (loggingEnabled && HookLogGate.shouldLogInterceptEnter(entryName)) {
                 HookLog.logInterceptEnter(entryName, contextObject, contextArgs)
             }
+            var resolvedUserId: Int? = null
             val resolvedPackage = ConfiguredPackage.resolveForEntry(
                 entryName,
                 contextObject,
                 contextArgs,
-                ConfiguredPackage.Lookup { packageName ->
-                    ConfigSelection.selectConfigForSystemServerEntry(
-                        entryName,
-                        source.get(packageName),
+                ConfiguredPackage.Lookup { candidatePackage ->
+                    val packageName = candidatePackage
+                    if (packageName == null) {
+                        if (loggingEnabled) {
+                            HookLog.logIdentityMissing(entryName, null, "candidate_package_missing")
+                        }
+                        return@Lookup null
+                    }
+                    val evidence = PackageNames.findUidEvidence(
+                        packageName,
+                        contextObject,
+                        contextArgs.orEmpty(),
                     )
+                    if (evidence == null) {
+                        if (loggingEnabled) {
+                            HookLog.logIdentityMissing(entryName, packageName, "uid_missing")
+                        }
+                        return@Lookup null
+                    }
+                    val userId = PackageUidResolver.userIdFromUid(evidence.uid) ?: run {
+                        if (loggingEnabled) {
+                            HookLog.logIdentityMissing(entryName, packageName, "user_unresolved")
+                        }
+                        return@Lookup null
+                    }
+                    resolvedUserId = userId
+                    if (loggingEnabled) {
+                        HookLog.logIdentityResolved(
+                            entryName,
+                            packageName,
+                            evidence.uid,
+                            userId,
+                            evidence.source,
+                        )
+                    }
+                    val lookup = source.inspect(PackageIdentity(packageName, userId))
+                    if (loggingEnabled) {
+                        HookLog.logSourceLookup(entryName, lookup)
+                    }
+                    val selected = ConfigSelection.selectConfigForSystemServerEntry(
+                        entryName,
+                        lookup.config,
+                    )
+                    if (selected == null && lookup.config != null && loggingEnabled) {
+                        HookLog.logPolicySkip(entryName, packageName, userId)
+                    }
+                    selected
                 },
             )
             val packageName = resolvedPackage.packageName
@@ -103,6 +167,7 @@ object HookCallback {
                 }
                 return chain.proceed()
             }
+            val targetUserId = resolvedUserId ?: return chain.proceed()
             if (loggingEnabled && resolvedPackage.fallbackFromPackage != null) {
                 HookLog.logConfigFallback(
                     entryName,
@@ -137,6 +202,7 @@ object HookCallback {
                     before.displayInfo,
                     applyEnvironment,
                     config,
+                    targetUserId,
                 )
                 changed = changed or EnvironmentWrite.applyConfigDispatch(
                     entryName,
@@ -191,37 +257,60 @@ object HookCallback {
                     effectiveEnvironment,
                     config,
                 )
-                if (EnvironmentWrite.apply(
-                        entryName,
-                        after.configuration,
-                        after.frame,
-                        after.displayInfo,
-                        applyEnvironment,
-                        config,
-                    )
-                ) {
-                    logViewportMarkerProbe(entryName, packageName, after, applyEnvironment, config)
-                    if (loggingEnabled) {
-                        val afterApplySummary = HookDiagnostics.describeState(
-                            after.configuration,
-                            after.frame,
+                val viewportAllowed = applyEnvironment != null &&
+                        ConfigSelection.hasSystemServerViewportOverride(config) &&
+                        MutationPolicy.shouldApplyMutationField(
+                            entryName, MutationField.VIEWPORT,
                         )
-                        val message = HookDiagnostics.buildApplyLog(
-                            entryName,
-                            packageName,
-                            beforeApplySummary,
-                            afterApplySummary,
+                val fontAllowed = ConfigSelection.hasSystemServerFontOverride(config) &&
+                        MutationPolicy.shouldApplyMutationField(
+                            entryName, MutationField.FONT_SCALE,
                         )
-                        HookLog.logDiagnosticIfChanged(
-                            "apply|$entryName|$packageName",
-                            message,
-                            HookLog.resolveLogMinIntervalMs(entryName),
-                            packageName,
-                            "mutation_applied",
-                        )
+                val attemptedFields = buildList {
+                    if (viewportAllowed) add("viewport")
+                    if (fontAllowed) add("font_scale")
+                }.ifEmpty {
+                    if (applyEnvironment != null &&
+                        ConfigSelection.hasSystemServerViewportOverride(config)
+                    ) {
+                        listOf("viewport_policy_denied")
+                    } else if (ConfigSelection.hasSystemServerFontOverride(config)) {
+                        listOf("font_scale_policy_denied")
+                    } else {
+                        listOf("none")
                     }
-                } else if (loggingEnabled) {
-                    HookLog.logApplySkipped(entryName, packageName, beforeApplySummary)
+                }.joinToString("|")
+                val mutationAllowed = viewportAllowed || fontAllowed
+                val mutationApplied = EnvironmentWrite.apply(
+                    entryName,
+                    after.configuration,
+                    after.frame,
+                    after.displayInfo,
+                    applyEnvironment,
+                    config,
+                    targetUserId,
+                )
+                val hasMutationTarget = applyEnvironment != null ||
+                        ConfigSelection.hasSystemServerFontOverride(config)
+                val status = MutationDiagnosticPolicy.outcome(
+                    hasMutationTarget,
+                    mutationAllowed,
+                    mutationApplied,
+                ).name.lowercase()
+                if (loggingEnabled) {
+                    HookLog.logMutationOutcome(
+                        entryName,
+                        packageName,
+                        resolvedUserId ?: -1,
+                        status,
+                        attemptedFields,
+                        beforeApplySummary,
+                        HookDiagnostics.describeState(after.configuration, after.frame),
+                        HookLog.describeEnvironment(applyEnvironment),
+                    )
+                }
+                if (mutationApplied) {
+                    logViewportMarkerProbe(entryName, packageName, after, applyEnvironment, config)
                 }
             }
             if (loggingEnabled) {

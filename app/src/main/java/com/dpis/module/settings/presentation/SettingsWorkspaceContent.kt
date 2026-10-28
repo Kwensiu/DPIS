@@ -1,70 +1,47 @@
 package com.dpis.module.settings.presentation
 
-import android.view.HapticFeedbackConstants
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.dpis.module.R
 import com.dpis.module.BuildConfig
-import com.dpis.module.ui.presentation.design.*
-import com.dpis.module.ui.presentation.dialogs.*
-import com.dpis.module.ui.presentation.editor.*
-import com.dpis.module.ui.presentation.interop.*
-import com.dpis.module.ui.presentation.wear.*
-import com.dpis.module.ui.presentation.workspace.*
-import com.dpis.module.settings.SettingsUiState
-import com.dpis.module.settings.AppUiScaleManager
-import com.dpis.module.settings.presentation.SettingsWorkspaceConfirmDialogs
-import com.dpis.module.settings.AppLocaleManager
-import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.R
 import com.dpis.module.about.TranslationContributorCatalog
-import kotlin.math.roundToInt
+import com.dpis.module.settings.AppLocaleManager
+import com.dpis.module.settings.SettingsUiState
+import com.dpis.module.settings.ThemeModeStore
+import com.dpis.module.ui.presentation.design.LocalSpacing
+import com.dpis.module.ui.presentation.design.ThemeSwatchPreviewCache
+import com.dpis.module.ui.presentation.design.rememberClickAction
+import com.dpis.module.ui.presentation.design.rememberClickValueAction
+import com.dpis.module.ui.presentation.editor.DpisSwitch
+import com.dpis.module.ui.presentation.workspace.AnimatedConditionalItem
+import com.dpis.module.ui.presentation.workspace.PageBarBehavior
+import com.dpis.module.ui.presentation.workspace.PageScaffold
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
+import com.dpis.module.ui.presentation.workspace.PageSectionLabel
+import com.dpis.module.ui.presentation.workspace.dpisSegmentedShapes
+import com.dpis.module.ui.presentation.workspace.rememberRestorableLazyListState
+import com.dpis.module.ui.presentation.workspace.segmentedRowColors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Compose rendering only; all settings workflows execute through Java-owned actions. */
 @Composable
@@ -83,9 +60,8 @@ fun SettingsWorkspaceContent(
     onThemeSettings: () -> Unit,
     onLanguageSelected: (String) -> Unit,
     onBackup: () -> Unit,
-    onConfirmImport: () -> Unit,
-    onDismissImport: () -> Unit,
     onClearCache: () -> Unit,
+    onRestartOnboarding: () -> Unit,
     onAbout: () -> Unit,
     onDonate: () -> Unit,
     scrollStore: PageScrollPositionStore,
@@ -279,7 +255,7 @@ fun SettingsWorkspaceContent(
                     R.string.settings_config_backup_label,
                     R.string.settings_config_backup_hint,
                     state?.storeAvailable == true,
-                    index = 0, total = 2,
+                    index = 0, total = 3,
                     onBackup
                 )
                 SettingsEntry(
@@ -287,8 +263,16 @@ fun SettingsWorkspaceContent(
                     R.string.settings_clear_cache_label,
                     state?.cacheUsage ?: stringResource(R.string.settings_clear_cache_size, "0 B"),
                     enabled = state?.storeAvailable == true && state.cacheClearInProgress != true,
-                    index = 1, total = 2,
+                    index = 1, total = 3,
                     onClearCache
+                )
+                SettingsEntry(
+                    R.drawable.ic_refresh_24,
+                    R.string.settings_restart_onboarding_label,
+                    R.string.settings_restart_onboarding_hint,
+                    enabled = state?.storeAvailable == true,
+                    index = 2, total = 3,
+                    onRestartOnboarding,
                 )
             }
         }
@@ -315,14 +299,11 @@ fun SettingsWorkspaceContent(
     }
     SettingsWorkspaceConfirmDialogs(
         hideLauncherVisible = hideLauncherVisible,
-        pendingImport = state?.pendingImportUri != null,
         onDismissHideLauncher = { hideLauncherVisible = false },
         onConfirmHideLauncher = {
             hideLauncherVisible = false
             onLauncherHiddenChanged(true)
         },
-        onDismissImport = onDismissImport,
-        onConfirmImport = onConfirmImport,
     )
 }
 

@@ -15,7 +15,7 @@ data class BackupMetadata(
     @JvmField val appVersionName: String
 )
 
-enum class BackupReplaceStage { MANAGED_CONFIG, LEGACY_MIGRATION, LEGACY_MIRROR }
+enum class BackupReplaceStage { MANAGED_CONFIG, LEGACY_MIGRATION, LEGACY_MIRROR, ROLLBACK }
 
 class BackupReplaceResult private constructor(
     @JvmField val success: Boolean,

@@ -38,43 +38,43 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.dpis.module.appconfig.editor.AppConfigEditorChip
+import com.dpis.module.R
 import com.dpis.module.appconfig.AppConfigWizardStore
+import com.dpis.module.appconfig.editor.AppConfigEditorChip
 import com.dpis.module.appconfig.editor.EditorPresentation
-import com.dpis.module.home.HomeWorkspaceState
-import com.dpis.module.tools.SystemFontScaleToolState
-import com.dpis.module.settings.SettingsActions
-import com.dpis.module.templates.TemplateWorkspacePresentationSource
-import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
-import com.dpis.module.templates.presentation.TemplateWorkspaceContent
-import com.dpis.module.templates.presentation.TemplateEditorOverlayHost
 import com.dpis.module.appconfig.presentation.AppConfigEditorContent
-import com.dpis.module.appconfig.presentation.AppConfigEditorSessionChip
 import com.dpis.module.appconfig.presentation.AppConfigEditorOverlay
+import com.dpis.module.appconfig.presentation.AppConfigEditorSessionChip
 import com.dpis.module.appconfig.presentation.AppConfigSheetUiTokens
 import com.dpis.module.appconfig.presentation.AppConfigWizardHint
-import com.dpis.module.ui.presentation.design.ComposeMotionTokens
-import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.appconfig.presentation.AppTypefacePickerPage
 import com.dpis.module.applist.presentation.AppListContent
+import com.dpis.module.applist.presentation.AppListPresentation
+import com.dpis.module.fonts.presentation.AppHookChainEditorPage
 import com.dpis.module.fonts.presentation.ConfigEditorAnimatedContent
+import com.dpis.module.home.HomeWorkspaceState
 import com.dpis.module.home.presentation.HomeWorkspaceContent
-import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
-import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
+import com.dpis.module.settings.SettingsActions
 import com.dpis.module.settings.presentation.SettingsWorkspaceContent
+import com.dpis.module.templates.TemplateWorkspacePresentationSource
+import com.dpis.module.templates.presentation.TemplateEditorOverlayHost
+import com.dpis.module.templates.presentation.TemplateWorkspaceContent
+import com.dpis.module.templates.presentation.TemplateWorkspacePresentation
+import com.dpis.module.tools.SystemFontScaleToolState
 import com.dpis.module.tools.presentation.ToolsWorkspaceContent
-import com.dpis.module.ui.presentation.editor.rememberEditorControlHeight
+import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.MainUiState
+import com.dpis.module.ui.presentation.design.ComposeMotionTokens
 import com.dpis.module.ui.presentation.design.dpisClickable
+import com.dpis.module.ui.presentation.editor.rememberEditorControlHeight
 import com.dpis.module.ui.presentation.wear.WearAppConfigEditorContent
 import com.dpis.module.ui.presentation.wear.WearAppListContent
 import com.dpis.module.ui.presentation.wear.WearHomeWorkspaceContent
 import com.dpis.module.ui.presentation.wear.WearSettingsWorkspaceContent
 import com.dpis.module.ui.presentation.wear.WearTemplateWorkspaceContent
 import com.dpis.module.ui.presentation.wear.WearToolsWorkspaceContent
-import com.dpis.module.applist.presentation.AppListPresentation
-import com.dpis.module.ui.MainUiState
-import com.dpis.module.R
-import com.dpis.module.ui.ConfigEditorDestination
+import com.dpis.module.ui.presentation.workspace.LocalWearWorkspaceContentPadding
+import com.dpis.module.ui.presentation.workspace.PageScrollPositionStore
 
 /** Compose workspace presentation boundary; domain actions remain in MainActivity. */
 class MainWorkspacePresentationCoordinator(private val content: Content) {
@@ -183,9 +183,8 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                         settings::openTheme,
                         settings::setLanguage,
                         settings::openBackup,
-                        settings::confirmImport,
-                        settings::dismissImport,
                         settings::clearCache,
+                        settings::restartOnboarding,
                         settings::openAbout,
                         settings::openDonate,
                         pageScrollPositions,
@@ -241,8 +240,6 @@ class MainWorkspacePresentationCoordinator(private val content: Content) {
                 settings::openTheme,
                 settings::openLanguage,
                 settings::openBackup,
-                settings::confirmImport,
-                settings::dismissImport,
                 settings::clearCache,
                 settings::openAbout
             )

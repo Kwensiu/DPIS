@@ -1,38 +1,21 @@
 package com.dpis.module.updates
 
+import com.dpis.module.SourceSmokeTestPaths
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import com.dpis.module.SourceSmokeTestPaths
-import com.dpis.module.ui.presentation.MainComposeShellHost
-import com.dpis.module.updates.presentation.UpdateAvailableDialog
 
 class UpdatePromptDialogCoordinatorSourceSmokeTest {
     @Test
-    fun coordinatorUsesRootOwnedDisclaimerAndSharedUpdatePrompt() {
+    fun coordinatorKeepsUpdatePromptSemantics() {
         val source = read("src/main/java/com/dpis/module/updates/presentation/UpdatePromptDialogCoordinator.kt")
         val dialogSource = read("src/main/java/com/dpis/module/updates/presentation/UpdateAvailableDialog.kt")
         val rendererSource = read("src/main/java/com/dpis/module/updates/ReleaseNotesMarkdownRenderer.kt")
         val markwonPluginSource = read("src/main/java/com/dpis/module/updates/presentation/ReleaseNotesMarkwonPlugin.kt")
         val textInteropSource = read("src/main/java/com/dpis/module/ui/presentation/interop/AndroidTextInterop.kt")
-        val disclaimerSource = read("src/main/java/com/dpis/module/ui/dialog/StartupDisclaimerDialog.kt")
         val modalSource = read("src/main/java/com/dpis/module/ui/dialog/ModalDialog.kt")
-        val shellHostSource = read("src/main/java/com/dpis/module/ui/presentation/MainComposeShellHost.kt")
 
-        assertTrue(source.contains("class UpdatePromptDialogCoordinator"))
-        assertTrue(source.contains("fun maybeShowStartupDisclaimerDialog("))
         assertTrue(source.contains("fun showUpdateAvailableDialog("))
-        assertTrue(source.contains("StartupDisclaimerGate.show("))
-        assertFalse(source.contains("StartupDisclaimerDialog.show("))
-        assertFalse(source.contains("R.layout.dialog_startup_disclaimer"))
-        assertTrue(disclaimerSource.contains("fun StartupDisclaimerDialog("))
-        assertTrue(disclaimerSource.contains("rememberSaveable"))
-        assertTrue(disclaimerSource.contains("dismissOnClickOutside = false"))
-        assertTrue(disclaimerSource.contains("dismissOnBackPress = false"))
-        assertTrue(disclaimerSource.contains("BackHandler(onBack = onBack)"))
-        assertTrue(disclaimerSource.contains("color = MaterialTheme.colorScheme.onSurface"))
-        assertFalse(disclaimerSource.contains("MaterialAlertDialogBuilder"))
-        assertFalse(disclaimerSource.contains("ComposeView"))
         assertTrue(modalSource.contains("fun StructuredModalDialog("))
         assertTrue(modalSource.contains("usePlatformDefaultWidth = false"))
         assertTrue(modalSource.contains(".widthIn(max = 560.dp)"))
@@ -41,16 +24,6 @@ class UpdatePromptDialogCoordinatorSourceSmokeTest {
         assertFalse(modalSource.contains("val minHeight"))
         assertTrue(modalSource.contains(".weight(1f, fill = false)"))
         assertTrue(modalSource.contains(".verticalScroll(rememberScrollState())"))
-        assertTrue(shellHostSource.contains("fun showStartupDisclaimer("))
-        assertTrue(shellHostSource.contains("startupDisclaimer = null"))
-        assertTrue(shellHostSource.contains("StartupDisclaimerDialog("))
-        assertTrue(shellHostSource.contains("DisposableEffect(disclaimerPresenter)"))
-        assertTrue(disclaimerSource
-            .contains("presentedBy"))
-        assertTrue(source.contains("interface StartupDisclaimerAcceptance"))
-        assertTrue(source.contains("acceptance.isAccepted()"))
-        assertTrue(source.contains("acceptance.markAccepted()"))
-        assertFalse(source.contains("StartupDisclaimerStore"))
         assertTrue(source.contains("UpdateAvailableDialog.create("))
         assertFalse(source.contains("fun applyLargeDialogWidth(dialog: AlertDialog)"))
         assertFalse(source.contains("host.applyLargeDialogWidth(dialogHandle.dialog)"))

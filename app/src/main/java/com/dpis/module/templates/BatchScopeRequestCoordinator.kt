@@ -22,6 +22,8 @@ class BatchScopeRequestCoordinator internal constructor(
         fun requestAppsLoad()
 
         fun runOnUiThread(runnable: Runnable)
+
+        fun onScopeRequestFinished(approved: Boolean, count: Int) = Unit
     }
 
     internal interface ScopeRequester {
@@ -74,6 +76,7 @@ class BatchScopeRequestCoordinator internal constructor(
                             R.string.quick_template_scope_request_approved,
                             approved.size,
                         )
+                        requestHost.onScopeRequestFinished(true, approved.size)
                         requestHost.requestAppsLoad()
                     })
                 }
@@ -83,6 +86,7 @@ class BatchScopeRequestCoordinator internal constructor(
                     val requestHost = host ?: return
                     requestHost.runOnUiThread(Runnable {
                         requestHost.showToast(R.string.quick_template_scope_manual_required)
+                        requestHost.onScopeRequestFinished(false, 0)
                         requestHost.requestAppsLoad()
                     })
                 }

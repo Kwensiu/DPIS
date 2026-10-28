@@ -1,5 +1,6 @@
 package com.dpis.module.quirks
 
+import android.os.Process
 import com.dpis.module.appconfig.WechatDpiConfig
 import java.lang.reflect.Method
 import java.util.Locale
@@ -9,40 +10,54 @@ object WechatDpiPropertyBridge {
     private const val PERSIST_PROPERTY_PREFIX = "persist.debug.dpis.wechat.dpi."
 
     @JvmStatic
-    fun propertyNameForPackage(packageName: String?): String =
-        PROPERTY_PREFIX + suffixForPackage(packageName)
+    fun propertyNameForPackage(packageName: String?, userId: Int): String =
+        PROPERTY_PREFIX + suffixForPackage(packageName, userId)
 
     @JvmStatic
-    fun persistentPropertyNameForPackage(packageName: String?): String =
-        PERSIST_PROPERTY_PREFIX + suffixForPackage(packageName)
+    fun persistentPropertyNameForPackage(packageName: String?, userId: Int): String =
+        PERSIST_PROPERTY_PREFIX + suffixForPackage(packageName, userId)
 
     @JvmStatic
-    fun readDpi(packageName: String?): Int = readDpi(packageName, ::readSystemProperty)
-
-    @JvmStatic
-    fun readDpiForTest(packageName: String?, volatileValue: String?, persistValue: String?): Int =
-        readDpi(packageName) { name ->
-            when (name) {
-                propertyNameForPackage(packageName) -> volatileValue
-                persistentPropertyNameForPackage(packageName) -> persistValue
-                else -> ""
-            }
-        }
-
-    private fun readDpi(packageName: String?, reader: (String) -> String?): Int {
+    fun readDpi(packageName: String?): Int {
         if (packageName.isNullOrBlank()) return 0
-        val suffix = suffixForPackage(packageName)
+        return readDpi(packageName, currentUserId())
+    }
+
+    @JvmStatic
+    fun readDpi(packageName: String?, userId: Int): Int =
+        readDpi(packageName, userId, ::readSystemProperty)
+
+    @JvmStatic
+    fun readDpiForTest(
+        packageName: String?,
+        userId: Int,
+        reader: (String) -> String?,
+    ): Int = readDpi(packageName, userId, reader)
+
+    private fun readDpi(
+        packageName: String?,
+        userId: Int,
+        reader: (String) -> String?,
+    ): Int {
+        if (packageName.isNullOrBlank()) return 0
+        val suffix = suffixForPackage(packageName, userId)
         return parseDpi(
             readFirstProperty(
                 reader,
                 PROPERTY_PREFIX + suffix,
-                PERSIST_PROPERTY_PREFIX + suffix
-            )
+                PERSIST_PROPERTY_PREFIX + suffix,
+            ),
         )
     }
 
-    private fun suffixForPackage(packageName: String?): String =
-        String.format(Locale.US, "%08x", packageName?.hashCode() ?: 0)
+    private fun suffixForPackage(packageName: String?, userId: Int): String =
+        "$userId." + String.format(Locale.US, "%08x", packageName?.hashCode() ?: 0)
+
+    private fun currentUserId(): Int = userIdFromUid(Process.myUid())
+
+    private fun userIdFromUid(uid: Int): Int = uid / PER_USER_RANGE
+
+    private const val PER_USER_RANGE = 100000
 
     private fun readFirstProperty(
         reader: (String) -> String?,

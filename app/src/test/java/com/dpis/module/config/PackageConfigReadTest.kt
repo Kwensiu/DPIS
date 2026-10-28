@@ -1,6 +1,5 @@
 package com.dpis.module.config
 
-import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.FakePrefs
 import com.dpis.module.fonts.FontApplyMode
 import com.dpis.module.viewport.ViewportApplyMode
@@ -13,6 +12,47 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PackageConfigReadTest {
+    @Test
+    fun samePackageWritesAndUpdatesRemainIsolatedByArchiveOwner() {
+        val prefs = FakePrefs()
+        val userZero = DpisConfigStore(prefs, 0)
+        val user999 = DpisConfigStore(prefs, 999)
+        val identityZero = PackageIdentity("com.example.app", 0)
+        val identity999 = PackageIdentity("com.example.app", 999)
+
+        assertTrue(userZero.writePackageConfig(identityZero, packageConfig(140)))
+        assertTrue(user999.writePackageConfig(identity999, packageConfig(160)))
+
+        assertEquals(140, userZero.readPackageConfig(identityZero).fontScalePercent())
+        assertEquals(160, user999.readPackageConfig(identity999).fontScalePercent())
+
+        assertTrue(user999.setTargetFontScalePercent("com.example.app", 180))
+
+        assertEquals(140, userZero.readPackageConfig(identityZero).fontScalePercent())
+        assertEquals(180, user999.readPackageConfig(identity999).fontScalePercent())
+    }
+
+    @Test
+    fun identityReadRejectsAnOwnerDifferentFromThePrivateArchive() {
+        val store = DpisConfigStore(FakePrefs(), 0)
+
+        org.junit.Assert.assertThrows(IllegalArgumentException::class.java) {
+            store.readPackageConfig(PackageIdentity("com.example.app", 999))
+        }
+    }
+
+    private fun packageConfig(fontScale: Int) = PackageConfigValue(
+        null,
+        null,
+        null,
+        fontScale,
+        null,
+        null,
+        null,
+        null,
+        null,
+    )
+
     @Test
     fun readPackageConfigAggregatesCurrentScatteredKeys() {
         val prefs = FakePrefs()
@@ -126,10 +166,30 @@ class PackageConfigReadTest {
         assertFalse(prefs.contains("viewport.com.example.app.target_type"))
         assertFalse(prefs.contains("viewport.com.example.app.width_dp"))
         assertFalse(prefs.contains("font.com.example.app.scale_percent"))
+        assertEquals(
+            ViewportTargetType.ABSOLUTE_DP,
+            prefs.getString(
+                PackageIdentity("com.example.app", 0)
+                    .packageConfigResidualKey("legacy.viewport.target_type"),
+                null,
+            ),
+        )
+        assertEquals(
+            411,
+            prefs.getInt("package_config.com.example.app.viewport.width_dp", 0),
+        )
+        assertEquals(
+            130,
+            prefs.getInt(
+                PackageIdentity("com.example.app", 0)
+                    .packageConfigResidualKey("legacy.font.scale_percent"),
+                0,
+            ),
+        )
     }
 
     @Test
-    fun migrateLegacyPackageConfigToAggregatedIgnoresInvalidWechatAndTargetPackagesOnly() {
+    fun preservesUnsupportedWechatFieldAndDoesNotConfigurePackage() {
         val prefs = FakePrefs()
         prefs.edit()
             .putStringSet(DpisConfigStore.KEY_TARGET_PACKAGES, setOf("com.example.target_only"))
@@ -141,9 +201,10 @@ class PackageConfigReadTest {
 
         assertFalse(prefs.contains("package_config.com.example.app.app.wechat_dpi"))
         assertFalse(store.hasUserVisiblePackageConfig("com.example.app"))
+        assertFalse(store.snapshotRuntimeDelivery().containsKey("wechat.com.example.app.dpi"))
         assertFalse(store.hasUserVisiblePackageConfig("com.example.target_only"))
         assertEquals(PackageConfigValue.EMPTY, store.readPackageConfig("com.example.target_only"))
-        assertFalse(prefs.contains("wechat.com.example.app.dpi"))
+        assertTrue(prefs.contains("wechat.com.example.app.dpi"))
     }
 
     @Test

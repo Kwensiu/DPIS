@@ -21,6 +21,8 @@ class SummaryBuilderTest {
             fontApplyMode = "field_rewrite",
             typefaceId = "font_modern",
             fontHookDomainsRaw = "resources_font",
+            dpisUserId = 0,
+            targetUserId = 999,
         )
 
         val summary = SummaryBuilder().build(
@@ -34,6 +36,8 @@ class SummaryBuilderTest {
         )
 
         assertTrue(summary.contains("package: com.example.target"))
+        assertTrue(summary.contains("dpisUserId: 0"))
+        assertTrue(summary.contains("targetUserId: 999"))
         assertTrue(summary.contains("rootStatus: available"))
         assertTrue(summary.contains("rootProvider: Magisk"))
         assertTrue(summary.contains("viewport: scale=125%, mode=system"))
@@ -54,6 +58,8 @@ class SummaryBuilderTest {
         )
 
         assertTrue(summary.contains("package: unknown"))
+        assertTrue(summary.contains("dpisUserId: unknown"))
+        assertTrue(summary.contains("targetUserId: unknown"))
         assertTrue(summary.contains("rootStatus: unknown"))
         assertTrue(summary.contains("rootProvider: unknown"))
         assertTrue(summary.contains("viewport: off, mode=unknown"))

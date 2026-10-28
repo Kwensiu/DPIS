@@ -1,5 +1,6 @@
 package com.dpis.module.viewport
 
+import android.os.Process
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.runtime.probe.RuntimeClock
 import java.nio.charset.StandardCharsets
@@ -31,8 +32,8 @@ object ViewportRuntimeMarkerBridge {
     }
 
     @JvmStatic
-    fun propertyNameForPackage(packageName: String?): String {
-        return PROPERTY_PREFIX + String.format(
+    fun propertyNameForPackage(packageName: String?, userId: Int = currentUserId()): String {
+        return PROPERTY_PREFIX + userId + "." + String.format(
             Locale.US,
             "%08x",
             safeString(packageName).hashCode()
@@ -562,6 +563,12 @@ object ViewportRuntimeMarkerBridge {
             return null
         }
     }
+
+    private fun currentUserId(): Int = runCatching {
+        Process.myUid() / PER_USER_RANGE
+    }.getOrDefault(0)
+
+    private const val PER_USER_RANGE = 100000
 
     private fun safeString(value: String?): String {
         return if (value == null) "" else value

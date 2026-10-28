@@ -1,5 +1,6 @@
 package com.dpis.module.ui.presentation
 
+import com.dpis.module.DpisApplication
 import com.dpis.module.MainActivity
 import com.dpis.module.R
 import com.dpis.module.appconfig.editor.AppConfigEditorPersister
@@ -13,10 +14,11 @@ import com.dpis.module.applist.AppListItem
 import com.dpis.module.applist.AppListPage
 import com.dpis.module.applist.AppListScopeTarget
 import com.dpis.module.applist.AppListSelectionController
-import com.dpis.module.applist.presentation.AppListPresentation
 import com.dpis.module.applist.RestoreScopePromptPolicy
 import com.dpis.module.applist.RestoreScopePromptStore
 import com.dpis.module.applist.presentation.AppListBatchActionCoordinator
+import com.dpis.module.applist.presentation.AppListPresentation
+import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.settings.presentation.SettingsWorkspaceSession
 import com.dpis.module.templates.BatchScopeRequestCoordinator
 import com.dpis.module.tools.presentation.ToolsWorkspace
@@ -67,6 +69,7 @@ class MainHostWiringSession(
             AppConfigEditorPersister(
                 activity.saveHandler,
                 gateway::systemHooksEnabled,
+                DpisApplication::isXposedConfigReady,
                 activity::hookConfigStore,
             ),
             MainWorkspaceEditorPostSaveEffects(activity, scopeCoordinator),
@@ -118,6 +121,8 @@ class MainHostWiringSession(
                 }
             },
             appListSelectionController,
+            DpisApplication::isXposedConfigReady,
+            RuntimeConfigDelivery::publishLocalSnapshotAfterSave,
         )
         appListActions = object : AppListPresentation.Actions,
             AppListPresentation.SelectionActions {

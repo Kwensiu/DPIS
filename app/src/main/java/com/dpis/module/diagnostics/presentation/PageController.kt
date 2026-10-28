@@ -191,36 +191,40 @@ class PageController(
             lsposedExplanation,
             false,
         )
-        executor.execute {
-            val rootAccess = RootAccessProbe.probe()
-            val result = if (refreshLsposed && rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
-                LsposedLogReader.readLsposedAvailability()
-            } else {
-                null
-            }
-            val availability = if (refreshLsposed
-                && rootAccess.status == RootAccessProbe.Status.AVAILABLE
-            ) {
-                LsposedLogReader.availability(result)
-            } else if (refreshLsposed) {
-                LsposedLogReader.Availability.NO_PERMISSION
-            } else {
-                LsposedLogReader.Availability.values()[
-                    (lsposedAvailabilityCode - 1).coerceAtLeast(0)
-                ]
-            }
-            host?.runOnUiThread {
-                if (presentation !== target) {
-                    return@runOnUiThread
+        RootAccessProbe.refreshAsync { result ->
+            executor.execute {
+                val rootAccess = result ?: RootAccessProbe.Result.unavailable()
+                val availabilityResult = if (refreshLsposed &&
+                    rootAccess.status == RootAccessProbe.Status.AVAILABLE
+                ) {
+                    LsposedLogReader.readLsposedAvailability()
+                } else {
+                    null
                 }
-                target.updateEnvironment(
-                    feedbackDiagnosticRootStatus(),
-                    logStatus,
-                    context.getString(feedbackDiagnosticLsposedStatusRes(availability)),
-                    availability.ordinal + 1,
-                    feedbackDiagnosticLsposedExplanation(availability),
-                    rootAccess.status == RootAccessProbe.Status.AVAILABLE,
-                )
+                val availability = if (refreshLsposed &&
+                    rootAccess.status == RootAccessProbe.Status.AVAILABLE
+                ) {
+                    LsposedLogReader.availability(availabilityResult)
+                } else if (refreshLsposed) {
+                    LsposedLogReader.Availability.NO_PERMISSION
+                } else {
+                    LsposedLogReader.Availability.values()[
+                        (lsposedAvailabilityCode - 1).coerceAtLeast(0)
+                    ]
+                }
+                host?.runOnUiThread {
+                    if (presentation !== target) {
+                        return@runOnUiThread
+                    }
+                    target.updateEnvironment(
+                        feedbackDiagnosticRootStatus(),
+                        logStatus,
+                        context.getString(feedbackDiagnosticLsposedStatusRes(availability)),
+                        availability.ordinal + 1,
+                        feedbackDiagnosticLsposedExplanation(availability),
+                        rootAccess.status == RootAccessProbe.Status.AVAILABLE,
+                    )
+                }
             }
         }
     }
@@ -239,30 +243,33 @@ class PageController(
             context.getString(R.string.feedback_diagnostic_lsposed_checking_message),
             target.isStartEnabled(),
         )
-        executor.execute {
-            val rootAccess = RootAccessProbe.cachedResult()
-            val result = if (rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
-                LsposedLogReader.readLsposedAvailability()
-            } else {
-                null
-            }
-            val availability = if (rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
-                LsposedLogReader.availability(result)
-            } else {
-                LsposedLogReader.Availability.NO_PERMISSION
-            }
-            host?.runOnUiThread {
-                if (presentation !== target) {
-                    return@runOnUiThread
+        RootAccessProbe.refreshAsync { result ->
+            executor.execute {
+                val rootAccess = result ?: RootAccessProbe.Result.unavailable()
+                val availabilityResult =
+                    if (rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
+                        LsposedLogReader.readLsposedAvailability()
+                    } else {
+                        null
+                    }
+                val availability = if (rootAccess.status == RootAccessProbe.Status.AVAILABLE) {
+                    LsposedLogReader.availability(availabilityResult)
+                } else {
+                    LsposedLogReader.Availability.NO_PERMISSION
                 }
-                target.updateEnvironment(
-                    target.rootStatus(),
-                    target.logStatus(),
-                    context.getString(feedbackDiagnosticLsposedStatusRes(availability)),
-                    availability.ordinal + 1,
-                    feedbackDiagnosticLsposedExplanation(availability),
-                    target.isStartEnabled(),
-                )
+                host?.runOnUiThread {
+                    if (presentation !== target) {
+                        return@runOnUiThread
+                    }
+                    target.updateEnvironment(
+                        target.rootStatus(),
+                        target.logStatus(),
+                        context.getString(feedbackDiagnosticLsposedStatusRes(availability)),
+                        availability.ordinal + 1,
+                        feedbackDiagnosticLsposedExplanation(availability),
+                        target.isStartEnabled(),
+                    )
+                }
             }
         }
     }

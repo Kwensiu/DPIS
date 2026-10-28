@@ -50,7 +50,7 @@ class CoordinatorRequestTest {
 
     @Test
     fun fromPersistedPrefersStoreOverStaleItemSnapshot() {
-        val store = DpisConfigStore(FakePrefs())
+        val store = DpisConfigStore(FakePrefs(), 999)
         val packageName = "com.tencent.mm"
         assertTrue(
             store.setTargetViewportSpec(
@@ -77,6 +77,19 @@ class CoordinatorRequestTest {
         assertEquals("font_modern", request.typefaceId)
         assertEquals("resources_font", request.fontHookDomainsRaw)
         assertEquals(610, request.wechatDpi)
+        assertEquals(999, request.dpisUserId)
+        assertEquals(999, request.targetUserId)
+    }
+
+    @Test
+    fun fromPersistedLeavesTargetUserUnknownWhenPackageIsNotInstalled() {
+        val store = DpisConfigStore(FakePrefs(), 999)
+        val item = app("com.example.removed", null, installed = false)
+
+        val request = Coordinator.Request.fromPersisted(item, null, "1.0", store)
+
+        assertEquals(999, request.dpisUserId)
+        assertNull(request.targetUserId)
     }
 
     @Test
@@ -88,7 +101,11 @@ class CoordinatorRequestTest {
         assertEquals(600, request.wechatDpi)
     }
 
-    private fun app(packageName: String, wechatDpi: Int?): AppListItem = AppListItem(
+    private fun app(
+        packageName: String,
+        wechatDpi: Int?,
+        installed: Boolean = true,
+    ): AppListItem = AppListItem(
         "WeChat",
         packageName,
         true,
@@ -105,7 +122,7 @@ class CoordinatorRequestTest {
         wechatDpi,
         true,
         true,
-        true,
+        installed,
         false,
         false,
         null,

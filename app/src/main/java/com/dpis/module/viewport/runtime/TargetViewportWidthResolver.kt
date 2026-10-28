@@ -114,6 +114,29 @@ object TargetViewportWidthResolver {
                 "current-virtual-display-target"
             )
         }
+        val systemMarker = ViewportRuntimeMarkerBridge.read(
+            packageName,
+            targetSpec.fingerprint(),
+            RuntimeClock.crossProcessMarkerMillis(),
+        )
+        val systemMarkerRecord = systemMarker.record
+        if (systemMarker.hit &&
+            systemMarkerRecord != null &&
+            systemMarkerRecord.provenance == ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER &&
+            source.sourceSignature() == systemMarkerRecord.sourceSignature
+        ) {
+            val importedSystemRecord = VirtualDisplayState.importMarker(
+                packageName,
+                targetSpec,
+                systemMarker,
+            )
+            if (importedSystemRecord != null) {
+                return ViewportTargetResolution.fromRecord(
+                    importedSystemRecord,
+                    "system-marker-source",
+                )
+            }
+        }
         var record = VirtualDisplayState.findForSource(packageName, targetSpec, source)
         if (record != null) {
             resolveMarkerResultForAlreadyAppliedSource(
@@ -121,6 +144,12 @@ object TargetViewportWidthResolver {
                 targetSpec,
                 source
             )?.let { return it }
+            if (targetSpec.isRelativeScale() &&
+                record.provenance == ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER &&
+                source.sourceSignature() == record.sourceSignature
+            ) {
+                return ViewportTargetResolution.fromRecord(record, "system-marker-source")
+            }
             return if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) {
                 ViewportTargetResolution.fromAppProcessBorrowRecord(record)
             } else {
@@ -138,6 +167,12 @@ object TargetViewportWidthResolver {
                 targetSpec,
                 source
             )?.let { return it }
+            if (targetSpec.isRelativeScale() &&
+                record.provenance == ViewportRuntimeRecord.PROVENANCE_SYSTEM_SERVER &&
+                source.sourceSignature() == record.sourceSignature
+            ) {
+                return ViewportTargetResolution.fromRecord(record, "system-marker-source")
+            }
             return if (targetSpec.isRelativeScale() && source.appProcessConsumerScoped()) {
                 ViewportTargetResolution.fromAppProcessBorrowRecord(record)
             } else {

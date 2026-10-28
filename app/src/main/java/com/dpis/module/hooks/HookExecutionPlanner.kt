@@ -107,11 +107,11 @@ object HookExecutionPlanner {
             hookDomainSource, automaticDomainPlan?.reason ?: "none",
         )
         val fontDomainPlan = domainPlan.toFontDomainPlan()
-        val resourcesWrite = !debug.flutterSettingsOnly && (viewportEnabledBase || emulationEnabled)
+        val resourcesWrite = !debug.flutterSettingsOnly && emulationEnabled
         val resourcesImpl =
-            resourcesWrite || (!debug.flutterSettingsOnly && domainPlan.hasResourcesFont())
+            resourcesWrite || domainPlan.hasResourcesFont()
         val resourcesRead =
-            !debug.flutterSettingsOnly && (resourcesImpl || domainPlan.hasResourcesFont())
+            !debug.flutterSettingsOnly && (viewportEnabledBase || resourcesImpl)
         val readPolicy = ResourcesReadHookPolicy(
             !debug.flutterSettingsOnly && (viewportEnabledBase || emulationEnabled),
             !debug.flutterSettingsOnly && fieldRewriteEnabled && domainPlan.hasResourcesFont(),

@@ -9,23 +9,28 @@ import com.dpis.module.applist.presentation.AppListScrollStateStore
 import com.dpis.module.applist.presentation.InstalledAppsLoadSession
 import com.dpis.module.config.DpisConfigStore
 import com.dpis.module.home.presentation.HomeWorkspaceSession
-import com.dpis.module.ui.presentation.SecondaryActivityNavigator
+import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.quirks.presentation.WechatDpiHelp
 import com.dpis.module.runtime.presentation.RuntimeLaunchSession
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.hooks.SystemScopeCoordinator
 import com.dpis.module.ui.presentation.MainHostWiringSession
 import com.dpis.module.ui.presentation.MainStartupSession
 import com.dpis.module.ui.presentation.MainWorkspaceSession
+import com.dpis.module.ui.presentation.SecondaryActivityNavigator
 import com.dpis.module.updates.presentation.MainUpdateSession
 
 class MainActivity :
     LocalizedActivity(),
     DpisApplication.ServiceStateListener {
 
-    internal val updateSession: MainUpdateSession = MainUpdateSession(this) {
-        startupSession.bindHomeWorkspaceIfVisible()
-    }
+    internal val updateSession: MainUpdateSession = MainUpdateSession(
+        this,
+        onHomeUpdateStateChanged = { startupSession.bindHomeWorkspaceIfVisible() },
+        onAppearanceChanged = { mainWorkspaceSession.composeShell()?.applyAppearanceInPlace() },
+        onConfigurationChanged = {
+            mainWorkspaceSession.composeShell()?.applyConfigurationInPlace()
+        },
+    )
     internal val wechatHelp = WechatDpiHelp(this) { mainWorkspaceSession.composeShell() }
     internal val runtimeLaunchSession = RuntimeLaunchSession(
         this,

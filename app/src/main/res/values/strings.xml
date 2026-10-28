@@ -431,15 +431,74 @@ Mini Programs are not supported yet.</string>
     <string name="dialog_process_action_stop">stop</string>
     <string name="dialog_dpis_enabled_status">Enabled</string>
     <string name="dialog_dpis_disabled_status">Disabled</string>
-    <string name="startup_disclaimer_title">Risk Notice and Disclaimer</string>
+
     <string name="startup_disclaimer_message">This module runs in a Root/LSPosed environment and may cause system instability, data loss, boot loops, or account bans.
 
 Please back up your data. You assume all risks associated with using this module.
 
 The developer is not responsible for any damage or loss caused by this module.</string>
-    <string name="startup_disclaimer_checkbox_text">I have read and agree</string>
     <string name="startup_disclaimer_accept_button">Agree and continue</string>
-    <string name="startup_disclaimer_save_failed">Failed to save consent.</string>
+
+    <string name="onboarding_welcome_message">Adjust app interface scaling and font size independently.</string>
+    <string name="onboarding_feature_dpi_title">libxposed 102</string>
+    <string name="onboarding_feature_dpi_description">Efficient low-level injection and development.</string>
+    <string name="onboarding_feature_scale_title">Scale modes</string>
+    <string name="onboarding_feature_scale_description">Adapt to different apps and usage preferences.</string>
+    <string name="onboarding_feature_font_title">Font routing</string>
+    <string name="onboarding_feature_font_description">Coordinate different font paths consistently.</string>
+    <string name="onboarding_step">Step %1$d of %2$d</string>
+    <string name="onboarding_start">Get started</string>
+    <string name="onboarding_terms_title">Terms</string>
+    <string name="onboarding_terms_lead">Welcome to DPIS.\nBefore you configure it, please review the information below.</string>
+    <string name="onboarding_terms_risk_title">System changes</string>
+    <string name="onboarding_terms_risk_body">DPIS changes how selected apps render their interfaces and may participate in related runtime operations. Device, system-version, and app differences can cause visual problems, crashes, or broken features; in extreme cases, system startup may also be affected.\n\nBefore use, back up important data and keep a way to recover your device.</string>
+    <string name="onboarding_terms_privacy_title">Local data</string>
+    <string name="onboarding_terms_privacy_body">DPIS stores its configuration on this device. Installed apps, Android user information, diagnostics, and foreground-app information are used only when the related feature needs them.\n\nBefore exporting or sharing diagnostics, check whether they contain information you do not want to disclose.</string>
+    <string name="onboarding_terms_permissions_title">Permissions</string>
+    <string name="onboarding_terms_root_runtime_title">Runtime config</string>
+    <string name="onboarding_terms_root_runtime_body">When needed, deliver, reload, and recover selected runtime configuration through the runtime routes of the module.</string>
+    <string name="onboarding_terms_root_process_title">App lifecycle</string>
+    <string name="onboarding_terms_root_process_body">Restart or stop selected target apps after configuration changes so they can consume the new state.</string>
+    <string name="onboarding_terms_root_diagnostics_title">Diagnostics &amp; logs</string>
+    <string name="onboarding_terms_root_diagnostics_body">Collect diagnostic evidence and read LSPosed logs when you explicitly open diagnostics or feedback flows.</string>
+    <string name="onboarding_terms_root_scope_title">Android users</string>
+    <string name="onboarding_terms_root_scope_body">Identify the target Android user and resolve installed-app scope across users when the selected feature requires it.</string>
+    <string name="onboarding_terms_root_font_proxy_title">Fonts &amp; proxy</string>
+    <string name="onboarding_terms_root_font_proxy_body">Install, synchronize, and clean font files or runtime properties, and set up or roll back HyperOS native proxy compatibility.</string>
+    <string name="onboarding_terms_app_list_title">App list</string>
+    <string name="onboarding_terms_app_list_body">Read installed apps for the app workspace. Root may also be used to resolve apps belonging to other Android users.</string>
+    <string name="onboarding_terms_usage_title">Usage access</string>
+    <string name="onboarding_terms_usage_body">Let Quick Config identify the current foreground app when you use its foreground-app workflow.</string>
+    <string name="onboarding_terms_open_source_title">Compatibility</string>
+    <string name="onboarding_terms_open_source_body">DPIS does not guarantee compatibility with every device or app. Before enabling changes, check compatibility, keep device access and recovery tools available, and decide whether the expected benefit is worth the corresponding risk.\n\nDPIS does not replace the terms, privacy policies, or support channels of third-party apps and services.</string>
+    <string name="onboarding_permissions_title">Permissions</string>
+    <string name="onboarding_permission_root_title">Root</string>
+    <string name="onboarding_permission_app_list_title">App list</string>
+    <string name="onboarding_permission_usage_title">Usage access</string>
+    <string name="onboarding_permission_optional">Optional</string>
+    <string name="onboarding_permission_available">Available: %1$s</string>
+    <string name="onboarding_permission_available_short">Available</string>
+    <string name="onboarding_permission_unavailable">Not available</string>
+    <string name="onboarding_permission_checking">Checking…</string>
+    <string name="onboarding_finish">Save and enter</string>
+    <string name="onboarding_continue">Skip for now</string>
+    <string name="onboarding_back_again_to_exit">Press back again to exit</string>
+    <string name="onboarding_configuration_title">Configuration</string>
+    <string name="onboarding_configuration_message">Restore old backups and adjust a new theme.</string>
+    <string name="onboarding_configuration_backup_section">Restore backup</string>
+    <string name="onboarding_configuration_import_title">Import backup</string>
+    <string name="onboarding_configuration_import_hint">Choose a DPIS backup package</string>
+    <string name="config_backup_import_in_progress">Restoring configuration…</string>
+    <string name="onboarding_configuration_scope_section">Module scope</string>
+    <string name="onboarding_configuration_scope_title">Restore scope</string>
+    <string name="onboarding_configuration_scope_hint">Request the backup apps for module scope.</string>
+    <string name="onboarding_configuration_scope_available">Restored apps are ready to be added to the module scope.</string>
+    <string name="onboarding_configuration_scope_requesting">Requesting module scope…</string>
+    <string name="onboarding_configuration_scope_applied">Module scope request completed.</string>
+    <string name="onboarding_configuration_scope_manual">Add the restored apps to the module scope manually.</string>
+    <string name="onboarding_configuration_scope_pending">Another scope request is already in progress.</string>
+    <string name="onboarding_configuration_scope_action">Request</string>
+    <string name="onboarding_configuration_scope_done">Done</string>
     <string name="dialog_cancel_button">Close</string>
     <string name="dialog_close_button">Close</string>
     <string name="filter_sheet_title">Filters</string>
@@ -667,6 +726,8 @@ The developer is not responsible for any damage or loss caused by this module.</
     <string name="settings_clear_cache_cleaning">Clearing cache...</string>
     <string name="settings_clear_cache_done">Cache cleared</string>
     <string name="settings_clear_cache_legacy_public_file_blocked">Debug files from older versions remain in Download/DPIS and need to be deleted manually.</string>
+    <string name="settings_restart_onboarding_label">Restart onboarding</string>
+    <string name="settings_restart_onboarding_hint">Run the setup flow again</string>
     <string name="about_title">About</string>
     <string name="about_version_format">Version: %1$s(%2$d)</string>
     <string name="about_link_source_title">View source code</string>

@@ -20,9 +20,6 @@ import com.dpis.module.fonts.TypefaceCatalogCache
 import com.dpis.module.runtime.ConfigStoreFactory
 import com.dpis.module.runtime.delivery.RuntimeConfigDelivery
 import com.dpis.module.settings.LocalizedActivity
-import com.dpis.module.fonts.presentation.FontLibraryDialog
-import com.dpis.module.fonts.presentation.FontLibraryPresentation
-import com.dpis.module.fonts.presentation.FontLibraryUiItem
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -47,10 +44,7 @@ class FontLibrarySession(
             DpisApplication.xposedService,
         )
         fontLibraryStore.purgeOrphanedFiles()
-        configStore = ConfigStoreFactory.createFontLibraryConfigStore(
-            activity,
-            DpisApplication.xposedService,
-        )
+        configStore = ConfigStoreFactory.createFontLibraryConfigStore(activity)
         archiveWorkflow = FontLibraryArchiveWorkflow(
             activity,
             fontLibraryStore,

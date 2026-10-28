@@ -2,6 +2,7 @@ package com.dpis.module.runtime.systemserver.mutation
 
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import com.dpis.module.config.PackageIdentity
 import com.dpis.module.config.PerAppDisplayConfigSource
 import com.dpis.module.diagnostics.DpisLog
 import com.dpis.module.runtime.font.HyperOsFlutterFontBridge
@@ -13,6 +14,7 @@ import com.dpis.module.runtime.systemserver.reflection.Reflection
 import com.dpis.module.runtime.systemserver.selection.ConfigSelection
 import com.dpis.module.runtime.systemserver.selection.ConfiguredPackage
 import com.dpis.module.runtime.systemserver.selection.PackageNames
+import com.dpis.module.runtime.systemserver.selection.PackageUidResolver
 import com.dpis.module.runtime.systemserver.viewport.DisplayPixels
 import com.dpis.module.viewport.PerAppDisplayEnvironment
 import io.github.libxposed.api.XposedInterface
@@ -42,12 +44,40 @@ object LaunchActivityItemApply {
 
     @JvmStatic
     fun applyArgs(source: PerAppDisplayConfigSource?, args: List<*>?) {
-        val packageName = ConfiguredPackage.fromSource(source, args) ?: return
+        if (source == null) return
         val arguments = args ?: return
+        val packageName = ConfiguredPackage.fromSource(source, arguments)
+        if (packageName == null) {
+            if (DpisLog.isLoggingEnabled()) {
+                HookLog.logIdentityMissing("launch-activity-item", null, "package_or_uid_missing")
+            }
+            return
+        }
+        val evidence = PackageNames.findUidEvidence(packageName, null, arguments)
+        if (evidence == null) {
+            if (DpisLog.isLoggingEnabled()) {
+                HookLog.logIdentityMissing("launch-activity-item", packageName, "uid_missing")
+            }
+            return
+        }
+        val userId = PackageUidResolver.userIdFromUid(evidence.uid) ?: return
+        if (DpisLog.isLoggingEnabled()) {
+            HookLog.logIdentityResolved(
+                "launch-activity-item",
+                packageName,
+                evidence.uid,
+                userId,
+                evidence.source,
+            )
+        }
+        val lookup = source.inspect(PackageIdentity(packageName, userId))
+        if (DpisLog.isLoggingEnabled()) {
+            HookLog.logSourceLookup("launch-activity-item", lookup)
+        }
         val config = ConfigSelection.selectConfigForSystemServerEntry(
             "launch-activity-item",
-            source!!.get(packageName),
-        ) ?: return
+            lookup.config,
+        )
         val baseConfiguration = findFirstConfiguration(arguments) ?: return
         var environment: PerAppDisplayEnvironment? = null
         if (ConfigSelection.hasSystemServerViewportOverride(config)) {
@@ -90,8 +120,20 @@ object LaunchActivityItemApply {
                 changed or applyLaunchActivityItemConfigurationFields(activityItem, environment)
         }
         if (fontChanged) {
-            HyperOsFlutterFontBridge.publishTarget(packageName, config)
+            HyperOsFlutterFontBridge.publishTarget(packageName, config, userId)
             FontScale.report(packageName, beforeFontScale, baseConfiguration.fontScale)
+        }
+        if (DpisLog.isLoggingEnabled()) {
+            HookLog.logMutationOutcome(
+                "launch-activity-item",
+                packageName,
+                userId,
+                if (changed) "changed" else "unchanged",
+                "viewport|font_scale",
+                beforeSummary,
+                describeConfigurationArgs(arguments),
+                HookLog.describeEnvironment(environment),
+            )
         }
         if (changed && DpisLog.isLoggingEnabled()) {
             val message = "system_server launch-activity-item apply: package=" + packageName +
@@ -114,25 +156,27 @@ object LaunchActivityItemApply {
             return
         }
         val activityInfo = readLaunchActivityInfo(launchActivityItem)
-        var packageName = activityInfo?.packageName
-        if (!PackageNames.isLikely(packageName)) {
-            return
-        }
-        packageName = ConfiguredPackage.launchPackage(
-            ConfiguredPackage.Lookup { source.get(it) },
+        val packageName = activityInfo?.packageName
+            ?.takeIf(PackageNames::isLikely) ?: return
+        val uid = activityInfo.applicationInfo?.uid?.takeIf { it > 0 } ?: return
+        val userId = PackageUidResolver.userIdFromUid(uid) ?: return
+        val resolvedPackage = ConfiguredPackage.launchPackage(
+            ConfiguredPackage.Lookup { candidatePackage ->
+                candidatePackage?.let { source.get(PackageIdentity(it, userId)) }
+            },
             packageName,
             launchActivityItem,
-        )
+        ) ?: return
         val config = ConfigSelection.selectConfigForSystemServerEntry(
             "launch-activity-item",
-            source.get(packageName),
+            source.get(PackageIdentity(resolvedPackage, userId)),
         )
         if (!ConfigSelection.hasSystemServerViewportOverride(config)) {
             return
         }
         val baseConfiguration = readLaunchActivityConfiguration(launchActivityItem) ?: return
         val environment = HookInstaller.resolveLaunchViewportEnvironment(
-            packageName,
+            resolvedPackage,
             baseConfiguration,
             DisplayPixels.widthPx(baseConfiguration, null),
             DisplayPixels.heightPx(baseConfiguration, null),
@@ -143,7 +187,7 @@ object LaunchActivityItemApply {
         ) {
             HookLog.logDiagnosticIfChanged(
                 "launch-activity-item-object|$packageName",
-                "system_server launch-activity-item object apply: package=" + packageName +
+                "system_server launch-activity-item object apply: package=" + resolvedPackage +
                         ", target=" + HookLog.describeEnvironment(environment),
                 HookLog.resolveLogMinIntervalMs("launch-activity-item"),
                 packageName,
@@ -153,21 +197,12 @@ object LaunchActivityItemApply {
     }
 
     private fun findFirstConfiguration(args: List<*>?): Configuration? {
-        if (args == null) {
-            return null
-        }
-        for (arg in args) {
-            if (arg is Configuration) {
-                return arg
-            }
-        }
-        return null
+        if (args == null) return null
+        return args.firstNotNullOfOrNull { it as? Configuration }
     }
 
-    private fun readLaunchActivityInfo(launchActivityItem: Any): ActivityInfo? {
-        val value = Reflection.readField(launchActivityItem, "mInfo")
-        return value as? ActivityInfo
-    }
+    private fun readLaunchActivityInfo(launchActivityItem: Any): ActivityInfo? =
+        Reflection.readField(launchActivityItem, "mInfo") as? ActivityInfo
 
     private fun readLaunchActivityConfiguration(launchActivityItem: Any): Configuration? {
         val override = Reflection.readField(

@@ -2,6 +2,7 @@ package com.dpis.module.diagnostics
 
 import com.dpis.module.appconfig.AppConfigInput
 import com.dpis.module.diagnostics.device.TransportSelfTest
+import com.dpis.module.diagnostics.ProcessPerformanceParser.ProcessSummary
 import com.dpis.module.root.RootAccessProbe
 import com.dpis.module.viewport.ViewportTargetSpec
 import java.util.LinkedHashMap
@@ -353,7 +354,13 @@ internal object DiagnosticReportText {
                     .append(",p95Us=").append(route.p95Us)
                     .append(",p99Us=").append(route.p99Us)
                     .append(",maxUs=").append(route.maxUs)
-                    .append('\n')
+                if (route.pathCounts.isNotEmpty()) {
+                    builder.append(",pathCounts=")
+                        .append(route.pathCounts.entries.joinToString("|") { entry ->
+                            entry.key + ":" + entry.value
+                        })
+                }
+                builder.append('\n')
             }
         }
     }

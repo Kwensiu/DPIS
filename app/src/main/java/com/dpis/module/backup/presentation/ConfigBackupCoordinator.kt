@@ -2,6 +2,7 @@ package com.dpis.module.backup.presentation
 
 import android.content.ContentResolver
 import android.net.Uri
+import com.dpis.module.backup.BackupReplaceStage
 import com.dpis.module.backup.ConfigBackupCodec
 import com.dpis.module.backup.ConfigBackupRestorePolicy
 import com.dpis.module.config.DpisConfigStore
@@ -50,6 +51,24 @@ class ConfigBackupCoordinator(
         }
     }
 
+    fun snapshotCurrentEntries(): Map<String, Any?> {
+        val entries = LinkedHashMap<String, Any?>()
+        configStore.snapshotBackup().entries.forEach { (key, value) ->
+            if (key != null) entries[key] = value
+        }
+        templateStore.copyToBackup(entries)
+        return entries
+    }
+
+    fun restoreEntries(entries: Map<String, Any?>): Boolean {
+        val mutableEntries = LinkedHashMap(entries)
+        val configRestored = configStore.replaceBackup(
+            ConfigBackupRestorePolicy.configEntries(mutableEntries),
+        )
+        val templatesRestored = templateStore.restoreFromBackup(mutableEntries)
+        return configRestored && templatesRestored
+    }
+
     fun restore(uri: Uri?): Result {
         if (uri == null) return Result.failure(Code.INVALID_FILE)
         val payload = try {
@@ -75,7 +94,16 @@ class ConfigBackupCoordinator(
             .toMap(LinkedHashMap<String, Any?>())
             .also { templateStore.copyToBackup(it) }
         val configEntries = ConfigBackupRestorePolicy.configEntries(incoming)
-        if (!configStore.replaceBackup(configEntries)) return Result.failure(Code.RESTORE_ERROR)
+        val replaceResult = configStore.replaceBackupResult(configEntries)
+        if (!replaceResult.isSuccess()) {
+            return Result.failure(
+                if (replaceResult.failedStage == BackupReplaceStage.ROLLBACK) {
+                    Code.ROLLBACK_ERROR
+                } else {
+                    Code.RESTORE_ERROR
+                },
+            )
+        }
         if (!QuickTemplateStore.containsTemplateEntries(incoming) || templateStore.restoreFromBackup(incoming)) {
             return Result.success(document.moduleScope)
         }

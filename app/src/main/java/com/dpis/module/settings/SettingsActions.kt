@@ -1,7 +1,5 @@
 package com.dpis.module.settings
 
-import com.dpis.module.settings.SettingsUiState
-
 /** Settings presentation capabilities exposed to the main workspace shell. */
 interface SettingsActions {
     fun state(): SettingsUiState
@@ -21,6 +19,7 @@ interface SettingsActions {
     fun confirmImport()
     fun dismissImport()
     fun clearCache()
+    fun restartOnboarding()
     fun openAbout()
     fun openDonate()
 }
